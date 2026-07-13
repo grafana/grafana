@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
+	grafanautil "github.com/grafana/grafana/pkg/util"
 )
 
 const MaxNumberOfFolders = 10000
@@ -557,44 +558,73 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 	return oldFolder.ID, nil
 }
 
+// EnsureFolderTreeExistsOptions configures EnsureFolderTreeExists.
+type EnsureFolderTreeExistsOptions struct {
+	// Ref is the repository ref (branch) the folders are written to.
+	Ref string
+	// Path is the base path within the repository under which the tree is written.
+	Path string
+	// GenerateNewFolderIDs, when true, writes each newly created folder's
+	// metadata (_folder.json) with a freshly generated UID instead of the
+	// original folder identifier. See EnsureFolderTreeExists for details.
+	GenerateNewFolderIDs bool
+	// OnFolder is called for each folder in the tree. It is called with created
+	// set to false when the folder already exists in the repository, and true
+	// when the folder is created.
+	OnFolder func(folder Folder, created bool, err error) error
+}
+
 // EnsureFolderTreeExists replicates the folder tree to the repository.
-// The function fn is called for each folder.
+// opts.OnFolder is called for each folder.
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.
-func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error {
+//
+// When opts.GenerateNewFolderIDs is true, each newly created folder's metadata
+// (_folder.json) is written with a freshly generated UID instead of the original
+// folder identifier; folders that already exist in the repository are left
+// untouched. The in-memory tree keeps the original IDs so resources still resolve
+// to their folder path, and parent nesting is unaffected (it derives from
+// directory structure); only the manifest's metadata.name carries the new UID.
+// This has no effect when folder metadata is not written, since no UID is
+// materialized then.
+func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree FolderTree, opts EnsureFolderTreeExistsOptions) error {
 	return tree.Walk(ctx, func(ctx context.Context, folder Folder, parent string) error {
 		p := folder.Path
-		if path != "" {
-			p = safepath.Join(path, p)
+		if opts.Path != "" {
+			p = safepath.Join(opts.Path, p)
 		}
 		if !safepath.IsDir(p) {
 			p = p + "/" // trailing slash indicates folder
 		}
 
-		_, err := fm.repo.Read(ctx, p, ref)
+		_, err := fm.repo.Read(ctx, p, opts.Ref)
 		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
-			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
+			return opts.OnFolder(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
 		} else if err == nil {
 			// Folder already exists in repository, add it to tree so resources can find it
 			fm.tree.Add(folder, parent)
-			return fn(folder, false, nil)
+			return opts.OnFolder(folder, false, nil)
 		}
 
 		if fm.folderMetadataEnabled {
+			manifestID := folder.ID
+			if opts.GenerateNewFolderIDs {
+				manifestID = grafanautil.GenerateShortUID()
+			}
 			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
-			manifest := NewFolderManifest(folder.ID, folder.Title, fm.folderGVK)
-			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, ref, msg); err != nil {
-				return fn(folder, true, err)
+			manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
+			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg); err != nil {
+				return opts.OnFolder(folder, true, err)
 			}
 		} else {
 			msg := fmt.Sprintf("Add folder %s", p)
-			if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
-				return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+			if err := fm.repo.Create(ctx, p, opts.Ref, nil, msg); err != nil {
+				return opts.OnFolder(folder, true, fmt.Errorf("write folder in repo: %w", err))
 			}
 		}
 		// Add it to the existing tree
 		fm.tree.Add(folder, parent)
 
-		return fn(folder, true, nil)
+		return opts.OnFolder(folder, true, nil)
 	})
 }

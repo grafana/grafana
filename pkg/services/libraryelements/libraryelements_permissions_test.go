@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -256,6 +257,51 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 	})
 }
 
+// TestIntegrationLibraryElementNameRouteRequiresReadPermission guards the route-level RBAC added
+// to GET /api/library-elements/name/:name. The unscoped library.panels:read check rejects a user
+// who lacks the action entirely (403) while leaving a permitted user unaffected (200). Folder-
+// scoped denial is a different code path (handled by the per-element filter) covered elsewhere.
+func TestIntegrationLibraryElementNameRouteRequiresReadPermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	cfgProvider, err := configprovider.ProvideService(env.Cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), env.SQLStore, cfgProvider)
+	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	require.NoError(t, err)
+
+	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
+	require.NoError(t, err)
+
+	createUserInOrg(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin2",
+		Login:          "admin2",
+		OrgID:          sharedOrg.ID,
+	})
+	// A user with no basic role has none of the fixed roles, so it lacks
+	// library.panels:read entirely — which is what trips the route middleware.
+	createUserInOrg(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleNone),
+		Password:       "noperms",
+		Login:          "noperms",
+		OrgID:          sharedOrg.ID,
+	})
+
+	createLibraryElement(t, grafanaListedAddr, "admin2", "admin2", "", http.StatusOK)
+	const panelName = "Library Panel Name" // the name createLibraryElement assigns
+
+	t.Run("user with library.panels:read can read by name", func(t *testing.T) {
+		getLibraryElementByName(t, grafanaListedAddr, "admin2", "admin2", panelName, http.StatusOK)
+	})
+
+	t.Run("user without library.panels:read is forbidden", func(t *testing.T) {
+		getLibraryElementByName(t, grafanaListedAddr, "noperms", "noperms", panelName, http.StatusForbidden)
+	})
+}
+
 /*
 	Helper functions
 */
@@ -302,6 +348,10 @@ func deleteLibraryElement(t *testing.T, grafanaListedAddr, user, password, uid s
 
 func getLibraryElement(t *testing.T, grafanaListedAddr, user, password, uid string, expectedStatus int) {
 	makeHTTPRequest(t, "GET", fmt.Sprintf("http://%s:%s@%s/api/library-elements/%s", user, password, grafanaListedAddr, uid), nil, expectedStatus)
+}
+
+func getLibraryElementByName(t *testing.T, grafanaListedAddr, user, password, name string, expectedStatus int) {
+	makeHTTPRequest(t, "GET", fmt.Sprintf("http://%s:%s@%s/api/library-elements/name/%s", user, password, grafanaListedAddr, url.PathEscape(name)), nil, expectedStatus)
 }
 
 func getAllLibraryElements(t *testing.T, grafanaListedAddr, user, password string, expectedStatus int, expectedLength int) {

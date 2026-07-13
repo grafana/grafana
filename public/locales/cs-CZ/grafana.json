@@ -10020,10 +10020,16 @@
         },
         "name-limit": "Limit",
         "name-mode": "Režim",
+        "name-overflow": "",
         "name-placement": "Umístění",
         "name-values": "Hodnoty",
         "name-visibility": "Viditelnost",
         "name-width": "Šířka",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Dolní",
           "label-right": "Vpravo"
@@ -11368,6 +11374,8 @@
         }
       },
       "fields-section": "Pole",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Skrýt řádek protokolu",
       "inline-mode": "Zobrazit v řádku",
       "inline-no-scrolls": "",
@@ -12113,9 +12121,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Spravujte mapování skupin poskytovatelů identity na role Grafana"
     },
     "help": {
       "title": "Nápověda"
@@ -14453,6 +14458,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Zdroj dat pro tento dotaz se nepodařilo načíst",
     "loading-datasource": "Načítání zdroje dat",
     "no-query-editor-component": "Plugin zdroje dat neexportuje žádnou komponentu editoru dotazů"

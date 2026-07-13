@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceStore_Read_FullMethodName   = "/resource.ResourceStore/Read"
-	ResourceStore_Create_FullMethodName = "/resource.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName = "/resource.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName = "/resource.ResourceStore/Delete"
-	ResourceStore_List_FullMethodName   = "/resource.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName  = "/resource.ResourceStore/Watch"
+	ResourceStore_Read_FullMethodName                = "/resource.ResourceStore/Read"
+	ResourceStore_Create_FullMethodName              = "/resource.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName              = "/resource.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName              = "/resource.ResourceStore/Delete"
+	ResourceStore_List_FullMethodName                = "/resource.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName               = "/resource.ResourceStore/Watch"
+	ResourceStore_ListStoredResources_FullMethodName = "/resource.ResourceStore/ListStoredResources"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -48,6 +49,10 @@ type ResourceStoreClient interface {
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (ResourceStore_WatchClient, error)
+	// Discover which resource identities (namespace/group/resource) exist in
+	// storage, without returning counts. This is a cheap alternative to
+	// GetStats for callers that only need to know what is stored, not how much.
+	ListStoredResources(ctx context.Context, in *ListStoredResourcesRequest, opts ...grpc.CallOption) (*ListStoredResourcesResponse, error)
 }
 
 type resourceStoreClient struct {
@@ -141,6 +146,16 @@ func (x *resourceStoreWatchClient) Recv() (*WatchEvent, error) {
 	return m, nil
 }
 
+func (c *resourceStoreClient) ListStoredResources(ctx context.Context, in *ListStoredResourcesRequest, opts ...grpc.CallOption) (*ListStoredResourcesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListStoredResourcesResponse)
+	err := c.cc.Invoke(ctx, ResourceStore_ListStoredResources_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourceStoreServer is the server API for ResourceStore service.
 // All implementations should embed UnimplementedResourceStoreServer
 // for forward compatibility
@@ -162,6 +177,10 @@ type ResourceStoreServer interface {
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	Watch(*WatchRequest, ResourceStore_WatchServer) error
+	// Discover which resource identities (namespace/group/resource) exist in
+	// storage, without returning counts. This is a cheap alternative to
+	// GetStats for callers that only need to know what is stored, not how much.
+	ListStoredResources(context.Context, *ListStoredResourcesRequest) (*ListStoredResourcesResponse, error)
 }
 
 // UnimplementedResourceStoreServer should be embedded to have forward compatible implementations.
@@ -185,6 +204,9 @@ func (UnimplementedResourceStoreServer) List(context.Context, *ListRequest) (*Li
 }
 func (UnimplementedResourceStoreServer) Watch(*WatchRequest, ResourceStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedResourceStoreServer) ListStoredResources(context.Context, *ListStoredResourcesRequest) (*ListStoredResourcesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListStoredResources not implemented")
 }
 
 // UnsafeResourceStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -309,6 +331,24 @@ func (x *resourceStoreWatchServer) Send(m *WatchEvent) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _ResourceStore_ListStoredResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListStoredResourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStoreServer).ListStoredResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStore_ListStoredResources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStoreServer).ListStoredResources(ctx, req.(*ListStoredResourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourceStore_ServiceDesc is the grpc.ServiceDesc for ResourceStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -335,6 +375,10 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "List",
 			Handler:    _ResourceStore_List_Handler,
+		},
+		{
+			MethodName: "ListStoredResources",
+			Handler:    _ResourceStore_ListStoredResources_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

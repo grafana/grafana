@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -558,6 +559,94 @@ func TestSimpleServer(t *testing.T) {
 	})
 }
 
+func TestListStoredResources(t *testing.T) {
+	testUser := &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), testUser)
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+
+	server, err := NewResourceServer(ResourceServerOptions{Backend: store})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = server.Stop(stopCtx)
+	})
+
+	create := func(namespace, name string) {
+		raw := []byte(fmt.Sprintf(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {"name": %q, "namespace": %q},
+			"spec": {"title": "hello", "interval": "5m"}
+		}`, name, namespace))
+		resp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key: &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: namespace,
+				Name:      name,
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+	}
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	create("ns1", "item1")
+	create("ns1", "item2")
+	create("ns2", "item3")
+
+	t.Run("discovers resources for a namespace", func(t *testing.T) {
+		resp, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "ns1"})
+		require.NoError(t, err)
+		require.Equal(t, []*resourcepb.ListStoredResourcesResponse_StoredResource{
+			{Namespace: "ns1", Group: "playlist.grafana.app", Resource: "playlists"},
+		}, resp.Items)
+	})
+
+	t.Run("non-existent namespace returns no items", func(t *testing.T) {
+		resp, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "missing"})
+		require.NoError(t, err)
+		require.Empty(t, resp.Items)
+	})
+
+	t.Run("empty namespace is rejected with InvalidArgument", func(t *testing.T) {
+		_, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{})
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("backend errors are returned as codes.Internal", func(t *testing.T) {
+		// mockStorageBackend inherits ListStoredResources from
+		// UnimplementedStorageBackend, which returns an error.
+		errServer, err := NewResourceServer(ResourceServerOptions{
+			Backend: &mockStorageBackend{},
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = errServer.Stop(stopCtx)
+		})
+
+		_, err = errServer.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "ns1"})
+		require.Equal(t, codes.Internal, status.Code(err))
+	})
+}
+
 func TestRunInQueue(t *testing.T) {
 	const testTenantID = "test-tenant"
 	t.Run("should execute successfully when queue has capacity", func(t *testing.T) {
@@ -936,10 +1025,12 @@ func TestCheckQuotas(t *testing.T) {
 			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
 		}
 
+		metrics := ProvideStorageMetrics(prometheus.NewRegistry())
 		server, err := NewResourceServer(ResourceServerOptions{
 			Backend:          &mockStorageBackend{},
 			SearchClient:     searchClient,
 			OverridesService: overridesService,
+			StorageMetrics:   metrics,
 			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
 		})
 		require.NoError(t, err)
@@ -948,6 +1039,8 @@ func TestCheckQuotas(t *testing.T) {
 		})
 
 		require.NoError(t, server.checkQuota(ctx, nsr))
+		require.Equal(t, float64(1), testutil.ToFloat64(
+			metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
 	})
 }
 
@@ -2471,4 +2564,26 @@ func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
 	require.NoError(t, err)
 	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+}
+
+func TestClassifyAuthError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{"nil", nil, ""},
+		{"namespace mismatch", authlib.ErrNamespaceMismatch, "auth_namespace_mismatch"},
+		{"unavailable", status.Error(codes.Unavailable, "down"), "auth_unavailable"},
+		{"deadline exceeded", status.Error(codes.DeadlineExceeded, "slow"), "auth_unavailable"},
+		{"resource exhausted", status.Error(codes.ResourceExhausted, "rate"), "auth_unavailable"},
+		{"permission denied", status.Error(codes.PermissionDenied, "no"), "auth_rejected"},
+		{"invalid argument", status.Error(codes.InvalidArgument, "bad"), "auth_rejected"},
+		{"unknown", errors.New("boom"), "auth_error"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, classifyAuthError(tt.err))
+		})
+	}
 }

@@ -248,6 +248,7 @@ func (in *ConnectionStatus) DeepCopyInto(out *ConnectionStatus) {
 		}
 	}
 	in.Health.DeepCopyInto(&out.Health)
+	out.Token = in.Token
 	return
 }
 
@@ -1251,6 +1252,16 @@ func (in *RepositoryView) DeepCopyInto(out *RepositoryView) {
 	if in.Commit != nil {
 		in, out := &in.Commit, &out.Commit
 		*out = new(CommitOptions)
+		**out = **in
+	}
+	if in.BranchOptions != nil {
+		in, out := &in.BranchOptions, &out.BranchOptions
+		*out = new(BranchOptions)
+		**out = **in
+	}
+	if in.PullRequest != nil {
+		in, out := &in.PullRequest, &out.PullRequest
+		*out = new(PullRequestOptions)
 		**out = **in
 	}
 	return

@@ -254,6 +254,13 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Enum:        []interface{}{"gpg", "smime", "ssh"},
 						},
 					},
+					"signerIsAuthor": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, commits are authored by the signer identity (signerName/signerEmail).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"smimeCertificate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
@@ -569,12 +576,19 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							Ref:         ref(HealthStatus{}.OpenAPIModelName()),
 						},
 					},
+					"token": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(TokenStatus{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"observedGeneration", "health"},
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 
@@ -741,6 +755,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 									},
 								},
 							},
+						},
+					},
+					"generateNewFolderIDs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. Use this to produce a portable export that creates new folders on a subsequent sync rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
@@ -1051,13 +1072,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref 
 							Description: "The branch to use in the repository.",
 							Default:     "",
 							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"generateDashboardPreviews": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews for pull requests.",
-							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
@@ -1935,6 +1949,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 							},
 						},
 					},
+					"generateNewFolderIDs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -2056,6 +2077,13 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.Referen
 					"enforceTemplate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When true, the PR title field in Save drawers is read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -2672,12 +2700,24 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Ref:         ref(CommitOptions{}.OpenAPIModelName()),
 						},
 					},
+					"branchOptions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name.",
+							Ref:         ref(BranchOptions{}.OpenAPIModelName()),
+						},
+					},
+					"pullRequest": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pull request options. Mirrors the same-named field on the repository spec.",
+							Ref:         ref(PullRequestOptions{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"name", "title", "type", "target", "workflows"},
 			},
 		},
 		Dependencies: []string{
-			CommitOptions{}.OpenAPIModelName()},
+			BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName()},
 	}
 }
 

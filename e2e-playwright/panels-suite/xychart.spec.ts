@@ -131,7 +131,7 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
     // assert panel is visible and `u-over` is in the document
     await expect(panel.locator('.u-over')).toBeVisible();
     // Click a known element position within the panel
-    panel.locator('.u-over').click({ position: { x: 100, y: 100 } });
+    panel.locator('.u-over').click({ position: { x: 80, y: 100 } });
     await expect(tooltip, 'tooltip appears on click').toBeVisible({ timeout: 3000 });
   });
 });

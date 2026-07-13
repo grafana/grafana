@@ -19,43 +19,47 @@ description: Create and edit a dashboard
 weight: 1
 image_maps:
   - key: sidebar-toolbar
-    src: /media/docs/grafana/dashboards/screenshot-edit-mode-toolbar-v13.0.png
+    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.1.png
     alt: An annotated image of the sidebar and toolbar
     points:
       - x_coord: 101
-        y_coord: 13
+        y_coord: 11
         content: |
-          **Add new element**: Click to open the sidebar. Edit mode only.
+          **Add new element**: Click to open the sidebar with add options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 20
+        y_coord: 18
         content: |
-          **Dashboard options**: Click the icon to open the sidebar and access dashboard options. Edit mode only.
+          **Dashboard options**: Click the icon to open the sidebar and access dashboard options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 27
+        y_coord: 24.5
         content: |
           **Feedback**: Submit feedback on the new editing experience. Edit mode only.
       - x_coord: 101
-        y_coord: 34
+        y_coord: 31
         content: |
-          **Edit as code**: Edit the dashboard JSON. Edit mode only.
+          **Edit as code**: Edit the dashboard JSON. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 43
+        y_coord: 38.5
         content: |
           **Export**: Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 101
-        y_coord: 50
+        y_coord: 45
         content: |
           **Content outline**: Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
       - x_coord: 101
-        y_coord: 57
+        y_coord: 51
         content: |
           **Filters overview**: Open the filters overview drawer.
       - x_coord: 101
-        y_coord: 64
+        y_coord: 57
         content: |
           **Dashboard insights**: View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
       - x_coord: 101
-        y_coord: 93
+        y_coord: 65
+        content: |
+          **Hide**: Click to hide the sidebar and toolbar.
+      - x_coord: 89
+        y_coord: 13
         content: |
           **Dock/Undock**: Click to dock or undock the sidebar.
 ---
@@ -82,7 +86,7 @@ To create a dashboard, follow these steps:
 1. Click **New** and select **New Dashboard**.
 1. Click the **Add new element** icon (blue plus sign) and click or drag a panel onto the dashboard.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.0.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.1.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
 
 {{< /shared >}}
 
@@ -138,6 +142,7 @@ To create a dashboard, follow these steps:
 1. Enter a title and description for the dashboard or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Select a folder, if applicable.
 1. Click **Save**
+1. Click **Back to dashboard**.
 1. Click **Exit edit**.
 
 {{< /docs/list >}}
@@ -153,6 +158,7 @@ Now that you've created a basic dashboard, you can augment it with more options,
 ### The sidebar and toolbar
 
 The _sidebar_ allows you to make changes without leaving the dashboard, by displaying options associated with the part of the dashboard that's in focus.
+
 The _toolbar_ is next to the sidebar, and it includes options that are useful to have available all the time.
 
 The following image shows the parts of the sidebar and the toolbar.
@@ -164,19 +170,13 @@ The toolbar is displayed in both edit and view mode, but the **Dashboard options
 
 The available configuration options in the sidebar differ depending on the selected dashboard element:
 
-- Dashboards: High-level options are in the sidebar and further configuration options are in the **Settings** page.
-- Groupings (rows and tabs): All configuration options are available in the sidebar.
-- Panels: High-level options are in the sidebar and further configuration options are in the **Edit panel** view.
-
-You can close the sidebar by clicking the following icons in the toolbar a second time:
-
-- Add new element (if you're in the configuration options for a dashboard element, it takes two clicks to close the sidebar)
-- Edit as code
-- Content outline
+- **Dashboards**: High-level options are in the sidebar and further configuration options are in the **Settings** page.
+- **Groupings (rows and tabs)**: All configuration options are available in the sidebar.
+- **Panels**: High-level options are in the sidebar and further configuration options are in the **Edit panel** view.
 
 #### Docked and undocked sidebar
 
-You can choose to use the sidebar docked or undocked by clicking the Dock/Undock icon in the toolbar.
+You can choose to use the sidebar docked or undocked by clicking the **Dock/Undock** icon in the sidebar.
 When the sidebar is docked, the content of the dashboard resizes to accommodate the sidebar.
 When it's undocked, the sidebar floats on top of the dashboard content.
 In edit mode, the sidebar is docked by default and in view mode, it's undocked.
@@ -202,10 +202,8 @@ You can clear this selection by clearing the following keys in your local storag
 - For view mode: `grafana.ui.sidebar.dashboard-view.docked`
 - For edit mode: `grafana.ui.sidebar.dashboard.docked`
 
-{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-sidebar-toolbar-v13.0.mp4" >}}
-
-You can also resize the sidebar and toolbar.
-You can only resize the toolbar when the sidebar is closed, however, you can do so in view or edit mode.
+You can also resize both the sidebar and toolbar.
+You can only resize the toolbar when the sidebar is closed and not docked, however, you can do so in view or edit mode.
 Your resizing changes persist until you change them.
 
 ### Navigate using the content outline
@@ -213,7 +211,7 @@ Your resizing changes persist until you change them.
 The **Content outline** provides a tree-like structure that shows you all the parts of the dashboard and their relationships to each other, including panels, rows, tabs, and variables.
 The outline also lets you quickly navigate the dashboard and is available in both view and edit modes (note that variables are only included in edit mode).
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-content-outline-v12.4.png" max-width="750px" alt="Dashboard with outline open" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-content-outline-v13.1.png" max-width="750px" alt="Dashboard with outline open" >}}
 
 To navigate the dashboard using the outline, follow these steps:
 
@@ -230,13 +228,13 @@ To edit a dashboard, follow these steps:
 1. Click **Edit**.
 1. Do one of the following:
 
-   | Update                 | Action                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-   | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | Edit existing elements | <p>Click the element to open the sidebar showing the relevant options. Click the **Dashboard options** icon to access dashboard settings.</p><p>If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.</p>                                                                                                                                                                                                                                                                                                                     |
-   | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>                                                                                                                                                                                                                                                                                                                                                            |
-   | Group panels           | <p>Click **Add new element** and select **Group into row** or **Group into tab**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>                                                                                                                                                                                    |
-   | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links)</li></ul> |
-   | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                               |
+   | Update                 | Action                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+   | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Edit existing elements | <p>Click the element to open the sidebar showing the relevant options. Click the **Dashboard options** icon to access dashboard settings.</p><p>If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.</p>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+   | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+   | Group panels           | <p>Click **Add new element** and select **Group into row** or **Group into tab**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>                                                                                                                                                                                                                                                                                                                                                                              |
+   | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
+   | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -460,25 +458,22 @@ To resize a panel, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-## Copy or duplicate dashboard elements
+## Copy, duplicate, or delete dashboard elements
 
-You can copy and paste or duplicate the following dashboard elements:
+You can copy and paste, duplicate, or delete any dashboard elements using the sidebar:
 
-- Panels
-- Rows
-- Tabs
-
-To copy or duplicate dashboard elements, follow these steps:
+To manage dashboard elements, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
+1. Do one of the following:
+   - For panels, rows, or tabs, click the element you want to update to open the sidebar. If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+   - For dashboard controls&mdash;filters, variables, annotations, or links&mdash; click the control at the top of the dashboard to display the edit and delete options, and then click the edit icon for the control. This opens the sidebar.
 
-   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
-
-1. In the top-corner of the sidebar, click the **Copy or Duplicate** icon and do one of the following:
+1. At the top of the sidebar, do one of the following:
    - Click **Copy**.
    - Click **Duplicate**. The duplicated element is added next to the original one. Proceed to step 6.
+   - Click **Delete** and then confirm you want to delete the control. Proceed to step 7.
 
 1. If you selected **Copy**, navigate to the part of the dashboard where you want to add the copied element, and click **Paste panel**, **Paste row**, or **Paste tab**.
 1. Update the copied or duplicated element if needed.
@@ -499,3 +494,5 @@ To make a copy of a dashboard, follow these steps:
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
 
 1. Click **Save**.
+
+You're now in the copied dashboard.

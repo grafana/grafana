@@ -31,9 +31,7 @@ refs:
 
 {{< admonition type="note" >}}
 
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -97,6 +95,12 @@ To update or delete your repository configuration after you complete setup:
 - To modify your configuration, update any of the settings and select **Save**.
 - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
 
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
+
 ## Manage folder permissions
 
 By default, users keep their roles in folders provisioned with Git Sync.
@@ -124,11 +128,11 @@ To add or modify folder permissions:
 
 ### The Git Sync folder JSON metadata file
 
-Each folder in a synced repository contains a `.folder.json` file at its root:
+Each folder in a synced repository contains a `_folder.json` file at its root:
 
 ```json
 {
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "<API_VERSION>",
   "kind": "Folder",
   "metadata": {
     "name": "<FOLDER_UID>"
@@ -141,5 +145,6 @@ Each folder in a synced repository contains a `.folder.json` file at its root:
 
 Where:
 
+- `<API_VERSION>` is the version of the API you want to use. For example, `folder.grafana.app/v1`.
 - `<FOLDER_UID>` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references.
 - `<FOLDER_UI_NAME>` is the display name shown in the Grafana UI. This parameter is optional. If not used, the folder name will be passed instead.

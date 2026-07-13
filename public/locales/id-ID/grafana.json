@@ -9837,10 +9837,16 @@
         },
         "name-limit": "Batas",
         "name-mode": "Mode",
+        "name-overflow": "",
         "name-placement": "Penempatan",
         "name-values": "Nilai",
         "name-visibility": "Visibilitas",
         "name-width": "Lebar",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Bawah",
           "label-right": "Kanan"
@@ -11155,6 +11161,8 @@
         }
       },
       "fields-section": "Bidang",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Sembunyikan baris log",
       "inline-mode": "Tampilkan sebaris",
       "inline-no-scrolls": "",
@@ -11900,9 +11908,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Kelola pemetaan grup Penyedia Identitas ke Peran Grafana"
     },
     "help": {
       "title": "Bantuan"
@@ -14168,6 +14173,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Gagal memuat sumber data untuk kueri ini",
     "loading-datasource": "Memuat sumber data",
     "no-query-editor-component": "Plugin sumber data tidak mengekspor komponen editor kueri apa pun"

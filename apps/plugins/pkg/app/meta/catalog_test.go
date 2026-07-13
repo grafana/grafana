@@ -71,7 +71,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
+		// The plugin.json has no version, so it falls back to the gcom version.
+		expectedWithVersion := expectedMeta
+		expectedWithVersion.Info.Version = "1.0.0"
+		assert.Equal(t, expectedWithVersion, result.Meta.PluginJson)
 		assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, result.Meta.Class)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid, result.Meta.Signature.Status)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana, *result.Meta.Signature.Type)
@@ -93,8 +96,11 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, childResult)
-			// Child plugin should have its own JSON data
-			assert.Equal(t, childJSON, childResult.Meta.PluginJson)
+			// Child plugin should have its own JSON data, with the version
+			// inherited from the parent (its own plugin.json has none).
+			expectedChild := childJSON
+			expectedChild.Info.Version = "1.0.0"
+			assert.Equal(t, expectedChild, childResult.Meta.PluginJson)
 			assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, childResult.Meta.Class)
 
 			// Child inherits signature from parent
@@ -286,7 +292,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
+		// The plugin.json has no version, so it falls back to the gcom version.
+		expectedWithVersion := expectedMeta
+		expectedWithVersion.Info.Version = "1.0.0"
+		assert.Equal(t, expectedWithVersion, result.Meta.PluginJson)
 		assert.Equal(t, defaultCatalogTTL, result.TTL)
 	})
 

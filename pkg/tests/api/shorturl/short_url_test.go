@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -34,9 +33,8 @@ func TestMain(m *testing.M) {
 
 func TestShortURL(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		DisableFeatureToggles: []string{featuremgmt.FlagKubernetesShortURLs},
+		AppModeProduction: true,
+		DisableAnonymous:  true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -74,7 +72,7 @@ func TestShortURL(t *testing.T) {
 	defer func() {
 		_ = res.Body.Close()
 	}()
-	assert.Equal(t, "http://localhost:3000/explore", res.Header.Get("Location"))
+	assert.Equal(t, "/explore", res.Header.Get("Location"))
 	assert.Equal(t, http.StatusFound, res.StatusCode)
 
 	// If the go-to does not exist, it should redirect to the home page and return 308.
@@ -84,7 +82,7 @@ func TestShortURL(t *testing.T) {
 		_ = res.Body.Close()
 	}()
 	assert.Equal(t, "http://localhost:3000/", res.Header.Get("Location"))
-	assert.Equal(t, http.StatusPermanentRedirect, res.StatusCode)
+	assert.Equal(t, http.StatusTemporaryRedirect, res.StatusCode)
 
 	// Create a client that does not have authentication.
 	notLoggedInClient := client(grafanaListedAddr, "", "")

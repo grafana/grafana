@@ -9,16 +9,17 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useHomeNav } from 'app/core/hooks/useHomeNav';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
-import { HomeLink } from '../../Branding/Branding';
+import { HomeLogo } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
+import { FeatureControlButton } from '../FeatureControl/FeatureControlButton';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
@@ -58,7 +59,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen, visualRefreshEnabled);
   const profileNode = useSelector((state) => state.navIndex['profile']);
-  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
+  const homeNav = useHomeNav();
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const isLargeScreen = useMediaQueryMinWidth('lg');
@@ -81,7 +82,7 @@ export const SingleTopBar = memo(function SingleTopBar({
               </Stack>
             </ToolbarButton>
           )}
-          {!menuDockedAndOpen && <HomeLink homeNav={homeNav} />}
+          {!menuDockedAndOpen && <HomeLogo homeNav={homeNav} />}
           {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}
@@ -97,6 +98,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
           {!isSmallScreen && <QuickAdd />}
+          <FeatureControlButton />
           <HelpTopBarButton isSmallScreen={isSmallScreen} />
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
