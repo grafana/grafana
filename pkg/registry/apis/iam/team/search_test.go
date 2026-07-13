@@ -230,9 +230,9 @@ func TestSearchHandler(t *testing.T) {
 		mockClient := &MockClient{}
 
 		searchHandler := &SearchHandler{
-			log:      log.New("grafana-apiserver.teams.search"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
+			log:    log.New("grafana-apiserver.teams.search"),
+			client: mockClient,
+			tracer: tracing.NewNoopTracerService(),
 		}
 
 		rr := httptest.NewRecorder()
@@ -252,9 +252,9 @@ func TestSearchHandler(t *testing.T) {
 				mockClient := &MockClient{}
 
 				searchHandler := &SearchHandler{
-					log:      log.New("grafana-apiserver.teams.search"),
-					client:   mockClient,
-					tracer:   tracing.NewNoopTracerService(),
+					log:    log.New("grafana-apiserver.teams.search"),
+					client: mockClient,
+					tracer: tracing.NewNoopTracerService(),
 				}
 
 				rr := httptest.NewRecorder()
