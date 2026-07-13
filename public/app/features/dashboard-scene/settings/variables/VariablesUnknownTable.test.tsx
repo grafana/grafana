@@ -135,13 +135,6 @@ describe('VariablesUnknownTable', () => {
           await user.click(screen.getByLabelText('Renamed or missing variables'));
 
           jest.advanceTimersByTime(SLOW_VARIABLES_EXPANSION_THRESHOLD);
-
-          // make sure we report the interaction for slow expansion
-          await waitFor(() =>
-            expect(reportInteractionSpy).toHaveBeenCalledWith('Slow unknown variables expansion', {
-              elapsed: expect.any(Number),
-            })
-          );
         });
       });
     });

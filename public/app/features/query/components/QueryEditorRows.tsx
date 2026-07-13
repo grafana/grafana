@@ -188,16 +188,6 @@ export class QueryEditorRows extends PureComponent<Props> {
     );
   }
 
-  onDragStart = (result: DragStart) => {
-    const { queries, dsSettings } = this.props;
-
-    reportInteraction('query_row_reorder_started', {
-      startIndex: result.source.index,
-      numberOfQueries: queries.length,
-      datasourceType: dsSettings.type,
-    });
-  };
-
   onDragEnd = (result: DropResult) => {
     const { queries, onQueriesChange, dsSettings } = this.props;
 
@@ -207,27 +197,11 @@ export class QueryEditorRows extends PureComponent<Props> {
 
     const startIndex = result.source.index;
     const endIndex = result.destination.index;
-    if (startIndex === endIndex) {
-      reportInteraction('query_row_reorder_canceled', {
-        startIndex,
-        endIndex,
-        numberOfQueries: queries.length,
-        datasourceType: dsSettings.type,
-      });
-      return;
-    }
 
     const update = Array.from(queries);
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
-
-    reportInteraction('query_row_reorder_ended', {
-      startIndex,
-      endIndex,
-      numberOfQueries: queries.length,
-      datasourceType: dsSettings.type,
-    });
   };
 
   render() {
@@ -259,7 +233,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       : undefined;
 
     return (
-      <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
+      <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (

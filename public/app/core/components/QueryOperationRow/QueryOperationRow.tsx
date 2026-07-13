@@ -71,14 +71,6 @@ export function QueryOperationRow({
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-
-      // report relative mouse position within the header element
-      reportInteraction('query_row_reorder_drag_position', {
-        x: x / rect.width,
-        y: y / rect.height,
-        width: rect.width,
-        height: rect.height,
-      });
     }
   }, []);
 
