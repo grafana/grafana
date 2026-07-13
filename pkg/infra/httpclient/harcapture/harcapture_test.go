@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"sync"
 	"testing"
 	"time"
@@ -227,6 +228,23 @@ func TestRedactHARDocument(t *testing.T) {
 	// Unparseable input is dropped (fail closed), not returned unredacted.
 	assert.Nil(t, RedactHARDocument([]byte("not har")))
 	assert.Nil(t, RedactHARDocument([]byte(`{"notalog":1}`)))
+}
+
+func TestRedactURLValue_failsClosedOnUnparseable(t *testing.T) {
+	// net/url.Parse rejects raw control characters; such a value can't be query-redacted, so it
+	// must be dropped rather than passed through into a bundle meant for external sharing.
+	bad := "https://idp.example.com/cb?access_token=SECRET\x7f"
+	require.Error(t, func() error { _, err := url.Parse(bad); return err }(), "guard: value must be unparseable")
+
+	assert.Equal(t, redactedValue, redactURLValue(bad))
+	// The same must hold when the value arrives via a URL-valued header (Location/Referer/...).
+	assert.Equal(t, redactedValue, redactHeader("Location", bad))
+	assert.NotContains(t, redactHeader("Referer", bad), "SECRET")
+
+	// A parseable URL is still query-redacted in place (not dropped wholesale).
+	ok := redactHeader("Location", "https://idp.example.com/cb?access_token=SECRET&state=ok")
+	assert.NotContains(t, ok, "SECRET")
+	assert.Contains(t, ok, "state=ok")
 }
 
 func TestToNameValues_sortedAndMultiValue(t *testing.T) {

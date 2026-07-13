@@ -75,9 +75,7 @@ func redactHeader(name, value string) string {
 		return redactedValue
 	}
 	if _, ok := urlValuedHeaders[canonical]; ok {
-		if u, err := url.Parse(value); err == nil {
-			return redactedURLString(u)
-		}
+		return redactURLValue(value)
 	}
 	return value
 }
@@ -117,6 +115,18 @@ func redactedURLString(u *url.URL) string {
 	return redacted.String()
 }
 
+// redactURLValue query-redacts a URL-valued string, failing closed: a value that can't be parsed
+// can't be safely query-redacted, so it is dropped (redactedValue) rather than passed through. This
+// matters because net/url.Parse rejects some inputs (e.g. a raw control character a misbehaving
+// datasource might emit), and this bundle is meant for external sharing.
+func redactURLValue(value string) string {
+	u, err := url.Parse(value)
+	if err != nil {
+		return redactedValue
+	}
+	return redactedURLString(u)
+}
+
 // RedactHARDocument applies the same header/cookie/query/URL redaction used for in-process capture
 // to a HAR 1.2 document produced elsewhere (e.g. an external plugin's __har__ frame), so
 // externally-sourced entries don't leak secrets into a shared bundle. It returns nil if the document
@@ -135,17 +145,15 @@ func RedactHARDocument(doc []byte) []byte {
 			redactPairs(e.Request.Headers, redactHeader)
 			redactPairs(e.Request.QueryString, redactQueryParam)
 			redactCookieValues(e.Request.Cookies)
-			if u, err := url.Parse(e.Request.URL); err == nil {
-				e.Request.URL = redactedURLString(u)
+			if e.Request.URL != "" {
+				e.Request.URL = redactURLValue(e.Request.URL)
 			}
 		}
 		if e.Response != nil {
 			redactPairs(e.Response.Headers, redactHeader)
 			redactCookieValues(e.Response.Cookies)
 			if e.Response.RedirectURL != "" {
-				if u, err := url.Parse(e.Response.RedirectURL); err == nil {
-					e.Response.RedirectURL = redactedURLString(u)
-				}
+				e.Response.RedirectURL = redactURLValue(e.Response.RedirectURL)
 			}
 		}
 	}
@@ -288,11 +296,7 @@ func buildEntry(req *http.Request, resp *http.Response, started time.Time, elaps
 		harResp.Headers = toNameValues(resp.Header)
 		harResp.Cookies = toCookies(resp.Cookies())
 		if loc := resp.Header.Get("Location"); loc != "" {
-			if u, err := url.Parse(loc); err == nil {
-				harResp.RedirectURL = redactedURLString(u)
-			} else {
-				harResp.RedirectURL = loc
-			}
+			harResp.RedirectURL = redactURLValue(loc)
 		}
 		if resp.Body != nil {
 			// Drain then Close the original transport body so its connection is returned to the
