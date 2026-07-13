@@ -15,7 +15,7 @@ export { default as scopeHandlers } from './handlers/apis/scope.grafana.app/v0al
 export { customCreateTeamHandler } from './handlers/api/teams/handlers';
 export { customGetUserPreferencesHandler } from './handlers/api/user/handlers';
 export { mockUserPreferences, setupMockUserPreferences, setMockUserPreferences } from './fixtures/preferences';
-export { setMockStarredDashboards } from './fixtures/starred';
+export { setMockStarredDashboards, setMockStarredFolders } from './fixtures/starred';
 export { customSetTeamRolesHandler } from './handlers/api/access-control/handlers';
 export { customCreateFolderHandler, customFolderCountsHandler } from './handlers/api/folders/handlers';
 export { customCreateFolderHandler as customCreateFolderHandlerAppPlatform } from './handlers/apis/folder.grafana.app/v1beta1/handlers';

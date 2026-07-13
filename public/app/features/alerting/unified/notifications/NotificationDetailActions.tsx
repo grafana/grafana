@@ -7,6 +7,7 @@ import { appEvents } from 'app/core/app_events';
 
 import MoreButton from '../components/MoreButton';
 import { DeclareIncidentMenuItem } from '../components/bridges/DeclareIncidentButton';
+import { isGranted } from '../hooks/abilities/abilityUtils';
 import { useCanViewContactPoints } from '../hooks/abilities/alertmanager/useContactPointAbility';
 import { useGlobalSilenceAbility } from '../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../hooks/abilities/types';
@@ -22,7 +23,7 @@ interface NotificationActionsMenuProps {
 export function NotificationActionsMenu({ notification }: NotificationActionsMenuProps) {
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
   const canViewContactPoint = useCanViewContactPoints();
-  const canSilence = useGlobalSilenceAbility(SilenceAction.Create).granted;
+  const canSilence = isGranted(useGlobalSilenceAbility({ action: SilenceAction.Create }));
 
   const shouldShowDeclareIncident = !isOpenSourceEdition() || isLocalDevEnv();
 
