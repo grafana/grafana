@@ -7296,7 +7296,7 @@
       "label-predefined": "Predefined variables",
       "tooltip": "Added by the {{pluginName}} plugin",
       "tooltip-folder": "Folder variable, inherited from this dashboard's folder",
-      "tooltip-global": "Global variable, managed centrally under Dashboards > Variables",
+      "tooltip-global": "Global variable, shared across all dashboards",
       "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {
@@ -7338,6 +7338,9 @@
       },
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
+    },
+    "read-only-variables-section": {
+      "label": "Provisioned variables"
     },
     "resource-export": {
       "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",

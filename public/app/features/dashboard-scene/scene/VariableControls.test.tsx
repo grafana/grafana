@@ -189,9 +189,7 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(await screen.findByText('globalVar')).toBeInTheDocument();
-    expect(
-      screen.getByLabelText('Global variable, managed centrally under Dashboards > Variables')
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Global variable, shared across all dashboards')).toBeInTheDocument();
   });
 
   it('should show an origin icon for folder predefined variables without a description', async () => {

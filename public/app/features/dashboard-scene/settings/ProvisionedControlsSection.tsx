@@ -83,7 +83,7 @@ export function SourceIcon({ origin }: { origin: ControlSourceRef | undefined })
     const content = isGlobal
       ? t(
           'dashboard-scene.provisioned-controls-section.tooltip-global',
-          'Global variable, managed centrally under Dashboards > Variables'
+          'Global variable, shared across all dashboards'
         )
       : t(
           'dashboard-scene.provisioned-controls-section.tooltip-folder',
