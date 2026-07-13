@@ -1089,7 +1089,7 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	panel["title"] = spec.Title
 	panel["pluginVersion"] = spec.VizConfig.Spec.PluginVersion
 
-	if spec.Description != "" {
+	if spec.Description != nil && *spec.Description != "" {
 		panel["description"] = spec.Description
 	}
 
