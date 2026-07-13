@@ -220,6 +220,18 @@ func TestPluginCaptureError(t *testing.T) {
 	require.EqualError(t, err, "datasource boom")
 }
 
+func TestResponseError_skipsSyntheticHARFrame(t *testing.T) {
+	// The SDK sets an error on the synthetic __har__ response so its own middlewares see the failure;
+	// ResponseError must not surface it under the reserved refID (PluginCaptureError handles it).
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"__har__": {Error: errors.New("swallowed boom")},
+	}}
+	require.NoError(t, ResponseError(resp), "__har__ synthetic error must be skipped")
+	// A real per-refId error alongside it is still reported.
+	resp.Responses["A"] = backend.DataResponse{Error: errors.New("real boom")}
+	require.EqualError(t, ResponseError(resp), "A: real boom")
+}
+
 func TestResponseError(t *testing.T) {
 	require.NoError(t, ResponseError(nil))
 	require.NoError(t, ResponseError(&backend.QueryDataResponse{Responses: backend.Responses{"A": {}}}))

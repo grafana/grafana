@@ -79,6 +79,12 @@ func ResponseError(resp *backend.QueryDataResponse) error {
 	}
 	refIDs := make([]string, 0, len(resp.Responses))
 	for refID, r := range resp.Responses {
+		// Skip the synthetic capture frame: an externalized plugin sets an error on it (so the SDK's
+		// own middlewares see the failure), but its clean error text is read via PluginCaptureError,
+		// not surfaced here under the reserved refID.
+		if refID == harResponseKey {
+			continue
+		}
 		if r.Error != nil {
 			refIDs = append(refIDs, refID)
 		}
