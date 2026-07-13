@@ -202,7 +202,7 @@ var (
 		},
 		{
 			Name:        "grafana.timeNavigator",
-			Description: "Adds a dashboard timebar / time navigator control that drives the dashboard time range",
+			Description: "Adds a dashboard time navigator control that drives the dashboard time range",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",

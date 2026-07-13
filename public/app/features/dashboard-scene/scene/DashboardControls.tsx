@@ -97,7 +97,7 @@ function getPanelEditVariables(
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
-  timebar: SceneTimeNavigator;
+  timeNavigator: SceneTimeNavigator;
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
@@ -161,7 +161,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     super({
       timePicker: state.timePicker ?? new SceneTimePicker({}),
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
-      timebar: state.timebar ?? new SceneTimeNavigator({}),
+      timeNavigator: state.timeNavigator ?? new SceneTimeNavigator({}),
       ...state,
     });
 
@@ -216,7 +216,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const {
     refreshPicker,
     timePicker,
-    timebar,
+    timeNavigator,
     hideTimeControls,
     hideVariableControls,
     hideLinksControls,
@@ -229,10 +229,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   // Show/hide preference for the time navigator. Read the saved value unconditionally (a harmless read, and
   // it means enabling the flag mid-session still honours a previously hidden state); only the toggle writes
   // it, and the toggle renders only when the feature is enabled, so a disabled instance never persists.
-  const [showTimebar, setShowTimebar] = useState(() => store.getBool(TIME_NAVIGATOR_VISIBLE_KEY, true));
-  const toggleTimebar = () => {
-    const next = !showTimebar;
-    setShowTimebar(next);
+  const [showTimeNavigator, setShowTimeNavigator] = useState(() => store.getBool(TIME_NAVIGATOR_VISIBLE_KEY, true));
+  const toggleTimeNavigator = () => {
+    const next = !showTimeNavigator;
+    setShowTimeNavigator(next);
     store.set(TIME_NAVIGATOR_VISIBLE_KEY, next);
   };
 
@@ -295,13 +295,13 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
               {timeNavigatorEnabled && (
                 <ToolbarButton
                   icon="bars-clock"
-                  variant={showTimebar ? 'active' : 'default'}
+                  variant={showTimeNavigator ? 'active' : 'default'}
                   tooltip={
-                    showTimebar
+                    showTimeNavigator
                       ? t('time-navigator.hide', 'Hide time navigator (experimental)')
                       : t('time-navigator.show', 'Show time navigator (experimental)')
                   }
-                  onClick={toggleTimebar}
+                  onClick={toggleTimeNavigator}
                 />
               )}
             </div>
@@ -336,9 +336,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
         {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
       </div>
-      {timeNavigatorEnabled && !hideTimeControls && showTimebar && (
+      {timeNavigatorEnabled && !hideTimeControls && showTimeNavigator && (
         <div style={{ width: '100%', padding: '4px 8px' }}>
-          <timebar.Component model={timebar} />
+          <timeNavigator.Component model={timeNavigator} />
         </div>
       )}
     </>

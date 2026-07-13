@@ -8,7 +8,7 @@ import { useStyles2 } from '@grafana/ui';
 import { type UPlotConfigBuilder } from '@grafana/ui/internal';
 
 import { WHEEL_ZOOM_BASE, type TimeRangeMs } from './timeModel';
-import { type TimebarActions, type TimebarState } from './timebarState';
+import { type TimeNavigatorActions, type TimeNavigatorState } from './timeNavigatorState';
 
 /** Width of a selection resize handle, in px. */
 const HANDLE_WIDTH = 6;
@@ -36,7 +36,7 @@ const containerPxToVal = (over: HTMLElement, containerPx: number, ctx: TimeRange
   overPxToVal(over, containerPx - over.offsetLeft, ctx);
 
 // Per-instance teardown for the imperative listeners attached in the uPlot `ready` hook.
-const timebarCleanups = new WeakMap<uPlot, () => void>();
+const timeNavigatorCleanups = new WeakMap<uPlot, () => void>();
 
 const getStyles = (theme: GrafanaTheme2) => ({
   selectionBox: css({
@@ -62,10 +62,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 interface TimeNavigatorBrushPluginProps {
   config: UPlotConfigBuilder;
-  /** The timebar model state (context window, selection, current interaction). */
-  state: TimebarState;
-  /** The timebar model actions (routes gestures through the reducer; only commits emit to the dashboard). */
-  actions: TimebarActions;
+  /** The time navigator model state (context window, selection, current interaction). */
+  state: TimeNavigatorState;
+  /** The time navigator model actions (routes gestures through the reducer; only commits emit to the dashboard). */
+  actions: TimeNavigatorActions;
   /** Plot width, used only to reposition the overlay on resize. */
   width: number;
   /** The plot-area container the overlay is portalled into (kept as a DOM sibling of the TimeSeries). */
@@ -73,7 +73,7 @@ interface TimeNavigatorBrushPluginProps {
 }
 
 /**
- * The timebar's self-contained brush: it registers all of the timebar's own interactions on the shared
+ * The time navigator's self-contained brush: it registers all of the time navigator's own interactions on the shared
  * TimeSeries uPlot config — drag-to-create selection (via `setSelect`), wheel-zoom of the context window,
  * and x-axis drag-pan of the context window — and renders the persistent selection overlay (box + resize
  * grips) with move/resize gestures.
@@ -99,7 +99,7 @@ export const TimeNavigatorBrushPlugin = ({
   const uplotRef = useRef<uPlot | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
-  const actionsRef = useRef<TimebarActions>(actions);
+  const actionsRef = useRef<TimeNavigatorActions>(actions);
   actionsRef.current = actions;
 
   const [overlay, setOverlay] = useState<OverlayGeom | null>(null);
@@ -195,7 +195,7 @@ export const TimeNavigatorBrushPlugin = ({
         axis.addEventListener('mousedown', onAxisPanStart);
       }
 
-      timebarCleanups.set(u, () => {
+      timeNavigatorCleanups.set(u, () => {
         u.over.removeEventListener('wheel', onWheel);
         axis?.removeEventListener('mousedown', onAxisPanStart);
       });
@@ -204,8 +204,8 @@ export const TimeNavigatorBrushPlugin = ({
     });
 
     config.addHook('destroy', (u: uPlot) => {
-      timebarCleanups.get(u)?.();
-      timebarCleanups.delete(u);
+      timeNavigatorCleanups.get(u)?.();
+      timeNavigatorCleanups.delete(u);
       if (uplotRef.current === u) {
         uplotRef.current = null;
       }

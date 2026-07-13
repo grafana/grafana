@@ -1,5 +1,5 @@
 /**
- * The timebar state machine: a `useReducer` with an explicit interaction state, replacing the seven
+ * The time navigator state machine: a `useReducer` with an explicit interaction state, replacing the seven
  * `useRef` flags the PoC used to coordinate context/selection/uPlot events. See ARCHITECTURE.md.
  *
  * Rules encoded here:
@@ -43,7 +43,7 @@ const FUTURE_CUSHION = 0.25;
 
 type Interaction = 'idle' | 'brushing' | 'moving' | 'resizingLeft' | 'resizingRight' | 'panning';
 
-export interface TimebarState {
+export interface TimeNavigatorState {
   interaction: Interaction;
   /** The zoomed-out view (uPlot x-scale range). */
   contextWindow: TimeRangeMs;
@@ -85,7 +85,7 @@ function containSelection(context: TimeRangeMs, selection: TimeRangeMs): TimeRan
   return { from, to };
 }
 
-function reducer(state: TimebarState, action: Action): TimebarState {
+function reducer(state: TimeNavigatorState, action: Action): TimeNavigatorState {
   switch (action.type) {
     case 'beginGesture':
       return { ...state, interaction: action.interaction };
@@ -160,7 +160,7 @@ function reducer(state: TimebarState, action: Action): TimebarState {
   }
 }
 
-export interface UseTimebarArgs {
+export interface UseTimeNavigatorArgs {
   /** The dashboard's current absolute time range. */
   value: TimeRangeMs;
   /** `Date.now()` at render, passed in so the model layer stays testable. */
@@ -169,7 +169,7 @@ export interface UseTimebarArgs {
   onChangeTimeRange: (range: TimeRangeMs) => void;
 }
 
-export interface TimebarActions {
+export interface TimeNavigatorActions {
   beginGesture: (interaction: Exclude<Interaction, 'idle'>) => void;
   endGesture: () => void;
   /** Update the selection during a drag; pass `commit` on the final update to push it to the dashboard. */
@@ -184,7 +184,7 @@ export interface TimebarActions {
   applyAbsoluteContext: (range: TimeRangeMs) => void;
 }
 
-function initState(value: TimeRangeMs, now: number, factor: number): TimebarState {
+function initState(value: TimeRangeMs, now: number, factor: number): TimeNavigatorState {
   const selection = clampRange(value);
   return {
     interaction: 'idle',
@@ -194,12 +194,12 @@ function initState(value: TimeRangeMs, now: number, factor: number): TimebarStat
   };
 }
 
-export function useTimebar({
+export function useTimeNavigator({
   value,
   now,
   contextZoomFactor = CONTEXT_ZOOM_FACTOR,
   onChangeTimeRange,
-}: UseTimebarArgs): { state: TimebarState; actions: TimebarActions } {
+}: UseTimeNavigatorArgs): { state: TimeNavigatorState; actions: TimeNavigatorActions } {
   const [state, dispatch] = useReducer(reducer, undefined, () => initState(value, now, contextZoomFactor));
 
   // Latest-value refs so the sync effect and callbacks read current values without re-subscribing.

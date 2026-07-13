@@ -24,7 +24,7 @@ import { getDatasourceFromQueryRunner } from '../../utils/getDatasourceFromQuery
 import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
 
-import { TimeBar } from './TimeBar';
+import { TimeNavigator } from './TimeNavigator';
 import { approxEqual, computeContextWindow, CONTEXT_ZOOM_FACTOR, type TimeRangeMs } from './timeModel';
 
 const EMPTY_TIME: number[] = [];
@@ -52,7 +52,7 @@ export interface SceneTimeNavigatorState extends SceneObjectState {
 }
 
 /**
- * A dashboard control that renders the timebar (a zoomed-out context window with a brushed selection that
+ * A dashboard control that renders the time navigator (a zoomed-out context window with a brushed selection that
  * drives the dashboard time range) with optional background sparklines. The sparklines reuse other panels'
  * queries (by key) but re-run them against the *context window* — its own SceneTimeRange, wider than the
  * dashboard/selection range — with its own downsampling, so they render across the whole bar.
@@ -111,7 +111,7 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
     }
     // Seed the context window from the dashboard's current range before the first sparkline/annotation
     // query runs. Otherwise they query the placeholder now-6h/now window set in the constructor (the
-    // dashboard range isn't known there), then re-query the real ~factor×-wider window once TimeBar's
+    // dashboard range isn't known there), then re-query the real ~factor×-wider window once TimeNavigator's
     // debounced context update lands ~350ms later — a wrong first query plus a wasted second one. Because
     // $data/_contextRange aren't subscribed until after this handler returns, seeding here doesn't itself
     // schedule an extra query.
@@ -281,7 +281,7 @@ function SceneTimeNavigatorRenderer({ model }: SceneComponentProps<SceneTimeNavi
   return (
     <div ref={ref} style={{ width: '100%', minHeight: height }}>
       {width > 0 && (
-        <TimeBar
+        <TimeNavigator
           value={{ from: value.from.valueOf(), to: value.to.valueOf() }}
           now={Date.now()}
           width={width}

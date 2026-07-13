@@ -69,7 +69,7 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
-  /** Adds a dashboard timebar / time navigator control that drives the dashboard time range */
+  /** Adds a dashboard time navigator control that drives the dashboard time range */
   GrafanaTimeNavigator: "grafana.timeNavigator",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
@@ -440,7 +440,7 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
 };
 
 /**
- * Adds a dashboard timebar / time navigator control that drives the dashboard time range
+ * Adds a dashboard time navigator control that drives the dashboard time range
  *
  * **Details:**
  * - flag key: `grafana.timeNavigator`

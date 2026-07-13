@@ -29,12 +29,12 @@ import { AnnotationsPlugin } from 'app/plugins/panel/timeseries/plugins/Annotati
 import { ContextWindowSelector } from './ContextWindowSelector';
 import { TimeNavigatorBrushPlugin } from './TimeNavigatorBrushPlugin';
 import { type TimeRangeMs } from './timeModel';
-import { useTimebar } from './timebarState';
+import { useTimeNavigator } from './timeNavigatorState';
 
 /** Fixed height of the time ruler, in px. */
 const CHART_HEIGHT = 50;
 
-export interface TimeBarProps {
+export interface TimeNavigatorProps {
   /** The dashboard's current absolute time range (epoch ms). */
   value: TimeRangeMs;
   /** `Date.now()` — passed in so the model stays testable and renders stay pure. */
@@ -54,12 +54,12 @@ export interface TimeBarProps {
   extraControls?: React.ReactNode;
 }
 
-// AnnotationsPlugin requires an interpolate function and a WIP-range setter; the timebar creates neither
+// AnnotationsPlugin requires an interpolate function and a WIP-range setter; the time navigator creates neither
 // (it never edits annotations), so both are inert.
 const noopInterpolate = (value: string) => value;
 const noopSetNewRange = () => {};
 
-// The timebar never shows a legend; a stable module-level object keeps TimeSeries from reconfiguring the
+// The time navigator never shows a legend; a stable module-level object keeps TimeSeries from reconfiguring the
 // plot every render (its `legend` prop is compared by reference).
 const HIDDEN_LEGEND: VizLegendOptions = { showLegend: false, calcs: [], placement: 'bottom' };
 
@@ -89,7 +89,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const TimeBar: React.FC<TimeBarProps> = ({
+export const TimeNavigator: React.FC<TimeNavigatorProps> = ({
   value,
   now,
   width,
@@ -105,7 +105,7 @@ export const TimeBar: React.FC<TimeBarProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const { state, actions } = useTimebar({ value, now, contextZoomFactor, onChangeTimeRange });
+  const { state, actions } = useTimeNavigator({ value, now, contextZoomFactor, onChangeTimeRange });
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   // The plot-area container the brush plugin portals its selection overlay into (as a DOM sibling of the
@@ -149,7 +149,7 @@ export const TimeBar: React.FC<TimeBarProps> = ({
       return field;
     });
 
-    return { name: 'timebar', fields: [timeField, ...seriesFields], length: time.length };
+    return { name: 'time-navigator', fields: [timeField, ...seriesFields], length: time.length };
   }, [time, values, theme]);
 
   // Stable array identity so GraphNG doesn't re-align + re-setData on every render (it re-aligns whenever

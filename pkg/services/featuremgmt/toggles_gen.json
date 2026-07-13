@@ -2783,11 +2783,14 @@
     {
       "metadata": {
         "name": "grafana.timeNavigator",
-        "resourceVersion": "1783598807681",
-        "creationTimestamp": "2026-07-09T12:06:47Z"
+        "resourceVersion": "1783948748638",
+        "creationTimestamp": "2026-07-09T12:06:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-13 13:19:08.638780097 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Adds a dashboard timebar / time navigator control that drives the dashboard time range",
+        "description": "Adds a dashboard time navigator control that drives the dashboard time range",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,

@@ -1,5 +1,5 @@
 /**
- * Pure time-range math for the timebar.
+ * Pure time-range math for the time navigator.
  *
  * Everything here is a pure function of its arguments — no React, no uPlot, no DOM, no `Date.now()`.
  * All ranges are absolute, in epoch **milliseconds**, with `from <= to`. This is the layer that used to
