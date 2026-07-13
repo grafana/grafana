@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -117,13 +116,21 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 // error (400), matching QueryMetricsV2's per-refId handling. Returns nil when nothing failed, so
 // the caller proceeds to assemble the bundle.
 func (hs *HTTPServer) diagnosticsNoCaptureError(queryErr, respErr error) response.Response {
+	// Redact any URL (with secret query params) the error text embeds before it reaches the response
+	// or logs, mirroring the bundle's query-error.txt handling. redactURLError preserves errors.Is/As
+	// so handleQueryMetricsError still maps access-denied/not-found to 403/404.
 	if queryErr != nil {
-		return hs.handleQueryMetricsError(queryErr)
+		return hs.handleQueryMetricsError(redactURLError{queryErr})
 	}
 	if respErr != nil {
-		// Redact any URL (with secret query params) the error text may embed before it reaches the
-		// response, mirroring the bundle's query-error.txt handling.
-		return response.Error(http.StatusBadRequest, "query failed", errors.New(harcapture.RedactErrorText(respErr.Error())))
+		return response.Error(http.StatusBadRequest, "query failed", redactURLError{respErr})
 	}
 	return nil
 }
+
+// redactURLError wraps an error so its rendered message has URLs (with secret query params) redacted
+// via harcapture.RedactErrorText, while Unwrap preserves the original for errors.Is/As classification.
+type redactURLError struct{ err error }
+
+func (e redactURLError) Error() string { return harcapture.RedactErrorText(e.err.Error()) }
+func (e redactURLError) Unwrap() error { return e.err }

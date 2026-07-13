@@ -353,7 +353,9 @@ func buildEntry(req *http.Request, resp *http.Response, rtErr error, started tim
 
 	var comment string
 	if rtErr != nil {
-		comment = "transport error: " + rtErr.Error()
+		// Redact URLs in the transport error: it can embed the full request URL (with secret query
+		// params), and this comment is written verbatim into the externally-shared bundle.
+		comment = "transport error: " + RedactErrorText(rtErr.Error())
 	}
 
 	waitMs := float64(elapsed.Milliseconds())

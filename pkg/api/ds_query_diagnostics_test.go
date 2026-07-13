@@ -42,4 +42,11 @@ func TestDiagnosticsNoCaptureError(t *testing.T) {
 	t.Run("no failure proceeds to bundle assembly (nil)", func(t *testing.T) {
 		require.Nil(t, hs.diagnosticsNoCaptureError(nil, nil))
 	})
+
+	t.Run("URL secrets in the error message are redacted", func(t *testing.T) {
+		// A bespoke-client datasource can fail with a *url.Error carrying the full URL; the secret
+		// query param must not reach the response. errors.Is is still preserved (see typed subtest).
+		e := redactURLError{errors.New(`Get "https://h/q?api_key=SECRET": denied`)}
+		require.NotContains(t, e.Error(), "SECRET")
+	})
 }

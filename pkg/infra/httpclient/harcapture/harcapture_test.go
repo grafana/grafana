@@ -296,6 +296,18 @@ func TestBuffer_ToHAR_transportError_recordedInComment(t *testing.T) {
 	assert.Contains(t, doc.Log.Entries[0].Comment, "connection refused", "transport error recorded in entry comment")
 }
 
+func TestBuffer_ToHAR_transportErrorComment_redactsURL(t *testing.T) {
+	_, buf := WithCapture(context.Background())
+	// A transport error can embed the full request URL (secret query params included); the entry
+	// comment is written into the shared bundle, so it must be redacted too.
+	rtErr := errors.New(`Get "https://ds.example.com/q?api_key=SECRET": dial tcp: connection refused`)
+	buf.AddEntry(newGetReq(t, "https://ds.example.com/q"), nil, rtErr, time.Now(), time.Millisecond)
+
+	raw, err := buf.ToHAR()
+	require.NoError(t, err)
+	assert.NotContains(t, string(raw), "SECRET", "secret in the transport-error comment must be redacted")
+}
+
 func TestBuffer_ToHAR_redactsCustomHeaders(t *testing.T) {
 	_, buf := WithCapture(context.Background())
 	// A datasource's custom HTTP headers carry secrets under arbitrary names not in the denylist.
