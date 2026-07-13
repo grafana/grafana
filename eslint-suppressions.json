@@ -1563,11 +1563,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor.tsx": {
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/sharing/ExportButton/ExportAsCode.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1

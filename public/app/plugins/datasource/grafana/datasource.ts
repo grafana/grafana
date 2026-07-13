@@ -263,8 +263,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
 /** Get the GrafanaDatasource instance */
 export async function getGrafanaDatasource() {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return (await getDataSourceInstance('-- Grafana --')) as GrafanaDatasource;
+  const ds = await getDataSourceInstance('-- Grafana --');
+  if (!(ds instanceof GrafanaDatasource)) {
+    throw new Error('Expected the "-- Grafana --" data source to be a GrafanaDatasource instance');
+  }
+  return ds;
 }
 
 export interface FileElement {
