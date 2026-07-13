@@ -2785,6 +2785,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.ssoSettingsToMTSettings",
+        "resourceVersion": "1783523719423",
+        "creationTimestamp": "2026-07-08T15:15:19Z"
+      },
+      "spec": {
+        "description": "Enables reading and writing SSO settings through the MT-Settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.starredFolders",
         "resourceVersion": "1781683112920",
         "creationTimestamp": "2026-06-17T07:58:32Z"
@@ -4588,17 +4602,17 @@
     {
       "metadata": {
         "name": "provisioning.userAttribution",
-        "resourceVersion": "1783531000298",
+        "resourceVersion": "1783717809512",
         "creationTimestamp": "2026-07-08T13:32:58Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-08 17:16:40.298205 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-07-10 21:10:09.512157 +0000 UTC"
         }
       },
       "spec": {
         "description": "Author Git Sync commits as the acting Grafana user",
         "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -5338,6 +5352,21 @@
     },
     {
       "metadata": {
+        "name": "ssoSettingsToMTSettings",
+        "resourceVersion": "1783417175218",
+        "creationTimestamp": "2026-07-07T09:39:35Z",
+        "deletionTimestamp": "2026-07-08T15:15:19Z"
+      },
+      "spec": {
+        "description": "Enables reading and writing SSO settings through the MT-Settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "starredFolders",
         "resourceVersion": "1781683016308",
         "creationTimestamp": "2026-06-17T07:56:56Z",
@@ -5775,6 +5804,7 @@
         "name": "vizPresets",
         "resourceVersion": "1779296184831",
         "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-06-29T12:51:15Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-20 16:56:24.831547 +0000 UTC"
         }

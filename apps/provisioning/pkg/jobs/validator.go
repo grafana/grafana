@@ -17,13 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// AnnoAuthor, AnnoAuthorEmail and AnnoAuthorID carry the display name, email
-// and stable identity of the user that triggered the job. They are set by the
-// server at creation time and are immutable.
+// AnnoAuthor and AnnoAuthorEmail carry the display name and email of the user
+// that triggered the job. They are set by the server at creation time and are
+// immutable.
 const (
 	AnnoAuthor      = "provisioning.grafana.app/author"
 	AnnoAuthorEmail = "provisioning.grafana.app/authorEmail"
-	AnnoAuthorID    = "provisioning.grafana.app/authorID"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
@@ -336,11 +335,10 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
 	name := job.Annotations[AnnoAuthor]
 	email := job.Annotations[AnnoAuthorEmail]
-	authorID := job.Annotations[AnnoAuthorID]
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if (name == "" && email == "" && authorID == "") || identity.IsServiceIdentity(ctx) {
+		if (name == "" && email == "") || identity.IsServiceIdentity(ctx) {
 			return nil
 		}
 		id, err := identity.GetRequester(ctx)
@@ -353,9 +351,6 @@ func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioni
 		if email != "" && email != id.GetEmail() {
 			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
 		}
-		if authorID != "" && authorID != id.GetUID() {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorID))
-		}
 	case admission.Update:
 		old, ok := a.GetOldObject().(*provisioning.Job)
 		if !ok {
@@ -366,9 +361,6 @@ func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioni
 		}
 		if old.Annotations[AnnoAuthorEmail] != email {
 			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorEmail))
-		}
-		if old.Annotations[AnnoAuthorID] != authorID {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorID))
 		}
 	case admission.Delete, admission.Connect:
 	}
