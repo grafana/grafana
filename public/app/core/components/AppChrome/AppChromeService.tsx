@@ -31,7 +31,6 @@ export interface AppChromeState {
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
-const FULLSCREEN_WORKSPACE_LOCAL_STORAGE_KEY = 'grafana.navigation.fullscreenWorkspace';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -52,7 +51,7 @@ export class AppChromeService {
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
-    fullscreenWorkspace: store.getBool(FULLSCREEN_WORKSPACE_LOCAL_STORAGE_KEY, false),
+    fullscreenWorkspace: false,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
@@ -173,7 +172,6 @@ export class AppChromeService {
   };
 
   public setFullscreenWorkspace = (fullscreenWorkspace: boolean) => {
-    store.set(FULLSCREEN_WORKSPACE_LOCAL_STORAGE_KEY, fullscreenWorkspace);
     this.update({ fullscreenWorkspace });
     reportInteraction('grafana_fullscreen_workspace', {
       action: fullscreenWorkspace ? 'enter' : 'exit',
