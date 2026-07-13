@@ -84,11 +84,11 @@ describe('TeamList', () => {
         })
       );
 
-      render(<TeamList />);
+      const { user } = render(<TeamList />);
       const input = await screen.findByPlaceholderText('Search teams');
       // Regex-special characters like the hyphen must reach the backend unescaped (not "k8s\-test").
-      await userEvent.click(input);
-      await userEvent.paste('k8s-test alpha');
+      await user.click(input);
+      await user.paste('k8s-test alpha');
 
       await waitFor(() => expect(capturedQuery).toBe('k8s-test alpha'));
     });
@@ -108,10 +108,10 @@ describe('TeamList', () => {
         })
       );
 
-      render(<TeamList />);
+      const { user } = render(<TeamList />);
       const input = await screen.findByPlaceholderText('Search teams');
-      await userEvent.click(input);
-      await userEvent.paste('k8s-test');
+      await user.click(input);
+      await user.paste('k8s-test');
 
       // The initial (empty query) response lists all teams, so wait until the
       // non-matching team is filtered out before asserting on the results.
