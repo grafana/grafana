@@ -366,7 +366,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 
 	if opts.From > 0 {
 		// Check against time for point annotations and time_end for range annotations
-		conditions = append(conditions, fmt.Sprintf("COALESCE(time_end, time) >= $%d", argNum))
+		conditions = append(conditions, fmt.Sprintf("((time_end IS NULL AND time >= $%d) OR (time_end IS NOT NULL AND time_end >= $%d))", argNum, argNum))
 		args = append(args, opts.From)
 		argNum++
 	}
