@@ -32,6 +32,21 @@ describe('renderCommitMessage', () => {
     ).toBe('Rename dashboard: My DB');
   });
 
+  it('uses a non-empty fallbackMessage verbatim when the template is empty', () => {
+    expect(
+      renderCommitMessage(undefined, { action: 'delete', resourceID: '', title: '2 resources' }, 'Delete resources')
+    ).toBe('Delete resources');
+  });
+
+  it('treats an empty/whitespace-only fallbackMessage as absent rather than committing a blank message', () => {
+    expect(renderCommitMessage(undefined, { action: 'delete', resourceID: '', title: '2 resources' }, '')).toBe(
+      '2 resources'
+    );
+    expect(renderCommitMessage(undefined, { action: 'move', resourceID: '', title: '3 resources' }, '   ')).toBe(
+      '3 resources'
+    );
+  });
+
   it('interpolates the resource kind in the built-in defaults', () => {
     expect(
       renderCommitMessage(undefined, { action: 'create', resourceKind: 'folder', resourceID: '', title: 'ops' })

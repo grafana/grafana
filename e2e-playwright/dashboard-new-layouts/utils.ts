@@ -5,47 +5,36 @@ import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plu
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
+import { Controls, Sidebar } from './page-objects';
+
 export const flows = {
-  async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.dockToggle).click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
-      .click();
-  },
-  async newEditPanelCommonVariableInputs(
+  async addNewGenericVariable(
+    page: Page,
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
     variable: Variable
   ) {
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
-      .click();
+    const controls = new Controls(page, dashboardPage, selectors);
+    const sidebar = new Sidebar(page, dashboardPage, selectors);
+
+    await controls.enterEditMode();
+
+    await sidebar.toolbar.clickButton('Add');
+    await sidebar.addOptions.clickNewVariableButton();
+
+    await sidebar.variableOptions.selectVariableType(variable.type);
 
     // New variable creation schedules a delayed autofocus to name input
     // Let that timer finish before we interact to prevent focus on the wrong input
     await dashboardPage.ctx.page.waitForTimeout(250);
 
-    const variableNameInput = dashboardPage.getByGrafanaSelector(
-      selectors.components.PanelEditor.ElementEditPane.variableNameInput
-    );
-    await variableNameInput.click();
-    await variableNameInput.fill(variable.name);
-    await variableNameInput.blur();
+    await sidebar.variableOptions.setName(variable.name);
     if (variable.label) {
-      const variableLabelInput = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.ElementEditPane.variableLabelInput
-      );
-      await variableLabelInput.click();
-      await variableLabelInput.fill(variable.label);
-      await variableLabelInput.blur();
+      await sidebar.variableOptions.setLabel(variable.label);
     }
   },
   async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
-    await flows.newEditPaneVariableClick(dashboardPage, selectors);
-    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+    await flows.addNewGenericVariable(dashboardPage.ctx.page, dashboardPage, selectors, variable);
     // set the textbox variable value
     const type = 'variable-type Value';
     const fieldLabel = dashboardPage.getByGrafanaSelector(

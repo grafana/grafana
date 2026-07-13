@@ -1,16 +1,24 @@
 import { HttpResponse } from 'msw';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { preferencesHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import { SharedPreferencesFunctional } from './SharedPreferencesFunctional';
+import { homeDashboardChanged } from './analytics/main';
+
+jest.mock('./analytics/main', () => ({
+  saveButtonClicked: jest.fn(),
+  themeChanged: jest.fn(),
+  languageChanged: jest.fn(),
+  homeDashboardChanged: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -41,6 +49,15 @@ const originalLocation = window.location;
 
 beforeEach(() => {
   mockReload.mockClear();
+  jest.mocked(homeDashboardChanged).mockClear();
+});
+
+afterEach(async () => {
+  // Wrap in act() because setTestFlags fires OpenFeature events that can trigger React state
+  // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
+  await act(async () => {
+    setTestFlags({});
+  });
 });
 
 beforeAll(() => {
@@ -224,5 +241,71 @@ describe('SharedPreferencesFunctional', () => {
     await waitFor(() => expect(themeSelect).toBeDisabled());
 
     expect(screen.getByText('Save preferences').closest('button')).not.toBeDisabled();
+  });
+
+  it('fires home_dashboard_changed with action set when a new home dashboard is saved', async () => {
+    const { user } = await setup();
+
+    await selectComboboxOptionInTest(
+      await screen.findByRole('combobox', { name: /home dashboard/i }),
+      new RegExp(dashbdE.item.title)
+    );
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'set',
+        unifiedHomepageEnabled: false,
+      });
+    });
+  });
+
+  it('reports unifiedHomepageEnabled true when the flag is on', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': true });
+    const { user } = await setup();
+
+    await selectComboboxOptionInTest(
+      await screen.findByRole('combobox', { name: /home dashboard/i }),
+      new RegExp(dashbdE.item.title)
+    );
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'set',
+        unifiedHomepageEnabled: true,
+      });
+    });
+  });
+
+  it('does not fire home_dashboard_changed when the home dashboard is unchanged', async () => {
+    const { user } = await setup();
+
+    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Sydney');
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => expect(mockReload).toHaveBeenCalled());
+    expect(jest.mocked(homeDashboardChanged)).not.toHaveBeenCalled();
+  });
+
+  it('fires home_dashboard_changed with action cleared when the dashboard is cleared', async () => {
+    const { user } = await setup();
+
+    const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
+    // The Clear value button only renders once the loaded dashboard (dashbdD) resolves, so awaiting it
+    // guarantees a non-empty starting value to clear.
+    await within(dashboardSelect).findByRole('button', { name: 'Clear value' });
+    await user.click(within(dashboardSelect).getByRole('button', { name: 'Clear value' }));
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'cleared',
+        unifiedHomepageEnabled: false,
+      });
+    });
   });
 });

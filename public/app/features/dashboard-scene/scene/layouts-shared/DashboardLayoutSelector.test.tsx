@@ -15,7 +15,6 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { type LayoutParent } from '../types/LayoutParent';
 
 import { DashboardLayoutSelector } from './DashboardLayoutSelector';
 
@@ -33,7 +32,7 @@ describe('DashboardLayoutSelector', () => {
     const user = userEvent.setup();
     const scene = buildTestScene();
     const layoutManager = scene.state.body;
-    const spy = jest.spyOn(layoutManager.parent as LayoutParent, 'switchLayout');
+    const spy = jest.spyOn(scene, 'switchLayout');
 
     render(<DashboardLayoutSelector layoutManager={layoutManager} />);
 
@@ -46,7 +45,8 @@ describe('DashboardLayoutSelector', () => {
     const user = userEvent.setup();
     const scene = buildTestScene();
     const layoutManager = (scene.state.body as RowsLayoutManager).state.rows[0].state.layout;
-    const spy = jest.spyOn(layoutManager.parent as LayoutParent, 'switchLayout');
+    const layoutParent = (scene.state.body as RowsLayoutManager).state.rows[0];
+    const spy = jest.spyOn(layoutParent, 'switchLayout');
 
     render(<DashboardLayoutSelector layoutManager={layoutManager} />);
 

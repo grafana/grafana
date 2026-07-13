@@ -23,7 +23,8 @@ import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
-import { getKindInfoByStatGroup, getRepositoryRoute } from '../utils/resourceKinds';
+import { isGitHubBased } from '../utils/repositoryTypes';
+import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -54,7 +55,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'Resource',
         header: 'Resource Type',
         cell: ({ row: { original } }: StatCell<'resource'>) => {
-          const info = getKindInfoByStatGroup(original.group);
+          const info = getKindInfoByStat(original);
           return (
             <Stack direction="row" gap={1} alignItems="center">
               <Icon name={info?.icon ?? 'file-alt'} />
@@ -76,7 +77,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: StatCell) => {
-          const info = getKindInfoByStatGroup(original.group);
+          const info = getKindInfoByStat(original);
           // Unknown kinds have no destination, so no action.
           if (!info) {
             return null;
@@ -166,7 +167,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 </Card.Description>
                 {webhookURL && (
                   <Card.Actions className={styles.actions}>
-                    <LinkButton fill="outline" href={webhookURL} icon="external-link-alt">
+                    <LinkButton fill="outline" href={webhookURL} icon="external-link-alt" target="_blank">
                       <Trans i18nKey="provisioning.repository-overview.webhook-url">View Webhook</Trans>
                     </LinkButton>
                   </Card.Actions>
@@ -238,8 +239,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function getWebhookURL(repo: Repository) {
   const { status, spec } = repo;
-  if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
-    return textUtil.sanitizeUrl(`${spec.github.url}/settings/hooks/${status.webhook?.id}`);
+  const repoUrl = spec?.github?.url ?? spec?.githubEnterprise?.url ?? spec?.gitlab?.url;
+  if (isGitHubBased(spec?.type) && status?.webhook?.url && repoUrl) {
+    return textUtil.sanitizeUrl(`${repoUrl}/settings/hooks/${status.webhook?.id}`);
+  }
+  if (spec?.type === 'gitlab' && status?.webhook?.url && repoUrl) {
+    return textUtil.sanitizeUrl(`${repoUrl}/-/hooks/${status.webhook?.id}/edit`);
   }
   return undefined;
 }

@@ -46,7 +46,7 @@ import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../u
 import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardScene, type DashboardSceneState } from './DashboardScene';
+import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -55,6 +55,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -726,11 +727,6 @@ describe('DashboardScene', () => {
 
         beforeEach(() => {
           store.delete(LS_STYLES_COPY_KEY);
-          config.featureToggles.panelStyleActions = true;
-        });
-
-        afterEach(() => {
-          config.featureToggles.panelStyleActions = false;
         });
 
         it('Should copy panel styles when feature flag is enabled', () => {
@@ -744,15 +740,6 @@ describe('DashboardScene', () => {
           expect(stored.panelType).toBe('timeseries');
           expect(stored.styles).toBeDefined();
           expect(spy).not.toHaveBeenCalled(); // Analytics only called from menu
-        });
-
-        it('Should not copy panel styles when feature flag is disabled', () => {
-          config.featureToggles.panelStyleActions = false;
-          const timeseriesPanel = createTimeseriesPanel();
-
-          scene.copyPanelStyles(timeseriesPanel);
-
-          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(false);
         });
 
         it('Should not copy styles for unsupported panel types', () => {
@@ -1419,13 +1406,6 @@ describe('DashboardScene', () => {
           expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
         });
 
-        it('Should return false for hasPanelStylesToPaste when feature flag is disabled', () => {
-          store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
-          config.featureToggles.panelStyleActions = false;
-
-          expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
-        });
-
         it('Should return true for hasPanelStylesToPaste when styles exist for matching panel type', () => {
           store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
 
@@ -1465,23 +1445,6 @@ describe('DashboardScene', () => {
           expect(mockOnFieldConfigChange).toHaveBeenCalled();
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
           expect(spy).not.toHaveBeenCalled();
-        });
-
-        it('Should not paste panel styles when feature flag is disabled', () => {
-          config.featureToggles.panelStyleActions = false;
-          const timeseriesPanel = createTimeseriesPanel();
-          const mockOnFieldConfigChange = jest.fn();
-          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
-
-          const styles = {
-            panelType: 'timeseries',
-            styles: { fieldConfig: { defaults: {} } },
-          };
-          store.set(LS_STYLES_COPY_KEY, JSON.stringify(styles));
-
-          scene.pastePanelStyles(timeseriesPanel);
-
-          expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
         });
 
         it('Should not paste styles when no styles are copied', () => {
@@ -2774,6 +2737,27 @@ describe('DashboardScene', () => {
 
         expect(pageNav.parentItem?.url).toBe('/subUrl/dashboard/provisioning/my-repo/preview/path/to/dash.json');
       });
+    });
+
+    it('prefixes the dashboard crumb url with the app sub url', () => {
+      const scene = buildTestScene({ meta: { slug: 'dash-1-slug' } });
+      const location = { pathname: '/d/dash-1/dash-1-slug', search: '', hash: '', state: null, key: '' };
+
+      const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+      expect(pageNav.url).toBe('/subUrl/d/dash-1/dash-1-slug');
+    });
+
+    it('prefixes the dashboard parent crumb url with the app sub url when editing a panel', () => {
+      const scene = buildTestScene({ meta: { slug: 'dash-1-slug' } });
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
+      const location = { pathname: '/d/dash-1/dash-1-slug', search: '?editPanel=1', hash: '', state: null, key: '' };
+
+      const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+      expect(pageNav.text).toBe('Edit panel');
+      expect(pageNav.parentItem?.url).toBe('/subUrl/d/dash-1/dash-1-slug');
     });
   });
 });

@@ -26,6 +26,7 @@ const (
 	DS_LOKI              = "loki"
 	DS_MSSQL             = "mssql"
 	DS_MYSQL             = "mysql"
+	DS_OPENTSDB          = "opentsdb"
 	DS_POSTGRES          = "grafana-postgresql-datasource"
 	DS_PROMETHEUS        = "prometheus"
 	DS_AMAZON_PROMETHEUS = "grafana-amazonprometheus-datasource"
