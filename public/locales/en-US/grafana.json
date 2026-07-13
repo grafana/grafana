@@ -7296,6 +7296,23 @@
       },
       "title-close": "Close"
     },
+    "pinned-filter-control": {
+      "placeholder-all": "All",
+      "restore-tooltip": "Restore {{label}} to the value set by this dashboard"
+    },
+    "pinned-filters-editor": {
+      "add-button": "Add pinned filter",
+      "cancel-aria-label": "Cancel adding pinned filter",
+      "cancel-tooltip": "Cancel",
+      "description": "Pinned filters are always visible at the top of the dashboard. Viewers can change their values but can't remove them.",
+      "field-placeholder": "Select field",
+      "label": "Pinned filters",
+      "label-aria-label": "Pinned filter label",
+      "label-placeholder": "Label (optional)",
+      "remove-aria-label": "Remove pinned filter",
+      "remove-tooltip": "Remove pinned filter",
+      "values-placeholder": "Default values (optional)"
+    },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
       "tooltip": "Added by the {{pluginName}} plugin",
