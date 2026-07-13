@@ -37,7 +37,11 @@ func NewBundler() *Bundler {
 func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON json.RawMessage, queryErr error) ([]byte, error) {
 	files := map[string][]byte{}
 
-	if har := collectHAR(resp, harBuffer); len(har) > 0 {
+	har, err := collectHAR(resp, harBuffer)
+	if err != nil {
+		return nil, err
+	}
+	if len(har) > 0 {
 		files["traffic.har"] = har
 	}
 
@@ -76,19 +80,25 @@ func HasCapturedHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffe
 
 // collectHAR returns the captured HTTP traffic as HAR 1.2 JSON. It merges two sources: the
 // in-process buffer (core plugins) and the __har__ response frame(s) returned by externalized GRPC
-// plugins. Returns nil when nothing was captured.
+// plugins. Returns (nil, nil) when nothing was captured, and a non-nil error if traffic was
+// captured but could not be serialized (so the caller can fail rather than return an empty bundle).
 //
 // NOTE: the __har__ frame path is inert until the SDK-side HTTP capture middleware that emits those
 // frames ships and Grafana is bumped to that SDK version (#1270) — until then external
 // (out-of-process) plugin traffic is NOT captured. Externally-sourced frames are run through
 // harcapture.RedactHARDocument before merging, so their headers/cookies/query/URLs are redacted the
 // same way in-process capture is (don't rely on the plugin/SDK to redact).
-func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) []byte {
+func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) ([]byte, error) {
 	var bufferDoc []byte
 	if harBuffer.Len() > 0 {
-		if b, err := harBuffer.ToHAR(); err == nil {
-			bufferDoc = b
+		b, err := harBuffer.ToHAR()
+		if err != nil {
+			// The in-process buffer captured traffic but couldn't be serialized. Surface the error
+			// instead of silently dropping traffic.har and returning a success bundle with no
+			// captured traffic.
+			return nil, err
 		}
+		bufferDoc = b
 	}
 
 	// __har__ frames carry capture from externalized gRPC plugins (out-of-process). "__har__" is a
@@ -123,14 +133,14 @@ func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) [
 	// already a complete HAR 1.2 document, so return it directly rather than re-parsing and
 	// re-marshaling every captured request/response through mergeHAR.
 	if len(frameDocs) == 0 {
-		return bufferDoc
+		return bufferDoc, nil
 	}
 
 	docs := frameDocs
 	if bufferDoc != nil {
 		docs = append([][]byte{bufferDoc}, frameDocs...)
 	}
-	return mergeHAR(docs)
+	return mergeHAR(docs), nil
 }
 
 // mergeHAR combines multiple HAR 1.2 documents into a single one by concatenating their

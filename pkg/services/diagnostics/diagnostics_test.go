@@ -91,7 +91,8 @@ func TestCollectHAR_ExternalFramesAndNilFrame(t *testing.T) {
 		},
 	}
 
-	out := collectHAR(resp, &harcapture.Buffer{})
+	out, err := collectHAR(resp, &harcapture.Buffer{})
+	require.NoError(t, err)
 	require.NotNil(t, out)
 
 	var env struct {
@@ -108,8 +109,13 @@ func TestCollectHAR_ExternalFramesAndNilFrame(t *testing.T) {
 }
 
 func TestCollectHAR_Empty(t *testing.T) {
-	require.Nil(t, collectHAR(nil, &harcapture.Buffer{}))
-	require.Nil(t, collectHAR(&backend.QueryDataResponse{Responses: backend.Responses{}}, &harcapture.Buffer{}))
+	out, err := collectHAR(nil, &harcapture.Buffer{})
+	require.NoError(t, err)
+	require.Nil(t, out)
+
+	out, err = collectHAR(&backend.QueryDataResponse{Responses: backend.Responses{}}, &harcapture.Buffer{})
+	require.NoError(t, err)
+	require.Nil(t, out)
 }
 
 func TestCollectHAR_BufferOnly_returnedVerbatim(t *testing.T) {
@@ -118,7 +124,8 @@ func TestCollectHAR_BufferOnly_returnedVerbatim(t *testing.T) {
 	require.NoError(t, err)
 	buf.AddEntry(req, nil, time.Now(), time.Millisecond)
 
-	out := collectHAR(nil, buf)
+	out, err := collectHAR(nil, buf)
+	require.NoError(t, err)
 	require.NotNil(t, out)
 
 	// With no external frames, the buffer's own HAR document is returned as-is (no mergeHAR
