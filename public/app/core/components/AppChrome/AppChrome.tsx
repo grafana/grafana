@@ -50,14 +50,18 @@ export function AppChrome({ children }: Props) {
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
 
+  const { fullscreenWorkspaceActive, fullscreenWorkspaceFeatureFlagEnabled } = useFullscreenWorkspace();
+
   // The DOM node exposed by the fullscreen workspace Platform tab; the shell registers it.
   const [workspaceHost, setWorkspaceHost] = useState<HTMLElement | null>(null);
 
-  // The live page (`children`) is portaled into this one stable, detached node, so it mounts once
-  // and is never unmounted. `portalHostRef` reparents that node into whichever host is active (the
-  // default <main> or the workspace host), moving DOM without a remount/refetch.
+  // Only used when the fullscreen workspace feature is enabled: the live page (`children`) is
+  // portaled into this one stable, detached node, so it mounts once and is never unmounted.
+  // `portalHostRef` reparents that node into whichever host is active (the default <main> or the
+  // workspace host), moving DOM without a remount/refetch. When the feature is disabled the page
+  // renders directly inside <main> instead (original behavior, no portal), so we don't create it.
   const portalTargetRef = useRef<HTMLDivElement | null>(null);
-  if (!portalTargetRef.current) {
+  if (fullscreenWorkspaceFeatureFlagEnabled && !portalTargetRef.current) {
     portalTargetRef.current = document.createElement('div');
   }
   const portalHostRef = useCallback((host: HTMLElement | null) => {
@@ -108,8 +112,6 @@ export function AppChrome({ children }: Props) {
     const queryParams = locationSearchToObject(search);
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
-
-  const { fullscreenWorkspaceActive } = useFullscreenWorkspace();
 
   const fullscreenWorkspaceChrome = (
     <div id={floatingUtils.BOUNDARY_ELEMENT_ID}>
@@ -187,8 +189,10 @@ export function AppChrome({ children }: Props) {
             })}
             id="pageContent"
             tabIndex={-1}
-            ref={portalHostRef}
-          />
+            ref={fullscreenWorkspaceFeatureFlagEnabled ? portalHostRef : undefined}
+          >
+            {!fullscreenWorkspaceFeatureFlagEnabled && children}
+          </main>
           {!state.chromeless &&
             isExtensionSidebarOpen &&
             (isSmallScreen ? (
@@ -220,12 +224,19 @@ export function AppChrome({ children }: Props) {
     </div>
   );
 
-  // The page is portaled once, at a stable position, regardless of which chrome is shown — so
-  // switching between the fullscreen workspace and the default chrome never remounts it.
+  if (!fullscreenWorkspaceFeatureFlagEnabled) {
+    return defaultChrome;
+  }
+
+  // With the fullscreen workspace feature flag enabled, we render either the fullscreen workspace
+  // chrome or the default chrome depending on whether the user entered workspace mode.
+  // `children` is rendered once into a stable detached node; `portalHostRef` reparents that node
+  // into whichever host is active (the default <main> or the workspace host / Platform tab), so
+  // toggling workspace mode moves the page's DOM without remounting it.
   return (
     <>
       {fullscreenWorkspaceActive ? fullscreenWorkspaceChrome : defaultChrome}
-      {createPortal(children, portalTargetRef.current)}
+      {portalTargetRef.current && createPortal(children, portalTargetRef.current)}
     </>
   );
 }
