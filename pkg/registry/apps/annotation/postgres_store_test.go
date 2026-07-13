@@ -129,18 +129,22 @@ func TestIntegrationPostgresStore(t *testing.T) {
 			create(t, "tw-point-before", at(500))
 			create(t, "tw-point-inside", at(1500))
 			create(t, "tw-point-after", at(2500))
-			create(t, "tw-region-overlap", at(500), timeEnd(1500))
+			create(t, "tw-region-overlap-start", at(500), timeEnd(1500))
+			create(t, "tw-region-overlap-end", at(1500), timeEnd(2500))
 			create(t, "tw-region-before", at(100), timeEnd(500))
+			create(t, "tw-region-after", at(2500), timeEnd(3000))
 
 			list, err := store.List(ctx, ns, ListOptions{DashboardUID: twDash, From: from, To: to})
 			require.NoError(t, err)
 
 			names := annotationNames(list)
 			assert.Contains(t, names, "tw-point-inside")
-			assert.Contains(t, names, "tw-region-overlap")
+			assert.Contains(t, names, "tw-region-overlap-start")
+			assert.Contains(t, names, "tw-region-overlap-end")
 			assert.NotContains(t, names, "tw-point-before")
 			assert.NotContains(t, names, "tw-point-after")
 			assert.NotContains(t, names, "tw-region-before")
+			assert.NotContains(t, names, "tw-region-after")
 		})
 
 		t.Run("Filters by tags requiring all to match", func(t *testing.T) {
