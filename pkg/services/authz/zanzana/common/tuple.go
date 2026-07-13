@@ -259,6 +259,26 @@ func SubresourceRelation(relation string) string {
 	return TypeResource + "_" + relation
 }
 
+// SubresourceActionSetRelation returns the action-set relation that implies the given
+// verb relation on subresources of the same object. Action-set grants (view/edit/admin)
+// are written on the base object / group_resource without subresource information, yet
+// the legacy action sets they represent bundle subresource actions with the resource
+// actions (e.g. dashboard View grants annotations:read). The schema chains
+// view ⊆ edit ⊆ admin, so a single relation per verb suffices. Returns "" for
+// relations no action set implies.
+func SubresourceActionSetRelation(relation string) string {
+	switch relation {
+	case RelationGet:
+		return RelationSetView
+	case RelationCreate, RelationUpdate, RelationDelete:
+		return RelationSetEdit
+	case RelationGetPermissions, RelationSetPermissions:
+		return RelationSetAdmin
+	default:
+		return ""
+	}
+}
+
 func NewTypedIdent(typ string, name string) string {
 	return typ + ":" + name
 }

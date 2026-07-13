@@ -229,6 +229,24 @@ func (s *Server) runGroupResourcePhase(
 			},
 			CorrelationId: checkID,
 		})
+
+		// Subresource items also fall back to the action-set relation on the base
+		// group_resource: org-wide action-set grants carry no subresource information
+		// but imply the subresource verbs (mirrors the legacy action sets).
+		if item.resource.HasSubresource() {
+			if fallback := common.SubresourceActionSetRelation(item.relation); fallback != "" {
+				fallbackID := fmt.Sprintf("%s_gr_as", item.correlationID)
+				checkIDToCorrelation[fallbackID] = item.correlationID
+				checks = append(checks, &openfgav1.BatchCheckItem{
+					TupleKey: &openfgav1.CheckRequestTupleKey{
+						User:     subject,
+						Relation: fallback,
+						Object:   item.resource.WithoutSubresource().GroupResourceIdent(),
+					},
+					CorrelationId: fallbackID,
+				})
+			}
+		}
 	}
 
 	if len(checks) == 0 {
@@ -240,16 +258,23 @@ func (s *Server) runGroupResourcePhase(
 		return len(checks), err
 	}
 
-	// Process results
+	// Process results: an item may have several checks (base + action-set fallback), so
+	// apply allows first and only record errors for items no check allowed.
 	for checkID, result := range results {
-		correlationID := checkIDToCorrelation[checkID]
-		item := items[correlationID]
-
+		if result.GetAllowed() {
+			item := items[checkIDToCorrelation[checkID]]
+			item.allowed = true
+			item.resolved = true
+			item.err = ""
+		}
+	}
+	for checkID, result := range results {
+		item := items[checkIDToCorrelation[checkID]]
+		if item.allowed {
+			continue
+		}
 		if err := result.GetError(); err != nil {
 			item.err = err.GetMessage()
-			item.resolved = true
-		} else if result.GetAllowed() {
-			item.allowed = true
 			item.resolved = true
 		}
 	}
@@ -678,6 +703,36 @@ func (s *Server) resolveGenericItems(
 		}
 
 		resolveByMembership(groupItems, allowed)
+
+		// Subresource items also resolve through action-set grants (view/edit/admin) on
+		// the base object: those tuples carry no subresource information but imply the
+		// subresource verbs (mirrors the legacy action sets). Base objects have base
+		// idents, so membership is matched against the subresource-less ident.
+		if sample.resource.HasSubresource() {
+			if fallback := common.SubresourceActionSetRelation(key.relation); fallback != "" {
+				base := sample.resource.WithoutSubresource()
+				allowedBase := make(map[string]bool)
+				if err := s.collectAllowedObjects(ctx, allowedBase, &openfgav1.ListObjectsRequest{
+					StoreId:              store.ID,
+					AuthorizationModelId: store.ModelID,
+					Type:                 common.TypeResource,
+					Relation:             fallback,
+					User:                 subject,
+					Context:              base.Context(),
+				}, contextuals); err != nil {
+					return err
+				}
+				for _, item := range groupItems {
+					if item.resolved {
+						continue
+					}
+					if ident := item.resource.WithoutSubresource().ResourceIdent(); ident != "" && allowedBase[ident] {
+						item.allowed = true
+						item.resolved = true
+					}
+				}
+			}
+		}
 	}
 
 	return nil

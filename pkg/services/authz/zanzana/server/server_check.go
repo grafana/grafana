@@ -111,8 +111,25 @@ func (s *Server) checkGroupResource(ctx context.Context, subject, relation strin
 	if err != nil {
 		return nil, err
 	}
+	if res.GetAllowed() {
+		return &authzv1.CheckResponse{Allowed: true}, nil
+	}
 
-	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+	// Subresource requests fall back to the action-set relation on the base
+	// group_resource: org-wide action-set grants (e.g. "dashboards:view" scoped
+	// dashboards:*) carry no subresource information but imply the subresource verbs,
+	// mirroring the legacy action sets (dashboard View bundles annotations:read).
+	if resource.HasSubresource() {
+		if fallback := common.SubresourceActionSetRelation(relation); fallback != "" {
+			res, err := s.openfgaCheck(ctx, store, subject, fallback, resource.WithoutSubresource().GroupResourceIdent(), contextuals, nil)
+			if err != nil {
+				return nil, err
+			}
+			return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+		}
+	}
+
+	return &authzv1.CheckResponse{Allowed: false}, nil
 }
 
 // checkTyped checks on our typed resources e.g. folder.
@@ -198,18 +215,36 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 		}
 	}
 
-	resourceIdent := resource.ResourceIdent()
-	if !resource.IsValidRelation(relation) || resourceIdent == "" {
-		return &authzv1.CheckResponse{Allowed: false}, nil
-	}
-
 	// Check if subject has direct access to resource
-	res, err := s.openfgaCheck(ctx, store, subject, relation, resourceIdent, contextuals, resourceCtx)
-	if err != nil {
-		return nil, err
+	resourceIdent := resource.ResourceIdent()
+	if resource.IsValidRelation(relation) && resourceIdent != "" {
+		res, err := s.openfgaCheck(ctx, store, subject, relation, resourceIdent, contextuals, resourceCtx)
+		if err != nil {
+			return nil, err
+		}
+		if res.GetAllowed() {
+			return &authzv1.CheckResponse{Allowed: true}, nil
+		}
 	}
 
-	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+	// Per-object action-set grants (view/edit/admin) are written on the base resource
+	// object and carry no subresource information, so subresource requests fall back to
+	// the action-set relation that implies the verb (e.g. view → get annotations),
+	// mirroring the legacy action sets.
+	if resource.HasSubresource() {
+		if fallback := common.SubresourceActionSetRelation(relation); fallback != "" {
+			base := resource.WithoutSubresource()
+			if baseIdent := base.ResourceIdent(); baseIdent != "" {
+				res, err := s.openfgaCheck(ctx, store, subject, fallback, baseIdent, contextuals, base.Context())
+				if err != nil {
+					return nil, err
+				}
+				return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+			}
+		}
+	}
+
+	return &authzv1.CheckResponse{Allowed: false}, nil
 }
 
 func (s *Server) openfgaCheck(ctx context.Context, store *zanzana.StoreInfo, subject, relation, object string, contextuals *openfgav1.ContextualTupleKeys, resourceCtx *structpb.Struct) (*openfgav1.CheckResponse, error) {

@@ -113,11 +113,11 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 
 	var err error
 	if options.Action != "" {
-		group, resource, verb := common.TranslateActionToListParams(options.Action)
+		group, resource, subresource, verb := common.TranslateActionToListParams(options.Action)
 		if group != "" && resource != "" {
 			// Per-user search resolves another identity's permissions; their request-time
 			// contextual team membership isn't available here, so no teams are passed.
-			perms, err := r.listPermissions(ctx, namespace, subject, nil, group, resource, verb, options.Action, options.Scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, nil, group, resource, subresource, verb, options.Action, options.Scope)
 			if err != nil {
 				return nil, err
 			}
@@ -242,9 +242,11 @@ func folderScopeForLegacyRBAC(folderUID string) string {
 }
 
 // isDashboardRBACAction matches actions backed by the dashboard generic list path, which returns
-// both direct dashboard objects (Items) and enclosing folders (Folders).
+// both direct dashboard objects (Items) and enclosing folders (Folders). The annotations:*
+// actions are included since they are dashboard-derived (dashboards/annotations subresource)
+// and legacy RBAC records them with the same dashboard/folder scopes.
 func isDashboardRBACAction(action string) bool {
-	return strings.HasPrefix(action, "dashboards:")
+	return strings.HasPrefix(action, "dashboards:") || strings.HasPrefix(action, "annotations:")
 }
 
 // isTeamRBACAction matches team-management actions whose scopes need UID→ID translation.
@@ -315,14 +317,15 @@ func userWildcardScope(action string) string {
 }
 
 // listPermissions lists permissions for a subject on a given group/resource
-func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, verb, action, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, subresource, verb, action, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
-		Namespace: namespace,
-		Subject:   subject,
-		Group:     group,
-		Verb:      verb,
-		Resource:  resource,
-		Teams:     teams,
+		Namespace:   namespace,
+		Subject:     subject,
+		Group:       group,
+		Verb:        verb,
+		Resource:    resource,
+		Subresource: subresource,
+		Teams:       teams,
 	}
 
 	resp, err := r.client.List(ctx, req)
@@ -442,7 +445,7 @@ func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, names
 	var permissions []ac.Permission
 	for _, entry := range common.SupportedActions() {
 		if strings.HasPrefix(entry.Action, prefix) {
-			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Verb, entry.Action, scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Subresource, entry.Verb, entry.Action, scope)
 			if err != nil {
 				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 					return nil, err

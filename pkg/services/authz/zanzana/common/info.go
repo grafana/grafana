@@ -210,6 +210,14 @@ func (r ResourceInfo) HasSubresource() bool {
 	return r.subresource != ""
 }
 
+// WithoutSubresource returns a copy of the resource addressing the base resource
+// (same group/resource/name, no subresource). Used by the subresource → action-set
+// fallback, where grants live on the base object.
+func (r ResourceInfo) WithoutSubresource() ResourceInfo {
+	r.subresource = ""
+	return r
+}
+
 var resourcesWithFolderSupport = map[string]bool{
 	dashboardV1.DashboardResourceInfo.GroupResource().Group: true,
 }

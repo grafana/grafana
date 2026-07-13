@@ -172,6 +172,30 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.Contains(t, res.GetItems(), "1")
 	})
 
+	// Action-set grants carry no subresource information; subresource listing must
+	// include them via the action-set fallback (view/edit on the base object).
+	t.Run("user:3 per-object view grant lists dashboard 1 for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:3", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.Equal(t, []string{"1"}, res.GetItems())
+	})
+
+	t.Run("user:24 per-object edit grant lists dashboard 24 for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:24", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.Equal(t, []string{"24"}, res.GetItems())
+	})
+
+	t.Run("user:25 org-wide view grant lists all for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:25", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.True(t, res.GetAll())
+		assert.Len(t, res.GetItems(), 0)
+		assert.Len(t, res.GetFolders(), 0)
+	})
+
 	// Typed `create` listing. user / service-account have no per-object `create`, so listing
 	// them must return empty rather than issue an invalid ListObjects that OpenFGA rejects.
 	newCreateList := func(subject, group, resource string) *authzv1.ListRequest {
@@ -430,6 +454,30 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 		assert.Len(t, res.GetFolders(), 0)
 
 		assert.Contains(t, res.GetItems(), "1")
+	})
+
+	// Action-set grants carry no subresource information; subresource listing must
+	// include them via the action-set fallback (view/edit on the base object).
+	t.Run("user:3 per-object view grant lists dashboard 1 for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:3", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.Equal(t, []string{"1"}, res.GetItems())
+	})
+
+	t.Run("user:24 per-object edit grant lists dashboard 24 for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:24", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.Equal(t, []string{"24"}, res.GetItems())
+	})
+
+	t.Run("user:25 org-wide view grant lists all for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:25", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.True(t, res.GetAll())
+		assert.Len(t, res.GetItems(), 0)
+		assert.Len(t, res.GetFolders(), 0)
 	})
 
 	// Typed `create` listing. user / service-account have no per-object `create`, so listing
