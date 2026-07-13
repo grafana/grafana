@@ -49,7 +49,19 @@ func (m *HTTPCaptureMiddleware) QueryData(ctx context.Context, req *backend.Quer
 	req.Headers[harCaptureHeader] = "true"
 
 	// Inject capturing RoundTripper for core (in-process) plugins.
-	captureMW := sdkhttpclient.NamedMiddlewareFunc("http-capture", func(_ sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+	captureMW := sdkhttpclient.NamedMiddlewareFunc("http-capture", func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+		// A datasource's "Custom HTTP Headers" (opts.Header, applied by CustomHeadersMiddleware)
+		// carry secrets under arbitrary names the static denylist can't enumerate. Capture runs
+		// after that middleware, so those headers are on the wire; mark their names sensitive so
+		// they're redacted from the bundle. opts.Header is this datasource's config, so this is
+		// scoped correctly even when multiple datasources are queried in one request.
+		if len(opts.Header) > 0 {
+			names := make([]string, 0, len(opts.Header))
+			for name := range opts.Header {
+				names = append(names, name)
+			}
+			buf.MarkSensitiveHeaders(names...)
+		}
 		return sdkhttpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 			// Buffer the request body before it is consumed by the transport.
 			var bodyBytes []byte

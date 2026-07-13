@@ -248,11 +248,11 @@ func TestRedactURLValue_failsClosedOnUnparseable(t *testing.T) {
 
 	assert.Equal(t, redactedValue, redactURLValue(bad))
 	// The same must hold when the value arrives via a URL-valued header (Location/Referer/...).
-	assert.Equal(t, redactedValue, redactHeader("Location", bad))
-	assert.NotContains(t, redactHeader("Referer", bad), "SECRET")
+	assert.Equal(t, redactedValue, redactHeader("Location", bad, nil))
+	assert.NotContains(t, redactHeader("Referer", bad, nil), "SECRET")
 
 	// A parseable URL is still query-redacted in place (not dropped wholesale).
-	ok := redactHeader("Location", "https://idp.example.com/cb?access_token=SECRET&state=ok")
+	ok := redactHeader("Location", "https://idp.example.com/cb?access_token=SECRET&state=ok", nil)
 	assert.NotContains(t, ok, "SECRET")
 	assert.Contains(t, ok, "state=ok")
 }
@@ -267,7 +267,27 @@ func TestToNameValues_sortedAndMultiValue(t *testing.T) {
 		{Name: "X-Alpha", Value: "a1"},
 		{Name: "X-Alpha", Value: "a2"},
 		{Name: "X-Zeta", Value: "z"},
-	}, toNameValues(h), "names sorted, one pair per value")
+	}, toNameValues(h, nil), "names sorted, one pair per value")
+}
+
+func TestBuffer_ToHAR_redactsCustomHeaders(t *testing.T) {
+	_, buf := WithCapture(context.Background())
+	// A datasource's custom HTTP headers carry secrets under arbitrary names not in the denylist.
+	buf.MarkSensitiveHeaders("PRIVATE-TOKEN", "x-vault-token")
+
+	req := newGetReq(t, "http://ds.example.com")
+	req.Header.Set("PRIVATE-TOKEN", "glpat-SECRET")
+	req.Header.Set("X-Vault-Token", "vault-SECRET") // canonicalization must still match
+	req.Header.Set("Accept", "application/json")     // untouched header stays for fidelity
+
+	buf.AddEntry(req, okResp(200), time.Now(), time.Millisecond) //nolint:bodyclose
+	raw, err := buf.ToHAR()
+	require.NoError(t, err)
+	s := string(raw)
+
+	assert.NotContains(t, s, "glpat-SECRET", "custom header value must be redacted")
+	assert.NotContains(t, s, "vault-SECRET", "custom header value must be redacted (case-insensitive name)")
+	assert.Contains(t, s, "application/json", "non-custom headers stay for diagnostic fidelity")
 }
 
 func TestBuffer_ToHAR_emptyHeaderValues_noPanic(t *testing.T) {

@@ -69,15 +69,27 @@ var urlValuedHeaders = map[string]struct{}{
 	"Referer":          {},
 }
 
-func redactHeader(name, value string) string {
+// redactHeader redacts a header value if its name is in the static denylist or in extra -- the
+// per-request set of datasource "Custom HTTP Headers" names, which carry secrets under arbitrary
+// names the static denylist can't enumerate. extra may be nil.
+func redactHeader(name, value string, extra map[string]struct{}) string {
 	canonical := http.CanonicalHeaderKey(name)
 	if _, ok := sensitiveHeaders[canonical]; ok {
+		return redactedValue
+	}
+	if _, ok := extra[canonical]; ok {
 		return redactedValue
 	}
 	if _, ok := urlValuedHeaders[canonical]; ok {
 		return redactURLValue(value)
 	}
 	return value
+}
+
+// redactHeaderStatic redacts using only the static denylist. Used for externally-sourced HAR frames,
+// where the per-request custom-header names are not known to this process.
+func redactHeaderStatic(name, value string) string {
+	return redactHeader(name, value, nil)
 }
 
 func redactQueryParam(name, value string) string {
@@ -146,7 +158,7 @@ func RedactHARDocument(doc []byte) []byte {
 			continue
 		}
 		if e.Request != nil {
-			redactPairs(e.Request.Headers, redactHeader)
+			redactPairs(e.Request.Headers, redactHeaderStatic)
 			redactPairs(e.Request.QueryString, redactQueryParam)
 			redactCookieValues(e.Request.Cookies)
 			if e.Request.URL != "" {
@@ -154,7 +166,7 @@ func RedactHARDocument(doc []byte) []byte {
 			}
 		}
 		if e.Response != nil {
-			redactPairs(e.Response.Headers, redactHeader)
+			redactPairs(e.Response.Headers, redactHeaderStatic)
 			redactCookieValues(e.Response.Cookies)
 			if e.Response.RedirectURL != "" {
 				e.Response.RedirectURL = redactURLValue(e.Response.RedirectURL)
@@ -202,6 +214,37 @@ type contextKey struct{}
 type Buffer struct {
 	mu      sync.Mutex
 	entries []*har.Entry
+	// extraSensitive holds per-request header names (canonical form) to redact in addition to the
+	// static denylist -- e.g. a datasource's "Custom HTTP Headers", which carry secrets under
+	// arbitrary names. Populated via MarkSensitiveHeaders as the client middleware chain is built.
+	extraSensitive map[string]struct{}
+}
+
+// MarkSensitiveHeaders registers header names whose values must be redacted from captured entries,
+// in addition to the static denylist. Names are canonicalized. Thread-safe.
+func (b *Buffer) MarkSensitiveHeaders(names ...string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.extraSensitive == nil {
+		b.extraSensitive = make(map[string]struct{}, len(names))
+	}
+	for _, n := range names {
+		b.extraSensitive[http.CanonicalHeaderKey(n)] = struct{}{}
+	}
+}
+
+// snapshotSensitive returns a copy of the extra sensitive-header set, safe to read without the lock.
+func (b *Buffer) snapshotSensitive() map[string]struct{} {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if len(b.extraSensitive) == 0 {
+		return nil
+	}
+	cp := make(map[string]struct{}, len(b.extraSensitive))
+	for k := range b.extraSensitive {
+		cp[k] = struct{}{}
+	}
+	return cp
 }
 
 // WithCapture returns a child context carrying a new Buffer and the buffer itself.
@@ -218,7 +261,7 @@ func FromContext(ctx context.Context) *Buffer {
 
 // AddEntry appends a captured request/response pair. Thread-safe.
 func (b *Buffer) AddEntry(req *http.Request, resp *http.Response, started time.Time, elapsed time.Duration) {
-	e := buildEntry(req, resp, started, elapsed)
+	e := buildEntry(req, resp, started, elapsed, b.snapshotSensitive())
 	b.mu.Lock()
 	b.entries = append(b.entries, e)
 	b.mu.Unlock()
@@ -250,8 +293,8 @@ func (b *Buffer) ToHAR() ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func buildEntry(req *http.Request, resp *http.Response, started time.Time, elapsed time.Duration) *har.Entry {
-	reqHeaders := toNameValues(req.Header)
+func buildEntry(req *http.Request, resp *http.Response, started time.Time, elapsed time.Duration, extra map[string]struct{}) *har.Entry {
+	reqHeaders := toNameValues(req.Header, extra)
 
 	query := req.URL.Query()
 	queryKeys := make([]string, 0, len(query))
@@ -297,7 +340,7 @@ func buildEntry(req *http.Request, resp *http.Response, started time.Time, elaps
 		harResp.Status = int64(resp.StatusCode)
 		harResp.StatusText = resp.Status
 		harResp.HTTPVersion = resp.Proto
-		harResp.Headers = toNameValues(resp.Header)
+		harResp.Headers = toNameValues(resp.Header, extra)
 		harResp.Cookies = toCookies(resp.Cookies())
 		if loc := resp.Header.Get("Location"); loc != "" {
 			harResp.RedirectURL = redactURLValue(loc)
@@ -349,7 +392,7 @@ func buildEntry(req *http.Request, resp *http.Response, started time.Time, elaps
 
 // toNameValues flattens an http.Header into HAR name/value pairs, emitting one pair per value so
 // repeated headers (e.g. multiple Set-Cookie) are preserved, in sorted order for deterministic output.
-func toNameValues(h http.Header) []*har.NameValuePair {
+func toNameValues(h http.Header, extra map[string]struct{}) []*har.NameValuePair {
 	names := make([]string, 0, len(h))
 	for name := range h {
 		names = append(names, name)
@@ -359,7 +402,7 @@ func toNameValues(h http.Header) []*har.NameValuePair {
 	result := make([]*har.NameValuePair, 0, len(h))
 	for _, name := range names {
 		for _, v := range h[name] {
-			result = append(result, &har.NameValuePair{Name: name, Value: redactHeader(name, v)})
+			result = append(result, &har.NameValuePair{Name: name, Value: redactHeader(name, v, extra)})
 		}
 	}
 	return result
