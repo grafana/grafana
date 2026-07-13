@@ -278,7 +278,7 @@ func TestBuffer_ToHAR_redactsCustomHeaders(t *testing.T) {
 	req := newGetReq(t, "http://ds.example.com")
 	req.Header.Set("PRIVATE-TOKEN", "glpat-SECRET")
 	req.Header.Set("X-Vault-Token", "vault-SECRET") // canonicalization must still match
-	req.Header.Set("Accept", "application/json")     // untouched header stays for fidelity
+	req.Header.Set("Accept", "application/json")    // untouched header stays for fidelity
 
 	buf.AddEntry(req, okResp(200), time.Now(), time.Millisecond) //nolint:bodyclose
 	raw, err := buf.ToHAR()
