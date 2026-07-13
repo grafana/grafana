@@ -4,17 +4,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { useBranding } from '../Branding/BrandingContext';
 
-import grafanaIconSvg from './grafana_icon.svg';
+import { BouncingLogo } from './BouncingLogo';
 
 export function PageLoader() {
   const styles = useStyles2(getStyles);
-  const { AppLogo } = useBranding();
-
-  // Use the branded logo supplied by the host app, falling back to the default Grafana icon.
-  // This lets the loader pick up custom branding without the caller knowing.
-  const logo = AppLogo ? <AppLogo /> : <img src={grafanaIconSvg} alt="Grafana" />;
 
   return (
     <div className={styles.loadingPage}>
@@ -24,9 +18,7 @@ export function PageLoader() {
         role="status"
         aria-label={t('grafana-ui.page-loader.label', 'Loading')}
       >
-        <div className={styles.bounce}>
-          <div className={styles.logo}>{logo}</div>
-        </div>
+        <BouncingLogo />
       </div>
     </div>
   );
@@ -54,50 +46,24 @@ const pulse = keyframes({
   },
 });
 
-const bounce = keyframes({
-  'from, to': {
-    transform: 'translateY(0px)',
-    animationTimingFunction: 'cubic-bezier(0.3, 0, 0.1, 1)',
-  },
-  '50%': {
-    transform: 'translateY(-50px)',
-    animationTimingFunction: 'cubic-bezier(0.9, 0, 0.7, 1)',
-  },
-});
-
-const squash = keyframes({
-  '0%': {
-    transform: 'scaleX(1.3) scaleY(0.8)',
-    animationTimingFunction: 'cubic-bezier(0.3, 0, 0.1, 1)',
-  },
-  '15%': {
-    transform: 'scaleX(0.75) scaleY(1.25)',
-    animationTimingFunction: 'cubic-bezier(0, 0, 0.7, 0.75)',
-  },
-  '55%': {
-    transform: 'scaleX(1.05) scaleY(0.95)',
-    animationTimingFunction: 'cubic-bezier(0.9, 0, 1, 1)',
-  },
-  '95%': {
-    transform: 'scaleX(0.75) scaleY(1.25)',
-    animationTimingFunction: 'cubic-bezier(0, 0, 0, 1)',
-  },
-  '100%': {
-    transform: 'scaleX(1.3) scaleY(0.8)',
-    animationTimingFunction: 'cubic-bezier(0, 0, 0.7, 1)',
-  },
-});
-
 const getStyles = (theme: GrafanaTheme2) => ({
-  loadingPage: css({
-    backgroundColor: theme.colors.background.primary,
-    flex: 1,
-    flexDirection: 'column',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100%',
-  }),
+  loadingPage: css(
+    {
+      backgroundColor: theme.colors.background.primary,
+      flex: 1,
+      flexDirection: 'column',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
+    },
+    theme.flags.visualDesignRefresh && {
+      backgroundColor: theme.colors.background.page,
+      borderRadius: theme.shape.radius.lg,
+      margin: theme.spacing(0, 0.5, 0.5, 0.5),
+      border: `1px solid ${theme.colors.border.weak}`,
+    }
+  ),
 
   container: css({
     opacity: 0,
@@ -113,29 +79,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       animationIterationCount: 'infinite',
       animationDuration: '4s',
       animationDelay: '0.5s',
-    },
-  }),
-
-  bounce: css({
-    textAlign: 'center',
-    [theme.transitions.handleMotion('no-preference')]: {
-      animationName: bounce,
-      animationDuration: '0.9s',
-      animationIterationCount: 'infinite',
-    },
-  }),
-
-  logo: css({
-    display: 'inline-block',
-    [theme.transitions.handleMotion('no-preference')]: {
-      animationName: squash,
-      animationDuration: '0.9s',
-      animationIterationCount: 'infinite',
-    },
-
-    img: {
-      width: '60px',
-      height: '60px',
     },
   }),
 });
