@@ -91,6 +91,34 @@ func ResponseError(resp *backend.QueryDataResponse) error {
 	return errors.Join(errs...)
 }
 
+// PluginCaptureError returns the error an externalized (gRPC) plugin stashed alongside its captured
+// __har__ frame (Custom["queryError"]), or nil if absent. The SDK capture middleware records a
+// top-level QueryData error there rather than returning it, because a gRPC error would discard the
+// whole response — and the captured traffic with it — before it crossed the wire. Reading it back
+// here lets the failure still be recorded in the bundle.
+func PluginCaptureError(resp *backend.QueryDataResponse) error {
+	if resp == nil {
+		return nil
+	}
+	r, ok := resp.Responses[harResponseKey]
+	if !ok {
+		return nil
+	}
+	for _, frame := range r.Frames {
+		if frame == nil || frame.Meta == nil {
+			continue
+		}
+		custom, ok := frame.Meta.Custom.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if msg, ok := custom["queryError"].(string); ok && msg != "" {
+			return errors.New(msg)
+		}
+	}
+	return nil
+}
+
 // HasCapturedHAR reports whether any HAR traffic was captured for this request — either the
 // in-process buffer has entries (core plugins) or an external plugin returned a __har__ frame. The
 // handler uses it to decide whether a failed query still has something worth bundling.

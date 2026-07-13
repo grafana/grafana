@@ -76,8 +76,13 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	resp, queryErr := queryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)
 
 	// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error, the
-	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle.
+	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle. An
+	// externalized plugin whose top-level QueryData error was swallowed to survive the gRPC boundary
+	// carries it in the __har__ frame instead; fold that in as well.
 	respErr := diagnostics.ResponseError(resp)
+	if respErr == nil {
+		respErr = diagnostics.PluginCaptureError(resp)
+	}
 
 	// If the query failed before any traffic was captured (e.g. pre-flight access-denied or
 	// datasource-not-found, which never reach the datasource), there's nothing to diagnose, so

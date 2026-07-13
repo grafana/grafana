@@ -187,6 +187,26 @@ func TestIndentJSON(t *testing.T) {
 	require.Equal(t, "not json", string(indentJSON([]byte("not json"))), "falls back to raw bytes when unparseable")
 }
 
+func TestPluginCaptureError(t *testing.T) {
+	require.NoError(t, PluginCaptureError(nil))
+	require.NoError(t, PluginCaptureError(&backend.QueryDataResponse{Responses: backend.Responses{"A": {}}}))
+
+	// No queryError in the frame -> nil.
+	noErr := data.NewFrame("__har__")
+	noErr.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": "{}"}}
+	require.NoError(t, PluginCaptureError(&backend.QueryDataResponse{Responses: backend.Responses{
+		"__har__": {Frames: data.Frames{noErr}},
+	}}))
+
+	// queryError present -> surfaced.
+	withErr := data.NewFrame("__har__")
+	withErr.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": "{}", "queryError": "datasource boom"}}
+	err := PluginCaptureError(&backend.QueryDataResponse{Responses: backend.Responses{
+		"__har__": {Frames: data.Frames{withErr}},
+	}})
+	require.EqualError(t, err, "datasource boom")
+}
+
 func TestResponseError(t *testing.T) {
 	require.NoError(t, ResponseError(nil))
 	require.NoError(t, ResponseError(&backend.QueryDataResponse{Responses: backend.Responses{"A": {}}}))
