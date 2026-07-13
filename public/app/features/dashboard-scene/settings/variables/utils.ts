@@ -23,6 +23,7 @@ import {
 import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
@@ -355,6 +356,43 @@ export interface VariableNameValidationResult {
   warningMessage?: string;
 }
 
+export const PREDEFINED_VARIABLE_SHADOW_WARNING =
+  'A global or folder variable with this name exists and will be overwritten by this dashboard variable.';
+
+/**
+ * Removes a predefined (global/folder) variable of the given name from the set so a
+ * dashboard/section-local variable can take over at runtime (nearest scope wins).
+ */
+export function dropPredefinedVariableNamed(set: SceneVariableSet, name: string): void {
+  const next = set.state.variables.filter((v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin)));
+  if (next.length !== set.state.variables.length) {
+    set.setState({ variables: next });
+  }
+}
+
+/**
+ * Drops any predefined variable shadowed by `name` from this variable's set and
+ * ancestor sets. Safe when the collision is a non-predefined dashboard local —
+ * those are left in place (section shadowing does not delete them).
+ */
+export function dropShadowedPredefinedVariables(variable: SceneVariable, name: string): void {
+  const set = variable.parent;
+  if (!(set instanceof SceneVariableSet)) {
+    return;
+  }
+
+  dropPredefinedVariableNamed(set, name);
+
+  let ancestor: SceneObject | undefined = set.parent;
+  while (ancestor) {
+    const ancestorVars = ancestor.state.$variables;
+    if (ancestorVars instanceof SceneVariableSet && ancestorVars !== set) {
+      dropPredefinedVariableNamed(ancestorVars, name);
+    }
+    ancestor = ancestor.parent;
+  }
+}
+
 export function validateVariableName(variable: SceneVariable, name: string): VariableNameValidationResult {
   const set = variable.parent;
   if (!(set instanceof SceneVariableSet)) {
@@ -375,6 +413,12 @@ export function validateVariableName(variable: SceneVariable, name: string): Var
   const varLookupByName = set.getByName(name);
 
   if (varLookupByName && varLookupByName !== variable) {
+    if (isPredefinedOrigin(varLookupByName.state.origin)) {
+      return {
+        isValid: true,
+        warningMessage: PREDEFINED_VARIABLE_SHADOW_WARNING,
+      };
+    }
     return { isValid: false, errorMessage: 'Variable with the same name already exists' };
   }
 
@@ -387,8 +431,9 @@ export function validateVariableName(variable: SceneVariable, name: string): Var
       if (ancestorVar) {
         return {
           isValid: true,
-          warningMessage:
-            'A variable with this name already exists at the dashboard level. This variable will overwrite it.',
+          warningMessage: isPredefinedOrigin(ancestorVar.state.origin)
+            ? PREDEFINED_VARIABLE_SHADOW_WARNING
+            : 'A variable with this name already exists at the dashboard level. This variable will overwrite it.',
         };
       }
     }

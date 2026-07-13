@@ -29,7 +29,11 @@ import {
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
-import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
+import {
+  dropShadowedPredefinedVariables,
+  getEditableVariableDefinition,
+  validateVariableName,
+} from '../../settings/variables/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -202,6 +206,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       return result;
     }
 
+    dropShadowedPredefinedVariables(this.variable, name);
     return;
   }
 
@@ -248,7 +253,8 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
   const id = useId();
 
   const onChange = (e: FormEvent<HTMLInputElement>) => {
-    const result = validateVariableName(variable, e.currentTarget.value);
+    const nextName = e.currentTarget.value;
+    const result = validateVariableName(variable, nextName);
     if (result.errorMessage !== nameError) {
       setNameError(result.errorMessage);
     }
@@ -256,7 +262,10 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
       setNameWarning(result.warningMessage);
     }
 
-    variable.setState({ name: e.currentTarget.value });
+    variable.setState({ name: nextName });
+    if (!result.errorMessage) {
+      dropShadowedPredefinedVariables(variable, nextName);
+    }
   };
 
   const oldName = useRef(name);

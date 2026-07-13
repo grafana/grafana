@@ -207,9 +207,9 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       errorText = 'Only word characters are allowed in variable names';
     }
 
-    const variable = this.getVariableSet().getByName(name)?.state;
+    const colliding = this.getVariableSet().getByName(name);
 
-    if (variable && variable.key !== key) {
+    if (colliding && colliding.state.key !== key && !isPredefinedOrigin(colliding.state.origin)) {
       errorText = 'Variable with the same name already exists';
     }
 

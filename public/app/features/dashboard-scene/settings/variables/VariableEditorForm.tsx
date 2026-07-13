@@ -25,6 +25,7 @@ import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
 import {
+  dropShadowedPredefinedVariables,
   type EditableVariableType,
   getVariableEditor,
   hasVariableOptions,
@@ -85,6 +86,7 @@ export function VariableEditorForm({
       // even when the field still has focus — same pattern as the edit pane.
       if (!result.errorMessage) {
         variable.setState({ name: nextName });
+        dropShadowedPredefinedVariables(variable, nextName);
       }
     },
     [variable, nameError, nameWarning, onNameErrorChange]

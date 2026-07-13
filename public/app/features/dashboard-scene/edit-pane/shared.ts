@@ -25,6 +25,7 @@ import { LocalVariableEditableElement } from '../settings/variables/LocalVariabl
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable, isVariableEditable } from '../settings/variables/utils';
+import { isPredefinedOrigin } from '../utils/predefinedVariables';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
@@ -219,12 +220,17 @@ export const dashboardEditActions = {
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
     const varsBeforeAddition = [...(source.state.variables ?? [])];
+    const name = addedObject.state.name;
 
     dashboardEditActions.addElement({
       source,
       addedObject,
       perform() {
-        source.setState({ variables: [...varsBeforeAddition, addedObject] });
+        // Drop any predefined (global/folder) var of the same name so the local wins live.
+        const withoutShadowed = varsBeforeAddition.filter(
+          (v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin))
+        );
+        source.setState({ variables: [...withoutShadowed, addedObject] });
       },
       undo() {
         source.setState({ variables: [...varsBeforeAddition] });

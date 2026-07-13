@@ -43,6 +43,9 @@ import {
   getVariableDefault,
   isSceneVariableInstance,
   isVariableEditable,
+  PREDEFINED_VARIABLE_SHADOW_WARNING,
+  dropPredefinedVariableNamed,
+  dropShadowedPredefinedVariables,
   validateVariableName,
 } from './utils';
 
@@ -584,5 +587,110 @@ describe('Cross-level variable name validation', () => {
     expect(secResult.isValid).toBe(true);
     expect(secResult.warningMessage).toBeUndefined();
     expect(secResult.errorMessage).toBeUndefined();
+  });
+});
+
+describe('Predefined variable name shadowing', () => {
+  it('should return warning when dashboard variable shadows a predefined global variable', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    new SceneVariableSet({ variables: [predefined, local] });
+
+    const result = validateVariableName(local, 'env');
+    expect(result.isValid).toBe(true);
+    expect(result.warningMessage).toBe(PREDEFINED_VARIABLE_SHADOW_WARNING);
+    expect(result.errorMessage).toBeUndefined();
+  });
+
+  it('should return warning when dashboard variable shadows a predefined folder variable', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    new SceneVariableSet({ variables: [predefined, local] });
+
+    const result = validateVariableName(local, 'env');
+    expect(result.isValid).toBe(true);
+    expect(result.warningMessage).toBe(PREDEFINED_VARIABLE_SHADOW_WARNING);
+    expect(result.errorMessage).toBeUndefined();
+  });
+
+  it('should still error when two dashboard-local variables share a name', () => {
+    const local1 = new CustomVariable({ name: 'env', query: 'a,b' });
+    const local2 = new CustomVariable({ name: 'other', query: 'c,d' });
+    new SceneVariableSet({ variables: [local1, local2] });
+
+    const result = validateVariableName(local2, 'env');
+    expect(result.isValid).toBe(false);
+    expect(result.errorMessage).toBe('Variable with the same name already exists');
+  });
+
+  it('should return predefined warning when section variable shadows a predefined root variable', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const sectionVar = new CustomVariable({ name: 'other', query: 'c,d' });
+
+    new SceneFlexLayout({
+      $variables: new SceneVariableSet({ variables: [predefined] }),
+      children: [
+        new SceneFlexItem({
+          $variables: new SceneVariableSet({ variables: [sectionVar] }),
+          body: undefined,
+        }),
+      ],
+    });
+
+    const result = validateVariableName(sectionVar, 'env');
+    expect(result.isValid).toBe(true);
+    expect(result.warningMessage).toBe(PREDEFINED_VARIABLE_SHADOW_WARNING);
+    expect(result.errorMessage).toBeUndefined();
+  });
+
+  it('dropPredefinedVariableNamed removes only the predefined entry', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const set = new SceneVariableSet({ variables: [predefined, local] });
+
+    dropPredefinedVariableNamed(set, 'env');
+
+    expect(set.state.variables).toHaveLength(1);
+    expect(set.state.variables[0]).toBe(local);
+  });
+
+  it('dropShadowedPredefinedVariables drops ancestor predefined when section renames onto it', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const sectionVar = new CustomVariable({ name: 'other', query: 'c,d' });
+    const rootSet = new SceneVariableSet({ variables: [predefined] });
+
+    new SceneFlexLayout({
+      $variables: rootSet,
+      children: [
+        new SceneFlexItem({
+          $variables: new SceneVariableSet({ variables: [sectionVar] }),
+          body: undefined,
+        }),
+      ],
+    });
+
+    dropShadowedPredefinedVariables(sectionVar, 'env');
+
+    expect(rootSet.state.variables).toHaveLength(0);
   });
 });

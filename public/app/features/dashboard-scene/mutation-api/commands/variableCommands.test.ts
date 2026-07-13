@@ -7,6 +7,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { getTestDashboardSceneFromSaveModel } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
@@ -164,6 +165,28 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain("Variable 'env' already exists");
+  });
+
+  it('ADD_VARIABLE allows shadowing a predefined global variable of the same name', async () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    scene.state.$variables = new SceneVariableSet({ variables: [predefined] });
+
+    const result = await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: {
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'a,b,c' } },
+      },
+    });
+
+    expect(result.success).toBe(true);
+    const vars = scene.state.$variables?.state.variables ?? [];
+    expect(vars).toHaveLength(1);
+    expect(vars[0].state.name).toBe('env');
+    expect(vars[0].state.origin).toBeUndefined();
   });
 
   it('UPDATE_VARIABLE updates an existing variable', async () => {
