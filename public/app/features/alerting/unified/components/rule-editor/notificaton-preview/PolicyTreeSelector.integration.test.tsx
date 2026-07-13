@@ -290,8 +290,8 @@ describe('PolicyTreeSelector', () => {
   });
 
   // Regression test for bug #1 from PR #124697:
-  // AutomaticRooting passed policyName={undefined} to NotificationPreview when only
-  // alertingMultiplePolicies was enabled (alertingPolicyRoutingSettings OFF).
+  // AutomaticRooting passed policyName={undefined} to NotificationPreview when a
+  // non-default policy tree was selected (alertingPolicyRoutingSettings OFF).
   // The selected tree (stored as __grafana_managed_route__ label) was never forwarded,
   // so routing was always evaluated against the default tree.
   describe('notification preview routing (alertingPolicyRoutingSettings OFF)', () => {
@@ -439,8 +439,8 @@ describe('PolicyTreeSelector', () => {
   });
 
   // Regression: a rule routed via notification_settings.policy (the canonical, backend-honored
-  // storage) was shown as "Default policy" and silently dropped on save when only
-  // alertingMultiplePolicies was enabled (alertingPolicyRoutingSettings OFF), because the
+  // storage) was shown as "Default policy" and silently dropped on save when a non-default
+  // policy tree was selected (alertingPolicyRoutingSettings OFF), because the
   // selector/save paths only looked at the legacy __grafana_managed_route__ label.
   describe('edit existing rule with notification_settings.policy (alertingPolicyRoutingSettings OFF)', () => {
     const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
