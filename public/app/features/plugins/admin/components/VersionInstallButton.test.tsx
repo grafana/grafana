@@ -5,18 +5,20 @@ import { Provider } from 'react-redux';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { type Version } from '../types';
+import { PluginStatus, type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
 
+const mockInstall = jest.fn();
 jest.mock('../state/hooks', () => ({
   ...jest.requireActual('../state/hooks'),
-  useInstall: () => jest.fn(),
+  useInstall: () => mockInstall,
 }));
 
 describe('VersionInstallButton', () => {
   const originalConfig = { ...config };
   afterEach(() => {
+    mockInstall.mockClear();
     config.featureToggles = {
       ...originalConfig.featureToggles,
     };
@@ -248,6 +250,35 @@ describe('VersionInstallButton', () => {
 
     expect(screen.getByRole('button')).not.toBeDisabled();
     expect(screen.getByText('Install')).toBeInTheDocument();
+  });
+
+  it('should dispatch an update (not a fresh install) for a managed plugin upgrade', () => {
+    // Regression test: hideInstallState only neutralizes the displayed label to "Install" — the
+    // dispatched operation must still be an UPDATE so hasUpdate is cleared and the plugin info
+    // cache is invalidated, exactly as it would be for a non-managed upgrade.
+    const version: Version = {
+      version: '2.0.0',
+      createdAt: '',
+      isCompatible: true,
+      grafanaDependency: null,
+    };
+    renderWithStore(
+      <VersionInstallButton
+        installedVersion="1.0.0"
+        hideInstallState
+        pluginId={'test'}
+        version={version}
+        disabled={false}
+        onConfirmInstallation={() => {}}
+      />
+    );
+
+    // Display is a neutral "Install" (no Upgrade label) for managed plugins...
+    const button = screen.getByText('Install');
+    fireEvent.click(button);
+
+    // ...but the underlying operation is still an update.
+    expect(mockInstall).toHaveBeenCalledWith('test', '2.0.0', PluginStatus.UPDATE);
   });
 
   it('should show the installation button if invalid semver installed version is provided', () => {

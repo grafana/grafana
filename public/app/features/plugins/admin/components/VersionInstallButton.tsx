@@ -42,7 +42,12 @@ export const VersionInstallButton = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
-  const installState = hideInstallState ? PluginStatus.INSTALL : getInstallState(installedVersion, version.version);
+  // The actual operation (install vs update vs downgrade), its tracking event, cache invalidation
+  // and downgrade confirmation must reflect the real installed version — even for managed plugins.
+  const installState = getInstallState(installedVersion, version.version);
+  // Managed plugins present a neutral "Install" action instead of Upgrade/Downgrade, since their
+  // installedVersion isn't a trustworthy baseline. This only affects the label/icon, not behavior.
+  const displayInstallState = hideInstallState ? PluginStatus.INSTALL : installState;
 
   useEffect(() => {
     if (installedVersion === version.version) {
@@ -120,8 +125,8 @@ export const VersionInstallButton = ({
         tooltip={tooltip}
         tooltipPlacement="bottom-start"
       >
-        {getLabel(installState)}{' '}
-        {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(installState)}
+        {getLabel(displayInstallState)}{' '}
+        {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(displayInstallState)}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
