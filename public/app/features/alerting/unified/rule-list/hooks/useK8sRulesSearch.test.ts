@@ -3,6 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import {
   alertRuleHitFactory,
   recordingRuleHitFactory,
@@ -12,6 +13,7 @@ import {
   rulesSearchHandlerFor,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/rulesSearch.k8s';
 import { getSearchFilterFromQuery } from 'app/features/alerting/unified/search/rulesSearchParser';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { buildSearchArgs, useK8sRulesSearch } from './useK8sRulesSearch';
 
@@ -61,6 +63,29 @@ describe('buildSearchArgs', () => {
     expect(args.dashboardUid).toBe('my-dashboard-uid');
   });
 
+  it('maps notification policy to routingTree', () => {
+    const filter = getSearchFilterFromQuery('policy:team-a-policy');
+    const args = buildSearchArgs(filter);
+
+    expect(args.routingTree).toBe('team-a-policy');
+  });
+
+  it('maps the hide-plugin-rules filter to a not-exists label matcher', () => {
+    const filter = getSearchFilterFromQuery('plugins:hide label:severity=critical');
+    const args = buildSearchArgs(filter);
+
+    expect(args.labels).toEqual(['severity=critical', '!__grafana_origin']);
+  });
+
+  it('resolves datasource names to uids for datasourceUiDs, skipping unknown names', () => {
+    setupDataSources(mockDataSource({ name: 'Prometheus', uid: 'prometheus-uid' }));
+
+    const filter = getSearchFilterFromQuery('datasource:Prometheus datasource:Deleted');
+    const args = buildSearchArgs(filter);
+
+    expect(args.datasourceUiDs).toEqual(['prometheus-uid']);
+  });
+
   it('always sorts by title and forwards the page size as limit', () => {
     const args = buildSearchArgs(emptyFilter, 10);
 
@@ -76,7 +101,9 @@ describe('buildSearchArgs', () => {
     expect(args.groups).toBeUndefined();
     expect(args.type).toBeUndefined();
     expect(args.receiver).toBeUndefined();
+    expect(args.routingTree).toBeUndefined();
     expect(args.dashboardUid).toBeUndefined();
+    expect(args.datasourceUiDs).toBeUndefined();
   });
 });
 
