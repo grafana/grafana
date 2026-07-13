@@ -163,18 +163,11 @@ export class AppChromeService {
     const nextMode = this.getNextKioskMode();
     this.update({ kioskMode: nextMode });
     locationService.partial({ kiosk: this.getKioskUrlValue(nextMode) });
-    reportInteraction('grafana_kiosk_mode', {
-      action: 'toggle',
-      mode: nextMode,
-    });
   };
 
   public exitKioskMode() {
     this.update({ kioskMode: undefined });
     locationService.partial({ kiosk: null });
-    reportInteraction('grafana_kiosk_mode', {
-      action: 'exit',
-    });
   }
 
   public setKioskModeFromUrl(kiosk: UrlQueryValue) {

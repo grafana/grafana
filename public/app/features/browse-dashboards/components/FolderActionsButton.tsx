@@ -61,13 +61,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });
-    reportInteraction('grafana_manage_dashboards_item_moved', {
-      item_counts: {
-        folder: 1,
-        dashboard: 0,
-      },
-      source: 'folder_actions',
-    });
   };
 
   const onDelete = async () => {
