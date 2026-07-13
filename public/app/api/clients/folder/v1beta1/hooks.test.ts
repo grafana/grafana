@@ -6,11 +6,13 @@ import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 
 import { AnnoKeyFolder, AnnoKeyGrantPermissions } from '../../../../features/apiserver/types';
 
@@ -53,6 +55,13 @@ jest.mock('../../../../types/store', () => {
     useDispatch: () => dispatchMockFn,
   };
 });
+
+// The folder mutations refresh the team folders tree as a side effect. listTeamFolders would error
+// here because this test mocks the app dispatch, so stub it out.
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/services'),
+  listTeamFolders: jest.fn(async () => []),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -393,6 +402,39 @@ describe.each([
 
       expect(await screen.findByText('Folder updated')).toBeInTheDocument();
     });
+  });
+});
+
+describe('useUpdateFolder app-platform starred nav update', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    config.featureToggles.foldersAppPlatformAPI = true;
+    folderAPIVersionResolver.set('v1beta1');
+    setupUpdateFolderHandler();
+  });
+
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+    folderAPIVersionResolver.set('v1beta1');
+    dispatchMockFn.mockReset();
+  });
+
+  it('dispatches updateDashboardName with the request uid/title and folder URL on rename', async () => {
+    const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+
+    await user.clear(screen.getByLabelText('Folder Title'));
+    await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
+    await user.click(screen.getByText('Update Folder'));
+
+    expect(await screen.findByText('Folder updated')).toBeInTheDocument();
+
+    expect(dispatchMockFn).toHaveBeenCalledWith(
+      updateDashboardName({
+        id: folderA_folderA.item.uid,
+        title: 'Updated Folder',
+        url: getStarredFolderURL(folderA_folderA.item.uid),
+      })
+    );
   });
 });
 

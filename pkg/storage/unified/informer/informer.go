@@ -27,7 +27,7 @@ import (
 //
 // A nil ObjectFunc means the resource is driven only by the periodic re-list of
 // full objects, not by live notifications — for handlers that read the object
-// directly instead of re-fetching (see NewHistoricJobInformer).
+// directly instead of re-fetching.
 type ObjectFunc func(namespace, name string) runtime.Object
 
 // ListFunc returns every object of one resource kind, read straight from the

@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"iter"
 	"sync"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -29,6 +27,8 @@ var (
 )
 
 type ResourcePermSqlBackend struct {
+	resource.UnimplementedStorageBackend
+
 	dbProvider    legacysql.LegacyDatabaseProvider
 	identityStore IdentityStore
 	logger        log.Logger
@@ -48,14 +48,6 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers 
 		subscribers:   make([]chan *resource.WrittenEvent, 0),
 		mutex:         sync.Mutex{},
 	}
-}
-
-func (s *ResourcePermSqlBackend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
-	return []resource.ResourceStats{}, errNotImplemented
-}
-
-func (s *ResourcePermSqlBackend) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
-	return 0, errNotImplemented
 }
 
 func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(resource.ListIterator) error) (int64, error) {
@@ -120,12 +112,6 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	return s.latestUpdate(ctx, dbHelper, ns), nil
 }
 
-func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
-	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
-		yield(nil, errNotImplemented)
-	}
-}
-
 func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	rsp := &resource.BackendReadResponse{Key: req.GetKey()}
 
@@ -177,11 +163,6 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	}
 
 	return rsp
-}
-
-func (s *ResourcePermSqlBackend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	stream := make(chan *resource.WrittenEvent, 10)
-	return stream, nil
 }
 
 func isValidKey(key *resourcepb.ResourceKey, requireName bool) error {
@@ -296,10 +277,4 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	}
 
 	return rv, err
-}
-
-func (s *ResourcePermSqlBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	return func(yield func(resource.ResourceLastImportTime, error) bool) {
-		yield(resource.ResourceLastImportTime{}, errNotImplemented)
-	}
 }

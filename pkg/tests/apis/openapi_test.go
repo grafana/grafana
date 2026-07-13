@@ -44,6 +44,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesServiceAccountsApi,
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
+			featuremgmt.FlagGlobalDashboardVariables,
+			featuremgmt.FlagDashboardNotebooks,
 		},
 	})
 

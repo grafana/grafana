@@ -202,6 +202,9 @@ func newClient(opts options.StorageOptions,
 		if cfg.NATS.NotifierShadow && eventSubscriber != nil {
 			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
 		}
+		if cfg.NATS.Notifier && eventSubscriber != nil {
+			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
+		}
 		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
 		if err != nil {
 			return nil, err
@@ -369,9 +372,8 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 
 	if clientKeepaliveTime > 0 {
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                clientKeepaliveTime,
-			Timeout:             10 * time.Second,
-			PermitWithoutStream: true,
+			Time:    clientKeepaliveTime,
+			Timeout: 10 * time.Second,
 		}))
 	}
 	// Create a connection to the gRPC server
