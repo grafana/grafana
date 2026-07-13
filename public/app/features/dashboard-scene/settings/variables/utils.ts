@@ -363,17 +363,102 @@ export const getPredefinedVariableShadowWarning = () =>
   );
 
 /**
+ * Predefined variables dropped for live shadowing are kept here so they can be
+ * re-injected when the shadowing local is renamed away or deleted.
+ *
+ * Keyed by the variable set's parent (dashboard / row / tab) — not the set itself —
+ * because mutation commands replace the SceneVariableSet instance while keeping the
+ * same owner. Falls back to the set when it has no parent (unit tests).
+ */
+const shadowedPredefinedByOwner = new WeakMap<object, Map<string, SceneVariable>>();
+
+function getShadowStash(set: SceneVariableSet, ownerHint?: object): Map<string, SceneVariable> {
+  // Prefer the live parent (dashboard / row / tab). Fall back to an explicit owner for
+  // mutation mocks / replace flows where the set may not be parented yet.
+  const owner: object = set.parent ?? ownerHint ?? set;
+  let byName = shadowedPredefinedByOwner.get(owner);
+  if (!byName) {
+    byName = new Map();
+    shadowedPredefinedByOwner.set(owner, byName);
+  }
+  return byName;
+}
+
+function stashPredefinedVariable(set: SceneVariableSet, variable: SceneVariable, ownerHint?: object): void {
+  getShadowStash(set, ownerHint).set(variable.state.name, variable);
+}
+
+/**
  * Removes a predefined (global/folder) variable of the given name from the set so a
  * dashboard/section-local variable can take over at runtime (nearest scope wins).
+ * Stashes the dropped variable for later restore when nothing local shadows it.
+ *
+ * `ownerHint` is used when `set.parent` is unset (e.g. mutation commands that replace
+ * the variable set on a mock / unparented owner).
  */
-export function dropPredefinedVariableNamed(set: SceneVariableSet, name: string): void {
-  const next = set.state.variables.filter((v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin)));
-  if (next.length !== set.state.variables.length) {
-    set.setState({ variables: next });
+export function dropPredefinedVariableNamed(set: SceneVariableSet, name: string, ownerHint?: object): void {
+  const toDrop = set.state.variables.filter((v) => v.state.name === name && isPredefinedOrigin(v.state.origin));
+  if (toDrop.length === 0) {
+    return;
   }
+
+  for (const variable of toDrop) {
+    stashPredefinedVariable(set, variable, ownerHint);
+  }
+
+  set.setState({
+    variables: set.state.variables.filter((v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin))),
+  });
+}
+
+/**
+ * Re-injects a stashed predefined variable named `name` into `set` when nothing in
+ * that set currently uses the name.
+ */
+export function restorePredefinedVariableNamed(set: SceneVariableSet, name: string, ownerHint?: object): void {
+  if (set.state.variables.some((v) => v.state.name === name)) {
+    return;
+  }
+
+  const stashed = getShadowStash(set, ownerHint).get(name);
+  if (!stashed) {
+    return;
+  }
+
+  set.setState({ variables: [stashed, ...set.state.variables] });
 }
 
 export type VariableSetSnapshot = { set: SceneVariableSet; variables: SceneVariable[] };
+
+function forEachVariableSetAlongPath(from: SceneVariable | SceneVariableSet, visit: (set: SceneVariableSet) => void) {
+  const set = from instanceof SceneVariableSet ? from : from.parent;
+  if (!(set instanceof SceneVariableSet)) {
+    return;
+  }
+
+  visit(set);
+
+  let ancestor: SceneObject | undefined = set.parent;
+  while (ancestor) {
+    const ancestorVars = ancestor.state.$variables;
+    if (ancestorVars instanceof SceneVariableSet && ancestorVars !== set) {
+      visit(ancestorVars);
+    }
+    ancestor = ancestor.parent;
+  }
+}
+
+/**
+ * Snapshots this variable's set and ancestor sets. Used so rename/drop side effects
+ * (including predefined restore) can be undone by restoring the prior arrays.
+ */
+export function snapshotVariableSetsAlongPath(variable: SceneVariable): VariableSetSnapshot[] {
+  const snapshots: VariableSetSnapshot[] = [];
+  forEachVariableSetAlongPath(variable, (set) => {
+    snapshots.push({ set, variables: [...set.state.variables] });
+  });
+  return snapshots;
+}
 
 /**
  * Snapshots variable sets that currently hold a predefined variable named `name`
@@ -381,28 +466,11 @@ export type VariableSetSnapshot = { set: SceneVariableSet; variables: SceneVaria
  */
 export function snapshotSetsWithPredefinedNamed(variable: SceneVariable, name: string): VariableSetSnapshot[] {
   const snapshots: VariableSetSnapshot[] = [];
-  const set = variable.parent;
-  if (!(set instanceof SceneVariableSet)) {
-    return snapshots;
-  }
-
-  const maybeSnapshot = (candidate: SceneVariableSet) => {
+  forEachVariableSetAlongPath(variable, (candidate) => {
     if (candidate.state.variables.some((v) => v.state.name === name && isPredefinedOrigin(v.state.origin))) {
       snapshots.push({ set: candidate, variables: [...candidate.state.variables] });
     }
-  };
-
-  maybeSnapshot(set);
-
-  let ancestor: SceneObject | undefined = set.parent;
-  while (ancestor) {
-    const ancestorVars = ancestor.state.$variables;
-    if (ancestorVars instanceof SceneVariableSet && ancestorVars !== set) {
-      maybeSnapshot(ancestorVars);
-    }
-    ancestor = ancestor.parent;
-  }
-
+  });
   return snapshots;
 }
 
@@ -421,21 +489,22 @@ export function restoreVariableSetSnapshots(snapshots: VariableSetSnapshot[]): v
  * intermediate typed names that briefly match a predefined variable must not drop it.
  */
 export function dropShadowedPredefinedVariables(variable: SceneVariable, name: string): void {
-  const set = variable.parent;
-  if (!(set instanceof SceneVariableSet)) {
-    return;
-  }
+  forEachVariableSetAlongPath(variable, (set) => dropPredefinedVariableNamed(set, name));
+}
 
-  dropPredefinedVariableNamed(set, name);
-
-  let ancestor: SceneObject | undefined = set.parent;
-  while (ancestor) {
-    const ancestorVars = ancestor.state.$variables;
-    if (ancestorVars instanceof SceneVariableSet && ancestorVars !== set) {
-      dropPredefinedVariableNamed(ancestorVars, name);
+/**
+ * Re-injects stashed predefined variables that are no longer shadowed by a local
+ * variable in this set or ancestor sets. Call after rename-away or delete of a local.
+ *
+ * `ownerHint` is forwarded when sets may be unparented (mutation replace flows).
+ */
+export function restoreUnshadowedPredefinedVariables(from: SceneVariable | SceneVariableSet, ownerHint?: object): void {
+  forEachVariableSetAlongPath(from, (set) => {
+    const stashed = getShadowStash(set, ownerHint);
+    for (const name of stashed.keys()) {
+      restorePredefinedVariableNamed(set, name, ownerHint);
     }
-    ancestor = ancestor.parent;
-  }
+  });
 }
 
 export function validateVariableName(variable: SceneVariable, name: string): VariableNameValidationResult {

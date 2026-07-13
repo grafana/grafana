@@ -32,6 +32,7 @@ import { VariableDisplaySelect } from '../../settings/variables/components/Varia
 import {
   dropShadowedPredefinedVariables,
   getEditableVariableDefinition,
+  restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -212,10 +213,11 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   /**
-   * Called when an outline rename commits (blur / Enter). Drops any predefined
-   * variable shadowed by the committed name.
+   * Called when an outline rename commits (blur / Enter). Restores any predefined
+   * variable freed by the rename, then drops any shadowed by the committed name.
    */
   public onCommitName() {
+    restoreUnshadowedPredefinedVariables(this.variable);
     dropShadowedPredefinedVariables(this.variable, this.variable.state.name);
   }
 

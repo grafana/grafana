@@ -31,6 +31,7 @@ import {
   isEditableVariableType,
   validateVariableName,
   dropShadowedPredefinedVariables,
+  restoreUnshadowedPredefinedVariables,
 } from './utils';
 
 interface VariableEditorFormProps {
@@ -94,8 +95,9 @@ export function VariableEditorForm({
   );
 
   const onNameBlur = useCallback(() => {
-    // Drop against the last valid name on the variable (onNameChange only commits
-    // valid names). Intermediate keystrokes never drop; blur is the commit point.
+    // Restore any predefined freed by an intermediate rename, then drop against the
+    // committed name. Intermediate keystrokes never drop; blur is the commit point.
+    restoreUnshadowedPredefinedVariables(variable);
     dropShadowedPredefinedVariables(variable, variable.state.name);
   }, [variable]);
 

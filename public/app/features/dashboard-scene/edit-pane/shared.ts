@@ -25,11 +25,13 @@ import { LocalVariableEditableElement } from '../settings/variables/LocalVariabl
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import {
+  dropPredefinedVariableNamed,
   dropShadowedPredefinedVariables,
   isSceneVariable,
   isVariableEditable,
+  restoreUnshadowedPredefinedVariables,
   restoreVariableSetSnapshots,
-  snapshotSetsWithPredefinedNamed,
+  snapshotVariableSetsAlongPath,
 } from '../settings/variables/utils';
 import { isPredefinedOrigin } from '../utils/predefinedVariables';
 
@@ -232,7 +234,8 @@ export const dashboardEditActions = {
       source,
       addedObject,
       perform() {
-        // Drop any predefined (global/folder) var of the same name so the local wins live.
+        // Stash then drop any predefined of the same name so the local wins live.
+        dropPredefinedVariableNamed(source, name);
         const withoutShadowed = varsBeforeAddition.filter(
           (v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin))
         );
@@ -251,9 +254,11 @@ export const dashboardEditActions = {
       removedObject,
       perform() {
         source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
+        // Local no longer shadows — re-inject any stashed predefined of the freed name.
+        restoreUnshadowedPredefinedVariables(source);
       },
       undo() {
-        source.setState({ variables: varsBeforeRemoval });
+        source.setState({ variables: [...varsBeforeRemoval] });
       },
     });
   },
@@ -282,14 +287,15 @@ export const dashboardEditActions = {
     });
   },
   changeVariableName({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'name'>) {
-    // Snapshot before perform so undo can restore predefined vars dropped on commit.
-    const snapshots = snapshotSetsWithPredefinedNamed(source, newValue);
+    // Snapshot set + ancestors before mutate so undo restores drops and re-injections.
+    const snapshots = snapshotVariableSetsAlongPath(source);
 
     dashboardEditActions.edit({
       description: t('dashboard.variable.name.action', 'Change variable name'),
       source,
       perform: () => {
         source.setState({ name: newValue });
+        restoreUnshadowedPredefinedVariables(source);
         dropShadowedPredefinedVariables(source, newValue);
       },
       undo: () => {

@@ -26,6 +26,7 @@ import {
   sceneUtils,
   type SceneVariable,
   type SceneVariableDependencyConfigLike,
+  MultiValueVariable,
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard, type DashboardLink, type LibraryPanel } from '@grafana/schema';
@@ -318,10 +319,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       .map((v) => {
         const previous = previousByName.get(v.state.name);
         // Preserve the user's current selection when refreshing definitions on a cached scene.
-        if (previous && 'value' in previous.state) {
+        if (previous instanceof MultiValueVariable && v instanceof MultiValueVariable) {
           v.setState({
             value: previous.state.value,
-            ...('text' in previous.state ? { text: previous.state.text } : {}),
+            text: previous.state.text,
           });
         }
         return v;

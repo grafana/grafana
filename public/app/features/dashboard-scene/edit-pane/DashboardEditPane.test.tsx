@@ -310,6 +310,72 @@ describe('DashboardEditPane', () => {
     expect(variableSet.state.variables).toEqual([predefined, local]);
   });
 
+  it('re-injects predefined variables when a shadowing local is renamed away', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'env',
+      newValue: 'localVar',
+    });
+
+    expect(local.state.name).toBe('localVar');
+    expect(variableSet.state.variables).toEqual([predefined, local]);
+  });
+
+  it('re-injects predefined variables when a shadowing local is deleted', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboardEditActions.removeVariable({
+      source: variableSet,
+      removedObject: local,
+    });
+
+    expect(variableSet.state.variables).toEqual([predefined]);
+  });
+
   describe('Selecting repeated elements', () => {
     it('Selecting a repeated panel selects the source panel', () => {
       const layoutManager = new DefaultGridLayoutManager({

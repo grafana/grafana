@@ -9,6 +9,7 @@ import {
   SceneObjectBase,
   type SceneVariable,
   type SceneVariables,
+  SceneVariableSet,
   sceneGraph,
 } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
@@ -39,6 +40,7 @@ import {
   getVariableDefault,
   getVariableScene,
   isVariableEditable,
+  restoreUnshadowedPredefinedVariables,
 } from './variables/utils';
 
 export interface VariablesEditViewState extends DashboardEditViewState {
@@ -99,7 +101,11 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const updatedVariables = [...variables.slice(0, variableIndex), ...variables.slice(variableIndex + 1)];
 
     // Update the state or the variables array
-    this.getVariableSet().setState({ variables: updatedVariables });
+    const variableSet = this.getVariableSet();
+    variableSet.setState({ variables: updatedVariables });
+    if (variableSet instanceof SceneVariableSet) {
+      restoreUnshadowedPredefinedVariables(variableSet);
+    }
     // Remove editIndex otherwise switches to next variable in list
     this.setState({ editIndex: undefined });
   };
