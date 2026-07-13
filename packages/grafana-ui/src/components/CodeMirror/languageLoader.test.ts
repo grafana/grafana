@@ -53,6 +53,22 @@ describe('loadLanguageExtension', () => {
     });
   });
 
+  it('adds indentation-based folding to SQL', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { foldable } = await import('@codemirror/language');
+      const { EditorState } = await import('@codemirror/state');
+      const extension = await loadLanguageExtension('sql');
+      const state = EditorState.create({
+        doc: 'FROM\n  table_a\nWHERE one > 0',
+        extensions: extension ? [extension] : [],
+      });
+      const fromLine = state.doc.line(1);
+
+      expect(foldable(state, fromLine.from, fromLine.to)).toEqual({ from: 4, to: 14 });
+    });
+  });
+
   it('loads and memoizes each SQL dialect independently', async () => {
     await jest.isolateModulesAsync(async () => {
       const { loadLanguageExtension } = await import('./languageLoader');

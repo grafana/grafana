@@ -2001,7 +2001,8 @@
       "metadata": {
         "name": "elasticsearchESQLQuery",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-08T21:29:18Z"
       },
       "spec": {
         "description": "Enables the ES|QL query editor in the Elasticsearch data source",
@@ -2027,7 +2028,8 @@
       "metadata": {
         "name": "elasticsearchRawDSLQuery",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-15T19:11:05Z"
+        "creationTimestamp": "2025-12-15T19:11:05Z",
+        "deletionTimestamp": "2026-07-08T21:29:18Z"
       },
       "spec": {
         "description": "Enables the raw DSL query editor in the Elasticsearch data source",
@@ -2778,6 +2780,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.ssoSettingsToMTSettings",
+        "resourceVersion": "1783523719423",
+        "creationTimestamp": "2026-07-08T15:15:19Z"
+      },
+      "spec": {
+        "description": "Enables reading and writing SSO settings through the MT-Settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -4585,6 +4601,22 @@
     },
     {
       "metadata": {
+        "name": "provisioning.userAttribution",
+        "resourceVersion": "1783717809512",
+        "creationTimestamp": "2026-07-08T13:32:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-10 21:10:09.512157 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Author Git Sync commits as the acting Grafana user",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioningExport",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -5069,7 +5101,8 @@
       "metadata": {
         "name": "rudderstackUpgrade",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-11-19T16:48:23Z"
+        "creationTimestamp": "2025-11-19T16:48:23Z",
+        "deletionTimestamp": "2026-06-10T21:28:05Z"
       },
       "spec": {
         "description": "Enables the new version of rudderstack",
@@ -5314,6 +5347,21 @@
         "description": "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "ssoSettingsToMTSettings",
+        "resourceVersion": "1783417175218",
+        "creationTimestamp": "2026-07-07T09:39:35Z",
+        "deletionTimestamp": "2026-07-08T15:15:19Z"
+      },
+      "spec": {
+        "description": "Enables reading and writing SSO settings through the MT-Settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -5756,6 +5804,7 @@
         "name": "vizPresets",
         "resourceVersion": "1779296184831",
         "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-06-29T12:51:15Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-20 16:56:24.831547 +0000 UTC"
         }

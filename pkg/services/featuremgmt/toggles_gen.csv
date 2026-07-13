@@ -30,6 +30,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,provisioning.readmes,preview,@grafana/grafana-app-platform-squad,false,false,true
 2026-06-09,provisioning.gitConventions,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-07-08,provisioning.userAttribution,preview,@grafana/grafana-app-platform-squad,false,false,false
 2023-12-06,grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
@@ -244,7 +245,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,cdnPluginsUrls,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,grafana.dedicatedGrafanaComProxyAPIToken,experimental,@grafana/grafana-catalog,false,false,false
-2026-02-18,vizPresets,GA,@grafana/dataviz-squad,false,false,true
 2026-06-03,heatmapNegativeLogBuckets,experimental,@grafana/dataviz-squad,false,false,true
 2026-05-22,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/data-sources-plugins,false,false,false
@@ -255,13 +255,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/grafana-catalog,false,false,true
 2025-10-29,panelTimeSettings,preview,@grafana/dashboards-squad,false,false,false
-2025-12-15,elasticsearchRawDSLQuery,experimental,@grafana/data-sources-plugins,false,false,false
-2026-05-22,elasticsearchESQLQuery,experimental,@grafana/data-sources-plugins,false,false,false
 2025-11-12,awsDatasourcesHttpProxy,experimental,@grafana/data-sources-plugins,false,false,false
 2025-11-17,transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
-2025-11-19,rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
 2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,true
 2026-05-22,dashboardSectionVariables,GA,@grafana/dashboards-squad,false,false,true
@@ -279,6 +276,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,kubernetesServiceAccountsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesServiceAccountTokensApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesSsoSettingsApi,experimental,@grafana/identity-access-team,false,false,false
+2026-07-08,grafana.ssoSettingsToMTSettings,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesExternalGroupMappingsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesExternalGroupMappingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false

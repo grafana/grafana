@@ -120,12 +120,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	}
 
 	rendererAvailable := e.render.IsAvailable(ctx)
-	// GenerateDashboardPreviews lives on the type-specific config, which is nil
-	// for the other provider(s) — guard against a nil dereference (e.g. a GitHub
-	// Enterprise repo has Spec.GitHubEnterprise set, not Spec.GitHub).
-	generatePreviews := (cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews) ||
-		(cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews)
-	shouldRender := rendererAvailable && len(changes) == 1 && generatePreviews
+	shouldRender := rendererAvailable && len(changes) == 1 && cfg.ShouldGenerateDashboardPreviews()
 	info := changeInfo{
 		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,

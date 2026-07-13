@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { type SceneObject, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, type SceneObject, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
@@ -386,6 +386,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     this.setState({ openPane, previousState: getStateForPaneHistory(this.state) });
+    this.publishEvent(new NewSceneObjectAddedEvent(openPane), true);
   }
 
   public closePane() {
