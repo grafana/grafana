@@ -177,6 +177,63 @@ func (_c *MockPullRequestRepo_Config_Call) RunAndReturn(run func() *v0alpha1.Rep
 	return _c
 }
 
+// MergeBase provides a mock function with given fields: ctx, headRef
+func (_m *MockPullRequestRepo) MergeBase(ctx context.Context, headRef string) (string, error) {
+	ret := _m.Called(ctx, headRef)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MergeBase")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+		return rf(ctx, headRef)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = rf(ctx, headRef)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, headRef)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockPullRequestRepo_MergeBase_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MergeBase'
+type MockPullRequestRepo_MergeBase_Call struct {
+	*mock.Call
+}
+
+// MergeBase is a helper method to define mock.On call
+//   - ctx context.Context
+//   - headRef string
+func (_e *MockPullRequestRepo_Expecter) MergeBase(ctx interface{}, headRef interface{}) *MockPullRequestRepo_MergeBase_Call {
+	return &MockPullRequestRepo_MergeBase_Call{Call: _e.mock.On("MergeBase", ctx, headRef)}
+}
+
+func (_c *MockPullRequestRepo_MergeBase_Call) Run(run func(ctx context.Context, headRef string)) *MockPullRequestRepo_MergeBase_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockPullRequestRepo_MergeBase_Call) Return(_a0 string, _a1 error) *MockPullRequestRepo_MergeBase_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockPullRequestRepo_MergeBase_Call) RunAndReturn(run func(context.Context, string) (string, error)) *MockPullRequestRepo_MergeBase_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Read provides a mock function with given fields: ctx, path, ref
 func (_m *MockPullRequestRepo) Read(ctx context.Context, path string, ref string) (*FileInfo, error) {
 	ret := _m.Called(ctx, path, ref)

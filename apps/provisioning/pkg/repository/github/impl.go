@@ -515,6 +515,20 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]
 	return ret, nil
 }
 
+func (r *githubClient) MergeBase(ctx context.Context, base, head string) (string, error) {
+	cmp, _, err := r.gh.Repositories.CompareCommits(ctx, r.owner, r.repo, base, head, &github.ListOptions{PerPage: 1})
+	if err != nil {
+		return "", translateGitHubError(err)
+	}
+
+	sha := cmp.GetMergeBaseCommit().GetSHA()
+	if sha == "" {
+		return "", fmt.Errorf("no merge base found between %q and %q", base, head)
+	}
+
+	return sha, nil
+}
+
 func (r *githubClient) CreatePullRequestComment(ctx context.Context, number int, body string) error {
 	comment := &github.IssueComment{
 		Body: &body,

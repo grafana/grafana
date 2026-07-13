@@ -158,6 +158,16 @@ Return to Grafana and fill in the following fields:
 1. Paste the token into the **API Token** text box.
 1. Paste the **Repository URL** for your Bitbucket repository into the text box.
 
+   Use the Git clone URL for the repository, not the URL that appears in your browser's address bar when you view the repository. To find it, select **Clone** in Bitbucket and copy the HTTPS URL. The clone URL ends in `.git`, and its format depends on your Bitbucket deployment:
+   - Bitbucket Cloud: `https://bitbucket.org/<workspace>/<repository>.git`
+   - Bitbucket Data Center and Server: `https://<bitbucket-host>/scm/<PROJECT>/<repository>.git`
+
+   {{< admonition type="tip" >}}
+
+   If Grafana returns an `ls-refs` error when it connects to the repository, check that you entered the clone URL and not the browser URL.
+
+   {{< /admonition >}}
+
 Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with Pure Git
