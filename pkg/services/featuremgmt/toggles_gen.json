@@ -1931,6 +1931,20 @@
     },
     {
       "metadata": {
+        "name": "deletedFolderResourceCleanup",
+        "resourceVersion": "1783997108632",
+        "creationTimestamp": "2026-07-14T02:45:08Z"
+      },
+      "spec": {
+        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-04-16T14:52:47Z"
