@@ -17,7 +17,9 @@ function fallbackFileName(): string {
 
 /** Extracts the filename from a Content-Disposition header, if present. */
 function fileNameFromContentDisposition(header: string | null): string | undefined {
-  return header?.match(/filename="?([^"]+)"?/i)?.[1];
+  // Stop at a closing quote or the next parameter (;), so an unquoted filename followed by other
+  // Content-Disposition params (e.g. filename*=) doesn't get captured into the name.
+  return header?.match(/filename="?([^";]+)"?/i)?.[1];
 }
 
 /**

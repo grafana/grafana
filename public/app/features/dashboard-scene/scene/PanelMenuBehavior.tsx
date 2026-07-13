@@ -21,6 +21,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened } from 'app/features/alerting/unified/Analytics';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
@@ -271,6 +272,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     }
 
     if (
+      isOnPrem() &&
       contextSrv.isGrafanaAdmin &&
       plugin &&
       !plugin.meta.skipDataQuery &&
