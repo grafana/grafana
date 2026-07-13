@@ -1794,6 +1794,11 @@
         },
         "source-title": "Import Source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "templates-desc": "Optional. Upload the template files referenced by your Alertmanager config. Each file is imported as a template named after the file.",
+        "templates-dropzone": "Drop template files here or click to upload",
+        "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
+        "templates-label": "Notification templates",
+        "templates-remove": "Remove {{name}}",
         "upload": "Upload YAML file",
         "validating": "Validating configuration...",
         "validation-error": "Validation failed",
@@ -1852,6 +1857,10 @@
       "target-folder": {
         "description": "The folder to import the rules to",
         "label": "Target folder"
+      },
+      "templates": {
+        "conflicts-with-config": "Template file \"{{name}}\" conflicts with a template already defined in the config",
+        "duplicate-file-name": "Duplicate template file name: \"{{name}}\""
       },
       "wizard": {
         "cancel": "Cancel",

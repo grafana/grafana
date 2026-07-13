@@ -39,6 +39,7 @@ function TestWrapper({
       notificationsDatasourceUID: undefined,
       notificationsDatasourceName: null,
       notificationsYamlFile: null,
+      notificationsTemplateFiles: [],
       selectedRoutingTree: '',
       rulesSource: 'datasource',
       rulesDatasourceUID: undefined,
@@ -154,6 +155,87 @@ describe('Step1AlertmanagerResources', () => {
 
       expect(alertmanagerDataSourceLabels.length).toBeGreaterThan(0);
       expect(screen.getByText(/select data source/i)).toBeInTheDocument();
+    });
+
+    it('should render the notification templates uploader for the YAML source', () => {
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText(/notification templates/i)).toBeInTheDocument();
+      expect(screen.getByText(/drop template files here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('should NOT render the templates uploader for the datasource source', () => {
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByText(/drop template files here or click to upload/i)).not.toBeInTheDocument();
+    });
+
+    it('should list uploaded template files and show a duplicate-name error', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      // The dropzone's file input inherits the Field id, so its label resolves to it
+      const input = screen.getByLabelText(/notification templates/i);
+
+      await user.upload(input, [
+        new File(['a'], 'dupe.tmpl', { type: 'text/plain' }),
+        new File(['b'], 'dupe.tmpl', { type: 'text/plain' }),
+      ]);
+
+      expect(await screen.findByText(/duplicate template file name: "dupe.tmpl"/i)).toBeInTheDocument();
+    });
+
+    it('displays template files already present in form state (persists across navigation)', () => {
+      render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            notificationsTemplateFiles: [
+              new File(['a'], 'email.tmpl', { type: 'text/plain' }),
+              new File(['b'], 'slack.tmpl', { type: 'text/plain' }),
+            ],
+          }}
+        >
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('email.tmpl')).toBeInTheDocument();
+      expect(screen.getByText('slack.tmpl')).toBeInTheDocument();
+    });
+
+    it('removes a template file when its remove button is clicked', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            notificationsTemplateFiles: [
+              new File(['a'], 'email.tmpl', { type: 'text/plain' }),
+              new File(['b'], 'slack.tmpl', { type: 'text/plain' }),
+            ],
+          }}
+        >
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      await user.click(screen.getByRole('button', { name: /remove email\.tmpl/i }));
+
+      expect(screen.queryByText('email.tmpl')).not.toBeInTheDocument();
+      expect(screen.getByText('slack.tmpl')).toBeInTheDocument();
     });
   });
 

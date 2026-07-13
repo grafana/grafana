@@ -1,6 +1,7 @@
 import { load } from 'js-yaml';
 import { useCallback, useMemo, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
@@ -8,6 +9,7 @@ import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
 import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/steps';
+import { findDuplicateTemplateFileName } from './steps/utils';
 import type { ConvertAlertmanagerResponse, DryRunValidationResult, MergeStats, PromoteStatsSummary } from './types';
 
 interface ParsedAlertmanagerYaml {
@@ -62,6 +64,12 @@ interface NotificationsSourceParams {
   /** Datasource name (not UID) - required when source is 'datasource' */
   datasourceName?: string;
   yamlFile: File | null;
+  /**
+   * Separate notification template files uploaded alongside the YAML config.
+   * On disk users keep the Alertmanager config and template files separately (mimirtool combines
+   * them on the fly); the wizard reads these and merges them into the request's template_files map.
+   */
+  templateFiles?: File[];
   /** Configuration identifier - the name of the extra config (policy tree name) */
   configIdentifier: string;
   /** If true, promote (merge) the imported config into the main Grafana config */
@@ -69,15 +77,64 @@ interface NotificationsSourceParams {
 }
 
 /**
+ * Read uploaded notification template files into a { fileName: content } map, keyed by file name —
+ * matching how mimirtool and the convert API key `template_files` (and how Grafana names the
+ * resulting template groups). Throws if two files share the same name, since the key would be
+ * ambiguous.
+ */
+export async function readTemplateFiles(files: File[] = []): Promise<Record<string, string>> {
+  const duplicate = findDuplicateTemplateFileName(files);
+  if (duplicate) {
+    throw new Error(
+      t('alerting.import-to-gma.templates.duplicate-file-name', 'Duplicate template file name: "{{name}}"', {
+        name: duplicate,
+      })
+    );
+  }
+  const contents = await Promise.all(files.map((file) => file.text()));
+  return Object.fromEntries(files.map((file, index) => [file.name, contents[index]]));
+}
+
+/**
+ * Merge separately-uploaded template files on top of any template_files already embedded in the
+ * config. A name that exists in both is ambiguous, so reject it rather than silently overwriting.
+ */
+export function mergeTemplateFiles(
+  embedded: Record<string, string>,
+  uploaded: Record<string, string>
+): Record<string, string> {
+  const merged = { ...embedded };
+  for (const [name, content] of Object.entries(uploaded)) {
+    if (name in merged) {
+      throw new Error(
+        t(
+          'alerting.import-to-gma.templates.conflicts-with-config',
+          'Template file "{{name}}" conflicts with a template already defined in the config',
+          { name }
+        )
+      );
+    }
+    merged[name] = content;
+  }
+  return merged;
+}
+
+/**
  * Resolve the alertmanager config and template files from a YAML file or datasource.
  * Shared between import and dry-run flows.
  */
 async function resolveAlertmanagerConfig(params: NotificationsSourceParams): Promise<ParsedAlertmanagerYaml> {
-  const { source, datasourceName, yamlFile } = params;
+  const { source, datasourceName, yamlFile, templateFiles } = params;
 
   if (source === 'yaml' && yamlFile) {
     const yamlContent = await yamlFile.text();
-    return parseAlertmanagerYaml(yamlContent);
+    const parsed = parseAlertmanagerYaml(yamlContent);
+    const uploadedTemplates = await readTemplateFiles(templateFiles);
+
+    return {
+      alertmanagerConfig: parsed.alertmanagerConfig,
+      templateFiles: mergeTemplateFiles(parsed.templateFiles, uploadedTemplates),
+    };
   }
 
   if (source === 'datasource' && datasourceName) {

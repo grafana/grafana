@@ -5,7 +5,9 @@ import { setupMswServer } from '../../mockApi';
 
 import {
   buildRoutingParams,
+  mergeTemplateFiles,
   parseDryRunResponse,
+  readTemplateFiles,
   summarizeMergeStats,
   useDryRunNotifications,
   useImportNotifications,
@@ -179,5 +181,102 @@ describe('promote header wiring', () => {
     expect(headers).toHaveLength(1);
     expect(headers[0].get('X-Grafana-Alerting-Promote')).toBe('true');
     expect(headers[0].get('X-Grafana-Alerting-Dry-Run')).toBe('true');
+  });
+});
+
+function templateFile(name: string, content: string) {
+  return new File([content], name, { type: 'text/plain' });
+}
+
+describe('readTemplateFiles', () => {
+  it('returns an empty map when there are no files', async () => {
+    expect(await readTemplateFiles()).toEqual({});
+    expect(await readTemplateFiles([])).toEqual({});
+  });
+
+  it('keys each file by its name with the file content as the value', async () => {
+    const result = await readTemplateFiles([
+      templateFile('email.tmpl', 'email body'),
+      templateFile('slack.tmpl', 'slack body'),
+    ]);
+
+    expect(result).toEqual({ 'email.tmpl': 'email body', 'slack.tmpl': 'slack body' });
+  });
+
+  it('rejects when two files share the same name', async () => {
+    await expect(
+      readTemplateFiles([templateFile('dupe.tmpl', 'one'), templateFile('dupe.tmpl', 'two')])
+    ).rejects.toThrow('dupe.tmpl');
+  });
+});
+
+describe('mergeTemplateFiles', () => {
+  it('layers uploaded templates on top of the embedded ones', () => {
+    expect(mergeTemplateFiles({ 'embedded.tmpl': 'a' }, { 'uploaded.tmpl': 'b' })).toEqual({
+      'embedded.tmpl': 'a',
+      'uploaded.tmpl': 'b',
+    });
+  });
+
+  it('returns a copy of the embedded map when there are no uploaded templates', () => {
+    const embedded = { 'embedded.tmpl': 'a' };
+    const merged = mergeTemplateFiles(embedded, {});
+
+    expect(merged).toEqual(embedded);
+    expect(merged).not.toBe(embedded);
+  });
+
+  it('throws when an uploaded name collides with an embedded template', () => {
+    expect(() => mergeTemplateFiles({ 'shared.tmpl': 'embedded' }, { 'shared.tmpl': 'uploaded' })).toThrow(
+      'shared.tmpl'
+    );
+  });
+});
+
+describe('template file import wiring', () => {
+  function captureConvertBodies() {
+    const bodies: Array<{ alertmanager_config: string; template_files: Record<string, string> }> = [];
+    server.use(
+      http.post(CONVERT_URL, async ({ request }) => {
+        bodies.push(await request.clone().json());
+        return HttpResponse.json({ status: 'success' });
+      })
+    );
+    return bodies;
+  }
+
+  it('combines separately-uploaded template files into the request template_files map', async () => {
+    const bodies = captureConvertBodies();
+    const { result } = renderHook(() => useImportNotifications(), { wrapper });
+
+    await act(async () => {
+      await result.current({
+        source: 'yaml',
+        yamlFile: yamlFile(),
+        templateFiles: [templateFile('email.tmpl', 'email body'), templateFile('slack.tmpl', 'slack body')],
+        configIdentifier: 'prod',
+      });
+    });
+
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0].template_files).toEqual({ 'email.tmpl': 'email body', 'slack.tmpl': 'slack body' });
+  });
+
+  it('surfaces a duplicate-template error and does not call the API', async () => {
+    const bodies = captureConvertBodies();
+    const { result } = renderHook(() => useImportNotifications(), { wrapper });
+
+    await expect(
+      act(async () => {
+        await result.current({
+          source: 'yaml',
+          yamlFile: yamlFile(),
+          templateFiles: [templateFile('dupe.tmpl', 'one'), templateFile('dupe.tmpl', 'two')],
+          configIdentifier: 'prod',
+        });
+      })
+    ).rejects.toThrow('dupe.tmpl');
+
+    expect(bodies).toHaveLength(0);
   });
 });

@@ -87,6 +87,7 @@ export interface ImportFormValues {
   notificationsDatasourceUID?: string;
   notificationsDatasourceName: string | null;
   notificationsYamlFile: File | null;
+  notificationsTemplateFiles: File[];
 
   // Step 2: Alert rules
   step2Completed: boolean;
@@ -220,6 +221,7 @@ function ImportWizardContent() {
       notificationsDatasourceUID: undefined,
       notificationsDatasourceName: null,
       notificationsYamlFile: null,
+      notificationsTemplateFiles: [],
       // Step 2
       step2Completed: false,
       step2Skipped: false,
@@ -267,6 +269,7 @@ function ImportWizardContent() {
       source: formValues.notificationsSource,
       datasourceName: formValues.notificationsDatasourceName ?? undefined,
       yamlFile: formValues.notificationsYamlFile,
+      templateFiles: formValues.notificationsTemplateFiles,
       configIdentifier: formValues.policyTreeName,
       promote: formValues.importMethod === 'promote',
     });
@@ -352,6 +355,7 @@ function ImportWizardContent() {
           source: values.notificationsSource,
           datasourceName: values.notificationsDatasourceName ?? undefined,
           yamlFile: values.notificationsYamlFile,
+          templateFiles: values.notificationsTemplateFiles,
           configIdentifier: values.policyTreeName,
           promote: values.importMethod === 'promote',
         });
