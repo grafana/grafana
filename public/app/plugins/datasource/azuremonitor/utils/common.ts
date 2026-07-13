@@ -1,7 +1,7 @@
 import { map } from 'lodash';
 
 import { type ScopedVars, type SelectableValue, type VariableWithMultiSupport } from '@grafana/data';
-import { type TemplateSrv, type VariableInterpolation } from '@grafana/runtime';
+import { logWarning, type TemplateSrv, type VariableInterpolation } from '@grafana/runtime';
 
 import { type AzureAPIResponse, type AzureMonitorOption, type VariableOptionGroup } from '../types/types';
 
@@ -64,8 +64,7 @@ export async function fetchAllArmPages<T>(
   for (; path && pages < maxPages; pages++) {
     const page = await fetchPage(path);
     if (!page) {
-      // eslint-disable-next-line no-console
-      console.warn('[azuremonitor] ARM page request returned no result; stopping pagination.');
+      logWarning('[azuremonitor] ARM page request returned no result; stopping pagination.');
       path = undefined;
       break;
     }
@@ -73,8 +72,7 @@ export async function fetchAllArmPages<T>(
     path = page.nextLink ? nextLinkToPath(prefix, page.nextLink) : undefined;
   }
   if (path) {
-    // eslint-disable-next-line no-console
-    console.warn(`[azuremonitor] ARM listing stopped after ${maxPages} pages; some results may be omitted.`);
+    logWarning(`[azuremonitor] ARM listing stopped after ${maxPages} pages; some results may be omitted.`);
   }
   return results;
 }
