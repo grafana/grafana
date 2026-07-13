@@ -7,11 +7,10 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o *options.Options) error {
+func applyGrafanaConfig(cfg *setting.Cfg, o *options.Options) error {
 	defaultLogLevel := 0
 	ip := net.ParseIP(cfg.HTTPAddr)
 	if ip == nil {
@@ -76,7 +75,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	unifiedStorageCfg := cfg.UnifiedStorage
 	o.StorageOptions.UnifiedStorageConfig = unifiedStorageCfg
 
-	o.ExtraOptions.DevMode = apiserverCfg.Key("dev_mode_enabled").MustBool(false)
+	o.ExtraOptions.DevMode = cfg.IsDevMode() && apiserverCfg.Key("dev_mode_enabled").MustBool(false)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL
 	o.ExtraOptions.Verbosity = apiserverCfg.Key("log_level").MustInt(defaultLogLevel)
