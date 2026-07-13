@@ -76,24 +76,28 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	resp, queryErr := queryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)
 
 	// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error, the
-	// same way QueryMetricsV2 surfaces failures. Fold those into queryErr so they are both recorded
-	// in the bundle (query-error.txt) and — when nothing was captured — surfaced as an error rather
-	// than a 200 with a sparse bundle that never explains the failure.
-	if queryErr == nil {
-		queryErr = diagnostics.ResponseError(resp)
-	}
+	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle.
+	respErr := diagnostics.ResponseError(resp)
 
 	// If the query failed before any traffic was captured (e.g. pre-flight access-denied or
 	// datasource-not-found, which never reach the datasource), there's nothing to diagnose, so
-	// surface the real HTTP error (403/404/…) instead of a 200 bundle. A runtime failure that did
-	// hit the wire leaves captured traffic (in-process buffer or an external __har__ frame) and
-	// falls through — the captured failure is exactly what the bundle is for, recorded alongside
+	// surface the failure with the same status QueryMetricsV2 would return instead of a 200 bundle:
+	// a top-level error keeps its typed status (403/404, else 500), while a per-refId (bad-query)
+	// failure is a client error (400). A failure that did hit the wire leaves captured traffic and
+	// falls through — that captured failure is exactly what the bundle is for, recorded alongside
 	// query-error.txt.
-	if queryErr != nil && !diagnostics.HasCapturedHAR(resp, harBuffer) {
-		return hs.handleQueryMetricsError(queryErr)
+	if !diagnostics.HasCapturedHAR(resp, harBuffer) {
+		if r := hs.diagnosticsNoCaptureError(queryErr, respErr); r != nil {
+			return r
+		}
 	}
 
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryErr)
+	// Record whatever failure occurred in the bundle, preferring the top-level error.
+	bundleErr := queryErr
+	if bundleErr == nil {
+		bundleErr = respErr
+	}
+	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, bundleErr)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}
@@ -103,4 +107,20 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
+}
+
+// diagnosticsNoCaptureError returns the response to send when a query failed and nothing was
+// captured — there is no traffic to diagnose, so surface the failure with the same status
+// QueryMetricsV2 would return instead of a 200 bundle. A top-level error keeps its typed status
+// (403/404, else 500) via handleQueryMetricsError; a per-refId failure is a bad query, so a client
+// error (400), matching QueryMetricsV2's per-refId handling. Returns nil when nothing failed, so
+// the caller proceeds to assemble the bundle.
+func (hs *HTTPServer) diagnosticsNoCaptureError(queryErr, respErr error) response.Response {
+	if queryErr != nil {
+		return hs.handleQueryMetricsError(queryErr)
+	}
+	if respErr != nil {
+		return response.Error(http.StatusBadRequest, "query failed", respErr)
+	}
+	return nil
 }
