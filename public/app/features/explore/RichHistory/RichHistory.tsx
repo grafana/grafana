@@ -83,7 +83,7 @@ export function RichHistory(props: RichHistoryProps) {
   }, [richHistory]);
 
   const exploreActiveDS = useSelector(selectExploreDSMaps);
-  const { items: dataSourceItems } = useDataSourceInstanceList({ mixed: true });
+  const { items: dataSourceItems, isLoading: isLoadingDatasources } = useDataSourceInstanceList({ mixed: true });
   const listOfDatasources = useMemo(
     () => dataSourceItems.map((ds) => ({ name: ds.name, uid: ds.uid })),
     [dataSourceItems]
@@ -108,6 +108,7 @@ export function RichHistory(props: RichHistoryProps) {
         height={height}
         activeDatasources={activeDatasources}
         listOfDatasources={listOfDatasources}
+        isLoadingDatasources={isLoadingDatasources}
       />
     ),
     icon: 'history',
