@@ -210,8 +210,8 @@ function ImportWizardContent() {
 
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
-      // Step 0 — default to auto-sync when it's available, otherwise the one-time import
-      importMethod: isAutoSyncSegmentEnabled() ? 'autosync' : 'stage',
+      // Step 0 — default to the staged one-time import (auto-sync stays opt-in)
+      importMethod: 'stage',
       autosyncDatasourceUID: undefined,
       // Step 1
       step1Completed: false,
