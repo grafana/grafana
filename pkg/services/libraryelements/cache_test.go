@@ -41,7 +41,7 @@ func (s *trackingFolderService) GetCallCount() int {
 func TestIntegration_FolderTreeCache(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	t.Run("GetAll calls GetFolders once and caches across requests", func(t *testing.T) {
+	t.Run("GetAll calls GetFolders once per request and rebuilds on the next", func(t *testing.T) {
 		sc := setupTestScenario(t)
 
 		// Create multiple library panels
@@ -63,7 +63,9 @@ func TestIntegration_FolderTreeCache(t *testing.T) {
 		sc.service.treeCache = newFolderTreeCache(trackingSvc)
 		defer func() { sc.service.folderService = originalFolderSvc }()
 
-		// First request
+		// First request builds the tree exactly once, even though the tree is
+		// needed once for the response plus once per panel in the permission
+		// resolver (the request-scoped holder collapses those N+1 lookups).
 		resp := sc.service.getAllHandler(sc.reqContext)
 		require.Equal(t, 200, resp.Status())
 
@@ -71,12 +73,13 @@ func TestIntegration_FolderTreeCache(t *testing.T) {
 		err := json.Unmarshal(resp.Body(), &result)
 		require.NoError(t, err)
 		require.Equal(t, int64(5), result.Result.TotalCount)
-		assert.Equal(t, 1, trackingSvc.GetCallCount(), "GetFolders should be called once for tree build")
+		assert.Equal(t, 1, trackingSvc.GetCallCount(), "GetFolders should be called once per request for tree build")
 
-		// Second request reuses global cache
+		// A second request must rebuild the tree so folder changes are reflected
+		// immediately rather than being masked by a stale cross-request cache.
 		resp = sc.service.getAllHandler(sc.reqContext)
 		require.Equal(t, 200, resp.Status())
-		assert.Equal(t, 1, trackingSvc.GetCallCount(), "Second request should reuse cached tree")
+		assert.Equal(t, 2, trackingSvc.GetCallCount(), "Second request should rebuild the tree, not reuse a stale one")
 	})
 }
 
@@ -101,7 +104,7 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 		assert.Equal(t, "Folder B", tree.GetTitle("folder-b"))
 	})
 
-	t.Run("caches tree and returns same instance on repeated calls", func(t *testing.T) {
+	t.Run("memoizes tree within a request and returns same instance", func(t *testing.T) {
 		sc := setupTestScenario(t)
 
 		trackingSvc := newTrackingFolderService()
@@ -110,7 +113,7 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 		}
 
 		cache := newFolderTreeCache(trackingSvc)
-		ctx := context.Background()
+		ctx := withCache(context.Background())
 
 		tree1, err := cache.get(ctx, sc.reqContext.SignedInUser)
 		require.NoError(t, err)
@@ -118,11 +121,11 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 
 		tree2, err := cache.get(ctx, sc.reqContext.SignedInUser)
 		require.NoError(t, err)
-		assert.Equal(t, 1, trackingSvc.GetCallCount(), "Should not call GetFolders again within TTL")
-		assert.Same(t, tree1, tree2, "Should return same cached tree instance")
+		assert.Equal(t, 1, trackingSvc.GetCallCount(), "Should reuse the memoized tree within the same request")
+		assert.Same(t, tree1, tree2, "Should return same memoized tree instance")
 	})
 
-	t.Run("different user gets separate cache entry", func(t *testing.T) {
+	t.Run("does not memoize across requests", func(t *testing.T) {
 		sc := setupTestScenario(t)
 
 		trackingSvc := newTrackingFolderService()
@@ -131,17 +134,37 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 		}
 
 		cache := newFolderTreeCache(trackingSvc)
-		ctx := context.Background()
 
-		// First user fetches and caches tree
+		// Each request carries its own holder, so each rebuilds a fresh tree.
+		_, err := cache.get(withCache(context.Background()), sc.reqContext.SignedInUser)
+		require.NoError(t, err)
+		assert.Equal(t, 1, trackingSvc.GetCallCount())
+
+		_, err = cache.get(withCache(context.Background()), sc.reqContext.SignedInUser)
+		require.NoError(t, err)
+		assert.Equal(t, 2, trackingSvc.GetCallCount(), "A new request should rebuild the tree and see fresh folders")
+	})
+
+	t.Run("does not reuse a tree across different users in the same context", func(t *testing.T) {
+		sc := setupTestScenario(t)
+
+		trackingSvc := newTrackingFolderService()
+		trackingSvc.ExpectedFolders = []*folder.Folder{
+			{UID: "folder-a", Title: "Folder A", OrgID: 1},
+		}
+
+		cache := newFolderTreeCache(trackingSvc)
+		ctx := withCache(context.Background())
+
+		// First user fetches and memoizes tree
 		_, err := cache.get(ctx, sc.reqContext.SignedInUser)
 		require.NoError(t, err)
 		assert.Equal(t, 1, trackingSvc.GetCallCount())
 
-		// Same user reuses cache
+		// Same user reuses the memoized tree
 		_, err = cache.get(ctx, sc.reqContext.SignedInUser)
 		require.NoError(t, err)
-		assert.Equal(t, 1, trackingSvc.GetCallCount(), "Same user should reuse cache")
+		assert.Equal(t, 1, trackingSvc.GetCallCount(), "Same user should reuse the memoized tree")
 
 		// Different user triggers a new GetFolders call
 		user2 := &user.SignedInUser{
