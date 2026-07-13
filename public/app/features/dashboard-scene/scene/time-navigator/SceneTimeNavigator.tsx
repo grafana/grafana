@@ -10,18 +10,18 @@ import {
   SceneDataLayerSet,
   type SceneDataProvider,
   type SceneDataQuery,
+  SceneDataTransformer,
+  type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
   SceneQueryRunner,
   SceneTimeRange,
+  VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
 import { type AnnotationQuery } from '@grafana/schema';
 import { IconButton, MultiSelect, Toggletip } from '@grafana/ui';
 
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDatasourceFromQueryRunner } from '../../utils/getDatasourceFromQueryRunner';
-import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
 
 import { TimeNavigator } from './TimeNavigator';
@@ -89,7 +89,10 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
 
   /** Per-dashboard localStorage key for a saved selection. */
   private _storageKey(kind: 'sources' | 'annotations'): string | undefined {
-    const uid = getDashboardSceneFor(this).state.uid;
+    // Duck-type the dashboard uid off the root state so we don't import DashboardScene (which would
+    // reintroduce the circular dependency).
+    const rootState: { uid?: string } = this.getRoot().state;
+    const uid = rootState.uid;
     return uid ? `grafana.dashboard.timeNavigator.${kind}.${uid}` : undefined;
   }
 
@@ -152,11 +155,7 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
     let queries: AnnotationQuery[] = [];
     if (names.size) {
       try {
-        queries = dashboardSceneGraph
-          .getDataLayers(getDashboardSceneFor(this))
-          .state.annotationLayers.filter(
-            (l): l is dataLayers.AnnotationsDataLayer => l instanceof dataLayers.AnnotationsDataLayer
-          )
+        queries = getDashboardAnnotationLayers(this)
           // Match on the layer's state.name — that's what the picker stores as its value; a layer's
           // query.name can differ (or be empty), so filtering on query.name would silently drop selections.
           .filter((l) => names.has(l.state.name ?? ''))
@@ -188,14 +187,22 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
     if (!(runner instanceof SceneQueryRunner)) {
       return;
     }
-    const dashboard = getDashboardSceneFor(this);
+    const root = this.getRoot();
     const queries: SceneDataQuery[] = [];
     for (const key of this.state.sourcePanelKeys ?? []) {
-      const source = getQueryRunnerFor(findVizPanelByKey(dashboard, key) ?? undefined);
+      let panel: VizPanel | undefined;
+      try {
+        panel = sceneGraph.findByKeyAndType(root, key, VizPanel);
+      } catch {
+        // No matching VizPanel for this key (removed/renamed) — skip it.
+        panel = undefined;
+      }
+      const source = getQueryRunnerForPanel(panel);
       if (!source) {
         continue;
       }
-      const ds = getDatasourceFromQueryRunner(source);
+      // No panel-level datasource means all queries share one; fall back to the first query's datasource.
+      const ds = source.state.datasource ?? source.state.queries?.[0]?.datasource;
       for (const q of source.state.queries) {
         // Unique refIds across panels; carry each query's datasource so the Mixed runner routes it.
         queries.push({ ...q, refId: `S${queries.length}`, datasource: q.datasource ?? ds ?? undefined });
@@ -232,6 +239,36 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
   }
 }
 
+/**
+ * Unwrap a scene object's data provider to its SceneQueryRunner. Handles a SceneDataTransformer wrapping
+ * the runner, and falls back to the parent's $data (panels store their runner on the panel or its parent).
+ */
+function getQueryRunnerForPanel(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
+  if (!sceneObject) {
+    return undefined;
+  }
+  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
+  if (dataProvider instanceof SceneQueryRunner) {
+    return dataProvider;
+  }
+  if (dataProvider instanceof SceneDataTransformer) {
+    return getQueryRunnerForPanel(dataProvider);
+  }
+  return undefined;
+}
+
+/**
+ * The dashboard's annotation layers, reachable from the given scene object. `sceneGraph.getDataLayers`
+ * walks UP the graph to the dashboard's data-layer set(s); we then walk DOWN each set to collect the
+ * individual AnnotationsDataLayer instances (public API, no dashboard-scene imports).
+ */
+function getDashboardAnnotationLayers(sceneObject: SceneObject): dataLayers.AnnotationsDataLayer[] {
+  return sceneGraph
+    .getDataLayers(sceneObject)
+    .flatMap((set) => sceneGraph.findAllObjects(set, (o) => o instanceof dataLayers.AnnotationsDataLayer))
+    .filter((o): o is dataLayers.AnnotationsDataLayer => o instanceof dataLayers.AnnotationsDataLayer);
+}
+
 function extractSparklines(series: DataFrame[] | undefined): { time: number[]; values: number[][] } {
   if (!series?.length) {
     return { time: EMPTY_TIME, values: EMPTY_SERIES };
@@ -264,16 +301,20 @@ function SceneTimeNavigatorRenderer({ model }: SceneComponentProps<SceneTimeNavi
   // hidden or the dashboard navigates away.
   useEffect(() => () => onContextWindowChange.cancel(), [onContextWindowChange]);
 
-  const dashboard = getDashboardSceneFor(model);
-  const panelOptions = dashboardSceneGraph.getVizPanels(dashboard).map((p) => ({
-    label: p.state.title || p.state.key || '',
-    value: p.state.key || '',
-  }));
+  const root = model.getRoot();
+  const panelOptions = sceneGraph
+    .findAllObjects(root, (o) => o instanceof VizPanel)
+    .filter((o): o is VizPanel => o instanceof VizPanel)
+    .map((p) => ({
+      label: p.state.title || p.state.key || '',
+      value: p.state.key || '',
+    }));
   let annotationOptions: Array<{ label: string; value: string }> = [];
   try {
-    annotationOptions = dashboardSceneGraph
-      .getDataLayers(dashboard)
-      .state.annotationLayers.map((l) => ({ label: l.state.name ?? '', value: l.state.name ?? '' }));
+    annotationOptions = getDashboardAnnotationLayers(model).map((l) => ({
+      label: l.state.name ?? '',
+      value: l.state.name ?? '',
+    }));
   } catch {
     // No annotation layers on this scene — leave the picker empty.
   }
