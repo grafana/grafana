@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -16,6 +17,28 @@ import (
 
 	"github.com/chromedp/cdproto/har"
 )
+
+// urlInText matches http(s) URL substrings in freeform text, e.g. a Go net/url.Error message, which
+// renders the full request URL including its query string.
+var urlInText = regexp.MustCompile(`https?://[^\s"'<>]+`)
+
+// RedactErrorText redacts inline credentials, fragments, and sensitive query params from any URL
+// substrings in a freeform error message. Transport errors (net/url.Error) embed the full request
+// URL -- query string included -- and Go only masks userinfo passwords, not query params, so an
+// unredacted error would leak a datasource credential carried in a query param (e.g. ?api_key=,
+// Azure ?sig=) into a bundle meant for external sharing. Non-URL text is returned unchanged.
+func RedactErrorText(msg string) string {
+	return urlInText.ReplaceAllStringFunc(msg, func(u string) string {
+		// Strip trailing punctuation the error format appends after the URL (": ", ".", ")", ...)
+		// so it is not fed to url.Parse and then re-appended verbatim.
+		trailing := ""
+		for len(u) > 0 && strings.IndexByte(":.,;)]}", u[len(u)-1]) >= 0 {
+			trailing = string(u[len(u)-1]) + trailing
+			u = u[:len(u)-1]
+		}
+		return redactURLValue(u) + trailing
+	})
+}
 
 // redactedValue replaces sensitive header/cookie/query values in captured traffic. Diagnostic
 // bundles are meant to be shared (often externally), and the capture sits after the middlewares

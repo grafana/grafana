@@ -42,6 +42,19 @@ func TestBundler_Build_recordsQueryError(t *testing.T) {
 	require.Contains(t, string(files["query-error.txt"]), "datasource timeout")
 }
 
+func TestBundler_Build_redactsQueryErrorURL(t *testing.T) {
+	// A transport error embedding a URL with a secret query param must not leak into query-error.txt.
+	err := errors.New(`Get "https://ds.example.com/api?api_key=SECRET": dial tcp: connection refused`)
+	blob, buildErr := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, err)
+	require.NoError(t, buildErr)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "query-error.txt")
+	got := string(files["query-error.txt"])
+	require.NotContains(t, got, "SECRET", "secret query param must be redacted from query-error.txt")
+	require.Contains(t, got, "connection refused", "error message otherwise preserved")
+}
+
 func TestMergeHAR(t *testing.T) {
 	d1 := []byte(`{"log":{"creator":{"name":"A","version":"1"},"entries":[{"n":1}]}}`)
 	d2 := []byte(`{"log":{"entries":[{"n":2},{"n":3}]}}`)

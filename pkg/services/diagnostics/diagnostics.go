@@ -55,7 +55,10 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 
 	if queryErr != nil {
-		files["query-error.txt"] = []byte(queryErr.Error() + "\n")
+		// Redact URL query params from the error text: a transport error (net/url.Error) embeds the
+		// full request URL, and Go masks only userinfo passwords, so a credential in a query param
+		// would otherwise leak into this externally-shared file despite the HAR-level redaction.
+		files["query-error.txt"] = []byte(harcapture.RedactErrorText(queryErr.Error()) + "\n")
 	}
 
 	return buildTarGz(files)

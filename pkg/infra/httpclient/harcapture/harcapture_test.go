@@ -230,6 +230,23 @@ func TestRedactHARDocument(t *testing.T) {
 	assert.Nil(t, RedactHARDocument([]byte(`{"notalog":1}`)))
 }
 
+func TestRedactErrorText(t *testing.T) {
+	// A Go *url.Error renders the full request URL (query string included); the secret query param
+	// must be redacted while the surrounding message and non-sensitive params survive.
+	in := `Get "https://ds.example.com/api?api_key=SECRET&region=eu": dial tcp: connection refused`
+	out := RedactErrorText(in)
+	assert.NotContains(t, out, "SECRET", "secret query param must be redacted from error text")
+	assert.Contains(t, out, "region=eu", "non-sensitive param preserved")
+	assert.Contains(t, out, "connection refused", "surrounding error message preserved")
+
+	// Unquoted URL form followed by ": " — trailing colon must not defeat parsing/redaction.
+	in2 := `Get https://ds.example.com/q?token=SECRET: EOF`
+	assert.NotContains(t, RedactErrorText(in2), "SECRET")
+
+	// Non-URL text is returned unchanged.
+	assert.Equal(t, "context deadline exceeded", RedactErrorText("context deadline exceeded"))
+}
+
 func TestRedactedURLString_dropsFragment(t *testing.T) {
 	// A #fragment can carry a token (OAuth implicit flow); it must be dropped, not passed through.
 	u, err := url.Parse("https://idp.example.com/cb?state=ok#access_token=SECRET")

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -125,7 +126,9 @@ func (hs *HTTPServer) diagnosticsNoCaptureError(queryErr, respErr error) respons
 		return hs.handleQueryMetricsError(queryErr)
 	}
 	if respErr != nil {
-		return response.Error(http.StatusBadRequest, "query failed", respErr)
+		// Redact any URL (with secret query params) the error text may embed before it reaches the
+		// response, mirroring the bundle's query-error.txt handling.
+		return response.Error(http.StatusBadRequest, "query failed", errors.New(harcapture.RedactErrorText(respErr.Error())))
 	}
 	return nil
 }
