@@ -20,10 +20,7 @@ type mtSettingsStrategy struct {
 	matches func(provider string) bool
 }
 
-func (s *mtSettingsStrategy) IsMatch(provider string) bool {
-	// IsMatch carries no context and the toggle is an instance-global gate,
-	// so evaluation uses a background context.
-	ctx := context.Background()
+func (s *mtSettingsStrategy) IsMatch(ctx context.Context, provider string) bool {
 	enabled := openfeature.NewDefaultClient().Boolean(ctx,
 		featuremgmt.FlagGrafanaSsoSettingsToMTSettings, false, openfeature.TransactionContext(ctx))
 	return enabled && s.matches(provider)
