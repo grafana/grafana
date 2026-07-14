@@ -1,7 +1,7 @@
 syntax = "proto3";
 package vectorstore;
 
-option go_package = "github.com/grafana/grafana/pkg/storage/unified/vectorstorepb";
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
 
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
@@ -10,6 +10,7 @@ option go_package = "github.com/grafana/grafana/pkg/storage/unified/vectorstorep
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
 //   INVALID_ARGUMENT   bad filter, oversized batch (>500 vectors or >4 KiB metadata), empty content
+//   ALREADY_EXISTS     attempted to create something that already exists
 //   NOT_FOUND          collection not allowlisted / never provisioned
 //   PERMISSION_DENIED  request namespace not permitted for the caller identity
 //   RESOURCE_EXHAUSTED per-cluster embed budget exhausted (retryable)
@@ -22,12 +23,12 @@ service VectorStore {
   rpc UpdateMetadata(UpdateMetadataRequest) returns (UpdateMetadataResponse);
 }
 
-// EmbeddingInput is a piece of text to be embedded, plus its identity and metadata.
+// EmbeddingInput is a document to be embedded, plus its identity and metadata.
 // It only becomes a vector once the server embeds it.
 message EmbeddingInput {
   string uid = 1;          // entity id (caller-chosen, deterministic)
   string subresource = 2;  // chunk id within the entity (optional)
-  string content = 3;      // text to embed (required)
+  string content = 3;      // document content to embed (required)
   bytes metadata = 4;      // JSON object, max 4 KiB
 }
 
@@ -83,11 +84,17 @@ message DeleteRequest {
   string namespace = 1;
   // required
   string collection = 2;
-  // Provide at most ONE OF the following
-  // If none are provided, will delete all from tenant/collection up to the page limit
-  // The uids are the parent/resource uids. This means you cant directly delete specific subresources by their id.
-  repeated string uids = 3;  // delete whole entities (and their subresources)
-  bytes filter = 4;          // delete by metadata filter (paged, 10k/page)
+  // If the selector is not set, will delete all from tenant/collection up to the page limit
+  oneof selector {
+    // The uids are the parent/resource uids. This means you cant directly delete specific subresources by their id.
+    UidList uids = 3;  // delete whole entities (and their subresources)
+    bytes filter = 4;  // delete by metadata filter (paged, 10k/page)
+  }
+}
+
+// Wrapper because repeated fields can't be used directly in a oneof.
+message UidList {
+  repeated string uids = 1;
 }
 
 message DeleteResponse {
