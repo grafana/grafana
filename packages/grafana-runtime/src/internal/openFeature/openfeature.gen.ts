@@ -19,6 +19,10 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
+  DashboardNotebooks: "dashboard.notebooks",
+  /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
+  DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -43,8 +47,12 @@ export const FlagKeys = {
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
+  /** Redesigns dashboard settings page into Advanced Settings in a modal window */
+  GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Enables PLG-focused growth redesign of the unified homepage */
+  GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
@@ -53,30 +61,36 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
-  /** Enables org-defined dashboard templates for enterprise */
-  GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
+  /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
+  GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
+  GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Enable referencing an existing secret in an active keeper when creating a secure value */
+  GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled. */
+  GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
+  /** Enables semantic (vector) dashboard search in the command palette */
+  GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Enables the logs tableNG panel to replace existing tableRT */
+  LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
   LokiShardSplitting: "lokiShardSplitting",
   /** Enables managed plugins v2 (expanded rollout, community plugin coverage) */
   ManagedPluginsV2: "managedPluginsV2",
-  /** New Log Context component */
-  NewLogContext: "newLogContext",
-  /** Enables the new logs panel */
-  NewLogsPanel: "newLogsPanel",
   /** Enables the new Saved queries (query library) modal experience */
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
@@ -91,6 +105,8 @@ export const FlagKeys = {
   ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
+  /** Author Git Sync commits as the acting Grafana user */
+  ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -113,6 +129,8 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
   TableProtoRowParser: "table.protoRowParser",
+  /** Enables the refactored TableNG nested-table implementation */
+  TableRefactorNested: "table.refactorNested",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -148,6 +166,28 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
+ *
+ * **Details:**
+ * - flag key: `dashboard.notebooks`
+ * - default value: `false`
+ */
+export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.notebooks", false, options).value;
+};
+
+/**
+ * Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
+ *
+ * **Details:**
+ * - flag key: `dashboard.vectorSearch`
+ * - default value: `false`
+ */
+export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.vectorSearch", false, options).value;
 };
 
 /**
@@ -283,6 +323,17 @@ export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Redesigns dashboard settings page into Advanced Settings in a modal window
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardSettingsRedesign`
+ * - default value: `true`
+ */
+export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
+};
+
+/**
  * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
  *
  * **Details:**
@@ -291,6 +342,17 @@ export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.enableScopesFirstMode", false, options).value;
+};
+
+/**
+ * Enables PLG-focused growth redesign of the unified homepage
+ *
+ * **Details:**
+ * - flag key: `grafana.growthHomepage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.growthHomepage", false, options).value;
 };
 
 /**
@@ -338,14 +400,14 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
 };
 
 /**
- * Enables org-defined dashboard templates for enterprise
+ * Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
  *
  * **Details:**
- * - flag key: `grafana.orgDashboardTemplates`
+ * - flag key: `grafana.onDemandDiagnostics`
  * - default value: `false`
  */
-export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.orgDashboardTemplates", false, options).value;
+export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.onDemandDiagnostics", false, options).value;
 };
 
 /**
@@ -360,6 +422,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
 };
 
 /**
+ * Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options
+ *
+ * **Details:**
+ * - flag key: `grafana.queryVarEditorRedesign`
+ * - default value: `true`
+ */
+export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.queryVarEditorRedesign", true, options).value;
+};
+
+/**
  * Prevents flickering in dashboards
  *
  * **Details:**
@@ -368,6 +441,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.scenesFlickeringFix", true, options).value;
+};
+
+/**
+ * Enable referencing an existing secret in an active keeper when creating a secure value
+ *
+ * **Details:**
+ * - flag key: `grafana.secretsReferenceValueUI`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.secretsReferenceValueUI", false, options).value;
 };
 
 /**
@@ -390,6 +474,28 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.
+ *
+ * **Details:**
+ * - flag key: `grafana.useDefaultScopesEndpoint`
+ * - default value: `false`
+ */
+export const useFlagGrafanaUseDefaultScopesEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.useDefaultScopesEndpoint", false, options).value;
+};
+
+/**
+ * Enables semantic (vector) dashboard search in the command palette
+ *
+ * **Details:**
+ * - flag key: `grafana.vectorSearchCmdk`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.vectorSearchCmdk", false, options).value;
 };
 
 /**
@@ -426,6 +532,17 @@ export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Enables the logs tableNG panel to replace existing tableRT
+ *
+ * **Details:**
+ * - flag key: `logsTablePanelNG`
+ * - default value: `false`
+ */
+export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("logsTablePanelNG", false, options).value;
+};
+
+/**
  * Use stream shards to split queries into smaller subqueries
  *
  * **Details:**
@@ -445,28 +562,6 @@ export const useFlagLokiShardSplitting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("managedPluginsV2", false, options).value;
-};
-
-/**
- * New Log Context component
- *
- * **Details:**
- * - flag key: `newLogContext`
- * - default value: `true`
- */
-export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogContext", true, options).value;
-};
-
-/**
- * Enables the new logs panel
- *
- * **Details:**
- * - flag key: `newLogsPanel`
- * - default value: `true`
- */
-export const useFlagNewLogsPanel = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogsPanel", true, options).value;
 };
 
 /**
@@ -544,6 +639,17 @@ export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationO
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioning.readmes", true, options).value;
+};
+
+/**
+ * Author Git Sync commits as the acting Grafana user
+ *
+ * **Details:**
+ * - flag key: `provisioning.userAttribution`
+ * - default value: `false`
+ */
+export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.userAttribution", false, options).value;
 };
 
 /**
@@ -665,6 +771,17 @@ export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEva
  */
 export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.protoRowParser", false, options).value;
+};
+
+/**
+ * Enables the refactored TableNG nested-table implementation
+ *
+ * **Details:**
+ * - flag key: `table.refactorNested`
+ * - default value: `false`
+ */
+export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refactorNested", false, options).value;
 };
 
 /**

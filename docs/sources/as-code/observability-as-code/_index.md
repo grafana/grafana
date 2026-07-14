@@ -85,4 +85,4 @@ If you're already using established [Infrastructure as code](ref:infra-as-code) 
   - Manage dashboards, folders, and data sources via Kubernetes Custom Resources.
   - Integrate with GitOps workflows for seamless version control and deployment.
 - [Crossplane](https://github.com/grafana/crossplane-provider-grafana) lets you manage Grafana resources using Kubernetes manifests with the Grafana Crossplane provider.
-- [Grafonnet (deprecated)](https://github.com/grafana/grafonnet) is a Jsonnet library for generating Grafana dashboard JSON definitions programmatically.
+- [Grafonnet](https://github.com/grafana/grafonnet) is a Jsonnet library for generating Grafana dashboard JSON definitions programmatically. **Grafonnet is not officially supported by Grafana. Instead, use the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/foundation-sdk/)** to create dashboards as code.

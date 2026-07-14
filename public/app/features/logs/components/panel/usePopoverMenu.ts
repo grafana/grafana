@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState, type MouseEvent } from 'react';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled, targetIsElement } from '../../utils';
-import { type PopoverStateType } from '../LogRows';
 
 import { useLogListContext } from './LogListContext';
+import { type PopoverStateType } from './popoverMenuTypes';
 import { type LogListModel } from './processing';
 
 export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {

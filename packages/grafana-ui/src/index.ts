@@ -36,6 +36,7 @@ export { ButtonCascader } from './components/ButtonCascader/ButtonCascader';
 export { InlineToast } from './components/InlineToast/InlineToast';
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './components/LoadingPlaceholder/LoadingPlaceholder';
 export { LoadingBar, type LoadingBarProps } from './components/LoadingBar/LoadingBar';
+export { PageLoader } from './components/PageLoader/PageLoader';
 export { ColorPicker, SeriesColorPicker } from './components/ColorPicker/ColorPicker';
 export { ColorPickerInput } from './components/ColorPicker/ColorPickerInput';
 export {

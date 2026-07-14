@@ -14,6 +14,7 @@ export {
   reportInteraction,
   reportPageview,
   reportExperimentView,
+  onInteraction,
 } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
 export {
@@ -98,3 +99,4 @@ export {
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
 export { isAppPluginEnabled } from './services/pluginSettings/settings';
 export { useAppPluginEnabled } from './services/pluginSettings/hooks';
+export { createOpenFeatureOFREPWebProvider, createOpenFeatureLocalStorageProvider } from './utils/openfeature';

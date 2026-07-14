@@ -29,6 +29,11 @@ type changeInfo struct {
 	// Attribution: identifies which provisioning repository posted this comment
 	RepositoryName  string
 	RepositoryTitle string
+	// RepositoryAdminURL links to the repository's management page in the
+	// Grafana UI (…/admin/provisioning/<name>), so readers land where they
+	// manage the sync rather than on the raw git remote. Empty only when the
+	// Grafana base URL cannot be parsed.
+	RepositoryAdminURL string
 
 	// Files we tried to read
 	Changes []fileChangeInfo
@@ -57,6 +62,10 @@ type fileChangeInfo struct {
 
 	// The title from inside the resource (or name if not found)
 	Title string
+
+	// SourceURL links to the file in the git repository (empty when the
+	// repository does not expose web URLs, e.g. non-GitHub backends)
+	SourceURL string
 
 	// The URL where this will appear (target)
 	GrafanaURL           string
@@ -114,15 +123,17 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	}
 
 	rendererAvailable := e.render.IsAvailable(ctx)
-	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
+	shouldRender := rendererAvailable && len(changes) == 1 && cfg.ShouldGenerateDashboardPreviews()
+	baseURL := e.urls.Internal(ctx, cfg.Namespace)
+	orgID := orgIDForLinks(cfg.Namespace)
 	info := changeInfo{
-		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
+		GrafanaBaseURL:       baseURL,
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
+		RepositoryAdminURL:   repositoryAdminURL(baseURL, cfg.Name, orgID),
 		MissingImageRenderer: !rendererAvailable,
 	}
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
-	orgID := orgIDForLinks(cfg.Namespace)
 
 	logger := logging.FromContext(ctx)
 
@@ -143,6 +154,41 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 }
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
+
+// stripUserinfo removes any embedded credentials (userinfo) from a URL so a
+// repository configured with an HTTPS URL like https://user:token@host/org/repo
+// never renders that token into a public PR comment. Returns "" when the URL
+// cannot be parsed, to avoid leaking a malformed credential-bearing string.
+func stripUserinfo(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	u.User = nil
+	return u.String()
+}
+
+// repositoryAdminURL builds a link to the repository's management page in the
+// Grafana UI (…/admin/provisioning/<name>), mirroring how GrafanaURL/PreviewURL
+// are constructed. orgID pins the org for non-primary on-prem orgs the same way.
+// Returns "" when the base URL cannot be parsed, so the footer falls back to
+// plain text rather than rendering a broken link.
+func repositoryAdminURL(baseURL, name string, orgID int64) string {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
+	u = u.JoinPath("admin/provisioning", name)
+	if orgID > 0 {
+		query := url.Values{}
+		query.Set("orgId", strconv.FormatInt(orgID, 10))
+		u.RawQuery = query.Encode()
+	}
+	return u.String()
+}
 
 // orgIDForLinks returns the org to pin on PR-comment links when the repo lives
 // in a non-primary org (on-prem org-N, N>=2). Main org (default), Cloud
@@ -167,6 +213,16 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		logger.Info("unable to read file", "err", err)
 		info.Error = err.Error()
 		return info
+	}
+
+	// Best-effort link back to the file in the git repository. Computed before
+	// parsing so that parse/validation failures still link reviewers to the
+	// source file. Repositories that don't expose web URLs (e.g. non-GitHub
+	// backends) leave this empty.
+	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
+		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
+			info.SourceURL = stripUserinfo(urls.SourceURL)
+		}
 	}
 
 	// Read the file as a resource

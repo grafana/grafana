@@ -17,13 +17,8 @@ import {
   dataFrameFromJSON,
   LoadingState,
 } from '@grafana/data';
-import {
-  DataSourceWithBackend,
-  getDataSourceSrv,
-  getGrafanaLiveSrv,
-  getTemplateSrv,
-  type StreamingFrameOptions,
-} from '@grafana/runtime';
+import { DataSourceWithBackend, getGrafanaLiveSrv, getTemplateSrv, type StreamingFrameOptions } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataSourceRef } from '@grafana/schema';
 import { annotationServer } from 'app/features/annotations/api';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
@@ -268,7 +263,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
 /** Get the GrafanaDatasource instance */
 export async function getGrafanaDatasource() {
-  return (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  const ds = await getDataSourceInstance('-- Grafana --');
+  if (!(ds instanceof GrafanaDatasource)) {
+    throw new Error('Expected the "-- Grafana --" data source to be a GrafanaDatasource instance');
+  }
+  return ds;
 }
 
 export interface FileElement {

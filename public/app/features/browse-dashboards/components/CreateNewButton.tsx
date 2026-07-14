@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
@@ -13,6 +13,7 @@ import { DASHBOARD_GROUP_COLOR_NAME, ITEM_ICONS } from 'app/core/components/AppC
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
@@ -29,8 +30,6 @@ import {
 import { type FolderDTO } from 'app/types/folders';
 
 import { NewFolderForm } from './NewFolderForm';
-
-const testDsFilters = { type: 'grafana-testdata-datasource' };
 
 interface Props {
   parentFolder?: FolderDTO;
@@ -54,11 +53,10 @@ export default function CreateNewButton({
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
+
   const theme = useTheme2();
-  const { items: testDataSources } = useDataSourceInstanceList(
-    config.featureToggles.dashboardTemplates ? testDsFilters : undefined
-  );
-  const renderPreBuiltDashboardAction = config.featureToggles.dashboardTemplates && testDataSources.length > 0;
 
   const handleVisibleChange = () => {
     if (!isOpen) {
@@ -136,11 +134,17 @@ export default function CreateNewButton({
                 isAnalyticsFrameworkEnabled
                   ? NewDashboardLibraryInteractions.entryPointClicked({
                       entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
-                      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKinds: isCustomDashboardTemplatesEnabled
+                        ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                        : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
                     })
                   : DashboardLibraryInteractions.entryPointClicked({
                       entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
-                      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKinds: isCustomDashboardTemplatesEnabled
+                        ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                        : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
                     })
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}

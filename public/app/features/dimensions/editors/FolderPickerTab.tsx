@@ -5,8 +5,7 @@ import { type Subscription } from 'rxjs';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, FilterInput, Combobox, useStyles2, type ComboboxOption } from '@grafana/ui';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { type FileElement, type GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { getGrafanaDatasource, type FileElement } from 'app/plugins/datasource/grafana/datasource';
 
 import { MediaType, ResourceFolderName } from '../types';
 
@@ -82,31 +81,29 @@ export const FolderPickerTab = (props: Props) => {
     // after we've already switched folders.
     let cancelled = false;
     let subscription: Subscription | undefined;
-    getDatasourceSrv()
-      .get('-- Grafana --')
-      .then((ds) => {
-        if (cancelled) {
-          return;
-        }
-        subscription = (ds as GrafanaDatasource).listFiles(folder, maxFiles).subscribe({
-          next: (frame) => {
-            const cards: ResourceItem[] = [];
-            frame.forEach((item) => {
-              if (filter(item)) {
-                const idx = item.name.lastIndexOf('.');
-                cards.push({
-                  value: `${folder}/${item.name}`,
-                  label: item.name,
-                  search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
-                  imgUrl: `${window.__grafana_public_path__}build/${folder}/${item.name}`,
-                });
-              }
-            });
-            setDirectoryIndex(cards);
-            setFilteredIndex(cards);
-          },
-        });
+    getGrafanaDatasource().then((ds) => {
+      if (cancelled) {
+        return;
+      }
+      subscription = ds.listFiles(folder, maxFiles).subscribe({
+        next: (frame) => {
+          const cards: ResourceItem[] = [];
+          frame.forEach((item) => {
+            if (filter(item)) {
+              const idx = item.name.lastIndexOf('.');
+              cards.push({
+                value: `${folder}/${item.name}`,
+                label: item.name,
+                search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
+                imgUrl: `${window.__grafana_public_path__}build/${folder}/${item.name}`,
+              });
+            }
+          });
+          setDirectoryIndex(cards);
+          setFilteredIndex(cards);
+        },
       });
+    });
 
     return () => {
       cancelled = true;
@@ -116,7 +113,7 @@ export const FolderPickerTab = (props: Props) => {
 
   return (
     <>
-      <Field>
+      <Field noMargin={false}>
         <Combobox
           options={folders}
           onChange={(folder) => {
@@ -130,7 +127,7 @@ export const FolderPickerTab = (props: Props) => {
           aria-label={t('dimensions.folder-picker-tab.label-folder', 'Folder')}
         />
       </Field>
-      <Field>
+      <Field noMargin={false}>
         <FilterInput
           value={searchQuery ?? ''}
           placeholder={t('dimensions.folder-picker-tab.placeholder-search', 'Search')}
