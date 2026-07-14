@@ -28,12 +28,12 @@ jobs:
         with:
           socket_api_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).SOCKET_API_TOKEN }}
           socket_org: grafana
-          output_file: ${{ github.event.repository.name }}-${{ github.event.release.tag_name || inputs.tag }}.spdx.json
+          output_file: ${{ github.event.repository.name }}-${{ github.event.release.tag_name }}.spdx.json
 
       - name: "Upload SBOM to release"
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          TAG: ${{ github.event.release.tag_name }}
           SBOM_PATH: ${{ steps.export-sbom.outputs.path }}
         run: gh release upload "$TAG" "$SBOM_PATH" --clobber
