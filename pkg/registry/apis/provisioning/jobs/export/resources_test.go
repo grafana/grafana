@@ -231,24 +231,43 @@ func TestExportResources_Dashboards_IgnoresExisting(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestExportResources_Dashboards_SavedVersion(t *testing.T) {
+// TestExportResources_Dashboards_V0StoredVersionExportsAsV1 asserts that a
+// dashboard whose stored version is v0 is re-fetched at v1 and exported with the
+// v1 apiVersion, rather than being relabeled back to v0alpha1. The export lists
+// dashboards at the preferred version (here v2), which lossily converts a classic
+// dashboard, so the shim must re-Get the un-converted form. A file labeled
+// v0alpha1 is rejected by the frontend dashboard loader (and the provisioning
+// preview path) and fails to load once synced back in, so v0 is exported as v1.
+func TestExportResources_Dashboards_V0StoredVersionExportsAsV1(t *testing.T) {
+	// Listed at the preferred version with a v0 stored version + failed conversion.
 	mockItems := []unstructured.Unstructured{
 		{
 			Object: map[string]interface{}{
-				"apiVersion": resources.DashboardResource.GroupVersion().String(),
+				"apiVersion": resources.DashboardResourceV2.GroupVersion().String(),
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"name": "existing-dashboard",
 				},
-				"spec": map[string]interface{}{
-					"hello": "world",
-				},
 				"status": map[string]interface{}{
 					"conversion": map[string]interface{}{
 						"failed":        true,
-						"storedVersion": "v0xyz",
+						"storedVersion": "v0alpha1",
 					},
 				},
+			},
+		},
+	}
+
+	// The un-converted object the v1 client returns for the re-fetch.
+	v1Dashboard := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": resources.DashboardResource.GroupVersion().String(),
+			"kind":       "Dashboard",
+			"metadata": map[string]interface{}{
+				"name": "existing-dashboard",
+			},
+			"spec": map[string]interface{}{
+				"title": "classic dashboard",
 			},
 		},
 	}
@@ -264,34 +283,25 @@ func TestExportResources_Dashboards_SavedVersion(t *testing.T) {
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
 		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
+
+		// v0 must be re-fetched through the v1 client, not v0alpha1.
+		v1GVR := schema.GroupVersionResource{
+			Group:    resources.DashboardResource.Group,
+			Version:  resources.DashboardResource.Version,
+			Resource: resources.DashboardResource.Resource,
+		}
+		versionClient := &mockDynamicInterface{items: []unstructured.Unstructured{v1Dashboard}}
+		resourceClients.On("ForResource", mock.Anything, v1GVR).Return(versionClient, gvk, nil)
+
 		options := resources.WriteOptions{
 			Path: "grafana",
 			Ref:  "feature/branch",
 		}
-
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
-			// Verify that the object has the expected status.conversion.storedVersion field
-			status, exists, err := unstructured.NestedMap(obj.Object, "status")
-			if !exists || err != nil {
-				return false
-			}
-
-			conversion, exists, err := unstructured.NestedMap(status, "conversion")
-			if !exists || err != nil {
-				return false
-			}
-
-			storedVersion, exists, err := unstructured.NestedString(conversion, "storedVersion")
-			if !exists || err != nil {
-				return false
-			}
-
-			if storedVersion != "v0xyz" {
-				return false
-			}
-
-			return obj.GetName() == "existing-dashboard"
-		}), options).Return("", fmt.Errorf("XXX"))
+			// The exported object must carry the v1 apiVersion, not v0alpha1.
+			return obj.GetName() == "existing-dashboard" &&
+				obj.GetAPIVersion() == resources.DashboardResource.GroupVersion().String()
+		}), options).Return("existing-dashboard.json", nil)
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)
