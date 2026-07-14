@@ -104,8 +104,7 @@ describe('VariableControls', () => {
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
   });
 
-  it('should not allow changing predefined variable values in edit mode', async () => {
-    const user = userEvent.setup();
+  it('should allow changing predefined variable values in edit mode', async () => {
     const dashboard = buildScene([
       new CustomVariable({
         name: 'globalVar',
@@ -120,16 +119,11 @@ describe('VariableControls', () => {
 
     render(<VariableControls dashboard={dashboard} />);
 
-    expect(await screen.findByTestId('read-only-variable-input')).toBeInTheDocument();
-
     const valueSelect = await screen.findByTestId(
       selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('a')
     );
     const inputElement = valueSelect.querySelector('input');
-    expect(inputElement).toBeDisabled();
-
-    await user.click(screen.getByText('globalVar'));
-    expect(inputElement).toBeDisabled();
+    expect(inputElement).not.toBeDisabled();
   });
 
   it('should allow changing predefined variable values in view mode', async () => {
@@ -147,7 +141,6 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(await screen.findByText('globalVar')).toBeInTheDocument();
-    expect(screen.queryByTestId('read-only-variable-input')).not.toBeInTheDocument();
 
     const valueSelect = await screen.findByTestId(
       selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('a')

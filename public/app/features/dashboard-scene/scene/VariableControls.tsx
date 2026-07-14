@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,7 +13,6 @@ import {
   type SceneVariables,
   SceneVariableSet,
   type SceneVariableState,
-  MultiValueVariable,
   useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
@@ -121,13 +120,12 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
           onPointerDown={markUserInitiated}
         >
           <div className={styles.switchControl}>
-            <VariableInput variable={variable} isReadOnly={isReadOnlyControl} />
+            <variable.Component model={variable} />
           </div>
           <VariableLabel
             variable={variable}
             layout={'vertical'}
             className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
-            disableLabelFor={isReadOnlyControl}
           />
         </div>
       </ControlActionsPopover>
@@ -151,9 +149,8 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             variable={variable}
             layout={'vertical'}
             className={cx(isSelectable && styles.labelSelectable)}
-            disableLabelFor={isReadOnlyControl}
           />
-          <VariableInput variable={variable} isReadOnly={isReadOnlyControl} />
+          <variable.Component model={variable} />
         </div>
       </ControlActionsPopover>
     );
@@ -171,43 +168,10 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
         onPointerDown={markUserInitiated}
       >
-        <VariableLabel
-          variable={variable}
-          className={cx(isSelectable && styles.labelSelectable, styles.label)}
-          disableLabelFor={isReadOnlyControl}
-        />
-        <VariableInput variable={variable} isReadOnly={isReadOnlyControl} />
+        <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
+        <variable.Component model={variable} />
       </div>
     </ControlActionsPopover>
-  );
-}
-
-function VariableInput({ variable, isReadOnly }: { variable: SceneVariable; isReadOnly: boolean }) {
-  const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    if (!isReadOnly || !(variable instanceof MultiValueVariable)) {
-      return;
-    }
-
-    const previousIsReadOnly = variable.state.isReadOnly;
-    variable.setState({ isReadOnly: true });
-
-    return () => {
-      variable.setState({ isReadOnly: previousIsReadOnly });
-    };
-  }, [variable, isReadOnly]);
-
-  const input = <variable.Component model={variable} />;
-
-  if (!isReadOnly) {
-    return input;
-  }
-
-  return (
-    <div className={styles.readOnlyInput} data-testid="read-only-variable-input">
-      {input}
-    </div>
   );
 }
 
@@ -215,12 +179,10 @@ function VariableLabel({
   variable,
   className,
   layout,
-  disableLabelFor,
 }: {
   variable: SceneVariable;
   className?: string;
   layout?: ControlsLayout;
-  disableLabelFor?: boolean;
 }) {
   const { state } = variable;
   const elementId = sceneUtils.getVariableControlId(state.type, state.key);
@@ -244,7 +206,7 @@ function VariableLabel({
 
   return (
     <ControlsLabel
-      htmlFor={disableLabelFor ? undefined : elementId}
+      htmlFor={elementId}
       isLoading={state.loading}
       onCancel={() => variable.onCancel?.()}
       label={labelOrName}
@@ -343,9 +305,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       color: 'inherit',
     },
-  }),
-  readOnlyInput: css({
-    pointerEvents: 'none',
-    userSelect: 'none',
   }),
 });

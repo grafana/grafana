@@ -4,16 +4,13 @@ import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import {
-  dashboardAPIv2beta1,
-  invalidatePredefinedVariableCaches,
-  type Variable,
-  type VariableList,
-} from 'app/api/clients/dashboard/v2beta1';
+import { dashboardAPIv2beta1, type Variable, type VariableList } from 'app/api/clients/dashboard/v2beta1';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { extractErrorMessage } from 'app/api/utils';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/predefinedVariables';
 import { dispatch } from 'app/store/store';
 
 import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariableSpecName } from './utils';
@@ -21,6 +18,15 @@ import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariab
 const LIST_PAGE_SIZE = 500;
 
 const variableListTag = { type: 'Variable' as const, id: 'LIST' };
+
+/**
+ * Clears caches so dashboards pick up Variable CRUD without a hard refresh.
+ * Owned by variables-management (mutation sites), not the API client veneer.
+ */
+export function invalidatePredefinedVariableCaches() {
+  clearPredefinedVariablesCache();
+  getDashboardScenePageStateManager().clearSceneCache();
+}
 
 function invalidateAfterVariableMutation() {
   dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
