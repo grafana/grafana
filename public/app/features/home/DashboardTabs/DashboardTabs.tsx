@@ -20,7 +20,13 @@ import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
 import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
-import { type HomepageTabExtensionProps, type HomepageTab, validateHomepageTab } from './types';
+import {
+  type HomepageTabExtensionProps,
+  type HomepageTab,
+  validateHomepageTab,
+  DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN,
+  DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT,
+} from './types';
 
 const RECENT_TAB_ID = 'recent';
 const MOST_USED_TAB_ID = 'most-used';
@@ -152,7 +158,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
   }, [initialLoading]);
 
   if (!initialLoadDone) {
-    return <DashboardTabsSkeleton />;
+    return <DashboardTabsSkeleton redesignEnabled={redesignEnabled} />;
   }
 
   const builtInTabs: HomepageTab[] = [
@@ -214,8 +220,8 @@ export function DashboardTabs({ extensionComponents }: Props) {
         <TabContent className={redesignEnabled ? styles.redesignedTabContent : styles.tabContent}>
           <ScrollContainer
             showScrollIndicators
-            maxHeight={redesignEnabled ? '350px' : '256px'}
-            minHeight={redesignEnabled ? '350px' : '256px'}
+            maxHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
+            minHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
           >
             {activeTab === RECENT_TAB_ID && (
               <RecentDashboardsTab

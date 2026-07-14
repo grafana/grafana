@@ -17,7 +17,7 @@ interface Props {
   source: string; // for rudderstack analytics to track which page DashListItem click from
   order?: number; // for rudderstack analytics to track position in cards
   onStarChange?: (id: string, isStarred: boolean) => void;
-  // Row density for list mode. 'compact' gives denser rows for the redesigned homepage;
+  // Row density for list mode. 'compact' gives denser rows for the redesigned homepage
   density?: 'default' | 'compact';
 }
 export function DashListItem({

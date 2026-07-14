@@ -27,7 +27,7 @@ export function HomePageSkeleton({ showAlertsCard, showExtra, redesignEnabled }:
             {/* DashboardTabs and Alerts card*/}
             <Grid gap={2} columns={{ xs: 1, md: 2 }} data-testid="home-page-skeleton-cards">
               <HomeSection direction="column" display="flex" gap={2}>
-                <DashboardTabsSkeleton />
+                <DashboardTabsSkeleton redesignEnabled />
               </HomeSection>
               {showAlertsCard && <CardSkeleton />}
             </Grid>
