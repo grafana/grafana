@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/proto"
@@ -53,14 +54,24 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 // relist). Core NATS also delivers in arrival order, not RV order, so Watch runs
 // arrivals through the same settle buffer as the channel notifier (held for
 // SettleDelay, emitted sorted by RV) to keep downstream RVs monotonic.
+// natsNotifierRetryInterval is how long Watch waits before retrying a failed
+// subscription (e.g. the bus is not reachable yet at startup).
+const natsNotifierRetryInterval = 5 * time.Second
+
 type natsNotifier struct {
-	subscriber EventSubscriber
-	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
-	log        log.Logger
+	subscriber    EventSubscriber
+	dropped       *prometheus.CounterVec // by reason; nil is allowed (no accounting)
+	retryInterval time.Duration
+	log           log.Logger
 }
 
 func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
-	return &natsNotifier{subscriber: subscriber, dropped: dropped, log: logger}
+	return &natsNotifier{
+		subscriber:    subscriber,
+		dropped:       dropped,
+		retryInterval: natsNotifierRetryInterval,
+		log:           logger,
+	}
 }
 
 func (n *natsNotifier) drop(reason string) {
@@ -73,34 +84,18 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 	opts = opts.normalize()
 	n.log.Info("creating new nats notifier", "buffer_size", opts.BufferSize)
 
-	// The NATS callback writes raw; the pump owns and closes out. raw is never
-	// closed, so a callback firing after ctx cancellation can't send on a closed
-	// channel.
+	// The callback writes raw; settleEvents owns and closes out on ctx cancel.
+	// It runs for the whole watch, so retrying a failed subscription does not
+	// tear down the consumer's channel. raw is never closed, so a late callback
+	// can't send on a closed channel.
 	raw := make(chan Event, opts.BufferSize)
 	out := make(chan Event, opts.BufferSize)
+	go settleEvents(ctx, raw, out, opts)
 
 	handler := func(subject string, data []byte) {
-		var notification resourcepb.WatchNotification
-		if err := proto.Unmarshal(data, &notification); err != nil {
-			n.drop("unmarshal_error")
-			n.log.Warn("failed to unmarshal watch notification", "subject", subject, "error", err)
-			return
-		}
-		action, ok := watchNotificationTypeToAction(notification.Type)
+		evt, ok := n.decode(subject, data)
 		if !ok {
-			n.drop("unknown_type")
-			n.log.Warn("dropped watch notification with unknown type", "subject", subject)
 			return
-		}
-		evt := Event{
-			Namespace:       notification.Namespace,
-			Group:           notification.Group,
-			Resource:        notification.Resource,
-			Name:            notification.Name,
-			ResourceVersion: notification.ResourceVersion,
-			Action:          action,
-			Folder:          notification.Folder,
-			PreviousRV:      notification.PreviousResourceVersion,
 		}
 		select {
 		case raw <- evt:
@@ -110,23 +105,71 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		}
 	}
 
-	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAll, handler)
-	if err != nil {
-		n.log.Error("failed to subscribe to nats", "error", err)
-		close(out)
-		return out
+	// Subscribe synchronously so a healthy bus wires delivery before returning;
+	// if the bus is unreachable (e.g. embedded server not started yet), retry in
+	// the background instead of closing out and losing the watch until restart.
+	// Once subscribed, the nats client auto-resumes across reconnects.
+	if !n.trySubscribe(ctx, handler) {
+		go func() {
+			for ctx.Err() == nil {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(n.retryInterval):
+				}
+				if n.trySubscribe(ctx, handler) {
+					return
+				}
+			}
+		}()
 	}
 
+	return out
+}
+
+// trySubscribe subscribes to the whole change stream once. On success it
+// unsubscribes on ctx cancel and returns true; on failure it logs and returns
+// false so the caller can retry.
+func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject string, data []byte)) bool {
+	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAll, handler)
+	if err != nil {
+		n.log.Error("failed to subscribe to nats, will retry", "error", err, "retry_interval", n.retryInterval)
+		return false
+	}
+	n.log.Info("subscribed to nats watch stream")
 	context.AfterFunc(ctx, func() {
 		if err := sub.Unsubscribe(); err != nil {
 			n.log.Warn("failed to unsubscribe from nats", "error", err)
 		}
 	})
+	return true
+}
 
-	// raw is never closed here; settleEvents exits on ctx.Done().
-	go settleEvents(ctx, raw, out, opts)
-
-	return out
+// decode turns a raw notification into an Event, returning ok=false (and
+// accounting the drop) for undecodable payloads or unknown types.
+func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
+	var notification resourcepb.WatchNotification
+	if err := proto.Unmarshal(data, &notification); err != nil {
+		n.drop("unmarshal_error")
+		n.log.Warn("failed to unmarshal watch notification", "subject", subject, "error", err)
+		return Event{}, false
+	}
+	action, ok := watchNotificationTypeToAction(notification.Type)
+	if !ok {
+		n.drop("unknown_type")
+		n.log.Warn("dropped watch notification with unknown type", "subject", subject)
+		return Event{}, false
+	}
+	return Event{
+		Namespace:       notification.Namespace,
+		Group:           notification.Group,
+		Resource:        notification.Resource,
+		Name:            notification.Name,
+		ResourceVersion: notification.ResourceVersion,
+		Action:          action,
+		Folder:          notification.Folder,
+		PreviousRV:      notification.PreviousResourceVersion,
+	}, true
 }
 
 // TODO: currently the events are published to NATS in watch_publisher.go,
