@@ -1904,6 +1904,13 @@ func (cfg *Cfg) readSessionConfig() {
 	}
 }
 
+func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
+	cfg.EnableKubernetesLibraryPanels = iniFile.Section("library_params").Key("enbale_kubernetes_library_panels").MustBool(false)
+
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
+	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
+}
+
 func (cfg *Cfg) initLogging(file *ini.File) error {
 	logModeStr := valueAsString(file.Section("log"), "mode", "console")
 	// split on comma
@@ -2542,8 +2549,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
-	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
-	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
