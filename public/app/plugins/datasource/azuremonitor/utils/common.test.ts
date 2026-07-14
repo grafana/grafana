@@ -1,12 +1,16 @@
-import { logWarning } from '@grafana/runtime';
+import { AppEvents } from '@grafana/data';
+import { getAppEvents, logWarning } from '@grafana/runtime';
 
 import { initialCustomVariableModelState } from '../mocks/variables';
 
 import { fetchAllArmPages, hasOption, interpolateVariable, MAX_ARM_PAGES, nextLinkToPath } from './common';
 
+const publish = jest.fn();
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   logWarning: jest.fn(),
+  getAppEvents: jest.fn(() => ({ publish })),
 }));
 
 describe('AzureMonitor: hasOption', () => {
@@ -69,6 +73,8 @@ describe('AzureMonitor: nextLinkToPath', () => {
 describe('AzureMonitor: fetchAllArmPages', () => {
   beforeEach(() => {
     jest.mocked(logWarning).mockClear();
+    jest.mocked(getAppEvents).mockClear();
+    publish.mockClear();
   });
 
   it('returns the single page when there is no nextLink', async () => {
@@ -138,6 +144,32 @@ describe('AzureMonitor: fetchAllArmPages', () => {
     expect(logWarning).toHaveBeenCalledWith(
       `[azuremonitor] ARM listing stopped after ${MAX_ARM_PAGES} pages; some results may be omitted.`
     );
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(publish).toHaveBeenCalledWith(
+      expect.objectContaining({ type: AppEvents.alertWarning.name })
+    );
+  });
+
+  it('does not emit a warning toast when all pages load within the cap', async () => {
+    const fetchPage = jest
+      .fn()
+      .mockResolvedValueOnce({
+        value: [{ id: 1 }],
+        nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=abc',
+      })
+      .mockResolvedValueOnce({ value: [{ id: 2 }] });
+
+    await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
+
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('does not emit a warning toast when a page returns no result', async () => {
+    const fetchPage = jest.fn().mockResolvedValue(undefined);
+
+    await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
+
+    expect(publish).not.toHaveBeenCalled();
   });
 });
 
