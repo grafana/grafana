@@ -83,6 +83,11 @@ export function DashboardsTree({
       setReadmeHeight(Math.ceil(height));
     }
   }, []);
+  useEffect(() => {
+    // The tree stays mounted across folder navigation; a stale measurement would
+    // otherwise persist when the next folder's README panel renders nothing.
+    setReadmeHeight(README_ROW_HEIGHT);
+  }, [folderUID]);
 
   useEffect(() => {
     // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,

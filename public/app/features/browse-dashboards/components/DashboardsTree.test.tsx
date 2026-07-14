@@ -94,6 +94,48 @@ describe('browse-dashboards DashboardsTree', () => {
     offsetHeightSpy.mockRestore();
   });
 
+  it('resets the README row height when navigating to another folder', async () => {
+    const offsetHeightSpy = jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(500);
+
+    const treeFor = (folderUID: string) => (
+      <DashboardsTree
+        permissions={mockPermissions}
+        items={[
+          dashboard,
+          { item: { kind: 'ui', uiKind: 'readme', uid: `folder-readme-${folderUID}` }, level: 0, isOpen: false },
+        ]}
+        folderUID={folderUID}
+        isSelected={isSelected}
+        width={WIDTH}
+        height={HEIGHT}
+        onFolderClick={noop}
+        onTagClick={noop}
+        onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
+      />
+    );
+
+    const { rerender } = render(treeFor('folder1'));
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      expect(rows[rows.length - 1]).toHaveStyle({ height: '516px' });
+    });
+
+    // The next panel's 0 measurement is ignored, so the reset restores the estimate.
+    offsetHeightSpy.mockReturnValue(0);
+    rerender(treeFor('folder2'));
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      expect(rows[rows.length - 1]).toHaveStyle({ height: '336px' });
+    });
+
+    offsetHeightSpy.mockRestore();
+  });
+
   it('does not render checkbox when disabled', () => {
     mockPermissions.canEditFolders = false;
     mockPermissions.canEditDashboards = false;
