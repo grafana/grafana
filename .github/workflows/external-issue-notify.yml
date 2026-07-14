@@ -1,4 +1,4 @@
-name: External FR Notify
+name: External Issue Notify
 
 # Thin wiring. Mints a short-lived community-triage token via the broker,
 # checks out the private grafana/community-triage repo (pinned by SHA) into
@@ -7,12 +7,12 @@ name: External FR Notify
 
 on:
   issues:
-    types: [labeled, typed]
+    types: [opened, labeled]
 
 permissions: {}
 
 concurrency:
-  group: notify-fr-${{ github.event.issue.number }}
+  group: notify-issue-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 env:
@@ -22,17 +22,18 @@ env:
 
 jobs:
   notify:
-    name: Notify team about new FR
+    name: Notify team about new issue
     runs-on: ubuntu-latest
     permissions:
       contents: read  # checkout config + community-triage logic
       issues: write   # post welcome comment and auto-triaged label
       id-token: write # vault OIDC + broker token exchange
     if: |
-      !contains(github.event.issue.labels.*.name, 'fr/auto-triaged') &&
+      !contains(github.event.issue.labels.*.name, 'issue/auto-triaged') &&
+      !contains(github.event.issue.labels.*.name, 'type/feature-request') &&
       (
-        (github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'type/feature-request'))
-        || github.event.action == 'typed'
+        github.event.action == 'opened'
+        || (github.event.action == 'labeled' && (startsWith(github.event.label.name, 'area/') || github.event.label.name == 'community/champion'))
       )
 
     steps:
@@ -80,8 +81,7 @@ jobs:
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-          EVENT_ACTION: ${{ github.event.action }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-notify.mts metadata
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-notify.mts metadata
 
       - name: Match teams and send notifications
         id: notify
@@ -96,7 +96,7 @@ jobs:
           CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
           IS_CHAMPION: ${{ steps.metadata.outputs.is_champion }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-notify.mts notify
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-notify.mts notify
 
       - name: Post welcome comment
         if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
@@ -104,7 +104,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-notify.mts welcome
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-notify.mts welcome
+
+      - name: Ensure auto-triaged label exists
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Create only if missing; no-op (and no overwrite) if it already exists.
+          gh label create "issue/auto-triaged" \
+            --color "0E8A16" \
+            --description "Issue has been auto-triaged" \
+            --repo "$REPO" 2>/dev/null || true
 
       - name: Add auto-triaged label
         if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
@@ -112,4 +124,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-notify.mts auto-triaged
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-notify.mts auto-triaged
