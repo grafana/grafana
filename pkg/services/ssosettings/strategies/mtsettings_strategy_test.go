@@ -45,7 +45,7 @@ func TestMTSettingsStrategies_IsMatch(t *testing.T) {
 
 		for _, adapter := range adapters {
 			for _, p := range providers {
-				require.False(t, adapter.IsMatch(p))
+				require.False(t, adapter.IsMatch(t.Context(), p))
 			}
 		}
 	})
@@ -58,18 +58,18 @@ func TestMTSettingsStrategies_IsMatch(t *testing.T) {
 		saml := NewMTSettingsSAMLStrategy()
 
 		for _, p := range ssosettings.AllOAuthProviders {
-			require.True(t, oauth.IsMatch(p))
-			require.False(t, ldap.IsMatch(p))
-			require.False(t, saml.IsMatch(p))
+			require.True(t, oauth.IsMatch(t.Context(), p))
+			require.False(t, ldap.IsMatch(t.Context(), p))
+			require.False(t, saml.IsMatch(t.Context(), p))
 		}
 
-		require.True(t, ldap.IsMatch(social.LDAPProviderName))
-		require.False(t, oauth.IsMatch(social.LDAPProviderName))
-		require.False(t, saml.IsMatch(social.LDAPProviderName))
+		require.True(t, ldap.IsMatch(t.Context(), social.LDAPProviderName))
+		require.False(t, oauth.IsMatch(t.Context(), social.LDAPProviderName))
+		require.False(t, saml.IsMatch(t.Context(), social.LDAPProviderName))
 
-		require.True(t, saml.IsMatch(social.SAMLProviderName))
-		require.False(t, oauth.IsMatch(social.SAMLProviderName))
-		require.False(t, ldap.IsMatch(social.SAMLProviderName))
+		require.True(t, saml.IsMatch(t.Context(), social.SAMLProviderName))
+		require.False(t, oauth.IsMatch(t.Context(), social.SAMLProviderName))
+		require.False(t, ldap.IsMatch(t.Context(), social.SAMLProviderName))
 	})
 }
 

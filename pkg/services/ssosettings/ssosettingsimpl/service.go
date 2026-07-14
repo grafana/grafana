@@ -384,7 +384,7 @@ func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssoset
 }
 
 func (s *Service) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	loadStrategy, ok := s.getFallbackStrategyFor(provider)
+	loadStrategy, ok := s.getFallbackStrategyFor(ctx, provider)
 	if !ok {
 		return nil, errors.New("no fallback strategy found for provider: " + provider)
 	}
@@ -410,9 +410,9 @@ func getSettingByProvider(provider string, settings []*models.SSOSettings) *mode
 	return nil
 }
 
-func (s *Service) getFallbackStrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
+func (s *Service) getFallbackStrategyFor(ctx context.Context, provider string) (ssosettings.FallbackStrategy, bool) {
 	for _, strategy := range s.fbStrategies {
-		if strategy.IsMatch(provider) {
+		if strategy.IsMatch(ctx, provider) {
 			return strategy, true
 		}
 	}
