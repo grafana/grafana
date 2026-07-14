@@ -108,6 +108,8 @@ export function VirtualizedList({
               // explicit position/size, since virtualization means only visible rows exist in the DOM
               'aria-posinset': virtualRow.index + 1,
               'aria-setsize': sortedDataSources.length,
+              // the option itself handles the click
+              onClick: () => handleSelect(virtualRow.index),
             })}
           >
             <DataSourceCardItem
