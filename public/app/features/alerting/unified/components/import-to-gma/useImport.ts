@@ -345,6 +345,25 @@ export function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryR
 }
 
 /**
+ * Combine the dry-run mutation's cached data with any error into a single UI result.
+ * A pre-run failure (e.g. a template conflict) sets an error while the previous
+ * successful response is still cached, so the error must take precedence over the
+ * stale data — otherwise the review step would report the config as ready to import.
+ */
+export function deriveDryRunResult(
+  dryRunData: DryRunValidationResult | undefined,
+  dryRunError: string | undefined
+): DryRunValidationResult | undefined {
+  if (dryRunError) {
+    return { valid: false, error: dryRunError, renamedReceivers: [], renamedTimeIntervals: [], stats: undefined };
+  }
+  if (dryRunData) {
+    return dryRunData;
+  }
+  return undefined;
+}
+
+/**
  * Hook to perform dry-run validation for Alertmanager config import.
  * Uses POST /api/convert/api/v1/alerts with X-Grafana-Alerting-Dry-Run: true.
  * Validates the config and checks for conflicts without saving.

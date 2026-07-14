@@ -5,6 +5,7 @@ import { setupMswServer } from '../../mockApi';
 
 import {
   buildRoutingParams,
+  deriveDryRunResult,
   mergeTemplateFiles,
   parseDryRunResponse,
   readTemplateFiles,
@@ -142,6 +143,38 @@ describe('parseDryRunResponse', () => {
     const result = parseDryRunResponse({ status: 'success' });
 
     expect(result.stats).toBeUndefined();
+  });
+});
+
+describe('deriveDryRunResult', () => {
+  const validResult = {
+    valid: true,
+    error: undefined,
+    renamedReceivers: [],
+    renamedTimeIntervals: [],
+    stats: undefined,
+  };
+
+  it('returns undefined when there is neither data nor error', () => {
+    expect(deriveDryRunResult(undefined, undefined)).toBeUndefined();
+  });
+
+  it('returns the successful result when there is no error', () => {
+    expect(deriveDryRunResult(validResult, undefined)).toBe(validResult);
+  });
+
+  it('returns an invalid result carrying the error when only an error is present', () => {
+    expect(deriveDryRunResult(undefined, 'boom')).toMatchObject({ valid: false, error: 'boom' });
+  });
+
+  // Regression: a pre-run failure (e.g. a template conflict) sets an error while the previous
+  // successful dry-run response is still cached. The error must win over the stale data, or the
+  // review step reports the config as ready to import.
+  it('prioritizes the error over stale successful data', () => {
+    const result = deriveDryRunResult(validResult, 'duplicate template "dupe.tmpl"');
+
+    expect(result?.valid).toBe(false);
+    expect(result?.error).toBe('duplicate template "dupe.tmpl"');
   });
 });
 

@@ -62,6 +62,7 @@ import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
 import {
   buildRoutingParams,
+  deriveDryRunResult,
   filterRulerRulesConfig,
   useDryRunNotifications,
   useImportNotifications,
@@ -179,15 +180,10 @@ function ImportWizardContent() {
   const { runDryRun, isLoading: isDryRunLoading, result: dryRunData, error: dryRunError } = useDryRunNotifications();
 
   // Derive dry-run result from RTK Query state (success data or synthetic error result)
-  const dryRunResult: DryRunValidationResult | undefined = useMemo(() => {
-    if (dryRunData) {
-      return dryRunData;
-    }
-    if (dryRunError) {
-      return { valid: false, error: dryRunError, renamedReceivers: [], renamedTimeIntervals: [], stats: undefined };
-    }
-    return undefined;
-  }, [dryRunData, dryRunError]);
+  const dryRunResult: DryRunValidationResult | undefined = useMemo(
+    () => deriveDryRunResult(dryRunData, dryRunError),
+    [dryRunData, dryRunError]
+  );
 
   // Derive dry-run UI state from RTK Query state
   const dryRunState = useMemo((): 'idle' | 'loading' | 'success' | 'warning' | 'error' => {
