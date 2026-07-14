@@ -760,6 +760,11 @@ export interface FeatureToggles {
   */
   alertingAIAnalyzeCentralStateHistory?: boolean;
   /**
+  * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+  * @default false
+  */
+  ['alerting.ruleQuality']?: boolean;
+  /**
   * Enables simplified step mode in the notifications section
   * @default true
   */
