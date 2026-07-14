@@ -8,7 +8,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	github.com/prometheus/common v0.69.0
 	github.com/stretchr/testify v1.11.1
-	k8s.io/apimachinery v0.36.1
+	k8s.io/apimachinery v0.36.2
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
 )
 
