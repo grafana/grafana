@@ -234,7 +234,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // New dashboards enter edit mode on activation, before any caller can tag the
       // session, so the initiator is carried in the url (set by the assistant when it
       // opens the editor to build a dashboard itself)
-      const editSource = new URLSearchParams(locationService.getLocation().search).get('editSource');
+      const editSource = locationService.getSearchObject().editSource;
       this.onEnterEditMode(editSource === 'assistant' ? 'assistant' : 'user');
       this.setState({ isDirty: true });
     }
