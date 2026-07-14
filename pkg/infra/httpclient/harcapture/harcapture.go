@@ -112,6 +112,11 @@ func buildEntry(req *http.Request, resp *http.Response, rtErr error, started tim
 			req.Body = io.NopCloser(bytes.NewReader(body))
 			reqBodySize = int64(len(body))
 			if len(body) > 0 {
+				// HAR 1.2 PostData has no "encoding" field (only response Content does), so a
+				// non-UTF-8 request body is base64-encoded into Text without a machine-readable
+				// marker. base64 preserves the bytes (vs string() corrupting invalid UTF-8 to U+FFFD),
+				// but a replay tool can't tell it's base64. Accepted: datasource request bodies are
+				// text in practice, and body handling overall is a redaction/limits follow-up (#1281).
 				text, _ := encodeBody(body)
 				pd = &har.PostData{
 					MimeType: req.Header.Get("Content-Type"),
