@@ -205,8 +205,8 @@ type searchServer struct {
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
-	selectableFields     map[string][]string
-	searchFieldsHashes   map[string]string
+	selectableFields     map[LowerGroupResource][]string
+	searchFieldsHashes   map[LowerGroupResource]string
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -1127,7 +1127,10 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
 	}
 
-	return s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	start := time.Now()
+	stats, err = s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err)
+	return stats, err
 }
 
 func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
@@ -1339,7 +1342,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
+		sfKey := NewLowerGroupResource(key.Group, key.Resource)
 		sfields := s.selectableFields[sfKey]
 		expectedSearchFieldsHash := s.searchFieldsHashes[sfKey]
 
