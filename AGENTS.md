@@ -150,7 +150,7 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
 ### Prerequisites
 
-- **Node.js v24.x** (see `.nvmrc` for exact version). Use `nvm install` / `nvm use` to match.
+- **Node.js v24.x** (see `.nvmrc` for exact version). Use `nvm install` / `nvm use` to match. Gotcha: a daemon-provided `/exec-daemon/node` (Node 22) can sit ahead of nvm's Node 24 on `PATH`, so `node -v` may report the wrong version even after `nvm use`. Prepend the nvm bin dir when running tooling, e.g. `export PATH="$HOME/.nvm/versions/node/$(cat .nvmrc | tr -d 'v')/bin:$PATH"`.
 - **Go 1.26.4** (see `go.mod`). Pre-installed in the VM.
 - **Yarn 4.11.0** via corepack (bundled in `.yarn/releases/`). Run `corepack enable` if `yarn` is not found.
 - **GCC** required for CGo/SQLite compilation of the backend.
@@ -165,4 +165,5 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
 - **Frontend tests**: The `yarn test` script includes `--watch` by default. Always use `yarn jest --no-watch` or add `--watchAll=false` to run tests once and exit.
 - **Backend tests**: Some packages (e.g. `pkg/api/`) have slow test compilation (~2 min) due to large dependency graphs. Use targeted test runs with `-run TestName` where possible.
+- **`yarn typecheck` heap**: whole-repo `tsc --noEmit` exhausts Node's default ~4 GB heap and crashes with "JavaScript heap out of memory". Run it with a larger heap, e.g. `NODE_OPTIONS=--max-old-space-size=8192 yarn typecheck` (the VM has ~15 GB RAM).
 - All standard build/test/lint commands are documented in the Commands section above.
