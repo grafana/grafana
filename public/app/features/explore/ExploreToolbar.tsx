@@ -28,6 +28,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
+import { PromPrototypeToolbar } from './promPrototype/PromPrototypeToolbar';
 import { changeDatasource } from './state/datasource';
 import { changeCorrelationHelperData } from './state/explorePane';
 import {
@@ -235,6 +236,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             timeZone={timeZone}
             extensionsToShow="queryless"
           />,
+          datasourceInstance?.type === 'prometheus' ? <PromPrototypeToolbar key="prom-prototype-toolbar" /> : null,
         ].filter(Boolean)}
         forceShowLeftItems
       >

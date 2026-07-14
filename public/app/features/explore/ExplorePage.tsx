@@ -23,12 +23,32 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
+import { AssistantPopover } from './promPrototype/AssistantPopover';
+import { MetricsPopover } from './promPrototype/MetricsPopover';
+import { PromPrototypeProvider, usePromPrototype } from './promPrototype/PromPrototypeContext';
 import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
-  return <ExplorePageContent {...props} />;
+  return (
+    <PromPrototypeProvider>
+      <PromPrototypeSideEffects />
+      <ExplorePageContent {...props} />
+    </PromPrototypeProvider>
+  );
+}
+
+// Renders side-effect-only children whose lifecycle should follow the
+// currently-selected prototype option (e.g. registering a Monaco completion provider).
+function PromPrototypeSideEffects() {
+  const { option } = usePromPrototype();
+  return (
+    <>
+      {option === 'b' && <MetricsPopover />}
+      {option === 'c' && <AssistantPopover />}
+    </>
+  );
 }
 
 function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {

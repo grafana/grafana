@@ -37,7 +37,7 @@ import { type StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../profile/state/selectors';
 
-import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline/ContentOutline';
+import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
@@ -56,6 +56,7 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { ExploreLeftPane } from './promPrototype/ExploreLeftPane';
 import { changeDatasource } from './state/datasource';
 import { changeSize, changeCompactMode } from './state/explorePane';
 import { splitOpen } from './state/main';
@@ -638,7 +639,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && !compact && (
-              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
+              <ExploreLeftPane
+                exploreId={exploreId}
+                scroller={this.scrollElement}
+                panelId={`content-outline-container-${exploreId}`}
+                isPrometheus={datasourceInstance?.type === 'prometheus'}
+              />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}
