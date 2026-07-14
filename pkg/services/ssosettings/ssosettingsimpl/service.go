@@ -59,7 +59,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 
 	// ProvideService cannot return an error: a broken MT-Settings client
 	// configuration leaves the strategies without a client, and they fail
-	// loudly on read while the legacy path keeps serving at mode 0.
+	// loudly on read while the legacy strategies keep serving when the
+	// ssoSettingsToMTSettings toggle is off.
 	mtSettingsClient, err := newMTSettingsClient(cfg, registerer)
 	if err != nil {
 		logger.Error("Failed to initialize the MT-Settings client", "error", err)
@@ -94,7 +95,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	store := database.ProvideStore(sqlStore)
 
 	svc := &Service{
-		logger:                log.New("ssosettings.service"),
+		logger:                logger,
 		cfg:                   cfg,
 		store:                 store,
 		ac:                    ac,
