@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
-	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -152,9 +151,8 @@ func TestIntegrationPluginManager(t *testing.T) {
 	my := mysql.ProvideService()
 	ms := mssql.ProvideService()
 	graf := grafanads.ProvideService(nil, features)
-	pyroscope := pyroscope.ProvideService(hcp)
 	jaeger := jaeger.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, idb, lk, pr, td, pg, my, ms, graf, pyroscope, jaeger)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, idb, lk, pr, td, pg, my, ms, graf, jaeger)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 

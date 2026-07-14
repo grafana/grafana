@@ -145,15 +145,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*",
-      "pkg/tsdb/grafana-pyroscope-datasource/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Pyroscope"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/grafana-postgresql-datasource/**/*",
       "pkg/tsdb/grafana-postgresql-datasource/**/*"
     ],
