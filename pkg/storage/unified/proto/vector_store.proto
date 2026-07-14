@@ -4,8 +4,8 @@ package vectorstore;
 option go_package = "github.com/grafana/grafana/pkg/storage/unified/vectorstorepb";
 
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
-// Callers send text; the server embeds it and stores it in the existing pgvector layout. Reads go through the existing
-// search service.
+// Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
+// Reads go through the search service.
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
