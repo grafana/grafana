@@ -1448,6 +1448,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "alerting.ruleQuality",
+			Description:  "Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
+		},
+		{
 			Name:        "alertingNotificationsStepMode",
 			Description: "Enables simplified step mode in the notifications section",
 			Stage:       FeatureStageGeneralAvailability,
