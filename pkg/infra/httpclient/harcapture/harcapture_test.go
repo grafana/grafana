@@ -252,6 +252,15 @@ func TestRedactedURLString_dropsFragment(t *testing.T) {
 	assert.Equal(t, "https://idp.example.com/cb?state=ok", out)
 }
 
+func TestRedactedURLString_failsClosedOnMalformedKey(t *testing.T) {
+	// A query key with a malformed percent-escape can't be decoded to compare against the denylist,
+	// so its value must be redacted (fail closed) rather than passed through; well-formed params are
+	// unaffected.
+	out := redactURLValue("https://h/p?bad%zzkey=SECRET&region=eu")
+	assert.NotContains(t, out, "SECRET", "value under an undecodable key must be redacted")
+	assert.Contains(t, out, "region=eu", "well-formed non-sensitive param preserved")
+}
+
 func TestRedactURLValue_failsClosedOnUnparseable(t *testing.T) {
 	// net/url.Parse rejects raw control characters; such a value can't be query-redacted, so it
 	// must be dropped rather than passed through into a bundle meant for external sharing.

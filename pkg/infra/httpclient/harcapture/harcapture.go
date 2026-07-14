@@ -148,11 +148,18 @@ func redactedURLString(u *url.URL) string {
 			subs := strings.Split(seg, ";")
 			for j, sub := range subs {
 				key, _, hasValue := strings.Cut(sub, "=")
-				name := key
-				if unescaped, err := url.QueryUnescape(key); err == nil {
-					name = unescaped
+				if !hasValue {
+					continue // no value to redact
 				}
-				if _, sensitive := sensitiveQueryParams[strings.ToLower(name)]; sensitive && hasValue {
+				name, err := url.QueryUnescape(key)
+				if err != nil {
+					// Fail closed: the key can't be decoded to compare against the denylist, so we
+					// can't prove it isn't sensitive -- redact the value rather than risk leaking it.
+					subs[j] = key + "=" + redactedValue
+					changed = true
+					continue
+				}
+				if _, sensitive := sensitiveQueryParams[strings.ToLower(name)]; sensitive {
 					subs[j] = key + "=" + redactedValue
 					changed = true
 				}
@@ -278,6 +285,10 @@ func (b *Buffer) ToHAR() ([]byte, error) {
 func buildEntry(req *http.Request, resp *http.Response, rtErr error, started time.Time, elapsed time.Duration, extra map[string]struct{}) *har.Entry {
 	reqHeaders := toNameValues(req.Header, extra)
 
+	// The queryString HAR array uses url.Query(): unlike the URL string (redactedURLString, which
+	// parses RawQuery manually and fails closed), url.Query() silently drops any malformed pair, so
+	// such a pair is simply absent here rather than leaked -- and every pair that does parse is run
+	// through redactQueryParam. The redacted URL string above is the authoritative fail-closed copy.
 	query := req.URL.Query()
 	queryKeys := make([]string, 0, len(query))
 	for k := range query {
