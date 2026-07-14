@@ -4,6 +4,8 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Modal, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
+import { getVariableFolderPickerExcludeUIDs } from '../utils';
+
 export interface MoveVariablesModalProps {
   count: number;
   isMoving: boolean;
@@ -27,7 +29,12 @@ export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: Mo
         })}
       </p>
       <Field noMargin label={t('variables-management.move-modal.folder-label', 'Folder')}>
-        <FolderPicker showRootFolder value={targetFolderUid} onChange={(uid) => setTargetFolderUid(uid ?? '')} />
+        <FolderPicker
+          showRootFolder
+          value={targetFolderUid}
+          onChange={(uid) => setTargetFolderUid(uid ?? '')}
+          excludeUIDs={getVariableFolderPickerExcludeUIDs()}
+        />
       </Field>
       <Modal.ButtonRow>
         <Stack gap={2}>

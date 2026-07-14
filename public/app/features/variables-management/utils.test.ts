@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { type Variable, type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
@@ -6,6 +7,7 @@ import {
   buildVariablesTree,
   getNextAvailableVariableName,
   getVariableEditableType,
+  getVariableFolderPickerExcludeUIDs,
   getVariableFolderUid,
   getVariableSpecName,
 } from './utils';
@@ -50,6 +52,24 @@ describe('getVariableFolderUid', () => {
 
   it('returns the folder annotation for folder-scoped variables', () => {
     expect(getVariableFolderUid(makeVariable('region', 'folder-1'))).toBe('folder-1');
+  });
+});
+
+describe('getVariableFolderPickerExcludeUIDs', () => {
+  const originalSharedWithMeFolderUID = config.sharedWithMeFolderUID;
+
+  afterEach(() => {
+    config.sharedWithMeFolderUID = originalSharedWithMeFolderUID;
+  });
+
+  it('excludes the Shared with me folder when configured', () => {
+    config.sharedWithMeFolderUID = 'sharedwithme';
+    expect(getVariableFolderPickerExcludeUIDs()).toEqual(['sharedwithme']);
+  });
+
+  it('returns undefined when Shared with me is not configured', () => {
+    config.sharedWithMeFolderUID = undefined;
+    expect(getVariableFolderPickerExcludeUIDs()).toBeUndefined();
   });
 });
 

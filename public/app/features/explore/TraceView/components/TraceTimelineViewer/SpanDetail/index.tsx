@@ -48,6 +48,7 @@ import { getServiceDisplayName } from '../../utils/service-name';
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
+import AccordionCategorizedKeyValues from './AccordionCategorizedKeyValues';
 import type DetailState from './DetailState';
 import { ShareSpanButton } from './ShareSpanButton';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
@@ -411,8 +412,9 @@ export default function SpanDetail(props: SpanDetailProps) {
   const listOfContentCards = [];
 
   listOfContentCards.push(
-    <AccordianKeyValues
+    <AccordionCategorizedKeyValues
       data={tags}
+      sectionType="span"
       label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
       isOpen={isTagsOpen}
       linksGetter={resourceLinksGetter}
@@ -422,8 +424,9 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (process.tags) {
     listOfContentCards.push(
-      <AccordianKeyValues
+      <AccordionCategorizedKeyValues
         data={process.tags}
+        sectionType="resource"
         label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
         linksGetter={resourceLinksGetter}
         isOpen={isProcessOpen}

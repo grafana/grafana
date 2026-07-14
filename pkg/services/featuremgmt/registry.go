@@ -1448,6 +1448,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "alerting.ruleQuality",
+			Description:  "Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
+		},
+		{
 			Name:        "alertingNotificationsStepMode",
 			Description: "Enables simplified step mode in the notifications section",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1537,6 +1546,14 @@ var (
 			RequiresDevMode: false,
 			Generate:        Generate{LegacyFrontend: true},
 			Expression:      "false",
+		},
+		{
+			Name:        "connectionsFilterSidebar",
+			Description: "Enables the new sidebar filter panel in the Add new connection page",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
 		},
 		{
 			Name:         "fetchRulesUsingPost",
@@ -2496,6 +2513,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "deletedFolderResourceCleanup",
+			Description:  "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
 		},
 		{
 			Name:        "react19",
