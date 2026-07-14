@@ -1454,7 +1454,7 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{Go: true, LegacyFrontend: true},
+			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "alertingNotificationsStepMode",
