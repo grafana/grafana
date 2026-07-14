@@ -47,17 +47,23 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
 
+  const handleCloseDetails = useCallback(() => {
+    inputRef.current = '';
+    setSearch('');
+    closeDetails();
+  }, [closeDetails]);
+
   useEffect(() => {
     function handleClose(event: KeyboardEvent) {
       if (event.key === 'Escape' && showDetails.length > 0) {
-        closeDetails();
+        handleCloseDetails();
       }
     }
     document.addEventListener('keyup', handleClose);
     return () => {
       document.removeEventListener('keyup', handleClose);
     };
-  }, [closeDetails, showDetails.length]);
+  }, [handleCloseDetails, showDetails.length]);
 
   useEffect(() => {
     function handleKeydown(e: KeyboardEvent) {
@@ -192,7 +198,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
             wrapLogMessage
           >
             <LogLineDetailsHeader
-              closeDetails={closeDetails}
+              closeDetails={handleCloseDetails}
               detailsMode="sidebar"
               log={currentLog}
               search={search}
