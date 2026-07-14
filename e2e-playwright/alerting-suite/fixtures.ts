@@ -188,6 +188,22 @@ export const test = base.extend<
         15_000
       );
 
+      // The create above only guarantees the folder is durably written, not that it's visible yet:
+      // every read (including the ruler API's namespace lookup that seedGroup/seedRule depend on)
+      // is served off a search index that's updated asynchronously from the write. A folder that
+      // exists but isn't indexed yet reads back as zero results, which callers can't distinguish
+      // from "doesn't exist" — surfacing as a transient 403 on the very next request. List (not a
+      // per-uid Get, which reads the primary store directly and would race past this) is what
+      // actually exercises that index, so poll it until the new folder shows up.
+      await expect(async () => {
+        const res = await workerApi.request.get(
+          `/apis/folder.grafana.app/v1/namespaces/${workerApi.namespace}/folders?fieldSelector=metadata.name%3D${uid}`
+        );
+        expect(res.ok(), `GET folders?fieldSelector=metadata.name=${uid} -> ${res.status()}`).toBeTruthy();
+        const body = await res.json();
+        expect(body.items?.length > 0, `folder ${uid} not yet visible in list`).toBeTruthy();
+      }).toPass({ intervals: [50, 100, 200, 400], timeout: 15_000 });
+
       await use({ uid, title });
 
       // Per-test disposers already removed the rules/groups, so a plain delete normally suffices;
@@ -197,7 +213,7 @@ export const test = base.extend<
         await workerApi.request.delete(`/api/folders/${uid}?forceDeleteRules=true`);
       }
     },
-    { scope: 'worker', timeout: 20_000 },
+    { scope: 'worker', timeout: 35_000 },
   ],
 
   folder: [
