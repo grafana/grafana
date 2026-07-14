@@ -8801,6 +8801,9 @@
       "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
     "span-detail": {
+      "attribute-category": {
+        "other": "Other"
+      },
       "label": {
         "kind": "Kind:",
         "library-name": "Library Name:",
