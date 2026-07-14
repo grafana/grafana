@@ -32,7 +32,6 @@ import { type TraceSpan } from '../../types/trace';
 
 import { type TraceFlameGraphs } from '.';
 
-
 export type SpanFlameGraphProps = {
   span: TraceSpan;
   traceToProfilesOptions?: TraceToProfilesOptions;
