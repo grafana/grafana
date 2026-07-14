@@ -1,7 +1,8 @@
 import { map } from 'lodash';
 
-import { ScopedVars, SelectableValue, VariableWithMultiSupport } from '@grafana/data';
-import { logWarning, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
+import { AppEvents, ScopedVars, SelectableValue, VariableWithMultiSupport } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { getAppEvents, logWarning, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
 
 import { AzureAPIResponse, AzureMonitorOption, VariableOptionGroup } from '../types/types';
 
@@ -73,6 +74,17 @@ export async function fetchAllArmPages<T>(
   }
   if (path) {
     logWarning(`[azuremonitor] ARM listing stopped after ${maxPages} pages; some results may be omitted.`);
+    getAppEvents().publish({
+      type: AppEvents.alertWarning.name,
+      payload: [
+        t('components.pagination.results-truncated-title', 'Azure Monitor'),
+        t(
+          'components.pagination.results-truncated-message',
+          'Stopped loading after {{maxPages}} pages; some results may be omitted.',
+          { maxPages }
+        ),
+      ],
+    });
   }
   return results;
 }
