@@ -295,12 +295,12 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       init: () => layer,
       dispose: () => subscriptions.unsubscribe(),
       update: (data: PanelData) => {
+        // The crosshair refers to a row of the previous data.
+        clearCrosshair();
+
         if (!data.series?.length) {
           return; // ignore empty
         }
-
-        // The crosshair refers to a row of the previous data.
-        clearCrosshair();
 
         for (const frame of data.series) {
           if (style.fields || hasArrows) {
