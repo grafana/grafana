@@ -55,6 +55,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	externalGroupReconciler    legacy.ExternalGroupReconciler
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
 	ssoLegacyStore             *sso.LegacyStore
+	ssoUseMTSettings           bool
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller
 	teamLBACApiInstaller       TeamLBACApiInstaller

@@ -76,7 +76,7 @@ require (
 	github.com/go-logfmt/logfmt v0.6.1 // @grafana/data-sources-plugins
 	github.com/go-openapi/loads v0.24.0 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.32.4 // @grafana/alerting-backend
-	github.com/go-openapi/strfmt v0.26.3 // @grafana/alerting-backend
+	github.com/go-openapi/strfmt v0.26.4 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
 	github.com/go-sql-driver/mysql v1.10.0 // @grafana/grafana-search-and-storage
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
@@ -94,7 +94,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.22.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20260707141535-ae0e826355dd // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20260713132205-673c077411fe // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260624092630-e3cde2289ada // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
@@ -144,13 +144,12 @@ require (
 	github.com/madflojo/testcerts v1.5.0 // @grafana/alerting-backend
 	github.com/mattn/go-isatty v0.0.22 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
-	github.com/microsoft/go-mssqldb v1.10.0 // @grafana/data-sources-plugins
 	github.com/migueleliasweb/go-github-mock v1.5.0 // @grafana/grafana-git-ui-sync-team
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c //@grafana/identity-access-team
 	github.com/mocktools/go-smtp-mock/v2 v2.5.4 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
-	github.com/nats-io/nats-server/v2 v2.14.2 // @grafana/grafana-search-and-storage
+	github.com/nats-io/nats-server/v2 v2.14.3 // @grafana/grafana-search-and-storage
 	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
 	github.com/oklog/ulid/v2 v2.1.1 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
@@ -468,8 +467,6 @@ require (
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
-	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
-	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/cel-go v0.28.1 // indirect
@@ -498,7 +495,6 @@ require (
 	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.5.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
-	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-7 // indirect
 	github.com/hashicorp/memberlist v0.5.4 // indirect
@@ -514,12 +510,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jaegertracing/jaeger-idl v0.6.0 // indirect
-	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
-	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
-	github.com/jcmturner/gofork v1.7.6 // indirect
-	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
-	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
-	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jessevdk/go-flags v1.6.1 // indirect
 	github.com/jhump/protoreflect v1.17.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
