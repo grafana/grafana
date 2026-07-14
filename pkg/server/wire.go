@@ -117,6 +117,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folderreconcile"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -211,7 +212,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
@@ -268,7 +268,6 @@ var wireBasicSet = wire.NewSet(
 	azuremonitor.ProvideService,
 	postgres.ProvideService,
 	mysql.ProvideService,
-	mssql.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
@@ -309,6 +308,9 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
 	libraryelements.ProvideService,
 	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
+	libraryelements.ProvideFolderConsumer,
+	ngalert.ProvideAlertRuleFolderConsumer,
+	folderreconcile.ProvideReconciler,
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,

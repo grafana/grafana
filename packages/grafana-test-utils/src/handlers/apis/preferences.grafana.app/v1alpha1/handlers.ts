@@ -6,6 +6,7 @@ import { mockUserPreferences, setMockUserPreferences } from '../../../../fixture
 
 export const MERGED_PREFS_URL = '/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences/merged';
 const LIST_PREFS_URL = '/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences';
+const UPDATE_PREFS_URL = `${LIST_PREFS_URL}/:name`;
 
 const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
   http.get(LIST_PREFS_URL, () => {
@@ -24,7 +25,7 @@ const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>)
   });
 
 const updatePreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
-  http.patch('/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences/:name', async ({ request }) => {
+  http.patch(UPDATE_PREFS_URL, async ({ request }) => {
     if (override) {
       return override;
     }
@@ -48,6 +49,9 @@ const mergedPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json
   });
 
 export const customGetUserPreferencesHandler = (resolver: HttpResponseResolver) => http.get(LIST_PREFS_URL, resolver);
+
+export const customPatchUserPreferencesHandler = (resolver: HttpResponseResolver) =>
+  http.patch(UPDATE_PREFS_URL, resolver);
 
 export const preferencesHandlers = { listPreferencesHandler, updatePreferencesHandler, mergedPreferencesHandler };
 

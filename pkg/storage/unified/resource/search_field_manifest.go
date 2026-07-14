@@ -85,12 +85,10 @@ func manifestSearchFieldsToDefinitions(in []app.ManifestVersionKindSearchField) 
 	return out
 }
 
-// manifestDeclaredKindKeys returns the lower-cased "group/resource" keys of
-// every kind that declares at least one search field in any version. The key
-// format matches the lower-cased "group/resource" used throughout the
-// search-fields boot wiring.
-func manifestDeclaredKindKeys(manifests []app.Manifest) map[string]bool {
-	keys := map[string]bool{}
+// manifestDeclaredKindKeys returns the (group, resource) key of every kind that
+// declares at least one search field in any version.
+func manifestDeclaredKindKeys(manifests []app.Manifest) map[LowerGroupResource]bool {
+	keys := map[LowerGroupResource]bool{}
 	for _, m := range manifests {
 		if m.ManifestData == nil {
 			continue
@@ -100,20 +98,20 @@ func manifestDeclaredKindKeys(manifests []app.Manifest) map[string]bool {
 				if len(kind.SearchFields) == 0 {
 					continue
 				}
-				keys[strings.ToLower(m.ManifestData.Group+"/"+manifestResourceName(kind))] = true
+				keys[NewLowerGroupResource(m.ManifestData.Group, manifestResourceName(kind))] = true
 			}
 		}
 	}
 	return keys
 }
 
-// SearchFieldProviders returns the per-("group/resource") provider map that
+// SearchFieldProviders returns the per-(group, resource) provider map that
 // drives bleve mappings. Every kind that declares search fields in its manifest
 // is mapped to a single manifest-backed provider; each entry queries it for its
-// own (group, resource). Keys are lower-cased "group/resource".
-func SearchFieldProviders(manifests []app.Manifest) map[string]SearchFieldsProvider {
+// own (group, resource).
+func SearchFieldProviders(manifests []app.Manifest) map[LowerGroupResource]SearchFieldsProvider {
 	declared := manifestDeclaredKindKeys(manifests)
-	out := make(map[string]SearchFieldsProvider, len(declared))
+	out := make(map[LowerGroupResource]SearchFieldsProvider, len(declared))
 	if len(declared) == 0 {
 		return out
 	}
