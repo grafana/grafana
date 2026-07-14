@@ -6,8 +6,8 @@
 // VERBATIM. This is a deliberate, temporary scope decision for the experimental, admin-only,
 // on-prem, feature-flagged diagnostics endpoint: the download drawer warns the operator that the
 // bundle may contain sensitive data and to review it before sharing, so responsible use is on the
-// operator. Automatic redaction is a planned follow-up (tracked in data-sources#1281); until it
-// lands, treat every generated bundle as containing live credentials.
+// operator. Automatic redaction is a planned follow-up; until it lands, treat every generated
+// bundle as containing live credentials.
 package harcapture
 
 import (

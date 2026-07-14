@@ -19,7 +19,7 @@ import (
 //
 // For core (in-process) plugins it injects a capturing RoundTripper as contextual middleware, so the
 // existing ContextualMiddleware in the HTTP client chain picks it up. (External out-of-process gRPC
-// plugins are captured separately once the SDK-side middleware ships — see #1270.)
+// plugins will be captured separately, in a follow-up.)
 func NewHTTPCaptureMiddleware() backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &HTTPCaptureMiddleware{BaseHandler: backend.NewBaseHandler(next)}

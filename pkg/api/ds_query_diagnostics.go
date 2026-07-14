@@ -36,10 +36,7 @@ var diagnosticsFeatureClient = openfeature.NewDefaultClient()
 // in the diagnostics service; this handler owns the HTTP concerns: gating, request binding, running
 // the queries, and writing the response.
 //
-// Two independent gates apply by design (see registerRoutes): the route is registered only on
-// on-prem/self-managed instances (empty StackID) so it never runs on Grafana Cloud, and within
-// on-prem it is gated at request time on the grafana.onDemandDiagnostics feature flag. Access is
-// further restricted to Grafana server admins via reqGrafanaAdmin.
+// Two independent gates apply by design; see registerRoutes for details.
 func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Response {
 	ctx := c.Req.Context()
 	if !diagnosticsFeatureClient.Boolean(ctx, featuremgmt.FlagGrafanaOnDemandDiagnostics, false, openfeature.TransactionContext(ctx)) {

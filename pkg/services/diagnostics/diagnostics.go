@@ -30,12 +30,8 @@ func NewBundler() *Bundler {
 // optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
 // captured.
 //
-// TODO: re-add a request-scoped server log. The previous whole-file tail was dropped because it is
-// not scoped to this request and would leak unrelated activity into a bundle meant for external
-// sharing; log inclusion returns (behind a drawer option) once it can be scoped to the request.
-// queryErr is the error (if any) from running the queries. A failed query is itself diagnostic
-// signal — the captured HAR already holds the failed attempt(s) — so it is recorded in the bundle
-// rather than causing the capture to be discarded.
+// Server logs are intentionally omitted because they are not scoped to this request and would leak
+// unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
 func (b *Bundler) Build(harBuffer *harcapture.Buffer, panelJSON, dashboardJSON json.RawMessage, queryErr error) ([]byte, error) {
 	files := map[string][]byte{}
 
