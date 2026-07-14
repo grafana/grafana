@@ -32,10 +32,6 @@ export interface RecommendationItem {
   href: string;
 }
 
-// Curated next steps after Kubernetes Monitoring. Built at render time (never at module load) so
-// `t` resolves after i18n init and `locationUtil.assureBaseUrl` sees config.appSubUrl. hrefs point
-// at the plugin page where each app can be enabled, so the section must drop entries whose plugin
-// is already enabled and hide entirely from users who cannot manage plugins.
 function getRecommendations(): RecommendationItem[] {
   const recommendationDefinitions: Array<Omit<RecommendationItem, 'href'>> = [
     {
@@ -138,6 +134,7 @@ function GatedRecommendations({ canInstall }: { canInstall: boolean }) {
     // plugins:write is scoped to this plugin.
     return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
   });
+
   if (recommendations.length === 0) {
     return null;
   }
