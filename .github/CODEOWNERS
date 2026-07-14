@@ -1174,6 +1174,8 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
+/public/app/features/dashboard-scene/scene/layout-notebook/ @grafana/sharing-squad
+/public/app/features/dashboard-scene/serialization/layoutSerializers/NotebookLayout* @grafana/sharing-squad
 /public/app/features/dashboard-scene/sharing/ @grafana/sharing-squad
 /public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
 /public/app/features/dashboard/dashgrid/DashboardLibrary/ @grafana/sharing-squad
