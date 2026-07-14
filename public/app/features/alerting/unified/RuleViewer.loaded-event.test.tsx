@@ -53,6 +53,24 @@ describe('RuleViewer loaded CUJ signal', () => {
     expect(mockReportInteraction).toHaveBeenCalledTimes(1);
   });
 
+  it('classifies a 404 fetch error as not_found, matching the rendered EntityNotFound', async () => {
+    mockUseCombinedRule.mockReturnValue({
+      loading: false,
+      error: { status: 404, data: { message: 'rule not found' } },
+    });
+
+    render(<RuleViewer />);
+
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith(
+        'grafana_alerting_rule_viewer_loaded',
+        { status: 'not_found' },
+        { silent: true }
+      )
+    );
+    expect(mockReportInteraction).toHaveBeenCalledTimes(1);
+  });
+
   it('does not emit while the rule is still loading', async () => {
     mockUseCombinedRule.mockReturnValue({ loading: true });
 

@@ -50,7 +50,9 @@ const RuleViewer = () => {
     }
     loadedTracked.current = true;
     let status: 'success' | 'error' | 'not_found';
-    if (error) {
+    if (isFetchError(error) && error.status === 404) {
+      status = 'not_found';
+    } else if (error) {
       status = 'error';
     } else if (rule) {
       status = 'success';
