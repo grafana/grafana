@@ -13946,9 +13946,15 @@
       "migrate-default-message": "Migrate Grafana resources into repository"
     },
     "sync-repository": {
+      "button-cancel": "Cancel",
+      "button-force-full-pull": "Force full pull",
+      "confirm-force-full-pull": "Are you sure you want to do a full pull? This may take a while, so only continue if you have resources that are unexpectedly not syncing.",
       "error-pulling-resources": "Error pulling resources",
       "pull": "Pull",
+      "pull-diff": "Pull based on diff (default)",
+      "pull-full": "Force full pull",
       "success-pull-started": "Pull started",
+      "title-force-full-pull": "Force full pull?",
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
