@@ -73,23 +73,22 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
-.cursor/*
-!.cursor/skills/
-.cursor/skills/*
-!.cursor/skills/git-sync-shared/
-!.cursor/skills/test-git-sync-pat/
-!.cursor/skills/test-git-sync-github-app/
-!.cursor/skills/test-git-sync-all/
-!.cursor/skills/test-git-sync-resource-ops/
-!.cursor/skills/test-git-sync-gitlab/
-!.cursor/skills/test-git-sync-bitbucket/
-!.cursor/skills/test-git-sync-none-role/
-!.cursor/skills/.env.example
+.cursor/
 .devcontainer/
-.claude/
-
-# Claude skills everyone should have
-!.claude/skills/add-e2e-selectors
+.claude/*
+# Agent skills everyone should have
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/add-e2e-selectors/
+!.claude/skills/git-sync-shared/
+!.claude/skills/test-git-sync-all/
+!.claude/skills/test-git-sync-pat/
+!.claude/skills/test-git-sync-gitlab/
+!.claude/skills/test-git-sync-bitbucket/
+!.claude/skills/test-git-sync-github-app/
+!.claude/skills/test-git-sync-resource-ops/
+!.claude/skills/test-git-sync-none-role/
+!.claude/skills/.env.example
 
 .eslintcache
 .stylelintcache
@@ -301,4 +300,4 @@ debug-storybook.log
 
 # Git Sync provisioning test credentials
 .env
-*.pem
+/*.pem

@@ -13,38 +13,7 @@ Tests provisioned resource access restrictions for the `None` org role — the m
 
 ## Execution Rules
 
-**This is a test-only run. You MUST follow these rules:**
-
-1. **No code changes.** Do not modify any Grafana source code or test files. Configuration files (e.g., feature toggles) may be changed only as directed by the Prerequisites section. You are testing the product as-is, not fixing it.
-2. **Do not stop on failure.** When a step fails, encounters a bug, or produces unexpected behavior -- document it and move on to the next step. Do not attempt to debug or fix the root cause. If a failure blocks subsequent steps, apply a minimal workaround to unblock the flow and note it in the report. **Workaround must use the same mechanism as the original step** (e.g., retry with slightly different input, skip to a later step that creates the needed state). Do not switch to a different API or creation method -- the resource may not behave the same way in subsequent steps.
-3. **Handle transient connection-loss alerts carefully.** Local/dev runs may occasionally show `Connection to server is lost...` during a save or drawer submit even when Grafana recovers on its own. Record the alert, wait for the page to recover or retry the same UI action once, and only treat it as a product failure if it persists or blocks progress while `/api/health` is still OK.
-4. **Complete the entire flow.** Execute every step from start to finish, including cleanup. Skipping steps after a failure loses coverage.
-5. **Produce a final report.** After completing all steps (or reaching the end), output a structured report:
-
-   ### Report Format
-
-   ```
-   ## Test Run Report
-
-   **Skill:** <skill name>
-   **Date:** <date>
-   **Status:** PASS | PARTIAL | FAIL
-
-   ### Steps Completed
-   - Step N: <description> -- PASS | FAIL
-     - [if FAIL] **Issue:** <what happened, expected vs actual>
-
-   ### Summary
-   - Total steps: N
-   - Passed: N
-   - Failed: N
-   - Blocked (could not attempt due to prior failure state): N
-
-   ### Issues Found
-   1. **[Step N] <title>**: <description of the bug or unexpected behavior>
-   ```
-
-6. **Budget your time.** Allocate effort across all phases, not just the first. If a phase is consuming disproportionate time due to repeated failures or workarounds, document what you've observed and advance to the next phase. Partial coverage of every phase is more valuable than exhaustive coverage of one.
+**This is a test-only run.** Read `../git-sync-shared/execution-rules.md` FIRST and follow all of its rules: no code changes, do not stop on failure, complete the entire flow including cleanup, budget your time, and produce the final report in the format it defines.
 
 ## Prerequisites
 
@@ -61,87 +30,18 @@ Grafana must have these feature toggles enabled: `provisioning`, `kubernetesDash
 
 Only PAT credentials are needed -- the simplest auth type for API-based setup.
 
-### Local Setup
+### Setup
 
-1. Create `.env` in the project root with credentials (see `.env.example`). Ensure `.env` is in `.gitignore`.
-2. Source the credentials:
-   ```bash
-   source .cursor/skills/git-sync-shared/scripts/load-env.sh
-   ```
-3. Add the feature toggles to `conf/custom.ini`:
-   ```ini
-   [feature_toggles]
-   provisioning = true
-   kubernetesDashboards = true
-   provisioningFolderMetadata = true
-   ```
-4. Grafana must be running at `http://localhost:3000`.
-
-### Cloud Setup
-
-On a cloud VM, Grafana must be built and started from scratch.
-
-1. **Create `conf/custom.ini`** (does not exist by default; it is gitignored):
-
-   ```bash
-   cat > conf/custom.ini << 'EOF'
-   [feature_toggles]
-   provisioning = true
-   kubernetesDashboards = true
-   provisioningFolderMetadata = true
-   EOF
-   ```
-
-   Do NOT edit `conf/defaults.ini`.
-
-2. **Start Grafana:**
-
-   ```bash
-   # Backend (first build ~3 min, hot-reload after)
-   make run &
-   # Frontend dev server (~45s first compile)
-   yarn start &
-   ```
-
-3. **Wait for health:**
-
-   ```bash
-   for i in $(seq 1 60); do
-     if curl -sf http://localhost:3000/api/health > /dev/null; then
-       echo "Grafana is ready"
-       break
-     fi
-     echo "Waiting for Grafana... ($i/60)"
-     sleep 5
-   done
-   ```
-
-4. **Secrets** are available as environment variables (configured in Cursor dashboard). Do not use `.env` files. Verify:
-
-   ```bash
-   for var in GIT_SYNC_TEST_PAT_REPO_URL GIT_SYNC_TEST_PAT; do
-     if [ -z "${!var}" ]; then echo "ERROR: $var is not set"; exit 1; fi
-     echo "OK: $var is set"
-   done
-   ```
-
-5. **Log in to Grafana:** Open browser to `http://localhost:3000`. Log in as `admin`/`admin`. Skip password change if prompted.
+Follow "Local Setup" (or "Cloud Setup" on a cloud VM) in `../git-sync-shared/setup.md`. Verify each variable from the Required Secrets table above is set before proceeding.
 
 ### Cleanup Before Testing
 
 Before running, delete existing test resources and users to avoid conflicts:
 
-```bash
-BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
-AUTH="admin:admin"
+Run `bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh`
 
-# Delete repositories that may conflict
-for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata.name'); do
-  if [ "$name" = "none-test-repo" ]; then
-    echo "Deleting repository: $name"
-    curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
-  fi
-done
+```bash
+AUTH="admin:admin"
 
 # Delete test users (ignore 404 if they don't exist)
 for login in none-test; do
@@ -152,7 +52,7 @@ for login in none-test; do
   fi
 done
 
-echo "Cleanup complete."
+echo "User cleanup complete."
 ```
 
 ## Shared References

@@ -1,8 +1,6 @@
 #!/bin/bash
 # Source .env from the project root and export all variables.
-# Usage: source .cursor/skills/git-sync-shared/scripts/load-env.sh
-
-set -euo pipefail
+# Usage: source .claude/skills/git-sync-shared/scripts/load-env.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"

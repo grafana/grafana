@@ -98,25 +98,10 @@ curl -s -u admin:admin \
 ## Full Cleanup Script
 
 ```bash
-#!/bin/bash
-# Delete all test repositories and GitHub App connections
-BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
-AUTH="admin:admin"
-
-# Delete repositories first
-for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata.name'); do
-  echo "Deleting repository: $name"
-  curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
-done
-
-# Then delete connections (GitHub App only)
-for name in $(curl -s -u "$AUTH" "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
-  echo "Deleting connection: $name"
-  curl -s -X DELETE -u "$AUTH" "$BASE/connections/$name"
-done
-
-echo "Cleanup complete."
+bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh
 ```
+
+Deletes all repositories (first) and connections in the `default` namespace. Prints remaining counts when finished.
 
 ## Create Repository via API
 

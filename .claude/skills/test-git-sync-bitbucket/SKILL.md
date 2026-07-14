@@ -12,37 +12,7 @@ Drive the Grafana provisioning wizard through the browser using `mcp_chrome_devt
 
 ## Execution Rules
 
-**This is a test-only run. You MUST follow these rules:**
-
-1. **No code changes.** Do not modify any Grafana source code or test files. Configuration files (e.g., feature toggles) may be changed only as directed by the Prerequisites section. You are testing the product as-is, not fixing it.
-2. **Do not stop on failure.** When a step fails, encounters a bug, or produces unexpected behavior -- document it and move on to the next step. Do not attempt to debug or fix the root cause. If a failure blocks subsequent steps, apply a minimal workaround to unblock the flow and note it in the report. **Workaround must use the same mechanism as the original step** (e.g., retry with slightly different input, skip to a later step that creates the needed state). Do not switch to a different API or creation method -- the resource may not behave the same way in subsequent steps.
-3. **Complete the entire flow.** Execute every step from start to finish, including cleanup. Skipping steps after a failure loses coverage.
-4. **Produce a final report.** After completing all steps (or reaching the end), output a structured report:
-
-   ### Report Format
-
-   ```
-   ## Test Run Report
-
-   **Skill:** <skill name>
-   **Date:** <date>
-   **Status:** PASS | PARTIAL | FAIL
-
-   ### Steps Completed
-   - Step N: <description> -- PASS | FAIL
-     - [if FAIL] **Issue:** <what happened, expected vs actual>
-
-   ### Summary
-   - Total steps: N
-   - Passed: N
-   - Failed: N
-   - Blocked (could not attempt due to prior failure state): N
-
-   ### Issues Found
-   1. **[Step N] <title>**: <description of the bug or unexpected behavior>
-   ```
-
-5. **Budget your time.** Allocate effort across all phases, not just the first. If a phase is consuming disproportionate time due to repeated failures or workarounds, document what you've observed and advance to the next phase. Partial coverage of every phase is more valuable than exhaustive coverage of one.
+**This is a test-only run.** Read `../git-sync-shared/execution-rules.md` FIRST and follow all of its rules: no code changes, do not stop on failure, complete the entire flow including cleanup, budget your time, and produce the final report in the format it defines.
 
 ## Prerequisites
 
@@ -58,46 +28,17 @@ Grafana must have these feature toggles enabled: `provisioning`, `kubernetesDash
 | `GIT_SYNC_TEST_BITBUCKET_TOKEN`      | Bitbucket API Token                                                          |
 | `GIT_SYNC_TEST_BITBUCKET_TOKEN_USER` | Bitbucket username used with the API token                                   |
 
-### Local Setup
+### Setup
 
 This skill covers the local-only Bitbucket test flow.
 
-1. Create `.env` in the project root with credentials (see `.env.example`). Ensure `.env` is in `.gitignore`.
-2. Source the credentials:
-   ```bash
-   source .cursor/skills/git-sync-shared/scripts/load-env.sh
-   ```
-3. Add the feature toggles to `conf/custom.ini`:
-   ```ini
-   [feature_toggles]
-   provisioning = true
-   kubernetesDashboards = true
-   provisioningFolderMetadata = true
-   ```
-4. Grafana must be running at `http://localhost:3000`.
+Follow "Local Setup" in `../git-sync-shared/setup.md`. Verify each variable from the Required Secrets table above is set before proceeding.
 
 ### Cleanup Before Testing
 
 Before running the Bitbucket flow, delete existing test resources to avoid conflicts:
 
-```bash
-BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
-AUTH="admin:admin"
-
-# Delete repositories first (must be deleted before their connections)
-for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata.name'); do
-  echo "Deleting repository: $name"
-  curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
-done
-
-# Then delete connections
-for name in $(curl -s -u "$AUTH" "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
-  echo "Deleting connection: $name"
-  curl -s -X DELETE -u "$AUTH" "$BASE/connections/$name"
-done
-
-echo "Cleanup complete."
-```
+Run `bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh`
 
 ## Shared References
 
@@ -144,26 +85,8 @@ After Step 5 completes and the page navigates to `/admin/provisioning/{repoName}
 
 Remove the repository and verify no artifacts remain:
 
-```bash
-BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
-AUTH="admin:admin"
+Run `bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh`
 
-# Delete repositories
-for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata.name'); do
-  echo "Deleting repository: $name"
-  curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
-done
-
-echo "Cleanup complete."
-```
-
-Verify:
-
-```bash
-curl -s -u admin:admin \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
-  jq '.items | length'
-# Should return 0
-```
+No connection deletion needed for Bitbucket token flow -- it does not create connections.
 
 No connection deletion needed for Bitbucket token flow -- it does not create connections.

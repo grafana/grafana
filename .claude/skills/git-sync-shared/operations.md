@@ -39,6 +39,7 @@ The step loads async. `wait_for` the cards to appear (the loading text is "Loadi
 
 1. `wait_for` text `["Begin synchronization"]` (loading text: "Checking repository status...")
 2. `take_snapshot` to find the "Begin synchronization" button
+   A "Migrate existing resources" checkbox (id: migrate-resources) may appear before the button — only when the provisioningExport feature toggle is enabled. It is NOT in this suite's toggle set, so it is normally absent; leave it unchecked if present.
 3. `click` "Begin synchronization"
 4. **Wait for job completion:** The sync job runs asynchronously. **Do not use `wait_for` here** — the MCP `wait_for` has a hard 30s internal timeout cap (see Gotchas). Instead, poll with `take_snapshot` every 10-15s until the "Choose additional settings" button is no longer disabled, or the heading changes to step 5. For small repos this takes seconds; for large repos (200+ files) it can take 1-2 minutes.
 5. `click` the Next button (text: "Choose additional settings")
@@ -203,35 +204,13 @@ After the wizard completes and the repo is synced, the following operations can 
 
 After testing, delete the created resources.
 
-**Quick cleanup via API:**
+**Quick cleanup:**
 
 ```bash
-BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
-AUTH="admin:admin"
-
-# Delete repositories first (must be deleted before their connections)
-for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata.name'); do
-  echo "Deleting repository: $name"
-  curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
-done
-
-# Delete connections (GitHub App flow only)
-for name in $(curl -s -u "$AUTH" "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
-  echo "Deleting connection: $name"
-  curl -s -X DELETE -u "$AUTH" "$BASE/connections/$name"
-done
-
-echo "Cleanup complete."
+bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh
 ```
 
-**Verify cleanup:**
-
-```bash
-curl -s -u admin:admin \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
-  jq '.items | length'
-# Should return 0
-```
+Expected output includes `Remaining repositories: 0` and `Remaining connections: 0`.
 
 **Via UI:**
 
