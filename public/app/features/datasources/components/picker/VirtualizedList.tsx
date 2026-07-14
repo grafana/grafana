@@ -82,6 +82,8 @@ export function VirtualizedList({
   useEffect(() => {
     const ds = sortedDataSources[selectedIndex];
     onActiveItemChange?.(listboxId && ds ? optionId(listboxId, ds.uid) : undefined);
+    // Clean up so aria-activedescendant never references a removed option
+    return () => onActiveItemChange?.(undefined);
   }, [listboxId, onActiveItemChange, selectedIndex, sortedDataSources]);
 
   return (
