@@ -73,8 +73,13 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	resp, queryErr := queryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)
 
 	// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error, the
-	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle.
+	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle. An
+	// externalized plugin whose top-level QueryData error was swallowed to survive the gRPC boundary
+	// carries it in the __har__ frame instead; fold that in as well.
 	respErr := diagnostics.ResponseError(resp)
+	if respErr == nil {
+		respErr = diagnostics.PluginCaptureError(resp)
+	}
 
 	// If the query failed before any traffic was captured (e.g. pre-flight access-denied or
 	// datasource-not-found, which never reach the datasource), there's nothing to diagnose, so
@@ -83,7 +88,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	// failure is a client error (400). A failure that did hit the wire leaves captured traffic and
 	// falls through — that captured failure is exactly what the bundle is for, recorded alongside
 	// query-error.txt.
-	if !diagnostics.HasCapturedHAR(harBuffer) {
+	if !diagnostics.HasCapturedHAR(resp, harBuffer) {
 		if r := hs.diagnosticsNoCaptureError(queryErr, respErr); r != nil {
 			return r
 		}
@@ -94,7 +99,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if bundleErr == nil {
 		bundleErr = respErr
 	}
-	bundle, err := diagnostics.NewBundler().Build(harBuffer, reqDTO.Panel, reqDTO.Dashboard, bundleErr)
+	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, bundleErr)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}
