@@ -20,4 +20,8 @@ export class Controls extends PageObject {
         .click();
     });
   }
+
+  getVariableLabel(label: string) {
+    return this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(label));
+  }
 }

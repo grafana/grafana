@@ -82,6 +82,8 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 
 	// Named dashboards should be written, each with its stored apiVersion
 	// and a regenerated metadata.name (standalone export uses new UIDs).
+	// v0 is the exception: it is relabeled to v1 on export so the synced file
+	// remains loadable (see the conversion shim in jobs/export/resources.go).
 	type expected struct {
 		title      string
 		origName   string
@@ -89,7 +91,7 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 		fileName   string
 	}
 	for _, tt := range []expected{
-		{title: "Test dashboard. Created at v0", origName: "test-v0", apiVersion: "dashboard.grafana.app/v0alpha1", fileName: "test-dashboard-created-at-v0.json"},
+		{title: "Test dashboard. Created at v0", origName: "test-v0", apiVersion: "dashboard.grafana.app/v1", fileName: "test-dashboard-created-at-v0.json"},
 		{title: "Test dashboard. Created at v1", origName: "test-v1", apiVersion: "dashboard.grafana.app/v1", fileName: "test-dashboard-created-at-v1.json"},
 		{title: "Test dashboard. Created at v2", origName: "test-v2", apiVersion: "dashboard.grafana.app/v2", fileName: "test-dashboard-created-at-v2.json"},
 		{title: "Test dashboard. Created at v2beta1", origName: "test-v2beta1", apiVersion: "dashboard.grafana.app/v2beta1", fileName: "test-dashboard-created-at-v2beta1.json"},

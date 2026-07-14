@@ -63,6 +63,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -137,6 +138,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "org-2",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -216,6 +218,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -290,6 +293,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -367,6 +371,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -444,6 +449,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -516,6 +522,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "org-2",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -588,6 +595,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -837,6 +845,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1184,6 +1193,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1257,6 +1267,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1327,6 +1338,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1502,7 +1514,7 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 	}}, progress)
 
 	require.NoError(t, err)
-	require.Equal(t, "https://github.com/example/repo", info.RepositoryURL)
+	require.Equal(t, "http://host/admin/provisioning/test-repo", info.RepositoryAdminURL)
 	require.Len(t, info.Changes, 1)
 	require.Equal(t, "https://github.com/example/repo/blob/ref/path/to/file.json", info.Changes[0].SourceURL)
 }
@@ -1565,10 +1577,11 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 	}}, progress)
 
 	require.NoError(t, err)
-	require.Equal(t, "https://github.com/example/repo", info.RepositoryURL)
+	// The repository admin link is derived from the Grafana base URL, so it never
+	// carries git credentials regardless of what the repo is configured with.
+	require.Equal(t, "http://host/admin/provisioning/creds-repo", info.RepositoryAdminURL)
 	require.Len(t, info.Changes, 1)
 	require.Equal(t, "https://github.com/example/repo/blob/ref/path/to/file.json", info.Changes[0].SourceURL)
-	require.NotContains(t, info.RepositoryURL, "token")
 	require.NotContains(t, info.Changes[0].SourceURL, "token")
 }
 
@@ -1591,8 +1604,10 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "ghes-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
-			Type:             provisioning.GitHubEnterpriseRepositoryType,
-			GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: true},
+			Type: provisioning.GitHubEnterpriseRepositoryType,
+			PullRequest: &provisioning.PullRequestOptions{
+				GenerateDashboardPreviews: true,
+			},
 		},
 	})
 	reader.On("Read", mock.Anything, "playlist.json", "ref").Return(finfo, nil)
