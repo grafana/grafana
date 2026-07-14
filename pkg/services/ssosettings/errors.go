@@ -21,4 +21,8 @@ var (
 	ErrInvalidProvider = errutil.ValidationFailed("sso.invalidProvider", errutil.WithPublicMessage("Provider is invalid"))
 	ErrInvalidSettings = errutil.ValidationFailed("sso.settings", errutil.WithPublicMessage("Settings field is invalid"))
 	ErrEmptyClientId   = errutil.ValidationFailed("sso.emptyClientId", errutil.WithPublicMessage("ClientId cannot be empty"))
+
+	ErrMTSettingsNotImplemented = errutil.NotImplemented("sso.mtSettingsNotImplemented",
+		errutil.WithPublicMessage("Resolving SSO settings from the MT-Settings service is not implemented yet")).
+		Errorf("MT-Settings SSO settings resolution not implemented")
 )

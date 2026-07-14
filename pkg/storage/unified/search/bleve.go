@@ -3114,11 +3114,7 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 
 	if custom != nil {
 		for _, name := range custom.Fields() {
-			f := custom.Field(name)
-			if f.Priority > 10 {
-				continue
-			}
-			fields = append(fields, f)
+			fields = append(fields, custom.Field(name))
 		}
 	}
 	for _, field := range fields {
