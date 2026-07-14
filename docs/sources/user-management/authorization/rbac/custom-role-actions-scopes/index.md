@@ -13,12 +13,12 @@ weight: 30
 refs:
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-grafana-provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-grafana-provisioning/
   rbac-fixed-roles:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/#fixed-roles
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/#fixed-roles
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/#fixed-roles
 ---
@@ -36,7 +36,7 @@ An RBAC permission comprises an action and a scope:
 
 To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
 
-If you're using Grafana Enterprise or Grafana Cloud, you can create **custom roles** with specific sets of permissions. Refer to [Create custom roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/create-custom-roles) to learn how.
+If you're using Grafana Enterprise or Grafana Cloud, you can create **custom roles** with specific sets of permissions. Refer to [Create custom roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/create-custom-roles) to learn how.
 
 ## Action definitions
 
@@ -256,4 +256,4 @@ curl -X GET "https://your-grafana-instance/api/access-control/roles/basic_admin"
 
 The response includes all permissions granted to that role, including plugin-specific actions. Plugin actions typically use `None` for their scope because they operate at the organization level.
 
-For a centralized reference of plugin roles and their default permissions, refer to [Grafana Cloud app plugin role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/).
+For a centralized reference of plugin roles and their default permissions, refer to [Grafana Cloud app plugin role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/plugin-role-definitions/).

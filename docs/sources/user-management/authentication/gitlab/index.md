@@ -83,7 +83,7 @@ Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafa
 
 ## Configure GitLab authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
+Ensure that you have access to the [Grafana configuration file](../../../setup-grafana/configure-grafana/#configuration-file-location).
 
 ### Steps
 
@@ -112,7 +112,7 @@ To configure GitLab authentication with Grafana, follow these steps:
    a. Set `use_refresh_token` to `true` in `[auth.gitlab]` section in Grafana configuration file.
 
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
+1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/).
 1. Restart Grafana.
 
    You should now see a GitLab login button on the login page and be able to log in or sign up with your GitLab accounts.
@@ -184,7 +184,7 @@ Refer to [configuration options](#configuration-options) for more information.
 
 You can use the `org_mapping` configuration option to assign the user to multiple organizations and specify their role based on their GitLab group membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If the org role mapping (`org_mapping`) is specified and Entra ID returns a valid role, then the user will get the highest of the two roles.
 
-If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../setup-grafana/configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
@@ -281,11 +281,11 @@ GitLab groups are referenced by the group name. For example, `developers`. To re
 Note that in GitLab, the group or subgroup name does not always match its display name, especially if the display name contains spaces or special characters.
 Make sure you always use the group or subgroup name as it appears in the URL of the group or subgroup.
 
-To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
+To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/).
 
 ## Configuration options
 
-The following table describes all GitLab OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
+The following table describes all GitLab OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
 
 {{< admonition type="note" >}}
 If the configuration option requires a JMESPath expression that includes a colon, enclose the entire expression in quotes to prevent parsing errors. For example `role_attribute_path: "role:view"`

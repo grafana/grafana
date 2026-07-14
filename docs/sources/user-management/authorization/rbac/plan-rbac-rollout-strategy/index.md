@@ -19,22 +19,22 @@ refs:
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#update-a-role
   rbac-fixed-basic-role-definitions-basic-role-assignments:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/#basic-role-assignments
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
   rbac-fixed-basic-role-definitions-fixed-role-definitions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/#fixed-role-definitions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
   manage-rbac-roles-update-basic-role-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/#update-basic-role-permissions
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles/#update-basic-role-permissions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/#update-basic-role-permissions
   service-accounts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
 ---
@@ -82,7 +82,7 @@ For example:
 
 1. Map SAML, LDAP, or Oauth roles to Grafana basic roles (viewer, editor, or admin).
 
-2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or OAuth provider to Grafana. For more information about team sync, refer to [Team sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
+2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or OAuth provider to Grafana. For more information about team sync, refer to [Team sync](/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/).
 
 3. Within Grafana, assign RBAC permissions to users and teams.
 
@@ -93,7 +93,7 @@ Consider the following guidelines when you determine if you should modify basic 
 - **Modify basic roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove permissions from any basic role.
 
   {{< admonition type="note" >}}
-  Changes that you make to basic roles impact the role definition for all [organizations](/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
+  Changes that you make to basic roles impact the role definition for all [organizations](/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/organization-management/) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
   {{< /admonition >}}
 
   {{< admonition type="note" >}}
@@ -123,7 +123,7 @@ If you have a use case that you'd like to share, feel free to contribute to this
 
 1. In Grafana, create a team with the name `Internal employees`.
 1. Assign the `fixed:datasources:explorer` role to the `Internal employees` team.
-1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or OAuth team using [Team Sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
+1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or OAuth team using [Team Sync](/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/).
 1. Assign the viewer role to both internal employees and contractors.
 
 ### Limit viewer, editor, or admin permissions

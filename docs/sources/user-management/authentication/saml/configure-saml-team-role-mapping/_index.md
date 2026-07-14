@@ -1,8 +1,8 @@
 ---
 aliases:
   - ../../../configure-access/configure-authentication/saml/configure-saml-team-role-mapping/ # /docs/grafana/next/configure-access/configure-authentication/saml/configure-saml-team-role-mapping/
-  - ../../../configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/
-  - ../../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/
+  - ../../../configure-security/configure-authentication/user-management/authentication/saml/configure-saml-team-role-mapping/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/user-management/authentication/saml/configure-saml-team-role-mapping/
+  - ../../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/ # /docs/grafana/next/user-management/authentication/saml/configure-saml-team-role-mapping/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -69,11 +69,11 @@ The following `External Group ID`s would be valid for input in the desired team'
 - `admins_group`
 - `division_1`
 
-[Learn more about Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/)
+[Learn more about Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/)
 
 # Configure role sync for SAML
 
-Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/).
 
 1. In the configuration file, set [`assertion_attribute_role`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_role) option to the attribute name where the role information will be extracted from.
 1. Set the [`role_values_none`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_none) option to the values mapped to the `None` role.
@@ -84,7 +84,7 @@ Role sync allows you to map user roles from an identity provider to Grafana. To 
 
 If a user role doesn't match any of configured values, then the role specified by the `auto_assign_org_role` configuration option will be assigned. If the `auto_assign_org_role` field is not set then the user role will default to `Viewer`.
 
-For more information about roles and permissions in Grafana, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+For more information about roles and permissions in Grafana, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/).
 
 Example configuration:
 

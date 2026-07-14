@@ -1,9 +1,9 @@
 ---
 aliases:
   - ../../../configure-security/configure-authentication/saml-ui/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/
-  - ../saml-ui/ # /docs/grafana/latest/setup-grafana/configure-access/configure-authentication/saml-ui/
-  - ../../../configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/saml-ui/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/saml-ui/
-  - ../../../configure-security/configure-authentication/saml/saml-ui/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/saml-ui/
+  - ../saml-ui/ # /docs/grafana/latest/user-management/authentication/saml-ui/
+  - ../../../configure-security/configure-authentication/user-management/authentication/saml/saml-ui/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/user-management/authentication/saml/saml-ui/
+  - ../../../configure-security/configure-authentication/saml/saml-ui/ # /docs/grafana/next/user-management/authentication/saml/saml-ui/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -20,7 +20,7 @@ weight: 510
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) version 10.0 and later, and to customers on select Grafana Cloud plans. For pricing information, visit [Pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
-You can configure SAML authentication in Grafana using the configuration file, Terraform, the API, or the UI. Refer to [Set up options for SAML authentication in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml#set-up-options-for-saml-authentication-in-grafana) for more details. Configuration in the API or UI takes precedence over the configuration in the Grafana configuration file. For more information on how Grafana determines the order of precedence for its settings, refer to the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/).
+You can configure SAML authentication in Grafana using the configuration file, Terraform, the API, or the UI. Refer to [Set up options for SAML authentication in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml#set-up-options-for-saml-authentication-in-grafana) for more details. Configuration in the API or UI takes precedence over the configuration in the Grafana configuration file. For more information on how Grafana determines the order of precedence for its settings, refer to the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/).
 
 The Grafana SAML UI provides the following advantages over configuring SAML in the Grafana configuration file:
 
@@ -85,9 +85,9 @@ Finish configuring Grafana using IdP data:
 
 ### Assertion mapping
 
-If you want to [map user information from SAML assertions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml#assertion-mapping), complete the **Assertion attributes mappings** section.
+If you want to [map user information from SAML assertions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml#assertion-mapping), complete the **Assertion attributes mappings** section.
 
-- To use team sync you need to configure the **Groups attribute** field. Team sync automatically maps users to Grafana teams based on their SAML group membership. Learn more about [team sync](../../../configure-team-sync) and [configuring team sync for SAML](../configure-saml-team-role-mapping/#configure-team-sync).
+- To use team sync you need to configure the **Groups attribute** field. Team sync automatically maps users to Grafana teams based on their SAML group membership. Learn more about [team sync](../../../user-identity/team-sync/) and [configuring team sync for SAML](../configure-saml-team-role-mapping/#configure-team-sync).
 
 ### Role mapping
 
@@ -95,7 +95,7 @@ If you want to automatically assign users' roles based on their SAML roles, comp
 
 First, you need to configure the **Role attribute** field to specify which SAML attribute should be used to retrieve SAML role information. Then enter the SAML roles that you want to map to Grafana roles in **Role mapping** section. If you want to map multiple SAML roles to a Grafana role, separate them by a comma and a space. For example, `Editor: editor, developer`.
 
-Role mapping automatically updates user's [basic role](../../../../../administration/roles-and-permissions/access-control/#basic-roles) based on their SAML roles every time the user logs in to Grafana. Learn more about [SAML role synchronization](../configure-saml-team-role-mapping/#configure-role-sync).
+Role mapping automatically updates user's [basic role](../../../../../user-management/authorization/rbac/#basic-roles) based on their SAML roles every time the user logs in to Grafana. Learn more about [SAML role synchronization](../configure-saml-team-role-mapping/#configure-role-sync).
 
 ### Mapping with Entra ID
 

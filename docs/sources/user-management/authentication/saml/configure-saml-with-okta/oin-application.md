@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../../../configure-security/configure-authentication/saml/configure-saml-with-okta/oin-application/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/oin-application/
+  - ../../../../configure-security/configure-authentication/saml/configure-saml-with-okta/oin-application/ # /docs/grafana/next/user-management/authentication/saml/configure-saml-with-okta/oin-application/
 description: Learn how to configure SAML authentication with Okta using the Okta Integration Network (OIN) application.
 labels:
   products:

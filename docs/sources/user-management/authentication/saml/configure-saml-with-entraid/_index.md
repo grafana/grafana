@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../configure-access/configure-authentication/saml/configure-saml-with-azuread/ # /docs/grafana/next/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/
-  - ../../../configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-entraid/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-entraid/
-  - ../../../configure-security/configure-authentication/saml/configure-saml-with-azuread/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/
+  - ../../../configure-access/configure-authentication/saml/configure-saml-with-azuread/ # /docs/grafana/next/user-management/authentication/saml/configure-saml-with-entraid/
+  - ../../../configure-security/configure-authentication/user-management/authentication/saml/configure-saml-with-entraid/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/user-management/authentication/saml/configure-saml-with-entraid/
+  - ../../../configure-security/configure-authentication/saml/configure-saml-with-azuread/ # /docs/grafana/next/user-management/authentication/saml/configure-saml-with-azuread/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -32,7 +32,7 @@ Related links:
 
 ## Before you begin
 
-Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/).
 
 If you have users that belong to more than 150 groups, configure a registered application to provide an Entra ID Graph API to retrieve the groups. Refer to [Setup Entra ID Graph API applications](#configure-a-graph-api-application-in-entra-id).
 
@@ -82,7 +82,7 @@ In order to validate Entra ID users with Grafana, you need to configure the SAML
 1. In the **Add a client secret** pane, enter a description for the secret.
 1. Set the expiration date for the secret.
 1. Select **Add**.
-1. Copy the value of the secret. This value is used in the `client_secret` field in the [SAML configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-configuration-options/).
+1. Copy the value of the secret. This value is used in the `client_secret` field in the [SAML configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml/saml-configuration-options/).
 
 ## Configure SAML assertions to use SCIM provisioning
 

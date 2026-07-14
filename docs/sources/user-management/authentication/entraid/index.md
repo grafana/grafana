@@ -3,7 +3,7 @@ aliases:
   - ../../../auth/azuread/ # /docs/grafana/next/auth/azuread/
   - ../../configure-security/setup-grafana/configure-security/configure-authentication/azuread/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/azuread/
   - ../../configure-security/configure-authentication/azuread/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/azuread/
-  - ./azuread/ # /docs/grafana/next/setup-grafana/configure-access/configure-authentication/azuread/
+  - ./azuread/ # /docs/grafana/next/user-management/authentication/entraid/
 description: Grafana Entra ID OAuth Guide
 keywords:
   - grafana
@@ -273,11 +273,11 @@ Refer to [Terraform Registry](https://registry.terraform.io/providers/grafana/gr
 
 ## Configure the Entra ID authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
+Ensure that you have access to the [Grafana configuration file](../../../setup-grafana/configure-grafana/#configuration-file-location).
 
 ### Enable Entra ID OAuth in Grafana
 
-Add the following to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location):
+Add the following to the [Grafana configuration file](../../../setup-grafana/configure-grafana/#configuration-file-location):
 
 ```
 [auth.azuread]
@@ -313,7 +313,7 @@ GF_AUTH_AZUREAD_FEDERATED_CREDENTIAL_AUDIENCE
 ```
 
 {{< admonition type="note" >}}
-Verify that the Grafana [root_url](../../../configure-grafana/#root_url) is set in your Azure Application Redirect URLs.
+Verify that the Grafana [root_url](../../../setup-grafana/configure-grafana/#root_url) is set in your Azure Application Redirect URLs.
 {{< /admonition >}}
 
 ### Configure refresh token
@@ -423,12 +423,12 @@ the correct teams.
 
 You can reference Entra ID groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync) documentation.
+To learn more, refer to the [Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/) documentation.
 
 ## Skip organization role sync
 
 If you don't want Entra ID authentication to sync user roles and organization membership and prevent the sync of org roles from Entra ID, set `skip_org_role_sync` to `true`. Use this if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
-See [Configure Grafana](../../../configure-grafana/#authazuread) for more details.
+See [Configure Grafana](../../../setup-grafana/configure-grafana/#authazuread) for more details.
 
 ```ini
 [auth.azuread]
@@ -439,7 +439,7 @@ skip_org_role_sync = true
 
 ## Configuration options
 
-The following table outlines the various Entra ID configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
+The following table outlines the various Entra ID configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
 
 | Setting                         | Required | Supported on Cloud | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Default                                              |
 | ------------------------------- | -------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
@@ -536,7 +536,7 @@ force_use_graph_api = true
 By default, Entra ID authentication will map users to organization roles based on the most privileged application role assigned to the user in Entra ID.
 
 If no application role is found, the user is assigned the role specified by
-[the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
+[the `auto_assign_org_role` option](../../../setup-grafana/configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned and the `org_mapping` expression evaluates to an empty mapping.
 
 You can use the `org_mapping` configuration option to assign the user to multiple organizations and specify their role based on their Entra ID group membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If the org role mapping (`org_mapping`) is specified and Entra ID returns a valid role, then the user will get the highest of the two roles.

@@ -25,19 +25,19 @@ For a tutorial on working with Teams, refer to [Create users and teams](https://
 Before you begin creating and working with Grafana Teams:
 
 - Ensure that you have either the `Organization Administrator` role or `team administrator` permissions.
-  Refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles) and [RBAC permissions, actions, and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#rbac-permissions-actions-and-scopes) for a list of Grafana roles and role-based access control actions.
+  Refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/#organization-roles) and [RBAC permissions, actions, and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/custom-role-actions-scopes/#rbac-permissions-actions-and-scopes) for a list of Grafana roles and role-based access control actions.
 - Decide which users belong to which teams and what permissions team members receive.
 - Configure the default basic role for users to join Grafana. This role applies to users where no role is set by the identity provider (IDP).
   - The `None` basic role can't view any resources by default. Recommended for `isolated` teams.
   - the `Viewer` role can view all resources by default. Recommended for `collaborative` teams.
 - Ensure team sync is turned on if you plan to manage team members through team sync.
-  Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/) for a list of providers and instructions on how to turn on team sync for each provider.
+  Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/) for a list of providers and instructions on how to turn on team sync for each provider.
 
 {{< admonition type="note" >}}
-[Grafana Organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/) do not exist in Grafana Cloud.
+[Grafana Organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/organization-management/) do not exist in Grafana Cloud.
 Grafana Cloud uses the term _organization_ to refer to accounts in grafana.com, or GCOM.
 In Grafana Enterprise and OSS, Teams belong to Grafana Organizations.
-Refer to [About organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/#about-organizations) for more information.
+Refer to [About organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/organization-management/#about-organizations) for more information.
 {{< /admonition >}}
 
 ## Create a Grafana Team
@@ -62,7 +62,7 @@ To create a Team, complete the following steps:
 1. Fill in each field and click **Create**.
 1. Click **Save**. You can now add a Team member.
 
-The **New team** page also includes a **Auto-create a team folder** option. Select **Auto-create a team folder** if you want Grafana to create a folder owned by that team during setup. For more information, refer to [Manage team folders](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/team-folders/).
+The **New team** page also includes a **Auto-create a team folder** option. Select **Auto-create a team folder** if you want Grafana to create a folder owned by that team during setup. For more information, refer to [Manage team folders](/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/teams/team-folders/).
 
 ## Add a Team member
 

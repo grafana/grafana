@@ -33,7 +33,7 @@ Grafana does not currently support refresh tokens.
 
 To use JWT authentication:
 
-1. Enable JWT in the [main config file](../../../configure-grafana/).
+1. Enable JWT in the [main config file](../../../setup-grafana/configure-grafana/).
 1. Specify the header name that contains a token.
 
 ```ini
@@ -108,7 +108,7 @@ provided in the HTTP header and a reverse proxy should rewrite requests to the
 Grafana instance to include the JWT in the request's headers.
 
 {{< admonition type="note" >}}
-For embedding to work, you must enable `allow_embedding` in the [security section](../../../configure-grafana/#allow_embedding). This setting is not available in Grafana Cloud.
+For embedding to work, you must enable `allow_embedding` in the [security section](../../../setup-grafana/configure-grafana/#allow_embedding). This setting is not available in Grafana Cloud.
 {{< /admonition >}}
 
 In a scenario where it is not possible to rewrite the request headers you
@@ -248,7 +248,7 @@ Unless `skip_org_role_sync` option is enabled, the user's role will be set to th
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
 
-If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../setup-grafana/configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 
 You can use the `org_attribute_path` and `org_mapping` configuration options to assign the user to organizations and specify their role. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If both org role mapping (`org_mapping`) and the regular role mapping (`role_attribute_path`) are specified, then the user will get the highest of the two mapped roles.

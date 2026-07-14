@@ -30,7 +30,7 @@ Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) 
 If you are a Grafana Cloud customer, please [open a support ticket in the Cloud Portal](/profile/org#support) to request this feature.
 {{< /admonition >}}
 
-> To control user access with role-based permissions, refer to [role-based access control](../../../../administration/roles-and-permissions/access-control/).
+> To control user access with role-based permissions, refer to [role-based access control](../../../../user-management/authorization/rbac/).
 
 ## LDAP group synchronization for teams
 
@@ -43,7 +43,7 @@ Grafana keeps track of all synchronized users in teams, and you can see which us
 This mechanism allows Grafana to remove an existing synchronized user from a team when its LDAP group membership changes. This mechanism also allows you to manually add
 a user as member of a team, and it will not be removed when the user signs in. This gives you flexibility to combine LDAP group memberships and Grafana team memberships.
 
-[Learn more about team sync.](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync)
+[Learn more about team sync.](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/)
 
 <div class="clearfix"></div>
 

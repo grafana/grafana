@@ -14,27 +14,27 @@ weight: 60
 refs:
   custom-role-actions-scopes:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/custom-role-actions-scopes/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-grafana-provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-grafana-provisioning/
   manage-rbac-roles-create-custom-roles-using-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/#create-custom-roles-using-provisioning
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles/#create-custom-roles-using-provisioning
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/#create-custom-roles-using-provisioning
   plan-rbac-rollout-strategy:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/plan-rbac-rollout-strategy/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/
   rbac-role-definitions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
 ---
@@ -74,7 +74,7 @@ In both cases, the assignment applies only to the user, team or service account 
 1. Sign in to Grafana.
 2. Switch to the organization that contains the user, team or service account.
 
-   For more information about switching organizations, refer to [Switch organizations](/docs/grafana/<GRAFANA_VERSION>/administration/user-management/user-preferences/#switch-organizations).
+   For more information about switching organizations, refer to [Switch organizations](/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/user-preferences/#switch-organizations).
 
 3. In the left-side menu, click **Administration**, **Users and access**, and then **Users**, **Teams**, or **Service accounts**.
 4. In the **Role** column, select the fixed role that you want to assign to the user, team, or service account.
@@ -125,7 +125,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 **Before you begin:**
 
 - Refer to [Role provisioning](ref:rbac-grafana-provisioning)
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/)
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams](/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/teams/)
 
 **To assign a role to a team:**
 

@@ -18,32 +18,32 @@ refs:
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#create-and-manage-custom-roles
   rbac-terraform-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-terraform-provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-terraform-provisioning/
   rbac-manage-rbac-roles:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/
   rbac-assign-rbac-roles:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/assign-rbac-roles/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/assign-rbac-roles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/assign-rbac-roles/
   service-accounts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   manage-rbac-roles-create-custom-roles-using-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/#create-custom-roles-using-provisioning
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles/#create-custom-roles-using-provisioning
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/#create-custom-roles-using-provisioning
   assign-rbac-roles-assign-a-fixed-role-to-a-basic-role-using-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/assign-rbac-roles/#assign-a-fixed-role-to-a-basic-role-using-provisioning
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/assign-rbac-roles/#assign-a-fixed-role-to-a-basic-role-using-provisioning
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/assign-rbac-roles/##assign-a-fixed-role-to-a-basic-role-using-provisioning
 ---

@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../enterprise/auditing/
-  - ../setup-grafana/configure-security/audit-grafana/
+  - ../user-management/audit/audit-grafana/
 description: Track and log important changes to your Grafana instance using audit logs.
 keywords:
   - grafana
@@ -144,7 +144,7 @@ Almost all recorded actions correspond to API requests or UI actions that trigge
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#single-logout).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml/#single-logout).
 
 #### Service accounts
 

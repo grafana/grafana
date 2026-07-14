@@ -80,11 +80,11 @@ Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafa
 
 ## Configure Google authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
+Ensure that you have access to the [Grafana configuration file](../../../setup-grafana/configure-grafana/#configuration-file-location).
 
 ### Enable Google OAuth in Grafana
 
-Specify the Client ID and Secret in the [Grafana configuration file](../../../configure-grafana/#configuration-file-location). For example:
+Specify the Client ID and Secret in the [Grafana configuration file](../../../setup-grafana/configure-grafana/#configuration-file-location). For example:
 
 ```bash
 [auth.google]
@@ -215,7 +215,7 @@ To set up team sync for Google OAuth:
 1. Configure team sync in your Grafana team's `External group sync` tab.
    The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
 
-To learn more about Team Sync, refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
+To learn more about Team Sync, refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/).
 
 #### Configure allowed groups
 
@@ -235,7 +235,7 @@ Unless the `skip_org_role_sync` option is enabled, the user's role will be set t
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
 
-If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../setup-grafana/configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
@@ -307,7 +307,7 @@ skip_org_role_sync = false
 
 ## Configuration options
 
-The following table outlines the various Google OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
+The following table outlines the various Google OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
 
 | Setting                      | Required | Supported on Cloud | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Default                                            |
 | ---------------------------- | -------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |

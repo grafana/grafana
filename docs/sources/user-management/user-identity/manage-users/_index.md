@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../administration/user-management/manage-org-users/
-  - ../../../administration/user-management/server-user-management/
+  - ../../../user-management/user-identity/manage-users/server-user-management/
 labels:
   products:
     - enterprise

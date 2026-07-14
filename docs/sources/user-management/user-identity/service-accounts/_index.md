@@ -4,7 +4,7 @@ aliases:
   - add-service-account-token/
   - create-service-account/
   - enable-service-accounts/
-  - ../../../administration/service-accounts/
+  - ../../../user-management/user-identity/service-accounts/
 description: This page contains information about service accounts in Grafana
 keywords:
   - API keys
@@ -20,27 +20,27 @@ weight: 4200
 refs:
   service-accounts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   migrate-api-keys:
     - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/migrate-api-keys/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/migrate-api-keys/
   roles-and-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
   rbac:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/
   rbac-assign-rbac-roles:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/assign-rbac-roles/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/assign-rbac-roles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/assign-rbac-roles/
   api-create-service-account:

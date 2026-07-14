@@ -11,7 +11,7 @@ weight: 1000
 
 # Configure Grafana secret scanning and notifications
 
-With Grafana, you can use the GitHub Secret Scanning service to determine if your [service account tokens](../../../administration/service-accounts/) have been leaked on GitHub.
+With Grafana, you can use the GitHub Secret Scanning service to determine if your [service account tokens](../../../user-management/user-identity/service-accounts/) have been leaked on GitHub.
 
 When GitHub Secret Scanning detects a Grafana secret, its hash is stored in Grafana Labs' secret scanning service.
 
@@ -46,7 +46,7 @@ Secret scanning is disabled by default. Outgoing connections are made once you e
 ## Before you begin
 
 - Ensure all your API keys have been migrated to service accounts.
-  For more information about service account migration, refer to [Migrate API keys to Grafana service accounts](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/).
+  For more information about service account migration, refer to [Migrate API keys to Grafana service accounts](/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/migrate-api-keys/).
 
 ## Configure secret scanning
 

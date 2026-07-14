@@ -24,7 +24,7 @@ group memberships and Grafana Organization user roles.
 [Enhanced LDAP authentication](../enhanced-ldap/) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise](../../../../introduction/grafana-enterprise/).
 {{< /admonition >}}
 
-Refer to [Role-based access control](../../../../administration/roles-and-permissions/access-control/) to understand how you can control access with role-based permissions.
+Refer to [Role-based access control](../../../../user-management/authorization/rbac/) to understand how you can control access with role-based permissions.
 
 ## Supported LDAP Servers
 
@@ -34,7 +34,7 @@ This means that you should be able to configure LDAP integration using any compl
 
 ## Enable LDAP
 
-In order to use LDAP integration you'll first need to enable LDAP in the [main config file](../../../configure-grafana/) as well as specify the path to the LDAP
+In order to use LDAP integration you'll first need to enable LDAP in the [main config file](../../../setup-grafana/configure-grafana/) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 After enabling LDAP, the default behavior is for Grafana users to be created automatically upon successful LDAP authentication. If you prefer for only existing Grafana users to be able to sign in, you can change `allow_sign_up` to `false` in the `[auth.ldap]` section.
@@ -399,7 +399,7 @@ Inspect your Active Directory configuration and documentation to find the correc
 
 ## Troubleshooting
 
-To troubleshoot and get more log information, enable LDAP debug logging in the [`grafana.ini` or `custom.ini`](../../../configure-grafana/) file:
+To troubleshoot and get more log information, enable LDAP debug logging in the [`grafana.ini` or `custom.ini`](../../../setup-grafana/configure-grafana/) file:
 
 ```bash
 [log]

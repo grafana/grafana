@@ -48,8 +48,8 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
 1. **Use the same identity provider for user provisioning and for authentication flow**: You must use the same identity provider for both authentication and user provisioning.
 
 2. **Security restriction**: When using SAML, the login authentication flow requires the SAML assertion exchange between the Identity Provider and Grafana to include the `userUID` SAML assertion with the user's unique identifier at the Identity Provider.
-   - Configure `userUID` SAML assertion in [Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
-   - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
+   - Configure `userUID` SAML assertion in [Entra ID](/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml/configure-saml-with-entraid/#configure-saml-assertions-when-using-scim-provisioning)
+   - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
 
 ### Align SAML identifier with SCIM `externalId`
 
@@ -161,13 +161,13 @@ The synchronization process works as follows:
 Grafana offers several methods for synchronizing users, teams, and roles.
 The following table compares SCIM with other synchronization methods to help you understand the advantages:
 
-| Sync Method                                                                    | Users | Teams | Roles | Automation | Key Benefits                                                             | Limitations                                                  | On-Prem | Cloud |
-| ------------------------------------------------------------------------------ | ----- | ----- | ----- | ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ----- |
-| SCIM                                                                           | ✅    | ✅    | ⚠️    | Full       | Complete user and team lifecycle management with automatic team creation | Requires SAML authentication; uses Role Sync for basic roles | ✅      | ✅    |
-| [Team Sync](../user-identity/team-sync/)                                       | ❌    | ⚠️    | ❌    | Partial    | Syncs team memberships to existing teams                                 | Requires manual team creation; no team lifecycle management  | ✅      | ✅    |
-| [Active LDAP Sync](../authentication/enhanced-ldap/)                           | ✅    | ❌    | ❌    | Full       | Background synchronization of LDAP users                                 | Limited to LDAP environments                                 | ✅      | ❌    |
-| [Role Sync](../authentication/saml#configure-role-sync)                        | ❌    | ❌    | ✅    | Full       | Full automation of basic role assignment                                 | Limited to basic roles only                                  | ✅      | ✅    |
-| [Org Mapping](../authentication/saml#configure-organization-mapping)           | ❌    | ❌    | ⚠️    | Full       | Full automation of basic role assignment per organization                | Limited to basic roles only; on-premises only                | ⚠️      | ❌    |
+| Sync Method                                                          | Users | Teams | Roles | Automation | Key Benefits                                                             | Limitations                                                  | On-Prem | Cloud |
+| -------------------------------------------------------------------- | ----- | ----- | ----- | ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ----- |
+| SCIM                                                                 | ✅    | ✅    | ⚠️    | Full       | Complete user and team lifecycle management with automatic team creation | Requires SAML authentication; uses Role Sync for basic roles | ✅      | ✅    |
+| [Team Sync](../user-identity/team-sync/)                             | ❌    | ⚠️    | ❌    | Partial    | Syncs team memberships to existing teams                                 | Requires manual team creation; no team lifecycle management  | ✅      | ✅    |
+| [Active LDAP Sync](../authentication/enhanced-ldap/)                 | ✅    | ❌    | ❌    | Full       | Background synchronization of LDAP users                                 | Limited to LDAP environments                                 | ✅      | ❌    |
+| [Role Sync](../authentication/saml#configure-role-sync)              | ❌    | ❌    | ✅    | Full       | Full automation of basic role assignment                                 | Limited to basic roles only                                  | ✅      | ✅    |
+| [Org Mapping](../authentication/saml#configure-organization-mapping) | ❌    | ❌    | ⚠️    | Full       | Full automation of basic role assignment per organization                | Limited to basic roles only; on-premises only                | ⚠️      | ❌    |
 
 ### Key advantages
 
@@ -180,5 +180,5 @@ The following table compares SCIM with other synchronization methods to help you
 
 - [Manage users and teams with SCIM provisioning](manage-users-teams/)
 - [Troubleshoot SCIM provisioning](troubleshooting/)
-- [Configure SCIM with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-entraid/)
-- [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-okta/)
+- [Configure SCIM with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/configure-scim-with-entraid/)
+- [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/configure-scim-with-okta/)

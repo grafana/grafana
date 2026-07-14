@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../setup-grafana/configure-security/audit-grafana/
+  - ../../user-management/audit/audit-grafana/
 labels:
   products:
     - enterprise

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/troublsehoot-saml/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/troublsehoot-saml/
-  - ../../../configure-security/configure-authentication/saml/troubleshoot-saml/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/troubleshoot-saml/
+  - ../../../configure-security/configure-authentication/user-management/authentication/saml/troublsehoot-saml/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/user-management/authentication/saml/troublsehoot-saml/
+  - ../../../configure-security/configure-authentication/saml/troubleshoot-saml/ # /docs/grafana/next/user-management/authentication/saml/troubleshoot-saml/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -123,7 +123,7 @@ curl -X POST "{token_url}" \
   -d "grant_type=client_credentials&client_id={client_id}&client_secret={client_secret}&scope=https://graph.microsoft.com/.default"
 ```
 
-Where the following values come from your [SAML configuration](../saml-configuration-options/_index.md#saml-configuration-options):
+Where the following values come from your [SAML configuration](../saml-configuration-options/#saml-configuration-options):
 
 - `token_url`: The token URL of your Entra ID application.
 - `client_id`: The client ID of your Entra ID application.

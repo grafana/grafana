@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../configure-access/configure-authentication/configure-scim-with-azuread/ # /docs/grafana/next/setup-grafana/configure-access/configure-authentication/configure-scim-with-azuread/
+  - ../../configure-access/configure-authentication/configure-scim-with-azuread/ # /docs/grafana/next/user-management/authentication/configure-scim-with-azuread/
   - ../../configure-security/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/
   - ../../configure-security/configure-scim-provisioning/configure-scim-with-azuread/ # /docs/grafana/next/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/
   - ../../configure-access/configure-scim-with-azuread/ # /docs/grafana/next/setup-grafana/configure-access/configure-scim-provisioning/configure-scim-with-azuread/

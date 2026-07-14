@@ -23,42 +23,42 @@ refs:
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/org/#updates-the-given-user
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-grafana-provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-grafana-provisioning/
   service-accounts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   service-accounts-create-a-service-account-in-grafana:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#create-a-service-account-in-grafana
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/#create-a-service-account-in-grafana
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#create-a-service-account-in-grafana
   service-accounts-assign-roles-to-a-service-account-in-grafana:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#assign-roles-to-a-service-account-in-grafana
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/#assign-roles-to-a-service-account-in-grafana
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#assign-roles-to-a-service-account-in-grafana
   service-accounts-to-add-a-token-to-a-service-account:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#to-add-a-token-to-a-service-account
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/#to-add-a-token-to-a-service-account
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#to-add-a-token-to-a-service-account
   plan-rbac-rollout-strategy:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/plan-rbac-rollout-strategy/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/
   manage-rbac-roles:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/
   custom-role-actions-scopes:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/custom-role-actions-scopes/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
 ---

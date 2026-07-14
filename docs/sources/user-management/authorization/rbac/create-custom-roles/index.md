@@ -12,7 +12,7 @@ weight: 55
 refs:
   configure-rbac-configure-rbac-in-grafana:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/configure-rbac/#configure-rbac-in-grafana
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/configure-rbac/#configure-rbac-in-grafana
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/configure-rbac/#configure-rbac-in-grafana
   api-rbac-reset-basic-roles-to-their-default:
@@ -42,32 +42,32 @@ refs:
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#create-a-new-custom-role
   plan-rbac-rollout-strategy:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/plan-rbac-rollout-strategy/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/
   custom-role-actions-scopes:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/custom-role-actions-scopes/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
   rbac-terraform-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-terraform-provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-terraform-provisioning/
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-grafana-provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-grafana-provisioning/
   rbac-role-definitions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
   rbac-fixed-basic-role-definitions-basic-role-assignments:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/#basic-role-assignments
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
 ---
@@ -78,13 +78,13 @@ refs:
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
-Create a custom RBAC role when basic roles and fixed roles do not meet your permissions requirements. For a list of the actions and scopes you can customize a role with, refer to [Grafana RBAC permission actions and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
+Create a custom RBAC role when basic roles and fixed roles do not meet your permissions requirements. For a list of the actions and scopes you can customize a role with, refer to [Grafana RBAC permission actions and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/custom-role-actions-scopes/).
 
 {{< admonition type="caution" >}}
 **Before creating custom roles**, consider whether you can meet your access requirements using:
 
-- **[Folder permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/folder-access-control/)**: Control access to dashboards, alert rules, and other resources by folder
-- **[Fixed roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/)**: Pre-built roles for common access patterns
+- **[Folder permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/folder-access-control/)**: Control access to dashboards, alert rules, and other resources by folder
+- **[Fixed roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/)**: Pre-built roles for common access patterns
 
 Use custom roles only when you need fine-grained control that these options don't provide.
 {{< /admonition >}}

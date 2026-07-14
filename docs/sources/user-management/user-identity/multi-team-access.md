@@ -26,17 +26,17 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#create-a-dashboard-folder
   rbac:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/access-control
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control
   rbac-assign:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/assign-rbac-roles
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/assign-rbac-roles
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/assign-rbac-roles
   rbac-fixed:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/#fixed-role-definitions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
   drilldown:
@@ -102,7 +102,7 @@ For guidance on when to use one stack versus multiple, refer to [Stack architect
 
 After you’ve deployed your Grafana instance:
 
-- To follow the example in this doc, create three [Grafana Teams](../../../administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
+- To follow the example in this doc, create three [Grafana Teams](../../../user-management/user-identity/teams/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
 - Determine the [RBAC](ref:rbac) strategy for your organization. RBAC extends default Grafana roles, provides more granular access rights, and simplifies how to grant, modify, or revoke user access to Grafana resources, such as users and reports.
 - Assign each user to the [relevant team](../../../administration/user-management/manage-org-users/). By default [new users](../../configure-grafana/#auto_assign_org) are granted the **Viewer** role.
 - Assign the [**Admin** role](ref:rbac-assign) to Team C so that they can manage all resources in the instance.

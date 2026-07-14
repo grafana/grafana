@@ -8,8 +8,8 @@ aliases:
   - ../../../enterprise/saml/enable-saml/ # /docs/grafana/latest/enterprise/saml/enable-saml/
   - ../../../enterprise/saml/set-up-saml-with-okta/ # /docs/grafana/latest/enterprise/saml/set-up-saml-with-okta/
   - ../../../enterprise/saml/troubleshoot-saml/ # /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
-  - ../../configure-security/setup-grafana/configure-security/configure-authentication/saml/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/saml/
-  - ../../configure-security/configure-authentication/saml/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/
+  - ../../configure-security/user-management/authentication/saml/ # /docs/grafana/next/setup-grafana/configure-security/user-management/authentication/saml/
+  - ../../configure-security/configure-authentication/saml/ # /docs/grafana/next/user-management/authentication/saml/
 description: Learn how to configure SAML authentication in Grafana's configuration file.
 labels:
   products:
@@ -31,10 +31,10 @@ Refer to [Configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setu
 To configure SAML authentication in Grafana using the configuration file, follow these steps:
 
 1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#enabled-3) to `true`.
-2. Configure SAML according to your requirements. **Review all the [available configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-configuration-options/)**.
+2. Configure SAML according to your requirements. **Review all the [available configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml/saml-configuration-options/)**.
 3. For IdP-specific configuration, refer to:
-   - [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/)
-   - [Configure SAML with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
+   - [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml/configure-saml-with-okta/)
+   - [Configure SAML with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml/configure-saml-with-entraid/)
 4. Save the configuration file and then restart the Grafana server.
 
 Here's an example of a Grafana configuration file with SAML:
@@ -93,7 +93,7 @@ By default, new Grafana users using SAML authentication will have an account cre
 Set `auto_login` option to true to attempt login automatically, skipping the login screen.
 This setting is ignored if multiple auth providers are configured to use auto login.
 
-For more information about automatic login behavior and troubleshooting, see [Automatic login](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/#automatic-oauth-login).
+For more information about automatic login behavior and troubleshooting, see [Automatic login](/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/#automatic-oauth-login).
 
 ```
 auto_login = true
@@ -131,7 +131,7 @@ IdP-initiated SSO has some security risks, so make sure you understand the risks
 
 `assertion_attribute_name` is a special assertion mapping that can either be a simple key, indicating a mapping to a single assertion attribute on the SAML response, or a complex template with variables using the `$__saml{<attribute>}` syntax. If this property is misconfigured, Grafana will log an error message on startup and disallow SAML sign-ins. Grafana will also log errors after a login attempt if a variable in the template is missing from the SAML response.
 
-Refer to [Assertion mapping](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml#assertion-mapping) for more information.
+Refer to [Assertion mapping](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authentication/saml#assertion-mapping) for more information.
 
 Examples:
 

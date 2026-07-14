@@ -51,7 +51,7 @@ Grafana creates a folder with the same name as the team and assigns that team as
 
 ![New team page with the Team folder section visible and Auto-create a team folder selected.](/media/whats-new/team-folders/2-new-team-detail.png)
 
-For more information about creating teams, refer to [Configure Grafana Teams](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/configure-grafana-teams/).
+For more information about creating teams, refer to [Configure Grafana Teams](/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/teams/configure-grafana-teams/).
 
 ## Create or assign a team folder from Dashboards
 

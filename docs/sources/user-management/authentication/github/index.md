@@ -81,7 +81,7 @@ Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafa
 
 ## Configure GitHub authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
+Ensure that you have access to the [Grafana configuration file](../../../setup-grafana/configure-grafana/#configuration-file-location).
 
 ### Configure GitHub authentication
 
@@ -104,7 +104,7 @@ To configure GitHub authentication with Grafana, follow these steps:
    Review the list of other GitHub [configuration options](#configuration-options) and complete them, as necessary.
 
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
+1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/).
 1. Restart Grafana.
 
    You should now see a GitHub login button on the login page and be able to log in or sign up with your GitHub accounts.
@@ -117,7 +117,7 @@ The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.htm
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
 Refer to [configuration options](#configuration-options) for more information.
 
-If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../setup-grafana/configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 
 You can use the `org_mapping` configuration options to assign the user to organizations and specify their role based on their GitHub team membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If both org role mapping (`org_mapping`) and the regular role mapping (`role_attribute_path`) are specified, then the user will get the highest of the two mapped roles.
@@ -226,11 +226,11 @@ GitHub teams can be referenced in two ways:
 
 Examples: `https://github.com/orgs/grafana/teams/developers` or `@grafana/developers`.
 
-To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
+To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/team-sync/).
 
 ## Configuration options
 
-The table below describes all GitHub OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
+The table below describes all GitHub OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
 
 {{< admonition type="note" >}}
 If the configuration option requires a JMESPath expression that includes a colon, enclose the entire expression in quotes to prevent parsing errors. For example `role_attribute_path: "role:view"`

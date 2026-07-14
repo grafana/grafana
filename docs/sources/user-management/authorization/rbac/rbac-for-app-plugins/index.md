@@ -12,22 +12,22 @@ weight: 400
 refs:
   manage-rbac-roles-update-basic-role-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/#update-basic-role-permissions
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles/#update-basic-role-permissions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/#update-basic-role-permissions
   restrict-access-to-app-plugin-example:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/#prevent-viewers-from-accessing-an-app-plugin
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/plan-rbac-rollout-strategy/#prevent-viewers-from-accessing-an-app-plugin
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/#prevent-viewers-from-accessing-an-app-plugin
   rbac-role-definitions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
   plugin-role-definitions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/plugin-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plugin-role-definitions/
 ---
@@ -96,5 +96,5 @@ To remove any undesired plugin permissions from a basic role, [update the basic 
 
 ## Grant additional access to app plugins
 
-To grant access to app plugins, you can use the predefined [fixed plugin roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/#fixed-roles) or create [custom roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/#custom-roles) with specific plugin permissions.
-To learn about how to assign an RBAC role, refer to [the documentation on assigning RBAC roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/assign-rbac-roles/#assign-rbac-roles).
+To grant access to app plugins, you can use the predefined [fixed plugin roles](https://grafana.com/docs/grafana/latest/user-management/authorization/rbac/#fixed-roles) or create [custom roles](https://grafana.com/docs/grafana/latest/user-management/authorization/rbac/#custom-roles) with specific plugin permissions.
+To learn about how to assign an RBAC role, refer to [the documentation on assigning RBAC roles](https://grafana.com/docs/grafana/latest/user-management/authorization/rbac/assign-rbac-roles/#assign-rbac-roles).
