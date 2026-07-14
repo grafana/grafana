@@ -400,6 +400,61 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		syncWorker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
+	t.Run("selective migration to a branch deletes only the migrated resources", func(t *testing.T) {
+		exportWorker := jobs.NewMockWorker(t)
+		syncWorker := jobs.NewMockWorker(t)
+		pr := jobs.NewMockJobProgressRecorder(t)
+		repo := repository.NewMockRepository(t)
+		nc := NewMockNamespaceCleaner(t)
+
+		repo.On("Config").Return(gitInstanceRepo("main"))
+		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+		pr.On("StrictMaxErrors", 1).Return()
+		pr.On("Record", mock.Anything, mock.Anything).Return()
+
+		dashGVK := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1", Kind: "Dashboard"}
+		folderGVK := resources.FolderKind
+
+		exportWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Push != nil && job.Spec.Push.Branch == "feature-x" && len(job.Spec.Push.Resources) == 2
+		}), mock.Anything).Run(func(args mock.Arguments) {
+			collector := args.Get(3).(jobs.JobProgressRecorder)
+			ctx := args.Get(0).(context.Context)
+			collector.Record(ctx, jobs.NewGVKResult("dash-1", dashGVK).WithAction(repository.FileActionCreated).Build())
+			collector.Record(ctx, jobs.NewGVKResult("dash-2", dashGVK).WithAction(repository.FileActionCreated).Build())
+			// A folder emitted for path scaffolding must NOT be deleted.
+			collector.Record(ctx, jobs.NewGVKResult("folder-1", folderGVK).WithAction(repository.FileActionCreated).Build())
+		}).Return(nil)
+
+		// Only the two migrated dashboards are deleted; the folder is excluded and
+		// the full namespace clean is never used.
+		nc.On("CleanResources", mock.Anything, "test-ns", mock.MatchedBy(func(refs []provisioning.ResourceRef) bool {
+			if len(refs) != 2 {
+				return false
+			}
+			names := map[string]bool{}
+			for _, r := range refs {
+				names[r.Name] = true
+			}
+			return names["dash-1"] && names["dash-2"]
+		}), pr).Return(nil)
+
+		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
+		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+			Migrate: &provisioning.MigrateJobOptions{
+				Branch: "feature-x",
+				Resources: []provisioning.ResourceRef{
+					{Name: "dash-1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+					{Name: "dash-2", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				},
+			},
+		}}, pr)
+		require.NoError(t, err)
+
+		syncWorker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		nc.AssertNotCalled(t, "Clean", mock.Anything, mock.Anything, mock.Anything)
+	})
+
 	t.Run("migrating to the configured branch keeps the pull/takeover flow", func(t *testing.T) {
 		exportWorker := jobs.NewMockWorker(t)
 		syncWorker := jobs.NewMockWorker(t)

@@ -5,6 +5,7 @@ package migrate
 import (
 	context "context"
 
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	jobs "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -66,6 +67,55 @@ func (_c *MockNamespaceCleaner_Clean_Call) Return(_a0 error) *MockNamespaceClean
 }
 
 func (_c *MockNamespaceCleaner_Clean_Call) RunAndReturn(run func(context.Context, string, jobs.JobProgressRecorder) error) *MockNamespaceCleaner_Clean_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CleanResources provides a mock function with given fields: ctx, namespace, refs, progress
+func (_m *MockNamespaceCleaner) CleanResources(ctx context.Context, namespace string, refs []provisioningv0alpha1.ResourceRef, progress jobs.JobProgressRecorder) error {
+	ret := _m.Called(ctx, namespace, refs, progress)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CleanResources")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, []provisioningv0alpha1.ResourceRef, jobs.JobProgressRecorder) error); ok {
+		r0 = rf(ctx, namespace, refs, progress)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockNamespaceCleaner_CleanResources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CleanResources'
+type MockNamespaceCleaner_CleanResources_Call struct {
+	*mock.Call
+}
+
+// CleanResources is a helper method to define mock.On call
+//   - ctx context.Context
+//   - namespace string
+//   - refs []provisioningv0alpha1.ResourceRef
+//   - progress jobs.JobProgressRecorder
+func (_e *MockNamespaceCleaner_Expecter) CleanResources(ctx interface{}, namespace interface{}, refs interface{}, progress interface{}) *MockNamespaceCleaner_CleanResources_Call {
+	return &MockNamespaceCleaner_CleanResources_Call{Call: _e.mock.On("CleanResources", ctx, namespace, refs, progress)}
+}
+
+func (_c *MockNamespaceCleaner_CleanResources_Call) Run(run func(ctx context.Context, namespace string, refs []provisioningv0alpha1.ResourceRef, progress jobs.JobProgressRecorder)) *MockNamespaceCleaner_CleanResources_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].([]provisioningv0alpha1.ResourceRef), args[3].(jobs.JobProgressRecorder))
+	})
+	return _c
+}
+
+func (_c *MockNamespaceCleaner_CleanResources_Call) Return(_a0 error) *MockNamespaceCleaner_CleanResources_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockNamespaceCleaner_CleanResources_Call) RunAndReturn(run func(context.Context, string, []provisioningv0alpha1.ResourceRef, jobs.JobProgressRecorder) error) *MockNamespaceCleaner_CleanResources_Call {
 	_c.Call.Return(run)
 	return _c
 }

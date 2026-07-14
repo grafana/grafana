@@ -94,17 +94,32 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		}
 	}
 
+	// A selective branch migration deletes only the resources it migrated. The
+	// default (non-branch) selective flow takes those resources over via the pull
+	// above, so it must not delete anything here — only the branch flow, which
+	// cannot take them over, reaches this deletion. Folders are excluded: they are
+	// emitted purely to resolve paths and may be shared with resources that were
+	// not migrated.
+	if branchMigration && len(options.Resources) > 0 {
+		progress.SetMessage(ctx, "delete migrated resources")
+		if err := m.namespaceCleaner.CleanResources(ctx, namespace, collector.ExportedNonFolderResources(), progress); err != nil {
+			return fmt.Errorf("delete migrated resources: %w", err)
+		}
+		return nil
+	}
+
 	// For instance-type repositories, also clean the namespace.
 	// In selective mode (caller supplied an explicit Resources list) we skip
 	// the cleanup, because deleting every other unmanaged resource would be
-	// destructive — the user only asked to take over the named ones.
+	// destructive — the user only asked to take over the named ones (handled
+	// above for branch migrations).
 	// Folderless repositories also coexist with unmanaged resources, so they
 	// must never trigger a namespace clean.
 	//
 	// For a default-branch migration this removes the unmanaged leftovers that
-	// were not taken over by the pull above. For a branch migration the exported
-	// resources are still unmanaged (they were never taken over), so this is what
-	// removes the migrated resources from the instance.
+	// were not taken over by the pull above. For a full branch migration the
+	// exported resources are still unmanaged (they were never taken over), so this
+	// is what removes the migrated resources from the instance.
 	target := repo.Config().Spec.Sync.Target
 	if target != provisioning.SyncTargetTypeFolder && target != provisioning.SyncTargetTypeFolderless && len(options.Resources) == 0 {
 		progress.SetMessage(ctx, "clean namespace")

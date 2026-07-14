@@ -84,3 +84,60 @@ func TestIntegrationProvisioning_MigrateToBranch(t *testing.T) {
 		require.Error(t, onDefault.Error(), "exported file %q must not exist on the default branch", file)
 	}
 }
+
+// TestIntegrationProvisioning_SelectiveMigrateToBranch verifies that a selective
+// migration to a branch removes only the migrated (named) resources from the
+// instance and leaves the other unmanaged resources untouched.
+func TestIntegrationProvisioning_SelectiveMigrateToBranch(t *testing.T) {
+	helper := sharedGitHelper(t)
+	ctx := context.Background()
+
+	// Two unmanaged dashboards; only the first is migrated.
+	dash1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
+	created1, err := helper.DashboardsV1.Resource.Create(ctx, dash1, metav1.CreateOptions{})
+	require.NoError(t, err, "should create first unmanaged dashboard")
+	migratedName := created1.GetName()
+
+	dash2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	created2, err := helper.DashboardsV2beta1.Resource.Create(ctx, dash2, metav1.CreateOptions{})
+	require.NoError(t, err, "should create second unmanaged dashboard")
+	untouchedName := created2.GetName()
+
+	const repo = "selective-migrate-to-branch-repo"
+	const branch = "feature-selective"
+	helper.CreateGitRepo(t, repo, nil, "write", "branch")
+
+	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionMigrate,
+		Migrate: &provisioning.MigrateJobOptions{
+			Message: "Migrate a single dashboard to a branch",
+			Branch:  branch,
+			Resources: []provisioning.ResourceRef{
+				{Name: migratedName, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	})
+
+	// Only the migrated dashboard is removed; the other stays and remains unmanaged.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := helper.DashboardsV1.Resource.Get(ctx, migratedName, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "migrated dashboard should be deleted, got err: %v", err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "migrated dashboard should be deleted from the instance")
+
+	other, err := helper.DashboardsV1.Resource.Get(ctx, untouchedName, metav1.GetOptions{})
+	require.NoError(t, err, "the non-migrated dashboard must still exist")
+	require.Empty(t, other.GetAnnotations()["grafana.app/managerId"], "the non-migrated dashboard must remain unmanaged")
+
+	// The migrated dashboard's file is on the branch; the other one was never exported.
+	migrated := helper.AdminREST.Get().
+		Namespace("default").Resource("repositories").Name(repo).
+		SubResource("files", "test-dashboard-created-at-v1.json").
+		Param("ref", branch).Do(ctx)
+	require.NoError(t, migrated.Error(), "migrated dashboard file should exist on branch %q", branch)
+
+	notMigrated := helper.AdminREST.Get().
+		Namespace("default").Resource("repositories").Name(repo).
+		SubResource("files", "test-dashboard-created-at-v2beta1.json").
+		Param("ref", branch).Do(ctx)
+	require.Error(t, notMigrated.Error(), "non-migrated dashboard file must not exist on the branch")
+}
