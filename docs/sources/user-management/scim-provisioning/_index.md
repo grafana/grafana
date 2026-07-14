@@ -2,6 +2,7 @@
 aliases:
   - ../setup-grafana/configure-security/configure-scim-provisioning/ # /docs/grafana/next/setup-grafana/setup-grafana/configure-security/configure-scim-provisioning/
   - ../configure-security/configure-scim-provisioning/ # /docs/grafana/next/setup-grafana/configure-security/configure-scim-provisioning/
+  - ../user-identity/scim-provisioning/ # /docs/grafana/next/user-management/user-identity/scim-provisioning/
 description: Learn how to use SCIM provisioning to synchronize users and groups from your identity provider to Grafana. SCIM enables automated user management, team provisioning, and enhanced security through real-time synchronization with your identity provider.
 keywords:
   - grafana
@@ -15,7 +16,7 @@ labels:
     - enterprise
 menuTitle: Configure SCIM provisioning
 title: Configure SCIM provisioning
-weight: 200
+weight: 150
 ---
 
 # Configure SCIM provisioning
@@ -144,8 +145,8 @@ The Terraform `grafana_scim_config` resource supports the same configuration opt
 
 The following identity providers are supported:
 
-- [Entra ID](../configure-authentication/azuread/)
-- [Okta](../configure-authentication/saml/)
+- [Entra ID](../authentication/entraid/)
+- [Okta](../authentication/saml/)
 
 ## How it works
 
@@ -163,10 +164,10 @@ The following table compares SCIM with other synchronization methods to help you
 | Sync Method                                                                    | Users | Teams | Roles | Automation | Key Benefits                                                             | Limitations                                                  | On-Prem | Cloud |
 | ------------------------------------------------------------------------------ | ----- | ----- | ----- | ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ----- |
 | SCIM                                                                           | ✅    | ✅    | ⚠️    | Full       | Complete user and team lifecycle management with automatic team creation | Requires SAML authentication; uses Role Sync for basic roles | ✅      | ✅    |
-| [Team Sync](../configure-team-sync/)                                           | ❌    | ⚠️    | ❌    | Partial    | Syncs team memberships to existing teams                                 | Requires manual team creation; no team lifecycle management  | ✅      | ✅    |
-| [Active LDAP Sync](../configure-authentication/enhanced-ldap/)                 | ✅    | ❌    | ❌    | Full       | Background synchronization of LDAP users                                 | Limited to LDAP environments                                 | ✅      | ❌    |
-| [Role Sync](../configure-authentication/saml#configure-role-sync)              | ❌    | ❌    | ✅    | Full       | Full automation of basic role assignment                                 | Limited to basic roles only                                  | ✅      | ✅    |
-| [Org Mapping](../configure-authentication/saml#configure-organization-mapping) | ❌    | ❌    | ⚠️    | Full       | Full automation of basic role assignment per organization                | Limited to basic roles only; on-premises only                | ⚠️      | ❌    |
+| [Team Sync](../user-identity/team-sync/)                                       | ❌    | ⚠️    | ❌    | Partial    | Syncs team memberships to existing teams                                 | Requires manual team creation; no team lifecycle management  | ✅      | ✅    |
+| [Active LDAP Sync](../authentication/enhanced-ldap/)                           | ✅    | ❌    | ❌    | Full       | Background synchronization of LDAP users                                 | Limited to LDAP environments                                 | ✅      | ❌    |
+| [Role Sync](../authentication/saml#configure-role-sync)                        | ❌    | ❌    | ✅    | Full       | Full automation of basic role assignment                                 | Limited to basic roles only                                  | ✅      | ✅    |
+| [Org Mapping](../authentication/saml#configure-organization-mapping)           | ❌    | ❌    | ⚠️    | Full       | Full automation of basic role assignment per organization                | Limited to basic roles only; on-premises only                | ⚠️      | ❌    |
 
 ### Key advantages
 

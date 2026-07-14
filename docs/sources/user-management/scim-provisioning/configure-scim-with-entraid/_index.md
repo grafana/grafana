@@ -37,7 +37,7 @@ This guide explains how to configure SCIM provisioning with Entra ID to automate
 When using SAML for authentication alongside SCIM provisioning with Entra ID, it is crucial to correctly align user identifiers.
 For detailed information on why this is critical for security and how to configure it, refer to the main [SCIM provisioning documentation](../).
 
-Refer to the [SAML authentication with Entra ID documentation](../../configure-authentication/saml/configure-saml-with-azuread/) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Entra ID SCIM setup.
+Refer to the [SAML authentication with Entra ID documentation](../../authentication/saml/configure-saml-with-azuread/) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Entra ID SCIM setup.
 {{< /admonition >}}
 
 ## Prerequisites
