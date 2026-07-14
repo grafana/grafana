@@ -57,7 +57,6 @@ jobs:
               - '!public/app/plugins/datasource/influxdb/**'
               - '!public/app/plugins/datasource/jaeger/**'
               - '!public/app/plugins/datasource/loki/**'
-              - '!public/app/plugins/datasource/mssql/**'
               - '!public/app/plugins/datasource/mysql/**'
             backend_strict:
               - 'pkg/**'
@@ -84,7 +83,6 @@ jobs:
               - 'public/app/plugins/datasource/influxdb/**'
               - 'public/app/plugins/datasource/jaeger/**'
               - 'public/app/plugins/datasource/loki/**'
-              - 'public/app/plugins/datasource/mssql/**'
               - 'public/app/plugins/datasource/mysql/**'
 
       - name: Check for exception label
