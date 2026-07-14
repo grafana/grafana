@@ -48,14 +48,20 @@ func TestPublishWatchNotification(t *testing.T) {
 		PreviousRV:      41,
 	}
 
-	t.Run("publishes a metadata-only notification on the resource subject", func(t *testing.T) {
+	t.Run("dual-publishes a metadata-only notification on the new and legacy subjects", func(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: true}
 		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
 
 		backend.publishWatchNotification(context.Background(), event)
 
-		require.Len(t, pub.subjects, 1)
-		assert.Equal(t, "provisioning.grafana.app.repositories.default", pub.subjects[0])
+		// The storage-api (publisher) deploys ahead of the provisioning operators
+		// (subscribers), so during the transition it publishes on both the new
+		// subject order and the legacy one.
+		require.Equal(t, []string{
+			"provisioning.grafana.app.repositories.default",
+			"provisioning.grafana.app.default.repositories",
+		}, pub.subjects)
+		require.Equal(t, pub.payloads[0], pub.payloads[1])
 
 		var got resourcepb.WatchNotification
 		require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))

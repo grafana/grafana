@@ -50,10 +50,10 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		return
 	}
 
-	subject := resourcewatch.Subject(schema.GroupVersionResource{
+	gvr := schema.GroupVersionResource{
 		Group:    event.Group,
 		Resource: event.Resource,
-	}, event.Namespace)
+	}
 
 	payload, err := proto.Marshal(&resourcepb.WatchNotification{
 		Type:                    actionToWatchNotificationType(event.Action),
@@ -66,11 +66,21 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		PreviousResourceVersion: event.PreviousRV,
 	})
 	if err != nil {
-		k.log.Warn("failed to marshal watch notification", "subject", subject, "error", err)
+		k.log.Warn("failed to marshal watch notification", "group", event.Group, "resource", event.Resource, "namespace", event.Namespace, "error", err)
 		return
 	}
 
-	if err := k.eventPublisher.Publish(ctx, subject, payload); err != nil {
-		k.log.Warn("failed to publish watch notification", "subject", subject, "error", err)
+	// Dual-publish during the deployment transition: the storage-api (publisher)
+	// ships ahead of the provisioning operators (subscribers), so we publish on
+	// both the new subject order and the legacy one until every subscriber has
+	// moved over. Once they have, drop LegacySubject and this loop.
+	subjects := []string{
+		resourcewatch.Subject(gvr, event.Namespace),
+		resourcewatch.LegacySubject(gvr, event.Namespace),
+	}
+	for _, subject := range subjects {
+		if err := k.eventPublisher.Publish(ctx, subject, payload); err != nil {
+			k.log.Warn("failed to publish watch notification", "subject", subject, "error", err)
+		}
 	}
 }
