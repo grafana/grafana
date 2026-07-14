@@ -43,7 +43,7 @@ export interface VizTooltipFooterProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   /** Callback to open the annotation editor for the hovered point. */
   annotate?: () => void;
-  /** Content rendered at the end of the footer; it owns its own section styling (border/padding). */
+  /** Content rendered at the end of the footer. */
   additionalContent?: ReactNode;
 }
 
