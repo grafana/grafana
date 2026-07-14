@@ -830,6 +830,10 @@ const (
 	// Enables the notification history detail page
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
+	// FlagDeletedFolderResourceCleanup
+	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server
+	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
+
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"

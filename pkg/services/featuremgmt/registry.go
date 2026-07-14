@@ -2515,6 +2515,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "deletedFolderResourceCleanup",
+			Description:  "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:        "react19",
 			Description: "Whether to use the new React 19 runtime",
 			Stage:       FeatureStageGeneralAvailability,
