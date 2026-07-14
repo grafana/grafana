@@ -365,8 +365,8 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 	}
 
 	if opts.From > 0 {
-		// Range overlap: annotation's time_end is NULL (point) OR time_end >= from
-		conditions = append(conditions, fmt.Sprintf("(time_end IS NULL OR time_end >= $%d)", argNum))
+		// Check against time for point annotations and time_end for range annotations
+		conditions = append(conditions, fmt.Sprintf("((time_end IS NULL AND time >= $%d) OR (time_end IS NOT NULL AND time_end >= $%d))", argNum, argNum))
 		args = append(args, opts.From)
 		argNum++
 	}
