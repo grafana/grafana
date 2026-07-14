@@ -493,7 +493,7 @@ const (
 
 	// FlagAlertingRuleQuality
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
-	FlagAlertingRuleQuality = "alertingRuleQuality"
+	FlagAlertingRuleQuality = "alerting.ruleQuality"
 
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch data source

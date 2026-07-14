@@ -134,6 +134,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleQuality",
+        "resourceVersion": "1784023221456",
+        "creationTimestamp": "2026-07-14T10:00:21Z"
+      },
+      "spec": {
+        "description": "Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.rulesAPIV2",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -688,7 +702,8 @@
       "metadata": {
         "name": "alertingRuleQuality",
         "resourceVersion": "1783689595044",
-        "creationTimestamp": "2026-07-10T13:19:55Z"
+        "creationTimestamp": "2026-07-10T13:19:55Z",
+        "deletionTimestamp": "2026-07-14T10:00:21Z"
       },
       "spec": {
         "description": "Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.",
