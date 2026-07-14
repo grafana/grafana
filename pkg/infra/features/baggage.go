@@ -10,12 +10,10 @@ import (
 )
 
 const (
-	SlugKey           = "slug"
-	PlanKey           = "plan"
-	ChannelKey        = "channel"
-	NamespaceKey      = "namespace"
-	GrafanaVersionKey = "grafana_version"
-	StackIdKey        = "stackId"
+	SlugKey      = "slug"
+	PlanKey      = "plan"
+	ChannelKey   = "channel"
+	NamespaceKey = "namespace"
 )
 
 // InstanceContextFromBaggage extracts per-tenant attributes from OTel baggage
@@ -38,8 +36,6 @@ func InstanceContextFromBaggage(ctx context.Context) openfeature.EvaluationConte
 	set(PlanKey)
 	set(ChannelKey)
 	set(NamespaceKey)
-	set(GrafanaVersionKey)
-	set(StackIdKey)
 
 	targetingKey := bag.Member(NamespaceKey).Value()
 	return openfeature.NewEvaluationContext(targetingKey, contextAtributes)

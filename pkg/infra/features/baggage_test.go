@@ -29,7 +29,7 @@ func TestInstanceContextFromBaggage(t *testing.T) {
 	})
 
 	t.Run("all canonical fields are extracted", func(t *testing.T) {
-		req := baggageCtx(t, "slug=mystack,plan=pro,channel=stable,namespace=stacks-42,grafana_version=13.0.0,stackId=42,instanceURL=https://mystack.grafana.net")
+		req := baggageCtx(t, "slug=mystack,plan=pro,channel=stable,namespace=stacks-42")
 		evalCtx := InstanceContextFromBaggage(req.Context())
 
 		attrs := evalCtx.Attributes()
@@ -37,9 +37,6 @@ func TestInstanceContextFromBaggage(t *testing.T) {
 		assert.Equal(t, "pro", attrs["plan"])
 		assert.Equal(t, "stable", attrs["channel"])
 		assert.Equal(t, "stacks-42", attrs["namespace"])
-		assert.Equal(t, "13.0.0", attrs["grafana_version"])
-		assert.Equal(t, "42", attrs["stackId"])
-		assert.Equal(t, "https://mystack.grafana.net", attrs["instanceURL"])
 	})
 
 	t.Run("absent fields are not added to attributes", func(t *testing.T) {
@@ -51,7 +48,6 @@ func TestInstanceContextFromBaggage(t *testing.T) {
 		assert.Contains(t, attrs, "namespace")
 		assert.NotContains(t, attrs, "plan")
 		assert.NotContains(t, attrs, "channel")
-		assert.NotContains(t, attrs, "stackId")
 	})
 
 	t.Run("non-canonical baggage members are not included", func(t *testing.T) {
