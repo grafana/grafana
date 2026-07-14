@@ -576,6 +576,9 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
               </span>
             )}
             <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
+            {/* The processor only aggregates groups of >= min_spans_to_aggregate (>= 2), so a real
+                summary span never has a 0 or absent count; guard defensively anyway since span_count
+                arrives as an untrusted tag value and a bare "0" pill conveys nothing. */}
             {isSummarySpan && span.aggregation && (span.aggregation.spanCount ?? 0) > 0 && (
               <span
                 className={styles.summaryCountBadge}
