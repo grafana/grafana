@@ -17,7 +17,7 @@ export interface ExistingItem {
   title: string;
   icon: IconName;
   subtitle?: string;
-  stats?: { primary: string; secondary: string };
+  stats?: { primary: string; secondary?: string };
   statsLoading?: boolean;
   sparkline?: SolutionSparklineData;
   sparklineLoading?: boolean;
