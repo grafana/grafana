@@ -760,6 +760,11 @@ export interface FeatureToggles {
   */
   alertingAIAnalyzeCentralStateHistory?: boolean;
   /**
+  * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+  * @default false
+  */
+  ['alerting.ruleQuality']?: boolean;
+  /**
   * Enables simplified step mode in the notifications section
   * @default true
   */
@@ -814,6 +819,11 @@ export interface FeatureToggles {
   * @default false
   */
   datasourceConnectionsTab?: boolean;
+  /**
+  * Enables the new sidebar filter panel in the Add new connection page
+  * @default false
+  */
+  connectionsFilterSidebar?: boolean;
   /**
   * Use a POST request to list rules by passing down the namespaces user has access to
   * @default false
