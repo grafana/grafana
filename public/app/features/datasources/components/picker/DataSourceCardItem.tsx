@@ -30,6 +30,9 @@ export function DataSourceCardItem({
       {...(enableKeyboardNavigation && {
         'data-role': 'keyboardSelectableItem',
         'data-selecteditem': isSelected ? 'true' : 'false',
+        // Hide the card internals from screen readers so the wrapping option's aria-label
+        // is all that gets announced
+        'aria-hidden': 'true',
       })}
       ds={ds}
       onClick={() => {

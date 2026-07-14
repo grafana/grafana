@@ -11,6 +11,7 @@ import { useStyles2 } from '@grafana/ui';
 import { useKeyboardNavigatableList } from '../../hooks';
 
 import { DataSourceCardItem } from './DataSourceCardItem';
+import { isDataSourceMatch } from './utils';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
 const ESTIMATED_ITEM_HEIGHT = 48;
@@ -102,7 +103,11 @@ export function VirtualizedList({
             {...(enableKeyboardNavigation && {
               id: listboxId ? optionId(listboxId, ds.uid) : undefined,
               role: 'option',
-              'aria-selected': virtualRow.index === selectedIndex,
+              'aria-selected': isDataSourceMatch(ds, current),
+              'aria-label': ds.name,
+              // explicit position/size, since virtualization means only visible rows exist in the DOM
+              'aria-posinset': virtualRow.index + 1,
+              'aria-setsize': sortedDataSources.length,
             })}
           >
             <DataSourceCardItem

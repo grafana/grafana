@@ -272,21 +272,32 @@ describe('DataSourcePicker', () => {
     });
 
     it('should announce the keyboard-highlighted item via aria-activedescendant', async () => {
-      await setupOpenDropdown(user, { onChange: jest.fn() });
+      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name });
 
       const searchBox = screen.getByRole('combobox');
       expect(searchBox).toHaveAttribute('aria-expanded', 'true');
 
+      const activeOption = () => {
+        const id = searchBox.getAttribute('aria-activedescendant');
+        expect(id).toBeTruthy();
+        return document.getElementById(id!);
+      };
+
       // On open, the first item is highlighted
-      let option = screen.getByRole('option', { selected: true });
-      expect(option).toHaveTextContent(mockDS1.name);
-      expect(option.id).toBeTruthy();
-      expect(searchBox).toHaveAttribute('aria-activedescendant', option.id);
+      let option = activeOption();
+      expect(option).toHaveAccessibleName(mockDS1.name);
+      expect(option).toHaveAttribute('aria-posinset', '1');
+      expect(option).toHaveAttribute('aria-setsize', String(mockDSList.length));
 
       await user.keyboard('[ArrowDown]');
-      option = screen.getByRole('option', { selected: true });
-      expect(option).toHaveTextContent(mockDS2.name);
-      expect(searchBox).toHaveAttribute('aria-activedescendant', option.id);
+      option = activeOption();
+      expect(option).toHaveAccessibleName(mockDS2.name);
+      expect(option).toHaveAttribute('aria-posinset', '2');
+
+      // aria-selected marks the current data source, not the keyboard highlight,
+      // so it must not have moved with the arrow key
+      const selected = screen.getByRole('option', { selected: true });
+      expect(selected).toHaveAccessibleName(mockDS1.name);
     });
 
     it('should be searchable', async () => {
