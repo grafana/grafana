@@ -15,7 +15,7 @@ var (
 			Name:      "authz_decisions_total",
 			Help:      "Total datasource authorizer decisions by subresource, outcome, and reason.",
 		},
-		[]string{"subresource", "svcIdentity", "decision", "reason"},
+		[]string{"group", "subresource", "verb", "svcIdentity", "decision", "reason"},
 	)
 
 	dsSubresourceRequests = prometheus.NewCounterVec(
@@ -50,8 +50,8 @@ func registerSubresourceMetrics(reg prometheus.Registerer) {
 
 // recordAuthzDecision increments the authz counter. subresource is the raw
 // k8s subresource from the request (empty string for CRUD operations).
-func recordAuthzDecision(subresource, svcIdentity, decision, reason string) {
-	dsAuthzDecisions.WithLabelValues(subresource, svcIdentity, decision, reason).Inc()
+func recordAuthzDecision(group, subresource, verb, svcIdentity, decision, reason string) {
+	dsAuthzDecisions.WithLabelValues(group, subresource, verb, svcIdentity, decision, reason).Inc()
 }
 
 // connectMetric tracks a single request across the Connect (setup) and
