@@ -239,7 +239,6 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.Cfg.KubernetesSnapshotsEnabled {
 		srv.deleteKubernetesExpiredSnapshots(ctx)
 	} else {
