@@ -19,6 +19,8 @@ import (
 // The Knowledge Graph's version of the "Application" page.
 const assertsServicesPath = "/a/grafana-asserts-app/services"
 const appObservabilityAppID = "grafana-app-observability-app"
+const assistantAppID = "grafana-assistant-app"
+const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
@@ -42,10 +44,19 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	enabledAccessibleAppPluginMap := make(map[string]*pluginstore.Plugin)
+	assistantAppEnabled := false
+	assistantOnboardingAppEnabled := false
 
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
 		if !isPluginEnabled(plugin) {
 			continue
+		}
+
+		switch plugin.ID {
+		case assistantAppID:
+			assistantAppEnabled = true
+		case assistantOnboardingAppID:
+			assistantOnboardingAppEnabled = true
 		}
 
 		if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
@@ -56,6 +67,19 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
 		}
+	}
+
+	if assistantOnboardingAppEnabled && !assistantAppEnabled {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Assistant",
+			Id:         "plugin-page-" + assistantAppID,
+			SubTitle:   "AI-powered assistant for Grafana",
+			Icon:       "ai-sparkle",
+			SortWeight: navtree.WeightAssistant,
+			IsSection:  true,
+			PluginID:   assistantAppID,
+			Url:        s.cfg.AppSubURL + "/a/" + assistantAppID,
+		})
 	}
 
 	if adaptiveTelemetryPlugin := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"]; adaptiveTelemetryPlugin != nil {
