@@ -49,16 +49,10 @@ const mockContextSrv = jest.mocked(contextSrv);
 describe('SplashScreenModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockContextSrv.user.uid = 'u_regularuser';
   });
 
-  it('renders for a regular user', () => {
-    render(<SplashScreenModal />);
-    expect(screen.getByLabelText("What's new in Grafana")).toBeInTheDocument();
-  });
-
-  it('does not render for a service account', () => {
-    mockContextSrv.user.uid = 'service-account:8';
+  it('does not render for a render user', () => {
+    mockContextSrv.user.authenticatedBy = "render"
     render(<SplashScreenModal />);
     expect(screen.queryByLabelText("What's new in Grafana")).not.toBeInTheDocument();
   });

@@ -45,7 +45,7 @@ export function SplashScreenModal() {
 
   // Service accounts cannot log in to the UI to dismiss this modal, so it would
   // permanently block dashboard screenshot rendering for those identities.
-  if (!shouldShow || contextSrv.user.uid.startsWith('service-account:')) {
+  if (!shouldShow || contextSrv.user.authenticatedBy === 'render') {
     return null;
   }
 
