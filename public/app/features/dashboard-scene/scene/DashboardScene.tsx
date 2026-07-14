@@ -867,7 +867,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newOptions?: Record<string, unknown>,
     newFieldConfig?: FieldConfigSource
   ) {
-    const { fieldConfig: prevFieldConfig } = panel.state;
+    // fieldConfig may be absent when a panel is created or changed via the Dashboard Mutation API.
+    const prevFieldConfig = panel.state.fieldConfig ?? { defaults: {}, overrides: [] };
 
     let cleanFieldConfig: FieldConfigSource = {
       defaults: { ...prevFieldConfig.defaults, custom: {} },

@@ -115,12 +115,15 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     }
   };
 
+  // fieldConfig may be absent when a panel is created or changed via the Dashboard Mutation API.
+  const defaults: FieldConfigSource['defaults'] = fieldConfig?.defaults ?? {};
+
   const transformedDefaults: any = {
-    ...fieldConfig.defaults,
+    ...defaults,
   };
 
-  if (fieldConfig.defaults.mappings) {
-    transformedDefaults.mappings = fieldConfig.defaults.mappings.flatMap((mapping) => {
+  if (defaults.mappings) {
+    transformedDefaults.mappings = defaults.mappings.flatMap((mapping) => {
       switch (mapping.type) {
         case 'value':
           return {
@@ -159,10 +162,10 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     });
   }
 
-  if (fieldConfig.defaults.thresholds) {
+  if (defaults.thresholds) {
     transformedDefaults.thresholds = {
-      ...fieldConfig.defaults.thresholds,
-      mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
+      ...defaults.thresholds,
+      mode: getThresholdsMode(defaults.thresholds.mode),
     };
   }
 
