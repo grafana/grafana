@@ -45,6 +45,7 @@ import { type TraceProcess, type TraceSpan, type TraceSpanReference } from '../.
 import { formatDuration } from '../../utils/date';
 import { getServiceDisplayName } from '../../utils/service-name';
 
+import AccordianCategorizedKeyValues from './AccordianCategorizedKeyValues';
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
@@ -411,8 +412,9 @@ export default function SpanDetail(props: SpanDetailProps) {
   const listOfContentCards = [];
 
   listOfContentCards.push(
-    <AccordianKeyValues
+    <AccordianCategorizedKeyValues
       data={tags}
+      sectionType="span"
       label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
       isOpen={isTagsOpen}
       linksGetter={resourceLinksGetter}
@@ -422,8 +424,9 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (process.tags) {
     listOfContentCards.push(
-      <AccordianKeyValues
+      <AccordianCategorizedKeyValues
         data={process.tags}
+        sectionType="resource"
         label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
         linksGetter={resourceLinksGetter}
         isOpen={isProcessOpen}
