@@ -73,6 +73,14 @@ export function SaveProvisionedDashboardForm({
   // Spans the whole create-folder flow, unlike the mutation's isLoading which ends before the selection sync
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const isCreatingFolderRef = useRef(false);
+  // Lets an in-flight folder creation know the user backed out, so its result isn't applied after the fact
+  const folderCreationCancelledRef = useRef(false);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const [createFolder] = useCreateRepositoryFilesWithPathMutation();
 
@@ -287,6 +295,7 @@ export function SaveProvisionedDashboardForm({
       source: 'save-dashboard',
     });
     isCreatingFolderRef.current = true;
+    folderCreationCancelledRef.current = false;
     setIsCreatingFolder(true);
     let uid: string | undefined;
     try {
@@ -306,29 +315,42 @@ export function SaveProvisionedDashboardForm({
       }).unwrap();
       uid = data.resource?.upsert?.metadata?.name;
     } catch (err) {
-      setFolderError(
-        getProvisionedRequestError(
-          err,
-          t('dashboard-scene.save-provisioned-dashboard-form.folder-create-error', 'Failed to create folder')
-        )
-      );
       isCreatingFolderRef.current = false;
+      if (!mountedRef.current) {
+        return;
+      }
+      if (!folderCreationCancelledRef.current) {
+        setFolderError(
+          getProvisionedRequestError(
+            err,
+            t('dashboard-scene.save-provisioned-dashboard-form.folder-create-error', 'Failed to create folder')
+          )
+        );
+      }
       setIsCreatingFolder(false);
       return;
     }
-    if (uid) {
-      setValue('path', joinPath(folderPath, filename));
-      try {
-        await selectFolder(uid, folderName);
-      } catch {
-        // The folder was created; a failed selection sync must not surface as a creation error
-      }
-    } else {
-      // Sync disabled: no folder resource to select, mark path dirty so resets keep the new location
-      setValue('path', joinPath(folderPath, filename), { shouldDirty: true });
+    // The folder was already created on the backend; only skip applying its selection if the
+    // user backed out of the flow (or the form unmounted) while the commit was in flight
+    if (!mountedRef.current) {
+      isCreatingFolderRef.current = false;
+      return;
     }
-    setShowNewFolderForm(false);
-    setNewFolderName('');
+    if (!folderCreationCancelledRef.current) {
+      if (uid) {
+        setValue('path', joinPath(folderPath, filename));
+        try {
+          await selectFolder(uid, folderName);
+        } catch {
+          // The folder was created; a failed selection sync must not surface as a creation error
+        }
+      } else {
+        // Sync disabled: no folder resource to select, mark path dirty so resets keep the new location
+        setValue('path', joinPath(folderPath, filename), { shouldDirty: true });
+      }
+      setShowNewFolderForm(false);
+      setNewFolderName('');
+    }
     isCreatingFolderRef.current = false;
     setIsCreatingFolder(false);
   }, [newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder]);
@@ -509,6 +531,7 @@ export function SaveProvisionedDashboardForm({
                           size="sm"
                           fill="outline"
                           onClick={() => {
+                            folderCreationCancelledRef.current = true;
                             setShowNewFolderForm(false);
                             setNewFolderName('');
                             setFolderError(undefined);
