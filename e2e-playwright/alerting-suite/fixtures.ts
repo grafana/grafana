@@ -53,33 +53,38 @@ class AlertRulesFixture {
   // at least one rule; we use a paused constant `math` expression so seeding does no datasource or
   // scheduler work — only the group name + interval matter to the tests that pick it.
   async seedGroup(groupName: string, interval: string, ruleTitle: string): Promise<void> {
-    await postWithRetry(this.request, `/api/ruler/grafana/api/v1/rules/${this.folder.uid}`, {
-      name: groupName,
-      interval,
-      rules: [
-        {
-          for: '0s',
-          annotations: {},
-          labels: {},
-          grafana_alert: {
-            title: ruleTitle,
-            condition: 'A',
-            no_data_state: 'NoData',
-            exec_err_state: 'Error',
-            is_paused: true,
-            data: [
-              {
-                refId: 'A',
-                datasourceUid: '__expr__',
-                queryType: '',
-                relativeTimeRange: { from: 600, to: 0 },
-                model: { refId: 'A', type: 'math', expression: '1 == 1' },
-              },
-            ],
+    await postWithRetry(
+      this.request,
+      `/api/ruler/grafana/api/v1/rules/${this.folder.uid}`,
+      {
+        name: groupName,
+        interval,
+        rules: [
+          {
+            for: '0s',
+            annotations: {},
+            labels: {},
+            grafana_alert: {
+              title: ruleTitle,
+              condition: 'A',
+              no_data_state: 'NoData',
+              exec_err_state: 'Error',
+              is_paused: true,
+              data: [
+                {
+                  refId: 'A',
+                  datasourceUid: '__expr__',
+                  queryType: '',
+                  relativeTimeRange: { from: 600, to: 0 },
+                  model: { refId: 'A', type: 'math', expression: '1 == 1' },
+                },
+              ],
+            },
           },
-        },
-      ],
-    });
+        ],
+      },
+      15_000
+    );
     this.disposers.push(async () => {
       await this.request.delete(`/api/ruler/grafana/api/v1/rules/${this.folder.uid}/${encodeURIComponent(groupName)}`);
     });
