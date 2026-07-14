@@ -385,7 +385,7 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   /**
   * Enable audit logging with Kubernetes under app platform
-  * @default false
+  * @default true
   */
   auditLoggingAppPlatform?: boolean;
   /**
