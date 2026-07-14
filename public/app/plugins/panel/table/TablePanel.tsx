@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
-
 import { getFrameDisplayName, type PanelProps, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { type TableOptions } from '@grafana/schema';
-import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
   useCacheFieldDisplayNames,
@@ -97,12 +96,12 @@ export function TablePanel(props: Props) {
   });
 
   return (
-    <div className={tableStyles.wrapper}>
+    <Stack direction="column" gap={1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <div className={tableStyles.selectWrapper}>
+      <Field label={t('table.frame-picker.label', 'Query')} noMargin>
         <Combobox options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
-      </div>
-    </div>
+      </Field>
+    </Stack>
   );
 }
 
@@ -112,15 +111,3 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
     frameIndex: val.value || 0,
   });
 }
-
-const tableStyles = {
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    height: '100%',
-  }),
-  selectWrapper: css({
-    padding: '8px 8px 0px 8px',
-  }),
-};
