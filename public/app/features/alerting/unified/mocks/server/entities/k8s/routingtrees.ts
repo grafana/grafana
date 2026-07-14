@@ -51,9 +51,14 @@ const mapRoute = (route: Route): RoutingTreeRoute => {
   };
 };
 
-export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig, name?: string) => RoutingTree = (
+/**
+ * Builds the default (root) routing tree from the alertmanager config. `emittedName` sets the tree's
+ * metadata.name — i.e. the name the mock reports back in responses — so tests can present the same default
+ * tree under either the current emitted name (`user-defined`) or the future canonical name (`default`).
+ */
+export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig, emittedName?: string) => RoutingTree = (
   config,
-  name = ROOT_ROUTE_NAME
+  emittedName = ROOT_ROUTE_NAME
 ) => {
   const route = config.alertmanager_config?.route || {};
 
@@ -67,7 +72,7 @@ export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig, name?
       }) || [],
   };
 
-  return routingTreeFromSpec(name, spec);
+  return routingTreeFromSpec(emittedName, spec);
 };
 
 const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, provenance?: string) => RoutingTree = (
