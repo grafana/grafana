@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import AccordianCategorizedKeyValues from './AccordianCategorizedKeyValues';
+import AccordionCategorizedKeyValues from './AccordionCategorizedKeyValues';
 
 const tags = [
   { key: 'http.method', value: 'POST' },
@@ -9,10 +9,10 @@ const tags = [
   { key: 'service.name', value: 'api' },
 ];
 
-describe('AccordianCategorizedKeyValues', () => {
+describe('AccordionCategorizedKeyValues', () => {
   it('renders categorized attribute sections when expanded', () => {
     render(
-      <AccordianCategorizedKeyValues
+      <AccordionCategorizedKeyValues
         data={tags}
         sectionType="span"
         isOpen={true}
@@ -28,7 +28,7 @@ describe('AccordianCategorizedKeyValues', () => {
 
   it('hides categories when collapsed', () => {
     render(
-      <AccordianCategorizedKeyValues
+      <AccordionCategorizedKeyValues
         data={tags}
         sectionType="span"
         isOpen={false}
@@ -45,7 +45,7 @@ describe('AccordianCategorizedKeyValues', () => {
     const onToggle = jest.fn();
 
     render(
-      <AccordianCategorizedKeyValues
+      <AccordionCategorizedKeyValues
         data={tags}
         sectionType="resource"
         isOpen={false}
@@ -61,7 +61,7 @@ describe('AccordianCategorizedKeyValues', () => {
 
   it('toggles category sections open and closed', async () => {
     render(
-      <AccordianCategorizedKeyValues
+      <AccordionCategorizedKeyValues
         data={tags}
         sectionType="span"
         isOpen={true}

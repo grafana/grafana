@@ -10,7 +10,7 @@ import { KeyValuesSummary } from './AccordianKeyValues';
 import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 import { type AttributeSectionType, groupAttributesByCategory } from './attributeCategories';
 
-export type AccordianCategorizedKeyValuesProps = {
+export type AccordionCategorizedKeyValuesProps = {
   data: TraceKeyValuePair[];
   sectionType: AttributeSectionType;
   isOpen: boolean;
@@ -19,14 +19,14 @@ export type AccordianCategorizedKeyValuesProps = {
   onToggle?: null | (() => void);
 };
 
-export default function AccordianCategorizedKeyValues({
+export default function AccordionCategorizedKeyValues({
   data,
   sectionType,
   isOpen,
   label,
   linksGetter,
   onToggle = null,
-}: AccordianCategorizedKeyValuesProps) {
+}: AccordionCategorizedKeyValuesProps) {
   const styles = useStyles2(getStyles);
   const isEmpty = !Array.isArray(data) || !data.length;
   const groupedCategories = React.useMemo(
@@ -76,7 +76,7 @@ export default function AccordianCategorizedKeyValues({
       <div
         className={styles.header}
         {...headerProps}
-        data-testid="AccordianCategorizedKeyValues--header"
+        data-testid="AccordionCategorizedKeyValues--header"
       >
         {arrow}
         <strong className={styles.headerLabel}>{label}</strong>
@@ -87,7 +87,7 @@ export default function AccordianCategorizedKeyValues({
         )}
       </div>
       {isOpen && (
-        <div className={styles.categories} data-testid="AccordianCategorizedKeyValues--categories">
+        <div className={styles.categories} data-testid="AccordionCategorizedKeyValues--categories">
           {groupedCategories.map(({ category, attributes }) => {
             const isCategoryOpen = !closedCategories.has(category.id);
 
