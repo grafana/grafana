@@ -1,4 +1,5 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { byRole } from 'testing-library-selector';
 
 import { type NavModelItem } from '@grafana/data';
 import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
@@ -7,7 +8,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
-import { DataSourceType } from '../utils/datasource';
+import { ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { AlertmanagerPageWrapper } from './AlertingPageWrapper';
 
@@ -161,6 +163,107 @@ describe('AlertmanagerPageWrapper', () => {
       );
 
       expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('ImportToGMA banner', () => {
+    testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
+
+    const importBanner = byRole('link', { name: /import to grafana alerting/i });
+
+    const setupExternalAlertmanager = () => {
+      const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
+        name: 'external-alertmanager',
+        uid: 'external-alertmanager-uid',
+        type: DataSourceType.Alertmanager,
+      });
+      setupDataSources(alertmanagerDataSource);
+      return alertmanagerDataSource;
+    };
+
+    const renderWithSelectedAlertmanager = (alertmanagerName: string) =>
+      render(
+        <AlertmanagerPageWrapper accessType="notification" pageNav={testPageNav}>
+          <div>Test content</div>
+        </AlertmanagerPageWrapper>,
+        {
+          historyOptions: {
+            initialEntries: [`/alerting/notifications?${ALERTMANAGER_NAME_QUERY_KEY}=${alertmanagerName}`],
+          },
+        }
+      );
+
+    it('shows the import banner when an external Alertmanager is selected and the user can import notifications', async () => {
+      const externalAm = setupExternalAlertmanager();
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+
+      renderWithSelectedAlertmanager(externalAm.name);
+
+      expect(await importBanner.find()).toBeInTheDocument();
+    });
+
+    it('does not show the import banner when the Grafana Alertmanager is selected', async () => {
+      setupExternalAlertmanager();
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+
+      renderWithSelectedAlertmanager(GRAFANA_RULES_SOURCE_NAME);
+
+      expect(await screen.findByText('Test content')).toBeInTheDocument();
+      expect(importBanner.query()).not.toBeInTheDocument();
+    });
+
+    it('does not show the import banner when the user cannot import notifications', async () => {
+      const externalAm = setupExternalAlertmanager();
+      // Read-only external access, no notifications write permission.
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+      ]);
+
+      renderWithSelectedAlertmanager(externalAm.name);
+
+      expect(await screen.findByText('Test content')).toBeInTheDocument();
+      expect(importBanner.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('ImportToGMA banner with feature toggle disabled', () => {
+    testWithFeatureToggles({ enable: [] });
+
+    it('does not show the import banner when the feature toggle is off', async () => {
+      const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
+        name: 'external-alertmanager',
+        uid: 'external-alertmanager-uid',
+        type: DataSourceType.Alertmanager,
+      });
+      setupDataSources(alertmanagerDataSource);
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+
+      render(
+        <AlertmanagerPageWrapper accessType="notification" pageNav={testPageNav}>
+          <div>Test content</div>
+        </AlertmanagerPageWrapper>,
+        {
+          historyOptions: {
+            initialEntries: [`/alerting/notifications?${ALERTMANAGER_NAME_QUERY_KEY}=${alertmanagerDataSource.name}`],
+          },
+        }
+      );
+
+      expect(await screen.findByText('Test content')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /import to grafana alerting/i })).not.toBeInTheDocument();
     });
   });
 });

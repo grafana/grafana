@@ -1881,6 +1881,11 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "import-to-gma-banner": {
+      "description": "Bring your external Alertmanager configuration into Grafana-managed alerting using the import wizard.",
+      "open-button": "Import to Grafana Alerting",
+      "title": "Import your external Alertmanager into Grafana"
+    },
     "import-to-gma-tool": {
       "pageTitle": "Import to Grafana Alerting"
     },
