@@ -108,11 +108,19 @@ export function SummaryCard<T>({
 }
 
 /** Item title: a plugin/detail link when `href` is set, otherwise plain truncated text. */
-export function SummaryCardTitle({ href, children }: { href?: string; children: string }) {
+export function SummaryCardTitle({
+  href,
+  onClick,
+  children,
+}: {
+  href?: string;
+  onClick?: () => void;
+  children: string;
+}) {
   const styles = useStyles2(getStyles);
   if (href) {
     return (
-      <TextLink href={href} inline={false} color="primary" className={styles.title}>
+      <TextLink href={href} onClick={onClick} inline={false} color="primary" className={styles.title}>
         {children}
       </TextLink>
     );

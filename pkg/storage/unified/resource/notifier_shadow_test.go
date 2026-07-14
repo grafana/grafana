@@ -43,8 +43,8 @@ func (c *countingSubscriber) callCount() int {
 
 func TestNatsShadow_ReSubscribesAfterInitialFailure(t *testing.T) {
 	sub := &countingSubscriber{failFirst: 2}
-	s := newNatsShadow(sub, WatchOptions{}, prometheus.NewRegistry(), log.NewNopLogger())
-	s.retryInterval = 10 * time.Millisecond
+	// Small backoff bounds keep the notifier's subscription retry loop fast.
+	s := newNatsShadow(sub, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond}, prometheus.NewRegistry(), log.NewNopLogger())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

@@ -254,6 +254,13 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Enum:        []interface{}{"gpg", "smime", "ssh"},
 						},
 					},
+					"signerIsAuthor": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, commits are authored by the signer identity (signerName/signerEmail).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"smimeCertificate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
@@ -569,12 +576,19 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							Ref:         ref(HealthStatus{}.OpenAPIModelName()),
 						},
 					},
+					"token": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(TokenStatus{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"observedGeneration", "health"},
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 
@@ -1058,13 +1072,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref 
 							Description: "The branch to use in the repository.",
 							Default:     "",
 							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"generateDashboardPreviews": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews for pull requests.",
-							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
@@ -2070,6 +2077,13 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.Referen
 					"enforceTemplate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When true, the PR title field in Save drawers is read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

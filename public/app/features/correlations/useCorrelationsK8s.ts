@@ -1,21 +1,18 @@
+import { useEffect, useState } from 'react';
+
 import { handleRequestError } from '@grafana/api-clients';
 import {
   type Correlation as CorrelationK8s,
   useListCorrelationQuery,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { SupportedTransformationType } from '@grafana/data';
-import {
-  type CorrelationData,
-  type CorrelationExternal,
-  type CorrelationQuery,
-  getDataSourceSrv,
-} from '@grafana/runtime';
+import { type CorrelationData, type CorrelationExternal, type CorrelationQuery } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { toEnrichedCorrelationData } from './useCorrelations';
 
-export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | undefined => {
-  const dsSrv = getDataSourceSrv();
-  const sourceDS = dsSrv.getInstanceSettings({ type: item.spec.source.group, uid: item.spec.source.name });
+export const toEnrichedCorrelationDataK8s = async (item: CorrelationK8s): Promise<CorrelationData | undefined> => {
+  const sourceDS = await getDataSourceInstanceSettings({ type: item.spec.source.group, uid: item.spec.source.name });
   if (sourceDS !== undefined) {
     // if a resource has a manager set, it must explicitly allow edits
     const isManaged = item.metadata.annotations?.['grafana.app/managedBy'] !== undefined;
@@ -51,7 +48,10 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
       };
       return toEnrichedCorrelationData(extCorr);
     } else {
-      const targetDs = dsSrv.getInstanceSettings({ type: item.spec.target?.group, uid: item.spec.target?.name });
+      const targetDs = await getDataSourceInstanceSettings({
+        type: item.spec.target?.group,
+        uid: item.spec.target?.name,
+      });
       if (targetDs !== undefined) {
         const queryCorr: CorrelationQuery = {
           ...baseCor,
@@ -82,21 +82,41 @@ export const useCorrelationsK8s = (limit = 100, page: number) => {
   }
 
   const { currentData, isLoading, error } = useListCorrelationQuery({ limit: pagedLimit });
-  const startIdx = limit * (page - 1);
-  const pagedData = currentData?.items.slice(startIdx, startIdx + limit) ?? [];
-  const enrichedCorrelations =
-    currentData !== undefined
-      ? pagedData
-          .filter((i) => i.metadata.name !== undefined)
-          .map((item) => toEnrichedCorrelationDataK8s(item))
-          .filter((i) => i !== undefined)
-      : [];
+
+  const [enrichedCorrelations, setEnrichedCorrelations] = useState<CorrelationData[]>([]);
+  const [isEnriching, setIsEnriching] = useState(false);
+
+  useEffect(() => {
+    if (currentData === undefined) {
+      setEnrichedCorrelations([]);
+      return;
+    }
+
+    let cancelled = false;
+    setIsEnriching(true);
+
+    const startIdx = limit * (page - 1);
+    const pagedData = currentData.items.slice(startIdx, startIdx + limit);
+
+    Promise.all(
+      pagedData.filter((i) => i.metadata.name !== undefined).map((item) => toEnrichedCorrelationDataK8s(item))
+    ).then((enriched) => {
+      if (!cancelled) {
+        setEnrichedCorrelations(enriched.filter((i) => i !== undefined));
+        setIsEnriching(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentData, limit, page]);
 
   const fmtedError = error ? handleRequestError(error) : undefined;
 
   return {
     currentData: enrichedCorrelations,
-    isLoading,
+    isLoading: isLoading || isEnriching,
     error: fmtedError,
     remainingItems: currentData?.metadata.remainingItemCount || 0,
     doesContinue: currentData?.metadata.continue !== undefined,
