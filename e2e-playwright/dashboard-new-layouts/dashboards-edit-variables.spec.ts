@@ -33,9 +33,7 @@ test.describe(
 
       const variable = variableWithDefaults({ type: 'constant' });
 
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
       // set the constant variable value
       const type = 'variable-type Value';
@@ -85,8 +83,7 @@ test.describe(
       const variable = variableWithDefaults({ type: 'interval', value: '1m' });
 
       // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
       // enable the auto option
       await page.getByText('Auto option').click();

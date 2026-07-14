@@ -93,35 +93,21 @@ func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.
 	assert.Equal(t, "v2", p.PreferredVersion("widgets.example.test", "gadgets"))
 }
 
-// stubProvider is a SearchFieldsProvider used only to assert identity in the
-// merge test; its methods are never exercised for their return values.
-type stubProvider struct{ SearchFieldsProvider }
+func TestSearchFieldProviders_MapsDeclaredKinds(t *testing.T) {
+	got := SearchFieldProviders([]app.Manifest{manifestWithSearchFields()})
 
-func TestSearchFieldProviders_ManifestWinsBuilderFallback(t *testing.T) {
-	widgetBuilder := &stubProvider{}
-	gadgetBuilder := &stubProvider{}
-	builderProviders := map[string]SearchFieldsProvider{
-		"widgets.example.test/widgets": widgetBuilder, // manifest also declares this one
-		"widgets.example.test/gadgets": gadgetBuilder, // builder-only, manifest declares nothing
-	}
+	// The one kind that declares search fields is present and provider-backed.
+	require.Len(t, got, 1)
+	provider := got[NewLowerGroupResource("widgets.example.test", "widgets")]
+	require.NotNil(t, provider)
 
-	got := SearchFieldProviders([]app.Manifest{manifestWithSearchFields()}, builderProviders)
-
-	// Widget is declared in the manifest, so its provider is replaced.
-	require.NotSame(t, widgetBuilder, got["widgets.example.test/widgets"])
-	require.NotNil(t, got["widgets.example.test/widgets"])
-
-	// Gadget is not in the manifest, so it keeps the builder provider.
-	assert.Same(t, gadgetBuilder, got["widgets.example.test/gadgets"])
+	// The mapped provider answers for that kind's own (group, resource).
+	gvr := schema.GroupVersionResource{Group: "widgets.example.test", Version: "v2", Resource: "widgets"}
+	assert.Len(t, provider.Fields(gvr), 2)
 }
 
-func TestSearchFieldProviders_NoManifestDeclarationsIsNoOp(t *testing.T) {
-	widgetBuilder := &stubProvider{}
-	builderProviders := map[string]SearchFieldsProvider{
-		"widgets.example.test/widgets": widgetBuilder,
-	}
-
-	// A manifest that declares no search fields must not change anything.
+func TestSearchFieldProviders_NoManifestDeclarationsIsEmpty(t *testing.T) {
+	// A manifest that declares no search fields yields an empty map.
 	manifestNoFields := app.Manifest{ManifestData: &app.ManifestData{
 		Group: "widgets.example.test",
 		Versions: []app.ManifestVersion{{
@@ -130,7 +116,6 @@ func TestSearchFieldProviders_NoManifestDeclarationsIsNoOp(t *testing.T) {
 		}},
 	}}
 
-	got := SearchFieldProviders([]app.Manifest{manifestNoFields}, builderProviders)
-	assert.Same(t, widgetBuilder, got["widgets.example.test/widgets"])
-	assert.Len(t, got, 1)
+	got := SearchFieldProviders([]app.Manifest{manifestNoFields})
+	assert.Empty(t, got)
 }

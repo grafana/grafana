@@ -40,7 +40,6 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingMultiplePolicies,
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		},
 	})
@@ -765,7 +764,6 @@ func TestIntegrationPromoteAlertmanagerAccessControl(t *testing.T) {
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingMultiplePolicies,
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		},
 	})

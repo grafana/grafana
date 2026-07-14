@@ -179,6 +179,14 @@ type StorageBackend interface {
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error)
 
+	// ListStoredResources discovers which resource identities exist in storage,
+	// without returning counts. It is a cheaper alternative to GetResourceStats
+	// for callers that only need to know what is stored. The filter's Namespace
+	// is required; Group and Resource are optional (empty means no filter on that
+	// field). Results are discovery-only and may contain false positives: a
+	// returned identity may have no live objects by the time the caller queries it.
+	ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error)
+
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
 	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
 }
@@ -272,15 +280,15 @@ type SearchOptions struct {
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
-	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
-	SelectableFieldsForKinds map[string][]string
+	// Selectable fields per kind, keyed by (group, kind) and (group, plural).
+	SelectableFieldsForKinds map[LowerGroupResource][]string
 
-	// Map "group/resource" -> hash of the SearchFieldDefinition slices
-	// registered for that (group, resource), across every version. The
-	// search server compares this against the value stored in each index's
-	// IndexBuildInfo and triggers a rebuild on mismatch. Keys must be
-	// lower-case. Entries with empty hash strings are ignored.
-	SearchFieldsHashesForKinds map[string]string
+	// Hash of the SearchFieldDefinition slices registered for a (group,
+	// resource) across every version, keyed by (group, resource). The search
+	// server compares this against the value stored in each index's
+	// IndexBuildInfo and triggers a rebuild on mismatch. Entries with empty
+	// hash strings are ignored.
+	SearchFieldsHashesForKinds map[LowerGroupResource]string
 
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
@@ -1448,6 +1456,42 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	default:
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
 	}
+}
+
+// ListStoredResources implements the ResourceStore gRPC service by delegating
+// to the storage backend. A namespace is required.
+func (s *server) ListStoredResources(ctx context.Context, req *resourcepb.ListStoredResourcesRequest) (*resourcepb.ListStoredResourcesResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.ListStoredResources")
+	defer span.End()
+
+	if req.Namespace == "" {
+		return nil, status.Error(codes.InvalidArgument, "namespace is required")
+	}
+
+	if err := s.Init(ctx); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	stored, err := s.backend.ListStoredResources(ctx, NamespacedResource{
+		Namespace: req.Namespace,
+		Group:     req.Group,
+		Resource:  req.Resource,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	rsp := &resourcepb.ListStoredResourcesResponse{
+		Items: make([]*resourcepb.ListStoredResourcesResponse_StoredResource, 0, len(stored)),
+	}
+	for _, r := range stored {
+		rsp.Items = append(rsp.Items, &resourcepb.ListStoredResourcesResponse_StoredResource{
+			Namespace: r.Namespace,
+			Group:     r.Group,
+			Resource:  r.Resource,
+		})
+	}
+	return rsp, nil
 }
 
 // listBackendFunc is the signature shared by ListIterator and ListHistory.

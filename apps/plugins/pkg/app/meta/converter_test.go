@@ -38,6 +38,13 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		}
 	})
 
+	t.Run("blanks unsubstituted version/updated placeholders", func(t *testing.T) {
+		jsonData := plugins.JSONData{ID: "test", Name: "Test", Info: plugins.Info{Version: "%VERSION%", Updated: "%TODAY%"}}
+		meta := jsonDataToMetaJSONData(jsonData)
+		assert.Empty(t, meta.Info.Version)
+		assert.Empty(t, meta.Info.Updated)
+	})
+
 	t.Run("converts categories", func(t *testing.T) {
 		testCases := []string{
 			"tsdb",
@@ -431,6 +438,26 @@ func TestPluginStorePluginToMeta(t *testing.T) {
 		assert.Equal(t, "module.js", meta.Module.Path)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript, meta.Module.LoadingStrategy)
 	})
+
+	t.Run("inherits version from parent when child version is empty", func(t *testing.T) {
+		plugin := pluginstore.Plugin{
+			JSONData: plugins.JSONData{ID: "child-plugin", Name: "Child Plugin", Type: plugins.TypeDataSource},
+			Class:    plugins.ClassExternal,
+			Parent:   &pluginstore.ParentPlugin{ID: "parent-app", Version: "1.2.3"},
+		}
+		meta := pluginStorePluginToMeta(plugin, "")
+		assert.Equal(t, "1.2.3", meta.PluginJson.Info.Version)
+	})
+
+	t.Run("keeps own version when child version is set", func(t *testing.T) {
+		plugin := pluginstore.Plugin{
+			JSONData: plugins.JSONData{ID: "child-plugin", Name: "Child Plugin", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "9.9.9"}},
+			Class:    plugins.ClassExternal,
+			Parent:   &pluginstore.ParentPlugin{ID: "parent-app", Version: "1.2.3"},
+		}
+		meta := pluginStorePluginToMeta(plugin, "")
+		assert.Equal(t, "9.9.9", meta.PluginJson.Info.Version)
+	})
 }
 
 func TestConvertSignatureStatus(t *testing.T) {
@@ -522,6 +549,16 @@ func TestPluginToMetaSpec(t *testing.T) {
 		assert.Empty(t, meta.Children)
 		assert.Empty(t, meta.Translations)
 	})
+
+	t.Run("inherits version from parent when child version is empty", func(t *testing.T) {
+		plugin := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: "child-plugin", Name: "Child Plugin", Type: plugins.TypeDataSource},
+			Class:    plugins.ClassExternal,
+			Parent:   &plugins.Plugin{JSONData: plugins.JSONData{ID: "parent-app", Info: plugins.Info{Version: "1.2.3"}}},
+		}
+		meta := pluginToMetaSpec(plugin)
+		assert.Equal(t, "1.2.3", meta.PluginJson.Info.Version)
+	})
 }
 
 func TestGrafanaComChildPluginVersionToMetaSpec(t *testing.T) {
@@ -551,6 +588,8 @@ func TestGrafanaComChildPluginVersionToMetaSpec(t *testing.T) {
 		assert.Equal(t, "child-plugin", meta.PluginJson.Id)
 		assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, meta.Class)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid, meta.Signature.Status)
+		// Child plugin.json has no version, so it inherits the parent's version.
+		assert.Equal(t, "1.0.0", meta.PluginJson.Info.Version)
 	})
 }
 
@@ -584,6 +623,52 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		assert.Equal(t, "hash123", *meta.Module.Hash)
 		assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0", meta.BaseURL)
 		assert.Equal(t, []string{"child1", "child2"}, meta.Children)
+	})
+
+	t.Run("falls back to gcom version when plugin.json version is empty", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug:          "test-plugin",
+			Version:             "2.3.4",
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest:            grafanaComPluginManifest{Files: map[string]string{}},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
+		require.NoError(t, err)
+		assert.Equal(t, "2.3.4", meta.PluginJson.Info.Version)
+	})
+
+	t.Run("keeps plugin.json version when present", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug:          "test-plugin",
+			Version:             "2.3.4",
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Info: pluginsv0alpha1.MetaInfo{Version: "9.9.9"}}},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest:            grafanaComPluginManifest{Files: map[string]string{}},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
+		require.NoError(t, err)
+		assert.Equal(t, "9.9.9", meta.PluginJson.Info.Version)
+	})
+
+	t.Run("treats a %VERSION% placeholder as empty and falls back to the gcom version", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug:          "test-plugin",
+			Version:             "2.3.4",
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Info: pluginsv0alpha1.MetaInfo{Version: "%VERSION%", Updated: "%TODAY%"}}},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest:            grafanaComPluginManifest{Files: map[string]string{}},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
+		require.NoError(t, err)
+		assert.Equal(t, "2.3.4", meta.PluginJson.Info.Version)
+		assert.Empty(t, meta.PluginJson.Info.Updated)
 	})
 
 	t.Run("converts all signature types", func(t *testing.T) {

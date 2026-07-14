@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"maps"
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -86,11 +85,10 @@ func manifestSearchFieldsToDefinitions(in []app.ManifestVersionKindSearchField) 
 	return out
 }
 
-// manifestDeclaredKindKeys returns the lower-cased "group/resource" keys of
-// every kind that declares at least one search field in any version. The key
-// format matches SearchFieldProvidersForBuilders so the two maps merge.
-func manifestDeclaredKindKeys(manifests []app.Manifest) map[string]bool {
-	keys := map[string]bool{}
+// manifestDeclaredKindKeys returns the (group, resource) key of every kind that
+// declares at least one search field in any version.
+func manifestDeclaredKindKeys(manifests []app.Manifest) map[LowerGroupResource]bool {
+	keys := map[LowerGroupResource]bool{}
 	for _, m := range manifests {
 		if m.ManifestData == nil {
 			continue
@@ -100,26 +98,20 @@ func manifestDeclaredKindKeys(manifests []app.Manifest) map[string]bool {
 				if len(kind.SearchFields) == 0 {
 					continue
 				}
-				keys[strings.ToLower(m.ManifestData.Group+"/"+manifestResourceName(kind))] = true
+				keys[NewLowerGroupResource(m.ManifestData.Group, manifestResourceName(kind))] = true
 			}
 		}
 	}
 	return keys
 }
 
-// SearchFieldProviders returns the per-("group/resource") provider map that
-// drives bleve mappings. A kind's search fields come from its manifest when the
-// manifest declares any; otherwise the builder-supplied provider is used. Keys
-// are lower-cased "group/resource", matching SearchFieldProvidersForBuilders.
-//
-// Until kinds migrate their search fields into CUE, no manifest declares any,
-// so this returns exactly the builder providers and boot behaviour is
-// unchanged.
-func SearchFieldProviders(manifests []app.Manifest, builderProviders map[string]SearchFieldsProvider) map[string]SearchFieldsProvider {
-	out := make(map[string]SearchFieldsProvider, len(builderProviders))
-	maps.Copy(out, builderProviders)
-
+// SearchFieldProviders returns the per-(group, resource) provider map that
+// drives bleve mappings. Every kind that declares search fields in its manifest
+// is mapped to a single manifest-backed provider; each entry queries it for its
+// own (group, resource).
+func SearchFieldProviders(manifests []app.Manifest) map[LowerGroupResource]SearchFieldsProvider {
 	declared := manifestDeclaredKindKeys(manifests)
+	out := make(map[LowerGroupResource]SearchFieldsProvider, len(declared))
 	if len(declared) == 0 {
 		return out
 	}

@@ -51,4 +51,11 @@ message WatchNotification {
   // The name of the folder in metadata
   // +optional
   string folder = 7;
+
+  // ResourceVersion of the immediately previous state of this resource, as
+  // issued by the writing storage. Lets consumers reconstruct the prior object
+  // (e.g. the body of a deleted resource) without a separate lookup. 0 when
+  // unknown (e.g. a create).
+  // +optional
+  int64 previous_resource_version = 8;
 }

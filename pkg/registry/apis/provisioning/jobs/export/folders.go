@@ -32,9 +32,10 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 			return fmt.Errorf("extract meta accessor: %w", err)
 		}
 
-		manager, _ := meta.GetManagerProperties()
-		// Skip if already managed by any manager (repository, file provisioning, etc.)
-		if manager.Identity != "" {
+		_, managed := meta.GetManagerProperties()
+		// Skip if already managed by any manager (repository, file provisioning, etc.).
+		// Classic shim kinds are managed without an identity, so rely on the managed flag.
+		if managed {
 			return nil
 		}
 
@@ -56,6 +57,10 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 // selective export, which only assembles the folders that the requested
 // resources actually need.
 func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, tree resources.FolderTree, progress jobs.JobProgressRecorder) error {
+	if err := checkFolderPathCollisions(ctx, tree); err != nil {
+		return err
+	}
+
 	return repositoryResources.EnsureFolderTreeExists(ctx, tree, resources.EnsureFolderTreeExistsOptions{
 		Ref:                  options.Branch,
 		Path:                 options.Path,
@@ -63,17 +68,41 @@ func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions,
 		OnFolder: func(folder resources.Folder, created bool, err error) error {
 			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
 
-			if err != nil {
+			// A folder that failed to write must keep a non-ignored action: the
+			// recorder discards errors on FileActionIgnored results, so labelling
+			// a failure as ignored would let a broken export (e.g. an invalid
+			// folder path) drop the error and report the job as a success.
+			switch {
+			case err != nil:
 				resultBuilder.WithError(fmt.Errorf("creating folder %s at path %s: %w", folder.ID, folder.Path, err))
-			}
-
-			if !created {
+			case !created:
 				resultBuilder.WithAction(repository.FileActionIgnored)
 			}
 			progress.Record(ctx, resultBuilder.Build())
 
 			return progress.TooManyErrors()
 		},
+	})
+}
+
+// checkFolderPathCollisions fails the export when two distinct folders normalize
+// to the same repository path. SanitizeSegment can map different titles under the
+// same parent onto one segment (for example "» Reports" and "Reports", or "A&B"
+// and "AB"). Writing both would let the second folder be treated as already
+// present — its _folder.json skipped or overwriting the first — while dashboards
+// still land under the shared path, so one folder's on-disk metadata would
+// silently represent the wrong UID/title. Refuse loudly instead, naming both
+// folders so the user can rename one.
+func checkFolderPathCollisions(ctx context.Context, tree resources.FolderTree) error {
+	seen := make(map[string]resources.Folder)
+	return tree.Walk(ctx, func(_ context.Context, folder resources.Folder, _ string) error {
+		if prev, dup := seen[folder.Path]; dup && prev.ID != folder.ID {
+			return fmt.Errorf(
+				"folders %q (%s) and %q (%s) both export to path %q; rename one so their normalized paths differ",
+				prev.Title, prev.ID, folder.Title, folder.ID, folder.Path)
+		}
+		seen[folder.Path] = folder
+		return nil
 	})
 }
 
@@ -135,7 +164,7 @@ func collectFolderAncestry(ctx context.Context, folderUID string, folderClient d
 		}
 		seen[current] = struct{}{}
 
-		if manager, _ := meta.GetManagerProperties(); manager.Identity != "" {
+		if _, managed := meta.GetManagerProperties(); managed {
 			return nil
 		}
 

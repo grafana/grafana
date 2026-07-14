@@ -89,18 +89,17 @@ func NewSearchOptions(
 		// docs is optional in some tests; only consult it when present so the
 		// hash check is a no-op rather than a nil deref. Real callers always
 		// pass a non-nil supplier.
-		var searchFieldsHashes map[string]string
-		var searchFieldsProviders map[string]resource.SearchFieldsProvider
+		var searchFieldsHashes map[resource.LowerGroupResource]string
+		var searchFieldsProviders map[resource.LowerGroupResource]resource.SearchFieldsProvider
 		if docs != nil {
 			builders, err := docs.GetDocumentBuilders()
 			if err != nil {
 				return resource.SearchOptions{}, err
 			}
 			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
-			// Prefer search fields declared in manifests, falling back to the
-			// builder-supplied provider for kinds that don't declare any in CUE.
-			builderProviders := resource.SearchFieldProvidersForBuilders(builders)
-			searchFieldsProviders = resource.SearchFieldProviders(resource.AppManifests(), builderProviders)
+			// Search fields come from the app manifests: every in-tree kind that
+			// has custom search fields declares them in its CUE manifest.
+			searchFieldsProviders = resource.SearchFieldProviders(resource.AppManifests())
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
@@ -117,6 +116,12 @@ func NewSearchOptions(
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
+			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
+			PostRankAuthz: PostRankAuthzConfig{
+				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
+				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
+				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
+			},
 		}, indexMetrics)
 
 		if err != nil {

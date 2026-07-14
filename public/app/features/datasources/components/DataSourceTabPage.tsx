@@ -22,6 +22,7 @@ function DataSourceTabPage({ uid, pageId }: Props) {
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,
     alertingSupported: dataSourceHeader.alertingSupported,
+    alertingLoading: dataSourceHeader.alertingLoading,
     failure: datasourceFailureByUID.get(uid),
   });
 
