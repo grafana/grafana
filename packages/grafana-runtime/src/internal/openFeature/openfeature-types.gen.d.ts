@@ -70,7 +70,8 @@ declare module "@openfeature/core" {
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
-    | "grafana.onDemandDiagnostics";
+    | "grafana.onDemandDiagnostics"
+    | "grafana.multiTenantNavTree";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

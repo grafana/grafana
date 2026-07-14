@@ -2751,6 +2751,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.multiTenantNavTree",
+        "resourceVersion": "1784042116563",
+        "creationTimestamp": "2026-07-14T15:15:16Z"
+      },
+      "spec": {
+        "description": "Builds the navigation tree client-side instead of reading it from /bootdata",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1781775898347",
         "creationTimestamp": "2026-06-18T09:44:58Z"
