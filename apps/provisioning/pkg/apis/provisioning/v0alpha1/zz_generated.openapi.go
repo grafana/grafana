@@ -1949,6 +1949,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 							Format:      "",
 						},
 					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Target branch for the migration (git only). When set to a branch other than the repository's configured branch, the migration writes the exported resources to that branch (a pull request workflow) and removes the migrated resources from the instance instead of taking ownership of them — they return as managed resources once the branch is merged and a regular sync runs on the configured branch. When empty (or equal to the configured branch), the migration writes directly to the configured branch and takes ownership of the exported resources.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"resources": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported.",

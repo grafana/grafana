@@ -38,6 +38,15 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	}
 	namespace := repo.Config().GetNamespace()
 
+	// A branch migration targets a branch other than the repository's configured
+	// branch, i.e. a pull request workflow. The exported resources cannot be
+	// taken over and synced back yet: the pull phase reads the configured branch,
+	// which does not contain them until the branch is merged. So instead of
+	// taking ownership we remove the migrated resources from the instance; they
+	// return as managed resources when the branch is merged and a regular sync
+	// runs on the configured branch.
+	branchMigration := options.Branch != "" && options.Branch != repo.Config().Branch()
+
 	// Export resources first (for both folder and instance sync).
 	// Wrap the progress recorder so we can capture which resources were exported.
 	progress.SetMessage(ctx, "export resources")
@@ -50,6 +59,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 			Message: job.Spec.Message,
 			Push: &provisioning.ExportJobOptions{
 				Message:              options.Message,
+				Branch:               options.Branch,
 				Resources:            options.Resources,
 				GenerateNewFolderIDs: options.GenerateNewFolderIDs,
 			},
@@ -59,24 +69,29 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		return fmt.Errorf("export resources: %w", err)
 	}
 
-	// Build a takeover allowlist from the exported resource identifiers so the
-	// sync phase can claim those specific unmanaged resources without rejecting them.
-	ctx = resources.WithTakeoverAllowlist(ctx, collector.ExportedResources())
+	// On a branch migration we skip the takeover/pull phase entirely: the
+	// exported resources live on a branch that is not yet merged, so there is
+	// nothing to claim from the configured branch.
+	if !branchMigration {
+		// Build a takeover allowlist from the exported resource identifiers so the
+		// sync phase can claim those specific unmanaged resources without rejecting them.
+		ctx = resources.WithTakeoverAllowlist(ctx, collector.ExportedResources())
 
-	// Reset the results after the export as pull will operate on the same resources
-	progress.ResetResults(false)
+		// Reset the results after the export as pull will operate on the same resources
+		progress.ResetResults(false)
 
-	// Pull resources from the repository
-	progress.SetMessage(ctx, "pull resources")
-	syncJob := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Pull: &provisioning.SyncJobOptions{
-				Incremental: false,
+		// Pull resources from the repository
+		progress.SetMessage(ctx, "pull resources")
+		syncJob := provisioning.Job{
+			Spec: provisioning.JobSpec{
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: false,
+				},
 			},
-		},
-	}
-	if err := m.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
-		return fmt.Errorf("pull resources: %w", err)
+		}
+		if err := m.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
+			return fmt.Errorf("pull resources: %w", err)
+		}
 	}
 
 	// For instance-type repositories, also clean the namespace.
@@ -85,6 +100,11 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	// destructive — the user only asked to take over the named ones.
 	// Folderless repositories also coexist with unmanaged resources, so they
 	// must never trigger a namespace clean.
+	//
+	// For a default-branch migration this removes the unmanaged leftovers that
+	// were not taken over by the pull above. For a branch migration the exported
+	// resources are still unmanaged (they were never taken over), so this is what
+	// removes the migrated resources from the instance.
 	target := repo.Config().Spec.Sync.Target
 	if target != provisioning.SyncTargetTypeFolder && target != provisioning.SyncTargetTypeFolderless && len(options.Resources) == 0 {
 		progress.SetMessage(ctx, "clean namespace")

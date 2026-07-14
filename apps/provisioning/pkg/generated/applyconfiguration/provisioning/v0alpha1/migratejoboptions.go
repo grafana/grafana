@@ -11,6 +11,15 @@ type MigrateJobOptionsApplyConfiguration struct {
 	// Deprecated: set JobSpec.Message instead. This field is kept for
 	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message *string `json:"message,omitempty"`
+	// Target branch for the migration (git only). When set to a branch other
+	// than the repository's configured branch, the migration writes the exported
+	// resources to that branch (a pull request workflow) and removes the migrated
+	// resources from the instance instead of taking ownership of them — they
+	// return as managed resources once the branch is merged and a regular sync
+	// runs on the configured branch. When empty (or equal to the configured
+	// branch), the migration writes directly to the configured branch and takes
+	// ownership of the exported resources.
+	Branch *string `json:"branch,omitempty"`
 	// Resources to migrate. When empty, every unmanaged resource in the namespace
 	// is migrated (legacy behavior). When non-empty, only the listed resources
 	// are exported to the repository — the folder hierarchy is still emitted so
@@ -36,6 +45,14 @@ func MigrateJobOptions() *MigrateJobOptionsApplyConfiguration {
 // If called multiple times, the Message field is set to the value of the last call.
 func (b *MigrateJobOptionsApplyConfiguration) WithMessage(value string) *MigrateJobOptionsApplyConfiguration {
 	b.Message = &value
+	return b
+}
+
+// WithBranch sets the Branch field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Branch field is set to the value of the last call.
+func (b *MigrateJobOptionsApplyConfiguration) WithBranch(value string) *MigrateJobOptionsApplyConfiguration {
+	b.Branch = &value
 	return b
 }
 
