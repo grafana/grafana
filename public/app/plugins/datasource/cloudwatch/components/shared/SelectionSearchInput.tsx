@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Icon, Input } from '@grafana/ui';
 
@@ -12,8 +12,16 @@ type Props = {
 
 export const SelectionSearchInput = ({ ariaLabel, placeholder, searchFn, searchPhrase }: Props) => {
   const [searchFilter, setSearchFilter] = useState(searchPhrase);
+  const searchFnRef = useRef(searchFn);
 
-  const debouncedSearch = useMemo(() => debounce(searchFn, 600), [searchFn]);
+  useEffect(() => {
+    searchFnRef.current = searchFn;
+  }, [searchFn]);
+
+  const debouncedSearch = useMemo(
+    () => debounce((nextSearchPhrase: string) => searchFnRef.current(nextSearchPhrase), 600),
+    []
+  );
 
   useEffect(() => {
     return () => {

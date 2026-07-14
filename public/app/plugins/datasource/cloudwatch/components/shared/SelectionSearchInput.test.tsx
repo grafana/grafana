@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 // eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
@@ -24,6 +24,7 @@ describe('SelectionSearchInput', () => {
 
   afterEach(() => {
     lodash.debounce = originalDebounce;
+    jest.useRealTimers();
   });
 
   it('displays the provided search phrase', async () => {
@@ -44,5 +45,21 @@ describe('SelectionSearchInput', () => {
 
     expect(searchFn).toBeCalledWith('s');
     expect(searchFn).toHaveBeenLastCalledWith('something');
+  });
+
+  it('keeps a pending search when searchFn changes', () => {
+    jest.useFakeTimers();
+    lodash.debounce = originalDebounce;
+    const initialSearchFn = jest.fn();
+    const latestSearchFn = jest.fn();
+    const { rerender } = render(<SelectionSearchInput {...defaultProps} searchFn={initialSearchFn} />);
+
+    fireEvent.change(screen.getByLabelText('selection search'), { target: { value: 'something' } });
+    rerender(<SelectionSearchInput {...defaultProps} searchFn={latestSearchFn} />);
+
+    act(() => jest.advanceTimersByTime(600));
+
+    expect(initialSearchFn).not.toHaveBeenCalled();
+    expect(latestSearchFn).toHaveBeenCalledWith('something');
   });
 });
