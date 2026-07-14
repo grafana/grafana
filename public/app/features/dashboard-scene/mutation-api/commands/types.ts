@@ -97,4 +97,11 @@ export function enterEditModeIfNeeded(scene: DashboardScene): void {
   if (!scene.state.isEditing) {
     scene.onEnterEditMode('assistant');
   }
+  // Layout mutations (new layouts) are dispatched as DashboardEditActionEvents that
+  // only run when an active DashboardEditPane is subscribed. In the programmatic
+  // mutation path the pane may not be mounted, so activate it to guarantee the
+  // add/update closures run and the new object is attached to the scene tree.
+  if (!scene.state.editPane.isActive) {
+    scene.state.editPane.activate();
+  }
 }
