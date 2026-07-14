@@ -1,6 +1,6 @@
 import { render, screen, within } from 'test/test-utils';
 
-import RecommendationExisting from './RecommendationExisting';
+import { RecommendationExisting } from './RecommendationExisting';
 
 describe('RecommendationExisting', () => {
   it('opens the dropdown and switches the selected solution', async () => {
