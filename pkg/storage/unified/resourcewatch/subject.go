@@ -6,8 +6,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// allNamespaces is the NATS single-token wildcard ("*") used in the namespace
-// position to watch every namespace's notifications for a resource.
+// allNamespaces is the NATS single-token wildcard ("*") used in the trailing
+// namespace position to watch every namespace's notifications for a resource.
 const allNamespaces = "*"
 
 // SubjectAll is the NATS multi-token wildcard (">"), matching every Subject(...)
@@ -18,14 +18,18 @@ const SubjectAll = ">"
 // Subject returns the NATS subject that carries change notifications for a
 // resource type within a namespace, as the dotted tokens
 //
-//	{group}.{namespace}.{resource}
+//	{group}.{resource}.{namespace}
 //
-// The version is intentionally absent: notifications are version-agnostic and a
-// consumer resolves the object at its own version via GET, so a single subject
-// serves every version. An empty namespace yields the "*" single-token wildcard
-// in the namespace position, so a consumer can watch every namespace's
-// notifications for the resource (Grafana namespaces have no dots, so a concrete
-// namespace is always exactly one token and never bleeds into the wildcard).
+// The namespace is the trailing token so that "{group}.{resource}" is a prefix of
+// every namespace's subject: a consumer can watch or be granted a whole resource
+// across all namespaces with a subtree wildcard (e.g. NATS
+// "provisioning.grafana.app.repositories.>"). The version is intentionally absent:
+// notifications are version-agnostic and a consumer resolves the object at its own
+// version via GET, so a single subject serves every version. An empty namespace
+// yields the "*" single-token wildcard in the trailing position, so a consumer can
+// watch every namespace's notifications for the resource (Grafana namespaces have
+// no dots, so a concrete namespace is always exactly one token and never bleeds
+// into the wildcard).
 //
 // The group keeps its dots and therefore spans several tokens
 // (provisioning.grafana.app -> three tokens); publisher and consumer build the
@@ -37,7 +41,7 @@ func Subject(gvr schema.GroupVersionResource, namespace string) string {
 	}
 	return strings.Join([]string{
 		gvr.Group,
-		ns,
 		gvr.Resource,
+		ns,
 	}, ".")
 }

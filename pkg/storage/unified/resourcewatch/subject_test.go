@@ -24,25 +24,25 @@ func TestSubject(t *testing.T) {
 			name:      "namespaced, version-agnostic",
 			gvr:       gvr,
 			namespace: "default",
-			want:      "provisioning.grafana.app.default.repositories",
+			want:      "provisioning.grafana.app.repositories.default",
 		},
 		{
-			name:      "empty namespace becomes the single-token wildcard",
+			name:      "empty namespace becomes the trailing single-token wildcard",
 			gvr:       gvr,
 			namespace: "",
-			want:      "provisioning.grafana.app.*.repositories",
+			want:      "provisioning.grafana.app.repositories.*",
 		},
 		{
 			name:      "version is ignored",
 			gvr:       schema.GroupVersionResource{Group: "provisioning.grafana.app", Version: "v9", Resource: "repositories"},
 			namespace: "stacks-1",
-			want:      "provisioning.grafana.app.stacks-1.repositories",
+			want:      "provisioning.grafana.app.repositories.stacks-1",
 		},
 		{
 			name:      "groupless resource",
 			gvr:       schema.GroupVersionResource{Resource: "configmaps"},
 			namespace: "default",
-			want:      ".default.configmaps",
+			want:      ".configmaps.default",
 		},
 	}
 
