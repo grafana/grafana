@@ -73,7 +73,7 @@ const existing: ExistingItem[] = [
   },
 ];
 
-export default function RecommendationExisting() {
+export function RecommendationExisting() {
   const styles = useStyles2(getStyles);
   const [selected, setSelected] = useState(existing[0]);
 
