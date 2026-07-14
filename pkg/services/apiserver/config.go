@@ -75,7 +75,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, o *options.Options) error {
 	unifiedStorageCfg := cfg.UnifiedStorage
 	o.StorageOptions.UnifiedStorageConfig = unifiedStorageCfg
 
-	o.ExtraOptions.DevMode = cfg.IsDevMode() && apiserverCfg.Key("dev_mode_enabled").MustBool(false)
+	o.ExtraOptions.DevMode = cfg.IsDevEnv() && apiserverCfg.Key("dev_mode_enabled").MustBool(false)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL
 	o.ExtraOptions.Verbosity = apiserverCfg.Key("log_level").MustInt(defaultLogLevel)
