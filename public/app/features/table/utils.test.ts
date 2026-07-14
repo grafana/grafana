@@ -1,19 +1,46 @@
-import { type FieldConfigSource, FieldMatcherID } from '@grafana/data';
+import { type ActionModel, type Field, type FieldConfigSource, FieldMatcherID, FieldType } from '@grafana/data';
+import { getActions } from 'app/features/actions/utils';
 
-import { onColumnResize } from './TablePanel';
+import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from './utils';
 
-const setup = (overrides: FieldConfigSource['overrides']) => {
-  const fieldConfig: FieldConfigSource = { defaults: {}, overrides };
-  const onFieldConfigChange = jest.fn();
-  return {
-    fieldConfig,
-    onFieldConfigChange,
-    props: { fieldConfig, onFieldConfigChange },
-    nextConfig: () => onFieldConfigChange.mock.calls[0][0] as FieldConfigSource,
-  };
-};
+jest.mock('app/features/actions/utils', () => ({
+  getActions: jest.fn(),
+}));
+
+const getActionsMock = jest.mocked(getActions);
+
+describe('getCurrentFrameIndex', () => {
+  const frames = [{}, {}, {}] as never[];
+
+  it('returns 0 when frameIndex is 0', () => {
+    expect(getCurrentFrameIndex(frames, { frameIndex: 0 })).toBe(0);
+  });
+
+  it('returns the frameIndex when it is within range', () => {
+    expect(getCurrentFrameIndex(frames, { frameIndex: 2 })).toBe(2);
+  });
+
+  it('returns 0 when frameIndex is negative', () => {
+    expect(getCurrentFrameIndex(frames, { frameIndex: -1 })).toBe(0);
+  });
+
+  it('returns 0 when frameIndex is out of range', () => {
+    expect(getCurrentFrameIndex(frames, { frameIndex: 5 })).toBe(0);
+  });
+});
 
 describe('onColumnResize', () => {
+  const setup = (overrides: FieldConfigSource['overrides']) => {
+    const fieldConfig: FieldConfigSource = { defaults: {}, overrides };
+    const onFieldConfigChange = jest.fn();
+    return {
+      fieldConfig,
+      onFieldConfigChange,
+      props: { fieldConfig, onFieldConfigChange },
+      nextConfig: () => onFieldConfigChange.mock.calls[0][0] as FieldConfigSource,
+    };
+  };
+
   it('appends a new override when no overrides exist', () => {
     const { props, onFieldConfigChange, nextConfig } = setup([]);
 
@@ -194,5 +221,63 @@ describe('onColumnResize', () => {
       ],
     });
     expect(next.overrides[1].properties).toEqual([{ id: 'custom.width', value: 250 }]);
+  });
+});
+
+describe('onSortByChange', () => {
+  it('merges the new sortBy onto the existing options and forwards them', () => {
+    const onOptionsChange = jest.fn();
+    const options = { showHeader: true, sortBy: [{ displayName: 'old' }] };
+
+    onSortByChange([{ displayName: 'time', desc: true }], { options, onOptionsChange });
+
+    expect(onOptionsChange).toHaveBeenCalledTimes(1);
+    expect(onOptionsChange).toHaveBeenCalledWith({
+      showHeader: true,
+      sortBy: [{ displayName: 'time', desc: true }],
+    });
+  });
+});
+
+describe('getCellActions', () => {
+  const frame = { fields: [], length: 0 } as never;
+
+  const makeField = (actions?: unknown[]): Field =>
+    ({
+      name: 'value',
+      type: FieldType.string,
+      values: [],
+      config: { actions },
+      state: { scopedVars: {} },
+    }) as unknown as Field;
+
+  const action = (title: string): ActionModel<Field> => ({ title }) as unknown as ActionModel<Field>;
+
+  beforeEach(() => {
+    getActionsMock.mockReset();
+  });
+
+  it('returns an empty array and skips resolution when the field has no configured actions', () => {
+    const result = getCellActions(frame, makeField(), 0, undefined);
+
+    expect(result).toEqual([]);
+    expect(getActionsMock).not.toHaveBeenCalled();
+  });
+
+  it('returns the single resolved action as-is', () => {
+    getActionsMock.mockReturnValue([action('open')]);
+
+    const result = getCellActions(frame, makeField([{}]), 0, undefined);
+
+    expect(result).toEqual([action('open')]);
+    expect(getActionsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('de-duplicates resolved actions by title', () => {
+    getActionsMock.mockReturnValue([action('open'), action('open'), action('close')]);
+
+    const result = getCellActions(frame, makeField([{}, {}]), 0, undefined);
+
+    expect(result).toEqual([action('open'), action('close')]);
   });
 });

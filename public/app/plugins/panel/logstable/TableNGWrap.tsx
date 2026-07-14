@@ -23,8 +23,7 @@ import { LogTableControls } from 'app/features/logs/components/panel/LogTableCon
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
 import { type DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
-
-import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from '../table/TablePanel';
+import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
