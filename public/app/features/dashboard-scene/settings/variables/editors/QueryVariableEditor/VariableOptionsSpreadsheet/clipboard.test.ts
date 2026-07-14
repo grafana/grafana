@@ -339,7 +339,10 @@ describe('useClipboardPaste', () => {
       mockPermissionState('granted');
 
       const { result } = renderHook(() => useClipboardPaste());
-      await waitFor(() => expect(result.current.canPaste).toBe(true));
+      await waitFor(() => {
+        expect(result.current.access).toBe('granted');
+        expect(result.current.canPaste).toBe(true);
+      });
       act(() => {
         result.current.markImported('a,b,c');
       });
