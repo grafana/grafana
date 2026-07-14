@@ -25,7 +25,7 @@ env:
   # community-triage logic version this repo is pinned to (main as of PR #6).
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 5f67f265ef6172719184081f780d20a67c202a1f
+  TRIAGE_REF: 72c2a930d8219e4684db86663cfac8f3f9ad163c
 
 jobs:
   triage:
@@ -119,6 +119,7 @@ jobs:
         id: metadata
         env:
           GH_TOKEN: ${{ github.token }}
+          ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
         run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts metadata

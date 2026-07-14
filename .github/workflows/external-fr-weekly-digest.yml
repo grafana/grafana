@@ -31,7 +31,7 @@ concurrency:
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 5f67f265ef6172719184081f780d20a67c202a1f
+  TRIAGE_REF: 72c2a930d8219e4684db86663cfac8f3f9ad163c
 
 jobs:
   digest:
@@ -113,6 +113,7 @@ jobs:
         id: fetch-frs
         env:
           GH_TOKEN: ${{ github.token }}
+          ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           REPO: ${{ github.repository }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
         run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-digest.mts fetch

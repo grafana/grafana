@@ -31,7 +31,7 @@ permissions: {}
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 5f67f265ef6172719184081f780d20a67c202a1f
+  TRIAGE_REF: 72c2a930d8219e4684db86663cfac8f3f9ad163c
   STALE_THRESHOLD_DAYS: ${{ inputs.stale_days || 30 }}
 
 concurrency:
@@ -115,6 +115,7 @@ jobs:
         id: fetch-prs
         env:
           GH_TOKEN: ${{ github.token }}
+          ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           REPO: ${{ github.repository }}
         run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-digest.mts fetch
 
