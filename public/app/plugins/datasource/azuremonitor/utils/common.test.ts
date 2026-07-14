@@ -145,9 +145,7 @@ describe('AzureMonitor: fetchAllArmPages', () => {
       `[azuremonitor] ARM listing stopped after ${MAX_ARM_PAGES} pages; some results may be omitted.`
     );
     expect(publish).toHaveBeenCalledTimes(1);
-    expect(publish).toHaveBeenCalledWith(
-      expect.objectContaining({ type: AppEvents.alertWarning.name })
-    );
+    expect(publish).toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertWarning.name }));
   });
 
   it('does not emit a warning toast when all pages load within the cap', async () => {
