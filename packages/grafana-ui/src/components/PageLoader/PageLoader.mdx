@@ -1,0 +1,25 @@
+import { ArgTypes } from '@storybook/addon-docs/blocks';
+import { PageLoader } from './PageLoader';
+
+# PageLoader
+
+Full-page loading indicator. Use this component when an entire page or view is not yet ready to display — for example, while lazy-loading a route or fetching the data needed to render the whole page.
+
+### Usage
+
+```jsx
+<PageLoader />
+```
+
+The logo shown reflects the configured branding automatically — no props are required.
+
+### When to use
+
+- Waiting for a top-level route component to load (e.g. inside a `<Suspense>` fallback)
+- Waiting for page-level data before anything can be rendered
+
+For loading states scoped to a single element or section within an already-rendered page, use [LoadingPlaceholder](?path=/docs/information-loadingplaceholder--docs) instead.
+
+### Props
+
+<ArgTypes of={PageLoader} />

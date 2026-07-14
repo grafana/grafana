@@ -299,7 +299,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Query:  searchQuery,
-		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldCreated, legacyIDField},
+		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, resource.SEARCH_FIELD_CREATED, legacyIDField},
 		// The query is a wildcard (*...*), so only Name is used from each
 		// QueryField to specify which fields to search in (Type and Boost
 		// are ignored for wildcard queries).
@@ -487,7 +487,7 @@ func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0
 		Email:   string(cell(builders.USER_EMAIL)),
 		Login:   string(cell(builders.USER_LOGIN)),
 		Role:    string(cell(builders.USER_ROLE)),
-		Created: asInt64(builders.USER_CREATED),
+		Created: asInt64(resource.SEARCH_FIELD_CREATED),
 	}
 
 	if id, err := strconv.ParseInt(string(cell(legacyIDField)), 10, 64); err == nil {
