@@ -28,6 +28,7 @@ import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
   getNextAvailableVariableName,
+  getVariableFolderPickerExcludeUIDs,
   getVariableFolderUid,
   getVariableKind,
   getVariableSpecName,
@@ -185,7 +186,12 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
           'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
         )}
       >
-        <FolderPicker showRootFolder value={folderUid} onChange={(uid) => setFolderUid(uid ?? '')} />
+        <FolderPicker
+          showRootFolder
+          value={folderUid}
+          onChange={(uid) => setFolderUid(uid ?? '')}
+          excludeUIDs={getVariableFolderPickerExcludeUIDs()}
+        />
       </Field>
 
       <VariableEditorForm

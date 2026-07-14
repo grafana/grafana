@@ -1,7 +1,13 @@
+import { config } from '@grafana/runtime';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Variable, type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { type EditableVariableType } from 'app/features/dashboard-scene/settings/variables/utils';
+
+/** Folder UIDs that appear in NestedFolderPicker but are not valid variable scopes. */
+export function getVariableFolderPickerExcludeUIDs(): string[] | undefined {
+  return config.sharedWithMeFolderUID ? [config.sharedWithMeFolderUID] : undefined;
+}
 
 const KIND_TO_EDITABLE_TYPE: Record<VariableKind['kind'], EditableVariableType> = {
   QueryVariable: 'query',
