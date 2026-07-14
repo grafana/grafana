@@ -127,28 +127,11 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/mssql/**/*",
-      "pkg/tsdb/mssql/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/MSSQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/mysql/**/*",
       "pkg/tsdb/mysql/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "datasource/MySQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/parca/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Parca"
   },
   {
     "type": "changedfiles",

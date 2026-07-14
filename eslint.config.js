@@ -17,11 +17,7 @@ const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
-const pluginsToTranslate = [
-  'public/app/plugins/panel',
-  'public/app/plugins/datasource/azuremonitor',
-  'public/app/plugins/datasource/mssql',
-];
+const pluginsToTranslate = ['public/app/plugins/panel', 'public/app/plugins/datasource/azuremonitor'];
 
 const commonTestIgnores = [
   '**/*.{test,spec}.{ts,tsx}',
@@ -72,6 +68,11 @@ const baseImportConfig = {
       name: 'react-redux',
       importNames: ['useDispatch', 'useSelector'],
       message: 'Please import from app/types/store instead.',
+    },
+    {
+      name: 'react-use',
+      importNames: ['useObservable'],
+      message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
     },
   ],
 };
@@ -509,9 +510,7 @@ module.exports = [
       'public/app/plugins/datasource/jaeger/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/mssql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,

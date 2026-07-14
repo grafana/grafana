@@ -18,9 +18,7 @@ const externalisedDatasources = [
   'influxdb',
   'jaeger',
   'loki',
-  'mssql',
   'mysql',
-  'parca',
 ];
 
 const config: KnipConfig = {

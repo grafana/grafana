@@ -13,9 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -307,12 +310,119 @@ func TestListPreferences_Errors(t *testing.T) {
 	})
 }
 
-// fakeStorage is a minimal grafanarest.Storage implementation that only
-// supports Get; ListPreferences only ever calls Get on the wrapped store.
+func TestPreferencesStorage_Update(t *testing.T) {
+	ctx := requestK8s.WithNamespace(context.Background(), "default")
+
+	// setTheme mimics the apiserver's merge-patch transformer: it requires
+	// the current object to carry a UID (the real transformer returns 404
+	// otherwise) and applies a single-field change on top of it.
+	setTheme := func(theme string) rest.UpdatedObjectInfo {
+		return rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
+			old, ok := oldObj.(*preferences.Preferences)
+			if !ok {
+				return nil, fmt.Errorf("expected preferences, got %T", oldObj)
+			}
+			if old.UID == "" {
+				return nil, k8serrors.NewNotFound(
+					schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+					old.Name,
+				)
+			}
+			patched := old.DeepCopy()
+			patched.Spec.Theme = ptr.To(theme)
+			return patched, nil
+		})
+	}
+
+	newStore := func(fake *fakeStorage) *preferencesStorage {
+		return &preferencesStorage{Storage: fake, gvk: preferences.PreferencesResourceInfo.GroupVersionKind()}
+	}
+
+	t.Run("creates preferences that do not exist yet", func(t *testing.T) {
+		fake := &fakeStorage{items: map[string]*preferences.Preferences{}}
+		store := newStore(fake)
+
+		obj, created, err := store.Update(ctx, "user-abc", setTheme("dark"), nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.True(t, created)
+
+		p, ok := obj.(*preferences.Preferences)
+		require.True(t, ok)
+		require.Equal(t, "user-abc", p.Name)
+		require.Equal(t, "default", p.Namespace)
+		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+
+		require.Equal(t, []string{"user-abc"}, fake.created)
+		require.Empty(t, fake.updated)
+	})
+
+	t.Run("updates preferences that already exist", func(t *testing.T) {
+		existing := newPref("user-abc")
+		existing.UID = "existing-uid"
+		existing.Spec.Theme = ptr.To("light")
+		fake := &fakeStorage{items: map[string]*preferences.Preferences{"user-abc": existing}}
+		store := newStore(fake)
+
+		obj, created, err := store.Update(ctx, "user-abc", setTheme("dark"), nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.False(t, created)
+
+		p, ok := obj.(*preferences.Preferences)
+		require.True(t, ok)
+		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+
+		require.Empty(t, fake.created)
+		require.Equal(t, []string{"user-abc"}, fake.updated)
+	})
+
+	t.Run("falls back to update when losing a create race", func(t *testing.T) {
+		// The first Update reports NotFound but Create collides with
+		// AlreadyExists, as if another request created the preferences in
+		// between; the retried Update must then succeed
+		existing := newPref("user-abc")
+		existing.UID = "existing-uid"
+		fake := &fakeStorage{
+			items: map[string]*preferences.Preferences{"user-abc": existing},
+			createErr: k8serrors.NewAlreadyExists(
+				schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+				"user-abc",
+			),
+		}
+		store := &preferencesStorage{
+			Storage: &failFirstUpdateStorage{fakeStorage: fake},
+			gvk:     preferences.PreferencesResourceInfo.GroupVersionKind(),
+		}
+
+		obj, created, err := store.Update(ctx, "user-abc", setTheme("dark"), nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.False(t, created)
+
+		p, ok := obj.(*preferences.Preferences)
+		require.True(t, ok)
+		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+		require.Equal(t, []string{"user-abc"}, fake.updated)
+	})
+
+	t.Run("non-NotFound errors from Update bubble up", func(t *testing.T) {
+		fake := &forbiddenStorage{}
+		store := &preferencesStorage{Storage: fake, gvk: preferences.PreferencesResourceInfo.GroupVersionKind()}
+
+		_, _, err := store.Update(ctx, "user-abc", setTheme("dark"), nil, nil, false, &metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsForbidden(err))
+	})
+}
+
+// fakeStorage is a minimal grafanarest.Storage implementation supporting
+// Get, Create and Update -- everything the preferencesStorage wrapper calls
+// on the wrapped store.
 type fakeStorage struct {
 	grafanarest.Storage
-	items map[string]*preferences.Preferences
-	calls []string
+	items     map[string]*preferences.Preferences
+	calls     []string
+	created   []string
+	updated   []string
+	createErr error
 }
 
 func (f *fakeStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -324,6 +434,50 @@ func (f *fakeStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) 
 		schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
 		name,
 	)
+}
+
+func (f *fakeStorage) New() runtime.Object {
+	return &preferences.Preferences{}
+}
+
+func (f *fakeStorage) Create(_ context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	if f.createErr != nil {
+		return nil, f.createErr
+	}
+	p, ok := obj.(*preferences.Preferences)
+	if !ok {
+		return nil, fmt.Errorf("expected preferences, got %T", obj)
+	}
+	if _, exists := f.items[p.Name]; exists {
+		return nil, k8serrors.NewAlreadyExists(
+			schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+			p.Name,
+		)
+	}
+	f.created = append(f.created, p.Name)
+	f.items[p.Name] = p
+	return p, nil
+}
+
+func (f *fakeStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	old, exists := f.items[name]
+	if !exists {
+		return nil, false, k8serrors.NewNotFound(
+			schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+			name,
+		)
+	}
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+	p, ok := obj.(*preferences.Preferences)
+	if !ok {
+		return nil, false, fmt.Errorf("expected preferences, got %T", obj)
+	}
+	f.updated = append(f.updated, name)
+	f.items[name] = p
+	return p, false, nil
 }
 
 func newPref(name string) *preferences.Preferences {
@@ -348,4 +502,37 @@ type errorStorage struct {
 
 func (e *errorStorage) Get(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
 	return &preferences.PreferencesList{}, nil
+}
+
+// failFirstUpdateStorage fails the first Update with NotFound but otherwise
+// behaves like the wrapped fakeStorage, simulating a concurrent create
+// between the failed optimistic update and the upsert's Create call.
+type failFirstUpdateStorage struct {
+	*fakeStorage
+	failed bool
+}
+
+func (n *failFirstUpdateStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	if !n.failed {
+		n.failed = true
+		return nil, false, k8serrors.NewNotFound(
+			schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+			name,
+		)
+	}
+	return n.fakeStorage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+// forbiddenStorage fails Update with a non-NotFound error to verify such
+// errors are not treated as "missing, create it".
+type forbiddenStorage struct {
+	grafanarest.Storage
+}
+
+func (f *forbiddenStorage) Update(_ context.Context, name string, _ rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, k8serrors.NewForbidden(
+		schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+		name,
+		fmt.Errorf("nope"),
+	)
 }

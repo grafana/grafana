@@ -47,12 +47,38 @@ describe('resourceKinds registry', () => {
     expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
     expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
   });
+  it('gives each entry a `key` equal to its registry key', () => {
+    // The type only requires `key` to be some ResourceKindKey; this guards against an entry pointing
+    // at the wrong key (e.g. the playlist entry carrying `key: 'dashboard'`), which would silently
+    // mislabel commit messages and telemetry.
+    for (const [key, info] of Object.entries(resourceKindInfos)) {
+      expect(info.key).toBe(key);
+    }
+  });
+
+  it('returns a localized singular label for each kind', () => {
+    expect(resourceKindInfos.folder.getLabel()).toBe('folder');
+    expect(resourceKindInfos.dashboard.getLabel()).toBe('dashboard');
+    expect(resourceKindInfos.playlist.getLabel()).toBe('playlist');
+    expect(resourceKindInfos.librarypanel.getLabel()).toBe('library panel');
+  });
 
   it('every kind exposes a translated plural label and a list function', () => {
     for (const info of Object.values(resourceKindInfos)) {
       expect(info.pluralLabel()).toBeTruthy();
       expect(typeof info.list).toBe('function');
     }
+  });
+
+  it('carries a list-cache invalidation action only for kinds committed through the shared drawer', () => {
+    // Playlists commit via SaveProvisionedResourceDrawer and must refresh their list afterwards;
+    // dashboards/folders use their own forms, so they don't carry an invalidation action. Looked up
+    // via getKindInfoByResource so the widened ResourceKindInfo type exposes the optional field (the
+    // `as const` registry entries narrow it away on kinds that omit it).
+    expect(getKindInfoByResource('playlists')?.invalidateListTags?.()).toMatchObject({ type: expect.any(String) });
+    expect(getKindInfoByResource('folders')?.invalidateListTags).toBeUndefined();
+    expect(getKindInfoByResource('dashboards')?.invalidateListTags).toBeUndefined();
+    expect(getKindInfoByResource('librarypanels')?.invalidateListTags).toBeUndefined();
   });
 });
 

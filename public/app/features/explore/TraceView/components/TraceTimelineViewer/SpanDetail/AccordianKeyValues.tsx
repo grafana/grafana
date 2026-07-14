@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
@@ -23,6 +23,7 @@ import { autoColor } from '../../Theme';
 import type TNil from '../../types/TNil';
 
 import * as markers from './AccordianKeyValues.markers';
+import { KeyValuesSummary } from './KeyValuesSummary';
 import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 
 import { alignIcon } from '.';
@@ -59,26 +60,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'emptyIcon',
       color: autoColor(theme, '#aaa'),
     }),
-    summary: css({
-      label: 'summary',
-      display: 'inline',
-      listStyle: 'none',
-      padding: 0,
-    }),
-    summaryItem: css({
-      label: 'summaryItem',
-      display: 'inline',
-      paddingRight: '0.5rem',
-      '&:last-child': {
-        paddingRight: 0,
-        borderRight: 'none',
-      },
-    }),
-    summaryLabel: css({
-      label: 'summaryLabel',
-      color: autoColor(theme, '#777'),
-      paddingRight: '0.5rem',
-    }),
   };
 };
 
@@ -96,31 +77,6 @@ export type AccordianKeyValuesProps = {
   linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
   onToggle?: null | (() => void);
 };
-
-interface KeyValuesSummaryProps {
-  data?: TraceKeyValuePair[] | null;
-}
-
-// export for tests
-export function KeyValuesSummary({ data = null }: KeyValuesSummaryProps) {
-  const styles = useStyles2(getStyles);
-
-  if (!Array.isArray(data) || !data.length) {
-    return null;
-  }
-
-  return (
-    <ul className={styles.summary}>
-      {data.map((item, i) => (
-        // `i` is necessary in the key because item.key can repeat
-        <li className={styles.summaryItem} key={`${item.key}-${i}`}>
-          <span className={styles.summaryLabel}>{item.key}</span>
-          {String(item.value)}
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export default function AccordianKeyValues({
   className = null,

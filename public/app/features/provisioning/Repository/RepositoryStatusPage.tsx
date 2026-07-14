@@ -64,7 +64,7 @@ export default function RepositoryStatusPage() {
       }}
       renderTitle={(title) => (
         <Stack alignItems="center">
-          <RepoIcon type={data?.spec?.type} />
+          <RepoIcon type={data?.spec?.type} autoHeight />
           <Text element="h1">{title}</Text>
         </Stack>
       )}

@@ -5,10 +5,9 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types/store';
+import { useHomeNav } from 'app/core/hooks/useHomeNav';
 
-import { HomeLink } from '../../Branding/Branding';
+import { HomeLogo, HomeTitle } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
@@ -24,14 +23,16 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
+  const homeNav = useHomeNav();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
-        <HomeLink homeNav={homeNav} inMegaMenuOverlay={!state.megaMenuDocked} />
-        <OrganizationSwitcher />
+        <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+        <OrganizationSwitcher>
+          <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+        </OrganizationSwitcher>
       </Stack>
       <div className={styles.flexGrow} />
       <IconButton

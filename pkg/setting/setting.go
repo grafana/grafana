@@ -70,6 +70,32 @@ const DefaultRendererAuthToken = "-"
 // written to a provisioning repository through the files API.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 
+// ProvisioningSyncResourceTimeoutDefault is the default value for the
+// [provisioning] sync_resource_timeout key. It bounds how long applying a
+// single resource (or folder) may take during a sync job before that
+// operation is cancelled. Large resources (e.g. multi-MB dashboards) can
+// exceed a short timeout, which is why it is configurable. 30s matches the
+// timeout used by the provisioning files write API.
+const ProvisioningSyncResourceTimeoutDefault = 30 * time.Second
+
+// ProvisioningControllerResyncIntervalDefault is the default value for the
+// [provisioning] resync_interval key. It sets how often the
+// provisioning controllers' informers re-list (repository, connection, job) as
+// a fallback to the live watch/NATS notifications. A shorter value reconciles
+// stale state sooner at the cost of more full LISTs.
+const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
+
+// ProvisioningHistoryExpirationDefault is the default value for the
+// [provisioning] history_expiration key. It is both how long a HistoricJob is
+// retained before the resync-driven cleanup removes it and the resync interval
+// of the historic-job informer that feeds that cleanup.
+const ProvisioningHistoryExpirationDefault = 10 * time.Minute
+
+// ProvisioningJobPollIntervalDefault is the default value for the [provisioning]
+// job_poll_interval key. It is how often the job driver polls for new jobs as a
+// fallback to the live watch/NATS notification that wakes it on job creation.
+const ProvisioningJobPollIntervalDefault = 30 * time.Second
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -170,14 +196,18 @@ type Cfg struct {
 	ProvisioningLokiTenantID                  string
 	ProvisioningMaxResourcesPerRepository     int64         // 0 = unlimited
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
-	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
+	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for repo/connection/job controllers; default 60s; <=0 = default
+	ProvisioningHistoryExpiration             time.Duration // HistoricJob retention and historic-job informer resync; default 10m; <=0 = default
+	ProvisioningJobPollInterval               time.Duration // job driver poll interval (fallback to the live job-create notification); default 30s; <=0 = default
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
+	MarketplaceLicenseDirectory               string
 	// PluginsPaths: list of paths where Grafana will look for plugins.
 	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
 	PluginsPaths []string
@@ -601,6 +631,9 @@ type Cfg struct {
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
 
+	// NATS message bus.
+	NATS NATSSettings
+
 	CustomResponseHeaders map[string]string
 
 	// This is used to override the general error message shown to users when we want to obfuscate a sensitive backend error
@@ -719,6 +752,15 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	// SearchPostRankAuthz enables the post-filter authorization search path:
+	// bleve ranks without the in-searcher authz wrapper and authorization runs
+	// app-side in rank order with early exit once the page is filled.
+	SearchPostRankAuthz bool
+	// SearchPostRankAuthz tunables. Zero falls back to the defaults in
+	// search.PostRankAuthzConfig.effective().
+	SearchPostRankAuthzOverFetchFactor int
+	SearchPostRankAuthzMaxWindow       int
+	SearchPostRankAuthzMaxCandidates   int
 
 	// Vector storage
 	EnableVectorBackend      bool
@@ -766,9 +808,17 @@ type Cfg struct {
 	EnforcedQuotaResources        []string
 	QuotasErrorMessageSupportInfo string
 
-	EnableSQLKVBackend                bool
-	EnableSQLKVCompatibilityMode      bool
+	EnableSQLKVBackend           bool
+	EnableSQLKVCompatibilityMode bool
+	// LogSQLBackendCalls, when true, logs every call that reaches an exported
+	// method of the legacy SQL backend. Temporary smoke-test instrumentation
+	// used to confirm no production traffic still reaches sql/backend before
+	// removing the sqlkv backwards-compatibility layer.
+	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
+	LogSQLBackendCalls                bool
 	EnableKVLeases                    bool
+	KVLeaseTTL                        time.Duration
+	KVLeaseAutoRenew                  bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -802,6 +852,13 @@ type Cfg struct {
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
+
+	// EnableKubernetesAggregator routes API traffic through a kube-aggregator layer
+	// (required for Kubernetes-style API aggregation, e.g. the service API builder).
+	EnableKubernetesAggregator bool
+
+	// Enable CAP token based authentication in grafana's embedded kube-aggregator
+	EnableKubernetesAggregatorCapTokenAuth bool
 }
 
 type UnifiedStorageConfig struct {
@@ -1133,82 +1190,6 @@ func (cfg *Cfg) readExpressionsSettings() {
 type AnnotationCleanupSettings struct {
 	MaxAge   time.Duration
 	MaxCount int64
-}
-
-type AnnotationAppPlatformSettings struct {
-	Enabled      bool
-	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
-	RetentionTTL time.Duration // Retention TTL for annotations
-
-	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
-	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
-	GRPCTLSCAFile     string // Path to CA certificate file (optional)
-	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
-
-	// Postgres store configuration
-	PostgresConnectionString string        // PostgreSQL connection string
-	PostgresMaxConnections   int           // Maximum number of connections in the pool
-	PostgresMaxIdleConns     int           // Maximum number of idle connections
-	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
-	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
-	PostgresTagCacheSize     int           // Size of the tag query cache
-
-	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
-	// for new annotations.
-	EnableLegacyID bool
-
-	// MaxScopeCount caps how many scopes may be attached to a single
-	// annotation. 0 means no scopes are allowed. Negative values are
-	// rejected at load time. Default 5.
-	MaxScopeCount int
-
-	// APIMigrationPhase controls legacy API proxy behavior.
-	// Values: "off" (default), "proxy-writes", "proxy-all".
-	APIMigrationPhase string
-
-	// APIServerURL is the URL of the standalone annotation API server.
-	// Empty means proxy is disabled regardless of APIMigrationPhase.
-	APIServerURL string
-}
-
-func (s AnnotationAppPlatformSettings) ProxyEnabled() bool {
-	return s.APIMigrationPhase == "proxy-writes" || s.APIMigrationPhase == "proxy-all"
-}
-
-func (s AnnotationAppPlatformSettings) ProxyAll() bool {
-	return s.APIMigrationPhase == "proxy-all"
-}
-
-func loadAnnotationAppPlatformSettings(cfg *ini.File) (AnnotationAppPlatformSettings, error) {
-	appPlatformSection := cfg.Section("annotations.app_platform")
-	settings := AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
-		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
-		MaxScopeCount:     appPlatformSection.Key("max_scope_count").MustInt(5),
-		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString("off"),
-		APIServerURL:      appPlatformSection.Key("api_server_url").MustString(""),
-
-		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
-		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
-		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
-		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
-
-		// Postgres configuration
-		PostgresConnectionString: appPlatformSection.Key("postgres_connection_string").MustString(""),
-		PostgresMaxConnections:   appPlatformSection.Key("postgres_max_connections").MustInt(10),
-		PostgresMaxIdleConns:     appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
-		PostgresConnMaxLifetime:  appPlatformSection.Key("postgres_conn_max_lifetime").MustDuration(time.Hour),
-		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
-		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
-	}
-
-	if settings.MaxScopeCount < 0 {
-		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_scope_count] must not be negative")
-	}
-
-	return settings, nil
 }
 
 // envNameFromIniName converts an ini-style name (section or key) to the
@@ -1581,6 +1562,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := readNATSSettings(cfg); err != nil {
+		return err
+	}
+
 	if err := cfg.readProvisioningSettings(iniFile); err != nil {
 		return err
 	}
@@ -1784,6 +1769,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
+	marketplace := iniFile.Section("marketplace")
+	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
 
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
@@ -2547,6 +2534,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
+	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
@@ -2560,10 +2549,13 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
-	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
+	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
+	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
+	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
 	// Read job history configuration

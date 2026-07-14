@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -45,11 +46,16 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	collectionsmigration "github.com/grafana/grafana/pkg/registry/apis/collections"
 	legacystars "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
+	snapshotmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
+	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
+	dsmigration "github.com/grafana/grafana/pkg/registry/apis/datasource"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	preferencesmigration "github.com/grafana/grafana/pkg/registry/apis/preferences"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -111,6 +117,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folderreconcile"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -205,9 +212,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
@@ -250,6 +255,7 @@ var wireBasicSet = wire.NewSet(
 	playlistmigrator.ProvidePlaylistMigrator,
 	querycachingmigrator.ProvideQueryCacheConfigMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
+	snapshotmigrator.ProvideSnapshotMigrator,
 	legacystars.ProvideStarsMigrator,
 	legacypreferences.ProvidePreferencesMigrator,
 	dsmigrator.ProvideDataSourceMigrator,
@@ -262,7 +268,6 @@ var wireBasicSet = wire.NewSet(
 	azuremonitor.ProvideService,
 	postgres.ProvideService,
 	mysql.ProvideService,
-	mssql.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
@@ -303,6 +308,9 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
 	libraryelements.ProvideService,
 	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
+	libraryelements.ProvideFolderConsumer,
+	ngalert.ProvideAlertRuleFolderConsumer,
+	folderreconcile.ProvideReconciler,
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,
@@ -310,6 +318,12 @@ var wireBasicSet = wire.NewSet(
 	tracing.ProvideService,
 	tracing.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	infranats.ProvideNATSConfig,
+	infranats.ProvideServer,
+	infranats.ProvidePublisher,
+	wire.Bind(new(infranats.Publisher), new(*infranats.PublisherService)),
+	infranats.ProvideSubscriber,
+	wire.Bind(new(infranats.Subscriber), new(*infranats.SubscriberService)),
 	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
@@ -320,7 +334,6 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	pyroscope.ProvideService,
-	parca.ProvideService,
 	jaeger.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
@@ -388,6 +401,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideApi,
 	starApi.ProvideApi,
 	prefapi.ProvideK8sHandler,
+	annotationsapi.ProvideTokenExchanger,
 	annotationsapi.ProvideMigrationProxy,
 	starApi.ProvideK8sClients,
 	userimpl.ProvideService,
@@ -617,6 +631,7 @@ func provideMigrationRegistry(
 	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
+	snapshotMigrator snapshotmigrator.SnapshotMigrator,
 	dataSourceMigrator dsmigrator.DataSourceMigrator,
 	starsMigrator legacystars.StarsMigrator,
 	preferencesMigrator legacypreferences.PreferencesMigrator,
@@ -626,9 +641,10 @@ func provideMigrationRegistry(
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
-	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
-	r.Register(legacystars.StarsMigrationDefinition(starsMigrator))
-	r.Register(legacypreferences.PreferencesMigrationDefinition(preferencesMigrator))
+	r.Register(snapshotmigration.SnapshotMigration(snapshotMigrator))
+	r.Register(dsmigration.DataSourceMigration(dataSourceMigrator))
+	r.Register(collectionsmigration.StarsMigration(starsMigrator))
+	r.Register(preferencesmigration.PreferencesMigration(preferencesMigrator))
 	r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
 	return r
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { groupBy as _groupBy } from 'lodash';
 import { useState } from 'react';
 import * as React from 'react';

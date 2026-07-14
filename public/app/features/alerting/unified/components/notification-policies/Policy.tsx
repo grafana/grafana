@@ -1141,15 +1141,15 @@ const routePropertyToValue = (
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcher: (label: string) => {
-    const { color, borderColor } = getTagColorsFromName(label);
+    const { background, text } = getTagColorsFromName(label, theme);
 
     return {
       wrapper: css({
         color: '#fff',
-        background: color,
+        background,
         padding: `${theme.spacing(0.33)} ${theme.spacing(0.66)}`,
         fontSize: theme.typography.bodySmall.fontSize,
-        border: `solid 1px ${borderColor}`,
+        border: `solid 1px ${text}`,
         borderRadius: theme.shape.radius.default,
       }),
     };

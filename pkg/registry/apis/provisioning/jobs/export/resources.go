@@ -224,17 +224,19 @@ func exportItem(ctx context.Context,
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		metaError := fmt.Errorf("extracting meta accessor for resource %s: %w", name, err)
-		resultBuilder.WithAction(repository.FileActionIgnored).WithError(metaError)
+		// Keep the default (created) action so the failure is counted rather
+		// than silently discarded as an ignored result.
+		resultBuilder.WithError(metaError)
 		progress.Record(ctx, resultBuilder.Build())
-		return nil
+		return progress.TooManyErrors()
 	}
 
-	manager, _ := meta.GetManagerProperties()
-	if manager.Identity != "" {
+	manager, managed := meta.GetManagerProperties()
+	if managed {
 		if explicitlyRequested {
 			// Leave the default action in place: the recorder discards errors
 			// on FileActionIgnored results, and we want this failure to count.
-			resultBuilder.WithError(fmt.Errorf("%s %q is managed by %q and cannot be exported", kindName, name, manager.Identity))
+			resultBuilder.WithError(fmt.Errorf("%s %q is managed by %q and cannot be exported", kindName, name, manager.Kind))
 			progress.Record(ctx, resultBuilder.Build())
 			return progress.TooManyErrors()
 		}
@@ -264,47 +266,51 @@ func exportItem(ctx context.Context,
 	if errors.Is(err, resources.ErrAlreadyInRepository) {
 		resultBuilder.WithAction(repository.FileActionIgnored)
 	} else if err != nil {
-		resultBuilder.WithAction(repository.FileActionIgnored).
-			WithError(fmt.Errorf("writing resource file for %s: %w", name, err))
+		// Keep the default (created) action so the error is counted: recording a
+		// genuine write failure as FileActionIgnored would let the recorder
+		// discard the error and pass the export off as successful.
+		resultBuilder.WithError(fmt.Errorf("writing resource file for %s: %w", name, err))
 	}
 
 	progress.Record(ctx, resultBuilder.Build())
 	return progress.TooManyErrors()
 }
 
-// newDashboardConversionShim returns a conversionShim that preserves each
-// dashboard's original apiVersion when the default v1 response has
-// lossy-converted fields. For v0 the stored model is simply restored via
-// apiVersion rewrite; for other stored versions we re-Get through a cached
-// dynamic client keyed on the version string.
+// newDashboardConversionShim returns a conversionShim that keeps each exported
+// dashboard's body and apiVersion consistent. The export lists dashboards at the
+// preferred version, which lossily converts any dashboard stored at a different
+// version, so we re-Get the un-converted object through a dynamic client pinned
+// to the stored version. v0 is the exception: a file labeled v0alpha1 cannot be
+// loaded by the frontend dashboard loader (nor the provisioning preview path)
+// once it is synced back, so v0 dashboards are fetched (losslessly) as v1.
 func newDashboardConversionShim(gvr schema.GroupVersionResource, clients resources.ResourceClients) conversionShim {
 	versionClients := make(map[string]dynamic.ResourceInterface)
 	return func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 		// Check if there's a stored version in the conversion status.
-		// This indicates the original API version the dashboard was created with,
-		// which should be preserved during export regardless of whether conversion succeeded or failed.
+		// This indicates the original API version the dashboard was created with.
 		storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
 		if storedVersion != "" {
-			// For v0 we can simply fallback -- the full model is saved
+			// Fetch the un-converted object at its stored version. v0 is exported as
+			// v1 instead: a v0alpha1-labeled file cannot be loaded once synced back,
+			// and v0 maps to v1 losslessly.
+			fetchVersion := storedVersion
 			if strings.HasPrefix(storedVersion, "v0") {
-				item.SetAPIVersion(fmt.Sprintf("%s/%s", gvr.Group, storedVersion))
-				return item, nil
+				fetchVersion = resources.DashboardResource.Version
 			}
 
-			// For any other version (v1, v2, v3, etc.), fetch the original version via client
-			versionClient, ok := versionClients[storedVersion]
+			versionClient, ok := versionClients[fetchVersion]
 			if !ok {
 				versionGVR := schema.GroupVersionResource{
 					Group:    gvr.Group,
-					Version:  storedVersion,
+					Version:  fetchVersion,
 					Resource: gvr.Resource,
 				}
 				var err error
 				versionClient, _, err = clients.ForResource(ctx, versionGVR)
 				if err != nil {
-					return nil, fmt.Errorf("get client for version %s: %w", storedVersion, err)
+					return nil, fmt.Errorf("get client for version %s: %w", fetchVersion, err)
 				}
-				versionClients[storedVersion] = versionClient
+				versionClients[fetchVersion] = versionClient
 			}
 			return versionClient.Get(ctx, item.GetName(), metav1.GetOptions{})
 		}

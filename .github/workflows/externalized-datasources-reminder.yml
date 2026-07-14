@@ -8,13 +8,11 @@ on:
       - "public/app/plugins/datasource/cloudwatch/**"
       - "public/app/plugins/datasource/graphite/**"
       - "public/app/plugins/datasource/influxdb/**"
-      - "public/app/plugins/datasource/mssql/**"
       - "public/app/plugins/datasource/prometheus/**"
       - "public/app/plugins/datasource/grafana-pyroscope-datasource/**"
       - "pkg/tsdb/cloudwatch/**"
       - "pkg/tsdb/graphite/**"
       - "pkg/tsdb/influxdb/**"
-      - "pkg/tsdb/mssql/**"
       - "pkg/tsdb/prometheus/**"
       - "pkg/tsdb/grafana-pyroscope-datasource/**"
 
