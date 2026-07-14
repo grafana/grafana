@@ -68,7 +68,9 @@ export default function HomePage() {
   });
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();
-  const skeleton = <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />;
+  const skeleton = (
+    <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} redesignEnabled={redesignEnabled} />
+  );
 
   return (
     <Page

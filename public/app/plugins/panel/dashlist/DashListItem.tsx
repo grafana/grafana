@@ -49,7 +49,7 @@ export function DashListItem({
         <div className={cx(css.dashlistLink, isCompact && css.dashlistLinkCompact)}>
           <Link href={url} onClick={onCardLinkClick}>
             <Text element="p">{dashboard.name}</Text>
-            {!isCompact && showFolderNames && locationInfo && (
+            {showFolderNames && locationInfo && (
               <Text color="secondary" variant="bodySmall" element="p">
                 {locationInfo?.name}
               </Text>
