@@ -1040,6 +1040,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	libraryPanels, _ := getOrCreateSection("library_panels")
 	if opts.EnableKubernetesLibraryPanels {
 		_, err = libraryPanels.NewKey("enable_kubernetes_library_panels", "true")
+		require.NoError(t, err)
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
