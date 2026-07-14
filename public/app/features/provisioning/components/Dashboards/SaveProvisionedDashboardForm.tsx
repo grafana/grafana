@@ -457,17 +457,19 @@ export function SaveProvisionedDashboardForm({
               {isFolderless && workflow === 'write' && (
                 <>
                   {!showNewFolderForm && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon="plus"
-                      onClick={() => {
-                        setFolderError(undefined);
-                        setShowNewFolderForm(true);
-                      }}
-                    >
-                      <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.new-folder">New folder</Trans>
-                    </Button>
+                    <div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="plus"
+                        onClick={() => {
+                          setFolderError(undefined);
+                          setShowNewFolderForm(true);
+                        }}
+                      >
+                        <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.new-folder">New folder</Trans>
+                      </Button>
+                    </div>
                   )}
 
                   {showNewFolderForm && (
