@@ -93,9 +93,6 @@
     },
     "input": {
       "background": "palette.white"
-    },
-    "panel": {
-      "background": "palette.white"
     }
   },
   "shape": {
