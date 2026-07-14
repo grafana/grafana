@@ -87,14 +87,14 @@ message DeleteRequest {
   // If the selector is not set, will delete all from tenant/collection up to the page limit
   oneof selector {
     // The uids are the parent/resource uids. This means you cant directly delete specific subresources by their id.
-    UidList uids = 3;  // delete whole entities (and their subresources)
-    bytes filter = 4;  // delete by metadata filter (paged, 10k/page)
+    StringList uids = 3;  // delete whole entities (and their subresources)
+    bytes filter = 4;     // delete by metadata filter (paged, 10k/page)
   }
 }
 
 // Wrapper because repeated fields can't be used directly in a oneof.
-message UidList {
-  repeated string uids = 1;
+message StringList {
+  repeated string values = 1;
 }
 
 message DeleteResponse {
@@ -105,10 +105,12 @@ message DeleteResponse {
 message UpdateMetadataRequest {
   string namespace = 1; // required
   string collection = 2; // required
-  bytes filter = 3;          // required; selects the rows to update
-  // at least one of the below are required
-  bytes set = 4;             // JSON merged into metadata
-  repeated string unset = 5; // metadata keys to remove
+  bytes filter = 3; // required; selects the rows to update
+  // required; one update kind per call
+  oneof update {
+    bytes set = 4;         // JSON merged into metadata
+    StringList unset = 5;  // metadata keys to remove
+  }
 }
 
 message UpdateMetadataResponse {
