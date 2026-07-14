@@ -1,26 +1,26 @@
 import { isNumber } from 'lodash';
-import FlowLine from 'ol-ext/style/FlowLine';
 import Feature, { type FeatureLike } from 'ol/Feature';
 import type OpenLayersMap from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
 import VectorSource from 'ol/source/Vector';
-import { Circle, Fill, Stroke, Style } from 'ol/style';
+import { Fill, Stroke, Style, Circle } from 'ol/style';
+import FlowLine from 'ol-ext/style/FlowLine';
 import { Subscription, throttleTime } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
 import {
-  DataHoverClearEvent,
-  DataHoverEvent,
-  FieldType,
-  colorManipulator,
-  type DataFrame,
-  type EventBus,
-  type GrafanaTheme2,
-  type MapLayerOptions,
   type MapLayerRegistryItem,
   type PanelData,
+  type GrafanaTheme2,
+  type EventBus,
+  DataHoverEvent,
+  DataHoverClearEvent,
+  type DataFrame,
+  FieldType,
+  colorManipulator,
+  type MapLayerOptions,
 } from '@grafana/data';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
