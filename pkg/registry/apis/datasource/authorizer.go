@@ -36,7 +36,7 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			user, err := identity.GetRequester(ctx)
 			if err != nil {
-				recordAuthzDecision(sub, verb, caller, "deny", "no_user")
+				recordAuthzDecision(group, sub, verb, caller, "deny", "no_user")
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
@@ -55,19 +55,19 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			rsp, err := b.accessClient.Check(ctx, user, req, "")
 			if err != nil {
-				recordAuthzDecision(sub, verb, caller, "deny", "error")
+				recordAuthzDecision(group, sub, verb, caller, "deny", "error")
 				return authorizer.DecisionDeny, "failed to check permissions", err
 			}
 			if rsp.Allowed {
-				recordAuthzDecision(sub, verb, caller, "allow", "")
+				recordAuthzDecision(group, sub, verb, caller, "allow", "")
 				return authorizer.DecisionAllow, "", nil
 			}
 			if req.Subresource != "" {
-				recordAuthzDecision(sub, verb, caller, "deny", "missing_permissions")
+				recordAuthzDecision(group, sub, verb, caller, "deny", "missing_permissions")
 				return authorizer.DecisionDeny, "missing `query` subresource permission", nil
 			}
 
-			recordAuthzDecision(sub, verb, caller, "deny", "access_denied")
+			recordAuthzDecision(group, sub, verb, caller, "deny", "access_denied")
 			return authorizer.DecisionDeny, "access denied", nil
 		})
 }
