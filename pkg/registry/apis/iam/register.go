@@ -128,6 +128,15 @@ func RegisterAPIService(
 		resourcePermsSearchAuthorizer = iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider)
 	}
 
+	// Mode lever for the SSO settings migration: any configured storage mode
+	// above 0 hands the SSOSetting kind to the MT-Settings store.
+	ssoUseMTSettings := false
+	if cfg != nil {
+		if resCfg, ok := cfg.UnifiedStorage[legacyiamv0.SSOSettingResourceInfo.GroupResource().String()]; ok && resCfg.DualWriterMode > grafanarest.Mode0 {
+			ssoUseMTSettings = true
+		}
+	}
+
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                             store,
 		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
@@ -136,6 +145,7 @@ func RegisterAPIService(
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
+		ssoUseMTSettings:                  ssoUseMTSettings,
 		roleApiInstaller:                  roleApiInstaller,
 		globalRoleApiInstaller:            globalRoleApiInstaller,
 		teamLBACApiInstaller:              teamLBACApiInstaller,
@@ -437,7 +447,17 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
-		storage[ssoResource.StoragePath()] = b.ssoLegacyStore
+		// The storage mode of [unified_storage.ssosettings.iam.grafana.app]
+		// decides which store serves the kind: at mode 0 (the default) the
+		// legacy store behaves as before; any higher mode engages the
+		// MT-Settings store, which fails loudly until it is implemented.
+		// The standard dual-writer cannot wrap this kind yet: it requires
+		// rest.CreaterUpdater and SSO settings are update-only.
+		if b.ssoUseMTSettings {
+			storage[ssoResource.StoragePath()] = sso.NewMTSettingsStore()
+		} else {
+			storage[ssoResource.StoragePath()] = b.ssoLegacyStore
+		}
 	}
 
 	if enableRolesApi {
