@@ -45,3 +45,24 @@ func Subject(gvr schema.GroupVersionResource, namespace string) string {
 		ns,
 	}, ".")
 }
+
+// LegacySubject returns the pre-reorder subject with the namespace and resource
+// tokens swapped:
+//
+//	{group}.{namespace}.{resource}
+//
+// It is retained only for the deployment transition. The storage-api (publisher)
+// ships ahead of the provisioning operators (subscribers), so the publisher
+// dual-publishes on both Subject and LegacySubject until every subscriber has
+// moved to the new order; then this and the dual-publish can be removed.
+func LegacySubject(gvr schema.GroupVersionResource, namespace string) string {
+	ns := namespace
+	if ns == "" {
+		ns = allNamespaces
+	}
+	return strings.Join([]string{
+		gvr.Group,
+		ns,
+		gvr.Resource,
+	}, ".")
+}
