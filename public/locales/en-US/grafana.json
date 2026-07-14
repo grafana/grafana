@@ -7492,10 +7492,13 @@
     "save-provisioned-dashboard-form": {
       "advanced-options": "Advanced options",
       "cancel": "Cancel",
+      "cancel-folder": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "create-folder": "Create",
       "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
+      "folder-create-error": "Failed to create folder",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "format": {
@@ -7504,8 +7507,10 @@
         "v2-resource": "V2 Resource"
       },
       "label-description": "Description",
+      "label-folder-name": "Folder name",
       "label-target-folder": "Target folder",
       "label-title": "Title",
+      "new-folder": "New folder",
       "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
