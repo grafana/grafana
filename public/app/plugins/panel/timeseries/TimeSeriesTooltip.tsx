@@ -122,7 +122,6 @@ export const TimeSeriesTooltip = ({
           annotate={annotate}
           adHocFilters={adHocFilters}
           filterByGroupedLabels={filterByGroupedLabels}
-          // Only offered on the pinned tooltip — hover tooltips aren't interactive (pointerEvents: none).
           additionalContent={
             isPinned && assistantContext != null ? (
               <AssistantTooltipButton

@@ -145,7 +145,7 @@ function matchExemplars(frames: DataFrame[], xVal: number, windowMs: number) {
   return matches;
 }
 
-/** Builds the point, series and panel context pills for a hovered data point. */
+/** Builds a single context pill for a hovered data point (point + its series and panel). */
 export function buildDatapointAssistantContext({
   alignedFrame,
   seriesIdx,
@@ -203,48 +203,36 @@ export function buildDatapointAssistantContext({
   const dashboardUid = resolveMacro(replaceVariables, '${__dashboard.uid}');
   const dashboardTitle = resolveMacro(replaceVariables, '${__dashboard.title}');
 
-  const pointItem = createAssistantContextItem('structured', {
-    title: `Point: ${displayValue} @ ${xDisp}`,
+  const datapointItem = createAssistantContextItem('structured', {
+    title: `${displayValue} @ ${xDisp} › ${seriesName} › ${panelTitle}`,
     icon: 'crosshair',
     data: {
       kind: 'timeseries-datapoint',
-      series: seriesName,
-      labels,
-      timestamp,
-      value,
-      displayValue,
-      unit,
-      ...(matchedAnnotations.length > 0 ? { annotations: matchedAnnotations } : {}),
-      ...(matchedExemplars.length > 0 ? { exemplars: matchedExemplars } : {}),
+      point: {
+        timestamp,
+        value,
+        displayValue,
+        unit,
+        ...(matchedAnnotations.length > 0 ? { annotations: matchedAnnotations } : {}),
+        ...(matchedExemplars.length > 0 ? { exemplars: matchedExemplars } : {}),
+      },
+      series: {
+        name: seriesName,
+        labels,
+        unit,
+        refId,
+        query,
+        stats,
+      },
+      panel: {
+        panelId,
+        panelTitle,
+        dashboardUid,
+        dashboardTitle,
+        timeRange: { from: timeRange.from.toISOString(), to: timeRange.to.toISOString() },
+      },
     },
   });
 
-  const seriesItem = createAssistantContextItem('structured', {
-    title: `Series: ${seriesName}`,
-    icon: 'chart-line',
-    data: {
-      kind: 'timeseries-series',
-      name: seriesName,
-      labels,
-      unit,
-      refId,
-      query,
-      stats,
-    },
-  });
-
-  const panelItem = createAssistantContextItem('structured', {
-    title: `Panel: ${panelTitle}`,
-    icon: 'apps',
-    data: {
-      kind: 'dashboard-panel',
-      panelId,
-      panelTitle,
-      dashboardUid,
-      dashboardTitle,
-      timeRange: { from: timeRange.from.toISOString(), to: timeRange.to.toISOString() },
-    },
-  });
-
-  return [pointItem, seriesItem, panelItem];
+  return [datapointItem];
 }
