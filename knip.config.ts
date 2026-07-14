@@ -17,7 +17,6 @@ const externalisedDatasources = [
   'influxdb',
   'jaeger',
   'loki',
-  'mssql',
   'mysql',
 ];
 

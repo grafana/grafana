@@ -23,7 +23,6 @@ func TestNewPlugin(t *testing.T) {
 		{ID: Graphite},
 		{ID: InfluxDB},
 		{ID: Loki},
-		{ID: MSSQL},
 		{ID: MySQL},
 		{ID: PostgreSQL},
 		{ID: Prometheus},

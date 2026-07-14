@@ -127,15 +127,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/mssql/**/*",
-      "pkg/tsdb/mssql/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/MSSQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/mysql/**/*",
       "pkg/tsdb/mysql/**/*"
     ],
