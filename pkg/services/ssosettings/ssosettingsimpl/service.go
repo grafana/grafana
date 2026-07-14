@@ -55,8 +55,14 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	usageStats usagestats.Service, registerer prometheus.Registerer,
 	settingsProvider setting.Provider, licensing licensing.Licensing,
 ) *Service {
+	// Each provider family pairs an MT-Settings adapter with its legacy
+	// strategy. The adapter sits first: while the ssoSettingsToMTSettings
+	// feature toggle is enabled it wins the match for its family, otherwise
+	// it matches nothing and the legacy strategy behaves as before.
 	fbStrategies := []ssosettings.FallbackStrategy{
+		strategies.NewMTSettingsOAuthStrategy(),
 		strategies.NewOAuthStrategy(cfg),
+		strategies.NewMTSettingsLDAPStrategy(),
 		strategies.NewLDAPStrategy(cfg),
 	}
 
@@ -70,7 +76,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	configurableProviders[social.LDAPProviderName] = true
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
-		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
+		fbStrategies = append(fbStrategies, strategies.NewMTSettingsSAMLStrategy(), strategies.NewSAMLStrategy(settingsProvider))
 		providersList = append(providersList, social.SAMLProviderName)
 		configurableProviders[social.SAMLProviderName] = true
 	}
@@ -378,7 +384,7 @@ func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssoset
 }
 
 func (s *Service) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	loadStrategy, ok := s.getFallbackStrategyFor(provider)
+	loadStrategy, ok := s.getFallbackStrategyFor(ctx, provider)
 	if !ok {
 		return nil, errors.New("no fallback strategy found for provider: " + provider)
 	}
@@ -404,9 +410,9 @@ func getSettingByProvider(provider string, settings []*models.SSOSettings) *mode
 	return nil
 }
 
-func (s *Service) getFallbackStrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
+func (s *Service) getFallbackStrategyFor(ctx context.Context, provider string) (ssosettings.FallbackStrategy, bool) {
 	for _, strategy := range s.fbStrategies {
-		if strategy.IsMatch(provider) {
+		if strategy.IsMatch(ctx, provider) {
 			return strategy, true
 		}
 	}

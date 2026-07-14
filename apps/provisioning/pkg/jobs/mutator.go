@@ -49,7 +49,6 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	// author always reflects who actually made the request.
 	delete(job.Annotations, AnnoAuthor)
 	delete(job.Annotations, AnnoAuthorEmail)
-	delete(job.Annotations, AnnoAuthorID)
 
 	if m.userAttributionEnabled == nil || !m.userAttributionEnabled(ctx) {
 		return nil
@@ -68,9 +67,6 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	}
 	if author.Email != "" {
 		job.Annotations[AnnoAuthorEmail] = author.Email
-	}
-	if author.ID != "" {
-		job.Annotations[AnnoAuthorID] = author.ID
 	}
 
 	return nil

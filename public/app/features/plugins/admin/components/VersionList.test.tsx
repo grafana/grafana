@@ -259,6 +259,47 @@ describe('VersionList', () => {
     config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;
   });
 
+  it('should not mark any row as installed or show upgrade/downgrade for a managed plugin', () => {
+    const versions = [
+      {
+        version: '4.19.0',
+        createdAt: '2024-01-01',
+        isCompatible: true,
+        grafanaDependency: '>=10.0.0',
+      },
+      {
+        version: '4.17.0',
+        createdAt: '2023-08-01',
+        isCompatible: true,
+        grafanaDependency: '>=9.0.0',
+      },
+    ];
+
+    // The stored installedVersion is stale/unreliable for managed plugins (e.g. remote
+    // CDN-provisioned datasources) — it should never be trusted as ground truth.
+    const installedVersion = '4.17.0';
+
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion,
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
+
+    expect(screen.queryByText(/\(installed version\)/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Installed')).not.toBeInTheDocument();
+    expect(screen.queryByText('Upgrade')).not.toBeInTheDocument();
+    expect(screen.queryByText('Downgrade')).not.toBeInTheDocument();
+    expect(screen.getByText('4.17.0')).toBeInTheDocument();
+    expect(screen.getByText(/^4\.19\.0/)).toBeInTheDocument();
+  });
+
   it('should disable all versions when plugin is managed and update strategy is "assigned"', () => {
     const versions = [
       ...generateVersionsForMajor('1', 3),

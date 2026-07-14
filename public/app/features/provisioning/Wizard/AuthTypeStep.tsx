@@ -119,12 +119,16 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Field>
       )}
 
-      {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
-
       {isGitHubBased(repoType) && githubAuthType === 'github-app' ? (
-        <GitHubAppFields connectionType={repoType} onGitHubAppSubmit={onGitHubAppSubmit} />
+        <>
+          <GitHubAppFields connectionType={repoType} onGitHubAppSubmit={onGitHubAppSubmit} />
+          {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
+        </>
       ) : (
-        <RepositoryTokenInput />
+        <>
+          <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />
+          <RepositoryTokenInput />
+        </>
       )}
     </Stack>
   );
