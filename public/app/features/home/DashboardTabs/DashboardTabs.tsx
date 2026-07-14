@@ -17,6 +17,7 @@ import { tabChanged } from '../analytics/main';
 
 import { DashboardTabsSkeleton } from './DashboardTabsSkeleton';
 import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
+import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
 import { type HomepageTabExtensionProps, type HomepageTab, validateHomepageTab } from './types';
@@ -181,6 +182,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
 
   const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => !tab.href)];
   const linkTabs = extensionTabs.filter((tab) => tab.href);
+  const listDensity = redesignEnabled ? 'compact' : 'default';
 
   const renderContent = () => (
     <>
@@ -210,7 +212,11 @@ export function DashboardTabs({ extensionComponents }: Props) {
 
       {DEFAULT_TAB_IDS.includes(activeTab) && (
         <TabContent className={redesignEnabled ? styles.redesignedTabContent : styles.tabContent}>
-          <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
+          <ScrollContainer
+            showScrollIndicators
+            maxHeight={redesignEnabled ? '350px' : '256px'}
+            minHeight={redesignEnabled ? '350px' : '256px'}
+          >
             {activeTab === RECENT_TAB_ID && (
               <RecentDashboardsTab
                 dashboards={recentDashboards ?? []}
@@ -219,6 +225,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
                 retry={recentRetry}
                 foldersByUid={foldersByUid}
                 onStarChange={starredRetry}
+                density={listDensity}
               />
             )}
             {activeTab === MOST_USED_TAB_ID && (
@@ -228,6 +235,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
                 error={mostUsedError}
                 retry={mostUsedRetry}
                 foldersByUid={foldersByUid}
+                density={listDensity}
               />
             )}
             {activeTab === STARRED_TAB_ID && (
@@ -237,9 +245,14 @@ export function DashboardTabs({ extensionComponents }: Props) {
                 error={starredError}
                 retry={starredRetry}
                 foldersByUid={foldersByUid}
+                density={listDensity}
               />
             )}
           </ScrollContainer>
+          {/* Show reset recent dashboards button in the redesign UI and when tab is recent tab */}
+          {redesignEnabled && activeTab === RECENT_TAB_ID && !recentLoading && !recentError && (
+            <RecentDashboardsClearButton dashboards={recentDashboards ?? []} retry={recentRetry} redesignEnabled />
+          )}
         </TabContent>
       )}
 

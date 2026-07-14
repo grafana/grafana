@@ -1,3 +1,5 @@
+import { cx } from '@emotion/css';
+
 import { reportInteraction } from '@grafana/runtime';
 import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type LocationInfo } from 'app/features/search/service/types';
@@ -15,6 +17,8 @@ interface Props {
   source: string; // for rudderstack analytics to track which page DashListItem click from
   order?: number; // for rudderstack analytics to track position in cards
   onStarChange?: (id: string, isStarred: boolean) => void;
+  // Row density for list mode. 'compact' gives denser rows for the redesigned homepage;
+  density?: 'default' | 'compact';
 }
 export function DashListItem({
   dashboard,
@@ -25,8 +29,10 @@ export function DashListItem({
   order,
   onStarChange,
   source,
+  density = 'default',
 }: Props) {
   const css = useStyles2(getStyles);
+  const isCompact = density === 'compact';
 
   const onCardLinkClick = () => {
     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
@@ -40,10 +46,10 @@ export function DashListItem({
   return (
     <>
       {layoutMode === 'list' ? (
-        <div className={css.dashlistLink}>
+        <div className={cx(css.dashlistLink, isCompact && css.dashlistLinkCompact)}>
           <Link href={url} onClick={onCardLinkClick}>
             <Text element="p">{dashboard.name}</Text>
-            {showFolderNames && locationInfo && (
+            {!isCompact && showFolderNames && locationInfo && (
               <Text color="secondary" variant="bodySmall" element="p">
                 {locationInfo?.name}
               </Text>
