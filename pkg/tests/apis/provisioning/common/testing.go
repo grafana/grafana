@@ -1541,6 +1541,7 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagProvisioningExport,
+			featuremgmt.FlagProvisioningUserAttribution,
 			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),
 			// bypassing the eventually-consistent "folder is empty" admission check.
 			// Normal (non-force) deletes still enforce the check, so test behavior

@@ -9,7 +9,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -59,8 +58,8 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
-			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
+		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): dashInfo.SearchFieldsProvider,
 		},
 	}, nil)
 	require.NoError(t, err)
@@ -81,8 +80,8 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5,
-		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
-			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
+		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): dashInfo.SearchFieldsProvider,
 		},
 	}, nil)
 	require.NoError(t, err)
@@ -1114,13 +1113,13 @@ func withIndexMinUpdateInterval(d time.Duration) setupOption {
 	}
 }
 
-func withSearchFieldsHashesForKinds(m map[string]string) setupOption {
+func withSearchFieldsHashesForKinds(m map[resource.LowerGroupResource]string) setupOption {
 	return func(options *BleveOptions) {
 		options.SearchFieldsHashesForKinds = m
 	}
 }
 
-func withSearchFieldsProvidersForKinds(m map[string]resource.SearchFieldsProvider) setupOption {
+func withSearchFieldsProvidersForKinds(m map[resource.LowerGroupResource]resource.SearchFieldsProvider) setupOption {
 	return func(options *BleveOptions) {
 		options.SearchFieldsProvidersForKinds = m
 	}
@@ -2212,8 +2211,8 @@ func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
 		Resource:  "resource",
 	}
 	hash := "deadbeefcafef00d"
-	hashes := map[string]string{
-		strings.ToLower(ns.Group + "/" + ns.Resource): hash,
+	hashes := map[resource.LowerGroupResource]string{
+		resource.NewLowerGroupResource(ns.Group, ns.Resource): hash,
 	}
 
 	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFieldsHashesForKinds(hashes))

@@ -76,18 +76,17 @@ func SearchableFieldsFromProvider(p SearchFieldsProvider, group, resource string
 	return NewSearchableDocumentFields(SearchFieldDefinitionsToTableColumns(sfds))
 }
 
-// SearchFieldsHashesForBuilders returns a lower-cased "group/resource" map
-// of SearchFieldsHash values collected from the given DocumentBuilderInfo
+// SearchFieldsHashesForBuilders returns a (group, resource) map of
+// SearchFieldsHash values collected from the given DocumentBuilderInfo
 // entries. Empty hashes are skipped so consumers can use len(...) == 0 as a
 // shorthand for "no expected hash".
-func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[string]string {
-	out := map[string]string{}
+func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[LowerGroupResource]string {
+	out := map[LowerGroupResource]string{}
 	for _, b := range builders {
 		if b.SearchFieldsHash == "" {
 			continue
 		}
-		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
-		out[key] = b.SearchFieldsHash
+		out[NewLowerGroupResource(b.GroupResource.Group, b.GroupResource.Resource)] = b.SearchFieldsHash
 	}
 	return out
 }
@@ -305,8 +304,7 @@ func StandardDocumentBuilderWithFields(manifests []app.Manifest, provider Search
 }
 
 type standardDocumentBuilder struct {
-	// Maps "group/resource" (in lowercase) to list of selectable fields.
-	selectableFields map[string][]string
+	selectableFields map[LowerGroupResource][]string
 	// provider supplies declarative search fields; may be nil.
 	provider SearchFieldsProvider
 	log      log.Logger
@@ -326,7 +324,7 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 
 	doc := NewIndexableDocument(key, rv, obj, "")
 
-	sfKey := strings.ToLower(key.GetGroup() + "/" + key.GetResource())
+	sfKey := NewLowerGroupResource(key.GetGroup(), key.GetResource())
 	doc.SelectableFields = getSelectableFieldsFromObject(tmp, s.selectableFields[sfKey])
 
 	if s.provider != nil {

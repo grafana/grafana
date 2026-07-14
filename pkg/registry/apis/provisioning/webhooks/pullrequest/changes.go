@@ -29,8 +29,11 @@ type changeInfo struct {
 	// Attribution: identifies which provisioning repository posted this comment
 	RepositoryName  string
 	RepositoryTitle string
-	// RepositoryURL links to the git repository (empty for local repositories)
-	RepositoryURL string
+	// RepositoryAdminURL links to the repository's management page in the
+	// Grafana UI (…/admin/provisioning/<name>), so readers land where they
+	// manage the sync rather than on the raw git remote. Empty only when the
+	// Grafana base URL cannot be parsed.
+	RepositoryAdminURL string
 
 	// Files we tried to read
 	Changes []fileChangeInfo
@@ -120,21 +123,17 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	}
 
 	rendererAvailable := e.render.IsAvailable(ctx)
-	// GenerateDashboardPreviews lives on the type-specific config, which is nil
-	// for the other provider(s) — guard against a nil dereference (e.g. a GitHub
-	// Enterprise repo has Spec.GitHubEnterprise set, not Spec.GitHub).
-	generatePreviews := (cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews) ||
-		(cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews)
-	shouldRender := rendererAvailable && len(changes) == 1 && generatePreviews
+	shouldRender := rendererAvailable && len(changes) == 1 && cfg.ShouldGenerateDashboardPreviews()
+	baseURL := e.urls.Internal(ctx, cfg.Namespace)
+	orgID := orgIDForLinks(cfg.Namespace)
 	info := changeInfo{
-		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
+		GrafanaBaseURL:       baseURL,
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
-		RepositoryURL:        stripUserinfo(cfg.URL()),
+		RepositoryAdminURL:   repositoryAdminURL(baseURL, cfg.Name, orgID),
 		MissingImageRenderer: !rendererAvailable,
 	}
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
-	orgID := orgIDForLinks(cfg.Namespace)
 
 	logger := logging.FromContext(ctx)
 
@@ -169,6 +168,25 @@ func stripUserinfo(raw string) string {
 		return ""
 	}
 	u.User = nil
+	return u.String()
+}
+
+// repositoryAdminURL builds a link to the repository's management page in the
+// Grafana UI (…/admin/provisioning/<name>), mirroring how GrafanaURL/PreviewURL
+// are constructed. orgID pins the org for non-primary on-prem orgs the same way.
+// Returns "" when the base URL cannot be parsed, so the footer falls back to
+// plain text rather than rendering a broken link.
+func repositoryAdminURL(baseURL, name string, orgID int64) string {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
+	u = u.JoinPath("admin/provisioning", name)
+	if orgID > 0 {
+		query := url.Values{}
+		query.Set("orgId", strconv.FormatInt(orgID, 10))
+		u.RawQuery = query.Encode()
+	}
 	return u.String()
 }
 

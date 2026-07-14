@@ -4313,10 +4313,6 @@
             "type": "string",
             "default": ""
           },
-          "generateDashboardPreviews": {
-            "description": "Whether we should show dashboard previews for pull requests.",
-            "type": "boolean"
-          },
           "path": {
             "description": "Path is the subdirectory for the Grafana data inside the repository.",
             "type": "string"
@@ -4978,6 +4974,10 @@
         "properties": {
           "enforceTemplate": {
             "description": "When true, the PR title field in Save drawers is read-only.",
+            "type": "boolean"
+          },
+          "generateDashboardPreviews": {
+            "description": "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
             "type": "boolean"
           },
           "titleTemplate": {

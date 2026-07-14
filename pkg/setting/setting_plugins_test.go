@@ -44,6 +44,46 @@ func TestPluginSettings(t *testing.T) {
 	require.Equal(t, ps["plugin2"]["key4"], "value4")
 }
 
+func TestMarketplaceLicenseDirectory(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		ini  string
+		want string
+	}{
+		{
+			name: "defaults to data path",
+		},
+		{
+			name: "parses configured directory",
+			ini: `
+[marketplace]
+license_directory = /var/lib/grafana/marketplace-licenses
+`,
+			want: "/var/lib/grafana/marketplace-licenses",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := NewCfgFromBytes([]byte(tc.ini))
+			require.NoError(t, err)
+			want := tc.want
+			if want == "" {
+				want = cfg.DataPath
+			}
+			require.Equal(t, want, cfg.MarketplaceLicenseDirectory)
+		})
+	}
+}
+
+func TestMarketplaceLicenseDirectoryEnvironmentOverride(t *testing.T) {
+	t.Setenv("GF_MARKETPLACE_LICENSE_DIRECTORY", "/var/lib/grafana/marketplace-licenses")
+	t.Setenv("GF_MARKETPLACE_LICENSE_PATH", "/var/lib/grafana/marketplace-licenses/license-acme-widget.jwt")
+
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+	require.Equal(t, "/var/lib/grafana/marketplace-licenses", cfg.MarketplaceLicenseDirectory)
+	require.NotEqual(t, "/var/lib/grafana/marketplace-licenses/license-acme-widget.jwt", cfg.MarketplaceLicenseDirectory)
+}
+
 func Test_readPluginSettings(t *testing.T) {
 	t.Run("should parse separated plugin ids", func(t *testing.T) {
 		for _, tc := range []struct {
