@@ -864,6 +864,9 @@ type Cfg struct {
 
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	EnableKubernetesAggregatorCapTokenAuth bool
+
+	// EnableKubernetesLibraryPanels Enables kubernetes-style LibraryPanels API
+	EnableKubernetesLibraryPanels bool
 }
 
 type UnifiedStorageConfig struct {

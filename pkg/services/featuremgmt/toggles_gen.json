@@ -3698,7 +3698,8 @@
       "metadata": {
         "name": "kubernetesLibraryPanels",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-06-25T22:21:56Z"
+        "creationTimestamp": "2025-06-25T22:21:56Z",
+        "deletionTimestamp": "2026-07-14T11:43:04Z"
       },
       "spec": {
         "description": "Routes library panel requests from /api to the /apis endpoint",

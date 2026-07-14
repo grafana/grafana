@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -147,8 +146,7 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+	if l.Cfg.EnableKubernetesLibraryPanels {
 		l.k8sHandler.getK8sLibraryElement(c)
 		return nil // already handled in the k8s handler
 	}
