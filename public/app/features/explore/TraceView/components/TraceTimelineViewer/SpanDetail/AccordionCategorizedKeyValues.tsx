@@ -119,6 +119,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       textOverflow: 'ellipsis',
       padding: `0 ${sectionPaddingX}`,
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
     }),
     header: css({
       label: 'header',
@@ -152,15 +154,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       letterSpacing: '0.04em',
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.primary,
       cursor: 'pointer',
+      appearance: 'none',
       background: 'none',
       border: 'none',
       width: '100%',
       textAlign: 'left',
       borderRadius: theme.shape.radius.default,
       '&:hover': {
-        background: theme.colors.background.secondary,
+        background: theme.colors.action.hover,
       },
     }),
     categoryContent: css({
