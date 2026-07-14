@@ -11,7 +11,7 @@ This directory contains end-to-end tests for critical user journeys related to d
 When set to `true`, skips importing test dashboards during global setup. Use this when running against a live Grafana instance that already has the required dashboards with matching UIDs (`cuj-dashboard-1`, `cuj-dashboard-2`, `cuj-dashboard-3`).
 
 ```bash
-NO_DASHBOARD_IMPORT=true yarn e2e:playwright
+NO_DASHBOARD_IMPORT=true pnpm run e2e:playwright
 ```
 
 ### `API_CONFIG_PATH`
@@ -33,7 +33,7 @@ Alongside the endpoint patterns, the config file can also specify a list of dash
 in the config file. The respective tests will then run against the specified dashboards.
 
 ```bash
-API_CONFIG_PATH=/path/to/custom-config.json yarn e2e:playwright
+API_CONFIG_PATH=/path/to/custom-config.json pnpm run e2e:playwright
 ```
 
 ## Global Setup and Teardown

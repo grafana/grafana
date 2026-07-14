@@ -136,15 +136,13 @@ jobs:
         if: steps.plan.outputs.should_publish == 'true'
         run: npm install -g npm@^11.5.1
 
-      - name: Install yarn dependencies
+      - name: Install dependencies
         if: steps.plan.outputs.should_publish == 'true'
-        uses: ./.github/actions/yarn-install
-        with:
-          hardened-mode: 'true'
+        uses: ./.github/actions/pnpm-install
 
       - name: Typecheck packages
         if: steps.plan.outputs.should_publish == 'true'
-        run: yarn run packages:typecheck
+        run: pnpm run packages:typecheck
 
       - name: Version, build, and pack packages
         if: steps.plan.outputs.should_publish == 'true'
@@ -152,8 +150,8 @@ jobs:
           VERSION: ${{ inputs.version }}
           GRAFANA_COMMIT: ${{ inputs.grafana_commit }}
         run: |
-          yarn run packages:build
-          yarn lerna version "$VERSION" \
+          pnpm run packages:build
+          pnpm exec lerna version "$VERSION" \
             --exact \
             --no-git-tag-version \
             --no-push \
@@ -163,7 +161,7 @@ jobs:
           # which stamps GRAFANA_COMMIT as gitHead into the packed manifest. npm doesn't
           # record gitHead for tarball publishes, and the nightly change-detection reads
           # it back to anchor on the exact commit the last artifact was built from.
-          yarn run packages:pack
+          pnpm run packages:pack
 
       # For pre-releases we only ship @grafana/e2e-selectors, so drop every other
       # packed tarball before validating and publishing.

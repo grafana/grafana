@@ -11,8 +11,10 @@ EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
 DEPRECATED_DATA_SOURCE_SRV="$(grep -r -oE --include="*.ts*" --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir={__mocks__,mocks,spec,node_modules,dist,compiled} "get(DataSource|Datasource)Srv\(\)" public/app packages | grep -cvE "packages/grafana-runtime/src/services/|public/app/features/plugins/datasource_srv" || true)"
 SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' | wc -l)"
-OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
-CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
+# pnpm prints one entry per outdated dependency; count them. yarn's summary line
+# "N dependencies are out of date" has no pnpm equivalent.
+OUTDATED_DEPENDENCIES="$(pnpm outdated --format list 2>/dev/null | grep -cE '^[^[:space:]]' || true)"
+CIRCULAR_DEPENDENCIES="$(pnpm run lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
 TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
 
 echo -e "Typescript errors: $ERROR_COUNT"
@@ -29,7 +31,7 @@ echo -e "Total SCSS files: $SCSS_FILES"
 echo -e "Total circular dependencies: $TOTAL_CIRCULAR_DEPENDENCIES"
 
 ESLINT_STATS=""
-yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
+pnpm run lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
 while read -r name value
 do
   ESLINT_STATS+=$'\n  '
@@ -44,14 +46,14 @@ while read -r name value
 do
   I18N_STATS+=$'\n  '
   I18N_STATS+="\"grafana.ci-code.i18n.${name}\": \"${value}\","
-done <<< "$(yarn i18n:stats)"
+done <<< "$(pnpm run i18n:stats)"
 
 THEME_TOKEN_USAGE=""
 while read -r name value
 do
   THEME_TOKEN_USAGE+=$'\n  '
   THEME_TOKEN_USAGE+="\"grafana.ci-code.themeUsage.${name}\": \"${value}\","
-done <<< "$(yarn themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $3}' | awk '{!seen[$0]++}END{for (i in seen) print i, seen[i]}')"
+done <<< "$(pnpm run themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $3}' | awk '{!seen[$0]++}END{for (i in seen) print i, seen[i]}')"
 
 echo "Metrics: {
   $THEME_TOKEN_USAGE

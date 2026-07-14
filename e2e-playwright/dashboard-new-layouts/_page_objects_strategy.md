@@ -185,7 +185,7 @@ Concrete checklist for PR #1:
 - [ ] Implement `DashboardControls`, `DashboardToolbar`, `DashboardSidebar` (with a `dashboardOptions` sub-object) — **only** the methods the seed spec needs, nothing speculative
 - [ ] Create `e2e-playwright/dashboard-new-layouts/AGENTS.md` with the reference table seeded with these three page objects and a canonical example
 - [ ] Migrate `dashboards-title-description.spec.ts` end-to-end — zero raw `getByGrafanaSelector` calls remaining in the file
-- [ ] Verify locally: `yarn playwright test --reporter list --project dashboard-new-layouts dashboards-title-description --repeat-each=3`
+- [ ] Verify locally: `pnpm exec playwright test --reporter list --project dashboard-new-layouts dashboards-title-description --repeat-each=3`
 - [ ] Verify CI: full suite green at least once
 
 PR #1 intentionally does **not** touch `utils.ts`. The `flows` bridge refactoring is deferred to PR #2 once the page-object shape is proven on one spec.

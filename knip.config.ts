@@ -50,7 +50,7 @@ const config: KnipConfig = {
         'react-19',
         'react-dom-19',
 
-        // used by yarn test:ci
+        // used by pnpm run test:ci
         'jest-junit',
 
         // used by coverage script, see jest.config.codeowner.js
@@ -60,7 +60,7 @@ const config: KnipConfig = {
         '@grafana/levitate',
         'wait-on',
 
-        // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
+        // used via `pnpm exec <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect them
         '@arethetypeswrong/cli',
         'publint',
       ],
@@ -143,6 +143,7 @@ const config: KnipConfig = {
     },
     'packages/grafana-api-clients': {
       entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
+      ignoreDependencies: packageIgnoreDeps,
     },
     'packages/grafana-plugin-configs': {
       // this package contains shared code that isn't immediately used by the package

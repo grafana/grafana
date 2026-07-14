@@ -819,9 +819,9 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.nvmrc @grafana/grafana-frontend-platform
 /mise.toml @grafana/grafana-frontend-platform
 /.prettierignore @grafana/grafana-frontend-platform
-/.yarn @grafana/grafana-frontend-platform
-/.yarnrc.yml @grafana/grafana-frontend-platform
-/yarn.lock @grafana/grafana-frontend-platform
+/patches @grafana/grafana-frontend-platform
+/pnpm-workspace.yaml @grafana/grafana-frontend-platform
+/pnpm-lock.yaml @grafana/grafana-frontend-platform
 /lerna.json @grafana/grafana-frontend-platform
 /.prettierrc.js @grafana/grafana-frontend-platform
 /.vim @zoltanbedi
@@ -1287,7 +1287,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/change-detection @grafana/grafana-backend-services-squad
 /.github/actions/setup-fpm @grafana/grafana-backend-services-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
-/.github/actions/yarn-install/action.yml @grafana/grafana-frontend-platform
+/.github/actions/pnpm-install/action.yml @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-backend-services-squad
 /.github/workflows/actionlint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling

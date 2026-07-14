@@ -50,7 +50,7 @@ while IFS=" " read -r -a package; do
   echo ""
   echo "$PACKAGE_PATH"
   echo "================================================="
-  yarn exec levitate compare --prev "$PREV" --current "$CURRENT" --json >data.json
+  pnpm exec levitate compare --prev "$PREV" --current "$CURRENT" --json >data.json
 
   # Check if the comparison returned with a non-zero exit code
   # Record the output, maybe with some additional information

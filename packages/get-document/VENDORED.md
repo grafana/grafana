@@ -27,7 +27,7 @@ If/when upstream releases a relevant fix:
 2. Diff against this directory; apply matching changes.
 3. Bump `version` in `package.json` (e.g. `1.0.0-grafana.1`).
 4. Update the commit SHA above.
-5. Run `rm -rf node_modules && yarn install`, then `yarn typecheck:tsgo`
-   and `yarn jest --no-watch --testPathPattern='public/app/features/explore'`
+5. Run `rm -rf node_modules && pnpm install`, then `yarn typecheck:tsgo`
+   and `pnpm exec jest --no-watch --testPathPattern='public/app/features/explore'`
    to confirm the consumer (`get-window` via slate-era editor code)
    still works.

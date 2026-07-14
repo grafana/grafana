@@ -3,7 +3,7 @@
 // with explicit `.ts` extensions (Node ESM with --experimental-strip-types
 // requires them). Setting `allowImportingTsExtensions` globally breaks the
 // dev server's fork-ts-checker (OOM), so smoke files live under their own
-// config: `yarn typecheck:smoke` validates them without touching anything else.
+// config: `pnpm typecheck:smoke` validates them without touching anything else.
 {
   "extends": "./scripts/tsconfig.base.json",
   "compilerOptions": {

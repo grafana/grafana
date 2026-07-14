@@ -232,7 +232,7 @@ const translatedString = t(
 );
 ```
 
-Once extracted with `yarn i18n-extract`, you'll see your updated strings in the [English `grafana.json` message catalog](../public/locales/en-US/grafana.json). Refer to the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+Once extracted with `pnpm run i18n-extract`, you'll see your updated strings in the [English `grafana.json` message catalog](../public/locales/en-US/grafana.json). Refer to the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
 
 ```json
 {

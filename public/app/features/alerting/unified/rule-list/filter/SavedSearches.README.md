@@ -239,7 +239,7 @@ The feature tracks the following events via `reportInteraction`:
 Location: `SavedSearches.test.tsx`
 
 ```bash
-yarn test SavedSearches.test.tsx
+pnpm run test SavedSearches.test.tsx
 ```
 
 Test categories:
@@ -257,7 +257,7 @@ Test categories:
 Location: `useSavedSearches.test.tsx`
 
 ```bash
-yarn test useSavedSearches.test.tsx
+pnpm run test useSavedSearches.test.tsx
 ```
 
 Test categories:
@@ -394,7 +394,7 @@ public/app/features/alerting/unified/
 Location: `e2e-playwright/alerting-suite/saved-searches.spec.ts`
 
 ```bash
-yarn e2e:playwright --grep "saved-searches"
+pnpm run e2e:playwright --grep "saved-searches"
 ```
 
 Test scenarios:
