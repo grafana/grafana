@@ -9,7 +9,6 @@ import { type z } from 'zod';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
-import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -42,8 +41,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       const existingVariables = scopeOwner.state.$variables;
       if (existingVariables) {
         const existing = existingVariables.state.variables.find((v) => v.state.name === name);
-        // Predefined (global/folder) vars may be shadowed by a dashboard/section local.
-        if (existing && !isPredefinedOrigin(existing.state.origin)) {
+        if (existing) {
           throw new Error(`Variable '${name}' already exists`);
         }
       }
@@ -51,10 +49,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
       const sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
 
-      // Drop any predefined of the same name so nearest-scope-wins holds live.
-      const currentVariables = getScopeVariableArray(scopeOwner).filter(
-        (v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin))
-      );
+      const currentVariables = [...getScopeVariableArray(scopeOwner)];
 
       if (position !== undefined && position >= 0 && position < currentVariables.length) {
         currentVariables.splice(position, 0, sceneVariable);
