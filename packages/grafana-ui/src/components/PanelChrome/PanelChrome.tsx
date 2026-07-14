@@ -544,8 +544,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, contentBackground, contentBorderColor } = theme.components.panel;
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const { background, borderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -561,7 +560,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: visualRefreshEnabled ? 'unset' : 'hidden',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',
@@ -619,20 +618,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     containNone: css({
       contain: 'none',
     }),
-    content: css(
-      {
-        label: 'panel-content',
-        flexGrow: 1,
-        contain: 'size layout',
-      },
-      visualRefreshEnabled && {
-        backgroundColor: contentBackground,
-        border: `1px solid ${contentBorderColor}`,
-        borderRadius: theme.shape.radius.lg,
-        overflow: 'hidden',
-        margin: '-1px', // to overlay the nested borders nicely
-      }
-    ),
+    content: css({
+      label: 'panel-content',
+      flexGrow: 1,
+      contain: 'size layout',
+    }),
     headerContainer: css({
       label: 'panel-header',
       display: 'flex',

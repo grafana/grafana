@@ -6,9 +6,9 @@
     "background": {
       "canvas": "palette.white",
       "page": "palette.neutral50",
-      "primary": "palette.neutral150",
-      "secondary": "palette.white",
-      "elevated": "palette.neutral50"
+      "primary": "palette.white",
+      "secondary": "palette.neutral150",
+      "elevated": "palette.white"
     },
     "primary": {
       "main": "palette.neutral950"
@@ -92,6 +92,9 @@
       ]
     },
     "input": {
+      "background": "palette.white"
+    },
+    "panel": {
       "background": "palette.white"
     }
   },
