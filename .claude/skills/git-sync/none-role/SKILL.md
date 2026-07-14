@@ -83,20 +83,7 @@ The None role has **zero default permissions**. Unlike Viewer (which can browse 
 
 ### Step 1: Create None-Role User
 
-Create a `none-test` user via API and set the org role to `None`. See "Create Test Users via API" in `../shared/operations.md`.
-
-```bash
-NONE_ID=$(curl -s -X POST -u admin:admin -H 'Content-Type: application/json' \
-  http://localhost:3000/api/admin/users \
-  -d '{"login":"none-test","password":"none-test","email":"none@test.com","name":"None Test"}' | jq -r '.id')
-
-curl -s -X PATCH -u admin:admin -H 'Content-Type: application/json' \
-  http://localhost:3000/api/org/users/$NONE_ID \
-  -d '{"role":"None"}'
-echo "Created none-test with ID: $NONE_ID"
-```
-
-**Store the user ID** -- it is needed for cleanup in Step 10.
+See "Create Test Users via API" in `../shared/operations.md` (None-role block). Create `none-test` — role `None`, password = login, email `none@test.com`.
 
 **Verify** the role was set correctly:
 
@@ -108,59 +95,19 @@ curl -s -u admin:admin "http://localhost:3000/api/org/users" | \
 
 ### Step 2: Create Repository via API
 
-Create a PAT repository without the wizard. See "API Repository Setup" in `../shared/operations.md`.
+See "Create Repository via API" and "Create Sync Job" in `../shared/api.md`. Substitute these parameters into the GitHub PAT payload:
 
-```bash
-curl -s -X POST -u admin:admin \
-  -H 'Content-Type: application/json' \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories \
-  -d '{
-  "apiVersion": "provisioning.grafana.app/v0alpha1",
-  "kind": "Repository",
-  "metadata": {
-    "name": "none-test-repo"
-  },
-  "spec": {
-    "title": "None Test Repository",
-    "description": "API-created repo for None-role access testing",
-    "type": "github",
-    "github": {
-      "url": "'"$GIT_SYNC_TEST_PAT_REPO_URL"'",
-      "branch": "agent-test",
-      "generateDashboardPreviews": false,
-      "path": "dev/none-test"
-    },
-    "sync": {
-      "enabled": true,
-      "target": "folder",
-      "intervalSeconds": 60
-    },
-    "workflows": ["write"]
-  },
-  "secure": {
-    "token": { "create": "'"$GIT_SYNC_TEST_PAT"'" }
-  }
-}'
-```
+- `metadata.name`: `none-test-repo`
+- `spec.title`: `"None Test Repository"`
+- `type`: `github`
+- url: `$GIT_SYNC_TEST_PAT_REPO_URL`
+- branch: `agent-test`
+- `path`: `dev/none-test`
+- `sync`: `{enabled: true, target: folder, intervalSeconds: 60}`
+- `workflows`: `["write"]` (write only — no branch workflow)
+- token: `$GIT_SYNC_TEST_PAT`
 
-**Trigger initial sync and wait:**
-
-```bash
-JOB_NAME=$(curl -s -X POST -u admin:admin \
-  -H 'Content-Type: application/json' \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/none-test-repo/jobs \
-  -d '{"action":"pull","pull":{}}' | jq -r '.metadata.name')
-
-for i in $(seq 1 30); do
-  STATE=$(curl -s -u admin:admin \
-    "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/none-test-repo/jobs/$JOB_NAME" | \
-    jq -r '.status.state')
-  echo "Job state: $STATE ($i/30)"
-  if [ "$STATE" = "success" ]; then break; fi
-  if [ "$STATE" = "error" ]; then echo "ERROR: Sync failed"; break; fi
-  sleep 5
-done
-```
+Trigger the initial sync and poll until `success` (see Create Sync Job).
 
 ### Step 3: Create Test Resources as Admin
 
@@ -178,15 +125,9 @@ Logged in as **admin**. Create one folder and one dashboard inside the provision
 
 ### Step 4: Switch to None-Role User
 
-Log out and log in as `none-test` / `none-test`. See "Switch Browser User" in `../shared/operations.md`.
+Log out and log in as `none-test` / `none-test` — see "Switch Browser User" in `../shared/operations.md`.
 
-1. `navigate_page` to `http://localhost:3000/logout`
-2. `wait_for` text `["Log in"]` or `["Welcome to Grafana"]`
-3. `fill` username input (`data-testid="data-testid Username input field"`) with `none-test`
-4. `fill` password input (`data-testid="data-testid Password input field"`) with `none-test`
-5. `click` login button (`data-testid="data-testid Login button"`)
-6. If prompted, `click` skip password change (`data-testid="data-testid Skip change password button"`)
-7. **Verify login:** Navigate to `/profile` or check the user menu to confirm you are logged in as `none-test`. If you see admin-only controls or provisioned resources in the sidebar, you are not logged in as the correct user.
+- **Verify login:** Navigate to `/profile` or check the user menu to confirm you are logged in as `none-test`. If you see admin-only controls or provisioned resources in the sidebar, you are not logged in as the correct user.
 
 ### Step 5: Verify Empty Browse
 
@@ -235,36 +176,11 @@ Navigate to `http://localhost:3000/admin/provisioning`.
 
 ### Step 9: Switch Back to Admin
 
-Log out and log in as `admin` / `admin`.
-
-1. `navigate_page` to `http://localhost:3000/logout`
-2. `wait_for` text `["Log in"]` or `["Welcome to Grafana"]`
-3. `fill` username input with `admin`
-4. `fill` password input with `admin`
-5. `click` login button
-6. If prompted, `click` skip password change
+Log out and log in as `admin` / `admin` — see "Switch Browser User" in `../shared/operations.md`.
 
 ### Step 10: Delete Repository, User, and Verify
 
-**Delete repository via API:**
-
-```bash
-curl -X DELETE -u admin:admin \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/none-test-repo
-```
-
-**Wait for repository deletion to complete** (resources are removed asynchronously):
-
-```bash
-for i in $(seq 1 15); do
-  COUNT=$(curl -s -u admin:admin \
-    http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
-    jq '[.items[] | select(.metadata.name == "none-test-repo")] | length')
-  if [ "$COUNT" = "0" ]; then echo "Repository deleted"; break; fi
-  echo "Waiting for deletion... ($i/15)"
-  sleep 5
-done
-```
+Run `bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh` — expected output includes `Remaining repositories: 0`.
 
 **Delete the none-test user:**
 
@@ -278,6 +194,6 @@ fi
 
 **Final verification:**
 
-- Repositories: confirm `none-test-repo` no longer exists (`curl ... /repositories | jq '.items[] | select(.metadata.name == "none-test-repo")'` returns nothing)
+- Repositories: confirm cleanup script reported `Remaining repositories: 0`
 - Test user: gone (lookup returns 404)
 - Provisioned folder: removed with the repository

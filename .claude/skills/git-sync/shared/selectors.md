@@ -58,7 +58,6 @@ GitHub is the only provider with an auth-mode picker. GitLab and Bitbucket rende
 | --------------------- | ---------------------- | ------------------------------------------------------------- |
 | Create Connection     | `Create connection`    | GitHub App "new" mode only. Loading: `Creating connection...` |
 | Next (Configure Repo) | `Configure repository` | Form submit button. Loading: `Submitting...`                  |
-| Cancel                | `Cancel`               | Left button on authType step                                  |
 
 ## Step 2: Configure Repository (connection)
 
@@ -77,12 +76,6 @@ GitHub is the only provider with an auth-mode picker. GitLab and Bitbucket rende
 | Previous | `Cancel`                     | For non-GitHub types; `Previous` for GitHub |
 
 ## Step 3: Choose What to Synchronize (bootstrap)
-
-### Loading State
-
-| Indicator       | Text                              |
-| --------------- | --------------------------------- |
-| Loading spinner | `Loading resource information...` |
 
 ### Sync Target Cards
 
@@ -105,15 +98,8 @@ Cards are `<article>` or clickable `<div>` elements. Click the card itself to se
 | ------------------ | ----------------------------------- | ---------------------------------------- |
 | Next (has content) | `Synchronize with external storage` | When repo/instance has resources to sync |
 | Next (empty)       | `Choose additional settings`        | When nothing to sync (skips step 4)      |
-| Previous           | `Previous`                          |                                          |
 
 ## Step 4: Synchronize (synchronize)
-
-### Loading State
-
-| Indicator       | Text                            |
-| --------------- | ------------------------------- |
-| Loading spinner | `Checking repository status...` |
 
 ### Elements
 
@@ -148,7 +134,6 @@ Cards are `<article>` or clickable `<div>` elements. Click the card itself to se
 | Element | Text     | Notes                                                       |
 | ------- | -------- | ----------------------------------------------------------- |
 | Finish  | `Finish` | Final submit. Navigates to `/admin/provisioning/{repoName}` |
-| Cancel  | `Cancel` | Left button                                                 |
 
 ## Step Heading Pattern
 
@@ -196,18 +181,10 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 | Path    | `dashboard-path`                    | Read-only input |
 | Comment | `provisioned-resource-form-comment` | Same textarea   |
 
-### Tabs
-
-| Tab     | Label     | Notes                               |
-| ------- | --------- | ----------------------------------- |
-| Details | "Details" | Default tab, shows save form        |
-| Changes | "Changes" | Shows diff, only when changes exist |
-
 ### Buttons
 
 | Button | Text                 | Notes                                                |
 | ------ | -------------------- | ---------------------------------------------------- |
-| Cancel | "Cancel"             | Secondary button                                     |
 | Save   | "Save" / "Saving..." | Primary submit, disabled when not dirty or read-only |
 
 ## New Provisioned Folder (Drawer)
@@ -220,10 +197,9 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 
 ### Buttons
 
-| Button | Text                     | Notes            |
-| ------ | ------------------------ | ---------------- |
-| Cancel | "Cancel"                 | Secondary button |
-| Create | "Create" / "Creating..." | Primary submit   |
+| Button | Text                     | Notes          |
+| ------ | ------------------------ | -------------- |
+| Create | "Create" / "Creating..." | Primary submit |
 
 ## Branch Dropdown Options
 
@@ -265,7 +241,6 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 | Target Folder | FolderPicker, label: "Target Folder" |               |
 | Branch        | `provisioned-ref`                    | Same combobox |
 | Comment       | `provisioned-resource-form-comment`  | Same textarea |
-| Cancel        | "Cancel"                             | Secondary     |
 | Move          | "Move" / "Moving..."                 | Primary       |
 
 ## Bulk Delete Provisioned Resources (Drawer)
@@ -277,7 +252,6 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 | Descendant count | Dynamic                                                                                | Shows dashboards/folders/panels count |
 | Branch           | `provisioned-ref`                                                                      | Same combobox                         |
 | Comment          | `provisioned-resource-form-comment`                                                    | Same textarea                         |
-| Cancel           | "Cancel"                                                                               | Secondary                             |
 | Delete           | "Delete" / "Deleting..."                                                               | Destructive                           |
 
 ## Single Dashboard Delete (Drawer)
@@ -288,7 +262,6 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 | Drawer title             | "Delete Provisioned Dashboard"                                                  | Subtitle: dashboard title  |
 | Branch                   | `provisioned-ref`                                                               |                            |
 | Comment                  | `provisioned-resource-form-comment`                                             |                            |
-| Cancel                   | "Cancel"                                                                        | Secondary                  |
 | Delete                   | "Delete dashboard" / "Deleting..."                                              | Destructive                |
 
 ## Single Folder Delete (Drawer)

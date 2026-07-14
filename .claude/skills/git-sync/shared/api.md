@@ -68,13 +68,6 @@ curl -s -u admin:admin \
   "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/{name}/jobs/{jobName}" | jq
 ```
 
-## UI Cleanup Flow
-
-If you prefer UI-based cleanup:
-
-1. **Delete repository:** Navigate to `/admin/provisioning/{repoName}` -> Click the "Delete" dropdown button -> Select "Delete and remove resources" -> Confirm in the modal dialog
-2. **Delete connection (GitHub App only):** Navigate to `/admin/provisioning?tab=connections` -> Find the connection in the list -> Click its Delete button -> Confirm
-
 ## Verification Checks
 
 After wizard completion, verify the repository was created:
@@ -232,12 +225,18 @@ curl -s -X POST -u admin:admin \
   -d '{"action":"pull","pull":{}}'
 ```
 
-Poll job status until `state` is `success` or `error`:
+Poll job status every 5s until `state` is `success` or `error` (capture `JOB_NAME` from the POST response):
 
 ```bash
-curl -s -u admin:admin \
-  "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/{name}/jobs/{jobName}" | \
-  jq '.status.state'
+for i in $(seq 1 30); do
+  STATE=$(curl -s -u admin:admin \
+    "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/{name}/jobs/$JOB_NAME" | \
+    jq -r '.status.state')
+  echo "Job state: $STATE ($i/30)"
+  if [ "$STATE" = "success" ]; then break; fi
+  if [ "$STATE" = "error" ]; then echo "ERROR: Sync failed"; break; fi
+  sleep 5
+done
 ```
 
 ## User Management

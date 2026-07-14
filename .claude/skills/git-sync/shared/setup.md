@@ -54,13 +54,6 @@ On a cloud VM, Grafana must be built and started from scratch.
    done
    ```
 
-4. **Secrets** are available as environment variables (configured in Cursor dashboard). Do not use `.env` files. Verify every variable in this skill's **Required Secrets** table is set:
-
-   ```bash
-   for var in <vars from the Required Secrets table>; do
-     if [ -z "${!var}" ]; then echo "ERROR: $var is not set"; exit 1; fi
-     echo "OK: $var is set"
-   done
-   ```
+4. **Secrets** are available as environment variables (configured in Cursor dashboard). Do not use `.env` files. Verify every variable in this skill's **Required Secrets** table is set and non-empty before proceeding.
 
 5. **Log in to Grafana:** Open browser to `http://localhost:3000`. Log in as `admin`/`admin`. Skip password change if prompted.

@@ -68,13 +68,7 @@ This is the simpler flow. Use `$GIT_SYNC_TEST_PAT_REPO_URL` and `$GIT_SYNC_TEST_
 
 After Step 5 completes and the page navigates to `/admin/provisioning/{repoName}`:
 
-1. Verify the repository was created via API:
-
-   ```bash
-   curl -s -u admin:admin \
-     http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
-     jq '.items[] | {name: .metadata.name, type: .spec.type, url: .spec.github.url}'
-   ```
+1. Verify via API that the repository exists with type github and the expected URL — see "Verification Checks" in ../shared/api.md.
 
 2. Navigate to the provisioned folder in the browse view and confirm it exists.
 

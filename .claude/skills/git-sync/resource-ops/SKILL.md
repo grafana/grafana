@@ -85,91 +85,26 @@ Read these files during execution for detailed operation steps, gotchas, and sel
 
 ### Step 1: Create Test Users
 
-Create `viewer-test` and `editor-test` users via API. See "Create Test Users via API" in `../shared/operations.md`.
+See "Create Test Users via API" in `../shared/operations.md`. Create:
 
-**Create Viewer user:**
-
-```bash
-VIEWER_ID=$(curl -s -X POST -u admin:admin -H 'Content-Type: application/json' \
-  http://localhost:3000/api/admin/users \
-  -d '{"login":"viewer-test","password":"viewer-test","email":"viewer@test.com","name":"Viewer Test"}' | jq -r '.id')
-
-curl -s -X PATCH -u admin:admin -H 'Content-Type: application/json' \
-  http://localhost:3000/api/org/users/$VIEWER_ID \
-  -d '{"role":"Viewer"}'
-echo "Created viewer-test with ID: $VIEWER_ID"
-```
-
-**Create Editor user:**
-
-```bash
-EDITOR_ID=$(curl -s -X POST -u admin:admin -H 'Content-Type: application/json' \
-  http://localhost:3000/api/admin/users \
-  -d '{"login":"editor-test","password":"editor-test","email":"editor@test.com","name":"Editor Test"}' | jq -r '.id')
-
-curl -s -X PATCH -u admin:admin -H 'Content-Type: application/json' \
-  http://localhost:3000/api/org/users/$EDITOR_ID \
-  -d '{"role":"Editor"}'
-echo "Created editor-test with ID: $EDITOR_ID"
-```
-
-**Store both user IDs** -- they are needed for cleanup in Step 17.
+- `viewer-test` — role `Viewer`, password = login, email `viewer@test.com`
+- `editor-test` — role `Editor`, password = login, email `editor@test.com`
 
 ### Step 2: Create Repository via API
 
-Create a PAT repository without the wizard. See "API Repository Setup" in `../shared/operations.md`.
+See "Create Repository via API" and "Create Sync Job" in `../shared/api.md`. Substitute these parameters into the GitHub PAT payload:
 
-```bash
-curl -s -X POST -u admin:admin \
-  -H 'Content-Type: application/json' \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories \
-  -d '{
-  "apiVersion": "provisioning.grafana.app/v0alpha1",
-  "kind": "Repository",
-  "metadata": {
-    "name": "ops-test-repo"
-  },
-  "spec": {
-    "title": "Ops Test Repository",
-    "description": "API-created repo for resource operation testing",
-    "type": "github",
-    "github": {
-      "url": "'"$GIT_SYNC_TEST_PAT_REPO_URL"'",
-      "branch": "agent-test",
-      "generateDashboardPreviews": false,
-      "path": "dev/ops-test"
-    },
-    "sync": {
-      "enabled": true,
-      "target": "folder",
-      "intervalSeconds": 60
-    },
-    "workflows": ["write", "branch"]
-  },
-  "secure": {
-    "token": { "create": "'"$GIT_SYNC_TEST_PAT"'" }
-  }
-}'
-```
+- `metadata.name`: `ops-test-repo`
+- `spec.title`: `"Ops Test Repository"`
+- `type`: `github`
+- url: `$GIT_SYNC_TEST_PAT_REPO_URL`
+- branch: `agent-test`
+- `path`: `dev/ops-test`
+- `sync`: `{enabled: true, target: folder, intervalSeconds: 60}`
+- `workflows`: `["write", "branch"]`
+- token: `$GIT_SYNC_TEST_PAT`
 
-**Trigger initial sync and wait:**
-
-```bash
-JOB_NAME=$(curl -s -X POST -u admin:admin \
-  -H 'Content-Type: application/json' \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/ops-test-repo/jobs \
-  -d '{"action":"pull","pull":{}}' | jq -r '.metadata.name')
-
-for i in $(seq 1 30); do
-  STATE=$(curl -s -u admin:admin \
-    "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/ops-test-repo/jobs/$JOB_NAME" | \
-    jq -r '.status.state')
-  echo "Job state: $STATE ($i/30)"
-  if [ "$STATE" = "success" ]; then break; fi
-  if [ "$STATE" = "error" ]; then echo "ERROR: Sync failed"; break; fi
-  sleep 5
-done
-```
+Trigger the initial sync and poll until `success` (see Create Sync Job).
 
 ### Step 3: Create Resources (3-Level Tree) -- Write Workflow
 
@@ -191,20 +126,7 @@ Logged in as **admin**. Build the following folder/dashboard tree inside the pro
    └─ Dashboard Staging-1              (dashboard)
 ```
 
-**Creation order** (12 resources: 6 folders counting provisioned root's children, 6 dashboards):
-
-1. Create folder `team-alpha` in provisioned root
-2. Create `Dashboard Alpha-1` in `team-alpha`
-3. Create `Dashboard Alpha-2` in `team-alpha`
-4. Create folder `alpha-services` inside `team-alpha`
-5. Create `Dashboard Alpha-Svc-1` in `alpha-services`
-6. Create folder `alpha-monitoring` inside `alpha-services` (level 3)
-7. Create `Dashboard Alpha-Mon-1` in `alpha-monitoring`
-8. Create folder `team-beta` in provisioned root
-9. Create `Dashboard Beta-1` in `team-beta`
-10. Create `Dashboard Beta-2` in `team-beta`
-11. Create folder `staging` in provisioned root
-12. Create `Dashboard Staging-1` in `staging`
+Create parents before children, top to bottom as drawn (12 resources: 6 folders, 6 dashboards).
 
 **Important:** All resources MUST be created through the provisioned folder UI ("New" dropdown in the provisioned folder browse page). Do not use the Grafana REST API (`POST /api/dashboards/db` or `POST /api/folders`) -- those create regular (non-provisioned) resources that won't appear in the provisioned folder tree and won't work with branch-based move/delete in later phases.
 
@@ -228,15 +150,9 @@ Navigate through all 3 levels. Confirm:
 
 ### Step 5: Switch to Viewer
 
-Log out and log in as `viewer-test` / `viewer-test`. See "Switch Browser User" in `../shared/operations.md`.
+Log out and log in as `viewer-test` / `viewer-test` — see "Switch Browser User" in `../shared/operations.md`.
 
-1. `navigate_page` to `http://localhost:3000/logout`
-2. `wait_for` text `["Log in"]` or `["Welcome to Grafana"]`
-3. `fill` username input (`data-testid="data-testid Username input field"`) with `viewer-test`
-4. `fill` password input (`data-testid="data-testid Password input field"`) with `viewer-test`
-5. `click` login button (`data-testid="data-testid Login button"`)
-6. If prompted, `click` skip password change (`data-testid="data-testid Skip change password button"`)
-7. **Verify login:** Navigate to the provisioned root. Before checking restrictions, confirm you are logged in as `viewer-test` -- the user menu (bottom-left avatar) or `/profile` page should show the username. If you see admin-only controls (e.g., "New" button, checkboxes), you are not logged in as the correct user.
+- **Verify login:** Navigate to the provisioned root. Before checking restrictions, confirm you are logged in as `viewer-test` — the user menu (bottom-left avatar) or `/profile` page should show the username. If you see admin-only controls (e.g., "New" button, checkboxes), you are not logged in as the correct user.
 
 ### Step 6: Verify Viewer Restrictions
 
@@ -253,15 +169,9 @@ Log out and log in as `viewer-test` / `viewer-test`. See "Switch Browser User" i
 
 ### Step 7: Switch to Editor
 
-Log out and log in as `editor-test` / `editor-test`. Same procedure as Step 5.
+Log out and log in as `editor-test` / `editor-test` — see "Switch Browser User" in `../shared/operations.md`.
 
-1. `navigate_page` to `http://localhost:3000/logout`
-2. `wait_for` text `["Log in"]` or `["Welcome to Grafana"]`
-3. `fill` username input with `editor-test`
-4. `fill` password input with `editor-test`
-5. `click` login button
-6. If prompted, `click` skip password change
-7. **Verify login:** Navigate to the provisioned root and confirm you are logged in as `editor-test` via the user menu or `/profile` page.
+- **Verify login:** Navigate to the provisioned root and confirm you are logged in as `editor-test` via the user menu or `/profile` page.
 
 ### Step 8: Editor Creates Resources (Write Workflow)
 
@@ -286,14 +196,7 @@ The Editor can create folders and dashboards in provisioned folders.
 
 ### Step 11: Switch Back to Admin
 
-Log out and log in as `admin` / `admin`.
-
-1. `navigate_page` to `http://localhost:3000/logout`
-2. `wait_for` text `["Log in"]` or `["Welcome to Grafana"]`
-3. `fill` username input with `admin`
-4. `fill` password input with `admin`
-5. `click` login button
-6. If prompted, `click` skip password change
+Log out and log in as `admin` / `admin` — see "Switch Browser User" in `../shared/operations.md`.
 
 ### Step 12: Test Branch (PR) Workflow
 
@@ -351,32 +254,9 @@ See "Bulk Deleting Resources" in `../shared/operations.md`.
 
 ### Step 16: Remove Repository
 
-Delete via API (no need to use the wizard UI):
-
-```bash
-curl -X DELETE -u admin:admin \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/ops-test-repo
-```
-
-Verify:
-
-```bash
-curl -s -u admin:admin \
-  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
-  jq '.items | length'
-# Should return 0
-```
+Run `bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh` — expected output includes `Remaining repositories: 0`.
 
 ### Step 17: Delete Test Users & Final Verification
-
-Delete the test users created in Step 1:
-
-```bash
-curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$VIEWER_ID
-curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$EDITOR_ID
-```
-
-If the user IDs are no longer in the shell session, look them up first:
 
 ```bash
 for login in viewer-test editor-test; do

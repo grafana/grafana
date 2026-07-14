@@ -71,13 +71,7 @@ GitLab uses the token flow only. Use `$GIT_SYNC_TEST_GITLAB_REPO_URL` and `$GIT_
 
 After Step 5 completes and the page navigates to `/admin/provisioning/{repoName}`:
 
-1. Verify the repository was created via API:
-
-   ```bash
-   curl -s -u admin:admin \
-     http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
-     jq '.items[] | {name: .metadata.name, type: .spec.type, url: .spec.gitlab.url}'
-   ```
+1. Verify via API that the repository exists with type gitlab and the expected URL — see "Verification Checks" in ../shared/api.md.
 
 2. Navigate to the provisioned folder in the browse view and confirm it exists.
 
@@ -86,7 +80,5 @@ After Step 5 completes and the page navigates to `/admin/provisioning/{repoName}
 Remove the repository and verify no artifacts remain:
 
 Run `bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh`
-
-No connection deletion needed for GitLab token flow -- it does not create connections.
 
 No connection deletion needed for GitLab token flow -- it does not create connections.
