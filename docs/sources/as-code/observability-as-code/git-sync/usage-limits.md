@@ -29,9 +29,7 @@ aliases:
 
 {{< admonition type="note" >}}
 
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.**
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -110,6 +108,12 @@ On-prem users can customize the limits with the following configuration settings
 ### Nested folders
 
 Git Sync supports up to four nested folders within a repository.
+
+### Git Sync across multiple organizations
+
+Git Sync works across multiple organizations for self-managed Grafana instances. You can set up Git Sync independently in each of your organizations, and what you sync in one organization does not affect another. Teams that share a single Grafana instance across separate organizations can each manage their own provisioning from Git.
+
+This feature is available starting in Grafana 13.0.4, but not supported until Grafana 13.1.1.
 
 ## Compatible Git providers
 

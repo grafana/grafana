@@ -88,6 +88,7 @@ function makeCheckType(
 
 function mockPluginFunctions(options: {
   completedCheck?: Check;
+  completedChecks?: Check[];
   completedChecksLoading?: boolean;
   retryCheckFn?: jest.Mock;
   createChecksFn?: jest.Mock;
@@ -97,6 +98,7 @@ function mockPluginFunctions(options: {
 }) {
   const {
     completedCheck,
+    completedChecks,
     completedChecksLoading = false,
     retryCheckFn,
     createChecksFn,
@@ -110,8 +112,9 @@ function mockPluginFunctions(options: {
   // the mock must do the same for useLayoutEffect deps to stabilize.
   const stableRetryCheck = retryCheckFn ?? jest.fn();
   const stableCreateChecks = createChecksFn ?? jest.fn();
-  const completedData: CheckList | undefined = completedCheck
-    ? { apiVersion: 'advisor.grafana.app/v0alpha1', kind: 'CheckList', items: [completedCheck], metadata: {} }
+  const items = completedChecks ?? (completedCheck ? [completedCheck] : undefined);
+  const completedData: CheckList | undefined = items
+    ? { apiVersion: 'advisor.grafana.app/v0alpha1', kind: 'CheckList', items, metadata: {} }
     : undefined;
   const completedResult = {
     isCompleted: !completedChecksLoading,
@@ -197,6 +200,20 @@ describe('useLatestDatasourceCheck', () => {
     const { result } = renderHook(() => useLatestDatasourceCheck(), { wrapper });
 
     expect(result.current.check?.metadata.name).toBe('latest');
+  });
+
+  it('returns the check with the newest creationTimestamp regardless of list order', () => {
+    // The advisor API returns every check for the type ordered by name, not by
+    // date, so the newest report must be picked by creationTimestamp.
+    const older = makeCheck({ name: 'check-aaa', creationTimestamp: '2026-07-07T10:32:05Z', failures: emptyReport });
+    const newest = makeCheck({ name: 'check-mmm', creationTimestamp: '2026-07-10T10:02:42Z', failures: emptyReport });
+    const middle = makeCheck({ name: 'check-zzz', creationTimestamp: '2026-07-08T14:01:57Z', failures: emptyReport });
+
+    mockPluginFunctions({ completedChecks: [older, newest, middle] });
+
+    const { result } = renderHook(() => useLatestDatasourceCheck(), { wrapper });
+
+    expect(result.current.check?.metadata.name).toBe('check-mmm');
   });
 
   it('returns isLoading true while plugin function is loading', () => {

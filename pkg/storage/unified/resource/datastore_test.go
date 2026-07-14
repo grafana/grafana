@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -3445,4 +3447,70 @@ func TestToSnowflakeRVIdempotent(t *testing.T) {
 				"toSnowflakeRV must not re-encode a value that is already a snowflake")
 		})
 	}
+}
+
+func TestIntegrationDataStore_ListStoredResources(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListStoredResources)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListStoredResources)
+}
+
+func testDataStoreListStoredResources(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	save := func(ns, group, resource, name string) {
+		key := DataKey{
+			Namespace:       ns,
+			Group:           group,
+			Resource:        resource,
+			Name:            name,
+			ResourceVersion: node.Generate().Int64(),
+			Action:          DataActionCreated,
+		}
+		require.NoError(t, ds.Save(ctx, key, bytes.NewReader([]byte("v"))))
+	}
+
+	sortFunc := func(a, b NamespacedResource) int {
+		if a.Namespace != b.Namespace {
+			return strings.Compare(a.Namespace, b.Namespace)
+		}
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	}
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	save("ns1", "apps", "deployments", "d1")
+	save("ns1", "apps", "deployments", "d2")
+	save("ns1", "apps", "services", "s1")
+	save("ns2", "apps", "deployments", "d1")
+
+	t.Run("namespace filter returns distinct identities", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "ns1"})
+		require.NoError(t, err)
+		slices.SortFunc(got, sortFunc)
+		require.Equal(t, []NamespacedResource{
+			{Namespace: "ns1", Group: "apps", Resource: "deployments"},
+			{Namespace: "ns1", Group: "apps", Resource: "services"},
+		}, got)
+	})
+
+	t.Run("resource filter is scoped to the namespace", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "ns1", Resource: "services"})
+		require.NoError(t, err)
+		require.Equal(t, []NamespacedResource{
+			{Namespace: "ns1", Group: "apps", Resource: "services"},
+		}, got)
+	})
+
+	t.Run("non-existent namespace is empty", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "missing"})
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+
+	t.Run("empty namespace is rejected", func(t *testing.T) {
+		_, err := ds.ListStoredResources(ctx, NamespacedResource{})
+		require.Error(t, err)
+	})
 }

@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import type BaseLayer from 'ol/layer/Base';
 import { useMemo } from 'react';
-import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import {
@@ -11,6 +10,7 @@ import {
   getFieldColorModeForField,
   type GrafanaTheme2,
 } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2, type VizLegendItem } from '@grafana/ui';

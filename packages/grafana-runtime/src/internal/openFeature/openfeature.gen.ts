@@ -19,6 +19,8 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
+  DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables support for section level variables (rows and tabs) */
@@ -59,8 +61,12 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
+  GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
+  GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
@@ -69,6 +75,8 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled. */
+  GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
   GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
@@ -97,6 +105,8 @@ export const FlagKeys = {
   ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
+  /** Author Git Sync commits as the acting Grafana user */
+  ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -156,6 +166,17 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
+ *
+ * **Details:**
+ * - flag key: `dashboard.notebooks`
+ * - default value: `false`
+ */
+export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.notebooks", false, options).value;
 };
 
 /**
@@ -379,6 +400,17 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
+ *
+ * **Details:**
+ * - flag key: `grafana.onDemandDiagnostics`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.onDemandDiagnostics", false, options).value;
+};
+
+/**
  * Enables firing an event for PanelEditNext feedback that triggers an in-house survey
  *
  * **Details:**
@@ -387,6 +419,17 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options
+ *
+ * **Details:**
+ * - flag key: `grafana.queryVarEditorRedesign`
+ * - default value: `true`
+ */
+export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.queryVarEditorRedesign", true, options).value;
 };
 
 /**
@@ -431,6 +474,17 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.
+ *
+ * **Details:**
+ * - flag key: `grafana.useDefaultScopesEndpoint`
+ * - default value: `false`
+ */
+export const useFlagGrafanaUseDefaultScopesEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.useDefaultScopesEndpoint", false, options).value;
 };
 
 /**
@@ -585,6 +639,17 @@ export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationO
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioning.readmes", true, options).value;
+};
+
+/**
+ * Author Git Sync commits as the acting Grafana user
+ *
+ * **Details:**
+ * - flag key: `provisioning.userAttribution`
+ * - default value: `false`
+ */
+export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.userAttribution", false, options).value;
 };
 
 /**

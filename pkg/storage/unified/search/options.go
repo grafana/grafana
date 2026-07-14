@@ -116,6 +116,12 @@ func NewSearchOptions(
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
+			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
+			PostRankAuthz: PostRankAuthzConfig{
+				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
+				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
+				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
+			},
 		}, indexMetrics)
 
 		if err != nil {
