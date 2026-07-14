@@ -981,6 +981,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/canvas/ @grafana/dataviz-squad
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
+/public/app/features/table/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/grafana-frontend-navigation
 /public/app/features/commandPalette/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/connections/ @grafana/grafana-catalog
