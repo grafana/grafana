@@ -204,6 +204,7 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
 };
 
 // legacy just needs uid for lookup, remote storage needs name/group
+// this is just for retrieving in explore, so pagination features are not needed
 export const getCorrelationsFromStorage = async (
   dispatch: ThunkDispatch,
   queries: DataQuery[],
