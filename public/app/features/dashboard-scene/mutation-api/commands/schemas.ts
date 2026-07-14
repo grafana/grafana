@@ -1101,7 +1101,7 @@ const listPanelsPayloadSchema = z.object({
     .optional()
     .default(false)
     .describe(
-      'When true, include runtime status (isLoading, hasError, hasNoData, errors) and data frame schema per panel'
+      'When true, include per-panel runtime status (loadingState, isLoading, hasError, hasNoData, errors, errorDetails with refId/type, and data-frame notices) plus the data frame schema'
     ),
 });
 

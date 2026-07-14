@@ -13,11 +13,19 @@
 
 import { type z } from 'zod';
 
-import { type DataFrame, LoadingState } from '@grafana/data';
+import { type DataFrame, type DataQueryError, LoadingState } from '@grafana/data';
 import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import type {
+  FrameSchema,
+  FieldSchema,
+  PanelElementEntry,
+  PanelRuntimeError,
+  PanelRuntimeNotice,
+  PanelRuntimeStatus,
+} from '../types';
 
 import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
@@ -44,24 +52,6 @@ function deepInterpolate(sceneObj: SceneObject, value: unknown): unknown {
   return value;
 }
 
-interface PanelRuntimeStatus {
-  isLoading: boolean;
-  hasError: boolean;
-  hasNoData: boolean;
-  errors?: string[];
-}
-
-interface FieldSchema {
-  name: string;
-  type: string;
-  labels?: Record<string, string>;
-}
-
-interface FrameSchema {
-  name?: string;
-  fields: FieldSchema[];
-}
-
 function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefined {
   const dataProvider = vizPanel.state.$data;
   if (!dataProvider) {
@@ -72,7 +62,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   const panelData = (innerProvider ?? dataProvider)?.state?.data;
 
   if (!panelData) {
-    return { isLoading: true, hasError: false, hasNoData: false };
+    return { loadingState: LoadingState.Loading, isLoading: true, hasError: false, hasNoData: false };
   }
 
   const { state, errors, error, series } = panelData;
@@ -80,27 +70,45 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   const isLoading =
     state === LoadingState.Loading || state === LoadingState.Streaming || state === LoadingState.NotStarted;
   if (isLoading) {
-    return { isLoading: true, hasError: false, hasNoData: false };
+    return { loadingState: state, isLoading: true, hasError: false, hasNoData: false };
   }
 
-  const allErrors: string[] = [];
-  if (errors?.length) {
-    for (const e of errors) {
-      if (e.message) {
-        allErrors.push(e.message);
+  // Structured error details (message + refId + type), falling back to the
+  // deprecated single `error`. `errors` keeps the plain message strings so
+  // existing consumers don't break.
+  const sourceErrors: DataQueryError[] = errors?.length ? errors : error ? [error] : [];
+  const errorDetails: PanelRuntimeError[] = sourceErrors.map((e) => ({
+    ...(e.message !== undefined && { message: e.message }),
+    ...(e.refId !== undefined && { refId: e.refId }),
+    ...(e.type !== undefined && { type: e.type }),
+  }));
+  const errorMessages = sourceErrors.map((e) => e.message).filter((m): m is string => m !== undefined && m !== '');
+
+  // Data-frame notices (info/warning/error), deduped across all frames.
+  const notices: PanelRuntimeNotice[] = [];
+  const seenNotices = new Set<string>();
+  if (Array.isArray(series)) {
+    for (const frame of series) {
+      for (const notice of frame.meta?.notices ?? []) {
+        const key = `${notice.severity}:${notice.text}`;
+        if (!seenNotices.has(key)) {
+          seenNotices.add(key);
+          notices.push({ severity: notice.severity, text: notice.text });
+        }
       }
     }
-  } else if (error?.message) {
-    allErrors.push(error.message);
   }
 
   const hasData = Array.isArray(series) && series.some((s: DataFrame) => s.fields.length > 0);
 
   return {
+    loadingState: state,
     isLoading: false,
-    hasError: allErrors.length > 0,
+    hasError: errorDetails.length > 0 || state === LoadingState.Error,
     hasNoData: !hasData,
-    ...(allErrors.length > 0 && { errors: allErrors }),
+    ...(errorMessages.length > 0 && { errors: errorMessages }),
+    ...(errorDetails.length > 0 && { errorDetails }),
+    ...(notices.length > 0 && { notices }),
   };
 }
 
@@ -155,7 +163,7 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
 
       const elementEntries = Object.entries(fullElements).filter(([name]) => !filterSet || filterSet.has(name));
 
-      const elements: Array<Record<string, unknown>> = [];
+      const elements: PanelElementEntry[] = [];
 
       for (const [elementName, element] of elementEntries) {
         const panelId = scene.serializer.getPanelIdForElement(elementName);
@@ -169,7 +177,7 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
               spec: { element: { kind: 'ElementReference' as const, name: elementName } },
             };
 
-        const entry: Record<string, unknown> = { element, layoutItem };
+        const entry: PanelElementEntry = { element, layoutItem };
 
         if (payload.includeStatus && vizPanel) {
           const status = getPanelRuntimeStatus(vizPanel);

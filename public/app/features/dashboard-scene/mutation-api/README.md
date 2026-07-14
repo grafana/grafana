@@ -641,7 +641,15 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
             "element": { "kind": "ElementReference", "name": "panel-1" }
           }
         },
-        "status": { "isLoading": false, "hasError": false, "hasNoData": false },
+        "status": {
+          "loadingState": "Error",
+          "isLoading": false,
+          "hasError": true,
+          "hasNoData": false,
+          "errors": ["parse error: unexpected } in query"],
+          "errorDetails": [{ "message": "parse error: unexpected } in query", "refId": "A", "type": "unknown" }],
+          "notices": [{ "severity": "warning", "text": "Query returned partial data" }]
+        },
         "dataSchema": [
           {
             "name": "response_time",
@@ -665,7 +673,17 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 }
 ```
 
-`status` and `dataSchema` are only present when `includeStatus` is `true` and the panel has a data provider. `dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.
+`status` and `dataSchema` are only present when `includeStatus` is `true` and the panel has a data provider. This is a runtime side-channel: it is never part of the saved v2 dashboard spec (`element`), only the read result.
+
+`status` reports the panel's live query health:
+
+- `loadingState` — the raw scene loading state (`NotStarted`, `Loading`, `Streaming`, `Done`, `Error`).
+- `isLoading` / `hasError` / `hasNoData` — convenience booleans derived from `loadingState` and the query result.
+- `errors` — plain error message strings (kept for backward compatibility).
+- `errorDetails` — structured errors with `message`, `refId`, and `type`, present only when the panel has query errors.
+- `notices` — data-frame notices (`info` / `warning` / `error`), deduped across frames.
+
+`dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.
 
 ````
 
