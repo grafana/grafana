@@ -12,9 +12,9 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import RecommendationCard from './RecommendationCard';
-import RecommendationExisting from './RecommendationExisting';
-import RecommendationPill from './RecommendationPill';
+import { RecommendationCard } from './RecommendationCard';
+import { RecommendationExisting } from './RecommendationExisting';
+import { RecommendationPill } from './RecommendationPill';
 import { KUBERNETES_APP_ID } from './kubernetesData';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
@@ -36,7 +36,7 @@ export interface RecommendationItem {
 // at the plugin page where each app can be enabled, so the section must drop entries whose plugin
 // is already enabled and hide entirely from users who cannot manage plugins.
 function getRecommendations(): RecommendationItem[] {
-  return [
+  const recommendationDefinitions: Array<Omit<RecommendationItem, 'href'>> = [
     {
       id: 'hosted-traces',
       pluginId: 'grafana-exploretraces-app',
@@ -49,7 +49,6 @@ function getRecommendations(): RecommendationItem[] {
         'Add distributed tracing to see how requests flow between services and where they slow down.'
       ),
       action: t('home.recommendations.hosted-traces.action', 'Enable Hosted Traces'),
-      href: locationUtil.assureBaseUrl('/plugins/grafana-exploretraces-app/'),
     },
     {
       id: 'synthetic-monitoring',
@@ -63,7 +62,6 @@ function getRecommendations(): RecommendationItem[] {
         'Probe your endpoints from 20+ global locations before your users notice.'
       ),
       action: t('home.recommendations.synthetic-monitoring.action', 'Add Synthetic Monitoring'),
-      href: locationUtil.assureBaseUrl('/plugins/grafana-synthetic-monitoring-app/'),
     },
     {
       id: 'application-observability',
@@ -77,7 +75,6 @@ function getRecommendations(): RecommendationItem[] {
         'Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.'
       ),
       action: t('home.recommendations.application-observability.action', 'Enable Application Observability'),
-      href: locationUtil.assureBaseUrl('/plugins/grafana-app-observability-app/'),
     },
     {
       id: 'frontend-observability',
@@ -91,9 +88,13 @@ function getRecommendations(): RecommendationItem[] {
         'Capture Core Web Vitals and errors from the browser and tie them back to backend traces.'
       ),
       action: t('home.recommendations.frontend-observability.action', 'Enable Frontend Observability'),
-      href: locationUtil.assureBaseUrl('/plugins/grafana-kowalski-app/'),
     },
   ];
+
+  return recommendationDefinitions.map((recommendation) => ({
+    ...recommendation,
+    href: locationUtil.assureBaseUrl(`/plugins/${recommendation.pluginId}/`),
+  }));
 }
 
 type PluginCtaState = 'enabled' | 'disabled' | 'not-installed' | 'unknown';
@@ -121,7 +122,7 @@ async function getPluginCtaState(pluginId: string): Promise<PluginCtaState> {
  * — the recommendations are pitched as next steps after Kubernetes Monitoring, so they make no sense
  * without it.
  */
-export default function Recommendations() {
+export function Recommendations() {
   const { installed, loading: bridgeLoading } = usePluginBridge(KUBERNETES_APP_ID);
   // Classify every recommended app once per mount: enabled apps are dropped, and the remaining
   // cards are gated on the permission their CTA actually needs (install vs settings write).

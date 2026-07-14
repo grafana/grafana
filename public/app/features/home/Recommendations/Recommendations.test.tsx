@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import Recommendations from './Recommendations';
+import { Recommendations } from './Recommendations';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),

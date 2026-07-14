@@ -7,7 +7,7 @@ import { recommendationEnableClicked } from '../analytics/main';
 
 import type { RecommendationItem } from './Recommendations';
 
-export default function RecommendationCard({ recommendation }: { recommendation: RecommendationItem }) {
+export function RecommendationCard({ recommendation }: { recommendation: RecommendationItem }) {
   const styles = useStyles2(getStyles, recommendation.color);
 
   return (
