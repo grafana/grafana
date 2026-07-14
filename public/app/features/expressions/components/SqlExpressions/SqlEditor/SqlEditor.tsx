@@ -80,7 +80,7 @@ export const SqlEditor = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   editorBorder: css({
-    border: `1px solid ${theme.colors.border.medium}`,
+    border: `1px solid ${theme.components.input.borderColor}`,
     borderTopLeftRadius: theme.shape.radius.default,
     borderTopRightRadius: theme.shape.radius.default,
     overflow: 'hidden',

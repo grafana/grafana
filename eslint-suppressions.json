@@ -2643,11 +2643,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/cloudwatch/language/cloudwatch-logs/CloudWatchLogsLanguageProvider.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/cloudwatch/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -2933,21 +2928,6 @@
   "public/app/plugins/datasource/loki/shardQuerySplitting.ts": {
     "@grafana/no-direct-local-storage-access": {
       "count": 2
-    }
-  },
-  "public/app/plugins/datasource/mssql/azureauth/AzureCredentialsForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 10
-    }
-  },
-  "public/app/plugins/datasource/mssql/configuration/ConfigurationEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 11
-    }
-  },
-  "public/app/plugins/datasource/mssql/configuration/Kerberos.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 8
     }
   },
   "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
