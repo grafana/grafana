@@ -12,12 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-// TestInstallSchema_ResourcePermissionsGate is a regression test for the
-// --static-feature-flags migration: the ResourcePermission kind must be
-// registered based on the OpenFeature flag alone. It used to be gated by the
-// legacy feature manager, which static flags never fed, breaking the zanzana
-// mt-reconciler's discovery of resourcepermissions in cloud (see
-// grafana/deployment_tools#586772).
 func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 	gvk := iamv0.ResourcePermissionInfo.GroupVersionKind()
 
@@ -50,6 +44,7 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 			require.NoError(t, openfeature.SetProviderAndWait(provider))
 
 			b := &IdentityAccessManagementAPIBuilder{ofClient: openfeature.NewDefaultClient()}
+
 			scheme := runtime.NewScheme()
 			require.NoError(t, b.InstallSchema(scheme))
 			require.Equal(t, tt.wantRegistered, scheme.Recognizes(gvk),
