@@ -6633,11 +6633,9 @@
       "adhoc-options": "Filter options",
       "alert-not-supported": "This data source does not support filters",
       "description-enable-group-by": "Enables group by operator in the filter combobox",
-      "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
       "label-use-static-key-dimensions": "Use static key dimensions",
-      "name-allow-custom-values": "Allow custom values",
       "name-enable-group-by": "Enable group by"
     },
     "add-filters": {
@@ -7046,6 +7044,7 @@
     },
     "get-editable-variables": {
       "description": {
+        "add-filters-and-group-by-keys-on-the-fly": "Add key/value filters and group by keys on the fly",
         "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly",
         "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
         "group": "Add keys to group by on the fly",
@@ -7096,12 +7095,10 @@
     },
     "group-by-variable-form": {
       "alert-not-supported": "This data source does not support group by variables",
-      "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "group-by-options": "Group by options",
       "label-data-source": "Data source",
-      "label-use-static-group-by-dimensions": "Use static group dimensions",
-      "name-allow-custom-values": "Allow custom values"
+      "label-use-static-group-by-dimensions": "Use static group dimensions"
     },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
@@ -7533,11 +7530,6 @@
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
-      "description-enables-option-include-variables": "Enables an option to include all values",
-      "description-enables-users-custom-values": "Enables users to add custom values to the list",
-      "name-allow-custom-values": "Allow custom values",
-      "name-custom-all-value": "Custom all value",
-      "name-include-all-option": "Include All option",
       "name-multi-value": "Multi-value"
     },
     "share-button": {
@@ -7705,7 +7697,6 @@
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
-      "run-query": "Run query",
       "text-running-query": "Running query...",
       "title": {
         "delete-variable": "Delete variable"
@@ -12050,6 +12041,10 @@
     "global-users": {
       "subtitle": "Manage users in Grafana",
       "title": "Users"
+    },
+    "global-variables": {
+      "subtitle": "Template variables shared across dashboards, globally or per folder",
+      "title": "Variables"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
@@ -16892,6 +16887,72 @@
       "collapse-label": "Renamed or missing variables",
       "collapse-tooltip": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "loading": "Loading..."
+    }
+  },
+  "variables-management": {
+    "bulk": {
+      "deleted_one": "{{count}} variable deleted",
+      "deleted_other": "{{count}} variables deleted",
+      "failed": "Failed to process variable \"{{name}}\"",
+      "move-skipped_one": "{{count}} variable was already in the selected folder",
+      "move-skipped_other": "{{count}} variables were already in the selected folder",
+      "moved_one": "{{count}} variable moved",
+      "moved_other": "{{count}} variables moved"
+    },
+    "delete-modal": {
+      "body_one": "Are you sure you want to delete the variable \"{{name}}\"?",
+      "body_other": "Are you sure you want to delete {{count}} variables?",
+      "confirm": "Delete",
+      "title": "Delete variables"
+    },
+    "editor": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "delete-modal-body": "Are you sure you want to delete \"{{name}}\"?",
+      "delete-modal-confirm": "Delete",
+      "delete-modal-title": "Delete variable",
+      "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
+      "folder-label": "Folder",
+      "moved": "Variable moved",
+      "name-exists": "A variable with this name already exists in the selected folder",
+      "save": "Save",
+      "saving": "Saving...",
+      "updated": "Variable updated"
+    },
+    "editor-nav": {
+      "back-to-list": "Back to variables",
+      "new": "New variable",
+      "not-found": "Variable not found"
+    },
+    "move-modal": {
+      "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).",
+      "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).",
+      "cancel": "Cancel",
+      "folder-label": "Folder",
+      "move": "Move",
+      "moving": "Moving...",
+      "title": "Move variables"
+    },
+    "page": {
+      "delete": "Delete",
+      "empty-body": "Variables created here can be shared across dashboards, either globally or scoped to a folder.",
+      "empty-cta": "New variable",
+      "empty-title": "You haven't created any variables yet",
+      "load-error": "Failed to load variables",
+      "move": "Move",
+      "new-variable": "New variable",
+      "selected-count_one": "{{count}} selected",
+      "selected-count_other": "{{count}} selected"
+    },
+    "recreate": {
+      "delete-failed": "The variable was saved to the new location, but the previous version could not be removed. Delete it manually to avoid duplicates."
+    },
+    "table": {
+      "header-name": "Name",
+      "header-type": "Type",
+      "select-all": "Select all variables",
+      "select-folder": "Select all variables in folder {{title}}",
+      "select-variable": "Select variable {{name}}"
     }
   },
   "visualization": {

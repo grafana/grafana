@@ -158,19 +158,60 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'groupby',
 ];
 
-export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
+export interface VariableTypeSelectOptionsArgs {
+  /**
+   * True when the type selector renders outside a dashboard (e.g. the variables
+   * management page). Standalone contexts have no dedicated "Filter and Group by"
+   * entry point, so with unified drilldown controls the adhoc type stays selectable
+   * and is relabeled accordingly.
+   */
+  standalone?: boolean;
+}
+
+/**
+ * Display label for a variable type, shared by the type selector and any list
+ * views so the same variable is never called two different things. Under
+ * unified drilldown controls the adhoc type is presented as "Filter and Group
+ * by" in standalone contexts.
+ */
+export function getVariableTypeLabel(
+  variableType: EditableVariableType,
+  { standalone }: VariableTypeSelectOptionsArgs = {}
+): string {
+  if (variableType === 'adhoc' && standalone && config.featureToggles.dashboardUnifiedDrilldownControls) {
+    return t('dashboard-scene.add-filters.label', 'Filter and Group by');
+  }
+  return getEditableVariables()[variableType].name;
+}
+
+export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectOptionsArgs = {}): Array<
+  SelectableValue<EditableVariableType>
+> {
   const editableVariables = getEditableVariables();
-  const results = EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
-    label: editableVariables[variableType].name,
-    value: variableType,
-    description: editableVariables[variableType].description,
-  }));
+  const unifiedDrilldown = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls);
+
+  const results = EDITABLE_VARIABLES_SELECT_ORDER.map(
+    (variableType): SelectableValue<EditableVariableType> => ({
+      label: getVariableTypeLabel(variableType, { standalone }),
+      value: variableType,
+      description:
+        variableType === 'adhoc' && unifiedDrilldown && standalone
+          ? t(
+              'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
+              'Add key/value filters and group by keys on the fly'
+            )
+          : editableVariables[variableType].description,
+    })
+  );
 
   return results.filter((option) => {
+    // Legacy standalone groupby is experimental/deprecated; leave it gated only
+    // by groupByVariable and focus new work on the unified adhoc path.
     if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
       return false;
     }
-    if (config.featureToggles.dashboardUnifiedDrilldownControls && option.value === 'adhoc') {
+    if (option.value === 'adhoc' && unifiedDrilldown && !standalone) {
+      // Dashboards have a dedicated "Filter and Group by" entry point instead.
       return false;
     }
 
