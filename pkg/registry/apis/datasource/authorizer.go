@@ -5,7 +5,9 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	authn "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -30,8 +32,27 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				Verb:      attr.GetVerb(),
 			}
 
-			// Must have query permission to access any subresource
-			if attr.GetSubresource() != "" {
+			var svcIdentity []string
+			if authInfo, ok := authlib.AuthInfoFrom(ctx); ok {
+				svcIdentity = authInfo.GetExtra()[authn.ServiceIdentityKey]
+			}
+
+			backend.Logger.Debug(
+				"datasource authorizer check",
+				"group", req.Group,
+				"resource", req.Resource,
+				"subresource", req.Subresource,
+				"verb", req.Verb,
+				"namespace", req.Namespace,
+				"name", req.Name,
+				"svcIdentity", svcIdentity,
+				"user_subject", user.GetSubject(),
+				"user_identity_type", string(user.GetIdentityType()),
+				"token_delegated_permissions", user.GetTokenDelegatedPermissions(),
+				"token_permissions", user.GetTokenPermissions(),
+			)
+
+			if sub := attr.GetSubresource(); sub != "" {
 				req.Verb = utils.VerbCreate
 				req.Subresource = "query"
 			}
@@ -44,7 +65,7 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionAllow, "", nil
 			}
 			if req.Subresource != "" {
-				return authorizer.DecisionDeny, "missing `query` subresource permission", nil
+				return authorizer.DecisionDeny, "missing `" + req.Subresource + "` subresource permission", nil
 			}
 			return authorizer.DecisionDeny, "access denied", nil
 		})
