@@ -43,7 +43,7 @@ export interface VizTooltipFooterProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   /** Callback to open the annotation editor for the hovered point. */
   annotate?: () => void;
-  /** Arbitrary content rendered as a trailing footer section (e.g. an app-layer action button). */
+  /** Content rendered at the end of the footer; it owns its own section styling (border/padding). */
   additionalContent?: ReactNode;
 }
 
@@ -170,7 +170,7 @@ export const VizTooltipFooter = ({
           </Button>
         </div>
       )}
-      {additionalContent != null && <div className={styles.footerSection}>{additionalContent}</div>}
+      {additionalContent}
     </div>
   );
 };
