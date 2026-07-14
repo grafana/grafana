@@ -1,26 +1,26 @@
 import { isNumber } from 'lodash';
+import FlowLine from 'ol-ext/style/FlowLine';
 import Feature, { type FeatureLike } from 'ol/Feature';
 import type OpenLayersMap from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
 import VectorSource from 'ol/source/Vector';
-import { Fill, Stroke, Style, Circle } from 'ol/style';
-import FlowLine from 'ol-ext/style/FlowLine';
+import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { Subscription, throttleTime } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
 import {
-  type MapLayerRegistryItem,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
-  DataHoverEvent,
   DataHoverClearEvent,
-  type DataFrame,
+  DataHoverEvent,
   FieldType,
   colorManipulator,
+  type DataFrame,
+  type EventBus,
+  type GrafanaTheme2,
   type MapLayerOptions,
+  type MapLayerRegistryItem,
+  type PanelData,
 } from '@grafana/data';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
@@ -189,6 +189,18 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const hLineFeature = new Feature({});
     const vLineFeature = new Feature({});
     const lineFeatures = [hLineFeature, vLineFeature];
+
+    // Clear the geometries + styles
+    // Stale crosshair geometry would otherwise pollute the "fit to data" extent.
+    const clearCrosshair = () => {
+      crosshairFeature.setGeometry(undefined);
+      crosshairFeature.setStyle(new Style({}));
+      lineFeatures.forEach((feature) => {
+        feature.setGeometry(undefined);
+        feature.setStyle(new Style({}));
+      });
+    };
+
     const crosshairRadius = (style.base.lineWidth || 6) + 3;
     const crosshairStyle = new Style({
       image: new Circle({
@@ -275,8 +287,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
     subscriptions.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
-        crosshairFeature.setStyle(new Style({}));
-        lineFeatures.forEach((feature) => feature.setStyle(new Style({})));
+        clearCrosshair();
       })
     );
 
@@ -287,6 +298,9 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         if (!data.series?.length) {
           return; // ignore empty
         }
+
+        // The crosshair refers to a row of the previous data.
+        clearCrosshair();
 
         for (const frame of data.series) {
           if (style.fields || hasArrows) {
