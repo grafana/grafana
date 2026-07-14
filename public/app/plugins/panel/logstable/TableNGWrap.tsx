@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
+  cacheFieldDisplayNames,
   DashboardCursorSync,
   type DataFrame,
   type Field,
@@ -50,6 +51,10 @@ export function TableNGWrap({
   containerElement,
   onWrapTextClick,
 }: Props) {
+  useMemo(() => {
+    cacheFieldDisplayNames(data.series);
+  }, [data.series]);
+
   const panelContext = usePanelContext();
   const protoParserEnabled = useFlagTableProtoRowParser();
   const nestedRefactorEnabled = useFlagTableRefactorNested();
