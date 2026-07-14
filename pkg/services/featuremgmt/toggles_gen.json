@@ -1377,6 +1377,20 @@
     },
     {
       "metadata": {
+        "name": "connectionsFilterSidebar",
+        "resourceVersion": "1779358850014",
+        "creationTimestamp": "2026-05-21T10:20:50Z"
+      },
+      "spec": {
+        "description": "Enables the new sidebar filter panel in the Add new connection page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "crashDetection",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-11-12T15:07:27Z"
