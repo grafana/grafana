@@ -1,11 +1,12 @@
 package v0alpha1
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,26 +31,29 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
-type GetSearchRulesRequest struct {
-	Params  GetSearchRulesRequestParams
+type CreateSearchRulesRequest struct {
+	Body    CreateSearchRulesRequestBody
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) GetSearchRules(ctx context.Context, namespace string, request GetSearchRulesRequest) (*GetSearchRulesResponse, error) {
-	params := url.Values{}
+func (c *CustomRouteClient) CreateSearchRules(ctx context.Context, namespace string, request CreateSearchRulesRequest) (*CreateSearchRulesResponse, error) {
+	body, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
+	}
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
 		Path:    "/search",
-		Verb:    "GET",
-		Query:   params,
+		Verb:    "POST",
+		Body:    io.NopCloser(bytes.NewReader(body)),
 		Headers: request.Headers,
 	})
 	if err != nil {
 		return nil, err
 	}
-	cast := GetSearchRulesResponse{}
+	cast := CreateSearchRulesResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetSearchRulesResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateSearchRulesResponse: %w", err)
 	}
 	return &cast, nil
 }

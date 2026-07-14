@@ -268,243 +268,81 @@ var appManifestData = app.ManifestData{
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/search": {
-						Get: &spec3.Operation{
+						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "getSearchRules",
+								OperationId: "createSearchRules",
 
-								Parameters: []*spec3.Parameter{
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
 
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "continueToken",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"continue": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"facets": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				}},
+																		},
+																	},
+																},
+																"fields": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				}},
+																		},
+																	},
+																},
+																"labelSelector": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"limit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"integer"},
+																	},
+																},
+																"sort": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchSortField"),
+																				}},
+																		},
+																	},
+																},
+																"where": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchWhereNode"),
+																	},
+																},
+															},
+														}},
+												}},
 										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "dashboardUID",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "datasourceUIDs",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"array"},
-													Items: &spec.SchemaOrArray{
-														Schema: &spec.Schema{
-															SchemaProps: spec.SchemaProps{
-																Type: []string{"string"},
-															}},
-													},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "folders",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"array"},
-													Items: &spec.SchemaOrArray{
-														Schema: &spec.Schema{
-															SchemaProps: spec.SchemaProps{
-																Type: []string{"string"},
-															}},
-													},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "labels",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"array"},
-													Items: &spec.SchemaOrArray{
-														Schema: &spec.Schema{
-															SchemaProps: spec.SchemaProps{
-																Type: []string{"string"},
-															}},
-													},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "limit",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"integer"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "metric",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "names",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"array"},
-													Items: &spec.SchemaOrArray{
-														Schema: &spec.Schema{
-															SchemaProps: spec.SchemaProps{
-																Type: []string{"string"},
-															}},
-													},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "notificationType",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "panelID",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"integer"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "paused",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"boolean"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "q",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "receiver",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "routingTree",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "sort",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/RuleSearchSortField"),
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "targetDatasourceUID",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "type",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-								},
-
+									}},
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
 										Default: &spec3.Response{
@@ -515,12 +353,32 @@ var appManifestData = app.ManifestData{
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Type: []string{"object"},
+																	Type:        []string{"object"},
+																	Description: "listMeta is intentionally omitted: #SearchResults carries its\nown metadata (continue, totalHits) mirroring the generic\nsearch.grafana.app SearchResults envelope.",
 																	Properties: map[string]spec.Schema{
 																		"apiVersion": {
 																			SchemaProps: spec.SchemaProps{
 																				Type:        []string{"string"},
 																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"facets": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				AdditionalProperties: &spec.SchemaOrBool{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"array"},
+																							Items: &spec.SchemaOrArray{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+
+																										Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesFacetValue"),
+																									}},
+																							},
+																						},
+																					},
+																				},
 																			},
 																		},
 																		"items": {
@@ -530,7 +388,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRuleHit"),
+																							Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchResultHit"),
 																						}},
 																				},
 																			},
@@ -543,42 +401,16 @@ var appManifestData = app.ManifestData{
 																		},
 																		"metadata": {
 																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"object"},
-																				Properties: map[string]spec.Schema{
-																					"continue": {
-																						SchemaProps: spec.SchemaProps{
-																							Type: []string{"string"},
-																						},
-																					},
-																					"remainingItemCount": {
-																						SchemaProps: spec.SchemaProps{
-																							Type: []string{"integer"},
-																						},
-																					},
-																					"resourceVersion": {
-																						SchemaProps: spec.SchemaProps{
-																							Type: []string{"string"},
-																						},
-																					},
-																					"selfLink": {
-																						SchemaProps: spec.SchemaProps{
-																							Type: []string{"string"},
-																						},
-																					},
-																				},
-																			},
-																			VendorExtensible: spec.VendorExtensible{
-																				Extensions: spec.Extensions{
-																					"x-grafana-app-uses-kubernetes-list-metadata": true,
-																				},
+
+																				Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchResultsMetadata"),
 																			},
 																		},
 																	},
 																	Required: []string{
+																		"metadata",
 																		"items",
 																		"apiVersion",
 																		"kind",
-																		"metadata",
 																	},
 																}},
 														}},
@@ -592,13 +424,37 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
-					"getSearchRulesAlertRuleHit": {
+					"createSearchRulesFacetValue": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
+							Type:        []string{"object"},
+							Description: "#FacetValue is a single value/count pair in a facet breakdown.",
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"value",
+								"count",
+							},
+						},
+					},
+					"createSearchRulesRuleSearchHitFields": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "#RuleSearchHitFields is the per-kind field payload returned on each hit.\nIt carries the union of alert- and recording-rule search fields; only the\nfields relevant to a hit's kind are populated. This maps to the kind's\ndeclared searchFields.",
 							Properties: map[string]spec.Schema{
 								"annotations": {
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
+										Type:        []string{"object"},
+										Description: "Alert-rule fields.",
 										AdditionalProperties: &spec.SchemaOrBool{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
@@ -656,9 +512,10 @@ var appManifestData = app.ManifestData{
 										},
 									},
 								},
-								"name": {
+								"metric": {
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
+										Type:        []string{"string"},
+										Description: "Recording-rule fields.",
 									},
 								},
 								"notificationType": {
@@ -686,78 +543,6 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
-								"title": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"type": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRuleSearchType"),
-									},
-								},
-							},
-							Required: []string{
-								"type",
-								"name",
-								"title",
-								"folder",
-							},
-						},
-					},
-					"getSearchRulesRecordingRuleHit": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"datasourceUIDs": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												}},
-										},
-									},
-								},
-								"folder": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"interval": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"labels": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-								},
-								"metric": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"name": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"paused": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"boolean"},
-									},
-								},
 								"targetDatasourceUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -770,31 +555,193 @@ var appManifestData = app.ManifestData{
 								},
 								"type": {
 									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRuleSearchType"),
+										Type: []string{"string"},
+									},
+								},
+							},
+						},
+					},
+					"createSearchRulesSearchFilterLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "#SearchFilterLeaf matches a single field against a set of values.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"operator": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"In",
+											"NotIn",
+										},
+									},
+								},
+								"values": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
 									},
 								},
 							},
 							Required: []string{
-								"type",
-								"name",
-								"title",
-								"folder",
+								"field",
+								"operator",
+								"values",
 							},
 						},
 					},
-					"getSearchRulesRuleHit": {
+					"createSearchRulesSearchResultHit": {
 						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "#SearchResultHit is a single match: its identity, an optional relevance\nscore (present only when the query included free text), and the requested\nfields.",
+							Properties: map[string]spec.Schema{
+								"fields": {
+									SchemaProps: spec.SchemaProps{
 
-							Description: "RuleHit is the cross-kind union returned by /search.",
+										Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesRuleSearchHitFields"),
+									},
+								},
+								"resource": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchResultResource"),
+									},
+								},
+								"score": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+							},
+							Required: []string{
+								"resource",
+								"fields",
+							},
 						},
 					},
-					"getSearchRulesRuleSearchType": {
+					"createSearchRulesSearchResultResource": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-							Enum: []interface{}{
-								"alertrule",
-								"recordingrule",
+							Type:        []string{"object"},
+							Description: "#SearchResultResource is the full identity of a hit.",
+							Properties: map[string]spec.Schema{
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"kind": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"resource": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"group",
+								"resource",
+								"kind",
+								"name",
+							},
+						},
+					},
+					"createSearchRulesSearchResultsMetadata": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "#SearchResultsMetadata carries the paging token and total authorised match\ncount.",
+							Properties: map[string]spec.Schema{
+								"continue": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"totalHits": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+							},
+						},
+					},
+					"createSearchRulesSearchSortField": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"string"},
+							Description: "#SearchSortField selects a result ordering. A leading \"-\" denotes\ndescending. Each field must be declared sortable in the kind's manifest.",
+						},
+					},
+					"createSearchRulesSearchTextLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "#SearchTextLeaf is a free-text search across one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used.",
+							Properties: map[string]spec.Schema{
+								"fields": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"value",
+							},
+						},
+					},
+					"createSearchRulesSearchWhereNode": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "#SearchWhereNode is a single node of the where query tree. A node has\nexactly one key naming its type. v1 supports a top-level \"and\" combinator\nplus the \"text\" and \"filter\" leaves; \"or\"/\"not\"/nesting and the \"range\"/\n\"exists\" leaves are future, additive extensions.",
+							Properties: map[string]spec.Schema{
+								"and": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchWhereNode"),
+												}},
+										},
+									},
+								},
+								"filter": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchFilterLeaf"),
+									},
+								},
+								"text": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchTextLeaf"),
+									},
+								},
 							},
 						},
 					},
@@ -826,7 +773,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/search|GET": v0alpha1.GetSearchRulesResponse{},
+	"v0alpha1||<namespace>/search|POST": v0alpha1.CreateSearchRulesResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -851,7 +798,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+	"v0alpha1||<namespace>/search|POST": v0alpha1.CreateSearchRulesRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {

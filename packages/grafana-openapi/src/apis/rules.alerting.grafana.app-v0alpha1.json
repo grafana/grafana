@@ -2714,169 +2714,47 @@
       ]
     },
     "/search": {
-      "get": {
-        "operationId": "getSearchRules",
+      "post": {
+        "operationId": "createSearchRules",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSearchRulesRequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSearchRulesRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetSearchRulesResponse"
+                  "$ref": "#/components/schemas/CreateSearchRulesResponse"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetSearchRulesResponse"
+                  "$ref": "#/components/schemas/CreateSearchRulesResponse"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetSearchRulesResponse"
+                  "$ref": "#/components/schemas/CreateSearchRulesResponse"
                 }
               }
             }
           }
         }
       },
-      "parameters": [
-        {
-          "name": "continueToken",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "dashboardUID",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "datasourceUIDs",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "folders",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "labels",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "metric",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "names",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "notificationType",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "panelID",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "paused",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "q",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "receiver",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "routingTree",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "sort",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "targetDatasourceUID",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "type",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
+      "parameters": []
     }
   },
   "components": {
@@ -3218,18 +3096,76 @@
       "AlertRuleTimeIntervalRef": {
         "type": "string"
       },
-      "GetSearchRulesResponse": {
+      "CreateSearchRulesFacetValue": {
+        "description": "#FacetValue is a single value/count pair in a facet breakdown.",
         "type": "object",
-        "required": ["items", "apiVersion", "kind", "metadata"],
+        "required": ["value", "count"],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSearchRulesRequestBody": {
+        "type": "object",
+        "properties": {
+          "continue": {
+            "type": "string"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "labelSelector": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateSearchRulesSearchSortField"
+            }
+          },
+          "where": {
+            "$ref": "#/components/schemas/CreateSearchRulesSearchWhereNode"
+          }
+        }
+      },
+      "CreateSearchRulesResponse": {
+        "description": "listMeta is intentionally omitted: #SearchResults carries its\nown metadata (continue, totalHits) mirroring the generic\nsearch.grafana.app SearchResults envelope.",
+        "type": "object",
+        "required": ["metadata", "items", "apiVersion", "kind"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
+          "facets": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CreateSearchRulesFacetValue"
+              }
+            }
+          },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GetSearchRulesRuleHit"
+              "$ref": "#/components/schemas/CreateSearchRulesSearchResultHit"
             }
           },
           "kind": {
@@ -3237,17 +3173,182 @@
             "type": "string"
           },
           "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ListMeta"
-              }
-            ]
+            "$ref": "#/components/schemas/CreateSearchRulesSearchResultsMetadata"
           }
         }
       },
-      "GetSearchRulesRuleHit": {
-        "description": "RuleHit is the cross-kind union returned by /search."
+      "CreateSearchRulesRuleSearchHitFields": {
+        "description": "#RuleSearchHitFields is the per-kind field payload returned on each hit.\nIt carries the union of alert- and recording-rule search fields; only the\nfields relevant to a hit's kind are populated. This maps to the kind's\ndeclared searchFields.",
+        "type": "object",
+        "properties": {
+          "annotations": {
+            "description": "Alert-rule fields.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dashboardUID": {
+            "type": "string"
+          },
+          "datasourceUIDs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "folder": {
+            "type": "string"
+          },
+          "for": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "keepFiringFor": {
+            "type": "string"
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "metric": {
+            "description": "Recording-rule fields.",
+            "type": "string"
+          },
+          "notificationType": {
+            "type": "string"
+          },
+          "panelID": {
+            "type": "integer"
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "routingTree": {
+            "type": "string"
+          },
+          "targetDatasourceUID": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSearchRulesSearchFilterLeaf": {
+        "description": "#SearchFilterLeaf matches a single field against a set of values.",
+        "type": "object",
+        "required": ["field", "operator", "values"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": ["In", "NotIn"]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateSearchRulesSearchResultHit": {
+        "description": "#SearchResultHit is a single match: its identity, an optional relevance\nscore (present only when the query included free text), and the requested\nfields.",
+        "type": "object",
+        "required": ["resource", "fields"],
+        "properties": {
+          "fields": {
+            "$ref": "#/components/schemas/CreateSearchRulesRuleSearchHitFields"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/CreateSearchRulesSearchResultResource"
+          },
+          "score": {
+            "type": "number"
+          }
+        }
+      },
+      "CreateSearchRulesSearchResultResource": {
+        "description": "#SearchResultResource is the full identity of a hit.",
+        "type": "object",
+        "required": ["group", "resource", "kind", "name"],
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSearchRulesSearchResultsMetadata": {
+        "description": "#SearchResultsMetadata carries the paging token and total authorised match\ncount.",
+        "type": "object",
+        "properties": {
+          "continue": {
+            "type": "string"
+          },
+          "totalHits": {
+            "type": "integer"
+          }
+        }
+      },
+      "CreateSearchRulesSearchSortField": {
+        "description": "#SearchSortField selects a result ordering. A leading \"-\" denotes\ndescending. Each field must be declared sortable in the kind's manifest.",
+        "type": "string"
+      },
+      "CreateSearchRulesSearchTextLeaf": {
+        "description": "#SearchTextLeaf is a free-text search across one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used.",
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSearchRulesSearchWhereNode": {
+        "description": "#SearchWhereNode is a single node of the where query tree. A node has\nexactly one key naming its type. v1 supports a top-level \"and\" combinator\nplus the \"text\" and \"filter\" leaves; \"or\"/\"not\"/nesting and the \"range\"/\n\"exists\" leaves are future, additive extensions.",
+        "type": "object",
+        "properties": {
+          "and": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateSearchRulesSearchWhereNode"
+            }
+          },
+          "filter": {
+            "$ref": "#/components/schemas/CreateSearchRulesSearchFilterLeaf"
+          },
+          "text": {
+            "$ref": "#/components/schemas/CreateSearchRulesSearchTextLeaf"
+          }
+        }
       },
       "RecordingRule": {
         "type": "object",
