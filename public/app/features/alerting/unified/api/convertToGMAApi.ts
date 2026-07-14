@@ -20,8 +20,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         payload: RulerRulesConfigDTO;
         /** Target data source UID to store recording rules in */
         targetDatasourceUID?: string;
-        /** Extra labels to add to all imported rules (format: key=value,key2=value2) */
-        extraLabels?: string;
         /** JSON-encoded notification settings applied to all imported alerting rules */
         notificationSettings?: string;
       }
@@ -33,7 +31,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         pauseAlerts,
         dataSourceUID,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       }) => ({
         url: `/api/convert/prometheus/config/v1/rules`,
@@ -46,7 +43,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           'X-Disable-Provenance': true,
           ...(targetFolderUID ? { 'X-Grafana-Alerting-Folder-UID': targetFolderUID } : {}),
           ...(targetDatasourceUID ? { 'X-Grafana-Alerting-Target-Datasource-UID': targetDatasourceUID } : {}),
-          ...(extraLabels ? { 'X-Grafana-Alerting-Extra-Labels': extraLabels } : {}),
           ...(notificationSettings ? { 'X-Grafana-Alerting-Notification-Settings': notificationSettings } : {}),
         },
       }),

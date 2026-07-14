@@ -99,12 +99,7 @@ interface MigrateRulesBaseParams {
   targetDatasourceUID?: string;
 }
 
-/**
- * Policy routing via notification_settings.policy (new) and label-based routing via extraLabels (legacy)
- * are mutually exclusive — only one mechanism should be used per import.
- */
-type MigrateRulesParams = MigrateRulesBaseParams &
-  ({ extraLabels?: string; notificationSettings?: never } | { extraLabels?: never; notificationSettings?: string });
+type MigrateRulesParams = MigrateRulesBaseParams & { notificationSettings?: string };
 
 export function buildRoutingParams(
   selectedRoutingTree: string | undefined
@@ -153,7 +148,6 @@ export function useImportRules() {
         pauseRecordingRules,
         payload,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       } = params;
 
@@ -164,7 +158,6 @@ export function useImportRules() {
         pauseAlerts: pauseAlertingRules,
         payload,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       }).unwrap();
     },
