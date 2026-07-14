@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 
 export type AttributeSectionType = 'resource' | 'span';
 
-export interface AttributeCategoryDefinition {
+interface AttributeCategoryDefinition {
   id: string;
   label: string;
   icon: IconName;
@@ -215,7 +215,7 @@ function getOtherCategory(): AttributeCategoryDefinition {
   };
 }
 
-export function getAttributeCategories(sectionType: AttributeSectionType): AttributeCategoryDefinition[] {
+function getAttributeCategories(sectionType: AttributeSectionType): AttributeCategoryDefinition[] {
   return orderAttributeCategories(buildAttributeCategories(), SECTION_CATEGORY_PRIORITY[sectionType]);
 }
 
