@@ -4,12 +4,13 @@ import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2, type IconName, locationUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
-import { getPluginSettings } from '@grafana/runtime/unstable';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
 import { contextSrv } from 'app/core/services/context_srv';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { RecommendationCard } from './RecommendationCard';
@@ -97,66 +98,45 @@ function getRecommendations(): RecommendationItem[] {
   }));
 }
 
-type PluginCtaState = 'enabled' | 'disabled' | 'not-installed' | 'unknown';
-
-// What acting on a recommendation's CTA would mean for this plugin: enabling a disabled app is a
-// settings write; a not-installed app is an install journey. 404 (wrapped as `cause`, like
-// usePluginSettings unwraps it) means not installed; any other failure is 'unknown'. Never
-// rejects — every failure path resolves to a state.
-async function getPluginCtaState(pluginId: string): Promise<PluginCtaState> {
-  try {
-    const settings = await getPluginSettings(pluginId);
-    return settings.enabled ? 'enabled' : 'disabled';
-  } catch (err) {
-    const cause = err instanceof Error ? err.cause : err;
-    if (isFetchError(cause) && cause.status === 404) {
-      return 'not-installed';
-    }
-    return 'unknown';
-  }
+// Bypass getLocalPlugins(): it drops hidden plugins, which must still be classified here.
+async function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
+  return getBackendSrv().get('/api/plugins', accessControlQueryParam({ embedded: 0 }));
 }
 
-/**
- * Self-gates to null unless Kubernetes Monitoring is installed, the user holds at least one plugin
- * capability (install or settings write), and at least one recommended app survives per-card gating
- * — the recommendations are pitched as next steps after Kubernetes Monitoring, so they make no sense
- * without it.
- */
 export function Recommendations() {
+  const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) && config.pluginAdminEnabled;
+  // Unscoped pre-gate only; each disabled card re-checks plugins:write scoped to its own plugin.
+  const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
+  if (!canInstall && !canWriteSome) {
+    return null;
+  }
+  return <GatedRecommendations canInstall={canInstall} />;
+}
+
+function GatedRecommendations({ canInstall }: { canInstall: boolean }) {
   const { installed, loading: bridgeLoading } = usePluginBridge(KUBERNETES_APP_ID);
-  // Classify every recommended app once per mount: enabled apps are dropped, and the remaining
-  // cards are gated on the permission their CTA actually needs (install vs settings write).
-  const { value: ctaStates, loading: statesLoading } = useAsync(async () => {
-    const ids = getRecommendations().map((r) => r.pluginId);
-    // getPluginCtaState never rejects (all failures resolve to 'unknown'), so Promise.all cannot
-    // abort the batch; Promise.allSettled would only add dead branches.
-    const states = await Promise.all(ids.map(getPluginCtaState));
-    return new Map(ids.map((id, i): [string, PluginCtaState] => [id, states[i]]));
-  }, []); // recommended plugin ids are static
+  const { value: installedPlugins, loading: pluginsLoading } = useAsync(
+    async () => (installed ? fetchInstalledPlugins() : undefined),
+    [installed]
+  );
 
-  // The /plugins/:id route also admits the legacy Admin/ServerAdmin roles — they pass every CTA.
-  const legacyAdmin = contextSrv.hasRole('Admin') || contextSrv.hasRole('ServerAdmin');
-  const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) || legacyAdmin;
-  const canWrite = contextSrv.hasPermission(AccessControlAction.PluginsWrite) || legacyAdmin;
-
-  // Hide (not skeleton) during load so the homepage never flashes a section that then vanishes.
-  if (bridgeLoading || statesLoading || !installed || (!canInstall && !canWrite)) {
+  // An unavailable plugin list fails closed.
+  if (bridgeLoading || pluginsLoading || !installed || !installedPlugins) {
     return null;
   }
 
-  // 'unknown'/undefined (settings lookup failed) keeps the card rather than hiding the section —
-  // the early return above already guaranteed the user holds at least one plugin capability.
-  const recommendations = getRecommendations().filter((r) => {
-    switch (ctaStates?.get(r.pluginId)) {
-      case 'enabled':
-        return false; // already running — never recommend
-      case 'disabled':
-        return canWrite; // enabling = plugin settings update
-      case 'not-installed':
-        return canInstall; // install journey
-      default:
-        return true;
+  const pluginsById = new Map(installedPlugins.map((plugin) => [plugin.id, plugin]));
+  const recommendations = getRecommendations().filter((recommendation) => {
+    const plugin = pluginsById.get(recommendation.pluginId);
+    if (!plugin) {
+      // Unlistable plugins take the install-only path.
+      return canInstall;
     }
+    if (plugin.enabled) {
+      return false;
+    }
+    // plugins:write is scoped to this plugin.
+    return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
   });
   if (recommendations.length === 0) {
     return null;
