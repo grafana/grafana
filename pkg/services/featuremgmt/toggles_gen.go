@@ -67,6 +67,10 @@ const (
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
 
+	// FlagAwsAssumeRolePerDatasourceExternalId
+	// Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.
+	FlagAwsAssumeRolePerDatasourceExternalId = "awsAssumeRolePerDatasourceExternalId"
+
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"

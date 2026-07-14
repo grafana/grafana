@@ -209,6 +209,15 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name: "awsAssumeRolePerDatasourceExternalId",
+			Description: "Generate a per-datasource external ID for Grafana Assume Role " +
+				"(jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.",
+			Stage:      FeatureStageExperimental,
+			Expression: "false",
+			Owner:      grafanaDataSourcesPlugins,
+			Generate:   Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+		},
+		{
 			Name:        "mlExpressions",
 			Description: "Enable support for Machine Learning in server-side expressions",
 			Stage:       FeatureStageExperimental,
