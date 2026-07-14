@@ -2,6 +2,8 @@ package usagestats
 
 import (
 	"context"
+	"errors"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -9,18 +11,29 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+func newTestLeases(t *testing.T) *lease.Manager {
+	t.Helper()
+	mgr := lease.NewManager(newBadgerKV(t), "test-holder", nil,
+		lease.WithInternalMinTTL(time.Second), lease.WithGarbageCollectionDisabled)
+	t.Cleanup(mgr.Stop)
+	return mgr
+}
+
 func newTestIngester(t *testing.T, store *Store, now func() time.Time) (*Ingester, prometheus.Gatherer) {
 	t.Helper()
 	reg := prometheus.NewRegistry()
-	ing := NewIngester(IngesterOptions{
-		Store: store,
-		Reg:   reg,
-		Now:   now,
+	ing, err := NewIngester(IngesterOptions{
+		Store:  store,
+		Leases: newTestLeases(t),
+		Reg:    reg,
+		Now:    now,
 	})
+	require.NoError(t, err)
 	return ing, reg
 }
 
@@ -122,15 +135,107 @@ func TestIngesterFlushAccumulatesAcrossFlushes(t *testing.T) {
 	})
 }
 
+// faultKV wraps a KV and fails Batch calls on a chosen section while the fault
+// is armed, so tests can simulate a transient KV error mid-flush.
+type faultKV struct {
+	kv.KV
+	failSection string
+	fail        atomic.Bool
+}
+
+func (f *faultKV) Batch(ctx context.Context, section string, ops []kv.BatchOp) error {
+	if f.fail.Load() && section == f.failSection {
+		return errors.New("injected batch failure")
+	}
+	return f.KV.Batch(ctx, section, ops)
+}
+
+// TestIngesterFlushDailyFailureNoDoubleCount verifies that when the daily write
+// fails, nothing is applied and the retry produces exactly-once counts.
+func TestIngesterFlushDailyFailureNoDoubleCount(t *testing.T) {
+	ctx := context.Background()
+	const day = "2026-06-23"
+	fkv := &faultKV{KV: newBadgerKV(t), failSection: dailySection}
+	store := NewStore(fkv)
+	ing, _ := newTestIngester(t, store, fixedNow(day))
+
+	require.NoError(t, ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 2}}))
+	require.NoError(t, ing.RecordEvent(ctx, dashKey("b"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 3}}))
+
+	fkv.fail.Store(true)
+	require.Error(t, ing.flush(ctx))
+
+	// Nothing was persisted; everything is re-buffered for retry.
+	daily, err := store.ReadDailyForObject(ctx, objectRefFromKey(dashKey("a")))
+	require.NoError(t, err)
+	require.Empty(t, daily)
+
+	fkv.fail.Store(false)
+	require.NoError(t, ing.flush(ctx))
+
+	agg, err := store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, "default")
+	require.NoError(t, err)
+	for name, v := range map[string]int64{"a": 2, "b": 3} {
+		daily, err := store.ReadDailyForObject(ctx, objectRefFromKey(dashKey(name)))
+		require.NoError(t, err)
+		require.Equal(t, v, daily[day]["views"], "daily views for %q", name)
+		require.Equal(t, v, agg[name]["views_last_1_days"], "views_last_1_days for %q", name)
+		require.Equal(t, v, agg[name]["views_last_7_days"], "views_last_7_days for %q", name)
+		require.Equal(t, v, agg[name]["views_total"], "views_total for %q", name)
+	}
+	require.Empty(t, ing.buffer)
+}
+
+// TestIngesterFlushAggregateFailureIsBestEffort verifies that when the daily
+// write succeeds but the aggregate write fails, the daily buckets stay exact
+// (never double-counted) and the aggregate is left for the reconciler rather
+// than retried through the raw buffer.
+func TestIngesterFlushAggregateFailureIsBestEffort(t *testing.T) {
+	ctx := context.Background()
+	const day = "2026-06-23"
+	fkv := &faultKV{KV: newBadgerKV(t), failSection: aggregatesSection}
+	store := NewStore(fkv)
+	ing, _ := newTestIngester(t, store, fixedNow(day))
+
+	require.NoError(t, ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 2}}))
+	require.NoError(t, ing.RecordEvent(ctx, dashKey("b"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 3}}))
+
+	// An aggregate write failure is best-effort: the flush itself succeeds,
+	// nothing is re-buffered, and the failure is counted.
+	fkv.fail.Store(true)
+	require.NoError(t, ing.flush(ctx))
+	require.Empty(t, ing.buffer)
+	require.Equal(t, float64(2), testutil.ToFloat64(ing.metrics.aggregateWriteFailures))
+
+	// A second flush must not re-apply anything (buffer is empty).
+	fkv.fail.Store(false)
+	require.NoError(t, ing.flush(ctx))
+
+	// Daily buckets are exact and were written exactly once.
+	for name, v := range map[string]int64{"a": 2, "b": 3} {
+		daily, err := store.ReadDailyForObject(ctx, objectRefFromKey(dashKey(name)))
+		require.NoError(t, err)
+		require.Equal(t, v, daily[day]["views"], "daily views for %q", name)
+	}
+
+	// Aggregates were not retried, so they stay under-counted until the
+	// reconciler rebuilds them from the daily buckets.
+	agg, err := store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, "default")
+	require.NoError(t, err)
+	require.Empty(t, agg)
+}
+
 func TestIngesterBufferFull(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, store *Store) {
 		ctx := context.Background()
-		ing := NewIngester(IngesterOptions{
+		ing, err := NewIngester(IngesterOptions{
 			Store:              store,
+			Leases:             newTestLeases(t),
 			Reg:                prometheus.NewRegistry(),
 			Now:                fixedNow("2026-06-23"),
 			MaxBufferedObjects: 1,
 		})
+		require.NoError(t, err)
 
 		require.NoError(t, ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}}))
 		// Second distinct object exceeds the bound and is dropped.
@@ -196,12 +301,13 @@ func TestIngesterFlushUnderLease(t *testing.T) {
 		lease.WithInternalMinTTL(time.Second), lease.WithGarbageCollectionDisabled)
 	t.Cleanup(mgr.Stop)
 
-	ing := NewIngester(IngesterOptions{
+	ing, err := NewIngester(IngesterOptions{
 		Store:  store,
 		Leases: mgr,
 		Reg:    prometheus.NewRegistry(),
 		Now:    fixedNow(day),
 	})
+	require.NoError(t, err)
 
 	require.NoError(t, ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 9}}))
 	require.NoError(t, ing.flush(ctx))
@@ -216,15 +322,17 @@ func TestIngesterStartStopFinalFlush(t *testing.T) {
 	ctx := context.Background()
 	const day = "2026-06-23"
 
-	ing := NewIngester(IngesterOptions{
-		Store: store,
-		Reg:   prometheus.NewRegistry(),
-		Now:   fixedNow(day),
+	ing, err := NewIngester(IngesterOptions{
+		Store:  store,
+		Leases: newTestLeases(t),
+		Reg:    prometheus.NewRegistry(),
+		Now:    fixedNow(day),
 		// A long interval guarantees the periodic ticker never fires during the
 		// test, so anything that reaches the store must have come from the
 		// shutdown flush rather than a scheduled one.
 		FlushInterval: time.Hour,
 	})
+	require.NoError(t, err)
 
 	ing.Start(ctx)
 	require.NoError(t, ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 4}}))

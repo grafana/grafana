@@ -68,7 +68,12 @@ type IngesterOptions struct {
 	Now func() time.Time
 }
 
-func NewIngester(opts IngesterOptions) *Ingester {
+func NewIngester(opts IngesterOptions) (*Ingester, error) {
+	// The flush loop serializes its read-add-write per namespace with a lease;
+	// without one, concurrent flushes across pods would lose increments.
+	if opts.Leases == nil {
+		return nil, errors.New("usage stats ingester requires a lease manager")
+	}
 	decls := opts.Declarations
 	if decls == nil {
 		decls = DefaultDeclarations()
@@ -99,7 +104,7 @@ func NewIngester(opts IngesterOptions) *Ingester {
 		flushInterval:      flushInterval,
 		maxBufferedObjects: maxBuffered,
 		buffer:             map[objectRef]map[string]int64{},
-	}
+	}, nil
 }
 
 func objectRefFromKey(key *resourcepb.ResourceKey) objectRef {
@@ -212,6 +217,15 @@ func (i *Ingester) mergeBack(o objectRef, deltas map[string]int64) {
 	}
 }
 
+func groupByNamespace(objs map[objectRef]map[string]int64) map[groupResourceNamespaceRef][]objectRef {
+	byNamespace := map[groupResourceNamespaceRef][]objectRef{}
+	for o := range objs {
+		scope := groupResourceNamespaceRef{Group: o.Group, Resource: o.Resource, Namespace: o.Namespace}
+		byNamespace[scope] = append(byNamespace[scope], o)
+	}
+	return byNamespace
+}
+
 func (i *Ingester) flush(ctx context.Context) error {
 	drained := i.drain()
 	if len(drained) == 0 {
@@ -220,25 +234,16 @@ func (i *Ingester) flush(ctx context.Context) error {
 	start := i.now()
 	defer func() { i.metrics.flushDuration.Observe(i.now().Sub(start).Seconds()) }()
 
-	byNamespace := map[groupResourceNamespaceRef][]objectRef{}
-	for o := range drained {
-		scope := groupResourceNamespaceRef{Group: o.Group, Resource: o.Resource, Namespace: o.Namespace}
-		byNamespace[scope] = append(byNamespace[scope], o)
-	}
-
 	day := i.now().UTC().Format(dayLayout)
 	var firstErr error
-	for scope, objs := range byNamespace {
+
+	for scope, objs := range groupByNamespace(drained) {
 		if err := i.flushNamespace(ctx, scope, day, objs, drained); err != nil {
 			i.log.Error("failed to flush usage stats for namespace",
 				"group", scope.Group, "resource", scope.Resource, "namespace", scope.Namespace,
 				"objects", len(objs), "error", err)
 			if firstErr == nil {
 				firstErr = err
-			}
-			// Retry these objects next cycle.
-			for _, o := range objs {
-				i.mergeBack(o, drained[o])
 			}
 		}
 	}
@@ -252,30 +257,44 @@ func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamesp
 		return nil
 	}
 
-	var l *lease.Lease
-	if i.leases != nil {
-		acquired, err := i.leases.Acquire(ctx, scope.leaseName())
-		if err != nil {
-			return err
-		}
-		l = acquired
-		defer func() {
-			if releaseErr := i.leases.Release(context.WithoutCancel(ctx), l); releaseErr != nil {
-				i.log.Warn("releasing usage stats flush lease failed", "lease", scope.leaseName(), "error", releaseErr)
+	rebufferFrom := func(idx int) {
+		for _, o := range objs[idx:] {
+			if d := drained[o]; len(d) > 0 {
+				i.mergeBack(o, d)
 			}
-		}()
+		}
 	}
 
-	for _, o := range objs {
+	l, err := i.leases.Acquire(ctx, scope.leaseName())
+	if err != nil {
+		rebufferFrom(0)
+		return err
+	}
+	defer func() {
+		if releaseErr := i.leases.Release(context.WithoutCancel(ctx), l); releaseErr != nil {
+			i.log.Warn("releasing usage stats flush lease failed", "lease", scope.leaseName(), "error", releaseErr)
+		}
+	}()
+
+	for idx, o := range objs {
 		deltas := drained[o]
 		if len(deltas) == 0 {
 			continue
 		}
-		if err := i.store.IncrementDaily(ctx, o, day, deltas); err != nil {
-			return err
+		if derr := i.store.IncrementDaily(ctx, o, day, deltas); derr != nil {
+			// Nothing applied: retry this object and everything after it.
+			rebufferFrom(idx)
+			return derr
 		}
-		if err := i.store.IncrementAggregates(ctx, o, aggregateDeltas(decl, deltas)); err != nil {
-			return err
+		if aerr := i.store.IncrementAggregates(ctx, o, aggregateDeltas(decl, deltas)); aerr != nil {
+			// Best-effort: the daily bucket is already committed, so we do not
+			// retry (that would double-count it). The reconciler rebuilds
+			// aggregates from the daily buckets.
+			i.metrics.aggregateWriteFailures.Inc()
+			i.log.Warn("usage stats aggregate write failed; leaving it for the reconciler",
+				"group", scope.Group, "resource", scope.Resource, "namespace", scope.Namespace,
+				"name", o.Name, "error", aerr)
+			continue
 		}
 	}
 	return nil

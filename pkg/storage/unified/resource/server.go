@@ -579,17 +579,16 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		}
 		// The flush loop relies on a lease to serialize the read-add-write per
 		// namespace; without one, concurrent flushes across pods would lose
-		// increments.
-		leaseMgr := kvBackend.LeaseManager()
-		if leaseMgr == nil {
-			return nil, fmt.Errorf("usage stats require leases to be enabled")
-		}
-		s.statsIngester = usagestats.NewIngester(usagestats.IngesterOptions{
+		// increments. NewIngester rejects a nil lease manager.
+		s.statsIngester, err = usagestats.NewIngester(usagestats.IngesterOptions{
 			Store:  usagestats.NewStore(kvBackend.KV()),
-			Leases: leaseMgr,
+			Leases: kvBackend.LeaseManager(),
 			Reg:    opts.Reg,
 			Log:    logger,
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return s, nil

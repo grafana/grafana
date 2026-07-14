@@ -14,6 +14,10 @@ type metrics struct {
 	// read-add-write per object under a lease, so this is the early warning
 	// for flushes slowing down as a namespace accumulates objects.
 	flushDuration prometheus.Histogram
+	// aggregateWriteFailures counts best-effort aggregate writes that failed
+	// during a flush. The daily buckets are still correct; the aggregate is
+	// under-counted until the daily reconciler rebuilds it from them.
+	aggregateWriteFailures prometheus.Counter
 }
 
 const (
@@ -33,6 +37,10 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Name:    "unified_storage_stats_flush_duration_seconds",
 			Help:    "Duration of a usage stats flush cycle.",
 			Buckets: prometheus.DefBuckets,
+		}),
+		aggregateWriteFailures: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "unified_storage_stats_aggregate_write_failures_total",
+			Help: "Total number of best-effort usage stats aggregate writes that failed during a flush.",
 		}),
 	}
 }
