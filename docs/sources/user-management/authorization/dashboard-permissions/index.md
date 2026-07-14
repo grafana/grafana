@@ -3,6 +3,7 @@ aliases:
   - ../../permissions/dashboard_folder_permissions/
   - ../manage-users-and-permissions/manage-dashboard-permissions/
   - ../../administration/user-management/manage-dashboard-permissions/
+  - ../../../administration/user-management/manage-dashboard-permissions/
 labels:
   products:
     - enterprise

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../../administration/team-management/team-folders/
 description: Learn how to create, assign, and find team folders in Grafana.
 labels:
   products:

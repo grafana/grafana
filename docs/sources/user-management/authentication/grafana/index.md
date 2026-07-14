@@ -3,6 +3,7 @@ aliases:
   - ../../../auth/grafana/ # /docs/grafana/next/auth/grafana/
   - ../../configure-security/setup-grafana/configure-security/configure-authentication/grafana/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/grafana/
   - ../../configure-security/configure-authentication/grafana/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/grafana/
+  - ../../../setup-grafana/configure-access/configure-authentication/grafana/
 description: Learn how to configure basic authentication in Grafana
 labels:
   products:

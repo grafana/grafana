@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../../administration/roles-and-permissions/access-control/plugin-role-definitions/
 description: Learn about the RBAC roles available for Grafana Cloud app plugins
 labels:
   products:

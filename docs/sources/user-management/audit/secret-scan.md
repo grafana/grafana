@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../setup-grafana/configure-security/secret-scan/
 description: Detect and revoke leaked Grafana service account tokens
 labels:
   products:

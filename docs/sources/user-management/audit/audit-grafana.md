@@ -2,6 +2,7 @@
 aliases:
   - ../../enterprise/auditing/
   - ../user-management/audit/audit-grafana/
+  - ../../../setup-grafana/configure-security/audit-grafana/
 description: Track and log important changes to your Grafana instance using audit logs.
 keywords:
   - grafana

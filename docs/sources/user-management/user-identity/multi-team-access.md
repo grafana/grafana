@@ -3,6 +3,7 @@ aliases:
   - ../setup-grafana/configure-security/manage-single-access/ # /docs/grafana/next/setup-grafana/setup-grafana/configure-security/manage-single-access/
   - ../../enterprise/manage-single-access/ # /docs/grafana/next/enterprise/manage-single-access/
   - ../configure-security/manage-single-access/ # /docs/grafana/next/setup-grafana/configure-security/manage-single-access/
+  - ../../../setup-grafana/configure-access/multi-team-access/
 description: Manage multi-team access in a single Grafana instance
 keywords:
   - grafana

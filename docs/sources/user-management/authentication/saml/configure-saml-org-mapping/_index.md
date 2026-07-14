@@ -2,6 +2,7 @@
 aliases:
   - ../../../configure-security/configure-authentication/user-management/authentication/saml/configure-saml-org-mapping/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/user-management/authentication/saml/configure-saml-org-mapping/
   - ../../../configure-security/configure-authentication/saml/configure-saml-org-mapping/ # /docs/grafana/next/user-management/authentication/saml/configure-saml-org-mapping/
+  - ../../../../setup-grafana/configure-access/configure-authentication/saml/configure-saml-org-mapping/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

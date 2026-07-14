@@ -3,6 +3,7 @@ aliases:
   - ../setup-grafana/configure-security/configure-scim-provisioning/ # /docs/grafana/next/setup-grafana/setup-grafana/configure-security/configure-scim-provisioning/
   - ../configure-security/configure-scim-provisioning/ # /docs/grafana/next/setup-grafana/configure-security/configure-scim-provisioning/
   - ../user-identity/scim-provisioning/ # /docs/grafana/next/user-management/user-identity/scim-provisioning/
+  - ../../setup-grafana/configure-access/configure-scim-provisioning/
 description: Learn how to use SCIM provisioning to synchronize users and groups from your identity provider to Grafana. SCIM enables automated user management, team provisioning, and enhanced security through real-time synchronization with your identity provider.
 keywords:
   - grafana

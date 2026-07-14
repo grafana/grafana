@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../manage-rbac-roles#create-custom-roles
+  - ../../../../administration/roles-and-permissions/access-control/create-custom-roles/
 description: Create custom RBAC roles.
 labels:
   products:
