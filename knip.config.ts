@@ -12,7 +12,6 @@ const defaultEntries = ['i18next.config.ts'];
 const externalisedDatasources = [
   'azuremonitor',
   'grafana-postgresql-datasource',
-  'grafana-pyroscope-datasource',
   'grafana-testdata-datasource',
   'graphite',
   'influxdb',
