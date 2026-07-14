@@ -207,7 +207,7 @@ After testing, delete the created resources.
 **Quick cleanup:**
 
 ```bash
-bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh
+bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh
 ```
 
 Expected output includes `Remaining repositories: 0` and `Remaining connections: 0`.
@@ -283,7 +283,7 @@ curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$NONE_ID
 
 Create a repository and sync it without using the wizard.
 
-For provider-specific create payloads, use the API reference in `../git-sync-shared/api.md` under **Create Repository via API**. GitHub PAT resource-ops runs still use the GitHub payload there; GitLab and Bitbucket token flows use the provider-specific variants.
+For provider-specific create payloads, use the API reference in `../shared/api.md` under **Create Repository via API**. GitHub PAT resource-ops runs still use the GitHub payload there; GitLab and Bitbucket token flows use the provider-specific variants.
 
 ### Step 1: Create the Repository
 

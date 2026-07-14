@@ -1,5 +1,5 @@
 ---
-name: test-git-sync-none-role
+name: none-role
 description: >
   Use when asked to test provisioned resource access for a user with org role None —
   the lowest privilege level in Grafana's RBAC hierarchy. Creates a repository via API,
@@ -13,7 +13,7 @@ Tests provisioned resource access restrictions for the `None` org role — the m
 
 ## Execution Rules
 
-**This is a test-only run.** Read `../git-sync-shared/execution-rules.md` FIRST and follow all of its rules: no code changes, do not stop on failure, complete the entire flow including cleanup, budget your time, and produce the final report in the format it defines.
+**This is a test-only run.** Read `../shared/execution-rules.md` FIRST and follow all of its rules: no code changes, do not stop on failure, complete the entire flow including cleanup, budget your time, and produce the final report in the format it defines.
 
 ## Prerequisites
 
@@ -32,13 +32,13 @@ Only PAT credentials are needed -- the simplest auth type for API-based setup.
 
 ### Setup
 
-Follow "Local Setup" (or "Cloud Setup" on a cloud VM) in `../git-sync-shared/setup.md`. Verify each variable from the Required Secrets table above is set before proceeding.
+Follow "Local Setup" (or "Cloud Setup" on a cloud VM) in `../shared/setup.md`. Verify each variable from the Required Secrets table above is set before proceeding.
 
 ### Cleanup Before Testing
 
 Before running, delete existing test resources and users to avoid conflicts:
 
-Run `bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh`
+Run `bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh`
 
 ```bash
 AUTH="admin:admin"
@@ -59,10 +59,10 @@ echo "User cleanup complete."
 
 Read these files during execution for detailed operation steps, gotchas, and selectors:
 
-- **Operations** (create/move/delete resources, user management, API setup): `../git-sync-shared/operations.md`
-- **Gotchas** (reconciliation delays, combobox quirks, timeouts): `../git-sync-shared/gotchas.md`
-- **Selectors** (element IDs, roles, placeholders, login page): `../git-sync-shared/selectors.md`
-- **API reference** (repository CRUD, jobs, user management): `../git-sync-shared/api.md`
+- **Operations** (create/move/delete resources, user management, API setup): `../shared/operations.md`
+- **Gotchas** (reconciliation delays, combobox quirks, timeouts): `../shared/gotchas.md`
+- **Selectors** (element IDs, roles, placeholders, login page): `../shared/selectors.md`
+- **API reference** (repository CRUD, jobs, user management): `../shared/api.md`
 
 ## RBAC Permission Matrix — None Role
 
@@ -83,7 +83,7 @@ The None role has **zero default permissions**. Unlike Viewer (which can browse 
 
 ### Step 1: Create None-Role User
 
-Create a `none-test` user via API and set the org role to `None`. See "Create Test Users via API" in `../git-sync-shared/operations.md`.
+Create a `none-test` user via API and set the org role to `None`. See "Create Test Users via API" in `../shared/operations.md`.
 
 ```bash
 NONE_ID=$(curl -s -X POST -u admin:admin -H 'Content-Type: application/json' \
@@ -108,7 +108,7 @@ curl -s -u admin:admin "http://localhost:3000/api/org/users" | \
 
 ### Step 2: Create Repository via API
 
-Create a PAT repository without the wizard. See "API Repository Setup" in `../git-sync-shared/operations.md`.
+Create a PAT repository without the wizard. See "API Repository Setup" in `../shared/operations.md`.
 
 ```bash
 curl -s -X POST -u admin:admin \
@@ -166,8 +166,8 @@ done
 
 Logged in as **admin**. Create one folder and one dashboard inside the provisioned root to verify the None-role user cannot see them.
 
-1. **Create folder `test-folder`** in the provisioned root. Use "Creating a New Folder" from `../git-sync-shared/operations.md`. Use the configured branch (`agent-test`).
-2. **Create `Dashboard Test-1`** inside `test-folder`. Use "Creating a New Dashboard" from `../git-sync-shared/operations.md`. Use the configured branch.
+1. **Create folder `test-folder`** in the provisioned root. Use "Creating a New Folder" from `../shared/operations.md`. Use the configured branch (`agent-test`).
+2. **Create `Dashboard Test-1`** inside `test-folder`. Use "Creating a New Dashboard" from `../shared/operations.md`. Use the configured branch.
 3. **Verify creation:** Navigate to the provisioned root folder. Confirm `test-folder` is visible and contains `Dashboard Test-1`.
 
 **Capture URLs:** Record the direct URLs for both `test-folder` and `Dashboard Test-1` -- these will be used in Phase B to test direct URL access as the None-role user.
@@ -178,7 +178,7 @@ Logged in as **admin**. Create one folder and one dashboard inside the provision
 
 ### Step 4: Switch to None-Role User
 
-Log out and log in as `none-test` / `none-test`. See "Switch Browser User" in `../git-sync-shared/operations.md`.
+Log out and log in as `none-test` / `none-test`. See "Switch Browser User" in `../shared/operations.md`.
 
 1. `navigate_page` to `http://localhost:3000/logout`
 2. `wait_for` text `["Log in"]` or `["Welcome to Grafana"]`

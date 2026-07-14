@@ -1,9 +1,9 @@
 ## Local Setup
 
-1. Create `.env` in the project root with credentials (see `.env.example`). Ensure `.env` is in `.gitignore`.
+1. Create `.env` in the project root with credentials (see `.claude/skills/git-sync/.env.example`). Ensure `.env` is in `.gitignore`.
 2. Source the credentials:
    ```bash
-   source .claude/skills/git-sync-shared/scripts/load-env.sh
+   source .claude/skills/git-sync/shared/scripts/load-env.sh
    ```
 3. Add the feature toggles to `conf/custom.ini`:
    ```ini

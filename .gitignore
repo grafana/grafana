@@ -80,15 +80,17 @@ public/css/*.min.css
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/add-e2e-selectors/
-!.claude/skills/git-sync-shared/
-!.claude/skills/test-git-sync-all/
-!.claude/skills/test-git-sync-pat/
-!.claude/skills/test-git-sync-gitlab/
-!.claude/skills/test-git-sync-bitbucket/
-!.claude/skills/test-git-sync-github-app/
-!.claude/skills/test-git-sync-resource-ops/
-!.claude/skills/test-git-sync-none-role/
-!.claude/skills/.env.example
+!.claude/skills/git-sync/
+.claude/skills/git-sync/*
+!.claude/skills/git-sync/shared/
+!.claude/skills/git-sync/all/
+!.claude/skills/git-sync/pat/
+!.claude/skills/git-sync/gitlab/
+!.claude/skills/git-sync/bitbucket/
+!.claude/skills/git-sync/github-app/
+!.claude/skills/git-sync/resource-ops/
+!.claude/skills/git-sync/none-role/
+!.claude/skills/git-sync/.env.example
 
 .eslintcache
 .stylelintcache

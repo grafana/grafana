@@ -1,5 +1,5 @@
 ---
-name: test-git-sync-pat
+name: pat
 description: >
   Use when asked to test the PAT (Personal Access Token) wizard flow of Git Sync
   provisioning. Runs the 5-step wizard with PAT auth, verifies the repository
@@ -12,7 +12,7 @@ Drive the Grafana provisioning wizard through the browser using `mcp_chrome_devt
 
 ## Execution Rules
 
-**This is a test-only run.** Read `../git-sync-shared/execution-rules.md` FIRST and follow all of its rules: no code changes, do not stop on failure, complete the entire flow including cleanup, budget your time, and produce the final report in the format it defines.
+**This is a test-only run.** Read `../shared/execution-rules.md` FIRST and follow all of its rules: no code changes, do not stop on failure, complete the entire flow including cleanup, budget your time, and produce the final report in the format it defines.
 
 ## Prerequisites
 
@@ -29,22 +29,22 @@ Grafana must have these feature toggles enabled: `provisioning`, `kubernetesDash
 
 ### Setup
 
-Follow "Local Setup" (or "Cloud Setup" on a cloud VM) in `../git-sync-shared/setup.md`. Verify each variable from the Required Secrets table above is set before proceeding.
+Follow "Local Setup" (or "Cloud Setup" on a cloud VM) in `../shared/setup.md`. Verify each variable from the Required Secrets table above is set before proceeding.
 
 ### Cleanup Before Testing
 
 Before running the PAT flow, delete existing test resources to avoid conflicts:
 
-Run `bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh`
+Run `bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh`
 
 ## Shared References
 
 Read these files during execution for detailed operation steps, gotchas, and selectors:
 
-- **Operations** (Steps 2-5, create/move/delete, cleanup): `../git-sync-shared/operations.md`
-- **Gotchas** (reconciliation delays, combobox quirks, timeouts): `../git-sync-shared/gotchas.md`
-- **Selectors** (element IDs, roles, placeholders): `../git-sync-shared/selectors.md`
-- **API reference** (cleanup & verification endpoints): `../git-sync-shared/api.md`
+- **Operations** (Steps 2-5, create/move/delete, cleanup): `../shared/operations.md`
+- **Gotchas** (reconciliation delays, combobox quirks, timeouts): `../shared/gotchas.md`
+- **Selectors** (element IDs, roles, placeholders): `../shared/selectors.md`
+- **API reference** (cleanup & verification endpoints): `../shared/api.md`
 
 ## PAT Wizard Step 1: Connect (authType)
 
@@ -60,7 +60,7 @@ This is the simpler flow. Use `$GIT_SYNC_TEST_PAT_REPO_URL` and `$GIT_SYNC_TEST_
 
 **Wait:** The button shows "Submitting..." during K8s reconciliation. `wait_for` text `["2. Configure repository"]` (step 2 heading) with **30s timeout** before proceeding.
 
-**Continue with Steps 2-5** from `../git-sync-shared/operations.md`.
+**Continue with Steps 2-5** from `../shared/operations.md`.
 
 **Use path `dev/pat-test` in Step 2** to avoid conflicts with other flows (see "Path Conflicts Across Repositories" gotcha).
 
@@ -82,6 +82,6 @@ After Step 5 completes and the page navigates to `/admin/provisioning/{repoName}
 
 Remove the repository and verify no artifacts remain:
 
-Run `bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh`
+Run `bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh`
 
 No connection deletion needed for PAT flow -- PAT does not create connections.

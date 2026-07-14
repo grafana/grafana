@@ -1,5 +1,5 @@
 ---
-name: test-git-sync-resource-ops
+name: resource-ops
 description: >
   Use when asked to test provisioned resource operations with multiple user
   roles (Admin, Editor, Viewer). Creates a repository via API, then exercises
@@ -13,7 +13,7 @@ Tests provisioned resource operations across Admin, Editor, and Viewer roles. Se
 
 ## Execution Rules
 
-**This is a test-only run.** Read `../git-sync-shared/execution-rules.md` FIRST and follow all of its rules: no code changes, do not stop on failure, complete the entire flow including cleanup, budget your time, and produce the final report in the format it defines.
+**This is a test-only run.** Read `../shared/execution-rules.md` FIRST and follow all of its rules: no code changes, do not stop on failure, complete the entire flow including cleanup, budget your time, and produce the final report in the format it defines.
 
 ## Prerequisites
 
@@ -32,13 +32,13 @@ Only PAT credentials are needed -- the simplest auth type for API-based setup.
 
 ### Setup
 
-Follow "Local Setup" (or "Cloud Setup" on a cloud VM) in `../git-sync-shared/setup.md`. Verify each variable from the Required Secrets table above is set before proceeding.
+Follow "Local Setup" (or "Cloud Setup" on a cloud VM) in `../shared/setup.md`. Verify each variable from the Required Secrets table above is set before proceeding.
 
 ### Cleanup Before Testing
 
 Before running, delete existing test resources and users to avoid conflicts:
 
-Run `bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh`
+Run `bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh`
 
 ```bash
 AUTH="admin:admin"
@@ -59,10 +59,10 @@ echo "User cleanup complete."
 
 Read these files during execution for detailed operation steps, gotchas, and selectors:
 
-- **Operations** (create/move/delete resources, user management, API setup): `../git-sync-shared/operations.md`
-- **Gotchas** (reconciliation delays, combobox quirks, timeouts): `../git-sync-shared/gotchas.md`
-- **Selectors** (element IDs, roles, placeholders, login page): `../git-sync-shared/selectors.md`
-- **API reference** (repository CRUD, jobs, user management): `../git-sync-shared/api.md`
+- **Operations** (create/move/delete resources, user management, API setup): `../shared/operations.md`
+- **Gotchas** (reconciliation delays, combobox quirks, timeouts): `../shared/gotchas.md`
+- **Selectors** (element IDs, roles, placeholders, login page): `../shared/selectors.md`
+- **API reference** (repository CRUD, jobs, user management): `../shared/api.md`
 
 ## RBAC Permission Matrix
 
@@ -85,7 +85,7 @@ Read these files during execution for detailed operation steps, gotchas, and sel
 
 ### Step 1: Create Test Users
 
-Create `viewer-test` and `editor-test` users via API. See "Create Test Users via API" in `../git-sync-shared/operations.md`.
+Create `viewer-test` and `editor-test` users via API. See "Create Test Users via API" in `../shared/operations.md`.
 
 **Create Viewer user:**
 
@@ -117,7 +117,7 @@ echo "Created editor-test with ID: $EDITOR_ID"
 
 ### Step 2: Create Repository via API
 
-Create a PAT repository without the wizard. See "API Repository Setup" in `../git-sync-shared/operations.md`.
+Create a PAT repository without the wizard. See "API Repository Setup" in `../shared/operations.md`.
 
 ```bash
 curl -s -X POST -u admin:admin \
@@ -173,7 +173,7 @@ done
 
 ### Step 3: Create Resources (3-Level Tree) -- Write Workflow
 
-Logged in as **admin**. Build the following folder/dashboard tree inside the provisioned root using the **configured branch** (`agent-test`). Use "Creating a New Folder" and "Creating a New Dashboard" from `../git-sync-shared/operations.md` for each resource.
+Logged in as **admin**. Build the following folder/dashboard tree inside the provisioned root using the **configured branch** (`agent-test`). Use "Creating a New Folder" and "Creating a New Dashboard" from `../shared/operations.md` for each resource.
 
 ```
 <provisioned root>/
@@ -228,7 +228,7 @@ Navigate through all 3 levels. Confirm:
 
 ### Step 5: Switch to Viewer
 
-Log out and log in as `viewer-test` / `viewer-test`. See "Switch Browser User" in `../git-sync-shared/operations.md`.
+Log out and log in as `viewer-test` / `viewer-test`. See "Switch Browser User" in `../shared/operations.md`.
 
 1. `navigate_page` to `http://localhost:3000/logout`
 2. `wait_for` text `["Log in"]` or `["Welcome to Grafana"]`
@@ -267,14 +267,14 @@ Log out and log in as `editor-test` / `editor-test`. Same procedure as Step 5.
 
 The Editor can create folders and dashboards in provisioned folders.
 
-1. **Create folder `editor-folder`** in the provisioned root. Use "Creating a New Folder" from `../git-sync-shared/operations.md`. Use the configured branch (`agent-test`).
-2. **Create `Dashboard Editor-1`** in `editor-folder`. Use "Creating a New Dashboard" from `../git-sync-shared/operations.md`. Use the configured branch.
+1. **Create folder `editor-folder`** in the provisioned root. Use "Creating a New Folder" from `../shared/operations.md`. Use the configured branch (`agent-test`).
+2. **Create `Dashboard Editor-1`** in `editor-folder`. Use "Creating a New Dashboard" from `../shared/operations.md`. Use the configured branch.
 
 ### Step 9: Editor Modifies and Deletes (Write Workflow)
 
-1. **Modify `Dashboard Editor-1`:** Navigate to the dashboard. Edit it -- change the panel title or add a text panel. Save using the configured branch. See "Modifying an Existing Dashboard" in `../git-sync-shared/operations.md`.
-2. **Delete `Dashboard Editor-1`:** Open dashboard settings, click "Delete dashboard". In the drawer, use configured branch. See "Deleting a Single Dashboard" in `../git-sync-shared/operations.md`.
-3. **Delete `editor-folder`:** Navigate to the provisioned root. Find `editor-folder` row, click "Folder actions" -> "Delete this folder". In the drawer, use configured branch. See "Deleting a Single Folder" in `../git-sync-shared/operations.md`.
+1. **Modify `Dashboard Editor-1`:** Navigate to the dashboard. Edit it -- change the panel title or add a text panel. Save using the configured branch. See "Modifying an Existing Dashboard" in `../shared/operations.md`.
+2. **Delete `Dashboard Editor-1`:** Open dashboard settings, click "Delete dashboard". In the drawer, use configured branch. See "Deleting a Single Dashboard" in `../shared/operations.md`.
+3. **Delete `editor-folder`:** Navigate to the provisioned root. Find `editor-folder` row, click "Folder actions" -> "Delete this folder". In the drawer, use configured branch. See "Deleting a Single Folder" in `../shared/operations.md`.
 
 ### Step 10: Editor Verifies Admin Restrictions
 
@@ -322,7 +322,7 @@ Exercise the `branch` workflow (PR creation) to confirm it works alongside the `
 
 ### Step 13: Bulk Move (2 Folders) -- Write Workflow
 
-See "Bulk Moving Resources" in `../git-sync-shared/operations.md`.
+See "Bulk Moving Resources" in `../shared/operations.md`.
 
 1. Navigate to the provisioned root folder.
 2. Select the `team-beta` and `staging` folder checkboxes (2 folders containing 3 dashboards total).
@@ -341,7 +341,7 @@ Navigate to `team-alpha`. Confirm it now contains:
 
 ### Step 15: Bulk Delete (All Remaining) -- Write Workflow
 
-See "Bulk Deleting Resources" in `../git-sync-shared/operations.md`.
+See "Bulk Deleting Resources" in `../shared/operations.md`.
 
 1. Navigate to the provisioned root folder.
 2. Select the `team-alpha` checkbox (selects the folder and all its descendants -- the entire remaining tree).

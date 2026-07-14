@@ -98,7 +98,7 @@ curl -s -u admin:admin \
 ## Full Cleanup Script
 
 ```bash
-bash .claude/skills/git-sync-shared/scripts/cleanup-provisioning.sh
+bash .claude/skills/git-sync/shared/scripts/cleanup-provisioning.sh
 ```
 
 Deletes all repositories (first) and connections in the `default` namespace. Prints remaining counts when finished.

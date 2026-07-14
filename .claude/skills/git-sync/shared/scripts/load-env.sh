@@ -1,9 +1,9 @@
 #!/bin/bash
 # Source .env from the project root and export all variables.
-# Usage: source .claude/skills/git-sync-shared/scripts/load-env.sh
+# Usage: source .claude/skills/git-sync/shared/scripts/load-env.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 ENV_FILE="$PROJECT_ROOT/.env"
 
 fail() {
@@ -25,7 +25,7 @@ warn_partial_flow() {
 }
 
 if [ ! -f "$ENV_FILE" ]; then
-  echo "Copy .env.example to .env and fill in your credentials." >&2
+  echo "Copy .claude/skills/git-sync/.env.example to .env and fill in your credentials." >&2
   fail ".env file not found at $ENV_FILE"
 fi
 
