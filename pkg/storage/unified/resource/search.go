@@ -205,8 +205,8 @@ type searchServer struct {
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
-	selectableFields     map[string][]string
-	searchFieldsHashes   map[string]string
+	selectableFields     map[LowerGroupResource][]string
+	searchFieldsHashes   map[LowerGroupResource]string
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -1339,7 +1339,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
+		sfKey := NewLowerGroupResource(key.Group, key.Resource)
 		sfields := s.selectableFields[sfKey]
 		expectedSearchFieldsHash := s.searchFieldsHashes[sfKey]
 

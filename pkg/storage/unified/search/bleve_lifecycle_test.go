@@ -276,8 +276,8 @@ func newFileBackedDashboardIndex(t *testing.T, key resource.NamespacedResource, 
 	})
 	require.NoError(t, err)
 
-	backend, _ := setupBleveBackend(t, withFileThreshold(0), withSearchFieldsProvidersForKinds(map[string]resource.SearchFieldsProvider{
-		"dashboard.grafana.app/dashboards": info.SearchFieldsProvider,
+	backend, _ := setupBleveBackend(t, withFileThreshold(0), withSearchFieldsProvidersForKinds(map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+		resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
 	}))
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: key.Namespace})
 
