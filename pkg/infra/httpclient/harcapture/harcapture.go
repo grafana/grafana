@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -67,6 +68,8 @@ var sensitiveQueryParams = map[string]struct{}{
 	"api_key":       {},
 	"apikey":        {},
 	"access_token":  {},
+	"refresh_token": {},
+	"id_token":      {},
 	"auth_token":    {},
 	"token":         {},
 	"private_token": {},
@@ -331,7 +334,10 @@ func buildEntry(req *http.Request, resp *http.Response, rtErr error, started tim
 	harResp := &har.Response{HeadersSize: -1, Content: &har.Content{}}
 	if resp != nil {
 		harResp.Status = int64(resp.StatusCode)
-		harResp.StatusText = resp.Status
+		// HAR statusText is the reason phrase only ("OK"), but resp.Status is the full status line
+		// ("200 OK"); strip the leading code (keeping the server's actual phrase) so entries match
+		// the HAR 1.2 replay format.
+		harResp.StatusText = strings.TrimSpace(strings.TrimPrefix(resp.Status, strconv.Itoa(resp.StatusCode)))
 		harResp.HTTPVersion = resp.Proto
 		harResp.Headers = toNameValues(resp.Header, extra)
 		harResp.Cookies = toCookies(resp.Cookies())

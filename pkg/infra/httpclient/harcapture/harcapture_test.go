@@ -261,6 +261,29 @@ func TestRedactedURLString_failsClosedOnMalformedKey(t *testing.T) {
 	assert.Contains(t, out, "region=eu", "well-formed non-sensitive param preserved")
 }
 
+func TestRedactsOAuthTokenQueryParams(t *testing.T) {
+	for _, p := range []string{"access_token", "refresh_token", "id_token"} {
+		out := redactURLValue("https://idp.example.com/cb?" + p + "=SECRET&state=ok")
+		assert.NotContains(t, out, "SECRET", p+" must be redacted")
+		assert.Contains(t, out, "state=ok", "non-sensitive param preserved alongside "+p)
+	}
+}
+
+func TestBuffer_ToHAR_statusTextIsReasonPhrase(t *testing.T) {
+	_, buf := WithCapture(context.Background())
+	resp := okResp(200)    //nolint:bodyclose
+	resp.Status = "200 OK" // real net/http status line (full), not just the reason phrase
+	buf.AddEntry(newGetReq(t, "http://example.com"), resp, nil, time.Now(), time.Millisecond)
+
+	raw, err := buf.ToHAR()
+	require.NoError(t, err)
+	var doc har.HAR
+	require.NoError(t, json.Unmarshal(raw, &doc))
+	// HAR 1.2 statusText is the reason phrase only, not the full "200 OK" status line.
+	assert.Equal(t, int64(200), doc.Log.Entries[0].Response.Status)
+	assert.Equal(t, "OK", doc.Log.Entries[0].Response.StatusText)
+}
+
 func TestRedactURLValue_failsClosedOnUnparseable(t *testing.T) {
 	// net/url.Parse rejects raw control characters; such a value can't be query-redacted, so it
 	// must be dropped rather than passed through into a bundle meant for external sharing.
