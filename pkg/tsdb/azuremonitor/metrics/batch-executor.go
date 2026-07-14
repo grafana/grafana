@@ -162,6 +162,14 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, q
 		if q.Subscription == "" {
 			q.Subscription = defaultSub
 		}
+		// buildQuery only reads the query-level region; when the region is set
+		// solely on the resource entry, carry it over so batch grouping targets
+		// the regional endpoint instead of the global one.
+		if q.Params.Get("region") == "" && len(azJSONModel.Resources) == 1 {
+			if r := azJSONModel.Resources[0].Region; r != nil && *r != "" {
+				q.Params.Set("region", *r)
+			}
+		}
 		return []*types.AzureMonitorQuery{q}, nil
 	}
 	defaultRegion := ""
@@ -198,6 +206,12 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, q
 		}
 		if q.Subscription == "" {
 			q.Subscription = orderedKeys[0].sub
+		}
+		// buildQuery only reads the query-level region; when the shared region
+		// comes from the resource entries, carry it over so batch grouping
+		// targets the regional endpoint instead of the global one.
+		if q.Params.Get("region") == "" && orderedKeys[0].region != "" {
+			q.Params.Set("region", orderedKeys[0].region)
 		}
 		return []*types.AzureMonitorQuery{q}, nil
 	}
@@ -260,11 +274,12 @@ func applyLegacyDimensions(queries []*types.AzureMonitorQuery, model dataquery.A
 // original RefIDs. Queries that cannot use the batch API (custom metrics, Guest
 // OS metrics) are executed individually via the legacy ARM endpoint.
 // batchClient is the dedicated data-plane HTTP client for batch requests, so
-// that requests to *.metrics.monitor.azure.com carry a token scoped to that
+// that requests to the regional data-plane endpoints (derived from
+// dataPlaneURL, e.g. *.metrics.monitor.azure.com) carry a token scoped to that
 // audience rather than the ARM audience. The caller (ExecuteTimeSeriesQuery)
-// resolves it from the datasource services and falls back to the legacy ARM
-// path when the service is not configured.
-func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, batchClient *http.Client) (*backend.QueryDataResponse, error) {
+// resolves both from the batch metrics datasource service and falls back to
+// the legacy ARM path when the service is not configured.
+func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, batchClient *http.Client, dataPlaneURL string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	armURL := dsInfo.Routes[types.RouteAzureMonitor].URL
@@ -338,7 +353,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	}
 
 	// Group into batches and execute all in parallel.
-	batches := createBatches(groupQueriesForBatch(azureQueries))
+	batches := createBatches(groupQueriesForBatch(azureQueries), dataPlaneURL)
 	batchResults := executeBatchRequests(ctx, batches, batchClient)
 
 	// For each batch: distribute frames to their RefID responses, then attribute

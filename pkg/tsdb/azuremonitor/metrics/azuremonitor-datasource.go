@@ -101,12 +101,12 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 	batchFlagEnabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI")
 	if dsInfo.Settings.BatchAPIEnabled && batchFlagEnabled {
 		// The batch data-plane service only exists when the datasource has a
-		// route for metrics.monitor.azure.com; customized-cloud configs must
-		// supply the metricsDataPlane route themselves. When it is missing, fall
-		// back to the legacy ARM endpoint rather than failing every query in the
-		// request.
+		// metrics data-plane route (e.g. metrics.monitor.azure.com, or .cn for
+		// China); customized-cloud configs must supply the metricsDataPlane
+		// route themselves. When it is missing, fall back to the legacy ARM
+		// endpoint rather than failing every query in the request.
 		if svc, ok := dsInfo.Services[types.RouteAzureMonitorBatchMetrics]; ok {
-			return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client, svc.HTTPClient)
+			return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client, svc.HTTPClient, svc.URL)
 		}
 		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but no batch metrics service is configured; falling back to the legacy ARM metrics endpoint")
 	}

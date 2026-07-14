@@ -80,9 +80,16 @@ func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcre
 	}
 
 	// The Metrics Batch API uses a separate data-plane endpoint and audience.
-	// This is currently only defined for the public cloud; sovereign cloud users
-	// must supply the URL via customizedRoutes.
+	// Defined for the public, China, and US Government clouds; other clouds must
+	// supply the URL via customizedRoutes or a metricsDataPlane property on a
+	// custom cloud.
 	metricsDataPlaneURL := "https://metrics.monitor.azure.com"
+	switch azureCloud {
+	case azsettings.AzureChina:
+		metricsDataPlaneURL = "https://metrics.monitor.azure.cn"
+	case azsettings.AzureUSGovernment:
+		metricsDataPlaneURL = "https://metrics.monitor.azure.us"
+	}
 	if v, ok := cloudSettings.Properties["metricsDataPlane"]; ok {
 		metricsDataPlaneURL = v
 	}

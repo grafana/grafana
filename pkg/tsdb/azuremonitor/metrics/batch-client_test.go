@@ -29,22 +29,39 @@ func makeBatch(region, subscription, namespace, metricNames, interval, aggregati
 			From:         from.UTC().Format(time.RFC3339),
 			To:           to.UTC().Format(time.RFC3339),
 		},
-		ResourceIDs: resourceIDs,
-		Queries:     queries,
+		ResourceIDs:  resourceIDs,
+		Queries:      queries,
+		DataPlaneURL: "https://metrics.monitor.azure.com",
 	}
 }
 
 func TestGetRegionalEndpoint(t *testing.T) {
 	tests := []struct {
-		region   string
-		expected string
+		name         string
+		region       string
+		dataPlaneURL string
+		expected     string
+		expectErr    bool
 	}{
-		{"westus2", "westus2.metrics.monitor.azure.com"},
-		{"WestUS2", "westus2.metrics.monitor.azure.com"}, // lowercased
-		{"", "global.metrics.monitor.azure.com"},
+		{"public cloud", "westus2", "https://metrics.monitor.azure.com", "westus2.metrics.monitor.azure.com", false},
+		{"region is lowercased", "WestUS2", "https://metrics.monitor.azure.com", "westus2.metrics.monitor.azure.com", false},
+		{"empty region uses global endpoint", "", "https://metrics.monitor.azure.com", "global.metrics.monitor.azure.com", false},
+		{"china cloud", "chinaeast2", "https://metrics.monitor.azure.cn", "chinaeast2.metrics.monitor.azure.cn", false},
+		{"china cloud global", "", "https://metrics.monitor.azure.cn", "global.metrics.monitor.azure.cn", false},
+		{"us government cloud", "usgovvirginia", "https://metrics.monitor.azure.us", "usgovvirginia.metrics.monitor.azure.us", false},
+		{"empty URL errors", "westus2", "", "", true},
+		{"scheme-less URL errors", "westus2", "metrics.monitor.azure.cn", "", true},
 	}
 	for _, tc := range tests {
-		assert.Equal(t, tc.expected, getRegionalEndpoint(tc.region), "region=%q", tc.region)
+		t.Run(tc.name, func(t *testing.T) {
+			endpoint, err := getRegionalEndpoint(tc.region, tc.dataPlaneURL)
+			if tc.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, endpoint)
+		})
 	}
 }
 
@@ -55,7 +72,8 @@ func TestBuildBatchURL(t *testing.T) {
 	t.Run("builds URL with base path and all query parameters", func(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "", from, to, nil, nil)
-		u := buildBatchURL(batch)
+		u, err := buildBatchURL(batch)
+		require.NoError(t, err)
 		assert.Contains(t, u, "https://westus2.metrics.monitor.azure.com/subscriptions/sub-123/metrics:getBatch")
 		parsed, err := url.Parse(u)
 		require.NoError(t, err)
@@ -73,7 +91,9 @@ func TestBuildBatchURL(t *testing.T) {
 	t.Run("omits interval and aggregation when empty", func(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"", "", "", from, to, nil, nil)
-		parsed, err := url.Parse(buildBatchURL(batch))
+		u, err := buildBatchURL(batch)
+		require.NoError(t, err)
+		parsed, err := url.Parse(u)
 		require.NoError(t, err)
 		q := parsed.Query()
 		assert.Empty(t, q.Get("interval"))
@@ -83,7 +103,9 @@ func TestBuildBatchURL(t *testing.T) {
 	t.Run("forwards dimension filter unchanged", func(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "VMName eq 'vm1'", from, to, nil, nil)
-		parsed, err := url.Parse(buildBatchURL(batch))
+		u, err := buildBatchURL(batch)
+		require.NoError(t, err)
+		parsed, err := url.Parse(u)
 		require.NoError(t, err)
 		assert.Equal(t, "VMName eq 'vm1'", parsed.Query().Get("filter"))
 	})
@@ -92,7 +114,9 @@ func TestBuildBatchURL(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "", from, to, nil, nil)
 		batch.Key.Top = "10"
-		parsed, err := url.Parse(buildBatchURL(batch))
+		u, err := buildBatchURL(batch)
+		require.NoError(t, err)
+		parsed, err := url.Parse(u)
 		require.NoError(t, err)
 		assert.Equal(t, "10", parsed.Query().Get("top"))
 	})
@@ -100,7 +124,18 @@ func TestBuildBatchURL(t *testing.T) {
 	t.Run("uses global endpoint for empty region", func(t *testing.T) {
 		batch := makeBatch("", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "", from, to, nil, nil)
-		assert.Contains(t, buildBatchURL(batch), "global.metrics.monitor.azure.com")
+		u, err := buildBatchURL(batch)
+		require.NoError(t, err)
+		assert.Contains(t, u, "global.metrics.monitor.azure.com")
+	})
+
+	t.Run("derives host from a sovereign-cloud data-plane URL", func(t *testing.T) {
+		batch := makeBatch("chinaeast2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
+			"PT1M", "Average", "", from, to, nil, nil)
+		batch.DataPlaneURL = "https://metrics.monitor.azure.cn"
+		u, err := buildBatchURL(batch)
+		require.NoError(t, err)
+		assert.Contains(t, u, "https://chinaeast2.metrics.monitor.azure.cn/subscriptions/sub-123/metrics:getBatch")
 	})
 }
 
@@ -117,7 +152,9 @@ func TestBuildBatchRequest(t *testing.T) {
 	// Request line and headers.
 	assert.Equal(t, "POST", req.Method)
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
-	assert.Equal(t, buildBatchURL(batch), req.URL.String())
+	expectedURL, err := buildBatchURL(batch)
+	require.NoError(t, err)
+	assert.Equal(t, expectedURL, req.URL.String())
 
 	// Body: resource IDs are sent under the exact "resourceids" key (casing
 	// matters for the Azure API).

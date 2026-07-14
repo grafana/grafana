@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sync"
 	"testing"
 	"time"
 
@@ -27,6 +28,25 @@ type redirectTransport struct {
 }
 
 func (t *redirectTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.URL.Scheme = t.target.Scheme
+	req.URL.Host = t.target.Host
+	return http.DefaultTransport.RoundTrip(req)
+}
+
+// hostRecordingTransport redirects like redirectTransport but records each
+// request's original host first, so tests can assert which endpoint a batch
+// request was aimed at before the redirect.
+type hostRecordingTransport struct {
+	target *url.URL
+	mu     sync.Mutex
+	hosts  []string
+}
+
+func (t *hostRecordingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	t.mu.Lock()
+	t.hosts = append(t.hosts, req.URL.Host)
+	t.mu.Unlock()
 	req = req.Clone(req.Context())
 	req.URL.Scheme = t.target.Scheme
 	req.URL.Host = t.target.Host
@@ -353,6 +373,34 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
 		require.NoError(t, err)
 		require.Contains(t, resp.Responses, "A", "resource-less query must receive a response, not vanish")
+	})
+
+	t.Run("batch requests target the regional host of the configured data-plane URL", func(t *testing.T) {
+		// Regression: the batch host must be derived from the batch metrics
+		// service URL (cloud-dependent, e.g. metrics.monitor.azure.cn for
+		// China), not from the ARM URL passed to ExecuteTimeSeriesQuery.
+		resourceID := "/subscriptions/sub-123/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write(batchSuccessResponse([]string{resourceID}, 42.0))
+		}))
+		defer srv.Close()
+
+		recorder := &hostRecordingTransport{target: mustParseURL(srv.URL)}
+		dsInfo := makeBatchDsInfo(srv)
+		dsInfo.Services["Azure Monitor Batch Metrics"] = types.DatasourceService{
+			URL:        "https://metrics.monitor.azure.cn",
+			HTTPClient: &http.Client{Transport: recorder},
+		}
+		q := makeBatchQuery("A", "sub-123", "chinaeast2", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("chinaeast2")},
+		})
+
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, &http.Client{}, "https://management.chinacloudapi.cn", false)
+		require.NoError(t, err)
+		assert.NoError(t, resp.Responses["A"].Error)
+		require.Len(t, recorder.hosts, 1)
+		assert.Equal(t, "chinaeast2.metrics.monitor.azure.cn", recorder.hosts[0])
 	})
 }
 

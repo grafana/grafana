@@ -61,19 +61,30 @@ func executeBatchRequests(ctx context.Context, batches []Batch, cli *http.Client
 	return results
 }
 
-// getRegionalEndpoint returns the Metrics Batch API hostname for the given region.
-// An empty region falls back to the global endpoint.
-func getRegionalEndpoint(region string) string {
-	if region == "" {
-		return "global.metrics.monitor.azure.com"
+// getRegionalEndpoint returns the Metrics Batch API hostname for the given
+// region, derived from the datasource's data-plane route URL so sovereign
+// clouds (e.g. metrics.monitor.azure.cn) get their own domain. An empty region
+// falls back to the global endpoint. The route URL is validated when the batch
+// service is created, so an invalid dataPlaneURL here indicates a Batch
+// constructed without createBatches and is returned as an error.
+func getRegionalEndpoint(region, dataPlaneURL string) (string, error) {
+	u, err := url.Parse(dataPlaneURL)
+	if err != nil || u.Host == "" {
+		return "", fmt.Errorf("invalid metrics data-plane URL %q", dataPlaneURL)
 	}
-	return fmt.Sprintf("%s.metrics.monitor.azure.com", strings.ToLower(region))
+	if region == "" {
+		return fmt.Sprintf("global.%s", u.Host), nil
+	}
+	return fmt.Sprintf("%s.%s", strings.ToLower(region), u.Host), nil
 }
 
 // buildBatchURL constructs the full URL for a Metrics Batch API POST request,
 // including all query parameters derived from the batch's group key.
-func buildBatchURL(batch Batch) string {
-	endpoint := getRegionalEndpoint(batch.Key.Region)
+func buildBatchURL(batch Batch) (string, error) {
+	endpoint, err := getRegionalEndpoint(batch.Key.Region, batch.DataPlaneURL)
+	if err != nil {
+		return "", err
+	}
 
 	params := url.Values{}
 	params.Set("api-version", batchAPIVersion)
@@ -98,7 +109,7 @@ func buildBatchURL(batch Batch) string {
 	}
 
 	return fmt.Sprintf("https://%s/subscriptions/%s/metrics:getBatch?%s",
-		endpoint, url.PathEscape(batch.Key.Subscription), params.Encode())
+		endpoint, url.PathEscape(batch.Key.Subscription), params.Encode()), nil
 }
 
 // batchResponse is the top-level JSON response from the Metrics Batch API.
@@ -168,7 +179,10 @@ func buildBatchRequest(ctx context.Context, batch Batch) (*http.Request, error) 
 		return nil, fmt.Errorf("invalid batch region %q: must contain only ASCII letters and digits", batch.Key.Region)
 	}
 
-	rawURL := buildBatchURL(batch)
+	rawURL, err := buildBatchURL(batch)
+	if err != nil {
+		return nil, err
+	}
 
 	bodyBytes, err := json.Marshal(batchRequestBody{ResourceIDs: batch.ResourceIDs})
 	if err != nil {
