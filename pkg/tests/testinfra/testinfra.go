@@ -1036,6 +1036,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	_, err = dbSection.NewKey("wal", "true")
 	require.NoError(t, err)
 
+	// Startup params
+	libraryPanels, _ := getOrCreateSection("library_panels")
+	if opts.EnableKubernetesLibraryPanels {
+		_, err = libraryPanels.NewKey("enable_kubernetes_library_panels", "true")
+	}
+
 	cfgPath := filepath.Join(cfgDir, "test.ini")
 	err = cfg.SaveTo(cfgPath)
 	require.NoError(t, err)
@@ -1174,6 +1180,9 @@ type GrafanaOpts struct {
 
 	// Enables Scope Api
 	ScopesApiEnabled bool
+
+	// Sartup params
+	EnableKubernetesLibraryPanels bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
