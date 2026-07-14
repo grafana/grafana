@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -391,10 +390,15 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	if cmd.JsonData == nil {
 		cmd.JsonData = simplejson.New()
 	}
-	if cmd.UID == "" {
-		cmd.UID = util.GenerateShortUID()
+	allowPerDsExternalID := s.features.IsEnabled(ctx, featuremgmt.FlagAwsAssumeRolePerDatasourceExternalId)
+	if allowPerDsExternalID && cmd.UID == "" {
+		uid, genErr := s.SQLStore.GenerateNewUID(ctx, cmd.OrgID)
+		if genErr != nil {
+			return nil, genErr
+		}
+		cmd.UID = uid
 	}
-	ensureGrafanaExternalID(cmd.UID, s.cfg.AWSExternalId, cmd.JsonData)
+	ensureGrafanaExternalID(cmd.UID, s.cfg.AWSExternalId, cmd.JsonData, allowPerDsExternalID)
 
 	var dataSource *datasources.DataSource
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -679,7 +683,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
-		preserveGrafanaExternalID(cmd.UID, s.cfg.AWSExternalId, dataSource.JsonData, cmd.JsonData)
+		allowPerDsExternalID := s.features.IsEnabled(ctx, featuremgmt.FlagAwsAssumeRolePerDatasourceExternalId)
+		preserveGrafanaExternalID(cmd.UID, s.cfg.AWSExternalId, dataSource.JsonData, cmd.JsonData, allowPerDsExternalID)
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource

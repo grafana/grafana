@@ -33,6 +33,9 @@ type Store interface {
 	UpdateDataSource(context.Context, *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error)
 	GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error)
+	// GenerateNewUID returns an org-unique datasource UID (with the same retry
+	// behavior used when AddDataSource assigns a UID).
+	GenerateNewUID(ctx context.Context, orgID int64) (string, error)
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 }
@@ -441,6 +444,17 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 
 		return err
 	})
+}
+
+// GenerateNewUID returns an org-unique datasource UID.
+func (ss *SqlStore) GenerateNewUID(ctx context.Context, orgID int64) (string, error) {
+	var uid string
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		var genErr error
+		uid, genErr = generateNewDatasourceUid(sess, orgID)
+		return genErr
+	})
+	return uid, err
 }
 
 func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {

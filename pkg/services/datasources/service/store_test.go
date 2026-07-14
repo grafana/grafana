@@ -111,6 +111,46 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 	})
 
+	t.Run("GenerateNewUID", func(t *testing.T) {
+		t.Run("returns an unused uid for the org", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+			uid, err := ss.GenerateNewUID(context.Background(), 10)
+			require.NoError(t, err)
+			require.NotEmpty(t, uid)
+
+			cmd := defaultAddDatasourceCommand
+			cmd.UID = uid
+			_, err = ss.AddDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+		})
+
+		t.Run("retries when a generated uid already exists", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+			cmd := defaultAddDatasourceCommand
+			cmd.UID = "taken-uid"
+			_, err := ss.AddDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+
+			orig := generateNewUid
+			t.Cleanup(func() { generateNewUid = orig })
+			calls := 0
+			generateNewUid = func() string {
+				calls++
+				if calls == 1 {
+					return "taken-uid"
+				}
+				return "free-uid"
+			}
+
+			uid, err := ss.GenerateNewUID(context.Background(), 10)
+			require.NoError(t, err)
+			require.Equal(t, "free-uid", uid)
+			require.GreaterOrEqual(t, calls, 2)
+		})
+	})
+
 	t.Run("UpdateDataSource", func(t *testing.T) {
 		t.Run("updates datasource with version", func(t *testing.T) {
 			db := db.InitTestDB(t)

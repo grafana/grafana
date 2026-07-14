@@ -25,12 +25,33 @@ func isValidGrafanaExternalID(id, stackExternalID, datasourceUID string) bool {
 	return id == buildGrafanaExternalID(stackExternalID, datasourceUID)
 }
 
-// ensureGrafanaExternalID sets a per-datasource external ID on create.
-// If the client already supplied a valid ID for this stack+UID (pre-save UX), it is kept.
-// Otherwise a new ID is generated. Invalid client values are replaced.
-// Gated on authType only — plugin allowlists live in enterprise dsauth / aws-sdk-react UI.
-func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json) {
+// clearInvalidGrafanaExternalID removes a client- or store-supplied grafanaExternalId that is
+// not bound to this datasource. Dual-read always prefers a set grafanaExternalId for STS, so
+// invalid values must never be persisted regardless of the minting feature toggle.
+func clearInvalidGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json) {
 	if jsonData == nil {
+		return
+	}
+	id := jsonData.Get(grafanaExternalIDJSONKey).MustString()
+	if id == "" {
+		return
+	}
+	if !isValidGrafanaExternalID(id, stackExternalID, uid) {
+		jsonData.Del(grafanaExternalIDJSONKey)
+	}
+}
+
+// ensureGrafanaExternalID validates (and clears) any client-supplied grafanaExternalId on create.
+// When allowGenerate is true and auth is grafana_assume_role, it mints {stack}-{uid} if the field
+// is empty after validation. If the client already supplied a valid ID (pre-save UX), it is kept.
+func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json, allowGenerate bool) {
+	if jsonData == nil {
+		return
+	}
+
+	clearInvalidGrafanaExternalID(uid, stackExternalID, jsonData)
+
+	if !allowGenerate {
 		return
 	}
 	if jsonData.Get("authType").MustString() != grafanaAssumeRoleAuthType {
@@ -39,23 +60,26 @@ func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.J
 	if stackExternalID == "" || uid == "" {
 		return
 	}
-
-	existing := jsonData.Get(grafanaExternalIDJSONKey).MustString()
-	if isValidGrafanaExternalID(existing, stackExternalID, uid) {
+	if jsonData.Get(grafanaExternalIDJSONKey).MustString() != "" {
 		return
 	}
 
 	jsonData.Set(grafanaExternalIDJSONKey, buildGrafanaExternalID(stackExternalID, uid))
 }
 
-// preserveGrafanaExternalID keeps an existing per-datasource external ID
-// immutable across updates, and generates one when switching to grafana_assume_role.
-// Legacy grafana_assume_role datasources without an ID keep using the stack-level
-// fallback until explicitly migrated — we do not generate on ordinary updates.
-func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *simplejson.Json) {
+// preserveGrafanaExternalID keeps a valid existing per-datasource external ID immutable across updates,
+// scrubs invalid stored or client-supplied values, and optionally mints when switching into
+// grafana_assume_role (when allowGenerate is true).
+//
+// Legacy grafana_assume_role datasources without an ID keep using the stack-level fallback until
+// explicitly migrated — we do not generate on ordinary updates.
+func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *simplejson.Json, allowGenerate bool) {
 	if updated == nil {
 		return
 	}
+
+	// Never persist a stolen / mismatched ID from the update payload.
+	clearInvalidGrafanaExternalID(uid, stackExternalID, updated)
 
 	existingID := ""
 	existingAuthType := ""
@@ -63,14 +87,23 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		existingID = existing.Get(grafanaExternalIDJSONKey).MustString()
 		existingAuthType = existing.Get("authType").MustString()
 	}
-	updatedAuthType := updated.Get("authType").MustString()
 
 	if existingID != "" {
-		// Immutable once set.
-		updated.Set(grafanaExternalIDJSONKey, existingID)
+		if isValidGrafanaExternalID(existingID, stackExternalID, uid) {
+			// Immutable once set (even when generation is feature-flagged off).
+			updated.Set(grafanaExternalIDJSONKey, existingID)
+			return
+		}
+		// Scrub planted values already in the store so STS falls back to the stack ID.
+		updated.Del(grafanaExternalIDJSONKey)
+		existingID = ""
+	}
+
+	if !allowGenerate {
 		return
 	}
 
+	updatedAuthType := updated.Get("authType").MustString()
 	if updatedAuthType != grafanaAssumeRoleAuthType {
 		return
 	}
@@ -83,8 +116,7 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		return
 	}
 
-	clientID := updated.Get(grafanaExternalIDJSONKey).MustString()
-	if isValidGrafanaExternalID(clientID, stackExternalID, uid) {
+	if updated.Get(grafanaExternalIDJSONKey).MustString() != "" {
 		return
 	}
 
