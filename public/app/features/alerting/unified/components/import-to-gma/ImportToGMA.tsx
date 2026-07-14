@@ -79,7 +79,7 @@ export interface ImportFormValues {
   step1Completed: boolean;
   step1Skipped: boolean;
   /**
-   * Name of the imported policy tree (value for __grafana_managed_route__ label).
+   * Name of the imported policy tree (the config identifier for the imported Alertmanager config).
    * For now, this is free-form as we don't have an API to retrieve the list of available policy trees.
    */
   policyTreeName: string;
