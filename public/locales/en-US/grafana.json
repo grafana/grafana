@@ -12246,8 +12246,14 @@
       "bookmark": {
         "tooltip": "Bookmark {{itemName}}"
       },
+      "hide": {
+        "tooltip": "Hide {{itemName}}"
+      },
       "pin": {
         "tooltip": "Pin {{itemName}}"
+      },
+      "show": {
+        "tooltip": "Show {{itemName}}"
       },
       "unpin": {
         "tooltip": "Unpin {{itemName}}"
@@ -12258,14 +12264,17 @@
     },
     "megamenu": {
       "close": "Close menu",
+      "customise": "Customise navigation",
+      "customise-cancel": "Cancel",
+      "customise-done": "Done",
+      "customise-reset": "Reset navigation - show all items, unpin all and reset order",
+      "customise-saving": "Saving…",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
-      "hide-unpinned-items": "Hide unpinned items",
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned",
-      "show-unpinned-items": "Show unpinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -12273,6 +12282,7 @@
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
       "loading-aria-label": "Loading {{sectionName}}",
+      "reorder-aria-label": "Reorder {{itemName}}",
       "starred-dashboard-icon": "Dashboard",
       "starred-folder-icon": "Folder"
     },
