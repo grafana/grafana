@@ -70,6 +70,9 @@
     "borderRadiusLg": 12
   },
   "components": {
+    "input": {
+      "background": "palette.ink850"
+    },
     "tag": {
       "colors": [
         { "background": "palette.coral900", "text": "palette.coral300" },

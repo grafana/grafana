@@ -49,9 +49,9 @@
       "link": "palette.orange700"
     },
     "border": {
-      "weak": "palette.neutral300",
-      "medium": "palette.neutral400",
-      "strong": "palette.neutral500"
+      "weak": "palette.neutral200",
+      "medium": "palette.neutral300",
+      "strong": "palette.neutral400"
     },
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
@@ -90,6 +90,9 @@
         { "background": "palette.lavender200", "text": "palette.lavender800" },
         { "background": "palette.rose200", "text": "palette.rose800" }
       ]
+    },
+    "input": {
+      "background": "palette.white"
     }
   },
   "shape": {
