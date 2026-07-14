@@ -33,7 +33,7 @@ type UnifiedMigrator interface {
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
 	streamProvider streamProvider
-	client         resource.SearchClient
+	client         resource.ResourceClient
 	log            log.Logger
 	registry       *MigrationRegistry
 }
@@ -79,7 +79,7 @@ func ProvideUnifiedMigrator(
 
 func newUnifiedMigrator(
 	streamProvider streamProvider,
-	client resource.SearchClient,
+	client resource.ResourceClient,
 	log log.Logger,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
@@ -113,7 +113,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 
 	// If a definition provides a dynamic group resolver, call it to discover
 	// which groups actually exist in this namespace. The resolver receives the
-	// SearchClient so it can also query unified storage for stale groups and
+	// ResourceClient so it can also query unified storage for stale groups and
 	// merge them in — keeping all resource-specific logic in the resolver.
 	//
 	// If the result is empty (namespace has no data at all), keep

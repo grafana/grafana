@@ -86,7 +86,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if len(prepared.ExtraConfigs) > 0 && moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) && moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+	if len(prepared.ExtraConfigs) > 0 && moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		if err := moa.Crypto.DecryptExtraConfigs(ctx, prepared); err != nil {
 			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 		}
@@ -100,10 +100,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
 	// route
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
-	}
+	prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
 
 	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &prepared.AlertmanagerConfig, onInvalid, moa.featureManager); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err

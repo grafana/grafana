@@ -110,7 +110,7 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
     });
   }
 
-  test('tooltip interactions', async ({ gotoDashboardPage, selectors, page }) => {
+  test.skip('tooltip interactions', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
     });

@@ -11,6 +11,7 @@ import { Drawer } from '@grafana/ui';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { DownloadDiagnostics } from '../DownloadDiagnostics';
 import { ExportAsCode } from '../ExportButton/ExportAsCode';
 import { ExportAsImage } from '../ExportButton/ExportAsImage';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
@@ -127,6 +128,8 @@ function getPanelShareView(
       return new SharePanelEmbedTab({ panelRef, onDismiss });
     case shareDashboardType.libraryPanel:
       return new ShareLibraryPanelTab({ panelRef, onDismiss });
+    case shareDashboardType.downloadDiagnostics:
+      return new DownloadDiagnostics({ panelRef, onDismiss });
     default:
       return new SharePanelInternally({ panelRef, onDismiss });
   }
