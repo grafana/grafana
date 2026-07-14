@@ -287,13 +287,17 @@ export class ScopesService implements ScopesContextValue {
               // the scope manually. The scope metadata is already in the
               // getScope RTK Query cache (seeded by fetchDefaultScope), so
               // applyScopes' downstream fetch is a cache hit.
-              this.selectorService.changeScopes([name], undefined, undefined, true);
+              // Return the promise so the outer .catch below actually catches
+              // a rejection from changeScopes → applyScopes → fetch chains.
+              // Without the return, the inner promise floats free and any
+              // rejection surfaces as unhandled.
+              return this.selectorService.changeScopes([name], undefined, undefined, true);
             })
             .catch((err) => {
-              // fetchDefaultScope handles its own errors, but changeScopes above
-              // returns an un-awaited promise; a rejection there would otherwise
-              // surface as an unhandled rejection. Match the pattern used by the
-              // resolvePathToRoot(...).catch(...) calls elsewhere in this file.
+              // Match the .catch(...) pattern used by the resolvePathToRoot(...)
+              // calls elsewhere in this file so a rejection from either
+              // fetchDefaultScope or the changeScopes chain above is logged
+              // instead of surfacing as an unhandled rejection.
               console.error('Failed to apply default scope:', err);
             });
         }
