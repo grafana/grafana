@@ -21,7 +21,8 @@ import (
 )
 
 func TestTeamMembersREST_Connect(t *testing.T) {
-	setTeamsApiFlag(t, true)
+	teamsApiEnabled := true
+	setTeamsApiFlag(t, teamsApiEnabled)
 
 	t.Run("returns members from team spec", func(t *testing.T) {
 		g := &mockGetter{team: teamWithMembers("team1",
@@ -53,8 +54,12 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 	})
 
 	t.Run("returns 403 when feature flag disabled", func(t *testing.T) {
-		setTeamsApiFlag(t, false)
-		t.Cleanup(func() { setTeamsApiFlag(t, true) })
+		teamsApiEnabled := false
+		setTeamsApiFlag(t, teamsApiEnabled)
+		t.Cleanup(func() {
+			teamsApiEnabled = true
+			setTeamsApiFlag(t, teamsApiEnabled)
+		})
 
 		g := &mockGetter{team: teamWithMembers("team1")}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())

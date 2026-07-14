@@ -39,7 +39,8 @@ func setTeamsApiFlag(t *testing.T, enabled bool) {
 }
 
 func TestUserTeamREST_Connect(t *testing.T) {
-	setTeamsApiFlag(t, true)
+	teamsApiEnabled := true
+	setTeamsApiFlag(t, teamsApiEnabled)
 
 	t.Run("should create handler with default pagination and stable sort", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
@@ -468,8 +469,12 @@ func TestUserTeamREST_Connect(t *testing.T) {
 	})
 
 	t.Run("should return 403 when feature flag is disabled", func(t *testing.T) {
-		setTeamsApiFlag(t, false)
-		t.Cleanup(func() { setTeamsApiFlag(t, true) })
+		teamsApiEnabled := false
+		setTeamsApiFlag(t, teamsApiEnabled)
+		t.Cleanup(func() {
+			teamsApiEnabled = true
+			setTeamsApiFlag(t, teamsApiEnabled)
+		})
 
 		mockClient := &mockSearchClient{}
 		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
