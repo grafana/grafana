@@ -1114,15 +1114,18 @@ github.com/go-openapi/jsonreference v0.21.5/go.mod h1:u25Bw85sX4E2jzFodh1FOKMTZL
 github.com/go-openapi/loads v0.22.0/go.mod h1:yLsaTCS92mnSAZX5WWoxszLj0u+Ojl+Zs5Stn1oF+rs=
 github.com/go-openapi/loads v0.23.2/go.mod h1:IEVw1GfRt/P2Pplkelxzj9BYFajiWOtY2nHZNj4UnWY=
 github.com/go-openapi/loads v0.23.3/go.mod h1:NOH07zLajXo8y55hom0omlHWDVVvCwBM/S+csCK8LqA=
+github.com/go-openapi/loads v0.23.4/go.mod h1:oXw5oD+IGqI5BdfQgN7y9OXR8JhsAfEDpwWKxpGzeno=
 github.com/go-openapi/runtime v0.28.0/go.mod h1:QN7OzcS+XuYmkQLw05akXk0jRH/eZ3kb18+1KwW9gyc=
 github.com/go-openapi/spec v0.21.0/go.mod h1:78u6VdPw81XU44qEWGhtr982gJ5BWg2c0I5XwVMotYk=
 github.com/go-openapi/spec v0.22.3/go.mod h1:iIImLODL2loCh3Vnox8TY2YWYJZjMAKYyLH2Mu8lOZs=
 github.com/go-openapi/spec v0.22.4/go.mod h1:WQ6Ai0VPWMZgMT4XySjlRIE6GP1bGQOtEThn3gcWLtQ=
+github.com/go-openapi/spec v0.22.5/go.mod h1:vxpOtMya5TXtENXKE5bKqv5NjocVhyhxHrlZfvKnZ74=
 github.com/go-openapi/strfmt v0.23.0/go.mod h1:NrtIpfKtWIygRkKVsxh7XQMDQW5HKQl6S5ik2elW+K4=
 github.com/go-openapi/strfmt v0.25.0/go.mod h1:nNXct7OzbwrMY9+5tLX4I21pzcmE6ccMGXl3jFdPfn8=
 github.com/go-openapi/strfmt v0.26.0/go.mod h1:Zslk5VZPOISLwmWTMBIS7oiVFem1o1EI6zULY8Uer7Y=
 github.com/go-openapi/strfmt v0.26.1/go.mod h1:Zslk5VZPOISLwmWTMBIS7oiVFem1o1EI6zULY8Uer7Y=
 github.com/go-openapi/strfmt v0.26.2/go.mod h1:fXh1e449cyUn2NYuz+wb3wARBUdMl7qPEZwX00nqivY=
+github.com/go-openapi/strfmt v0.26.3/go.mod h1:a5nsUw0oRpQzZeOwx8bi6cKbzFZslpbCKt1LEot+KnQ=
 github.com/go-openapi/swag v0.22.3/go.mod h1:UzaqsxGiab7freDnrUUra0MwWfN/q7tE4j+VcZ0yl14=
 github.com/go-openapi/swag v0.23.0/go.mod h1:esZ8ITTYEsH1V2trKHjAN8Ai7xHb8RV+YSZ577vPjgQ=
 github.com/go-openapi/swag v0.23.1/go.mod h1:STZs8TbRvEQQKUA+JZNAm3EWlgaOBGpyFDqQnDHMef0=
@@ -1133,6 +1136,7 @@ github.com/go-openapi/swag/conv v0.25.5/go.mod h1:CuJ1eWvh1c4ORKx7unQnFGyvBbNlRK
 github.com/go-openapi/swag/conv v0.26.0/go.mod h1:tpAmIL7X58VPnHHiSO4uE3jBeRamGsFsfdDeDtb5ECE=
 github.com/go-openapi/swag/fileutils v0.25.4/go.mod h1:cdOT/PKbwcysVQ9Tpr0q20lQKH7MGhOEb6EwmHOirUk=
 github.com/go-openapi/swag/fileutils v0.25.5/go.mod h1:V3cT9UdMQIaH4WiTrUc9EPtVA4txS0TOmRURmhGF4kc=
+github.com/go-openapi/swag/fileutils v0.26.0/go.mod h1:0WDJ7lp67eNjPMO50wAWYlKvhOb6CQ37rzR7wrgI8Tc=
 github.com/go-openapi/swag/jsonname v0.25.4/go.mod h1:GPVEk9CWVhNvWhZgrnvRA6utbAltopbKwDu8mXNUMag=
 github.com/go-openapi/swag/jsonname v0.25.5/go.mod h1:jNqqikyiAK56uS7n8sLkdaNY/uq6+D2m2LANat09pKU=
 github.com/go-openapi/swag/jsonname v0.26.0/go.mod h1:urBBR8bZNoDYGr653ynhIx+gTeIz0ARZxHkAPktJK2M=
@@ -1162,6 +1166,7 @@ github.com/go-openapi/testify/v2 v2.4.0/go.mod h1:HCPmvFFnheKK2BuwSA0TbbdxJ3I16p
 github.com/go-openapi/testify/v2 v2.4.1/go.mod h1:HCPmvFFnheKK2BuwSA0TbbdxJ3I16pjwMkYkP4Ywn54=
 github.com/go-openapi/testify/v2 v2.4.2/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-openapi/testify/v2 v2.5.0/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
+github.com/go-openapi/testify/v2 v2.5.1/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-openapi/validate v0.24.0/go.mod h1:iyeX1sEufmv3nPbBdX3ieNviWnOZaJ1+zquzJEf2BAQ=
 github.com/go-openapi/validate v0.25.1/go.mod h1:RMVyVFYte0gbSTaZ0N4KmTn6u/kClvAFp+mAVfS/DQc=
 github.com/go-pdf/fpdf v0.6.0 h1:MlgtGIfsdMEEQJr2le6b/HNr1ZlQwxyWr77r2aj2U/8=
@@ -2439,6 +2444,7 @@ golang.org/x/sys v0.0.0-20220908164124-27713097b956/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.10.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.19.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/sys v0.26.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+golang.org/x/sys v0.27.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/sys v0.28.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/sys v0.31.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
 golang.org/x/sys v0.32.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
@@ -2569,6 +2575,7 @@ google.golang.org/genproto/googleapis/api v0.0.0-20260406210006-6f92a3bedf2d/go.
 google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478/go.mod h1:C6ADNqOxbgdUUeRTU+LCHDPB9ttAMCTff6auwCVa4uc=
 google.golang.org/genproto/googleapis/api v0.0.0-20260511170946-3700d4141b60/go.mod h1:7yoXV7RIh5gblj/xVYoogxAWvA9wUeVbpsK/M694l00=
 google.golang.org/genproto/googleapis/api v0.0.0-20260519071638-aa98bba5eb94/go.mod h1:1dCETSCY2YKZNXQE3h4fun3TYwF5p8jejRKZgfWAgAY=
+google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa/go.mod h1:q4lMZS6kskjT5HvCPrnnypcDPVJqT/f4nfxmkE7gryY=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260319201613-d00831a3d3e7 h1:6jJ8xNMxB3mmH3HsxEMPjJU+WeFOiwBJ+cLm60OvSZs=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260319201613-d00831a3d3e7/go.mod h1:6TABGosqSqU2l1+fJ3jdvOYPPVryeKybxYF0cCZkTBE=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260427160629-7cedc36a6bc4 h1:vZSynqmtxmRfYL0QaV3UUWE/8BC6aqyIx+D+enkxybM=
