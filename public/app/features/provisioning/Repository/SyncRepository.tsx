@@ -59,23 +59,10 @@ export function SyncRepository({ repository }: Props) {
   const menu = (
     <Menu>
       <Menu.Item
-        label={t('provisioning.sync-repository.pull-diff', 'Pull based on diff')}
-        icon="cloud-download"
-        description={t(
-          'provisioning.sync-repository.pull-diff-description',
-          'Syncs only the changes since the last synced commit. Use for routine updates.'
-        )}
+        label={t('provisioning.sync-repository.pull-diff', 'Pull based on diff (default)')}
         onClick={() => triggerPull(true)}
       />
-      <Menu.Item
-        label={t('provisioning.sync-repository.pull-full', 'Force full pull')}
-        icon="sync"
-        description={t(
-          'provisioning.sync-repository.pull-full-description',
-          'Re-reads every file in the repository and reconciles all resources, including removing orphaned ones. This may be a long running job that will prevent other syncs while it completes. Use only when there are unexpected issues. '
-        )}
-        onClick={confirmFullPull}
-      />
+      <Menu.Item label={t('provisioning.sync-repository.pull-full', 'Force full pull')} onClick={confirmFullPull} />
     </Menu>
   );
 

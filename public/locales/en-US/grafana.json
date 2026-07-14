@@ -13919,10 +13919,8 @@
       "confirm-force-full-pull": "Are you sure you want to do a full pull? This may take a while, so only continue if you have resources that are unexpectedly not syncing.",
       "error-pulling-resources": "Error pulling resources",
       "pull": "Pull",
-      "pull-diff": "Pull based on diff",
-      "pull-diff-description": "Syncs only the changes since the last synced commit. Use for routine updates.",
+      "pull-diff": "Pull based on diff (default)",
       "pull-full": "Force full pull",
-      "pull-full-description": "Re-reads every file in the repository and reconciles all resources, including removing orphaned ones. This may be a long running job that will prevent other syncs while it completes. Use only when there are unexpected issues. ",
       "success-pull-started": "Pull started",
       "title-force-full-pull": "Force full pull?",
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
