@@ -272,7 +272,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
             <Text element="h2" variant="h5">
               <Trans i18nKey="home.dashboards.title">Dashboards</Trans>
             </Text>
-            <TextLink color="secondary" href="/dashboards" icon="angle-right">
+            <TextLink inline={false} color="secondary" href="/dashboards" icon="angle-right">
               <Trans i18nKey="home.dashboards.view-all">View all</Trans>
             </TextLink>
           </Stack>
