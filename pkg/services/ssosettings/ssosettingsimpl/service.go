@@ -55,14 +55,24 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	usageStats usagestats.Service, registerer prometheus.Registerer,
 	settingsProvider setting.Provider, licensing licensing.Licensing,
 ) *Service {
+	logger := log.New("ssosettings.service")
+
+	// ProvideService cannot return an error: a broken MT-Settings client
+	// configuration leaves the strategies without a client, and they fail
+	// loudly on read while the legacy path keeps serving at mode 0.
+	mtSettingsClient, err := newMTSettingsClient(cfg, registerer)
+	if err != nil {
+		logger.Error("Failed to initialize the MT-Settings client", "error", err)
+	}
+
 	// Each provider family pairs an MT-Settings adapter with its legacy
 	// strategy. The adapter sits first: while the ssoSettingsToMTSettings
 	// feature toggle is enabled it wins the match for its family, otherwise
 	// it matches nothing and the legacy strategy behaves as before.
 	fbStrategies := []ssosettings.FallbackStrategy{
-		strategies.NewMTSettingsOAuthStrategy(),
+		strategies.NewMTSettingsOAuthStrategy(mtSettingsClient),
 		strategies.NewOAuthStrategy(cfg),
-		strategies.NewMTSettingsLDAPStrategy(),
+		strategies.NewMTSettingsLDAPStrategy(mtSettingsClient),
 		strategies.NewLDAPStrategy(cfg),
 	}
 
@@ -76,7 +86,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	configurableProviders[social.LDAPProviderName] = true
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
-		fbStrategies = append(fbStrategies, strategies.NewMTSettingsSAMLStrategy(), strategies.NewSAMLStrategy(settingsProvider))
+		fbStrategies = append(fbStrategies, strategies.NewMTSettingsSAMLStrategy(mtSettingsClient), strategies.NewSAMLStrategy(settingsProvider))
 		providersList = append(providersList, social.SAMLProviderName)
 		configurableProviders[social.SAMLProviderName] = true
 	}

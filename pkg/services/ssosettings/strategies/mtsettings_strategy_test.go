@@ -36,9 +36,9 @@ func TestMTSettingsStrategies_IsMatch(t *testing.T) {
 		provider.UsingFlags(t, toggleFlags(false))
 
 		adapters := []ssosettings.FallbackStrategy{
-			NewMTSettingsOAuthStrategy(),
-			NewMTSettingsLDAPStrategy(),
-			NewMTSettingsSAMLStrategy(),
+			NewMTSettingsOAuthStrategy(nil),
+			NewMTSettingsLDAPStrategy(nil),
+			NewMTSettingsSAMLStrategy(nil),
 		}
 		providers := append([]string{}, ssosettings.AllOAuthProviders...)
 		providers = append(providers, social.LDAPProviderName, social.SAMLProviderName)
@@ -53,9 +53,9 @@ func TestMTSettingsStrategies_IsMatch(t *testing.T) {
 	t.Run("each adapter matches exactly its own family when the toggle is enabled", func(t *testing.T) {
 		provider.UsingFlags(t, toggleFlags(true))
 
-		oauth := NewMTSettingsOAuthStrategy()
-		ldap := NewMTSettingsLDAPStrategy()
-		saml := NewMTSettingsSAMLStrategy()
+		oauth := NewMTSettingsOAuthStrategy(nil)
+		ldap := NewMTSettingsLDAPStrategy(nil)
+		saml := NewMTSettingsSAMLStrategy(nil)
 
 		for _, p := range ssosettings.AllOAuthProviders {
 			require.True(t, oauth.IsMatch(t.Context(), p))
@@ -80,9 +80,9 @@ func TestMTSettingsStrategies_GetProviderConfig(t *testing.T) {
 		adapter  ssosettings.FallbackStrategy
 		provider string
 	}{
-		{NewMTSettingsOAuthStrategy(), social.GenericOAuthProviderName},
-		{NewMTSettingsLDAPStrategy(), social.LDAPProviderName},
-		{NewMTSettingsSAMLStrategy(), social.SAMLProviderName},
+		{NewMTSettingsOAuthStrategy(nil), social.GenericOAuthProviderName},
+		{NewMTSettingsLDAPStrategy(nil), social.LDAPProviderName},
+		{NewMTSettingsSAMLStrategy(nil), social.SAMLProviderName},
 	}
 
 	for _, tc := range testCases {

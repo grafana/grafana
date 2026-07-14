@@ -5,11 +5,19 @@ import (
 	"slices"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
+
+// SettingsLister is the subset of the MT-Settings client the MT-Settings
+// strategies need to load provider settings.
+type SettingsLister interface {
+	List(ctx context.Context, selector metav1.LabelSelector) ([]*settingsvc.Setting, error)
+}
 
 // The MT-Settings strategies resolve provider settings from the MT-Settings
 // service. Each provider family has its own adapter, registered directly in
@@ -17,7 +25,8 @@ import (
 // feature toggle is enabled the adapter wins the match and fails loudly
 // instead of silently falling back to the legacy mechanism.
 type mtSettingsStrategy struct {
-	matches func(provider string) bool
+	settings SettingsLister
+	matches  func(provider string) bool
 }
 
 func (s *mtSettingsStrategy) IsMatch(ctx context.Context, provider string) bool {
@@ -36,8 +45,9 @@ type MTSettingsOAuthStrategy struct {
 
 var _ ssosettings.FallbackStrategy = (*MTSettingsOAuthStrategy)(nil)
 
-func NewMTSettingsOAuthStrategy() *MTSettingsOAuthStrategy {
+func NewMTSettingsOAuthStrategy(settings SettingsLister) *MTSettingsOAuthStrategy {
 	return &MTSettingsOAuthStrategy{mtSettingsStrategy{
+		settings: settings,
 		matches: func(provider string) bool {
 			return slices.Contains(ssosettings.AllOAuthProviders, provider)
 		},
@@ -50,8 +60,9 @@ type MTSettingsLDAPStrategy struct {
 
 var _ ssosettings.FallbackStrategy = (*MTSettingsLDAPStrategy)(nil)
 
-func NewMTSettingsLDAPStrategy() *MTSettingsLDAPStrategy {
+func NewMTSettingsLDAPStrategy(settings SettingsLister) *MTSettingsLDAPStrategy {
 	return &MTSettingsLDAPStrategy{mtSettingsStrategy{
+		settings: settings,
 		matches: func(provider string) bool {
 			return provider == social.LDAPProviderName
 		},
@@ -64,8 +75,9 @@ type MTSettingsSAMLStrategy struct {
 
 var _ ssosettings.FallbackStrategy = (*MTSettingsSAMLStrategy)(nil)
 
-func NewMTSettingsSAMLStrategy() *MTSettingsSAMLStrategy {
+func NewMTSettingsSAMLStrategy(settings SettingsLister) *MTSettingsSAMLStrategy {
 	return &MTSettingsSAMLStrategy{mtSettingsStrategy{
+		settings: settings,
 		matches: func(provider string) bool {
 			return provider == social.SAMLProviderName
 		},
