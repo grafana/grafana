@@ -258,7 +258,7 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 	rev := testConfig()
 
 	t.Run("returns all managed routes", func(t *testing.T) {
-		routes := rev.GetManagedRoutes(true)
+		routes := rev.GetManagedRoutes()
 
 		expected := make([]*ManagedRoute, 0, len(rev.Config.ManagedRoutes)+1)
 		for name, mr := range rev.Config.ManagedRoutes {
@@ -268,14 +268,6 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 
 		assert.Len(t, routes, len(expected))
 		assert.ElementsMatch(t, routes, expected)
-	})
-
-	t.Run("returns only default route when flag is false", func(t *testing.T) {
-		// Ignore non-default routes when `includeManagedRoutes=false`
-		routes := rev.GetManagedRoutes(false)
-
-		assert.Len(t, routes, 1)
-		assert.Equal(t, routes[0], NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
 	})
 }
 

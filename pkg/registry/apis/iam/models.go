@@ -55,6 +55,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	externalGroupReconciler    legacy.ExternalGroupReconciler
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
 	ssoLegacyStore             *sso.LegacyStore
+	ssoUseMTSettings           bool
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller
 	teamLBACApiInstaller       TeamLBACApiInstaller
@@ -86,6 +87,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
+	teamSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
