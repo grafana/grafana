@@ -992,6 +992,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.savedQueriesPage",
+			Description: "Enables the dedicated Saved queries page and its navigation entry",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "playlistsRBAC",
 			Description: "Enables RBAC for playlists",
 			Stage:       FeatureStageGeneralAvailability,
