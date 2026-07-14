@@ -270,7 +270,6 @@
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/data-sources-plugins
-/devenv/dev-dashboards/datasource-mssql/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-loki/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-testdata/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-mysql/ @grafana/data-sources-plugins
@@ -308,10 +307,6 @@
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
 /devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend
 /devenv/docker/blocks/mqtt/ @grafana/alerting-backend
-/devenv/docker/blocks/mssql/ @grafana/data-sources-plugins
-/devenv/docker/blocks/mssql_arm64/ @grafana/data-sources-plugins
-/devenv/docker/blocks/mssql_tests/ @grafana/data-sources-plugins
-/devenv/docker/blocks/mssql_tls/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_exporter/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plugins
@@ -377,7 +372,6 @@
 /pkg/tsdb/jaeger/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
-/pkg/tsdb/mssql/ @grafana/data-sources-plugins
 /pkg/tsdb/influxdb/ @grafana/data-sources-plugins
 /pkg/tsdb/graphite/ @grafana/data-sources-plugins
 
@@ -1167,7 +1161,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/jaeger/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/loki/ @grafana/data-sources-plugins @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
-/public/app/plugins/datasource/mssql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
