@@ -127,8 +127,9 @@ async function listVariables(labelSelector: string): Promise<Variable[]> {
 
 /**
  * Applies scope precedence (folder wins over global on name collisions), tags each
- * variable with its origin, and returns folder-scoped variables first, each group
- * sorted by name.
+ * variable with its origin, and returns them in hierarchy order: global, then
+ * folder-scoped — each group sorted by name. Dashboard-local variables are appended
+ * later when the scene is built.
  */
 function mergePredefinedVariables(
   globalVariables: Variable[],
@@ -142,11 +143,11 @@ function mergePredefinedVariables(
   const visibleGlobals = globalVariables.filter((v) => !folderNames.has(getVariableSpecName(v)));
 
   return [
+    ...visibleGlobals.sort(byName).map((v) => toVariableKindWithOrigin(v, { type: 'global' })),
     ...folderVariables
       .sort(byName)
       // The folder branch is only reachable when folderUid is set.
       .map((v) => toVariableKindWithOrigin(v, { type: 'folder', folderUid: folderUid ?? '' })),
-    ...visibleGlobals.sort(byName).map((v) => toVariableKindWithOrigin(v, { type: 'global' })),
   ];
 }
 

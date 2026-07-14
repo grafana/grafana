@@ -80,10 +80,10 @@ describe('fetchPredefinedVariables', () => {
     const selectors = mockGet.mock.calls.map((call) => call[1].labelSelector);
     expect(selectors).toEqual(expect.arrayContaining(['!grafana.app/folder', 'grafana.app/folder=folder-1']));
 
-    // Folder-scoped variables come first.
-    expect(result.map((v) => v.spec.name)).toEqual(['cluster', 'region']);
-    expect(result[0].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
-    expect(result[1].spec.origin).toEqual({ type: 'global' });
+    // Hierarchy order: global, then folder-scoped.
+    expect(result.map((v) => v.spec.name)).toEqual(['region', 'cluster']);
+    expect(result[0].spec.origin).toEqual({ type: 'global' });
+    expect(result[1].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
   });
 
   it('drops global variables shadowed by a folder variable of the same name', async () => {
@@ -94,8 +94,8 @@ describe('fetchPredefinedVariables', () => {
 
     const result = await fetchPredefinedVariables('folder-1');
 
-    expect(result.map((v) => v.spec.name)).toEqual(['cluster', 'region']);
-    expect(result[0].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
+    expect(result.map((v) => v.spec.name)).toEqual(['region', 'cluster']);
+    expect(result[1].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
   });
 
   it('fails open and returns an empty list when the fetch errors', async () => {
