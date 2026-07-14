@@ -815,6 +815,11 @@ export interface FeatureToggles {
   */
   datasourceConnectionsTab?: boolean;
   /**
+  * Enables the new sidebar filter panel in the Add new connection page
+  * @default false
+  */
+  connectionsFilterSidebar?: boolean;
+  /**
   * Use a POST request to list rules by passing down the namespaces user has access to
   * @default false
   */
@@ -1290,11 +1295,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersRedirect?: boolean;
-  /**
-  * Enables the ability to create multiple notification policies in alerting
-  * @default true
-  */
-  alertingMultiplePolicies?: boolean;
   /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false

@@ -1539,6 +1539,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:        "connectionsFilterSidebar",
+			Description: "Enables the new sidebar filter panel in the Add new connection page",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+		},
+		{
 			Name:         "fetchRulesUsingPost",
 			Description:  "Use a POST request to list rules by passing down the namespaces user has access to",
 			Stage:        FeatureStageExperimental,
@@ -1615,7 +1623,7 @@ var (
 			Name:        "grafana.assetSriChecks",
 			Description: "Enables SRI checks for Grafana JavaScript assets",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendOpsWG,
+			Owner:       grafanaFrontendPlatformSquad,
 			Generate:    Generate{Go: true},
 			Expression:  "false",
 		},
@@ -2424,14 +2432,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingMultiplePolicies",
-			Description: "Enables the ability to create multiple notification policies in alerting",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingPolicyRoutingSettings",
