@@ -371,6 +371,15 @@ describe('<SpanBarRow>', () => {
       expect(screen.queryByLabelText(/aggregated spans/)).not.toBeInTheDocument();
     });
 
+    it('does not render a count badge when the aggregated span count is 0', () => {
+      const span = {
+        ...props.span,
+        aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 0 },
+      } as unknown as TraceSpan;
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      expect(screen.queryByLabelText(/aggregated spans/)).not.toBeInTheDocument();
+    });
+
     it('renders the stat string (no parens) on the span bar itself', () => {
       const span = summarySpanFromFixture(summaryWithConditionalAttrs);
       render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);

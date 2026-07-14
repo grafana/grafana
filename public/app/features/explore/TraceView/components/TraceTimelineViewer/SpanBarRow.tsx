@@ -576,7 +576,7 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
               </span>
             )}
             <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
-            {isSummarySpan && span.aggregation?.spanCount !== undefined && (
+            {isSummarySpan && span.aggregation && (span.aggregation.spanCount ?? 0) > 0 && (
               <span
                 className={styles.summaryCountBadge}
                 style={{ background: color, color: theme.colors.getContrastText(color) }}
