@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import AccordianReferences, { type AccordianReferencesProps } from './AccordianReferences';
+import AccordionReferences, { type AccordionReferencesProps } from './AccordionReferences';
 
 const traceID = 'trace1';
 const references = [
@@ -53,7 +53,7 @@ const references = [
 
 const link = { href: 'link' };
 
-const setup = (propOverrides?: AccordianReferencesProps) => {
+const setup = (propOverrides?: AccordionReferencesProps) => {
   const props = {
     compact: false,
     data: references,
@@ -64,10 +64,10 @@ const setup = (propOverrides?: AccordianReferencesProps) => {
     ...propOverrides,
   };
 
-  return render(<AccordianReferences {...(props as AccordianReferencesProps)} />);
+  return render(<AccordionReferences {...(props as AccordionReferencesProps)} />);
 };
 
-describe('AccordianReferences tests', () => {
+describe('AccordionReferences tests', () => {
   it('renders without exploding', () => {
     expect(() => setup()).not.toThrow();
   });
@@ -79,14 +79,14 @@ describe('AccordianReferences tests', () => {
   });
 
   it('content doesnt show when not expanded', () => {
-    setup({ isOpen: false } as AccordianReferencesProps);
+    setup({ isOpen: false } as AccordionReferencesProps);
 
     expect(screen.queryByRole('link', { name: /^View\sLinked/ })).not.toBeInTheDocument();
     expect(screen.queryAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(0);
   });
 
   it('renders the content when it is expanded', () => {
-    setup({ isOpen: true } as AccordianReferencesProps);
+    setup({ isOpen: true } as AccordionReferencesProps);
 
     expect(screen.getByRole('switch', { name: 'References 3' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(2);

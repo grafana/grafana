@@ -22,7 +22,7 @@ import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { autoColor } from '../../Theme';
 import type TNil from '../../types/TNil';
 
-import * as markers from './AccordianKeyValues.markers';
+import * as markers from './AccordionKeyValues.markers';
 import { KeyValuesSummary } from './KeyValuesSummary';
 import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 
@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export type AccordianKeyValuesProps = {
+export type AccordionKeyValuesProps = {
   className?: string | TNil;
   data: TraceKeyValuePair[];
   logName?: string;
@@ -78,7 +78,7 @@ export type AccordianKeyValuesProps = {
   onToggle?: null | (() => void);
 };
 
-export default function AccordianKeyValues({
+export default function AccordionKeyValues({
   className = null,
   data,
   logName,
@@ -91,7 +91,7 @@ export default function AccordianKeyValues({
   showSummary = true,
   showCountBadge = false,
   onToggle = null,
-}: AccordianKeyValuesProps) {
+}: AccordionKeyValuesProps) {
   const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
   const styles = useStyles2(getStyles);
   const iconCls = cx(alignIcon, { [styles.emptyIcon]: isEmpty });
@@ -121,7 +121,7 @@ export default function AccordianKeyValues({
           [styles.headerHighContrast]: highContrast && !isEmpty,
         })}
         {...headerProps}
-        data-testid="AccordianKeyValues--header"
+        data-testid="AccordionKeyValues--header"
       >
         {arrow}
         <strong data-test={markers.LABEL} className={styles.headerLabel}>
