@@ -4,7 +4,7 @@ const PAGE_UNDER_TEST = 'edediimbjhdz4b/a-tall-dashboard';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
   },
 });
 

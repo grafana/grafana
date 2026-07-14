@@ -7,6 +7,16 @@
         "enabled": false,
         "dynamic": false
       },
+      "created": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "number",
+            "store": true
+          }
+        ]
+      },
       "createdBy": {
         "enabled": true,
         "dynamic": true,
@@ -35,7 +45,7 @@
       },
       "fields": {
         "enabled": true,
-        "dynamic": true
+        "dynamic": false
       },
       "folder": {
         "enabled": true,
@@ -107,6 +117,7 @@
             "type": "text",
             "analyzer": "keyword",
             "index": true,
+            "docvalues": true,
             "skip_freq_norm": true
           }
         ]
@@ -224,6 +235,16 @@
             "index": true,
             "docvalues": true,
             "skip_freq_norm": true
+          }
+        ]
+      },
+      "updated": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "number",
+            "store": true
           }
         ]
       }

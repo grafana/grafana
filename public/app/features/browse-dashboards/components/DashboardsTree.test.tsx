@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 
-import { sharedWithMeFolder } from '../fixtures/dashboardsTreeItem.fixture';
+import { sharedWithMeFolder, wellFormedDashboard } from '../fixtures/dashboardsTreeItem.fixture';
 import { SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
@@ -195,6 +195,50 @@ describe('browse-dashboards DashboardsTree', () => {
     await user.click(folderButton);
 
     expect(handler).toHaveBeenCalledWith(folder.item.uid, true);
+  });
+
+  it('renders a description tooltip indicator when the item has a description', () => {
+    const dashboardWithDescription = wellFormedDashboard(10, undefined, { description: 'A helpful description' });
+
+    render(
+      <DashboardsTree
+        permissions={mockPermissions}
+        items={[dashboardWithDescription]}
+        isSelected={isSelected}
+        width={WIDTH}
+        height={HEIGHT}
+        onFolderClick={noop}
+        onTagClick={noop}
+        onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
+      />
+    );
+
+    expect(screen.getByLabelText('Description')).toBeInTheDocument();
+  });
+
+  it('does not render a description tooltip indicator when the item has no description', () => {
+    const dashboardWithoutDescription = wellFormedDashboard(11);
+
+    render(
+      <DashboardsTree
+        permissions={mockPermissions}
+        items={[dashboardWithoutDescription]}
+        isSelected={isSelected}
+        width={WIDTH}
+        height={HEIGHT}
+        onFolderClick={noop}
+        onTagClick={noop}
+        onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
+      />
+    );
+
+    expect(screen.queryByLabelText('Description')).not.toBeInTheDocument();
   });
 
   it('renders empty folder indicators', () => {

@@ -2812,7 +2812,9 @@
           "alerting": "Activez pour mettre en pause l'évaluation de cette règle d'alerte.",
           "recording": "Activez pour mettre en pause l'évaluation de cette règle d'enregistrement."
         },
-        "select-folder-before": "Sélectionnez un dossier avant de définir le groupe d'évaluation et l'intervalle"
+        "select-folder-before": "Sélectionnez un dossier avant de définir le groupe d'évaluation et l'intervalle",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -6028,9 +6030,6 @@
       "placeholder-search-options": "Options de recherche",
       "visualization-button-tooltip": "Options de recherche"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Liens de panneau"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Revenir aux requêtes"
     },
@@ -8706,7 +8705,9 @@
       "query-history-button": "Historique des requêtes",
       "query-history-button-aria-label": "Historique des requêtes",
       "query-inspector-button": "Inspecteur de requête",
-      "query-inspector-button-aria-label": "Inspecteur de requête"
+      "query-inspector-button-aria-label": "Inspecteur de requête",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Afficher toutes les traces",
     "span-bar": {
@@ -9897,10 +9898,16 @@
         },
         "name-limit": "Limiter",
         "name-mode": "Mode",
+        "name-overflow": "",
         "name-placement": "Placement",
         "name-values": "Valeurs",
         "name-visibility": "Visibilité",
         "name-width": "Largeur",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Bas",
           "label-right": "Aligné à droite"
@@ -11225,6 +11232,8 @@
         }
       },
       "fields-section": "Champs",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Masquer cette ligne de log",
       "inline-mode": "Afficher en ligne",
       "inline-no-scrolls": "",
@@ -11970,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Gérer les mappages des groupes de fournisseurs d'identité aux rôles Grafana"
     },
     "help": {
       "title": "Aide"
@@ -13041,9 +13047,6 @@
       "description-clear-repository-connection": "Ce nom sera utilisé pour la connexion au référentiel et pour le dossier affiché dans l’interface utilisateur",
       "empty": "Vide",
       "error-field-required": "Ce champ est obligatoire.",
-      "error-quota-exceeded-message": "Ce dossier de référentiel contient {{fileCount}} ressources, ce qui dépasse la limite de votre compte, qui est de {{limit}}. Pour synchroniser ce référentiel, mettez votre compte à niveau ou réduisez le nombre de ressources à synchroniser.",
-      "error-quota-exceeded-message-onprem": "Ce dossier de référentiel contient {{fileCount}} ressources, ce qui dépasse la limite de votre instance, qui est de {{limit}}. Pour synchroniser ce référentiel, mettez à jour votre configuration Grafana ou réduisez le nombre de ressources à synchroniser.",
-      "error-quota-exceeded-title": "Quota de ressources dépassé",
       "error-repository-status-unhealthy-message": "Un problème est survenu lors de la connexion au référentiel. Veuillez vérifier les paramètres du référentiel et réessayer.",
       "error-repository-status-unhealthy-title": "État du référentiel : non sain",
       "external-storage-label": "Stockage externe",
@@ -13054,6 +13057,9 @@
       "unmanaged-resources-label": "Ressources non gérées",
       "update-configuration-action": "Afficher les documents de configuration",
       "upgrade-action": "Mettre le compte à niveau",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
       "files-count_one": "{{count}} fichiers",
@@ -14262,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Échec du chargement de la source de données pour cette requête",
     "loading-datasource": "Chargement de la source de données en cours",
     "no-query-editor-component": "Le plugin de source de données n’exporte aucun composant de l’éditeur de requêtes"
@@ -14283,6 +14290,56 @@
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

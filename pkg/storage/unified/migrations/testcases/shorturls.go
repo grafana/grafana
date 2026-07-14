@@ -10,7 +10,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -33,7 +32,7 @@ func (tc *shortURLsTestCase) Name() string {
 }
 
 func (tc *shortURLsTestCase) FeatureToggles() []string {
-	return []string{featuremgmt.FlagKubernetesShortURLs}
+	return []string{}
 }
 
 func (tc *shortURLsTestCase) RenameTables() []string {

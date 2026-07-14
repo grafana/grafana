@@ -14,6 +14,21 @@
 
 jest.mock('../../utils/date');
 
+// Controls the measured container width so the two-column layout decision is
+// deterministic in tests (real measurement needs layout jsdom doesn't do).
+let mockMeasuredWidth = 0;
+jest.mock('react-use/lib/useMeasure', () => ({
+  __esModule: true,
+  default: () => [jest.fn(), { width: mockMeasuredWidth }],
+}));
+
+// SpanDetailLinkButtons resolves data source settings via an async hook; return a
+// synchronous value so rendering doesn't trigger an un-acted state update in tests.
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+}));
+
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -160,6 +175,7 @@ describe('<SpanDetail>', () => {
   ];
 
   beforeEach(() => {
+    mockMeasuredWidth = 0;
     jest.mocked(formatDuration).mockReset();
     props.tagsToggle.mockReset();
     props.processToggle.mockReset();
@@ -183,6 +199,20 @@ describe('<SpanDetail>', () => {
 
   it('renders without exploding', () => {
     expect(() => render(<SpanDetail {...(props as unknown as SpanDetailProps)} />)).not.toThrow();
+  });
+
+  describe('attribute card layout', () => {
+    it('uses two columns when the container is wider than 1000px', () => {
+      mockMeasuredWidth = 1200;
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+      expect(screen.getAllByTestId('span-detail-cards-column')).toHaveLength(2);
+    });
+
+    it('uses a single column when the container is 1000px or narrower', () => {
+      mockMeasuredWidth = 800;
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+      expect(screen.getAllByTestId('span-detail-cards-column')).toHaveLength(1);
+    });
   });
 
   it('shows the operation name', () => {

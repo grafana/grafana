@@ -375,7 +375,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 
 	// Build initial index
 	size := int64(10000) // force the index to be on disk
-	index, err := backend.BuildIndex(ctx, nr, size, nil, "benchmark", func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, nr, size, "benchmark", func(index resource.ResourceIndex) (int64, error) {
 		return 0, nil
 	}, nil, false, time.Time{}, 0)
 	if err != nil {

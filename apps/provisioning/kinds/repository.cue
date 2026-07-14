@@ -47,8 +47,6 @@ repository: {
 					token?: string
 					// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
 					encryptedToken?: [...string]
-					// Whether we should show dashboard previews for pull requests.
-					generateDashboardPreviews?: bool
 					// Path is the subdirectory for the Grafana data inside the repository.
 					path?: string
 				}
@@ -132,6 +130,9 @@ repository: {
 					signerEmail?: string
 					// Method used to sign commits with the key in secure.commitSigningKey. When unset, commits are not signed.
 					signingMethod?: "gpg" | "ssh" | "smime"
+					// When true, commits are authored by the signer identity
+					// (signerName/signerEmail).
+					signerIsAuthor?: bool
 					// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 					// signingMethod is "smime". This is public, not a secret.
 					smimeCertificate?: string

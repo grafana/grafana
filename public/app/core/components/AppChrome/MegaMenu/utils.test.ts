@@ -1,10 +1,19 @@
 import { cloneDeep } from 'lodash';
 
 import { type NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { getEnrichedHelpItem, getActiveItem, findByUrl } from './utils';
+import {
+  getEnrichedHelpItem,
+  getActiveItem,
+  findByUrl,
+  partitionNavForPinning,
+  getPinnableLeafUrls,
+  expandPinnedUrls,
+  normalizePinnedUrls,
+  enrichWithInteractionTracking,
+} from './utils';
 
 const starredDashboardUid = 'foo';
 const mockNavTree: NavModelItem[] = [
@@ -69,6 +78,11 @@ jest.mock('../../../app_events', () => ({
   publish: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 describe('enrichConfigItems', () => {
   let mockHelpNode: NavModelItem = {
     id: 'help',
@@ -125,6 +139,60 @@ describe('enrichConfigItems', () => {
     // The new node should have a different identity than the original
     expect(newHelpNode).not.toBe(mockHelpNode);
     expect(newHelpNode.children).not.toBe(mockHelpNode.children);
+  });
+});
+
+describe('enrichWithInteractionTracking', () => {
+  beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
+  });
+
+  it('reports a starred folder click with itemKind folder', () => {
+    const item: NavModelItem = {
+      text: 'Folder 1',
+      id: 'starred/f1',
+      url: '/dashboards/f/f1/',
+      parentItem: { text: 'Starred', id: 'starred' },
+    };
+
+    enrichWithInteractionTracking(item, false).onClick?.();
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'folder' })
+    );
+  });
+
+  it('reports a starred dashboard click with itemKind dashboard', () => {
+    const item: NavModelItem = {
+      text: 'Dashboard 1',
+      id: 'starred/d1',
+      url: '/d/d1',
+      parentItem: { text: 'Starred', id: 'starred' },
+    };
+
+    enrichWithInteractionTracking(item, false).onClick?.();
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'dashboard' })
+    );
+  });
+
+  it('reports non-starred items as not starred and without a kind', () => {
+    const item: NavModelItem = {
+      text: 'Playlists',
+      id: 'dashboards/playlists',
+      url: '/playlists',
+      parentItem: { text: 'Dashboards', id: 'dashboards' },
+    };
+
+    enrichWithInteractionTracking(item, false).onClick?.();
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ itemIsStarred: false, itemKind: undefined })
+    );
   });
 });
 
@@ -189,5 +257,148 @@ describe('findByUrl', () => {
 
   it('returns null if no item found', () => {
     expect(findByUrl(mockNavTree, '/no-item')).toBeNull();
+  });
+});
+
+describe('pinning helpers', () => {
+  const tree: NavModelItem[] = [
+    { text: 'Home', id: 'home', url: '/' },
+    { text: 'Explore', id: 'explore', url: '/explore' },
+    {
+      text: 'Dashboards',
+      id: 'dashboards',
+      url: '/dashboards',
+      children: [
+        { text: 'New', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true },
+        { text: 'Playlists', id: 'dashboards/playlists', url: '/playlists' },
+        { text: 'Snapshots', id: 'dashboards/snapshots', url: '/snapshots' },
+      ],
+    },
+    {
+      text: 'Administration',
+      id: 'cfg',
+      url: '/admin',
+      children: [{ text: 'Settings', id: 'cfg/settings', url: '/admin/settings' }],
+    },
+  ];
+
+  describe('partitionNavForPinning', () => {
+    it('moves a pinned leaf into the pinned tree and out of the rest', () => {
+      const { pinned, rest } = partitionNavForPinning(tree, new Set(['/explore']));
+      expect(pinned.map((i) => i.text)).toEqual(['Explore']);
+      expect(rest.find((i) => i.id === 'explore')).toBeUndefined();
+    });
+
+    it('leaves everything in the rest when nothing is pinned', () => {
+      const { pinned, rest } = partitionNavForPinning(tree, new Set());
+      expect(pinned).toHaveLength(0);
+      expect(rest.map((i) => i.id)).toEqual(['home', 'explore', 'dashboards', 'cfg']);
+    });
+
+    it('pins a child via its ancestor chain, keeping the partially-pinned parent in the rest', () => {
+      const { pinned, rest } = partitionNavForPinning(tree, new Set(['/playlists']));
+      expect(pinned).toHaveLength(1);
+      expect(pinned[0].text).toBe('Dashboards');
+      expect(pinned[0].children?.map((c) => c.text)).toEqual(['Playlists']);
+
+      const dashboards = rest.find((i) => i.id === 'dashboards');
+      expect(dashboards).toBeDefined();
+      expect(dashboards?.children?.map((c) => c.text)).toEqual(['New', 'Snapshots']);
+    });
+
+    it('moves a section pinned in its own right with all its live children', () => {
+      const { pinned, rest } = partitionNavForPinning(tree, new Set(['/dashboards']));
+      expect(pinned).toHaveLength(1);
+      expect(pinned[0].text).toBe('Dashboards');
+      const childText = pinned[0].children?.map((c) => c.text);
+      expect(childText).toContain('Playlists');
+      expect(childText).toContain('Snapshots');
+      expect(rest.find((i) => i.id === 'dashboards')).toBeUndefined();
+    });
+
+    it('only moves a section once every child is pinned', () => {
+      const partial = partitionNavForPinning(tree, new Set(['/playlists']));
+      expect(partial.rest.find((i) => i.id === 'dashboards')).toBeDefined();
+
+      const full = partitionNavForPinning(tree, new Set(['/playlists', '/snapshots']));
+      expect(full.rest.find((i) => i.id === 'dashboards')).toBeUndefined();
+    });
+
+    it('moves a single-child section once that child is pinned', () => {
+      const { pinned, rest } = partitionNavForPinning(tree, new Set(['/admin/settings']));
+      expect(pinned.find((i) => i.id === 'cfg')).toBeDefined();
+      expect(rest.find((i) => i.id === 'cfg')).toBeUndefined();
+    });
+  });
+});
+
+describe('canonical pin set helpers', () => {
+  const tree: NavModelItem[] = [
+    { text: 'Explore', id: 'explore', url: '/explore' },
+    {
+      text: 'Dashboards',
+      id: 'dashboards',
+      url: '/dashboards',
+      children: [
+        { text: 'New', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true },
+        { text: 'Playlists', id: 'dashboards/playlists', url: '/playlists' },
+        { text: 'Snapshots', id: 'dashboards/snapshots', url: '/snapshots' },
+      ],
+    },
+    {
+      text: 'Starred',
+      id: 'starred',
+      url: '/dashboards?starred',
+      children: [{ text: 'My dashboard', id: 'starred/abc', url: '/d/abc' }],
+    },
+    { text: 'Home', id: 'home', url: '/' },
+  ];
+
+  describe('getPinnableLeafUrls', () => {
+    it('returns the url of a leaf', () => {
+      expect(getPinnableLeafUrls(tree[0])).toEqual(['/explore']);
+    });
+
+    it('returns the leaves of a section, ignoring create actions', () => {
+      expect(getPinnableLeafUrls(tree[1])).toEqual(['/playlists', '/snapshots']);
+    });
+
+    it('treats a section whose children are not pinnable (Starred) as a leaf', () => {
+      expect(getPinnableLeafUrls(tree[2])).toEqual(['/dashboards?starred']);
+    });
+  });
+
+  describe('expandPinnedUrls', () => {
+    it('expands a stored section url into its leaves', () => {
+      expect(expandPinnedUrls(['/dashboards'], tree)).toEqual(new Set(['/playlists', '/snapshots']));
+    });
+
+    it('keeps a stored leaf url as-is', () => {
+      expect(expandPinnedUrls(['/playlists'], tree)).toEqual(new Set(['/playlists']));
+    });
+  });
+
+  describe('normalizePinnedUrls', () => {
+    it('collapses a fully-pinned top-level section to the section url', () => {
+      expect(normalizePinnedUrls(new Set(['/playlists', '/snapshots']), tree)).toEqual(['/dashboards']);
+    });
+
+    it('keeps a partially-pinned section as individual leaves', () => {
+      expect(normalizePinnedUrls(new Set(['/playlists']), tree)).toEqual(['/playlists']);
+    });
+
+    it('keeps top-level leaves and the Starred section as their own url', () => {
+      expect(normalizePinnedUrls(new Set(['/explore', '/dashboards?starred']), tree)).toEqual([
+        '/explore',
+        '/dashboards?starred',
+      ]);
+    });
+
+    it('collapses some sections while keeping others individual', () => {
+      expect(normalizePinnedUrls(new Set(['/explore', '/playlists', '/snapshots']), tree)).toEqual([
+        '/explore',
+        '/dashboards',
+      ]);
+    });
   });
 });

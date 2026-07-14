@@ -29,20 +29,18 @@ type filesConnector struct {
 	parsers               resources.ParserFactory
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
-	folderAPIVersion      string
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
 		clients:               clients,
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
-		folderAPIVersion:      folderAPIVersion,
 		maxFileSize:           maxFileSize,
 	}
 }
@@ -90,6 +88,11 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
+	if userAttributionEnabled(ctx) {
+		if author, ok := auth.GetAuthorFromRequester(ctx); ok {
+			ctx = repository.WithAuthorSignature(ctx, author)
+		}
+	}
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
@@ -102,10 +105,11 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
 		return
 	}
-	// Enforce max_file_size right at the repo boundary so oversized payloads
-	// are rejected before parsing/DryRun runs in DualReadWriter.Read or before
-	// the bytes are streamed back from handleGetRawFile.
-	readWriter = repository.NewSizeLimitedReaderWriter(readWriter, c.maxFileSize)
+	if c.maxFileSize > 0 {
+		if m, ok := readWriter.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(c.maxFileSize)
+		}
+	}
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
@@ -174,7 +178,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	folderClient, folderGVK, err := clients.Folder(ctx, c.folderAPIVersion)
+	folderClient, folderGVK, err := clients.Folder(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
