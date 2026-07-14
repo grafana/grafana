@@ -1,4 +1,4 @@
-name: External PR Weekly Digest
+name: External Issue Weekly Digest
 
 # Thin wiring. Mints a community-triage token via the broker, checks out the
 # private logic repo (scripts + docker + skills) at a pinned SHA into
@@ -7,45 +7,40 @@ name: External PR Weekly Digest
 
 on:
   schedule:
+    # Run every Monday at 9:00 AM UTC
     - cron: '0 9 * * 1'
   workflow_dispatch:
     inputs:
-      stale_days:
-        description: 'Number of days without activity to consider PR stale'
-        required: false
-        type: number
-        default: 30
       dry_run:
-        description: 'Dry run mode (print report but skip Slack notification)'
+        description: 'Dry run (skip Slack notifications)'
         required: false
-        type: boolean
         default: false
+        type: boolean
       team_filter:
-        description: 'Filter to specific team (leave empty for all)'
+        description: 'Filter to specific team (leave empty for all enabled teams)'
         required: false
-        type: string
         default: ''
+        type: string
 
 permissions: {}
+
+concurrency:
+  group: issue-weekly-digest
+  cancel-in-progress: false
 
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
   TRIAGE_REF: 72c2a930d8219e4684db86663cfac8f3f9ad163c
-  STALE_THRESHOLD_DAYS: ${{ inputs.stale_days || 30 }}
-
-concurrency:
-  group: pr-weekly-digest
-  cancel-in-progress: false
 
 jobs:
-  report:
-    name: Generate PR weekly digest
+  digest:
+    name: Generate issue weekly digest
     runs-on: ubuntu-latest
     permissions:
-      contents: read      # checkout config + community-triage logic
-      pull-requests: read # query open external PRs
-      id-token: write     # vault OIDC + broker token exchange
+      contents: read  # checkout config + community-triage logic
+      issues: read    # query issues
+      id-token: write # vault OIDC + broker token exchange
     environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
 
     steps:
@@ -54,15 +49,10 @@ jobs:
         env:
           ACTOR: ${{ github.actor }}
           TEAM_FILTER: ${{ inputs.team_filter }}
-          STALE_DAYS: ${{ inputs.stale_days }}
         run: |
           echo "::notice::Manual trigger by $ACTOR"
           # Validate dispatch inputs before they flow into env/scripts downstream.
           # SECURITY-REVIEW.md #4. (Already env-passed, never inlined into run:.)
-          if [ -n "$STALE_DAYS" ] && ! [[ "$STALE_DAYS" =~ ^[0-9]+$ ]]; then
-            echo "::error::stale_days must be a positive integer: $STALE_DAYS"
-            exit 1
-          fi
           if [ -n "$TEAM_FILTER" ] && ! [[ "$TEAM_FILTER" =~ ^[a-z0-9-]+(,[a-z0-9-]+)*$ ]]; then
             echo "::error::team_filter must be comma-separated [a-z0-9-] names: $TEAM_FILTER"
             exit 1
@@ -111,30 +101,39 @@ jobs:
             SLACK_BOT_TOKEN=community-slack-bot:token
             SLACK_CHANNELS=community-slack-channels:map
 
-      - name: Get all PRs
-        id: fetch-prs
+      - name: Validate configuration
+        run: |
+          if [ ! -f ".github/team-notifications-config.json" ]; then
+            echo "::error::Configuration file not found: .github/team-notifications-config.json"
+            exit 1
+          fi
+          node -e "JSON.parse(require('fs').readFileSync('.github/team-notifications-config.json', 'utf-8')); console.log('Configuration file validated successfully');"
+
+      - name: Fetch issues
+        id: fetch-issues
         env:
           GH_TOKEN: ${{ github.token }}
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-digest.mts fetch
+          TEAM_FILTER: ${{ inputs.team_filter || '' }}
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-digest.mts fetch
 
       - name: Build analysis container
-        if: steps.fetch-prs.outputs.external_prs == 'true'
+        if: steps.fetch-issues.outputs.has_issues == 'true'
         run: docker build -t oz-review ./community-triage/docker/oz-review/
 
       - name: Stage clean repo mount
-        if: steps.fetch-prs.outputs.external_prs == 'true'
+        if: steps.fetch-issues.outputs.has_issues == 'true'
         run: |
           rsync -a --exclude='.git' --exclude='community-triage' "${GITHUB_WORKSPACE}/" /tmp/repo-clean/
           # Overlay the analysis skills from community-triage so the Oz entrypoint
-          # (which copies /repo/.agents into its workspace) finds digest-pr-analysis.
+          # (which copies /repo/.agents into its workspace) finds digest-issue-analysis.
           cp -r ./community-triage/.agents /tmp/repo-clean/.agents
           echo "Staged repo: $(find /tmp/repo-clean -type f | wc -l) files (no .git)"
 
       - name: Restrict container egress to Warp API
         id: egress
-        if: steps.fetch-prs.outputs.external_prs == 'true'
+        if: steps.fetch-issues.outputs.has_issues == 'true'
         run: |
           WARP_IPS=$(dig +short app.warp.dev A | head -3)
           echo "Resolved app.warp.dev → $WARP_IPS"
@@ -160,17 +159,17 @@ jobs:
 
           sudo iptables -I DOCKER-USER -j OZ_EGRESS
 
-      - name: Run PR digest analysis in Docker
+      - name: Run issue digest analysis in Docker
         id: digest-analysis
-        if: steps.fetch-prs.outputs.external_prs == 'true' && env.WARP_API_KEY != ''
+        if: steps.fetch-issues.outputs.has_issues == 'true' && env.WARP_API_KEY != ''
         continue-on-error: true
         env:
           WARP_IP: ${{ steps.egress.outputs.warp_ip }}
-          DATA_FILE: ${{ steps.fetch-prs.outputs.data_file }}
+          DATA_FILE: ${{ steps.fetch-issues.outputs.data_file }}
         run: |
           mkdir -p /tmp/oz-output /tmp/oz-context
 
-          cp "$DATA_FILE" /tmp/oz-context/prs.json
+          cp "$DATA_FILE" /tmp/oz-context/issues.json
           chmod -R a+rX /tmp/repo-clean /tmp/oz-context
           chmod 777 /tmp/oz-output
 
@@ -185,8 +184,8 @@ jobs:
             -v "/tmp/oz-output:/output" \
             -e WARP_API_KEY="${WARP_API_KEY}" \
             -e OZ_MODEL="claude-4-6-opus-high" \
-            -e OZ_SKILL="digest-pr-analysis" \
-            -e OZ_PROMPT="Analyze the open external pull requests in prs.json. Use the repository source at /repo to understand code relationships. Output analysis.json with insights." \
+            -e OZ_SKILL="digest-issue-analysis" \
+            -e OZ_PROMPT="Analyze the open issues in issues.json. Use the repository source at /repo to understand code relationships and recently-changed areas. Output analysis.json with insights and regressions." \
             oz-review
 
           if [ -f /tmp/oz-output/analysis.json ]; then
@@ -205,21 +204,24 @@ jobs:
           sudo iptables -F OZ_EGRESS 2>/dev/null || true
           sudo iptables -X OZ_EGRESS 2>/dev/null || true
 
-      - name: Process teams and send reports
-        if: steps.fetch-prs.outputs.external_prs == 'true'
+      - name: Run Issue Weekly Digest
         env:
           GH_TOKEN: ${{ github.token }}
-          STALE_DAYS: ${{ env.STALE_THRESHOLD_DAYS }}
-          REPO: ${{ github.repository }}
-          DATA_FILE: ${{ steps.fetch-prs.outputs.data_file }}
+          SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
+          DATA_FILE: ${{ steps.fetch-issues.outputs.data_file }}
           ANALYSIS_FILE: ${{ steps.digest-analysis.outputs.analysis_file || '' }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
-          SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-digest.mts process
-
-      - name: No PRs summary
-        if: steps.fetch-prs.outputs.external_prs != 'true'
+          REPO: ${{ github.repository }}
+          TRIGGERED_BY: ${{ github.actor }}
+          TRIGGER_TYPE: ${{ github.event_name }}
         run: |
-          echo "No open external PRs found."
-          echo "Skipping Slack notification."
+          echo "::group::Execution Context"
+          echo "Triggered by: $TRIGGERED_BY"
+          echo "Trigger type: $TRIGGER_TYPE"
+          echo "Dry run: $DRY_RUN"
+          echo "Team filter: ${TEAM_FILTER:-all}"
+          echo "Analysis file: ${ANALYSIS_FILE:-none}"
+          echo "::endgroup::"
+
+          node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-digest.mts process
