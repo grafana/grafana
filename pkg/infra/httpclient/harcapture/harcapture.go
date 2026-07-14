@@ -121,6 +121,45 @@ func redactQueryParam(name, value string) string {
 	return value
 }
 
+// redactedQueryPairs parses a raw query string into HAR name/value pairs with sensitive values
+// redacted. Unlike url.Query() (which splits only on "&"), it splits on both "&" and ";" and fails
+// closed on an undecodable key -- matching redactedURLString -- so a secret after a ";" (e.g.
+// foo=bar;token=SECRET, which url.Query() would leave inside foo's value) is redacted here too.
+func redactedQueryPairs(rawQuery string) []*har.NameValuePair {
+	if rawQuery == "" {
+		return nil
+	}
+	var pairs []*har.NameValuePair
+	for _, seg := range strings.Split(rawQuery, "&") {
+		for _, sub := range strings.Split(seg, ";") {
+			if sub == "" {
+				continue
+			}
+			rawKey, rawVal, hasValue := strings.Cut(sub, "=")
+			name, keyErr := url.QueryUnescape(rawKey)
+			if keyErr != nil {
+				name = rawKey
+			}
+			var value string
+			if hasValue {
+				if v, err := url.QueryUnescape(rawVal); err == nil {
+					value = v
+				} else {
+					value = rawVal
+				}
+				if keyErr != nil {
+					// Fail closed: the key can't be decoded to check against the denylist.
+					value = redactedValue
+				} else {
+					value = redactQueryParam(name, value)
+				}
+			}
+			pairs = append(pairs, &har.NameValuePair{Name: name, Value: value})
+		}
+	}
+	return pairs
+}
+
 // redactedURLString renders u with inline credentials stripped and sensitive query params redacted.
 // The query is only rewritten when a param was actually redacted, so an otherwise-untouched URL is
 // preserved verbatim (parameter order and encoding unchanged).
@@ -288,22 +327,7 @@ func (b *Buffer) ToHAR() ([]byte, error) {
 func buildEntry(req *http.Request, resp *http.Response, rtErr error, started time.Time, elapsed time.Duration, extra map[string]struct{}) *har.Entry {
 	reqHeaders := toNameValues(req.Header, extra)
 
-	// The queryString HAR array uses url.Query(): unlike the URL string (redactedURLString, which
-	// parses RawQuery manually and fails closed), url.Query() silently drops any malformed pair, so
-	// such a pair is simply absent here rather than leaked -- and every pair that does parse is run
-	// through redactQueryParam. The redacted URL string above is the authoritative fail-closed copy.
-	query := req.URL.Query()
-	queryKeys := make([]string, 0, len(query))
-	for k := range query {
-		queryKeys = append(queryKeys, k)
-	}
-	sort.Strings(queryKeys)
-	queryString := make([]*har.NameValuePair, 0, len(query))
-	for _, k := range queryKeys {
-		for _, v := range query[k] {
-			queryString = append(queryString, &har.NameValuePair{Name: k, Value: redactQueryParam(k, v)})
-		}
-	}
+	queryString := redactedQueryPairs(req.URL.RawQuery)
 
 	var pd *har.PostData
 	var reqBodySize int64

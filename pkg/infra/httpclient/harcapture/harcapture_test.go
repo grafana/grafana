@@ -261,6 +261,25 @@ func TestRedactedURLString_failsClosedOnMalformedKey(t *testing.T) {
 	assert.Contains(t, out, "region=eu", "well-formed non-sensitive param preserved")
 }
 
+func TestBuffer_ToHAR_semicolonSecretRedactedInQueryStringArray(t *testing.T) {
+	// url.Query() only splits on "&", so a secret after a ";" would ride inside a non-sensitive
+	// value and land in the queryString array unredacted. Both the URL string and the array must
+	// redact it.
+	_, buf := WithCapture(context.Background())
+	req := newGetReq(t, "http://ds.example.com/q?foo=bar;token=SEMISECRET&region=eu")
+	buf.AddEntry(req, okResp(200), nil, time.Now(), time.Millisecond) //nolint:bodyclose
+
+	raw, err := buf.ToHAR()
+	require.NoError(t, err)
+	assert.NotContains(t, string(raw), "SEMISECRET", "secret after ';' must not appear anywhere in the HAR")
+
+	var doc har.HAR
+	require.NoError(t, json.Unmarshal(raw, &doc))
+	for _, p := range doc.Log.Entries[0].Request.QueryString {
+		assert.NotContains(t, p.Value, "SEMISECRET", "queryString array value must be redacted")
+	}
+}
+
 func TestRedactsOAuthTokenQueryParams(t *testing.T) {
 	for _, p := range []string{"access_token", "refresh_token", "id_token"} {
 		out := redactURLValue("https://idp.example.com/cb?" + p + "=SECRET&state=ok")
