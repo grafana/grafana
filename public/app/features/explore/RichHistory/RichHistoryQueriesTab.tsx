@@ -4,7 +4,8 @@ import { useAsync } from 'react-use';
 
 import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
 import { mapNumbertoTimeInSlider, mapQueriesToHeadings } from 'app/core/utils/richHistory';
 import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
@@ -150,8 +151,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     const datasourcesToGet = listOfDatasources.map((ds) => ds.uid);
     const dsGetProm = datasourcesToGet.map(async (dsf) => {
       try {
-        // this get works off datasource names
-        return getDataSourceSrv().get(dsf);
+        return await getDataSourceInstance(dsf);
       } catch (e) {
         return Promise.resolve();
       }

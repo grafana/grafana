@@ -22,6 +22,13 @@ jest.mock('react-use/lib/useMeasure', () => ({
   default: () => [jest.fn(), { width: mockMeasuredWidth }],
 }));
 
+// SpanDetailLinkButtons resolves data source settings via an async hook; return a
+// synchronous value so rendering doesn't trigger an un-acted state update in tests.
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+}));
+
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 

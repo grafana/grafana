@@ -8,7 +8,6 @@ import {
 } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
 import { ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -153,7 +152,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
           )}
         </Field>
       )}
-      {isGrafanaAlertmanager && config.featureToggles.alertingMultiplePolicies && (
+      {isGrafanaAlertmanager && (
         <Field label={t('alerting.multiple-policies-view.policy-tree-filter-label', 'Policy')} noMargin>
           <RoutingTreeSelector
             multi

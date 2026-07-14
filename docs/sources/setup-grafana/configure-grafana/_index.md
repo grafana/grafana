@@ -661,7 +661,7 @@ If tracking with RudderStack is enabled, you can provide a custom URL to load th
 
 Optional.
 This is mirroring the old configuration option, which will be deprecated.
-If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the feature toggle `rudderstackUpgrade` will control which one is loaded.
+If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the v3 SDK is loaded.
 
 #### `rudderstack_config_url`
 
@@ -2776,6 +2776,15 @@ When enabled, preinstalled plugins without a pinned version are automatically up
 The default is `true`.
 
 To prevent automatic updates for specific plugins, pin them to a specific version using the format `plugin_id@version` in the `preinstall` setting.
+
+<hr>
+
+### `[marketplace]`
+
+#### `license_directory`
+
+Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
+Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
 
 <hr>
 

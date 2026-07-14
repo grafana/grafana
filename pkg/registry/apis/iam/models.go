@@ -49,19 +49,19 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Stores
 	store legacy.LegacyIdentityStore
 
-	userLegacyStore                  *user.LegacyStore
-	saLegacyStore                    *serviceaccount.LegacyStore
-	legacyTeamStore                  *team.LegacyStore
-	externalGroupReconciler          legacy.ExternalGroupReconciler
-	teamBindingLegacyStore           *teambinding.LegacyBindingStore
-	ssoLegacyStore                   *sso.LegacyStore
-	roleApiInstaller                 RoleApiInstaller
-	globalRoleApiInstaller           GlobalRoleApiInstaller
-	teamLBACApiInstaller             TeamLBACApiInstaller
-	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
-	resourcePermissionsStorage       resource.StorageBackend
-	mappers                          *resourcepermission.MappersRegistry
-	roleBindingsApiInstaller         RoleBindingApiInstaller
+	userLegacyStore            *user.LegacyStore
+	saLegacyStore              *serviceaccount.LegacyStore
+	legacyTeamStore            *team.LegacyStore
+	externalGroupReconciler    legacy.ExternalGroupReconciler
+	teamBindingLegacyStore     *teambinding.LegacyBindingStore
+	ssoLegacyStore             *sso.LegacyStore
+	ssoUseMTSettings           bool
+	roleApiInstaller           RoleApiInstaller
+	globalRoleApiInstaller     GlobalRoleApiInstaller
+	teamLBACApiInstaller       TeamLBACApiInstaller
+	resourcePermissionsStorage resource.StorageBackend
+	mappers                    *resourcepermission.MappersRegistry
+	roleBindingsApiInstaller   RoleBindingApiInstaller
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
@@ -87,6 +87,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
+	teamSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler

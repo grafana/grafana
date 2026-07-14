@@ -88,6 +88,7 @@ RadioButton.displayName = 'RadioButton';
 
 const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   const textColor = theme.colors.text.secondary;
   const textColorHover = theme.colors.text.primary;
@@ -112,7 +113,8 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       cursor: 'pointer',
 
       '&:checked + label': {
-        color: theme.colors.text.primary,
+        border: visualRefreshEnabled ? `1px solid ${theme.colors.border.medium}` : 'none',
+        color: visualRefreshEnabled ? theme.colors.accent.text : theme.colors.text.primary,
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.action.selected,
         zIndex: 1,

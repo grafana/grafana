@@ -266,9 +266,6 @@ func dashboardSearchLifecycleSeed(t *testing.T) int64 {
 func newFileBackedDashboardIndex(t *testing.T, key resource.NamespacedResource, docCount int64) *bleveIndex {
 	t.Helper()
 
-	backend, _ := setupBleveBackend(t, withFileThreshold(0))
-	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: key.Namespace})
-
 	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		return &builders.DashboardDocumentBuilder{
 			Namespace:        namespace,
@@ -279,7 +276,12 @@ func newFileBackedDashboardIndex(t *testing.T, key resource.NamespacedResource, 
 	})
 	require.NoError(t, err)
 
-	resourceIndex, err := backend.BuildIndex(ctx, key, docCount, info.Fields, "test", func(index resource.ResourceIndex) (int64, error) {
+	backend, _ := setupBleveBackend(t, withFileThreshold(0), withSearchFieldsProvidersForKinds(map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+		resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
+	}))
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: key.Namespace})
+
+	resourceIndex, err := backend.BuildIndex(ctx, key, docCount, "test", func(index resource.ResourceIndex) (int64, error) {
 		return 0, nil
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)

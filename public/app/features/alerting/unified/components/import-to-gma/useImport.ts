@@ -7,7 +7,7 @@ import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
-import type { ConvertAlertmanagerResponse, DryRunValidationResult } from './types';
+import type { ConvertAlertmanagerResponse, DryRunValidationResult, MergeStats, PromoteStatsSummary } from './types';
 
 interface ParsedAlertmanagerYaml {
   alertmanagerConfig: string;
@@ -63,6 +63,8 @@ interface NotificationsSourceParams {
   yamlFile: File | null;
   /** Configuration identifier - the name of the extra config (policy tree name) */
   configIdentifier: string;
+  /** If true, promote (merge) the imported config into the main Grafana config */
+  promote?: boolean;
 }
 
 /**
@@ -123,11 +125,12 @@ export function useImportNotifications() {
     async (params: NotificationsSourceParams) => {
       const { alertmanagerConfig, templateFiles } = await resolveAlertmanagerConfig(params);
 
-      await convertAlertmanagerConfig({
+      return await convertAlertmanagerConfig({
         alertmanagerConfig,
         templateFiles,
         configIdentifier: params.configIdentifier,
         forceReplace: true,
+        promote: params.promote,
       }).unwrap();
     },
     [convertAlertmanagerConfig]
@@ -240,9 +243,23 @@ function isRuleManagedByExternalSystem(rule: { labels?: Record<string, string> }
 }
 
 /**
+ * Summarize the per-type merge stats from a promote (dry-run or real) into counts
+ * for display on the review screen.
+ */
+export function summarizeMergeStats(stats: MergeStats | undefined): PromoteStatsSummary {
+  return {
+    route: Boolean(stats?.added_route),
+    receivers: stats?.added_receivers?.length ?? 0,
+    templates: stats?.added_templates?.length ?? 0,
+    timeIntervals: stats?.added_time_intervals?.length ?? 0,
+    inhibitionRules: stats?.added_inhibition_rules?.length ?? 0,
+  };
+}
+
+/**
  * Parse the backend ConvertAlertmanagerResponse into a UI-friendly DryRunValidationResult.
  */
-function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryRunValidationResult {
+export function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryRunValidationResult {
   const renamedReceivers = Object.entries(response.rename_resources?.receivers ?? {}).map(
     ([originalName, newName]) => ({ originalName, newName })
   );
@@ -255,6 +272,7 @@ function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryRunValid
     error: response.error,
     renamedReceivers,
     renamedTimeIntervals,
+    stats: response.stats ? summarizeMergeStats(response.stats) : undefined,
   };
 }
 
@@ -277,6 +295,7 @@ export function useDryRunNotifications() {
           alertmanagerConfig,
           templateFiles,
           configIdentifier: params.configIdentifier,
+          promote: params.promote,
         });
       } catch (err) {
         setPreRunError(stringifyErrorLike(err));

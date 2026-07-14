@@ -59,10 +59,23 @@ func BenchmarkBleveBuildIndexStorageSelection(b *testing.B) {
 }
 
 func benchmarkBuildIndex(b *testing.B, docs int, fileThreshold int64) {
+	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &builders.DashboardDocumentBuilder{
+			Namespace:        namespace,
+			Blob:             blob,
+			Stats:            make(map[string]map[string]int64),
+			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
+		}, nil
+	})
+	require.NoError(b, err)
+
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          b.TempDir(),
 		FileThreshold: fileThreshold,
 		BuildVersion:  "12.3.45-789",
+		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
+		},
 	}, nil)
 	require.NoError(b, err)
 	defer backend.Stop()
@@ -73,21 +86,12 @@ func benchmarkBuildIndex(b *testing.B, docs int, fileThreshold int64) {
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &builders.DashboardDocumentBuilder{
-			Namespace:        namespace,
-			Blob:             blob,
-			Stats:            make(map[string]map[string]int64),
-			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-		}, nil
-	})
-	require.NoError(b, err)
 	writer := newTestWriter(docs, docs)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for range b.N {
-		idx, err := backend.BuildIndex(ctx, key, int64(docs), info.Fields, "benchmark", writer, nil, true, time.Time{}, 0)
+		idx, err := backend.BuildIndex(ctx, key, int64(docs), "benchmark", writer, nil, true, time.Time{}, 0)
 		require.NoError(b, err)
 
 		b.StopTimer()
