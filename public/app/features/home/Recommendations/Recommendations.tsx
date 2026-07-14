@@ -214,7 +214,12 @@ function RecommendationsView({ recommendations }: { recommendations: Recommendat
               </div>
             </div>
 
-            <div className={cx(styles.card, styles.recommended)}>
+            <div
+              className={cx(styles.card, styles.recommended)}
+              role="region"
+              aria-roledescription={t('home.recommendations.carousel-roledescription', 'carousel')}
+              aria-label={t('home.recommendations.carousel-label', 'Recommended apps')}
+            >
               <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
                 <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
 

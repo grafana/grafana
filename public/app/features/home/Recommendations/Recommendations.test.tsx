@@ -313,4 +313,10 @@ describe('Recommendations', () => {
       jest.useRealTimers();
     }
   });
+  it('announces the recommendation slides as a carousel region', async () => {
+    render(<Recommendations />);
+
+    const region = await screen.findByRole('region', { name: 'Recommended apps' });
+    expect(region).toHaveAttribute('aria-roledescription', 'carousel');
+  });
 });
