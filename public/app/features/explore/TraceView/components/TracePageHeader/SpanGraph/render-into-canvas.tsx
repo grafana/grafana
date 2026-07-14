@@ -20,11 +20,13 @@ export const MIN_ITEM_WIDTH = 10;
 export const MIN_TOTAL_HEIGHT = 60;
 export const MAX_ITEM_HEIGHT = 6;
 
-type SpanGraphItem = {
+export type SpanGraphItem = {
   valueWidth: number;
   valueOffset: number;
   serviceName: string;
   isSummary?: boolean;
+  // Number of spans a summary represents; drives its proportional vertical
+  // weight in the minimap so the pruned trace keeps the unpruned density shape.
   spanCount?: number;
 };
 

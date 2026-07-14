@@ -27,6 +27,7 @@ import { getServiceColorKey } from '../../utils/service-name';
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
 import ViewingLayer from './ViewingLayer';
+import { type SpanGraphItem } from './render-into-canvas';
 
 const getStyles = () => {
   return {
@@ -47,19 +48,8 @@ export type SpanGraphProps = {
   updateNextViewRangeTime: (nextUpdate: ViewRangeTimeUpdate) => void;
 };
 
-type SpanItem = {
-  valueOffset: number;
-  valueWidth: number;
-  serviceName: string;
-  isSummary: boolean;
-  // Number of spans this summary represents; drives its proportional weight in
-  // the minimap so the pruned trace keeps the unpruned density shape. 0 for
-  // normal spans.
-  spanCount: number;
-};
-
 // exported for tests
-export function getItem(span: TraceSpan): SpanItem {
+export function getItem(span: TraceSpan): SpanGraphItem {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,
@@ -69,7 +59,7 @@ export function getItem(span: TraceSpan): SpanItem {
   };
 }
 
-function getItems(trace: Trace): SpanItem[] {
+function getItems(trace: Trace): SpanGraphItem[] {
   return trace.spans.map(getItem);
 }
 
