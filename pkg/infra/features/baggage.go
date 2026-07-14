@@ -50,5 +50,4 @@ func WithTransactionContextMiddleware(next http.Handler) http.Handler {
 		ctx := openfeature.MergeTransactionContext(r.Context(), evalCtx)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-
 }
