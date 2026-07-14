@@ -229,6 +229,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z3,
+    // position is required for zIndex to take effect and establish a stacking
+    // context, otherwise the tabs render behind elements in the table below.
+    position: 'relative',
     zIndex: theme.zIndex.navbarFixed,
     height: '100%',
     display: 'flex',
