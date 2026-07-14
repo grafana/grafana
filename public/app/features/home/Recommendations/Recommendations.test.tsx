@@ -136,6 +136,14 @@ describe('Recommendations', () => {
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
+  it('renders nothing when the plugin list is empty despite Kubernetes Monitoring being installed', async () => {
+    mockGet.mockResolvedValue([]);
+
+    const { container } = render(<Recommendations />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
   it('renders nothing for legacy Admin roles without plugin permissions', async () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasRole').mockImplementation((role) => role === 'Admin');

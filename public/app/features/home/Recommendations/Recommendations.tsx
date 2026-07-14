@@ -116,8 +116,9 @@ function GatedRecommendations({ canInstall }: { canInstall: boolean }) {
     [installed]
   );
 
-  // An unavailable plugin list fails closed.
-  if (bridgeLoading || pluginsLoading || !installed || !installedPlugins) {
+  // An unavailable plugin list fails closed. An empty list contradicts the bridge
+  // reporting Kubernetes Monitoring installed, so it is treated as unavailable too.
+  if (bridgeLoading || pluginsLoading || !installed || !installedPlugins || installedPlugins.length === 0) {
     return null;
   }
 
