@@ -21,9 +21,7 @@ interface Props {
   disabled: boolean;
   tooltip?: string;
   onConfirmInstallation: () => void;
-  // Suppresses the "Installed"/Upgrade/Downgrade labeling (used for managed plugins, where
-  // installedVersion may not be trustworthy) without affecting installedVersion itself, which
-  // this component still needs to detect when an install it triggered has actually completed.
+  // Present a neutral "Install" action instead of Upgrade/Downgrade (used for managed plugins).
   hideInstallState?: boolean;
 }
 
@@ -42,12 +40,9 @@ export const VersionInstallButton = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
-  // The dispatched operation (install vs update vs downgrade), its tracking event and cache
-  // invalidation must reflect the real installed version — even for managed plugins.
+  // installState drives the dispatched operation and tracking; displayInstallState drives the
+  // button label/icon, which managed plugins neutralize to a plain "Install".
   const installState = getInstallState(installedVersion, version.version);
-  // Managed plugins present a neutral "Install" action instead of Upgrade/Downgrade, since their
-  // installedVersion isn't a trustworthy baseline. This governs the presented action — the label,
-  // the icon, and whether the downgrade confirmation is shown — but never the dispatched operation.
   const displayInstallState = hideInstallState ? PluginStatus.INSTALL : installState;
 
   useEffect(() => {
@@ -93,10 +88,7 @@ export const VersionInstallButton = ({
   };
 
   const onInstallClick = () => {
-    // Gate on displayInstallState so the confirmation matches what's shown: a button labeled
-    // "Install" (managed plugins) must not pop the downgrade confirmation modal. The dispatched
-    // operation in performInstallation still uses the real installState.
-    if (displayInstallState === PluginStatus.DOWNGRADE) {
+    if (installState === PluginStatus.DOWNGRADE) {
       setIsModalOpen(true);
     } else {
       performInstallation();
