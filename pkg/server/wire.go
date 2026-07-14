@@ -117,6 +117,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folderreconcile"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -307,6 +308,9 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
 	libraryelements.ProvideService,
 	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
+	libraryelements.ProvideFolderConsumer,
+	ngalert.ProvideAlertRuleFolderConsumer,
+	folderreconcile.ProvideReconciler,
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,

@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -8,12 +8,11 @@ import {
   type VariableRegexApplyTo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryVariable, sceneGraph, type SceneVariable } from '@grafana/scenes';
+import { type QueryVariable, sceneGraph } from '@grafana/scenes';
 import { type VariableRefresh, type VariableSort } from '@grafana/schema';
-import { Box, Button, Field, Modal } from '@grafana/ui';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { Field, Stack } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { QueryVariableRegexForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableRegexForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -26,9 +25,9 @@ import {
   type StaticOptionsType,
 } from 'app/features/variables/query/QueryVariableStaticOptions';
 
-import { QueryVariableEditorForm } from '../components/QueryVariableForm';
-import { VariableValuesPreview } from '../components/VariableValuesPreview';
-import { hasVariableOptions } from '../utils';
+import { QueryVariableEditorForm } from '../../components/QueryVariableForm';
+import { VariableValuesPreview } from '../../components/VariableValuesPreview';
+import { hasVariableOptions } from '../../utils';
 
 interface QueryVariableEditorProps {
   variable: QueryVariable;
@@ -136,75 +135,14 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
   );
 }
 
-export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
-  if (!(variable instanceof QueryVariable)) {
-    console.warn('getQueryVariableOptions: variable is not a QueryVariable');
-    return [];
-  }
-
-  return [
-    new OptionsPaneItemDescriptor({
-      id: `variable-${variable.state.name}-value`,
-      render: () => <ModalEditor variable={variable} />,
-    }),
-  ];
+interface EditorProps {
+  variable: QueryVariable;
+  hideRefresh?: boolean;
+  hideStaticOptions?: boolean;
+  hidePreview?: boolean;
 }
 
-function ModalEditor({ variable }: { variable: QueryVariable }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const onRunQuery = () => {
-    variable.refreshOptions();
-  };
-
-  return (
-    <>
-      <Box display={'flex'} direction={'column'} paddingBottom={1}>
-        <Button
-          tooltip={t(
-            'dashboard.edit-pane.variable.open-editor-tooltip',
-            'For more variable options open variable editor'
-          )}
-          onClick={() => setIsOpen(true)}
-          size="sm"
-          fullWidth
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton}
-        >
-          <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
-        </Button>
-      </Box>
-      <Modal
-        title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query Variable')}
-        isOpen={isOpen}
-        onDismiss={() => setIsOpen(false)}
-        closeOnBackdropClick={false}
-        closeOnEscape={false}
-      >
-        <Editor variable={variable} />
-        <Modal.ButtonRow>
-          <Button
-            variant="primary"
-            fill="outline"
-            onClick={onRunQuery}
-            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
-          >
-            <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
-          </Button>
-          <Button
-            variant="secondary"
-            fill="outline"
-            onClick={() => setIsOpen(false)}
-            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
-          >
-            <Trans i18nKey="dashboard.edit-pane.variable.query-options.close">Close</Trans>
-          </Button>
-        </Modal.ButtonRow>
-      </Modal>
-    </>
-  );
-}
-
-export function Editor({ variable }: { variable: QueryVariable }) {
+export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }: EditorProps) {
   const {
     datasource: datasourceRef,
     sort,
@@ -229,6 +167,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
     }
 
     return { datasource, VariableQueryEditor };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasourceRef]);
 
   const { datasource: selectedDatasource, VariableQueryEditor } = dsConfig ?? {};
@@ -266,14 +205,18 @@ export function Editor({ variable }: { variable: QueryVariable }) {
     variable.setState({ staticOptionsOrder });
   };
 
-  const isHasVariableOptions = hasVariableOptions(variable);
+  const isVariableWithOptions = hasVariableOptions(variable);
 
   return (
-    <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}>
-      {/* eslint-disable-next-line @grafana/require-no-margin */}
+    <Stack
+      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}
+      direction="column"
+      gap={1}
+    >
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-target-data-source', 'Target data source')}
         htmlFor="data-source-picker"
+        noMargin
       >
         <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
@@ -302,22 +245,28 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         sort={sort}
       />
 
-      <QueryVariableRefreshSelect
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
-        onChange={onRefreshChange}
-        refresh={refresh}
-      />
+      {!hideRefresh && (
+        <QueryVariableRefreshSelect
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
+          onChange={onRefreshChange}
+          refresh={refresh}
+        />
+      )}
 
-      <QueryVariableStaticOptions
-        options={options}
-        staticOptions={staticOptions}
-        staticOptionsOrder={staticOptionsOrder}
-        onStaticOptionsChange={onStaticOptionsChange}
-        onStaticOptionsOrderChange={onStaticOptionsOrderChange}
-      />
+      {!hideStaticOptions && (
+        <QueryVariableStaticOptions
+          options={options}
+          staticOptions={staticOptions}
+          staticOptionsOrder={staticOptionsOrder}
+          onStaticOptionsChange={onStaticOptionsChange}
+          onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+        />
+      )}
 
-      {isHasVariableOptions && <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} />}
-    </div>
+      {!hidePreview && isVariableWithOptions && (
+        <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} />
+      )}
+    </Stack>
   );
 }
 

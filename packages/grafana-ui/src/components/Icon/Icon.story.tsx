@@ -57,8 +57,9 @@ const IconWrapper = ({ name }: { name: IconName }) => {
   );
 };
 
+const collator = new Intl.Collator();
 const icons = [...getAvailableIcons()];
-icons.sort((a, b) => a.localeCompare(b));
+icons.sort((a, b) => collator.compare(a, b));
 
 export const IconsOverview = () => {
   const [filter, setFilter] = useState('');

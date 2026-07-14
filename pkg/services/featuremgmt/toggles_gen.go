@@ -491,6 +491,10 @@ const (
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
+	// FlagAlertingRuleQuality
+	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+	FlagAlertingRuleQuality = "alerting.ruleQuality"
+
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
@@ -778,6 +782,10 @@ const (
 	// Enables SSO settings APIs in the app platform
 	FlagKubernetesSsoSettingsApi = "kubernetesSsoSettingsApi"
 
+	// FlagGrafanaSsoSettingsToMTSettings
+	// Enables reading and writing SSO settings through the MT-Settings service
+	FlagGrafanaSsoSettingsToMTSettings = "grafana.ssoSettingsToMTSettings"
+
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
 	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"
@@ -793,10 +801,6 @@ const (
 	// FlagKubernetesUsersRedirect
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
-
-	// FlagAlertingMultiplePolicies
-	// Enables the ability to create multiple notification policies in alerting
-	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
@@ -825,6 +829,10 @@ const (
 	// FlagAlertingNotificationHistoryDetail
 	// Enables the notification history detail page
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
+
+	// FlagDeletedFolderResourceCleanup
+	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server
+	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
