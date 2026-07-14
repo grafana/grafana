@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
@@ -6,7 +6,7 @@ import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import type TNil from '../../types/TNil';
 
-import { KeyValuesSummary } from './AccordianKeyValues';
+import { KeyValuesSummary } from './KeyValuesSummary';
 import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 import { type AttributeSectionType, groupAttributesByCategory } from './attributeCategories';
 
@@ -50,7 +50,7 @@ export default function AccordionCategorizedKeyValues({
     });
   }, []);
 
-  const iconCls = cx(styles.chevronIcon, { [styles.categoryIcon]: isEmpty });
+  const iconCls = styles.chevronIcon;
   const arrow = isOpen ? (
     <Icon name="angle-down" className={iconCls} />
   ) : (

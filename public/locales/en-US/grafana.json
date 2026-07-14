@@ -8783,7 +8783,25 @@
     },
     "span-detail": {
       "attribute-category": {
-        "other": "Other"
+        "cloud": "Cloud",
+        "container": "Container",
+        "database": "Database",
+        "deployment": "Deployment",
+        "error": "Error",
+        "exception": "Exception",
+        "frontend": "Frontend",
+        "host-os": "Host / OS",
+        "http": "HTTP",
+        "kubernetes": "Kubernetes",
+        "messaging": "Messaging",
+        "network": "Network",
+        "other": "Other",
+        "process": "Process",
+        "rpc": "RPC",
+        "runtime": "Runtime-specific",
+        "service": "Service",
+        "telemetry-sdk": "Telemetry SDK",
+        "url": "URL"
       },
       "label": {
         "kind": "Kind:",
