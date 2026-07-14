@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -72,6 +72,7 @@ export function SaveProvisionedDashboardForm({
   const [showNewFolderForm, setShowNewFolderForm] = useState(false);
   // Spans the whole create-folder flow, unlike the mutation's isLoading which ends before the selection sync
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const isCreatingFolderRef = useRef(false);
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const [createFolder] = useCreateRepositoryFilesWithPathMutation();
 
@@ -263,7 +264,7 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleCreateFolder = useCallback(async () => {
-    if (isCreatingFolder) {
+    if (isCreatingFolderRef.current) {
       return;
     }
     setFolderError(undefined);
@@ -285,6 +286,7 @@ export function SaveProvisionedDashboardForm({
       repositoryType: repository.type ?? 'unknown',
       source: 'save-dashboard',
     });
+    isCreatingFolderRef.current = true;
     setIsCreatingFolder(true);
     let uid: string | undefined;
     try {
@@ -310,6 +312,7 @@ export function SaveProvisionedDashboardForm({
           t('dashboard-scene.save-provisioned-dashboard-form.folder-create-error', 'Failed to create folder')
         )
       );
+      isCreatingFolderRef.current = false;
       setIsCreatingFolder(false);
       return;
     }
@@ -326,8 +329,9 @@ export function SaveProvisionedDashboardForm({
     }
     setShowNewFolderForm(false);
     setNewFolderName('');
+    isCreatingFolderRef.current = false;
     setIsCreatingFolder(false);
-  }, [isCreatingFolder, newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder]);
+  }, [newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder]);
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
