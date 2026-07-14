@@ -965,4 +965,8 @@ const (
 	// FlagGrafanaFrontendLegacyAPIHandling
 	// Controls whether the frontend blocks calls to legacy /api/ endpoints
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
+
+	// FlagGrafanaPluginPathNesting
+	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 )

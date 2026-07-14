@@ -21,6 +21,10 @@ apps:
     org_id: 1
     org_name: Main Org.
     disabled: false
+  - type: nav-nesting-app-test
+    org_id: 1
+    org_name: Main Org.
+    disabled: false
 panels:
   - type: grafana-e2etest-panel
     org_id: 1
