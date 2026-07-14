@@ -28,6 +28,7 @@ jobs:
       sources: |
         [
           {
+            "toolkit_ref": "robbymilo/deploy-preview",
             "index_file": "content/docs/grafana/_index.md",
             "relative_prefix": "/docs/grafana/latest/",
             "repo": "grafana",
