@@ -629,7 +629,12 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Jobs subresource - check jobs permissions with the verb (editors can manage jobs)
+	// Jobs subresource - editors can manage jobs via provisioning.jobs:*.
+	//
+	// Folder-targeted Git Sync also allows users with dashboards:write on the
+	// repository root folder so Folder Admins can create move/delete sync jobs
+	// without global jobs:create. Finer-grained checks still run in the jobs
+	// connector (authorizeDeleteJob / authorizeMoveJob) for the specific action.
 	case "jobs":
 		err := b.accessWithEditor.Check(ctx, authlib.CheckRequest{
 			Verb:      a.GetVerb(),
@@ -640,33 +645,37 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 		if err == nil {
 			return authorizer.DecisionAllow, "", nil
 		}
-
-		// Fallback for Git Sync: Users with write permissions on the sync root folder can manage sync jobs
-		if a.GetName() != "" {
-			obj, getErr := b.repoStore.Get(ctx, a.GetName(), &metav1.GetOptions{})
-			if getErr == nil && obj != nil {
-				if repo, ok := obj.(*provisioning.Repository); ok {
-					if repo.Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
-						folderUID := repo.Name
-						verb := a.GetVerb()
-						if verb == apiutils.VerbList {
-							verb = apiutils.VerbGet
-						}
-						// Check if the user has dashboard edit permissions in this root folder.
-						folderErr := b.access.Check(ctx, authlib.CheckRequest{
-							Verb:      verb,
-							Group:     resources.DashboardResource.Group,
-							Resource:  resources.DashboardResource.Resource,
-							Namespace: a.GetNamespace(),
-						}, folderUID)
-						if folderErr == nil {
-							return authorizer.DecisionAllow, "", nil
-						}
-					}
-				}
-			}
+		// Only fall back on permission denied. Unauthorized (and other non-Forbidden
+		// errors) must not trigger repository lookups or an alternate auth path.
+		if !apierrors.IsForbidden(err) || a.GetName() == "" {
+			return toAuthorizerDecision(err)
 		}
 
+		obj, getErr := b.repoStore.Get(ctx, a.GetName(), &metav1.GetOptions{})
+		if getErr != nil || obj == nil {
+			return toAuthorizerDecision(err)
+		}
+		repo, ok := obj.(*provisioning.Repository)
+		if !ok || repo.Spec.Sync.Target != provisioning.SyncTargetTypeFolder {
+			return toAuthorizerDecision(err)
+		}
+
+		// Jobs POST uses verb "create"; map mutating job verbs to dashboards:write
+		// (update). Read verbs keep dashboards:read (get).
+		verb := apiutils.VerbUpdate
+		switch a.GetVerb() {
+		case apiutils.VerbGet, apiutils.VerbList, apiutils.VerbWatch:
+			verb = apiutils.VerbGet
+		}
+
+		if folderErr := b.access.Check(ctx, authlib.CheckRequest{
+			Verb:      verb,
+			Group:     resources.DashboardResource.Group,
+			Resource:  resources.DashboardResource.Resource,
+			Namespace: a.GetNamespace(),
+		}, repo.Name); folderErr == nil {
+			return authorizer.DecisionAllow, "", nil
+		}
 		return toAuthorizerDecision(err)
 
 	default:
