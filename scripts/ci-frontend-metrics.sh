@@ -9,6 +9,7 @@ BARREL_IMPORTS="$(grep -r -oP '@todo: replace barrel import path' public/app | w
 CLASSNAME_PROP="$(grep -r -o -E --include="*.ts*" "\.*.className=\W.*\W.*" public/app | wc -l)"
 EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.*\} from '@emotion/css'" public/app | wc -l)"
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
+DEPRECATED_DATA_SOURCE_SRV="$(grep -r -oE --include="*.ts*" --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir={__mocks__,mocks,spec,node_modules,dist,compiled} "get(DataSource|Datasource)Srv\(\)" public/app packages | grep -cvE "packages/grafana-runtime/src/services/|public/app/features/plugins/datasource_srv" || true)"
 SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' | wc -l)"
 # pnpm prints one entry per outdated dependency; count them. yarn's summary line
 # "N dependencies are out of date" has no pnpm equivalent.
@@ -25,6 +26,7 @@ echo -e "Total outdated dependencies: $OUTDATED_DEPENDENCIES"
 echo -e "ClassName in props: $CLASSNAME_PROP"
 echo -e "@emotion/css imports: $EMOTION_IMPORTS"
 echo -e "Total TS files: $TS_FILES"
+echo -e "Deprecated DataSourceSrv usages: $DEPRECATED_DATA_SOURCE_SRV"
 echo -e "Total SCSS files: $SCSS_FILES"
 echo -e "Total circular dependencies: $TOTAL_CIRCULAR_DEPENDENCIES"
 
@@ -65,6 +67,7 @@ echo "Metrics: {
   \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
   \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
   \"grafana.ci-code.tsFiles\": \"${TS_FILES}\",
+  \"grafana.ci-code.deprecatedApis.dataSourceSrv\": \"${DEPRECATED_DATA_SOURCE_SRV}\",
   \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\",
   \"grafana.ci-code.dependencies.circular\": \"${TOTAL_CIRCULAR_DEPENDENCIES}\"
 }"

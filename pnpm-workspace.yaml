@@ -108,9 +108,6 @@ overrides:
   # 6.14's no-global-function-names flags pre-existing map-keys() usage; 6.2.1
   # (yarn-resolved, transitive via stylelint-config-sass-guidelines) does not.
   stylelint-scss: "6.2.1"
-  # 25.7+ prints a promotional console.info banner during init; jest-fail-on-console
-  # then fails every suite that initialises i18n. 25.6.2 (yarn-resolved) is quiet.
-  i18next: "25.6.2"
   # @storybook/test-runner asks for playwright ^1.14.0; a fresh pnpm resolution
   # picks a newer version than grafana's pinned @playwright/test (1.56.1), so the
   # browser `pnpm exec playwright install` downloads doesn't match the build the
@@ -191,3 +188,6 @@ overrides:
   undici@<6.27.0: "6.27.0"
   tar@<=7.5.15: ^7.5.16
   uuid@<11.1.1: ^11.1.1
+  shell-quote: "1.9.0"
+  tmp: "0.2.7"
+  "yaml@^1.10.0": "1.10.3"

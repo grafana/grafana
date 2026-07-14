@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,22 +33,26 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	var startHistoryInformers func()
+	// Historic-job cleanup is age-based and needs no live events: when NATS is off
+	// the source is an apiserver informer (watch-fed cache replayed on resync),
+	// when NATS is on it is a cron-style periodic re-list. Either way each pass
+	// delivers every job to the handler, which deletes the expired ones. It only
+	// runs when a history expiration is configured; the expired-job reaper below
+	// runs regardless. The source choice reads the NATS config flag directly, not a
+	// subscriber: this operator has no NATS consumer role and holds no subscriber.
+	var historySource informer.DeltaSource
 	if controllerCfg.historyExpiration > 0 {
-		// History jobs informer and controller (separate factory with resync == expiration)
-		historyInformerFactory := newInformerFactory(provisioningClient, controllerCfg.historyExpiration)
-		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
-			return fmt.Errorf("failed to add history job event handler: %w", err)
+		historySource = informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
+		if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
+			return fmt.Errorf("add history job event handler: %w", err)
 		}
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
-		startHistoryInformers = func() { historyInformerFactory.Start(ctx.Done()) }
 	} else {
-		startHistoryInformers = func() {}
+		logger.Info("history cleanup disabled", "history_expiration", controllerCfg.historyExpiration.String())
 	}
 	// HistoryWriter can be either Loki or the API server
 	// TODO: Loki configuration and setup in the same way we do for the API server
@@ -60,7 +65,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// }
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -81,8 +86,11 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		logger.Info("job cleanup controller stopped")
 	}()
 
-	// Start informers
-	go startHistoryInformers()
+	// Start the historic-job source when history cleanup is enabled; cleanup runs
+	// off its re-lists.
+	if historySource != nil {
+		go historySource.Run(ctx.Done())
+	}
 
 	logger.Info("jobs operator is ready")
 	deps.HealthNotifier.SetReady()

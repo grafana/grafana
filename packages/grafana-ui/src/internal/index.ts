@@ -106,3 +106,4 @@ export { RadialGauge } from '../components/RadialGauge/RadialGauge';
 export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';
 
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
+export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';
