@@ -815,6 +815,11 @@ export interface FeatureToggles {
   */
   datasourceConnectionsTab?: boolean;
   /**
+  * Enables the new sidebar filter panel in the Add new connection page
+  * @default false
+  */
+  connectionsFilterSidebar?: boolean;
+  /**
   * Use a POST request to list rules by passing down the namespaces user has access to
   * @default false
   */
