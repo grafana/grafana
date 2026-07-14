@@ -35,6 +35,7 @@ var (
 	sqlResourceUpdate                      = mustTemplate("resource_update.sql")
 	sqlResourceRead                        = mustTemplate("resource_read.sql")
 	sqlResourceStats                       = mustTemplate("resource_stats.sql")
+	sqlResourceStoredList                  = mustTemplate("resource_stored_list.sql")
 	sqlResourceList                        = mustTemplate("resource_list.sql")
 	sqlResourceHistoryList                 = mustTemplate("resource_history_list.sql")
 	sqlResourceHistoryListModifiedSince    = mustTemplate("resource_history_list_since_modified.sql")
@@ -48,8 +49,11 @@ var (
 	sqlResourceHistoryPrune                = mustTemplate("resource_history_prune.sql")
 	sqlResourceHistoryGarbageGetCandidates = mustTemplate("resource_history_gc_get_candidates.sql")
 	sqlResourceHistoryGCDeleteByNames      = mustTemplate("resource_history_gc_delete_by_names.sql")
+	sqlChunkCandidates                     = mustTemplate("chunk_candidates.sql")
+	sqlDeleteByGUIDs                       = mustTemplate("delete_by_guids.sql")
 	sqlResourceTrash                       = mustTemplate("resource_trash.sql")
 	sqlResourceInsertFromHistory           = mustTemplate("resource_insert_from_history.sql")
+	sqlResourceHistoryDistinctNames        = mustTemplate("resource_history_distinct_names.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionList = mustTemplate("resource_version_list.sql")
@@ -115,6 +119,10 @@ func (r sqlBulkResourceHistoryInsertRequest) Validate() error {
 type sqlResourceInsertFromHistoryRequest struct {
 	sqltemplate.SQLTemplate
 	Key *resourcepb.ResourceKey
+	// StartName and EndName bound the name range as (StartName, EndName]:
+	// exclusive start, inclusive end. An empty value means unbounded on that side.
+	StartName string
+	EndName   string
 }
 
 func (r sqlResourceInsertFromHistoryRequest) Validate() error {
@@ -124,19 +132,67 @@ func (r sqlResourceInsertFromHistoryRequest) Validate() error {
 	return nil
 }
 
+// distinctName is one row returned by the distinct-names query: a single name
+// from resource_history for a collection.
+type distinctName struct {
+	Name string
+}
+
+// sqlResourceHistoryDistinctNamesRequest selects a collection's distinct names
+// in DB collation order, so the backfill can be split into byte-bounded ranges.
+type sqlResourceHistoryDistinctNamesRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+	Response  *distinctName
+}
+
+func (r *sqlResourceHistoryDistinctNamesRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	return nil
+}
+
+func (r *sqlResourceHistoryDistinctNamesRequest) Results() (distinctName, error) {
+	return *r.Response, nil
+}
+
 type sqlStatsRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace string
 	Group     string
 	Resource  string
-	Folder    string
-	MinCount  int
+	// Folders, when non-empty, restricts the count to rows whose folder is in
+	// this set. A single UID counts that exact folder (no recursion); callers
+	// that need recursive descendant counts pre-expand the subtree and pass
+	// every UID here.
+	Folders  []string
+	MinCount int
 }
 
 func (r sqlStatsRequest) Validate() error {
-	if r.Folder != "" && r.Namespace == "" {
+	if len(r.Folders) > 0 && r.Namespace == "" {
 		return fmt.Errorf("folder constraint requires a namespace")
 	}
+	return nil
+}
+
+type sqlStoredResourcesRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+}
+
+func (r sqlStoredResourcesRequest) Validate() error {
 	return nil
 }
 
@@ -224,17 +280,42 @@ type historyReadRequest struct {
 	ResourceVersion int64
 }
 
+type historyReadResponse struct {
+	Key             *resourcepb.ResourceKey
+	Folder          string
+	GUID            string
+	ResourceVersion int64
+	Value           []byte
+	Action          int
+}
+
+func NewHistoryReadResponse() *historyReadResponse {
+	return &historyReadResponse{
+		Key: &resourcepb.ResourceKey{},
+	}
+}
+
+func (r *historyReadResponse) ReadResponse() *resource.BackendReadResponse {
+	return &resource.BackendReadResponse{
+		Key:             r.Key,
+		Folder:          r.Folder,
+		GUID:            r.GUID,
+		ResourceVersion: r.ResourceVersion,
+		Value:           r.Value,
+	}
+}
+
 type sqlResourceHistoryReadRequest struct {
 	sqltemplate.SQLTemplate
 	Request  *historyReadRequest
-	Response *resource.BackendReadResponse
+	Response *historyReadResponse
 }
 
 func (r sqlResourceHistoryReadRequest) Validate() error {
 	return nil // TODO
 }
 
-func (r sqlResourceHistoryReadRequest) Results() (*resource.BackendReadResponse, error) {
+func (r sqlResourceHistoryReadRequest) Results() (*historyReadResponse, error) {
 	return r.Response, nil
 }
 
@@ -409,6 +490,93 @@ func (r *sqlGarbageCollectDeleteByNamesRequest) Validate() error {
 	return nil
 }
 
+// chunkCandidate is one row returned by the chunked-wipe candidate queries: a
+// row's guid plus the byte size of its value column.
+type chunkCandidate struct {
+	GUID string
+	Size int64
+}
+
+// sqlChunkCandidatesRequest selects a bounded batch of rows for a collection
+// with each row's value byte size. Table selects which table to read
+// ("resource" or "resource_history").
+type sqlChunkCandidatesRequest struct {
+	sqltemplate.SQLTemplate
+	Table     string
+	Namespace string
+	Group     string
+	Resource  string
+	BatchSize int
+	Response  *chunkCandidate
+}
+
+func (r *sqlChunkCandidatesRequest) Validate() error {
+	if err := validateResourceTable(r.Table); err != nil {
+		return err
+	}
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.BatchSize <= 0 {
+		return fmt.Errorf("invalid batch size")
+	}
+	return nil
+}
+
+func (r *sqlChunkCandidatesRequest) Results() (chunkCandidate, error) {
+	x := *r.Response
+	return x, nil
+}
+
+// sqlDeleteByGUIDsRequest deletes a sub-batch of rows by guid within a
+// collection. Table selects which table to delete from ("resource" or
+// "resource_history").
+type sqlDeleteByGUIDsRequest struct {
+	sqltemplate.SQLTemplate
+	Table     string
+	Namespace string
+	Group     string
+	Resource  string
+	GUIDs     []string
+}
+
+func (r *sqlDeleteByGUIDsRequest) Validate() error {
+	if err := validateResourceTable(r.Table); err != nil {
+		return err
+	}
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if len(r.GUIDs) == 0 {
+		return fmt.Errorf("missing guids")
+	}
+	return nil
+}
+
+const (
+	tableResource        = "resource"
+	tableResourceHistory = "resource_history"
+)
+
+func validateResourceTable(table string) error {
+	if table != tableResource && table != tableResourceHistory {
+		return fmt.Errorf("invalid table %q: must be %q or %q", table, tableResource, tableResourceHistory)
+	}
+	return nil
+}
+
 type sqlResourceBlobInsertRequest struct {
 	sqltemplate.SQLTemplate
 	Now         time.Time
@@ -464,9 +632,6 @@ type sqlResourceListModifiedSinceRequest struct {
 }
 
 func (r sqlResourceListModifiedSinceRequest) Validate() error {
-	if r.Namespace == "" {
-		return fmt.Errorf("missing namespace")
-	}
 	if r.Group == "" {
 		return fmt.Errorf("missing group")
 	}

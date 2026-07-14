@@ -5,10 +5,10 @@ import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_SUB_SCOPE_MIMIR_ITEMS } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { ScopesApiClient } from '../ScopesApiClient';
-import { ScopesService } from '../ScopesService';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
-import { ScopeNavigation } from '../dashboards/types';
+import { type ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesService } from '../ScopesService';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopeNavigation } from '../dashboards/types';
 
 import {
   clearNotFound,

@@ -1,6 +1,6 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
-import { LanguageDefinition } from './register';
+import { type LanguageDefinition } from './register';
 
 export type CompletionItem = monacoTypes.languages.CompletionItem;
 
@@ -200,16 +200,16 @@ export enum CompletionItemPriority {
   Low = 'q',
 }
 
-export interface Editor {
+interface Editor {
   tokenize: (value: string, languageId: string) => monacoTypes.Token[][];
 }
 
-export interface Range {
+interface Range {
   containsPosition: (range: monacoTypes.IRange, position: monacoTypes.IPosition) => boolean;
   fromPositions: (start: monacoTypes.IPosition, end?: monacoTypes.IPosition) => monacoTypes.Range;
 }
 
-export interface Languages {
+interface Languages {
   CompletionItemInsertTextRule: {
     InsertAsSnippet: 4;
   };

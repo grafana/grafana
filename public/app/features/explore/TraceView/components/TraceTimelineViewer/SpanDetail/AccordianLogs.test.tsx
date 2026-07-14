@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import AccordianLogs, { AccordianLogsProps } from './AccordianLogs';
+import AccordianLogs, { type AccordianLogsProps } from './AccordianLogs';
 
 const logs = [
   {

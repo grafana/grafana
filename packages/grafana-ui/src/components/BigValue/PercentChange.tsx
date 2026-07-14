@@ -1,8 +1,8 @@
-import { IconName } from '@grafana/data';
+import { type IconName } from '@grafana/data';
 
 import { Icon } from '../Icon/Icon';
 
-import { PercentChangeStyles } from './BigValueLayout';
+import { type PercentChangeStyles } from './BigValueLayout';
 
 export interface Props {
   percentChange: number;

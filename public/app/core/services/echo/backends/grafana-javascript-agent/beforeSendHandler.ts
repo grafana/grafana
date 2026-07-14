@@ -1,4 +1,4 @@
-import { TransportItem } from '@grafana/faro-core';
+import { type TransportItem } from '@grafana/faro-core';
 
 // as listed in https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/filter-bots/#filter-out-bots-from-collecting-data-for-frontend-observability
 const bots =

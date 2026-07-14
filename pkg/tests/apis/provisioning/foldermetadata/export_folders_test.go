@@ -76,9 +76,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "export-meta-new-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -110,9 +111,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "export-existing-folder-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -152,9 +154,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-middle-existing-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -204,9 +207,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-two-level-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -241,9 +245,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-three-level-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -287,9 +292,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-siblings-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -328,4 +334,168 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		require.Equal(t, siblingBUID, siblingBManifest.Name)
 		require.Equal(t, siblingBTitle, siblingBManifest.Spec.Title)
 	})
+}
+
+// TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs verifies that the
+// GenerateNewFolderIDs export option writes a freshly generated UID into each
+// folder's _folder.json instead of preserving the original folder identifier,
+// while leaving the directory structure (derived from titles) and the folder
+// titles untouched. The default behavior (option off) preserves the original UIDs.
+func TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs(t *testing.T) {
+	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
+		t.Helper()
+		data, err := os.ReadFile(path) //nolint:gosec
+		require.NoError(t, err, "_folder.json should exist at %s", path)
+		var manifest foldersV1.Folder
+		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json at %s should be valid JSON", path)
+		return manifest
+	}
+
+	const (
+		parentUID   = "newids-parent-uid"
+		parentTitle = "newids-parent"
+		childUID    = "newids-child-uid"
+		childTitle  = "newids-child"
+	)
+
+	setup := func(t *testing.T, repo string) *common.ProvisioningTestHelper {
+		t.Helper()
+		helper := sharedHelper(t)
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:                   repo,
+			SyncTarget:             "folder",
+			Workflows:              []string{"write"},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+		createUnmanagedFolder(t, helper, parentUID, parentTitle)
+		createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
+		return helper
+	}
+
+	t.Run("generateNewFolderIDs writes fresh UIDs into folder metadata", func(t *testing.T) {
+		const repo = "export-newids-repo"
+		helper := setup(t, repo)
+
+		result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{GenerateNewFolderIDs: true},
+		})
+		job := &provisioning.Job{}
+		require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
+		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
+
+		// Directory structure derives from titles, so it is unaffected by the option.
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle))
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle))
+
+		parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
+		childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
+
+		// Each manifest carries a freshly generated UID, not the original one.
+		require.NotEmpty(t, parentManifest.Name, "parent _folder.json must have a UID")
+		require.NotEqual(t, parentUID, parentManifest.Name, "parent _folder.json should carry a new UID")
+		require.NotEmpty(t, childManifest.Name, "child _folder.json must have a UID")
+		require.NotEqual(t, childUID, childManifest.Name, "child _folder.json should carry a new UID")
+		require.NotEqual(t, parentManifest.Name, childManifest.Name, "each folder should get a distinct new UID")
+
+		// Titles are preserved.
+		require.Equal(t, parentTitle, parentManifest.Spec.Title)
+		require.Equal(t, childTitle, childManifest.Spec.Title)
+	})
+
+	t.Run("without generateNewFolderIDs preserves the original UIDs", func(t *testing.T) {
+		const repo = "export-keepids-repo"
+		helper := setup(t, repo)
+
+		result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{},
+		})
+		job := &provisioning.Job{}
+		require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
+		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
+
+		parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
+		childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
+
+		// Default behavior: the original folder UIDs are preserved.
+		require.Equal(t, parentUID, parentManifest.Name, "parent _folder.json should preserve the original UID")
+		require.Equal(t, childUID, childManifest.Name, "child _folder.json should preserve the original UID")
+	})
+}
+
+// TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata
+// verifies that a selective export of a single dashboard generates _folder.json
+// metadata for the dashboard's parent folder ancestry — even though those
+// folders were not named in the export — while leaving an unrelated folder
+// (and its metadata) out of the repository entirely.
+func TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata(t *testing.T) {
+	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
+		t.Helper()
+		data, err := os.ReadFile(path) //nolint:gosec
+		require.NoError(t, err, "_folder.json should exist at %s", path)
+		var manifest foldersV1.Folder
+		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json at %s should be valid JSON", path)
+		return manifest
+	}
+
+	helper := sharedHelper(t)
+
+	const repo = "selective-export-meta-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "instance",
+		Workflows:              []string{"write"},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	const (
+		parentUID   = "selective-meta-parent-uid"
+		parentTitle = "selective-meta-parent"
+		childUID    = "selective-meta-child-uid"
+		childTitle  = "selective-meta-child"
+
+		unrelatedUID   = "selective-meta-unrelated-uid"
+		unrelatedTitle = "selective-meta-unrelated"
+	)
+	createUnmanagedFolder(t, helper, parentUID, parentTitle)
+	createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
+	createUnmanagedFolder(t, helper, unrelatedUID, unrelatedTitle)
+
+	// The dashboard lives in the child folder; only it is named in the export.
+	selectedDash := helper.CreateUnmanagedDashboard(t, t.Context(), "selective-meta-dash", childUID)
+
+	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: selectedDash, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	})
+	job := &provisioning.Job{}
+	require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
+	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "selective export job should succeed")
+
+	// The parent ancestry is generated with metadata even though it was not
+	// named: the dashboard's nested path must resolve to managed folders.
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle))
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle))
+
+	parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
+	require.Equal(t, parentUID, parentManifest.Name, "generated parent _folder.json should preserve the folder UID")
+	require.Equal(t, parentTitle, parentManifest.Spec.Title)
+
+	childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
+	require.Equal(t, childUID, childManifest.Name, "generated child _folder.json should preserve the folder UID")
+	require.Equal(t, childTitle, childManifest.Spec.Title)
+
+	// The dashboard itself lands inside the generated child folder.
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "selective-meta-dash.json"))
+
+	// The unrelated folder must not be exported at all: no directory, no metadata.
+	_, err := os.Stat(filepath.Join(helper.ProvisioningPath, unrelatedTitle))
+	require.True(t, os.IsNotExist(err), "unrelated folder must not be exported during a selective export")
 }

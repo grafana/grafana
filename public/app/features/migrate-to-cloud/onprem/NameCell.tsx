@@ -6,17 +6,17 @@ import {
   useGetDashboardByUidQuery,
   useGetLibraryElementByUidQuery,
 } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
+import { type CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
-import { LocalPlugin } from '../../plugins/admin/types';
+import { type LocalPlugin } from '../../plugins/admin/types';
 
 import { iconNameForResource } from './resourceInfo';
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 export function NameCell(props: CellProps<ResourceTableItem>) {
   const data = props.row.original;

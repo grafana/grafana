@@ -25,7 +25,6 @@ const getRepeatedPanelTitle = (row: number, panel: number) => `repeated-row-${ro
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },
@@ -95,7 +94,7 @@ test.describe(
         .click();
 
       // blur to close dropdown
-      await page.keyboard.press('Escape');
+      await page.locator('body').click();
 
       // verify that repeats are present for last 3 values
       await checkRepeatedRowTitles(dashboardPage, selectors, repeatTitleBase, repeatOptions.slice(1));

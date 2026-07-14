@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { QueryOperationRowHeader, QueryOperationRowHeaderProps } from './QueryOperationRowHeader';
+import { QueryOperationRowHeader, type QueryOperationRowHeaderProps } from './QueryOperationRowHeader';
 
 const setup = (propOverrides?: Partial<QueryOperationRowHeaderProps>) => {
   const props: QueryOperationRowHeaderProps = {

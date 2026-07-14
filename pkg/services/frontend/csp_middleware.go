@@ -28,6 +28,7 @@ func CSPMiddleware() web.Middleware {
 				"enabled", requestConfig.CSPEnabled,
 				"report_only_enabled", requestConfig.CSPReportOnlyEnabled,
 				"allow_embedding_hosts", requestConfig.AllowEmbeddingHosts,
+				"form_action_additional_hosts", requestConfig.FormActionAdditionalHosts,
 			)
 
 			// Bail early if CSP is not enabled for this tenant
@@ -45,15 +46,20 @@ func CSPMiddleware() web.Middleware {
 			// Stored on the context so the index handler can put it in the HTML
 			reqCtx.RequestNonce = nonce
 
+			hosts := middleware.CSPHostLists{
+				FrameAncestorHosts:        requestConfig.AllowEmbeddingHosts,
+				FormActionAdditionalHosts: requestConfig.FormActionAdditionalHosts,
+			}
+
 			if requestConfig.CSPEnabled && requestConfig.CSPTemplate != "" {
 				logger.Debug("Setting Content-Security-Policy header")
-				policy := middleware.ReplacePolicyVariables(requestConfig.CSPTemplate, requestConfig.AppURL, requestConfig.AllowEmbeddingHosts, nonce)
+				policy := middleware.ReplacePolicyVariables(requestConfig.CSPTemplate, requestConfig.AppURL, hosts, nonce)
 				w.Header().Set("Content-Security-Policy", policy)
 			}
 
 			if requestConfig.CSPReportOnlyEnabled && requestConfig.CSPReportOnlyTemplate != "" {
 				logger.Debug("Setting Content-Security-Policy-Report-Only header")
-				policy := middleware.ReplacePolicyVariables(requestConfig.CSPReportOnlyTemplate, requestConfig.AppURL, requestConfig.AllowEmbeddingHosts, nonce)
+				policy := middleware.ReplacePolicyVariables(requestConfig.CSPReportOnlyTemplate, requestConfig.AppURL, hosts, nonce)
 				w.Header().Set("Content-Security-Policy-Report-Only", policy)
 			}
 

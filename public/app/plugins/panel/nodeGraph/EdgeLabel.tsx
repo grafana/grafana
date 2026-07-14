@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { memo, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { nodeR } from './Node';
-import { EdgeDatumLayout } from './types';
+import { type EdgeDatumLayout } from './types';
 import { shortenLine } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {

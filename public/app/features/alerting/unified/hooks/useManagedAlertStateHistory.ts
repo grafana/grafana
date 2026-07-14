@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 
 import { useDispatch } from 'app/types/store';
-import { StateHistoryItem } from 'app/types/unified-alerting';
+import { type StateHistoryItem } from 'app/types/unified-alerting';
 
 import { fetchGrafanaAnnotationsAction } from '../state/actions';
-import { AsyncRequestState } from '../utils/redux';
+import { type AsyncRequestState } from '../utils/redux';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 

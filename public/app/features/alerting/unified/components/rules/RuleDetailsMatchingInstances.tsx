@@ -3,23 +3,23 @@ import { countBy, sum } from 'lodash';
 import * as React from 'react';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import {
   AlertInstanceStateFilter,
-  InstanceStateFilter,
+  type InstanceStateFilter,
 } from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { createViewLink, sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
+import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
-import { prometheusRuleType } from '../../utils/rules';
+import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { getComponentsFromStats } from './RuleStats';
@@ -171,7 +171,13 @@ export function RuleDetailsMatchingInstances(props: Props) {
         </div>
       )}
       {!enableFiltering && <div className={styles.stats}>{statsComponents}</div>}
-      <AlertInstancesTable rule={rule} instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
+      <AlertInstancesTable
+        rule={rule}
+        instances={visibleInstances}
+        pagination={pagination}
+        footerRow={footerRow}
+        showNotificationColumn={rulerRuleType.grafana.alertingRule(rule.rulerRule)}
+      />
     </>
   );
 }

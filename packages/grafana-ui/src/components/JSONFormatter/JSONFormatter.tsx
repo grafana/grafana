@@ -1,6 +1,6 @@
 import { memo, useRef, useEffect } from 'react';
 
-import { JsonExplorer, JsonExplorerConfig } from './json_explorer/json_explorer'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
+import { JsonExplorer, type JsonExplorerConfig } from './json_explorer/json_explorer'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
 
 interface Props {
   className?: string;

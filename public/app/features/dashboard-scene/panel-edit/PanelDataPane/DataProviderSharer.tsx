@@ -1,11 +1,11 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 import {
-  SceneDataProvider,
-  SceneDataProviderResult,
-  SceneDataState,
+  type SceneDataProvider,
+  type SceneDataProviderResult,
+  type SceneDataState,
   SceneObjectBase,
-  SceneObjectRef,
+  type SceneObjectRef,
 } from '@grafana/scenes';
 
 export interface DataProviderSharerState extends SceneDataState {

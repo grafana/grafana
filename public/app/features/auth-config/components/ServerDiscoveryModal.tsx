@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Field, Modal } from '@grafana/ui';
 
-import { ServerDiscoveryFormData } from '../types';
+import { type ServerDiscoveryFormData } from '../types';
 import { isUrlValid } from '../utils/url';
 
 interface Props {

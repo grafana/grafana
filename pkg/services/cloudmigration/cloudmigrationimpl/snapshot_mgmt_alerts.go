@@ -64,9 +64,9 @@ func (s *Service) getNotificationTemplates(ctx context.Context, signedInUser *us
 
 	for _, template := range templates {
 		notificationTemplates = append(notificationTemplates, notificationTemplate{
-			UID:      template.UID,
-			Name:     template.Name,
-			Template: template.Template,
+			UID:      string(template.UID),
+			Name:     template.Title,
+			Template: template.Content,
 		})
 	}
 

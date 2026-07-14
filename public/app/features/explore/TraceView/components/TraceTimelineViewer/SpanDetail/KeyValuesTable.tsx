@@ -13,22 +13,22 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import DOMPurify from 'dompurify';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
-import { GrafanaTheme2, PluginExtensionLink, TraceKeyValuePair } from '@grafana/data';
+import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import TNil from '../../types/TNil';
+import type TNil from '../../types/TNil';
 
 import jsonMarkup from './jsonMarkup';
 
 const copyIconClassName = 'copyIcon';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     KeyValueTable: css({
       label: 'KeyValueTable',

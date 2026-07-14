@@ -350,6 +350,7 @@ func (pk8s *playlistK8sHandler) createPlaylist(c *contextmodel.ReqContext) {
 //-----------------------------------------------------------------------------------------
 
 func (pk8s *playlistK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	// NOTE! if you are copying this, consider using the hs.clientclientGenerator to get a typed client!
 	dyn, err := dynamic.NewForConfig(pk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)

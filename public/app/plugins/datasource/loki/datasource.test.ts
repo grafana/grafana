@@ -3,42 +3,42 @@ import { take } from 'rxjs/operators';
 
 import {
   AbstractLabelOperator,
-  AnnotationQueryRequest,
+  type AnnotationQueryRequest,
   CoreApp,
-  CustomVariableModel,
-  DataFrame,
+  type CustomVariableModel,
+  type DataFrame,
   dataFrameToJSON,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  QueryFixAction,
+  type QueryFixAction,
   SupplementaryQueryType,
   toDataFrame,
-  TimeRange,
-  ToggleFilterAction,
-  DataQueryRequest,
-  ScopedVars,
-  AdHocVariableFilter,
+  type TimeRange,
+  type ToggleFilterAction,
+  type DataQueryRequest,
+  type ScopedVars,
+  type AdHocVariableFilter,
 } from '@grafana/data';
 import {
-  BackendSrv,
-  BackendSrvRequest,
+  type BackendSrv,
+  type BackendSrvRequest,
   config,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   reportInteraction,
   setBackendSrv,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { LokiQueryType, SupportingQueryType } from './dataquery.gen';
-import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
+import { type LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { createMetadataRequest } from './mocks/metadataRequest';
 import { runSplitQuery } from './querySplitting';
-import { LokiOptions, LokiQuery, LokiVariableQueryType } from './types';
+import { type LokiOptions, type LokiQuery, LokiVariableQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -1618,6 +1618,25 @@ describe('LokiDatasource', () => {
             refId: 'A',
           }
         );
+        expect(query?.expr).toEqual(
+          'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))'
+        );
+      });
+
+      it('inherits step from the original log query', () => {
+        const query = ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            expr: '{label="value"}',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+            step: '2m',
+            resolution: 2,
+          }
+        );
+        expect(query).toBeDefined();
+        expect(query?.step).toBe('2m');
+        expect(query?.resolution).toBe(2);
         expect(query?.expr).toEqual(
           'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))'
         );

@@ -1,4 +1,4 @@
-import { BackendModule } from 'i18next';
+import { type BackendModule } from 'i18next';
 
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 

@@ -1,24 +1,38 @@
 import { useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
-import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
+import { type NavModel, type NavModelItem, PageLayoutType, generateUUID } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { config, locationService } from '@grafana/runtime';
+import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneVariable,
+  type SceneVariables,
+  sceneGraph,
+} from '@grafana/scenes';
+import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import {
+  HIGHLIGHT_CATEGORY_PARAM_NAME,
+  CATEGORY_PARAM_NAME,
+} from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { ProvisionedVariablesSection } from './variables/ProvisionedVariablesSection';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
 import { VariablesUnknownTable } from './variables/VariablesUnknownTable';
 import {
-  EditableVariableType,
+  type EditableVariableType,
   RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
   WORD_CHARACTERS_REGEX,
   getVariableDefault,
@@ -113,7 +127,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
 
     //clone the original variable, update name and key
-    const newVariable = variableToUpdate.clone({ ...variableToUpdate.state, name: newName, key: uuidv4() });
+    const newVariable = variableToUpdate.clone({ ...variableToUpdate.state, name: newName, key: generateUUID() });
 
     const updatedVariables = [
       ...variables.slice(0, variableIndex + 1),
@@ -233,6 +247,41 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
   const saveModel = model.getSaveModel();
+
+  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
+
+  const goToSidebar = () => {
+    // close settings and open dashboard sidebar
+    const dashboard = getDashboardSceneFor(model);
+    dashboard.state.editPane.selectObject(dashboard);
+    locationService.partial({
+      editview: null,
+      [HIGHLIGHT_CATEGORY_PARAM_NAME]: 'dashboard-variables',
+      [CATEGORY_PARAM_NAME]: 'dashboard-variables',
+    });
+
+    DashboardInteractions.takeMeToSidebarClicked({ item: 'variables' });
+  };
+
+  if (isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled) {
+    return (
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
+        <Alert
+          severity="info"
+          title={t('dashboard-scene.dashboard-settings.variables.title-moved', 'Looking for variable settings?')}
+        >
+          <Trans i18nKey="dashboard-scene.dashboard-settings.variables.description-moved">
+            Variable settings have moved to the dashboard&apos;s sidebar.
+          </Trans>
+          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
+            <Trans i18nKey="dashboard-scene.dashboard-settings.variables.button-moved">Take me there</Trans>
+          </Button>
+        </Alert>
+      </Page>
+    );
+  }
 
   if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];

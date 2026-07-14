@@ -1,10 +1,10 @@
-import { DataSourceSettings } from '@grafana/data';
+import { type DataSourceSettings } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Field, Icon, InlineLabel, Label, Stack, Switch, Tooltip } from '@grafana/ui';
 
-import { SQLConnectionLimits, SQLOptions } from '../../types';
+import { type SQLConnectionLimits, type SQLOptions } from '../../types';
 
 import { MaxLifetimeField } from './MaxLifetimeField';
 import { MaxOpenConnectionsField } from './MaxOpenConnectionsField';

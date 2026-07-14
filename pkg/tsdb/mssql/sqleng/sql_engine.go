@@ -24,9 +24,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -150,7 +151,7 @@ func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanc
 
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
-		logger.Error("mssql proxy creation failed", "error", err)
+		log.Error("mssql proxy creation failed", "error", err)
 		return nil, fmt.Errorf("mssql proxy creation failed")
 	}
 
@@ -186,7 +187,7 @@ func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanc
 
 		db, err := newMSSQL(driverName, config.RowLimit, config.DSInfo, cnnstr, log, proxyClient)
 		if err != nil {
-			logger.Error("Failed connecting to MSSQL", "err", err)
+			log.Error("Failed connecting to MSSQL", "err", err)
 			return nil, err
 		}
 
@@ -246,7 +247,7 @@ func (e *DataSourceHandler) getDB(ctx context.Context) (*sql.DB, error) {
 
 	db, err := newMSSQL(e.driverName, e.rowLimit, e.dsInfo, cnnstr, e.log, e.proxyClient)
 	if err != nil {
-		logger.Error("Failed connecting to MSSQL", "err", err)
+		e.log.Error("Failed connecting to MSSQL", "err", err)
 		return nil, err
 	}
 	e.dbConnections.Store(cacheKey, db)
@@ -342,8 +343,14 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		ch <- queryResult
 	}
 
+	// A trailing SQLCommenter attribution tag must reach the database verbatim,
+	// so split it off before interpolation and re-append it afterwards. This
+	// keeps it out of comment stripping and macro substitution, and prevents a
+	// macro from completing across the comment boundary in either direction.
+	rawSQL, sqlCommenterTag := sqlmacro.SplitTrailingSQLCommenter(queryJson.RawSql, "--")
+
 	// global substitutions
-	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
+	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, rawSQL)
 
 	// data source specific substitutions
 	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
@@ -351,6 +358,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin)
 		return
 	}
+	interpolatedQuery += sqlCommenterTag
 
 	db, err := e.getDB(queryContext)
 	if err != nil {
@@ -374,13 +382,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	frame := e.processResponse(qm, rows, interpolatedQuery, errAppendDebug)
+	frame := e.processResponse(qm, rows, interpolatedQuery, errAppendDebug, logger)
 
 	queryResult.dataResponse.Frames = data.Frames{frame}
 	ch <- queryResult
 }
 
-func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, interpolatedQuery string, errAppendDebug func(string, error, string, backend.ErrorSource)) *data.Frame {
+func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, interpolatedQuery string, errAppendDebug func(string, error, string, backend.ErrorSource), logger log.Logger) *data.Frame {
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
 	frame, err := sqlutil.FrameFromRows(rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
@@ -460,23 +468,44 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 				}
 			}
 		}
-		if qm.FillMissing != nil {
-			// we align the start-time
-			startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
-			alignedTimeRange := backend.TimeRange{
-				From: time.Unix(startUnixTime, 0),
-				To:   qm.TimeRange.To,
-			}
-
-			var err error
-			frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval) //nolint:staticcheck
-			if err != nil {
-				logger.Error("Failed to resample dataframe", "err", err)
-				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
-			}
+		if qm.FillMissing != nil && qm.Interval > 0 {
+			frame = e.applyFill(frame, qm, logger)
 		}
 	}
 
+	return frame
+}
+
+// applyFill resamples frame using the fill configuration in qm. If the number
+// of fill points would exceed the row limit the fill is skipped and a warning
+// notice is appended to the frame instead.
+func (e *DataSourceHandler) applyFill(frame *data.Frame, qm *dataQueryModel, logger log.Logger) *data.Frame {
+	// we align the start-time
+	startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
+	alignedTimeRange := backend.TimeRange{
+		From: time.Unix(startUnixTime, 0),
+		To:   qm.TimeRange.To,
+	}
+
+	// Guard against excessive memory allocation from fill operations that span
+	// a very large time range relative to the fill interval.
+	numFillPoints := int64(alignedTimeRange.To.Sub(alignedTimeRange.From) / qm.Interval)
+	if numFillPoints > e.rowLimit {
+		e.log.Warn("Skipping fill: number of fill points exceeds row limit",
+			"numFillPoints", numFillPoints, "rowLimit", e.rowLimit)
+		frame.AppendNotices(data.Notice{
+			Text:     "Fill operation skipped: time range and interval would require more points than the configured row limit",
+			Severity: data.NoticeSeverityWarning,
+		})
+		return frame
+	}
+
+	var err error
+	frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval) //nolint:staticcheck
+	if err != nil {
+		logger.Error("Failed to resample dataframe", "err", err)
+		frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
+	}
 	return frame
 }
 

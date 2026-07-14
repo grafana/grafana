@@ -2,14 +2,14 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
 import {
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isDateTime,
   isValidGrafanaDuration,
   rangeUtil,
-  RawTimeRange,
-  TimeOption,
-  TimeRange,
-  TimeZone,
+  type RawTimeRange,
+  type TimeOption,
+  type TimeRange,
+  type TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -19,7 +19,7 @@ import { getFocusStyles } from '../../../themes/mixins';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
-import { WeekStart } from '../WeekStartPicker';
+import { type WeekStart } from '../WeekStartPicker';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
@@ -302,7 +302,7 @@ const getStyles = (
     background: theme.colors.background.elevated,
     boxShadow: theme.shadows.z3,
     width: `${isFullscreen ? '546px' : '262px'}`,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     border: `1px solid ${theme.colors.border.weak}`,
     [`${isReversed ? 'left' : 'right'}`]: 0,
     display: 'flex',

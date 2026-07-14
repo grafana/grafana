@@ -4,27 +4,29 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   DataSourceApi,
-  DataSourceJsonData,
-  DataSourcePluginMeta,
-  DataSourceWithSupplementaryQueriesSupport,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+  type DataSourceWithSupplementaryQueriesSupport,
   LoadingState,
   MutableDataFrame,
-  RawTimeRange,
+  type RawTimeRange,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { initDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
-import { ExploreItemState } from 'app/types/explore';
-import { createAsyncThunk, StoreState, ThunkDispatch } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk, type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import * as richHistory from '../../../core/utils/richHistory';
 import { configureStore } from '../../../store/configureStore';
-import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
 import { makeLogs } from '../mocks/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
@@ -46,7 +48,7 @@ import {
   cleanSupplementaryQueryDataProviderAction,
   clearLogs,
   queryStreamUpdatedAction,
-  QueryEndedPayload,
+  type QueryEndedPayload,
   changeQueries,
 } from './query';
 import * as actions from './query';
@@ -108,6 +110,69 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
 }));
+
+// explore.ts now resolves datasources via getDataSourceInstance() from @grafana/runtime/unstable.
+// This suite exercises that path through ensureQueries/generateEmptyQuery (via addQueryRow), so we
+// seed the real new-API caches (instance settings + a plugin importer) instead of delegating to the
+// legacy getDataSourceSrv mock above — seeding runs the real resolution path and does not reassert
+// legacy semantics.
+function makeSettings(uid: string, name: string, type: string, isDefault = false): DataSourceInstanceSettings {
+  return {
+    id: 1,
+    uid,
+    name,
+    type,
+    access: 'direct',
+    jsonData: {},
+    readOnly: false,
+    isDefault,
+    meta: {
+      id: type,
+      name: type,
+      type: 'datasource',
+      module: '',
+      baseUrl: '',
+      metrics: true,
+      info: {
+        author: { name: '' },
+        description: '',
+        links: [],
+        logos: { small: '', large: '' },
+        screenshots: [],
+        updated: '',
+        version: '',
+      },
+    } as unknown as DataSourcePluginMeta,
+  } as DataSourceInstanceSettings;
+}
+
+class TestDataSource extends DataSourceApi<DataQuery> {
+  query() {
+    return Promise.resolve({ data: [] });
+  }
+  testDatasource() {
+    return Promise.resolve({ status: 'success', message: '' });
+  }
+}
+
+beforeEach(() => {
+  // Seed every uid the suite's queries and root datasources reference so getDataSourceInstance
+  // resolves them via the new path. The legacy getDataSourceSrv mock silently returned the default
+  // for unknown uids; the new API throws, so an unseeded uid would drop or reject a query. The
+  // resolved instance's type is irrelevant here — generateEmptyQuery/ensureQueries only need the
+  // lookup to succeed and consume getRef()/the passed ref.
+  initDataSourceInstanceSettings(
+    {
+      testDs: makeSettings('ds1', 'testDs', 'postgres', true),
+      testDs2: makeSettings('ds2', 'testDs2', 'mysql'),
+      ds3: makeSettings('ds3', 'ds3', 'postgres'),
+      ds4: makeSettings('ds4', 'ds4', 'loki'),
+      'uid-loki': makeSettings('uid-loki', 'uid-loki', 'loki'),
+    },
+    'testDs'
+  );
+  setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass: TestDataSource, components: {} }));
+});
 
 function setupQueryResponse(state: StoreState) {
   const leftDatasourceInstance = assertIsDefined(state.explore.panes.left!.datasourceInstance);

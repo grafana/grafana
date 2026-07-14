@@ -14,6 +14,10 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 | Dashboards | `dashboard.grafana.app` | `dashboard` |
 | Playlists | `playlist.grafana.app` | `playlist` |
 | Short URLs | `shorturl.grafana.app` | `short_url` |
+| Datasources | `*.datasource.grafana.app` | `data_source` |
+| Query cache configs | `querycaching.grafana.app` | `data_source_cache` |
+| Preferences | `preferences.grafana.app` | `preferences` |
+| Stars | `collections.grafana.app` | `star` |
 
 ## Architecture
 
@@ -50,15 +54,26 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 - **`resources.go`**: Migration registration and config validation
 - **`migrator.go`**: `UnifiedMigrator` interface, BulkProcess streaming, and index rebuilding with retry
 - **`validator.go`**: `CountValidator` and `FolderTreeValidator` implementations
+- **`table_locker.go`**: `MigrationTableLocker` interface — locks legacy tables during migration
+- **`table_renamer.go`**: `MigrationTableRenamer` interface — renames legacy tables post-migration
+- **`status_reader.go`**: `MigrationStatusReader` — determines storage mode (Legacy/DualWrite/Unified) from migration log + config, with caching
+- **`contract/migrations.go`**: Shared interfaces (`UnifiedStorageMigrationService`, `MigrationStatusReader`) and `StorageMode` type, kept in a sub-package to avoid import cycles
 - **`service.go`**: `UnifiedStorageMigrationServiceImpl` — Wire-provided entry point that runs migrations on startup
 
 #### Migration registrars (owned by each team)
 
+Every team follows the same convention: a `migration_registrar.go` file in the team's **root
+package** exposing a `Xxx**Migration**` factory function (not `MigrationDefinition`).
+
 - **`pkg/registry/apis/dashboard/migration_registrar.go`**: `FoldersDashboardsMigration` — folders and dashboards definition
 - **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — playlists definition
 - **`pkg/registry/apps/shorturl/migration_registrar.go`**: `ShortURLMigration` — short URLs definition
+- **`pkg/registry/apis/datasource/migration_registrar.go`**: `DataSourceMigration` — datasources definition
+- **`pkg/registry/apps/querycaching/migration_registrar.go`**: `QueryCacheConfigMigration` — query cache configs definition
+- **`pkg/registry/apis/preferences/migration_registrar.go`**: `PreferencesMigration` — preferences definition
+- **`pkg/registry/apis/collections/migration_registrar.go`**: `StarsMigration` — stars definition
 
-Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`).
+Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`). Preferences and collections keep their migrator implementation in the existing `legacy/` subpackage.
 
 ## How migrations work
 
@@ -77,7 +92,9 @@ Each team also provides a migrator interface in a `migrator/` subpackage (e.g., 
 
 ### Per-organization execution
 
-Migrations run independently for each organization using namespace format `org-{orgId}`.
+Migrations run independently for each organization. The namespace comes from
+`types.OrgNamespaceFormatter`: `default` for org 1, and `org-{orgId}` for every other org.
+The migrator receives it via `opts.Namespace` — do not build the namespace string by hand.
 
 ## Legacy table rename
 
@@ -110,7 +127,7 @@ The rename is designed to leave no gap where DML from old pods could sneak in be
 
 **MySQL**: DDL (`RENAME TABLE`) is non-transactional and auto-commits immediately on the separate connections.
 If a crash occurs before migration log is inserted, some tables might not have been renamed.
-- `recoverPartialRename()` skips the BulkProcess and renames any missing tables before inserting the migration log entry.
+- On the next startup `RecoverRenamedTables()` (called before the migration runs) restores any `_legacy` tables back to their original names, so the migration can re-run cleanly.
 
 ## Validators
 
@@ -129,14 +146,14 @@ Verifies folder parent-child relationships are preserved after migration by comp
 Successful migration:
 
 ```
-info: storage.unified.migration_runner Starting migration for all organizations
-info: storage.unified.migration_runner Migration completed successfully for all organizations
+info: storage.unified.migration_runner.{id} Starting migration for all organizations
+info: storage.unified.migration_runner.{id} Migration completed successfully for all organizations
 ```
 
 Failed migration:
 
 ```
-error: storage.unified.migration_runner Migration validation failed
+error: storage.unified.migration_runner.{id} Migration validation failed
 ```
 
 ### Migration status
@@ -166,16 +183,19 @@ func (a *myAccess) MigrateMyResources(
     opts MigrateOptions,
     stream resourcepb.BulkStore_BulkProcessClient,
 ) error {
+    // Buffer rows into a slice and close the cursor BEFORE streaming: the
+    // stream.Send gRPC calls can be slow, and holding a DB cursor open across
+    // them can starve the connection pool. Paginate for large tables.
     rows, err := a.listResources(ctx, orgId)
     if err != nil {
         return err
     }
-    defer rows.Close()
 
-    for rows.Next() {
-        // Build the resource protobuf and send it to the stream
+    for _, row := range rows {
+        // Build the resource protobuf and send it to the stream.
+        // Namespace comes from opts.Namespace (set per-org by the runner).
         err := stream.Send(&resourcepb.BulkRequest{
-            // ... populate from legacy row
+            // ... populate from legacy row, e.g. Key.Namespace: opts.Namespace
         })
         if err != nil {
             return err
@@ -198,7 +218,7 @@ type MyResourceMigrator interface {
         stream resourcepb.BulkStore_BulkProcessClient) error
 }
 
-func ProvideMyResourceMigrator(db legacydb.LegacyDatabaseProvider) MyResourceMigrator {
+func ProvideMyResourceMigrator(db legacysql.LegacyDatabaseProvider) MyResourceMigrator {
     return &myResourceMigrator{db: db}
 }
 ```
@@ -233,10 +253,16 @@ func MyResourceMigration(migrator migrator.MyResourceMigrator) migrations.Migrat
             gr: migrator.MigrateMyResources,
         },
         Validators: []migrations.ValidatorFactory{
-            migrations.CountValidation(gr, "my_resource_table", "org_id = ?"),
+            migrations.CountValidation(gr, migrations.CountValidationOptions{
+                Table: "my_resource_table",
+                Where: "org_id = ?",
+            }),
         },
         // Rename legacy tables after successful migration to prevent stale writes.
         RenameTables: []string{"my_resource_table"},
+        // Set to true if new deployments no longer create the legacy table.
+        // The migration will be skipped rather than failing when the table is absent.
+        SkipWhenMissing: false,
     }
 }
 ```
@@ -258,12 +284,14 @@ func provideMigrationRegistry(
     dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
     playlistMigrator playlistmigrator.PlaylistMigrator,
     shortURLMigrator shorturlmigrator.ShortURLMigrator,
+    dataSourceMigrator dsmigrator.DataSourceMigrator,
     myResourceMigrator myresourcemigrator.MyResourceMigrator, // <-- add parameter
 ) *unifiedmigrations.MigrationRegistry {
     r := unifiedmigrations.NewMigrationRegistry()
     r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
     r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
     r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
+    r.Register(dsmigration.DataSourceMigration(dataSourceMigrator))
     r.Register(myresource.MyResourceMigration(myResourceMigrator)) // <-- register
     return r
 }
@@ -271,14 +299,32 @@ func provideMigrationRegistry(
 
 **c.** Regenerate wire: run `make gen-go` from the repository root.
 
-#### 5. Configure the resource
+#### 5. Register the resource in settings
 
-Add your resource to the unified storage configuration in `conf/defaults.ini`
-or your custom config:
+Add your resource to `MigratedUnifiedResources` in
+`pkg/setting/setting_unified_storage.go`. This is **required**: startup validation
+(`resources.go`) fails if a map entry has no registered migration, and the map supplies the
+compiled-in `enableMigration` default. Define a constant, then add it to the map:
+
+```go
+const (
+    // ... existing constants ...
+    MyResource = "myresources.myresource.grafana.app" // "<plural>.<group>"
+)
+
+var MigratedUnifiedResources = map[string]bool{
+    // ... existing entries ...
+    MyResource: false, // false = migration opt-in; true = enabled by default (Mode5)
+}
+```
+
+To override at runtime (e.g. to enable the migration or set a dual-writer mode without
+changing the default), add a config section — in `conf/defaults.ini` or custom config:
 
 ```ini
 [unified_storage.myresources.myresource.grafana.app]
 dualWriterMode = 0
+enableMigration = true
 ```
 
 #### Checklist
@@ -292,8 +338,8 @@ dualWriterMode = 0
 - [ ] Validators added (at minimum, `CountValidation`)
 - [ ] `RenameTables` configured (list of legacy tables to rename with `_legacy` suffix)
   - [ ] Audit code for references to legacy tables that are not behind the dynamic storage reader
-- [ ] Configuration added to `conf/defaults.ini`
-- [ ] Integration test case added to `testcases/` package
+- [ ] Resource added to `MigratedUnifiedResources` in `pkg/setting/setting_unified_storage.go` (constant + map entry)
+- [ ] Integration test case added to `testcases/` and registered via `NewXxxTestCase()` in `defaultMigrationTestCases()` (`migrator_test.go`)
 
 ### Adding a new validator
 
@@ -351,7 +397,10 @@ The `testcases/` package provides reusable test cases for each resource migratio
 type ResourceMigratorTestCase interface {
     Name() string
     Resources() []schema.GroupVersionResource
-    Setup(t *testing.T, helper *apis.K8sTestHelper)
+    FeatureToggles() []string
+    RenameTables() []string
+    AddLegacySQLMigrations(mg *migrator.Migrator)
+    Setup(t *testing.T, helper *apis.K8sTestHelper) bool
     Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool)
 }
 ```
@@ -362,5 +411,10 @@ Existing test cases:
 |-----------|------|----------------|
 | `NewFoldersAndDashboardsTestCase` | `testcases/folders_dashboards.go` | Nested folders, dashboards with library panels |
 | `NewPlaylistsTestCase` | `testcases/playlists.go` | Playlists with dashboard UID, tag, and mixed items |
+| `NewShortURLsTestCase` | `testcases/shorturls.go` | Short URL entries |
+| `NewDataSourceTestCase` | `testcases/datasources.go` | Datasource entries with secure JSON data |
+| `NewQueryCacheConfigsTestCase` | `testcases/querycacheconfigs.go` | Query cache config entries |
+| `NewPreferencesTestCase` | `testcases/preferences.go` | Preferences (user/team/org owners) |
+| `NewStarsTestCase` | `testcases/stars.go` | Starred dashboards per user |
 
 Each resource owner is responsible for writing and maintaining a test case for their resource as part of the development process. When adding a new resource migration, create a corresponding test case in `testcases/` that sets up representative data via `Setup` and verifies it via `Verify`. Extend existing test cases to cover additional scenarios as needed (e.g., edge cases, specific field mappings, or error conditions).

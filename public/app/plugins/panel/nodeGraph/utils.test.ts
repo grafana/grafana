@@ -1,7 +1,7 @@
-import { DataFrame, FieldType, createDataFrame, NodeGraphDataFrameFieldNames } from '@grafana/data';
+import { type DataFrame, FieldType, createDataFrame, NodeGraphDataFrameFieldNames } from '@grafana/data';
 
-import { Options as NodeGraphOptions } from './panelcfg.gen';
-import { NodeDatum } from './types';
+import { type Options as NodeGraphOptions } from './panelcfg.gen';
+import { type NodeDatum } from './types';
 import {
   findConnectedNodesForEdge,
   findConnectedNodesForNode,

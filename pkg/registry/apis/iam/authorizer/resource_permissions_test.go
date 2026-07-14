@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -77,6 +78,7 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 				require.NoError(t, err, "expected no error for allowed access")
 			} else {
 				require.Error(t, err, "expected error for denied access")
+				require.True(t, k8serrors.IsNotFound(err), "expected a 404 StatusError (not wrapped) to avoid leaking resource existence")
 			}
 			require.True(t, accessClient.checkCalled, "accessClient.Check should be called")
 			require.True(t, fakeParentProvider.getParentCalled, "parentProvider.GetParent should be called")
@@ -253,6 +255,7 @@ func TestResourcePermissions_beforeWrite(t *testing.T) {
 				require.NoError(t, err, "expected no error for allowed delete")
 			} else {
 				require.Error(t, err, "expected error for denied delete")
+				require.True(t, k8serrors.IsForbidden(err), "expected 403 for unauthorized write operations")
 			}
 			require.True(t, accessClient.checkCalled, "accessClient.Check should be called")
 			require.True(t, fakeParentProvider.getParentCalled, "parentProvider.GetParent should be called")

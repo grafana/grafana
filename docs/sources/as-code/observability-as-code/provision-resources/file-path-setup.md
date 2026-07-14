@@ -18,17 +18,17 @@ aliases:
 
 # Set up file provisioning
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
-Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but it's **not available in Grafana Cloud**. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+On-prem file provisioning is available in Grafana v12 and later for open source and Enterprise editions. It's **not available in Grafana Cloud**. This new file provisioning feature is only available for dashboards and doesn't replace classic provisioning for the time being.
+
+For classic provisioning using configuration files refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
 {{< /admonition >}}
 
-Use local file provisioning to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system.
+Use local file provisioning to include in your Grafana instance resources that you store in your local file system.
 
-This page explains how to set up local file provisioning.
-
-The local path mount is referred to as a repository.
+The local path mount is referred to as a `repository`.
 
 Using the local path lets you also use it with a tool like `fuse`, allowing you to mount S3 buckets as local paths. You can also use tools like `restic` to automatically back up your dashboards to your preferred backup storage solution.
 
@@ -46,19 +46,14 @@ Local file provisioning using **Administration** > **Provisioning** will eventua
 For production systems, use the `folderFromFilesStructure` capability instead of **Administration** > **Provisioning** to include dashboards from a local file system in your Grafana instance. Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-folders-structure-from-filesystem-to-grafana) for more information.
 {{< /admonition >}}
 
-### Limitations
-
-- A provisioned dashboard can't be deleted from within Grafana UI. The dashboard has to be deleted at the local file system and those changes synced to Grafana.
-- Changes from the local file system are one way: you can't save changes from the Grafana UI to GitHub.
-
 ## Before you begin
 
 To set up file provisioning, you need:
 
 - Administration rights in your Grafana organization.
-- A local directory where your dashboards will be stored.
-  - If you want to use a GitHub repository, refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
+- A local directory to store your dashboards. If you want to use a GitHub repository, refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
 - To update the `permitted_provisioning_paths` section of `custom.ini`.
+- To understand the limitations of local file provisioning. Refer to [How it works](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources#how-it-works) for more details.
 
 ## Configure permitted paths
 
@@ -114,12 +109,6 @@ The set up process verifies the path and provides an error message if a problem 
 ### Choose what to synchronize
 
 #### Synchronization limitations
-
-{{< admonition type="caution" >}}
-
-Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
-
-{{< /admonition >}}
 
 To have access to full instance sync you must explicitly enable the option.
 

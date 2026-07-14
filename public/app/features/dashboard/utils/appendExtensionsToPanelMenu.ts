@@ -1,4 +1,4 @@
-import { IconName, PanelMenuItem, PluginExtensionLink } from '@grafana/data';
+import { type IconName, type PanelMenuItem, type PluginExtensionLink } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';
 

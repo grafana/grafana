@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -108,9 +108,9 @@ func TestReduceExecute(t *testing.T) {
 
 		t.Run("should noop if Number", func(t *testing.T) {
 			var numbers mathexp.Values = []mathexp.Value{
-				mathexp.GenerateNumber(util.Pointer(rand.Float64())),
-				mathexp.GenerateNumber(util.Pointer(rand.Float64())),
-				mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+				mathexp.GenerateNumber(new(rand.Float64())),
+				mathexp.GenerateNumber(new(rand.Float64())),
+				mathexp.GenerateNumber(new(rand.Float64())),
 			}
 
 			vars := map[string]mathexp.Results{
@@ -146,12 +146,12 @@ func TestReduceExecute(t *testing.T) {
 
 	t.Run("when mapper is not nil", func(t *testing.T) {
 		var numbers mathexp.Values = []mathexp.Value{
-			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+			mathexp.GenerateNumber(new(rand.Float64())),
 			mathexp.GenerateNumber(nil),
-			mathexp.GenerateNumber(util.Pointer(math.NaN())),
-			mathexp.GenerateNumber(util.Pointer(math.Inf(-1))),
-			mathexp.GenerateNumber(util.Pointer(math.Inf(1))),
-			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+			mathexp.GenerateNumber(new(math.NaN())),
+			mathexp.GenerateNumber(new(math.Inf(-1))),
+			mathexp.GenerateNumber(new(math.Inf(1))),
+			mathexp.GenerateNumber(new(rand.Float64())),
 		}
 		varToReduce := util.GenerateShortUID()
 		vars := map[string]mathexp.Results{
@@ -245,7 +245,7 @@ func TestResampleCommand_Execute(t *testing.T) {
 			isError: true,
 		}, {
 			name:    "should return error when input Scalar",
-			vals:    mathexp.NewScalar("test", util.Pointer(rand.Float64())),
+			vals:    mathexp.NewScalar("test", new(rand.Float64())),
 			isError: true,
 		},
 	}

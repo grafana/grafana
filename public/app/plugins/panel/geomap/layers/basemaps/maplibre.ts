@@ -1,21 +1,21 @@
-import Map from 'ol/Map';
+import type Map from 'ol/Map';
 import LayerGroup from 'ol/layer/Group';
 import { apply } from 'ol-mapbox-style';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
 
 // MapLibre Style Specification constants
 const LAYER_TYPE_BACKGROUND = 'background';
 const PAINT_BACKGROUND_OPACITY = 'background-opacity';
 
-export interface MaplibreConfig {
+interface MaplibreConfig {
   url: string;
   accessToken?: string;
 }
 
 const sampleURL = 'https://tiles.stadiamaps.com/styles/alidade_smooth.json';
 
-export const defaultMaplibreConfig: MaplibreConfig = {
+const defaultMaplibreConfig: MaplibreConfig = {
   url: sampleURL,
 };
 
@@ -23,7 +23,7 @@ interface ExtendedMapLayerOptions<T> extends MapLayerOptions<T> {
   noRepeat?: boolean;
 }
 
-export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
+const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
   id: 'maplibre',
   name: 'MapLibre layer',
   description: 'Add layer using MapLibre style.json URL',

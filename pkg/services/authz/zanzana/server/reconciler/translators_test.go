@@ -112,97 +112,60 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 	}
 }
 
-func TestTranslateTeamBindingToTuples(t *testing.T) {
-	tests := []struct {
-		name             string
-		permission       iamv0.TeamBindingTeamPermission
-		expectedRelation string
-	}{
-		{
-			name:             "member binding",
-			permission:       iamv0.TeamBindingTeamPermissionMember,
-			expectedRelation: common.RelationTeamMember,
-		},
-		{
-			name:             "admin binding",
-			permission:       iamv0.TeamBindingTeamPermissionAdmin,
-			expectedRelation: common.RelationTeamAdmin,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tb := &iamv0.TeamBinding{
-				ObjectMeta: metav1.ObjectMeta{Name: "tb-test"},
-				Spec: iamv0.TeamBindingSpec{
-					Subject:    iamv0.TeamBindingspecSubject{Kind: "User", Name: "user1"},
-					TeamRef:    iamv0.TeamBindingTeamRef{Name: "teamA"},
-					Permission: tt.permission,
+func TestTranslateTeamToMemberTuples(t *testing.T) {
+	t.Run("admin and member", func(t *testing.T) {
+		team := &iamv0.Team{
+			ObjectMeta: metav1.ObjectMeta{Name: "teamA"},
+			Spec: iamv0.TeamSpec{
+				Members: []iamv0.TeamTeamMember{
+					{Kind: "User", Name: "user1", Permission: iamv0.TeamTeamPermissionAdmin},
+					{Kind: "User", Name: "user2", Permission: iamv0.TeamTeamPermissionMember},
 				},
-			}
+			},
+		}
 
-			tuples, err := TranslateTeamBindingToTuples(toUnstructured(t, tb))
-			require.NoError(t, err)
-			require.Len(t, tuples, 1)
+		tuples, err := TranslateTeamToMemberTuples(toUnstructured(t, team))
+		require.NoError(t, err)
+		require.Len(t, tuples, 2)
 
-			assert.Equal(t, "user:user1", tuples[0].GetUser())
-			assert.Equal(t, tt.expectedRelation, tuples[0].GetRelation())
-			assert.Equal(t, "team:teamA", tuples[0].GetObject())
-		})
-	}
-}
+		tupleMap := make(map[string]string)
+		for _, tup := range tuples {
+			tupleMap[tup.GetUser()] = tup.GetRelation()
+		}
+		assert.Equal(t, common.RelationTeamAdmin, tupleMap["user:user1"])
+		assert.Equal(t, common.RelationTeamMember, tupleMap["user:user2"])
+		for _, tup := range tuples {
+			assert.Equal(t, "team:teamA", tup.GetObject())
+		}
+	})
 
-func TestTranslateGlobalRoleBindingToTuples(t *testing.T) {
-	tests := []struct {
-		name         string
-		subjectKind  iamv0.GlobalRoleBindingSpecSubjectKind
-		subjectName  string
-		expectedUser string
-	}{
-		{
-			name:         "user subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindUser,
-			subjectName:  "uid1",
-			expectedUser: "user:uid1",
-		},
-		{
-			name:         "service-account subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount,
-			subjectName:  "sa1",
-			expectedUser: "service-account:sa1",
-		},
-		{
-			name:         "team subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindTeam,
-			subjectName:  "team1",
-			expectedUser: "team:team1#member",
-		},
-	}
+	t.Run("no members", func(t *testing.T) {
+		team := &iamv0.Team{
+			ObjectMeta: metav1.ObjectMeta{Name: "teamB"},
+			Spec:       iamv0.TeamSpec{Members: []iamv0.TeamTeamMember{}},
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			grb := &iamv0.GlobalRoleBinding{
-				ObjectMeta: metav1.ObjectMeta{Name: "grb-test"},
-				Spec: iamv0.GlobalRoleBindingSpec{
-					Subject: iamv0.GlobalRoleBindingspecSubject{
-						Kind: tt.subjectKind,
-						Name: tt.subjectName,
-					},
-					RoleRefs: []iamv0.GlobalRoleBindingspecRoleRef{
-						{Kind: "GlobalRole", Name: "global-role-1"},
-					},
+		tuples, err := TranslateTeamToMemberTuples(toUnstructured(t, team))
+		require.NoError(t, err)
+		assert.Empty(t, tuples)
+	})
+
+	t.Run("member with empty name is skipped", func(t *testing.T) {
+		team := &iamv0.Team{
+			ObjectMeta: metav1.ObjectMeta{Name: "teamC"},
+			Spec: iamv0.TeamSpec{
+				Members: []iamv0.TeamTeamMember{
+					{Kind: "User", Name: "", Permission: iamv0.TeamTeamPermissionMember},
+					{Kind: "User", Name: "user3", Permission: iamv0.TeamTeamPermissionMember},
 				},
-			}
+			},
+		}
 
-			tuples, err := TranslateGlobalRoleBindingToTuples(toUnstructured(t, grb))
-			require.NoError(t, err)
-			require.Len(t, tuples, 1)
-
-			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
-			assert.Equal(t, common.RelationAssignee, tuples[0].GetRelation())
-			assert.Equal(t, "role:global-role-1", tuples[0].GetObject())
-		})
-	}
+		tuples, err := TranslateTeamToMemberTuples(toUnstructured(t, team))
+		require.NoError(t, err)
+		require.Len(t, tuples, 1)
+		assert.Equal(t, "user:user3", tuples[0].GetUser())
+	})
 }
 
 func TestTranslateRoleBindingToTuples(t *testing.T) {
@@ -317,6 +280,72 @@ func TestTranslateUserToTuples(t *testing.T) {
 	}
 }
 
+func TestTranslateServiceAccountToTuples(t *testing.T) {
+	tests := []struct {
+		name           string
+		role           iamv0.ServiceAccountOrgRole
+		expectedTuples int
+		expectedUser   string
+		expectedObject string
+	}{
+		{
+			name:           "viewer role",
+			role:           iamv0.ServiceAccountOrgRoleViewer,
+			expectedTuples: 1,
+			expectedUser:   "service-account:sa-test",
+			expectedObject: "role:basic_viewer",
+		},
+		{
+			name:           "editor role",
+			role:           iamv0.ServiceAccountOrgRoleEditor,
+			expectedTuples: 1,
+			expectedUser:   "service-account:sa-test",
+			expectedObject: "role:basic_editor",
+		},
+		{
+			name:           "admin role",
+			role:           iamv0.ServiceAccountOrgRoleAdmin,
+			expectedTuples: 1,
+			expectedUser:   "service-account:sa-test",
+			expectedObject: "role:basic_admin",
+		},
+		{
+			name:           "none role maps to basic_none",
+			role:           iamv0.ServiceAccountOrgRoleNone,
+			expectedTuples: 1,
+			expectedUser:   "service-account:sa-test",
+			expectedObject: "role:basic_none",
+		},
+		{
+			name:           "empty role produces no tuples",
+			role:           "",
+			expectedTuples: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sa := &iamv0.ServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{Name: "sa-test"},
+				Spec:       iamv0.ServiceAccountSpec{Role: tt.role},
+			}
+
+			tuples, err := TranslateServiceAccountToTuples(toUnstructured(t, sa))
+			require.NoError(t, err)
+
+			if tt.expectedTuples == 0 {
+				assert.Nil(t, tuples)
+				return
+			}
+
+			require.Len(t, tuples, tt.expectedTuples)
+			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
+			assert.Equal(t, common.RelationAssignee, tuples[0].GetRelation())
+			assert.Equal(t, tt.expectedObject, tuples[0].GetObject())
+		})
+	}
+}
+
 func TestTranslateFolderToTuples(t *testing.T) {
 	t.Run("folder with parent", func(t *testing.T) {
 		folder := &folderv1.Folder{
@@ -333,9 +362,9 @@ func TestTranslateFolderToTuples(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, tuples, 1)
 
-		assert.Equal(t, "folder:child-folder", tuples[0].GetUser())
+		assert.Equal(t, "folder:parent-folder", tuples[0].GetUser())
 		assert.Equal(t, common.RelationParent, tuples[0].GetRelation())
-		assert.Equal(t, "folder:parent-folder", tuples[0].GetObject())
+		assert.Equal(t, "folder:child-folder", tuples[0].GetObject())
 	})
 
 	t.Run("root folder without parent", func(t *testing.T) {
@@ -347,6 +376,31 @@ func TestTranslateFolderToTuples(t *testing.T) {
 		tuples, err := TranslateFolderToTuples(toUnstructured(t, folder))
 		require.NoError(t, err)
 		assert.Nil(t, tuples)
+	})
+
+	t.Run("reconciler tuples match mutation path convention", func(t *testing.T) {
+		// Verify the reconciler produces the same tuple as the mutation path
+		// (common.NewFolderParentTuple(child, parent)) to prevent argument swap regression.
+		folder := &folderv1.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "grandchild",
+				Annotations: map[string]string{
+					"grafana.app/folder": "child",
+				},
+			},
+			Spec: folderv1.FolderSpec{Title: "Grandchild"},
+		}
+
+		tuples, err := TranslateFolderToTuples(toUnstructured(t, folder))
+		require.NoError(t, err)
+		require.Len(t, tuples, 1)
+
+		// The mutation path creates: NewFolderParentTuple(folderUID, parentUID)
+		// where folderUID is the child and parentUID is the parent.
+		expected := common.NewFolderParentTuple("grandchild", "child")
+		assert.Equal(t, expected.GetObject(), tuples[0].GetObject(), "Object should be the child folder")
+		assert.Equal(t, expected.GetRelation(), tuples[0].GetRelation())
+		assert.Equal(t, expected.GetUser(), tuples[0].GetUser(), "User should be the parent folder")
 	})
 }
 
@@ -447,7 +501,7 @@ func TestResolveAllGlobalRolePermissions(t *testing.T) {
 
 // TestUnlinkedGlobalRoleInjection verifies the per-namespace injection logic:
 // GlobalRoles referenced by a namespace Role are NOT injected as standalone tuples
-// (their permissions are already inlined via translateRoleToTuples composition).
+// (their permissions are already inlined via TranslateRoleToTuples composition).
 // GlobalRoles NOT referenced by any namespace Role ARE injected as standalone tuples.
 func TestUnlinkedGlobalRoleInjection(t *testing.T) {
 	globalRolePerms := map[string][]*authzextv1.RolePermission{
@@ -515,7 +569,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 		// Expects: dashboards:read/d1 (inherited) + dashboards:read/d2 (own addition),
 		// dashboards:write/d1 is omitted.
@@ -532,12 +586,12 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 		require.NotEmpty(t, tuples)
 	})
 
-	t.Run("public TranslateRoleToTuples — no composition even with RoleRefs", func(t *testing.T) {
+	t.Run("nil globalRolePerms — no composition even with RoleRefs", func(t *testing.T) {
 		role := &iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{Name: "wrapper-role"},
 			Spec: iamv0.RoleSpec{
@@ -551,12 +605,12 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		// Public wrapper passes nil globalRolePerms — no composition.
-		tuplesNoComposition, err := TranslateRoleToTuples(toUnstructured(t, role))
+		// nil globalRolePerms — no composition.
+		tuplesNoComposition, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
 		require.NoError(t, err)
 
 		// With composition, the same role also inherits dashboards:write from global-role-a.
-		tuplesWithComposition, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuplesWithComposition, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 
 		// Composition produces more (or equal if deduped) tuples than no-composition.
@@ -576,16 +630,69 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), nil)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
 		require.NoError(t, err)
 		// Only own Permissions are used — global role not inherited.
 		require.NotEmpty(t, tuples)
 	})
 }
 
+// TestTranslateRoleToTuples_RoleManagementPermissions verifies the reconciler
+// end-to-end (Role CRD → tuples) for the three legacy role-management actions:
+//
+//   - roles:write + permissions:type:delegate → edit on group_resource:.../roles
+//   - roles:delete + permissions:type:delegate → delete on group_resource:.../roles
+//   - roles:read + roles:* → get on both .../roles and .../globalroles
+//
+// This is the reconciler-facing contract: when a Role with these permissions
+// is reconciled, the resulting tuples must let the bound principal exercise
+// the IAM roles/globalroles APIs.
+func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
+	role := &iamv0.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "role-admin"},
+		Spec: iamv0.RoleSpec{
+			Permissions: []iamv0.RolespecPermission{
+				{Action: "roles:read", Scope: "roles:*"},
+				{Action: "roles:write", Scope: "permissions:type:delegate"},
+				{Action: "roles:delete", Scope: "permissions:type:delegate"},
+			},
+		},
+	}
+
+	tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
+	require.NoError(t, err)
+
+	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/globalroles"},
+		{User: "role:role-admin#assignee", Relation: "edit", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/roles"},
+	}), tupleKeyStrings(tuples))
+
+	// Every reconciled tuple must conform to the FGA model — catches drift
+	// between the helper output and the schema (e.g. unknown relation, wrong
+	// user type) before it reaches Zanzana.
+	ts := loadTypesystem(t)
+	for _, tu := range tuples {
+		validateTupleAgainstSchema(t, ts, tu)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Schema validation: verify that translated tuples conform to the FGA model.
 // ---------------------------------------------------------------------------
+
+// tupleKeyStrings returns the prototext (`.String()`) form of each tuple.
+// Comparing tuples by their textual form sidesteps proto-internal state
+// caches that confuse reflect-based comparators like require.ElementsMatch,
+// and automatically picks up any new public field added to TupleKey upstream.
+func tupleKeyStrings(tuples []*openfgav1.TupleKey) []string {
+	out := make([]string, len(tuples))
+	for i, t := range tuples {
+		out[i] = t.String()
+	}
+	return out
+}
 
 // loadTypesystem loads the Zanzana FGA schema modules and creates a TypeSystem
 // that can be used to validate tuples against the authorization model.
@@ -721,22 +828,22 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 		}
 	})
 
-	t.Run("team bindings", func(t *testing.T) {
-		for _, perm := range []iamv0.TeamBindingTeamPermission{
-			iamv0.TeamBindingTeamPermissionMember,
-			iamv0.TeamBindingTeamPermissionAdmin,
+	t.Run("team members", func(t *testing.T) {
+		for _, perm := range []iamv0.TeamTeamPermission{
+			iamv0.TeamTeamPermissionMember,
+			iamv0.TeamTeamPermissionAdmin,
 		} {
 			t.Run(string(perm), func(t *testing.T) {
-				tb := &iamv0.TeamBinding{
-					ObjectMeta: metav1.ObjectMeta{Name: "tb-schema-test"},
-					Spec: iamv0.TeamBindingSpec{
-						Subject:    iamv0.TeamBindingspecSubject{Kind: "User", Name: "user1"},
-						TeamRef:    iamv0.TeamBindingTeamRef{Name: "teamA"},
-						Permission: perm,
+				team := &iamv0.Team{
+					ObjectMeta: metav1.ObjectMeta{Name: "teamA"},
+					Spec: iamv0.TeamSpec{
+						Members: []iamv0.TeamTeamMember{
+							{Kind: "User", Name: "user1", Permission: perm},
+						},
 					},
 				}
 
-				tuples, err := TranslateTeamBindingToTuples(toUnstructured(t, tb))
+				tuples, err := TranslateTeamToMemberTuples(toUnstructured(t, team))
 				require.NoError(t, err)
 
 				for _, tuple := range tuples {
@@ -799,32 +906,20 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 		}
 	})
 
-	t.Run("global role bindings for all subject kinds", func(t *testing.T) {
-		subjects := []struct {
-			kind iamv0.GlobalRoleBindingSpecSubjectKind
-			name string
-		}{
-			{iamv0.GlobalRoleBindingSpecSubjectKindUser, "uid1"},
-			{iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount, "sa1"},
-			{iamv0.GlobalRoleBindingSpecSubjectKindTeam, "team1"},
-		}
-
-		for _, s := range subjects {
-			t.Run(string(s.kind), func(t *testing.T) {
-				grb := &iamv0.GlobalRoleBinding{
-					ObjectMeta: metav1.ObjectMeta{Name: "grb-schema-test"},
-					Spec: iamv0.GlobalRoleBindingSpec{
-						Subject: iamv0.GlobalRoleBindingspecSubject{
-							Kind: s.kind,
-							Name: s.name,
-						},
-						RoleRefs: []iamv0.GlobalRoleBindingspecRoleRef{
-							{Kind: "GlobalRole", Name: "global-role"},
-						},
-					},
+	t.Run("service account basic role assignments", func(t *testing.T) {
+		for _, role := range []iamv0.ServiceAccountOrgRole{
+			iamv0.ServiceAccountOrgRoleViewer,
+			iamv0.ServiceAccountOrgRoleEditor,
+			iamv0.ServiceAccountOrgRoleAdmin,
+			iamv0.ServiceAccountOrgRoleNone,
+		} {
+			t.Run(string(role), func(t *testing.T) {
+				sa := &iamv0.ServiceAccount{
+					ObjectMeta: metav1.ObjectMeta{Name: "sa-schema-test"},
+					Spec:       iamv0.ServiceAccountSpec{Role: role},
 				}
 
-				tuples, err := TranslateGlobalRoleBindingToTuples(toUnstructured(t, grb))
+				tuples, err := TranslateServiceAccountToTuples(toUnstructured(t, sa))
 				require.NoError(t, err)
 
 				for _, tuple := range tuples {

@@ -14,5 +14,4 @@ type Storage interface {
 	rest.Lister
 	rest.CreaterUpdater
 	rest.GracefulDeleter
-	rest.CollectionDeleter
 }

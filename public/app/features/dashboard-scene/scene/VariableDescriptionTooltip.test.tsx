@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { Tooltip } from '@grafana/ui';
+import { type Tooltip } from '@grafana/ui';
 
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 

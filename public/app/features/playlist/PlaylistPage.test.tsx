@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
 import { backendSrv } from '../../core/services/backend_srv';
@@ -17,7 +19,8 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     ...jest.requireActual('app/core/services/context_srv').contextSrv,
-    isEditor: true,
+    hasPermission: jest.fn(),
+    isEditor: false,
   },
 }));
 
@@ -33,6 +36,9 @@ describe('PlaylistPage', () => {
   beforeEach(() => {
     jest.spyOn(backendSrv, 'fetch').mockImplementation(() => of(createFetchResponse({})));
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+    (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = false;
+    config.featureToggles.playlistsRBAC = false;
   });
 
   describe('when mounted without a playlist', () => {
@@ -46,21 +52,49 @@ describe('PlaylistPage', () => {
       expect(await screen.findByText('There are no playlists created yet')).toBeInTheDocument();
     });
 
-    describe('and signed in user is not a viewer', () => {
-      it('then create playlist button should not be disabled', async () => {
-        contextSrv.isEditor = true;
-        setup();
-        const createPlaylistButton = await screen.findByRole('link', { name: /create playlist/i });
-        expect(createPlaylistButton).not.toHaveStyle('pointer-events: none');
+    describe('with playlistsRBAC toggle on', () => {
+      beforeEach(() => {
+        config.featureToggles.playlistsRBAC = true;
+      });
+
+      describe('and user has playlists:write', () => {
+        it('then create playlist button should not be disabled', async () => {
+          jest
+            .mocked(contextSrv.hasPermission)
+            .mockImplementation((action) => action === AccessControlAction.PlaylistsWrite);
+          setup();
+          const createPlaylistButton = await screen.findByRole('link', { name: /create playlist/i });
+          expect(createPlaylistButton).not.toHaveStyle('pointer-events: none');
+        });
+      });
+
+      describe('and user does not have playlists:write (isEditor is ignored)', () => {
+        it('then create playlist button should be disabled', async () => {
+          jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+          (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
+          setup();
+          const createPlaylistButton = await screen.findByRole('link', { name: /create playlist/i });
+          expect(createPlaylistButton).toHaveStyle('pointer-events: none');
+        });
       });
     });
 
-    describe('and signed in user is a viewer', () => {
-      it('then create playlist button should be disabled', async () => {
-        contextSrv.isEditor = false;
-        setup();
-        const createPlaylistButton = await screen.findByRole('link', { name: /create playlist/i });
-        expect(createPlaylistButton).toHaveStyle('pointer-events: none');
+    describe('with playlistsRBAC toggle off (legacy)', () => {
+      describe('and user is an editor', () => {
+        it('then create playlist button should not be disabled', async () => {
+          (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
+          setup();
+          const createPlaylistButton = await screen.findByRole('link', { name: /create playlist/i });
+          expect(createPlaylistButton).not.toHaveStyle('pointer-events: none');
+        });
+      });
+
+      describe('and user is not an editor', () => {
+        it('then create playlist button should be disabled', async () => {
+          setup();
+          const createPlaylistButton = await screen.findByRole('link', { name: /create playlist/i });
+          expect(createPlaylistButton).toHaveStyle('pointer-events: none');
+        });
       });
     });
   });
@@ -97,28 +131,91 @@ describe('PlaylistPage', () => {
       expect(screen.getByTestId('playlist-page-list-skeleton')).toBeInTheDocument();
     });
 
-    describe('and signed in user is not a viewer', () => {
-      it('then playlist title and all playlist buttons should appear on the page', async () => {
-        contextSrv.isEditor = true;
-        setup();
-        expect(await screen.findByText('A test playlist'));
-        expect(await screen.findByRole('link', { name: /New playlist/i })).toBeInTheDocument();
-        expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-        expect(await screen.findByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
-        expect(await screen.findByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+    describe('with playlistsRBAC toggle on', () => {
+      beforeEach(() => {
+        config.featureToggles.playlistsRBAC = true;
+      });
+
+      describe('and user has playlists:write', () => {
+        it('then all playlist buttons should appear', async () => {
+          jest
+            .mocked(contextSrv.hasPermission)
+            .mockImplementation((action) => action === AccessControlAction.PlaylistsWrite);
+          setup();
+          expect(await screen.findByText('A test playlist'));
+          expect(await screen.findByRole('link', { name: /New playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+        });
+      });
+
+      describe('and user does not have playlists:write (isEditor is ignored)', () => {
+        it('then only start playlist button should appear', async () => {
+          jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+          (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
+          setup();
+          expect(await screen.findByText('A test playlist')).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
+          expect(screen.queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
+        });
       });
     });
 
-    describe('and signed in user is a viewer', () => {
-      it('then playlist title and only start playlist button should appear on the page', async () => {
-        contextSrv.isEditor = false;
-        setup();
-        expect(await screen.findByText('A test playlist')).toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
-        expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
+    describe('with playlistsRBAC toggle off (legacy)', () => {
+      describe('and user is an editor', () => {
+        it('then all playlist buttons should appear', async () => {
+          jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+          (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
+          setup();
+          expect(await screen.findByText('A test playlist'));
+          expect(await screen.findByRole('link', { name: /New playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+        });
       });
+
+      describe('and user is not an editor', () => {
+        it('then only start playlist button should appear', async () => {
+          setup();
+          expect(await screen.findByText('A test playlist')).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
+          expect(screen.queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
+        });
+      });
+    });
+  });
+
+  describe('pull request banner', () => {
+    afterEach(() => {
+      locationService.push('/playlists');
+    });
+
+    it('does not show the banner without pull-request params', async () => {
+      locationService.push('/playlists');
+      setup();
+
+      expect(await screen.findByText('There are no playlists created yet')).toBeInTheDocument();
+      expect(screen.queryByText(/open pull request/i)).not.toBeInTheDocument();
+    });
+
+    it('shows the PR banner with source and target branches when redirected with PR params', async () => {
+      locationService.push(
+        '/playlists?new_pull_request_url=https%3A%2F%2Fgithub.com%2Forg%2Frepo%2Fpull%2F1' +
+          '&repo_type=github&action=create&ref=feature-branch&repo_branch=main&repo_url=https%3A%2F%2Fgithub.com%2Forg%2Frepo'
+      );
+      setup();
+
+      // The banner offers to open the pull request...
+      expect(await screen.findByText(/open pull request/i)).toBeInTheDocument();
+      // ...and shows the source and target branches.
+      expect(await screen.findByRole('link', { name: 'feature-branch' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'main' })).toBeInTheDocument();
     });
   });
 });

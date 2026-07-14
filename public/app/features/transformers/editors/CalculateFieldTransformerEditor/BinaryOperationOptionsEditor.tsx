@@ -1,9 +1,15 @@
-import { BinaryOperationID, binaryOperators, FieldMatcherID, FieldType, SelectableValue } from '@grafana/data';
 import {
-  BinaryValue,
-  BinaryOptions,
+  type BinaryOperationID,
+  binaryOperators,
+  FieldMatcherID,
+  FieldType,
+  type SelectableValue,
+} from '@grafana/data';
+import {
+  type BinaryValue,
+  type BinaryOptions,
   CalculateFieldMode,
-  CalculateFieldTransformerOptions,
+  type CalculateFieldTransformerOptions,
   checkBinaryValueType,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';

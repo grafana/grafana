@@ -1,23 +1,23 @@
 import {
-  VariableHide as VariableHideV1,
-  VariableRefresh as VariableRefreshV1,
-  VariableSort as VariableSortV1,
-  DashboardCursorSync as DashboardCursorSyncV1,
+  type VariableHide as VariableHideV1,
+  type VariableRefresh as VariableRefreshV1,
+  type VariableSort as VariableSortV1,
+  type DashboardCursorSync as DashboardCursorSyncV1,
   FieldColorModeId as FieldColorModeIdV1,
   DataTopic,
 } from '@grafana/schema';
 import {
-  DashboardCursorSync,
+  type DashboardCursorSync,
   defaultSpec as defaultDashboardV2Spec,
   defaultVariableHide,
   defaultVariableRefresh,
   defaultVariableSort,
-  VariableHide,
-  VariableRefresh,
-  VariableSort,
-  FieldColorModeId as FieldColorModeIdV2,
+  type VariableHide,
+  type VariableRefresh,
+  type VariableSort,
+  type FieldColorModeId as FieldColorModeIdV2,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
+import { type DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
 
 // used for QueryVariableKind's query prop - in schema V2 we've deprecated string type and support only DataQuery
 export const LEGACY_STRING_VALUE_KEY = '__legacyStringValue';
@@ -73,6 +73,14 @@ export function transformSortVariableToEnum(sort?: VariableSortV1): VariableSort
       return 'numericalAsc';
     case 4:
       return 'numericalDesc';
+    case 5:
+      return 'alphabeticalCaseInsensitiveAsc';
+    case 6:
+      return 'alphabeticalCaseInsensitiveDesc';
+    case 7:
+      return 'naturalAsc';
+    case 8:
+      return 'naturalDesc';
     default:
       return defaultVariableSort();
   }
@@ -99,6 +107,14 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
       return 'palette-classic';
     case FieldColorModeIdV1.PaletteClassicByName:
       return 'palette-classic-by-name';
+    case 'palette-colorblind':
+      return 'palette-colorblind';
+    case 'palette-categorical-next':
+      return 'palette-categorical-next';
+    case 'palette-categorical-next-2':
+      return 'palette-categorical-next-2';
+    case 'palette-categorical-next-3':
+      return 'palette-categorical-next-3';
     case FieldColorModeIdV1.ContinuousGrYlRd:
       return 'continuous-GrYlRd';
     case FieldColorModeIdV1.ContinuousRdYlGr:
@@ -133,6 +149,8 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
       return 'fixed';
     case FieldColorModeIdV1.Shades:
       return 'shades';
+    case 'gradient':
+      return 'gradient';
     default:
       return undefined;
   }

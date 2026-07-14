@@ -177,14 +177,8 @@ func schema_pkg_apis_dashboard_v2alpha1_AnnotationPermission(ref common.Referenc
 							Ref:     ref(AnnotationActions{}.OpenAPIModelName()),
 						},
 					},
-					"organization": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(AnnotationActions{}.OpenAPIModelName()),
-						},
-					},
 				},
-				Required: []string{"dashboard", "organization"},
+				Required: []string{"dashboard"},
 			},
 		},
 		Dependencies: []string{
@@ -2105,6 +2099,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardFieldColor(ref common.Reference
 					"fixedColor": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The fixed color value for fixed or shades color modes.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"gradientColorTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

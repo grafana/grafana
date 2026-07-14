@@ -35,5 +35,6 @@ type ServerInternal interface {
 	DeleteStore(ctx context.Context, namespace string) error
 	ListAllStores(ctx context.Context) ([]StoreInfo, error)
 	WriteTuples(ctx context.Context, store *StoreInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error
+	ReadTuples(ctx context.Context, store *StoreInfo, req *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error)
 	GetOpenFGAServer() openfgav1.OpenFGAServiceServer
 }

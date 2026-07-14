@@ -1,0 +1,27 @@
+import { test } from '@playwright/test';
+
+import { PageObject } from './PageObject';
+
+// Controls above the dashboard: timepicker, refresh button, edit button, save button
+export class Controls extends PageObject {
+  async enterEditMode() {
+    await test.step('Enter edit mode', async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
+        .click();
+    });
+  }
+
+  // Same control as enterEditMode: while editing, the edit button acts as "Exit edit"
+  async exitEditMode() {
+    await test.step('Exit edit mode', async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
+        .click();
+    });
+  }
+
+  getVariableLabel(label: string) {
+    return this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(label));
+  }
+}

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 
 interface Props {
   libraryPanel: LibraryPanelBehavior;
@@ -23,7 +23,14 @@ export const LibraryVizPanelInfo = ({ libraryPanel }: Props) => {
   return (
     <div className={styles.info}>
       <div className={styles.libraryPanelInfo}>
-        <Trans i18nKey="dashboard-scene.library-viz-panel-info.usage-count" count={meta.connectedDashboards}>
+        <Trans
+          i18nKey="dashboard-scene.library-viz-panel-info.usage-count"
+          count={meta.connectedDashboards}
+          tOptions={{
+            defaultValue_one: 'Used on {{count}} dashboards',
+            defaultValue_other: 'Used on {{count}} dashboards',
+          }}
+        >
           Used on {'{{count}}'} dashboards
         </Trans>
       </div>

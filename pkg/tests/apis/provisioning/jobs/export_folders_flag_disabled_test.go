@@ -74,9 +74,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 		helper := sharedHelper(t)
 
 		const repo = "export-no-meta-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -98,9 +99,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 		helper := sharedHelper(t)
 
 		const repo = "nested-no-meta-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})

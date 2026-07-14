@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { ColorPicker, Input } from '@grafana/ui';
 
-import { HandlerArguments } from './fieldToConfigMapping';
+import { type HandlerArguments } from './fieldToConfigMapping';
 
 export interface Props {
   handlerKey: string | null;

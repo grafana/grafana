@@ -2,7 +2,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { byPlaceholderText, byRole, byText } from 'testing-library-selector';
 
 import { SavedSearches } from './SavedSearches';
-import { SavedSearch } from './savedSearchesSchema';
+import { type SavedSearch } from './savedSearchesSchema';
 
 /**
  * UI selectors for SavedSearches component tests.

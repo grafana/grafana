@@ -19,7 +19,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/kube-openapi/pkg/common"
+	k8scommon "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,8 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
-
-const maxLimit = 100
 
 // accessControlCheck maps a legacy RBAC action name to a K8s-style check.
 // The RBAC authz server translates Group/Resource/Verb through the mapper
@@ -50,12 +49,15 @@ type accessControlCheck struct {
 	name     string // user UID of the resource being checked
 }
 
+// Only verbs whose relation is defined on the authz model's "user" type may be
+// checked here. A check for a relation the type lacks fails the whole batch
+// (e.g. "relation 'user#create' not found"), blanking out all access control
+// metadata. The "user" type defines only get/update/delete, so VerbCreate
+// (org.users:add) and VerbGetPermissions (users.permissions:read) are omitted.
 var userAccessControlChecks = []accessControlCheck{
 	{action: "org.users:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbList},
-	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate},
 	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
 	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
-	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions},
 	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
 
@@ -79,7 +81,7 @@ func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndex
 	}
 }
 
-func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
 	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers"].Schema
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -257,7 +259,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit := 30
+	limit := common.DefaultListLimit
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
@@ -271,6 +273,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
 		offset = (page - 1) * limit
+	}
+
+	if limit > common.MaxListLimit {
+		http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+		return
+	}
+
+	if limit < 1 {
+		limit = common.DefaultListLimit
 	}
 
 	// Escape characters that are used by bleve wildcard search to be literal strings.
@@ -288,7 +299,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Query:  searchQuery,
-		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
+		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldCreated, legacyIDField},
+		// The query is a wildcard (*...*), so only Name is used from each
+		// QueryField to specify which fields to search in (Type and Boost
+		// are ignored for wildcard queries).
+		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
+			{Name: resource.SEARCH_FIELD_TITLE},
+			{Name: fieldEmail},
+			{Name: fieldLogin},
+		},
 		Limit:  int64(limit),
 		Page:   int64(page),
 		Offset: int64(offset),
@@ -335,6 +354,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			}
 			request.SortBy = append(request.SortBy, s)
 		}
+	} else {
+		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{
+			Field: resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+		})
 	}
 
 	resp, err := s.client.Search(ctx, request)
@@ -423,25 +446,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		return iamv0.NewGetSearchUsersResponse(), nil
 	}
 
-	titleIDX := -1
-	emailIDX := -1
-	loginIDX := -1
-	lastSeenAtIDX := -1
-	roleIDX := -1
-
+	colIdx := make(map[string]int, len(result.Results.Columns))
 	for i, v := range result.Results.Columns {
-		switch v.Name {
-		case resource.SEARCH_FIELD_TITLE:
-			titleIDX = i
-		case builders.USER_EMAIL:
-			emailIDX = i
-		case builders.USER_LOGIN:
-			loginIDX = i
-		case builders.USER_LAST_SEEN_AT:
-			lastSeenAtIDX = i
-		case builders.USER_ROLE:
-			roleIDX = i
-		}
+		colIdx[v.Name] = i
 	}
 
 	sr := iamv0.NewGetSearchUsersResponse()
@@ -454,40 +461,48 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		if len(row.Cells) != len(result.Results.Columns) {
 			return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
 		}
-
-		var login string
-		if loginIDX >= 0 && row.Cells[loginIDX] != nil {
-			login = string(row.Cells[loginIDX])
-		}
-
-		hit := iamv0.GetSearchUsersUserHit{
-			Name:  row.Key.Name,
-			Login: login,
-		}
-
-		if titleIDX >= 0 && row.Cells[titleIDX] != nil {
-			hit.Title = string(row.Cells[titleIDX])
-		}
-
-		if emailIDX >= 0 && row.Cells[emailIDX] != nil {
-			hit.Email = string(row.Cells[emailIDX])
-		}
-
-		if roleIDX >= 0 && row.Cells[roleIDX] != nil {
-			hit.Role = string(row.Cells[roleIDX])
-		}
-
-		if lastSeenAtIDX >= 0 && row.Cells[lastSeenAtIDX] != nil {
-			if len(row.Cells[lastSeenAtIDX]) == 8 {
-				hit.LastSeenAt = int64(binary.BigEndian.Uint64(row.Cells[lastSeenAtIDX]))
-				hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
-			}
-		}
-
-		sr.Hits = append(sr.Hits, hit)
+		sr.Hits = append(sr.Hits, parseUserHit(row, colIdx))
 	}
 
 	return sr, nil
+}
+
+func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0.GetSearchUsersUserHit {
+	cell := func(name string) []byte {
+		if i, ok := colIdx[name]; ok {
+			return row.Cells[i]
+		}
+		return nil
+	}
+	asInt64 := func(name string) int64 {
+		if b := cell(name); len(b) == 8 {
+			return int64(binary.BigEndian.Uint64(b))
+		}
+		return 0
+	}
+
+	hit := iamv0.GetSearchUsersUserHit{
+		Name:    row.Key.Name,
+		Title:   string(cell(resource.SEARCH_FIELD_TITLE)),
+		Email:   string(cell(builders.USER_EMAIL)),
+		Login:   string(cell(builders.USER_LOGIN)),
+		Role:    string(cell(builders.USER_ROLE)),
+		Created: asInt64(builders.USER_CREATED),
+	}
+
+	if id, err := strconv.ParseInt(string(cell(legacyIDField)), 10, 64); err == nil {
+		hit.InternalId = id
+	}
+
+	if b := cell(builders.USER_DISABLED); len(b) > 0 {
+		hit.Disabled = b[0] == 1
+	}
+	if b := cell(builders.USER_LAST_SEEN_AT); len(b) == 8 {
+		hit.LastSeenAt = int64(binary.BigEndian.Uint64(b))
+		hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
+	}
+
+	return hit
 }
 
 var bleveEscapeRegex = regexp.MustCompile(`([\\*?])`)

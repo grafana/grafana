@@ -1,10 +1,10 @@
 import { omit } from 'lodash';
 
 import {
-  DataQuery,
-  DataSourceApi,
+  type DataQuery,
+  type DataSourceApi,
   dateTimeFormat,
-  ExploreUrlState,
+  type ExploreUrlState,
   urlUtil,
   serializeStateToUrlParam,
 } from '@grafana/data';
@@ -12,13 +12,13 @@ import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import {
-  RichHistoryResults,
+  type RichHistoryResults,
   RichHistoryServiceError,
   RichHistoryStorageWarning,
-  RichHistoryStorageWarningDetails,
+  type RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
 import { createRetentionPeriodBoundary } from '../history/richHistoryLocalStorageUtils';
 import { getLocalRichHistoryStorage, getRichHistoryStorage } from '../history/richHistoryStorageProvider';
@@ -26,9 +26,9 @@ import { notifyApp } from '../reducers/appNotification';
 import { contextSrv } from '../services/context_srv';
 
 import {
-  RichHistorySearchBackendFilters,
-  RichHistorySearchFilters,
-  RichHistorySettings,
+  type RichHistorySearchBackendFilters,
+  type RichHistorySearchFilters,
+  type RichHistorySettings,
   SortOrder,
 } from './richHistoryTypes';
 
@@ -238,11 +238,11 @@ export const mapNumbertoTimeInSlider = (num: number) => {
 
 export function createDateStringFromTs(ts: number) {
   return dateTimeFormat(ts, {
-    format: 'MMMM D',
+    format: 'MMMM D, YYYY',
   });
 }
 
-export function getQueryDisplayText(query: DataQuery): string {
+function getQueryDisplayText(query: DataQuery): string {
   /* If datasource doesn't have getQueryDisplayText, create query display text by
    * stringifying query that was stripped of key, refId and datasource for nicer
    * formatting and improved readability
@@ -273,11 +273,11 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   let mappedQueriesToHeadings: Record<string, RichHistoryQuery[]> = {};
 
   query.forEach((q) => {
-    let heading = createQueryHeading(q, sortOrder);
+    const heading = createQueryHeading(q, sortOrder);
     if (!(heading in mappedQueriesToHeadings)) {
       mappedQueriesToHeadings[heading] = [q];
     } else {
-      mappedQueriesToHeadings[heading] = [...mappedQueriesToHeadings[heading], q];
+      mappedQueriesToHeadings[heading].push(q);
     }
   });
 
@@ -298,7 +298,7 @@ export function createDatasourcesList() {
     });
 }
 
-export function notEmptyQuery(query: DataQuery) {
+function notEmptyQuery(query: DataQuery) {
   /* Check if query has any other properties besides key, refId and datasource.
    * If not, then we consider it empty query.
    */

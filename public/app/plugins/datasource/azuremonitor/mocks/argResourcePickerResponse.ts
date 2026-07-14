@@ -1,8 +1,8 @@
 import {
-  AzureGraphResponse,
-  RawAzureResourceGroupItem,
-  RawAzureResourceItem,
-  RawAzureSubscriptionItem,
+  type AzureGraphResponse,
+  type RawAzureResourceGroupItem,
+  type RawAzureResourceItem,
+  type RawAzureSubscriptionItem,
 } from '../types/types';
 
 export const createMockARGSubscriptionResponse = (): AzureGraphResponse<RawAzureSubscriptionItem[]> => ({

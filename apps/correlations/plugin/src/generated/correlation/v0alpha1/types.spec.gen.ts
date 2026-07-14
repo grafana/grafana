@@ -49,7 +49,8 @@ export const defaultTransformationSpec = (): TransformationSpec => ({
 export interface Spec {
 	type: CorrelationType;
 	source: DataSourceRef;
-	target?: DataSourceRef;
+	// null is for PATCH/edit when we want to clear the value
+	target?: DataSourceRef | null;
 	description?: string;
 	label: string;
 	config: ConfigSpec;

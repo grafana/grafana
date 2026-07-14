@@ -5,15 +5,15 @@ import { config } from '@grafana/runtime';
 import {
   API_GROUP,
   API_VERSION,
-  GetTeamApiArg,
-  Team,
+  type GetTeamApiArg,
+  type Team,
   useLazyGetSearchTeamsQuery as useLazyGetSearchTeamsQueryIam,
   useLazyGetTeamQuery as useLazyGetTeamQueryIam,
   useGetTeamQuery as useGetTeamQueryIam,
 } from 'app/api/clients/iam/v0alpha1';
 import {
-  TeamDto,
-  UpdateTeamCommand,
+  type TeamDto,
+  type UpdateTeamCommand,
   useDeleteTeamByIdMutation,
   useGetTeamByIdQuery,
   useLazyGetTeamByIdQuery as useLazyGetTeamByIdQueryLegacy,
@@ -134,7 +134,7 @@ export const useDeleteTeam = () => {
 /**
  * Transform a legacy TeamDto to the IAM Team (k8s) shape.
  */
-export function teamDtoToTeam(dto: TeamDto): Team {
+function teamDtoToTeam(dto: TeamDto): Team {
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Team',
@@ -147,6 +147,8 @@ export function teamDtoToTeam(dto: TeamDto): Team {
       email: dto.email ?? '',
       externalUID: dto.externalUID ?? '',
       provisioned: dto.isProvisioned,
+      // FIXME: Legacy API does not return team members, so this will always be an empty array. We should either update the legacy API to include members or make a separate call to fetch them.
+      members: [],
     },
   };
 }
@@ -154,7 +156,7 @@ export function teamDtoToTeam(dto: TeamDto): Team {
 /**
  * Transform legacy TeamDto[] to IAM search hit shape.
  */
-export function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
+function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
   return teams.map((t) => ({ title: t.name, name: t.uid }));
 }
 

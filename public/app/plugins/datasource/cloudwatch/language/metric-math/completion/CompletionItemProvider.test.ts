@@ -1,4 +1,4 @@
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { type Monaco, type monacoTypes } from '@grafana/ui';
 
 import { setupMockedTemplateService } from '../../../mocks/CloudWatchDataSource';
 import { afterFunctionQuery } from '../../../mocks/metric-math-test-data/afterFunctionQuery';
@@ -9,7 +9,7 @@ import { thirdArgAfterSearchQuery } from '../../../mocks/metric-math-test-data/t
 import { withinStringQuery } from '../../../mocks/metric-math-test-data/withinStringQuery';
 import MonacoMock from '../../../mocks/monarch/Monaco';
 import TextModel from '../../../mocks/monarch/TextModel';
-import { ResourcesAPI } from '../../../resources/ResourcesAPI';
+import { type ResourcesAPI } from '../../../resources/ResourcesAPI';
 import cloudWatchMetricMathLanguageDefinition from '../definition';
 import {
   METRIC_MATH_FNS,

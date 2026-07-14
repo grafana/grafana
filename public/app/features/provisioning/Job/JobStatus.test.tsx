@@ -3,7 +3,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { createJob, createRepository } from '../mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';
@@ -132,9 +132,9 @@ describe('JobStatus', () => {
     });
   });
 
-  it('handles watch stream errors by marking the cached job as failed', async () => {
+  it('continues showing real job state when watch stream errors (polling fallback)', async () => {
     const onStatusChange = jest.fn();
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
     mockJobList(createJob());
 
@@ -146,18 +146,16 @@ describe('JobStatus', () => {
       getMockLiveSrv().emitWatchError('jobs', new Error('connection lost'));
     });
 
+    // The polling fallback intercepts the watch error and re-fetches real state.
+    // Wait for the poll to complete and re-update the cache.
     await waitFor(() => {
-      expect(onStatusChange).toHaveBeenCalledWith({
-        status: 'error',
-        error: {
-          title: 'Error running job',
-          message: ['Error: connection lost'],
-        },
-        warning: undefined,
-        action: undefined,
-      });
+      expect(onStatusChange.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
-    consoleErrorSpy.mockRestore();
+    // No artificial error state — the job continues showing its real server state.
+    expect(onStatusChange).not.toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    expect(screen.getByText('Pulling...')).toBeInTheDocument();
+
+    consoleWarnSpy.mockRestore();
   });
 });

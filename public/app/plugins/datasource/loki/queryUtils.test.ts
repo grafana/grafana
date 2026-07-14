@@ -21,7 +21,7 @@ import {
   interpolateShardingSelector,
   requestSupportsSharding,
 } from './queryUtils';
-import { LokiQuery } from './types';
+import { type LokiQuery } from './types';
 
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {

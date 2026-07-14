@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useEffect, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, generateUUID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Icon, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { VariableStaticOptionsFormAddButton } from './VariableStaticOptionsFormAddButton';
@@ -30,7 +29,11 @@ const useVariableMultiPropStaticOptionsForm = ({
   onChange,
 }: VariableMultiPropStaticOptionsFormProps) => {
   const [internalOptions, setInternalOptions] = useState<Option[]>(() =>
-    options.map((o) => ({ id: uuidv4(), ...o, properties: { ...o.properties, value: o.value, text: o.label } }))
+    options.map((o) => ({
+      id: generateUUID(),
+      ...o,
+      properties: { ...o.properties, value: o.value, text: o.label },
+    }))
   );
 
   // track id of newly added option for auto-focus
@@ -45,7 +48,7 @@ const useVariableMultiPropStaticOptionsForm = ({
   };
 
   const onAddNewOption = () => {
-    const newId = uuidv4();
+    const newId = generateUUID();
     autoFocusIdRef.current = newId;
 
     const newOption = {

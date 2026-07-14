@@ -1,5 +1,5 @@
 import { buildVisualQueryFromString } from './parsing';
-import { LokiOperationId, LokiVisualQuery } from './types';
+import { LokiOperationId, type LokiVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   it('creates no errors for empty query', () => {

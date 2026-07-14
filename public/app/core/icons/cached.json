@@ -41,6 +41,7 @@
   "unicons/chart-line",
   "unicons/check",
   "unicons/check-circle",
+  "unicons/checkbox-multiple",
   "unicons/times-circle",
   "unicons/circle",
   "unicons/clipboard-alt",
@@ -126,6 +127,7 @@
   "unicons/search-plus",
   "unicons/share-alt",
   "unicons/shield",
+  "unicons/sigil",
   "unicons/signal",
   "unicons/signin",
   "unicons/signout",
@@ -195,8 +197,14 @@
   "unicons/window-grid",
   "unicons/ban",
   "unicons/git",
+  "unicons/grid",
   "unicons/bitbucket",
   "unicons/tachometer-fast",
   "unicons/tachometer-empty",
-  "unicons/vial"
+  "unicons/vial",
+  "unicons/anthropic-logo",
+  "unicons/cursor-logo",
+  "unicons/github-copilot-logo",
+  "unicons/github-enterprise",
+  "unicons/robot"
 ]

@@ -14,22 +14,37 @@
 
 jest.mock('../../utils/date');
 
+// Controls the measured container width so the two-column layout decision is
+// deterministic in tests (real measurement needs layout jsdom doesn't do).
+let mockMeasuredWidth = 0;
+jest.mock('react-use/lib/useMeasure', () => ({
+  __esModule: true,
+  default: () => [jest.fn(), { width: mockMeasuredWidth }],
+}));
+
+// SpanDetailLinkButtons resolves data source settings via an async hook; return a
+// synchronous value so rendering doesn't trigger an un-acted state update in tests.
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+}));
+
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame, DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { createDataFrame, type DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
-import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
+import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
-import { TraceSpanReference } from '../../types/trace';
+import { type TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
 
 import DetailState from './DetailState';
 
-import SpanDetail, { getAbsoluteTime, SpanDetailProps } from './index';
+import SpanDetail, { getAbsoluteTime, type SpanDetailProps } from './index';
 
 describe('<SpanDetail>', () => {
   // use `transformTraceData` on a fake trace to get a fully processed span
@@ -160,6 +175,7 @@ describe('<SpanDetail>', () => {
   ];
 
   beforeEach(() => {
+    mockMeasuredWidth = 0;
     jest.mocked(formatDuration).mockReset();
     props.tagsToggle.mockReset();
     props.processToggle.mockReset();
@@ -183,6 +199,20 @@ describe('<SpanDetail>', () => {
 
   it('renders without exploding', () => {
     expect(() => render(<SpanDetail {...(props as unknown as SpanDetailProps)} />)).not.toThrow();
+  });
+
+  describe('attribute card layout', () => {
+    it('uses two columns when the container is wider than 1000px', () => {
+      mockMeasuredWidth = 1200;
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+      expect(screen.getAllByTestId('span-detail-cards-column')).toHaveLength(2);
+    });
+
+    it('uses a single column when the container is 1000px or narrower', () => {
+      mockMeasuredWidth = 800;
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+      expect(screen.getAllByTestId('span-detail-cards-column')).toHaveLength(1);
+    });
   });
 
   it('shows the operation name', () => {

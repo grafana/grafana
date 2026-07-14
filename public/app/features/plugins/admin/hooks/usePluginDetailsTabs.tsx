@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
+import { type GrafanaPlugin, type NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
+import { type CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
 
 type ReturnType = {
   error: Error | undefined;
@@ -100,10 +100,7 @@ export const usePluginDetailsTabs = (
       });
     }
 
-    if (
-      config.featureToggles.unifiedStorageSearchUI &&
-      (pluginConfig.meta.type === PluginType.panel || pluginConfig.meta.type === PluginType.datasource)
-    ) {
+    if (pluginConfig.meta?.type === PluginType.panel || pluginConfig.meta?.type === PluginType.datasource) {
       navModelChildren.push({
         text: PluginTabLabels.USAGE,
         icon: 'list-ul',

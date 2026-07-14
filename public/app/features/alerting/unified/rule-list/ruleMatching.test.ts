@@ -1,11 +1,11 @@
-import { PromRuleDTO, RulerCloudRuleDTO } from 'app/types/unified-alerting-dto';
+import { type PromRuleDTO, type RulerCloudRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { mockPromRecordingRule } from '../mocks';
 import { alertingFactory } from '../mocks/server/db';
 
-import { PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
+import { type PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
 import { getMatchingPromRule, getMatchingRulerRule, matchRulesGroup } from './ruleMatching';
-import { RulePositionHash, createRulePositionHash } from './rulePositionHash';
+import { type RulePositionHash, createRulePositionHash } from './rulePositionHash';
 
 // Helper to create PromRuleWithOrigin mock
 function createPromRuleWithOrigin(rule: PromRuleDTO, ruleIndex: number, totalRules: number): PromRuleWithOrigin {
@@ -619,6 +619,46 @@ max by (service) (up{env="staging"}) * 0.8`,
     const result = matchRulesGroup(rulerGroup, promGroup);
 
     // Both rules should be matched despite comments in ruler rules
+    expect(result.matches.size).toBe(2);
+    expect(result.matches.get(rulerRule1)).toBe(promRule1);
+    expect(result.matches.get(rulerRule2)).toBe(promRule2);
+    expect(result.promOnlyRules).toHaveLength(0);
+  });
+
+  it('should match rules where ruler expressions have inline comments (# after code on the same line)', () => {
+    // The ruler stores expressions with inline comments (e.g. `or # Fallback for staging`).
+    // Mimir strips all comments before returning the query in Prometheus state.
+    // Both rules share the same name and empty labels, so the matcher must fall back to query comparison.
+    const rulerRule1 = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `(max by (environment, namespace, service, area) (service_condition{area_check!="", monitored="true"}))`,
+    });
+    const rulerRule2 = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `max by (environment, namespace, service) (service_condition{environment="production"}) # production path
+or # combine with non-production fallback
+max by (environment, namespace, service) (service_condition{environment!="production"})`,
+    });
+    const rulerGroup = alertingFactory.ruler.group.build({ rules: [rulerRule1, rulerRule2] });
+
+    // Prometheus returns the same queries with all comments stripped and whitespace normalized
+    const promRule1 = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `(max by (environment, namespace, service, area) (service_condition{area_check!="",monitored="true"}))`,
+    });
+    const promRule2 = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `max by (environment, namespace, service) (service_condition{environment="production"}) or max by (environment, namespace, service) (service_condition{environment!="production"})`,
+    });
+    const promGroup = alertingFactory.prometheus.group.build({ rules: [promRule1, promRule2] });
+
+    const result = matchRulesGroup(rulerGroup, promGroup);
+
+    // Both rules must match — no ghost "creating" or "deleting" entries
     expect(result.matches.size).toBe(2);
     expect(result.matches.get(rulerRule1)).toBe(promRule1);
     expect(result.matches.get(rulerRule2)).toBe(promRule2);

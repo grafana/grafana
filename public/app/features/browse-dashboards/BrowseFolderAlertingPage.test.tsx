@@ -75,11 +75,11 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
     expect(await screen.findByRole('tab', { name: 'Dashboards' })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'false');
 
-    expect(await screen.findByRole('tab', { name: 'Panels' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Panels' })).toHaveAttribute('aria-selected', 'false');
+    expect(await screen.findByRole('tab', { name: /^Panels/ })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /^Panels/ })).toHaveAttribute('aria-selected', 'false');
 
-    expect(await screen.findByRole('tab', { name: 'Alert rules' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('displays rules from the folder', async () => {

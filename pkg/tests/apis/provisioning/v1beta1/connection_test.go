@@ -55,7 +55,7 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 		},
 	}
 
-	unstructuredObj, err := common.ToUnstructuredConnection(connection)
+	unstructuredObj, err := common.ToUnstructured(connection)
 	require.NoError(t, err)
 
 	created, err := client.Resource.Create(ctx, unstructuredObj, metav1.CreateOptions{})
@@ -63,7 +63,7 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 	require.NotNil(t, created)
 
 	// Verify the created object
-	createdConn, err := common.FromUnstructuredToConnection(created)
+	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
 	require.NotEmpty(t, createdConn.UID)
 	require.Equal(t, connection.Name, createdConn.Name)
@@ -118,14 +118,14 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 		},
 	}
 
-	unstructuredObj, err := common.ToUnstructuredConnection(connection)
+	unstructuredObj, err := common.ToUnstructured(connection)
 	require.NoError(t, err)
 
 	created, err := client.Resource.Create(ctx, unstructuredObj, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, created)
 
-	createdConn, err := common.FromUnstructuredToConnection(created)
+	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
 	require.Equal(t, provisioning.GitlabConnectionType, createdConn.Spec.Type)
 	require.Equal(t, "gitlab-client-123", createdConn.Spec.Gitlab.ClientID)
@@ -173,14 +173,14 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 		},
 	}
 
-	unstructuredObj, err := common.ToUnstructuredConnection(connection)
+	unstructuredObj, err := common.ToUnstructured(connection)
 	require.NoError(t, err)
 
 	created, err := client.Resource.Create(ctx, unstructuredObj, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, created)
 
-	createdConn, err := common.FromUnstructuredToConnection(created)
+	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
 	require.Equal(t, provisioning.BitbucketConnectionType, createdConn.Spec.Type)
 	require.Equal(t, "bitbucket-client-456", createdConn.Spec.Bitbucket.ClientID)
@@ -229,7 +229,7 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 		},
 	}
 
-	unstructuredObj, err := common.ToUnstructuredConnection(connection)
+	unstructuredObj, err := common.ToUnstructured(connection)
 	require.NoError(t, err)
 
 	_, err = client.Resource.Create(ctx, unstructuredObj, metav1.CreateOptions{})
@@ -240,7 +240,7 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, retrieved)
 
-	retrievedConn, err := common.FromUnstructuredToConnection(retrieved)
+	retrievedConn, err := common.FromUnstructured[provisioning.Connection](retrieved)
 	require.NoError(t, err)
 	require.Equal(t, "test-get-connection", retrievedConn.Name)
 	require.Equal(t, namespace, retrievedConn.Namespace)
@@ -290,7 +290,7 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 		},
 	}
 
-	unstructuredObj, err := common.ToUnstructuredConnection(connection)
+	unstructuredObj, err := common.ToUnstructured(connection)
 	require.NoError(t, err)
 
 	_, err = client.Resource.Create(ctx, unstructuredObj, metav1.CreateOptions{})
@@ -356,7 +356,7 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 		},
 	}
 
-	unstructuredObj, err := common.ToUnstructuredConnection(connection)
+	unstructuredObj, err := common.ToUnstructured(connection)
 	require.NoError(t, err)
 
 	_, err = client.Resource.Create(ctx, unstructuredObj, metav1.CreateOptions{})
@@ -366,27 +366,27 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 	current, err := client.Resource.Get(ctx, "test-update-connection", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	currentConn, err := common.FromUnstructuredToConnection(current)
+	currentConn, err := common.FromUnstructured[provisioning.Connection](current)
 	require.NoError(t, err)
 
 	// Update the AppID
 	currentConn.Spec.GitHub.AppID = "999999"
 
-	unstructuredObj, err = common.ToUnstructuredConnection(currentConn)
+	unstructuredObj, err = common.ToUnstructured(currentConn)
 	require.NoError(t, err)
 
 	updated, err := client.Resource.Update(ctx, unstructuredObj, metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 
-	updatedConn, err := common.FromUnstructuredToConnection(updated)
+	updatedConn, err := common.FromUnstructured[provisioning.Connection](updated)
 	require.NoError(t, err)
 	require.Equal(t, "999999", updatedConn.Spec.GitHub.AppID)
 
 	// Verify the update persisted
 	retrieved, err := client.Resource.Get(ctx, "test-update-connection", metav1.GetOptions{})
 	require.NoError(t, err)
-	retrievedConn, err := common.FromUnstructuredToConnection(retrieved)
+	retrievedConn, err := common.FromUnstructured[provisioning.Connection](retrieved)
 	require.NoError(t, err)
 	require.Equal(t, "999999", retrievedConn.Spec.GitHub.AppID)
 
@@ -434,7 +434,7 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 		},
 	}
 
-	unstructuredObj, err := common.ToUnstructuredConnection(connection)
+	unstructuredObj, err := common.ToUnstructured(connection)
 	require.NoError(t, err)
 
 	_, err = client.Resource.Create(ctx, unstructuredObj, metav1.CreateOptions{})

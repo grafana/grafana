@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,6 +53,7 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
+	natsSubscriber        nats.Subscriber
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
@@ -92,6 +94,7 @@ type ControllerConfig struct {
 // provisioning_server_public_url =
 // dashboards_server_url =
 // folders_server_url =
+// aggregated_server_url =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =
@@ -101,6 +104,15 @@ type ControllerConfig struct {
 // local_permitted_prefixes =
 // [provisioning]
 // repository_types =
+// [nats]
+// # when enabled, the informers take their watch from NATS instead of the
+// # apiserver watch; operators use an external NATS (no embedded server).
+// enabled =
+// mode = external
+// client_urls =
+// token =
+// subscriber_credentials_file =
+// tls_enabled =
 func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*ControllerConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
@@ -108,8 +120,12 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
-		registry:       registry,
-		Settings:       cfg,
+		registry: registry,
+		Settings: cfg,
+		// Operators run against an external NATS (no embedded server), so a nil
+		// server yields a config that dials the configured client URLs. The
+		// subscriber connects lazily and is a no-op transport when NATS is disabled.
+		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
@@ -208,11 +224,42 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
+	// aggregated_server_url serves resource groups that do not have a dedicated server URL
+	// (e.g. newly provisionable kinds in their own API group). Dashboards and folders keep
+	// their dedicated URLs for backwards compatibility.
+	aggregatedServerURL := operatorSec.Key("aggregated_server_url").String()
 	apiServerURLs := map[string]string{
 		resources.DashboardResource.Group: dashboardsServerURL,
 		resources.FolderResource.Group:    foldersServerURL,
 		provisioning.GROUP:                provisioningServerURL,
 	}
+
+	supportedResources, err := resources.ParseSupportedResources(c.Settings.ProvisioningResources)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	}
+
+	// Dashboards and folders have dedicated server URLs; everything else is served by the
+	// aggregated API server. Skip the built-in groups, then ensure every other active
+	// resource's group resolves to the aggregated server — failing loudly if a resource needs
+	// it and it is unset, rather than hitting "no clients provider for group" at request time.
+	for _, r := range supportedResources {
+		if !r.IsActive() {
+			continue
+		}
+		switch r.Group {
+		case resources.DashboardResource.Group, resources.FolderResource.Group, provisioning.GROUP:
+			continue // built-in groups with dedicated server URLs
+		}
+		if _, ok := apiServerURLs[r.Group]; ok {
+			continue
+		}
+		if aggregatedServerURL == "" {
+			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
+		}
+		apiServerURLs[r.Group] = aggregatedServerURL
+	}
+
 	configProviders := make(map[string]apiserver.RestConfigProvider)
 
 	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
@@ -246,7 +293,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...)
 	c.clients = clients
 	return clients, nil
 }
@@ -543,18 +590,22 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 		repoTypes = []string{"git", "github"}
 	}
 
+	// http:// URLs with a token are only allowed in development or when explicitly opted in,
+	// since the token would otherwise travel in cleartext.
+	allowInsecure := c.Settings.Env == setting.Dev || provisioningSec.Key("allow_insecure").MustBool(false)
+
 	extras := make([]repository.Extra, 0)
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, resources.IsFolderMetadataEnabled(c.Settings)))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {

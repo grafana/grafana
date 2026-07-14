@@ -43,13 +43,14 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 
 	db, cfg := db.InitTestDBWithCfg(t)
 	orgSvc := populateDB(t, db, cfg)
+
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(1)).Return(int64(2), nil)
-	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(2)).Return(int64(1), nil)
-	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(3)).Return(int64(0), nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 1}).Return([]*dashboards.DashboardTagCloudItem{{Term: "test"}}, nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 2}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 3}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
+	dashSvc.On("CountProvisionedDashboardsInOrg", mock.Anything, int64(1)).Return(int64(0), nil)
+	dashSvc.On("CountProvisionedDashboardsInOrg", mock.Anything, int64(2)).Return(int64(0), nil)
+	dashSvc.On("CountProvisionedDashboardsInOrg", mock.Anything, int64(3)).Return(int64(0), nil)
 
 	folderService := &foldertest.FakeService{}
 	folderService.ExpectedFolders = []*folder.Folder{{ID: 1}, {ID: 2}, {ID: 3}}
@@ -90,8 +91,8 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.APIKeys)
 		assert.Equal(t, int64(2), result.Correlations)
 		assert.Equal(t, int64(3), result.Orgs)
-		assert.Equal(t, int64(3), result.Dashboards)
-		assert.Equal(t, int64(9), result.Folders)       // will return 3 folders for each org
+		assert.Equal(t, int64(15), result.Dashboards)   // 5 per org from mock × 3 orgs
+		assert.Equal(t, int64(15), result.Folders)      // 5 per org from mock × 3 orgs
 		assert.Equal(t, int64(15), result.Playlists)    // 5 per org from mock × 3 orgs
 		assert.Equal(t, int64(15), result.Repositories) // 5 per org from mock × 3 orgs
 		assert.NotNil(t, result.DatabaseCreatedTime)
@@ -127,7 +128,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		stats, err := statsService.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(1), stats.Tags)
-		assert.Equal(t, int64(3), stats.Dashboards)
+		assert.Equal(t, int64(15), stats.Dashboards) // 5 per org from mock × 3 orgs
 		assert.Equal(t, int64(3), stats.Orgs)
 		assert.Equal(t, int64(15), stats.Playlists) // 5 per org from mock × 3 orgs
 	})

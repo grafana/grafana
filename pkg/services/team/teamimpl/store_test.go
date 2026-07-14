@@ -69,7 +69,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			var err error
 
 			setup := func() {
-				for i := 0; i < 5; i++ {
+				for i := range 5 {
 					userCmd = user.CreateUserCommand{
 						Email: fmt.Sprint("user", i, "@test.com"),
 						Name:  fmt.Sprint("user", i),
@@ -160,11 +160,14 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, team1.MemberCount, 2)
 
 				getIDsQuery := &team.GetTeamIDsByUserQuery{OrgID: testOrgID, UserID: userIds[0]}
-				getIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
+				getIDResult, getUIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
 				require.NoError(t, err)
 
 				require.Equal(t, len(getIDResult), 1)
 				require.Equal(t, getIDResult[0], team1.ID)
+
+				require.Equal(t, len(getUIDResult), 1)
+				require.Equal(t, getUIDResult[0], team1.UID)
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {

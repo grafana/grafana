@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 import { sqlTestDataMultiLineFullQuery } from '../../../mocks/cloudwatch-sql-test-data/multiLineFullQuery';
 import { sqlTestDataMultiLineIncompleteQueryWithoutNamespace } from '../../../mocks/cloudwatch-sql-test-data/multiLineIncompleteQueryWithoutNamespace';
@@ -6,7 +6,7 @@ import { sqlTestDataSingleLineFullQuery } from '../../../mocks/cloudwatch-sql-te
 import { sqlTestDataSingleLineTwoQueries } from '../../../mocks/cloudwatch-sql-test-data/singleLineTwoQueries';
 import MonacoMock from '../../../mocks/monarch/Monaco';
 import TextModel from '../../../mocks/monarch/TextModel';
-import { LinkedToken } from '../../monarch/LinkedToken';
+import { type LinkedToken } from '../../monarch/LinkedToken';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
 import cloudWatchSqlLanguageDefinition from '../definition';
 import { SELECT } from '../language';

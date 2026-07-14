@@ -2,15 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useSelector } from 'app/types/store';
 
 import { findItem } from '../../browse-dashboards/state/utils';
-import { DashboardTreeSelection } from '../../browse-dashboards/types';
+import { type DashboardTreeSelection } from '../../browse-dashboards/types';
 
 // This hook can be remove once searching endpoint returns provisioning status
 // It is used to determine if the selected items are provisioned or not, which is currently missing from the search API
@@ -54,8 +54,7 @@ export function useSelectionProvisioningStatus(
       }
       try {
         const folder = await folderClient.get(uid);
-        const managedBy = folder.metadata?.annotations?.[AnnoKeyManagerKind];
-        const result = managedBy === ManagerKind.Repo;
+        const result = isManagedByRepository(folder);
         setFolderCache((prev) => ({ ...prev, [uid]: result }));
         return result;
       } catch {
@@ -91,16 +90,16 @@ export function useSelectionProvisioningStatus(
 
       const item = findItemInState(uid);
       if (isFolder) {
-        return item?.managedBy === ManagerKind.Repo;
+        return isItemManagedByRepository(item);
       }
 
       // Check parent folder first for dashboards
       const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
-      if (parent?.managedBy === ManagerKind.Repo) {
+      if (isItemManagedByRepository(parent)) {
         return true;
       }
 
-      return item?.managedBy === ManagerKind.Repo;
+      return isItemManagedByRepository(item);
     },
     [isSearching, getFolderMeta, getDashboardMeta, findItemInState]
   );

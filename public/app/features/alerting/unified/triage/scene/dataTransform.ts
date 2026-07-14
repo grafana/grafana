@@ -1,7 +1,13 @@
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
 import { FIELD_NAMES } from '../constants';
-import { AlertRuleRow, EmptyLabelValue, GenericGroupedRow, InstanceCounts, WorkbenchRow } from '../types';
+import {
+  type AlertRuleRow,
+  EmptyLabelValue,
+  type GenericGroupedRow,
+  type InstanceCounts,
+  type WorkbenchRow,
+} from '../types';
 
 const EMPTY_COUNTS: InstanceCounts = { firing: 0, pending: 0 };
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });

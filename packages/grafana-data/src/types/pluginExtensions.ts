@@ -1,12 +1,12 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
-import { ScopedVars } from './ScopedVars';
-import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
-import { IconName } from './icon';
-import { PanelData } from './panel';
-import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
+import { type ScopedVars } from './ScopedVars';
+import { type DataSourcePluginMeta, type DataSourceSettings } from './datasource';
+import { type IconName } from './icon';
+import { type PanelData } from './panel';
+import { type AbsoluteTimeRange, type RawTimeRange, type TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -234,6 +234,13 @@ export enum PluginExtensionPoints {
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
   MegaMenuAction = 'grafana/megamenu/action',
   SingleTopBarAction = 'grafana/singletopbar/action',
+  AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
+  AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
+  AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
+  NavRightButton = 'grafana/singletopbar/nav-right-button/v1',
+  HomepageTabs = 'grafana/homepage/tabs/v1',
+  HomepageAssistant = 'grafana/homepage/assistant/v1',
+  HomepageExtra = 'grafana/homepage/extra/v1',
 }
 
 // Don't use directly in a plugin!
@@ -267,6 +274,15 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+  /**
+   * Path-based identifier for the rendered panel instance, unique even across
+   * repeated panels (one per repeat instance, includes local variable values).
+   *
+   * Set only in scenes-based dashboards. Pass to
+   * `getPanelScreenshotService().capture()` to capture the panel image.
+   * Undefined in legacy dashboard contexts.
+   */
+  panelPathId?: string;
 };
 
 export type CentralAlertHistorySceneV1Props = {

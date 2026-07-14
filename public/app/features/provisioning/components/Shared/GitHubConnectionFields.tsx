@@ -4,7 +4,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 
-import { ConnectionFormData } from '../../types';
+import { type GitHubBasedConnectionType } from '../../Wizard/types';
+import { type ConnectionFormData } from '../../types';
 import { validateNoHiddenCharacters } from '../../utils/validators';
 
 export interface GitHubConnectionFieldsProps {
@@ -15,10 +16,12 @@ export interface GitHubConnectionFieldsProps {
   onNewConnectionCreation?: () => void;
   /** Whether the connection is currently being created */
   isCreating?: boolean;
+  type: GitHubBasedConnectionType;
 }
 
 export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
-  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation, isCreating = false }) => {
+  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation, isCreating = false, type }) => {
+    const isEnterprise = type === 'githubEnterprise';
     const [isPrivateKeyConfigured, setIsPrivateKeyConfigured] = useState(privateKeyConfigured);
     const {
       register,
@@ -66,6 +69,29 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
             placeholder={t('provisioning.connection-form.placeholder-description', 'Optional description')}
           />
         </Field>
+
+        {isEnterprise && (
+          <Field
+            noMargin
+            label={t('provisioning.github-enterprise.server-url-label', 'Custom server URL')}
+            description={t(
+              'provisioning.github-enterprise.server-url-description',
+              'The custom server URL where your GitHub Enterprise is hosted'
+            )}
+            invalid={!!errors.serverUrl}
+            error={errors.serverUrl?.message}
+            required={required}
+          >
+            <Input
+              id="serverUrl"
+              {...register('serverUrl', {
+                required: requiredValidation,
+              })}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              placeholder="https://your-enterprise-url.com or https://<enterprise-slug>.ghe.com"
+            />
+          </Field>
+        )}
 
         <Field
           noMargin

@@ -10,7 +10,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { ViewJsonModal } from './ViewJsonModal';
-import { ShareModalTabProps } from './types';
+import { type ShareModalTabProps } from './types';
 import { getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {}

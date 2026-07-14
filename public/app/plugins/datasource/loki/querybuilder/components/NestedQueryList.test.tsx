@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LokiDatasource } from '../../datasource';
+import { type LokiDatasource } from '../../datasource';
 import { createLokiDatasource } from '../../mocks/datasource';
-import { LokiVisualQuery, LokiVisualQueryBinary } from '../types';
+import { type LokiVisualQuery, type LokiVisualQueryBinary } from '../types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
-import { NestedQueryList, Props as NestedQueryListProps } from './NestedQueryList';
+import { NestedQueryList, type Props as NestedQueryListProps } from './NestedQueryList';
 
 const X_BUTTON_LABEL = 'Remove nested query';
 function createMockProps(nestedQueriesCount = 1, showExplain = false): NestedQueryListProps {

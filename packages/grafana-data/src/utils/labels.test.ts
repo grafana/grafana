@@ -1,6 +1,6 @@
 import { getFieldDisplayName } from '../field/fieldState';
-import { Labels } from '../types/data';
-import { DataFrame, FieldType } from '../types/dataFrame';
+import { type Labels } from '../types/data';
+import { type DataFrame, FieldType } from '../types/dataFrame';
 
 import {
   parseLabels,

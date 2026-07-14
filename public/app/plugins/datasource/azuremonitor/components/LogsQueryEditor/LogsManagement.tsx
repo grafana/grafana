@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { t } from '@grafana/i18n';
 import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types/types';
+import { type AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setBasicLogsQuery, setDashboardTime, setKustoQuery } from './setQueryValue';
 
@@ -32,7 +32,7 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
           setBasicLogsAckOpen(false);
           onChange(setBasicLogsQuery(query, false));
         }}
-        confirmButtonVariant="primary"
+        confirmVariant="primary"
       />
       <InlineField
         label={t('components.logs-management.label-logs', 'Logs')}

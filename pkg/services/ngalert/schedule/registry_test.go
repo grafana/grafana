@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestSchedulableAlertRulesRegistry(t *testing.T) {
@@ -23,7 +22,7 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 
 	expectedFolders := map[models.FolderKey]string{{OrgID: 1, UID: "test-uid"}: "test-title"}
 	// replace all rules in the registry with foo
-	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}}, expectedFolders)
+	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}}, expectedFolders, nil)
 	rules, folders = r.all()
 	assert.Len(t, rules, 1)
 	assert.Equal(t, expectedFolders, folders)
@@ -52,7 +51,7 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "bar", Version: 1}, *bar)
 
 	// replace all rules in the registry with baz
-	r.set([]*models.AlertRule{{OrgID: 1, UID: "baz", Version: 1}}, nil)
+	r.set([]*models.AlertRule{{OrgID: 1, UID: "baz", Version: 1}}, nil, nil)
 	rules, folders = r.all()
 	assert.Len(t, rules, 1)
 	assert.Nil(t, folders)
@@ -91,7 +90,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 		for _, rule := range initialRules {
 			newRules = append(newRules, models.CopyRule(rule))
 		}
-		diff := r.set(newRules, map[models.FolderKey]string{})
+		diff := r.set(newRules, map[models.FolderKey]string{}, nil)
 		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
 	})
 	t.Run("should return empty diff if version does not change", func(t *testing.T) {
@@ -107,7 +106,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 			newRules = append(newRules, rule)
 		}
 
-		diff := r.set(newRules, map[models.FolderKey]string{})
+		diff := r.set(newRules, map[models.FolderKey]string{}, nil)
 		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
 	})
 	t.Run("should return key in diff if version changes", func(t *testing.T) {
@@ -123,9 +122,193 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 		}
 		require.NotEmptyf(t, expectedUpdated, "Input parameters have changed. Nothing to assert")
 
-		diff := r.set(newRules, map[models.FolderKey]string{})
+		diff := r.set(newRules, map[models.FolderKey]string{}, nil)
 		require.Falsef(t, diff.IsEmpty(), "Diff is empty but should not be")
 		require.Equal(t, expectedUpdated, diff.updated)
+	})
+}
+
+func TestRuleSequencesNeedUpdate(t *testing.T) {
+	newRegistry := func() alertRulesRegistry {
+		return alertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.AlertRule)}
+	}
+
+	t.Run("empty registry and empty sequences returns false", func(t *testing.T) {
+		r := newRegistry()
+		r.set(nil, nil, []models.SchedulableRuleSequence{})
+		assert.False(t, r.ruleSequencesNeedUpdate(nil))
+		assert.False(t, r.ruleSequencesNeedUpdate([]models.SchedulableRuleSequence{}))
+	})
+
+	t.Run("empty registry with new sequences returns true", func(t *testing.T) {
+		r := newRegistry()
+		r.set(nil, nil, []models.SchedulableRuleSequence{})
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
+	})
+
+	t.Run("matching sequences returns false", func(t *testing.T) {
+		r := newRegistry()
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 60},
+		}
+		r.set(nil, nil, sequences)
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
+	})
+
+	t.Run("interval change returns true", func(t *testing.T) {
+		r := newRegistry()
+		r.set(nil, nil, []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+		})
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 60},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
+	})
+
+	t.Run("sequence added returns true", func(t *testing.T) {
+		r := newRegistry()
+		r.set(nil, nil, []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+		})
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 60},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
+	})
+
+	t.Run("sequence removed returns true", func(t *testing.T) {
+		r := newRegistry()
+		r.set(nil, nil, []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 60},
+		})
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
+	})
+
+	t.Run("sequence replaced with different UID returns true", func(t *testing.T) {
+		r := newRegistry()
+		r.set(nil, nil, []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+		})
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-new", IntervalSeconds: 30},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
+	})
+
+	t.Run("nil registry map with empty sequences returns false", func(t *testing.T) {
+		// A fresh registry has a nil fingerprints map. With no sequences,
+		// len(nil) == len([]models.SchedulableRuleSequence{}) == 0, so no update needed.
+		r := newRegistry()
+		assert.False(t, r.ruleSequencesNeedUpdate(nil))
+	})
+
+	t.Run("membership change without interval change returns true", func(t *testing.T) {
+		r := newRegistry()
+		sequences := []models.SchedulableRuleSequence{
+			{
+				UID:               "seq-1",
+				IntervalSeconds:   30,
+				RecordingRuleRefs: []string{"rule-a"},
+				AlertRuleRefs:     []string{"rule-b"},
+			},
+		}
+
+		r.set(nil, nil, sequences)
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
+
+		// Change membership: add a new rule ref without changing the interval.
+		changed := []models.SchedulableRuleSequence{
+			{
+				UID:               "seq-1",
+				IntervalSeconds:   30,
+				RecordingRuleRefs: []string{"rule-a", "rule-c"},
+				AlertRuleRefs:     []string{"rule-b"},
+			},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(changed), "membership change should be detected even without interval change")
+	})
+
+	t.Run("membership reorder without interval change returns true", func(t *testing.T) {
+		r := newRegistry()
+		sequences := []models.SchedulableRuleSequence{
+			{
+				UID:               "seq-1",
+				IntervalSeconds:   30,
+				RecordingRuleRefs: []string{"rule-a", "rule-b"},
+			},
+		}
+
+		r.set(nil, nil, sequences)
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
+
+		// Reorder the refs: this changes evaluation order, so should be detected.
+		reordered := []models.SchedulableRuleSequence{
+			{
+				UID:               "seq-1",
+				IntervalSeconds:   30,
+				RecordingRuleRefs: []string{"rule-b", "rule-a"},
+			},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(reordered), "membership reorder should be detected")
+	})
+
+	t.Run("rule moved between recording and alerting refs returns true", func(t *testing.T) {
+		r := newRegistry()
+		sequences := []models.SchedulableRuleSequence{
+			{
+				UID:               "seq-1",
+				IntervalSeconds:   30,
+				RecordingRuleRefs: []string{"rule-a"},
+				AlertRuleRefs:     []string{"rule-b"},
+			},
+		}
+
+		r.set(nil, nil, sequences)
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
+
+		// Move rule-a from recording to alerting refs.
+		moved := []models.SchedulableRuleSequence{
+			{
+				UID:             "seq-1",
+				IntervalSeconds: 30,
+				AlertRuleRefs:   []string{"rule-a", "rule-b"},
+			},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(moved), "moving a rule between ref types should be detected")
+	})
+
+	t.Run("after set with sequences, matching sequences return false", func(t *testing.T) {
+		r := newRegistry()
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 60},
+		}
+
+		// Before storing, the registry has no sequence data, so it reports an update is needed.
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
+
+		// Store the sequence intervals via set.
+		r.set(nil, nil, sequences)
+
+		// Now the same sequences should not need an update.
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
+
+		// A changed interval should still be detected.
+		changed := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 120},
+		}
+		assert.True(t, r.ruleSequencesNeedUpdate(changed))
 	})
 }
 
@@ -205,14 +388,14 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				"key-label": "value-label",
 			},
 			IsPaused:             false,
-			NotificationSettings: util.Pointer(models.NotificationSettingsGen()()),
+			NotificationSettings: new(models.NotificationSettingsGen()()),
 			Metadata: models.AlertRuleMetadata{
 				EditorSettings: models.EditorSettings{
 					SimplifiedQueryAndExpressionsSection: false,
 					SimplifiedNotificationsSection:       false,
 				},
 			},
-			MissingSeriesEvalsToResolve: util.Pointer[int64](2),
+			MissingSeriesEvalsToResolve: new(int64(2)),
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -250,13 +433,13 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				"key-label": "value-label23",
 			},
 			IsPaused:             true,
-			NotificationSettings: util.Pointer(models.NotificationSettingsGen()()),
+			NotificationSettings: new(models.NotificationSettingsGen()()),
 			Metadata: models.AlertRuleMetadata{
 				EditorSettings: models.EditorSettings{
 					SimplifiedQueryAndExpressionsSection: true,
 				},
 			},
-			MissingSeriesEvalsToResolve: util.Pointer[int64](1),
+			MissingSeriesEvalsToResolve: new(int64(1)),
 		}
 
 		excludedFields := map[string]struct{}{

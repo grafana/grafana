@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import { mockFolder } from 'app/features/alerting/unified/mocks';
 import { grafanaRulerRule } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 export const DEFAULT_FOLDERS: FolderDTO[] = [
   mockFolder({
@@ -21,6 +21,9 @@ export const DEFAULT_FOLDERS: FolderDTO[] = [
     title: 'Some Folder',
   }),
 ];
+
+/** Title of the "happy path" folder used across alerting rule-editor tests. Derived from DEFAULT_FOLDERS[1]. */
+export const FOLDER_TITLE_HAPPY_PATH = DEFAULT_FOLDERS[1].title;
 
 export const getFolderHandler = (responseOverride?: FolderDTO) =>
   http.get<{ folderUid: string }>(`/api/folders/:folderUid`, ({ request, params }) => {

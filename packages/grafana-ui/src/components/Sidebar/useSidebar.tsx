@@ -1,9 +1,10 @@
-import { clamp } from 'lodash';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
+import { useMedia } from 'react-use';
 
 import { store } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { clamp } from '../../utils/clamp';
 
 export type SidebarPosition = 'left' | 'right';
 
@@ -19,15 +20,23 @@ export interface SidebarContextValue {
   edgeMargin: number;
   contentMargin: number;
   isHidden: boolean;
-  onToggleDock: () => void;
+  isHiddenPreference: boolean;
+  canGoBack?: boolean;
+  onToggleDock?: () => void;
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /** Open previous pane */
+  onGoBack?: () => void;
+  onToggleIsHidden: () => void;
+  setIsHidden: (value: boolean) => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
   SidebarContextValue | undefined
 >(undefined);
+
+export const useSidebarContext = () => useContext(SidebarContext);
 
 export interface UseSideBarOptions {
   hasOpenPane?: boolean;
@@ -45,13 +54,23 @@ export interface UseSideBarOptions {
   contentMargin?: number;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /** Disables go back button */
+  canGoBack?: boolean;
+  /** Open previous pane */
+  onGoBack?: () => void;
   /**
    * Optional key to use for persisting sidebar state (docked / compact / size)
-   * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistanceKey}.{docked|compact|size}`
+   * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistenceKey}.{docked|compact|size}`
    */
-  persistanceKey?: string;
-  /** Whether the sidebar is hidden */
-  isHidden?: boolean;
+  persistenceKey?: string;
+  /** Whether the sidebar is hidden by default */
+  defaultIsHidden?: boolean;
+  /**
+   * Optional override for the persistance key used to store the hidden state.
+   * Allows the hidden preference to be shared across consumers that otherwise use different
+   * persistenceKeys (e.g. dashboard view vs edit mode share a single hide preference).
+   */
+  hiddenPersistenceKey?: string;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -66,23 +85,34 @@ export function useSidebar({
   bottomMargin = 2,
   edgeMargin = 2,
   contentMargin = 2,
-  persistanceKey,
+  persistenceKey,
   onClosePane,
-  isHidden = false,
+  onGoBack,
+  canGoBack,
+  defaultIsHidden = false,
+  hiddenPersistenceKey,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
-
-  const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
-  const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
-  const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 240);
+  const [isDocked, setIsDocked] = useSidebarSavedState(persistenceKey, 'docked', defaultToDocked);
+  const [compact, setCompact] = useSidebarSavedState(persistenceKey, 'compact', defaultToCompact);
+  const [paneWidth, setPaneWidth] = useSidebarSavedState(persistenceKey, 'size', 240);
+  const [isHidden, setIsHidden] = useSidebarSavedState(
+    hiddenPersistenceKey ?? persistenceKey,
+    'hidden',
+    defaultIsHidden
+  );
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+  const isTemporarilyShown = isHidden && Boolean(hasOpenPane);
+  const effectiveIsHidden = isHidden && !isTemporarilyShown;
+  // On small viewports the sidebar is always rendered as an undocked overlay so it doesn't
+  // permanently steal horizontal space — docking only applies on larger viewports.
+  const effectiveIsDocked = !isTemporarilyShown && !isMobile && isDocked;
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
 
   const onToggleDock = useCallback(() => {
-    setIsDocked((prev) => {
-      return !prev;
-    });
+    setIsDocked((prev) => !prev);
   }, [setIsDocked]);
 
   // Calculate how much space the outer wrapper needs to reserve for the sidebar toolbar + pane (if docked)
@@ -91,13 +121,14 @@ export function useSidebar({
     ((compact ? SIDE_BAR_WIDTH_ICON_ONLY : SIDE_BAR_WIDTH_WITH_TEXT) + edgeMargin + contentMargin) *
     theme.spacing.gridSize;
 
-  const outerWrapperProps = isHidden
-    ? {}
-    : {
-        style: {
-          [prop]: isDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
-        },
-      };
+  const outerWrapperProps =
+    effectiveIsHidden || isTemporarilyShown
+      ? {}
+      : {
+          style: {
+            [prop]: effectiveIsDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
+          },
+        };
 
   const onResize = useCallback(
     (diff: number) => {
@@ -120,15 +151,19 @@ export function useSidebar({
           return prevWidth;
         }
 
-        return clamp(prevWidth + diff, 100, 500);
+        const maxWidth = Math.max(window.innerWidth * 0.5, 500);
+        return clamp(prevWidth + diff, 100, maxWidth);
       });
     },
     [hasOpenPane, setCompact, setPaneWidth, compact]
   );
 
+  const onToggleIsHidden = useCallback(() => setIsHidden((prev) => !prev), [setIsHidden]);
+  const setIsHiddenValue = useCallback((value: boolean) => setIsHidden(() => value), [setIsHidden]);
+
   return {
-    isDocked,
-    onToggleDock,
+    isDocked: effectiveIsDocked,
+    onToggleDock: isMobile || isTemporarilyShown ? undefined : onToggleDock,
     onResize,
     outerWrapperProps,
     position,
@@ -139,23 +174,28 @@ export function useSidebar({
     edgeMargin,
     bottomMargin,
     contentMargin,
-    isHidden,
+    isHidden: effectiveIsHidden,
+    isHiddenPreference: isHidden,
     onClosePane,
+    onGoBack,
+    canGoBack,
+    onToggleIsHidden,
+    setIsHidden: setIsHiddenValue,
   };
 }
 
-function readFromStore<T>(persistanceKey: string | undefined, subKey: string, defaultValue: T): T {
-  if (!persistanceKey) {
+function readFromStore<T>(persistenceKey: string | undefined, subKey: string, defaultValue: T): T {
+  if (!persistenceKey) {
     return defaultValue;
   }
 
   if (typeof defaultValue === 'boolean') {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return store.getBool(`grafana.ui.sidebar.${persistanceKey}.${subKey}`, defaultValue) as T;
+    return store.getBool(`grafana.ui.sidebar.${persistenceKey}.${subKey}`, defaultValue) as T;
   }
 
   if (typeof defaultValue === 'number') {
-    const value = Number.parseInt(store.get(`grafana.ui.sidebar.${persistanceKey}.${subKey}`), 10);
+    const value = Number.parseInt(store.get(`grafana.ui.sidebar.${persistenceKey}.${subKey}`), 10);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return Number.isNaN(value) ? defaultValue : (value as T);
   }
@@ -164,36 +204,36 @@ function readFromStore<T>(persistanceKey: string | undefined, subKey: string, de
 }
 
 export function useSidebarSavedState<T = number | boolean>(
-  persistanceKey: string | undefined,
+  persistenceKey: string | undefined,
   subKey: string,
   defaultValue: T
 ) {
-  const [state, setState] = React.useState<T>(() => readFromStore(persistanceKey, subKey, defaultValue));
+  const [state, setState] = React.useState<T>(() => readFromStore(persistenceKey, subKey, defaultValue));
 
   useEffect(() => {
-    setState(readFromStore(persistanceKey, subKey, defaultValue));
+    setState(readFromStore(persistenceKey, subKey, defaultValue));
     // Re-read from storage when the persistence key changes, but not when defaultValue changes
     // to avoid overriding a user-persisted value.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [persistanceKey, subKey]);
+  }, [persistenceKey, subKey]);
 
   const setPersisted = useCallback(
     (cb: (prevState: T) => T) => {
       setState((prevState) => {
         const newState = cb(prevState);
 
-        if (!persistanceKey) {
+        if (!persistenceKey) {
           return newState;
         }
 
-        if (persistanceKey) {
-          store.set(`grafana.ui.sidebar.${persistanceKey}.${subKey}`, String(newState));
+        if (persistenceKey) {
+          store.set(`grafana.ui.sidebar.${persistenceKey}.${subKey}`, String(newState));
         }
 
         return newState;
       });
     },
-    [persistanceKey, subKey]
+    [persistenceKey, subKey]
   );
 
   return [state, setPersisted] as const;

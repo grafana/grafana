@@ -83,9 +83,6 @@ func autoConvert_v1_AnnotationPermission_To_dashboard_AnnotationPermission(in *A
 	if err := Convert_v1_AnnotationActions_To_dashboard_AnnotationActions(&in.Dashboard, &out.Dashboard, s); err != nil {
 		return err
 	}
-	if err := Convert_v1_AnnotationActions_To_dashboard_AnnotationActions(&in.Organization, &out.Organization, s); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -96,9 +93,6 @@ func Convert_v1_AnnotationPermission_To_dashboard_AnnotationPermission(in *Annot
 
 func autoConvert_dashboard_AnnotationPermission_To_v1_AnnotationPermission(in *dashboard.AnnotationPermission, out *AnnotationPermission, s conversion.Scope) error {
 	if err := Convert_dashboard_AnnotationActions_To_v1_AnnotationActions(&in.Dashboard, &out.Dashboard, s); err != nil {
-		return err
-	}
-	if err := Convert_dashboard_AnnotationActions_To_v1_AnnotationActions(&in.Organization, &out.Organization, s); err != nil {
 		return err
 	}
 	return nil

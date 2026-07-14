@@ -2,11 +2,14 @@
   {
     "grant": "Admin",
     "roles": [
-      "fixed:alerting.legacy.config:reader",
-      "fixed:alerting.legacy.config:writer",
+      "fixed:alerting.alertmanager-imports:writer",
+      "fixed:alerting.legacy:writer",
+      "fixed:alerting.notifications.config:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
       "fixed:alerting.provisioning:writer",
+      "fixed:alerting.routes:reader",
+      "fixed:alerting.routes:writer",
       "fixed:alerting:admin"
     ],
     "permissions": [
@@ -191,6 +194,53 @@
         "scope": "folders:*"
       },
       {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:create",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:delete",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:get",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:update",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:update",
+        "scope": "configs:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get_permissions",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:set_permissions",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
         "action": "receivers.permissions:read",
         "scope": "receivers:*"
       },
@@ -205,11 +255,10 @@
     "roles": [
       "fixed:alerting.inhibition-rules:writer",
       "fixed:alerting.instances:writer",
-      "fixed:alerting.legacy:writer",
+      "fixed:alerting.managed-routes:creator",
       "fixed:alerting.notifications.external:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.receivers:writer",
-      "fixed:alerting.routes:writer",
       "fixed:alerting.rules:writer",
       "fixed:alerting.templates:writer",
       "fixed:alerting.time-intervals:writer"
@@ -282,12 +331,6 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
-      },
-      {
         "action": "alert.notifications.templates.test:write"
       },
       {
@@ -307,12 +350,6 @@
       },
       {
         "action": "alert.notifications.time-intervals:write"
-      },
-      {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
       },
       {
         "action": "alert.provisioning.provenance:write"
@@ -352,6 +389,9 @@
       {
         "action": "alert.silences:write",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
       }
     ]
   },
@@ -360,10 +400,9 @@
     "roles": [
       "fixed:alerting.inhibition-rules:reader",
       "fixed:alerting.instances:reader",
-      "fixed:alerting.legacy:reader",
+      "fixed:alerting.notifications.config:reader",
       "fixed:alerting.notifications.external:reader",
       "fixed:alerting.receivers:reader",
-      "fixed:alerting.routes:reader",
       "fixed:alerting.rules:reader",
       "fixed:alerting.templates:reader",
       "fixed:alerting.time-intervals:reader"
@@ -392,16 +431,10 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
         "action": "alert.notifications.templates:read"
       },
       {
         "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications:read"
       },
       {
         "action": "alert.rules.external:read",
@@ -414,6 +447,10 @@
       {
         "action": "alert.silences:read",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
       }
     ]
   }

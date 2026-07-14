@@ -1,10 +1,11 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, dateTimeAsMoment, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
+import { mockComboboxRect } from '@grafana/test-utils';
 
-import { DateTimePicker, Props } from './DateTimePicker';
+import { DateTimePicker, type Props } from './DateTimePicker';
 
 // An assortment of timezones that we will test the behavior of the DateTimePicker with different timezones
 const TEST_TIMEZONES = ['browser', 'Europe/Stockholm', 'America/Indiana/Marengo'];
@@ -27,6 +28,15 @@ const renderDatetimePicker = (props?: Partial<Props>) => {
 };
 
 describe('Date time picker', () => {
+  const onChangeHandler = jest.fn();
+  beforeAll(() => {
+    mockComboboxRect();
+  });
+
+  afterEach(() => {
+    onChangeHandler.mockReset();
+  });
+
   it('should render component', () => {
     renderDatetimePicker();
 
@@ -85,17 +95,18 @@ describe('Date time picker', () => {
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
 
       // open the time of day overlay
-      await userEvent.click(screen.getAllByRole('textbox')[1]);
-      const hourList = screen.getAllByRole('list')[0];
+      await userEvent.click(screen.getByRole('combobox'));
 
       // change the hour
-      await userEvent.click(within(hourList).getByText('00'));
+      await userEvent.click(screen.getByText('00:00'));
 
       // Check the active day is the 5th
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
 
+      await userEvent.type(screen.getByRole('combobox'), '23:00');
+
       // change the hour
-      await userEvent.click(within(hourList).getByText('23'));
+      await userEvent.click(screen.getByText('23:00'));
 
       // Check the active day is the 5th
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
@@ -115,7 +126,7 @@ describe('Date time picker', () => {
       // Select a different day in the calendar
       await userEvent.click(screen.getByRole('button', { name: 'May 15, 2021' }));
 
-      const timeInput = screen.getAllByRole('textbox')[1];
+      const timeInput = screen.getByRole('combobox');
       expect(timeInput).not.toHaveDisplayValue('00:00:00');
     }
   );
@@ -205,19 +216,15 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getByLabelText('Time picker'));
 
       // open the time of day overlay
-      await userEvent.click(screen.getAllByRole('textbox')[1]);
+      await userEvent.click(screen.getByRole('combobox'));
 
       // check the hour element is visible
-      const hourElement = screen.getAllByText('00')[0];
-      expect(hourElement).toBeVisible();
-
-      // select the hour value and check it's still visible
-      await userEvent.click(hourElement);
+      const hourElement = screen.getByText('00:00');
       expect(hourElement).toBeVisible();
 
       // click outside the overlay and check the hour element is no longer visible
       await userEvent.click(document.body);
-      expect(screen.queryByText('00')).not.toBeInTheDocument();
+      expect(screen.queryByText('00:00')).not.toBeInTheDocument();
     }
   );
 
@@ -234,6 +241,6 @@ describe('Date time picker', () => {
     // Check that calendar date is set correctly
     expect(screen.getByRole('button', { name: `June 30, 2024` })).toHaveClass('react-calendar__tile--active');
     // Check that time is set correctly
-    expect(screen.getAllByRole('textbox')[1]).toHaveValue('22:00:00');
+    expect(screen.getByRole('combobox')).toHaveValue('22:00:00');
   });
 });

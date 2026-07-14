@@ -74,7 +74,7 @@ func (SortableField) OpenAPIModelName() string {
 
 // +k8s:deepcopy-gen=true
 type DashboardHit struct {
-	// Dashboard or folder
+	// Dashboards or folders
 	Resource string `json:"resource"` // dashboards | folders
 	// The k8s "name" (eg, grafana UID)
 	Name string `json:"name"`

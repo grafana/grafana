@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestUnifiedStorageMigrationServiceImpl_Run_SkipsMigrations(t *testing.T) {
@@ -47,17 +48,21 @@ func TestUnifiedStorageMigrationServiceImpl_Run_SkipsMigrations(t *testing.T) {
 			cfg := setting.NewCfg()
 			tt.cfgFunc(cfg)
 
-			migrator := NewMockUnifiedMigrator(t)
+			fake := &fakeUnifiedMigrator{}
 
+			gate := resource.NewGCGate()
 			svc := &UnifiedStorageMigrationServiceImpl{
 				cfg:      cfg,
-				migrator: migrator,
+				migrator: fake,
+				gcGate:   gate,
 			}
 
 			err := svc.Run(context.Background())
 			require.NoError(t, err)
 			require.Equal(t, float64(1), testutil.ToFloat64(metrics.MUnifiedStorageMigrationStatus))
-			migrator.AssertNotCalled(t, "Migrate")
+			require.Equal(t, 0, fake.migrateCalled)
+			require.True(t, gate.Wait(context.Background(), make(chan struct{})),
+				"expected Run to release the GC gate on the skip path")
 		})
 	}
 }

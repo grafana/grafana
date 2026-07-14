@@ -1,9 +1,9 @@
-import { ErrorDetails } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
+import { type ErrorDetails } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 
 import { getFormErrors } from '../../utils/getFormErrors';
-import { Step } from '../Stepper';
-import { RepoType, StepStatusInfo, WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type RepoType, type StepStatusInfo, type WizardStep } from '../types';
 
 export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
   const isLocal = type === 'local';
@@ -127,7 +127,7 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
 
 const AUTH_TYPE_FIELDS = new Set(['repository.token', 'repository.tokenUser', 'repository.url']);
 
-export function getEarliestErrorStep(fieldErrors: ErrorDetails[]): WizardStep {
+function getEarliestErrorStep(fieldErrors: ErrorDetails[]): WizardStep {
   const formErrors = getFormErrors(fieldErrors);
   // If any of the form errors are in the auth type fields, return the auth type step, otherwise return the connection step
   return formErrors.some(([path]) => AUTH_TYPE_FIELDS.has(path)) ? 'authType' : 'connection';

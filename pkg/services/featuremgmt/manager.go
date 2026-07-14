@@ -146,8 +146,8 @@ func WithManager(spec ...any) *FeatureManager {
 		key := fmt.Sprintf("%v", spec[idx])
 		val := true
 		idx++
-		if idx < count && reflect.TypeOf(spec[idx]).Kind() == reflect.Bool {
-			val = spec[idx].(bool)
+		if idx < count && reflect.TypeOf(spec[idx]).Kind() == reflect.Bool { // #nosec G602 -- bounds checked by `idx < count`
+			val = spec[idx].(bool) // #nosec G602 -- bounds checked by `idx < count`
 			idx++
 		}
 

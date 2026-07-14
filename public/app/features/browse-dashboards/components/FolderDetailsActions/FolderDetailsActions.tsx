@@ -1,19 +1,25 @@
 import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 
-import { OwnerReference as OwnerReferenceType } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type OwnerReference as OwnerReferenceType } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { type CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useGetTeamByUidQuery } from 'app/features/teams/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
+import { useDispatch } from 'app/types/store';
 
+import { PAGE_SIZE } from '../../api/constants';
 import { getFolderPermissions } from '../../permissions';
+import { refetchChildren } from '../../state/actions';
+import { starredFoldersEnabled } from '../../utils/dashboards';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
@@ -22,6 +28,13 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
   const { canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO ?? rootFolderDTO);
+  const dispatch = useDispatch();
+
+  // Stars and the browse-dashboards "Starred folders" row use independent caches, so refetch the
+  // virtual folder's children when a folder is starred/unstarred to keep the browse list in sync.
+  const handleStarChange = () => {
+    dispatch(refetchChildren({ parentUID: STARRED_FOLDERS_UID, pageSize: PAGE_SIZE }));
+  };
 
   const handleButtonClickToRecentlyDeleted = () => {
     reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
@@ -33,18 +46,25 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
 
   return (
     <Stack alignItems="center">
-      {canReadTeams && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
+      {starredFoldersEnabled() && folderDTO && (
+        <StarToolbarButton
+          group="folder.grafana.app"
+          kind="Folder"
+          id={folderDTO.uid}
+          title={folderDTO.title}
+          onStarChange={handleStarChange}
+        />
+      )}
+      {canReadTeams && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}
-      {config.featureToggles.restoreDashboards && (
-        <LinkButton
-          variant="secondary"
-          href={config.appSubUrl + '/dashboard/recently-deleted'}
-          onClick={handleButtonClickToRecentlyDeleted}
-        >
-          <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-        </LinkButton>
-      )}
+      <LinkButton
+        variant="secondary"
+        href={config.appSubUrl + '/dashboard/recently-deleted'}
+        onClick={handleButtonClickToRecentlyDeleted}
+      >
+        <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
+      </LinkButton>
       {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
       {(canCreateDashboards || canCreateFolders) && (
         <CreateNewButton

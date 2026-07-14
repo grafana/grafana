@@ -1,7 +1,7 @@
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { ServiceAccountDTO } from 'app/types/serviceaccount';
+import { type ServiceAccountDTO } from 'app/types/serviceaccount';
 
 type ServiceAccountPermissionsProps = {
   serviceAccount: ServiceAccountDTO;

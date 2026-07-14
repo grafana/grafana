@@ -1,32 +1,32 @@
 import { defaultsDeep } from 'lodash';
-import { Observable, TimeoutError, lastValueFrom, of, throwError } from 'rxjs';
+import { type Observable, TimeoutError, lastValueFrom, of, throwError } from 'rxjs';
 import { delay, take, timeout } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
-  DataFrame,
-  DataFrameJSON,
-  DataSourceInstanceSettings,
-  Field,
+  type DataFrame,
+  type DataFrameJSON,
+  type DataSourceInstanceSettings,
+  type Field,
   FieldType,
   LoadingState,
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { DataSourceSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
+import { type DataSourceSrv, DataSourceWithBackend, type FetchResponse } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { DataQuery } from '@grafana/schema';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { type DataQuery } from '@grafana/schema';
+import { type BackendSrv } from 'app/core/services/backend_srv';
 import {
   EXTERNAL_VANILLA_ALERTMANAGER_UID,
   mockDataSources,
 } from 'app/features/alerting/unified/components/settings/mocks/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';
+import { type AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';
 
 setupMswServer();
 

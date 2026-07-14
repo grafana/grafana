@@ -2,11 +2,13 @@ package common
 
 import (
 	"slices"
+	"sort"
 
 	authlib "github.com/grafana/authlib/types"
 
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
 const (
@@ -37,22 +39,29 @@ type resourceTranslation struct {
 	typ      string
 	group    string
 	resource string
-	mapping  map[string]actionMappig
+	mapping  map[string]actionMapping
 }
 
-type actionMappig struct {
+type actionMapping struct {
 	relation    string
 	group       string
 	resource    string
 	subresource string
+	// skipScope marks actions that are valid without a scope (e.g. create verbs).
+	// TranslateToResourceTuple treats these as wildcard when kind/name are empty.
+	skipScope bool
 }
 
-func newMapping(relation, subresource string) actionMappig {
+func newMapping(relation, subresource string) actionMapping {
 	return newScopedMapping(relation, "", "", subresource)
 }
 
-func newScopedMapping(relation, group, resource, subresource string) actionMappig {
-	return actionMappig{relation, group, resource, subresource}
+func newUnscopedMapping(relation string) actionMapping {
+	return actionMapping{relation: relation, skipScope: true}
+}
+
+func newScopedMapping(relation, group, resource, subresource string) actionMapping {
+	return actionMapping{relation: relation, group: group, resource: resource, subresource: subresource}
 }
 
 var (
@@ -61,6 +70,10 @@ var (
 
 	dashboardGroup    = dashboards.DashboardResourceInfo.GroupResource().Group
 	dashboardResource = dashboards.DashboardResourceInfo.GroupResource().Resource
+
+	iamGroup      = iamv0.TeamResourceInfo.GroupResource().Group
+	teamsResource = iamv0.TeamResourceInfo.GroupResource().Resource
+	usersResource = iamv0.UserResourceInfo.GroupResource().Resource
 )
 
 var resourceTranslations = map[string]resourceTranslation{
@@ -68,7 +81,7 @@ var resourceTranslations = map[string]resourceTranslation{
 		typ:      TypeFolder,
 		group:    folderGroup,
 		resource: folderResource,
-		mapping: map[string]actionMappig{
+		mapping: map[string]actionMapping{
 			"folders:read":      newMapping(RelationGet, ""),
 			"folders:write":     newMapping(RelationUpdate, ""),
 			"folders:create":    newMapping(RelationCreate, ""),
@@ -77,6 +90,11 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:write":  newScopedMapping(RelationUpdate, dashboardGroup, dashboardResource, ""),
 			"dashboards:create": newScopedMapping(RelationCreate, dashboardGroup, dashboardResource, ""),
 			"dashboards:delete": newScopedMapping(RelationDelete, dashboardGroup, dashboardResource, ""),
+			// Permission management
+			"folders.permissions:read":     newMapping(RelationGetPermissions, ""),
+			"folders.permissions:write":    newMapping(RelationSetPermissions, ""),
+			"dashboards.permissions:read":  newScopedMapping(RelationGetPermissions, dashboardGroup, dashboardResource, ""),
+			"dashboards.permissions:write": newScopedMapping(RelationSetPermissions, dashboardGroup, dashboardResource, ""),
 			// Action sets
 			"folders:view":     newMapping(RelationSetView, ""),
 			"folders:edit":     newMapping(RelationSetEdit, ""),
@@ -90,15 +108,50 @@ var resourceTranslations = map[string]resourceTranslation{
 		typ:      TypeResource,
 		group:    dashboardGroup,
 		resource: dashboardResource,
-		mapping: map[string]actionMappig{
+		mapping: map[string]actionMapping{
 			"dashboards:read":   newMapping(RelationGet, ""),
 			"dashboards:write":  newMapping(RelationUpdate, ""),
 			"dashboards:create": newMapping(RelationCreate, ""),
 			"dashboards:delete": newMapping(RelationDelete, ""),
+			// Permission management
+			"dashboards.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"dashboards.permissions:write": newMapping(RelationSetPermissions, ""),
 			// Action sets
 			"dashboards:view":  newMapping(RelationSetView, ""),
 			"dashboards:edit":  newMapping(RelationSetEdit, ""),
 			"dashboards:admin": newMapping(RelationSetAdmin, ""),
+		},
+	},
+	KindTeams: {
+		typ:      TypeTeam,
+		group:    iamGroup,      // "iam.grafana.app"
+		resource: teamsResource, // "teams"
+		mapping: map[string]actionMapping{
+			"teams:read":              newMapping(RelationGet, ""),
+			"teams:write":             newMapping(RelationUpdate, ""),
+			"teams:create":            newUnscopedMapping(RelationCreate),
+			"teams:delete":            newMapping(RelationDelete, ""),
+			"teams.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"teams.permissions:write": newMapping(RelationSetPermissions, ""),
+		},
+	},
+	KindUsers: {
+		typ:      TypeUser,
+		group:    iamGroup,      // "iam.grafana.app"
+		resource: usersResource, // "users"
+		mapping: map[string]actionMapping{
+			"users:read":              newMapping(RelationGet, ""),
+			"users:write":             newMapping(RelationUpdate, ""),
+			"users:create":            newUnscopedMapping(RelationCreate),
+			"users:delete":            newMapping(RelationDelete, ""),
+			"users.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"users.permissions:write": newMapping(RelationSetPermissions, ""),
+			// The org.users:* family gates the same iam.grafana.app/users verbs as the
+			// global users:* family (see userManagementMappings in tuple_helpers.go).
+			// org.users:add is intentionally omitted, matching the write-side mapping.
+			"org.users:read":   newMapping(RelationGet, ""),
+			"org.users:write":  newMapping(RelationUpdate, ""),
+			"org.users:remove": newMapping(RelationDelete, ""),
 		},
 	},
 }
@@ -162,4 +215,100 @@ func TranslateBasicRole(name string) string {
 
 func IsBasicRole(name string) bool {
 	return slices.Contains(basicRolesUIDs, name)
+}
+
+func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, verb string, ok bool) {
+	group = translation.group
+	resource = translation.resource
+	if m.group != "" && m.resource != "" {
+		group = m.group
+		resource = m.resource
+	}
+
+	verb, ok = RelationToVerbMapping[m.relation]
+	if !ok {
+		return "", "", "", false
+	}
+
+	return group, resource, verb, true
+}
+
+// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, verb).
+// Returns empty strings if the action cannot be translated.
+func TranslateActionToListParams(action string) (group, resource, verb string) {
+	translationTypes := make([]string, 0, len(resourceTranslations))
+	for typ := range resourceTranslations {
+		translationTypes = append(translationTypes, typ)
+	}
+	sort.Strings(translationTypes)
+
+	for _, typ := range translationTypes {
+		translation := resourceTranslations[typ]
+		if m, ok := translation.mapping[action]; ok {
+			group, resource, verb, ok := actionListParams(translation, m)
+			if !ok {
+				return "", "", ""
+			}
+			return group, resource, verb
+		}
+	}
+	return "", "", ""
+}
+
+// ActionListEntry describes an action that Zanzana supports, along with
+// its List request parameters.
+type ActionListEntry struct {
+	Action   string
+	Group    string
+	Resource string
+	Verb     string
+}
+
+// supportedActions is the memoized result of building the action list from
+// resourceTranslations. The translation table is constant at runtime, so this
+// slice can be computed once and reused.
+var supportedActions = func() []ActionListEntry {
+	translationTypes := make([]string, 0, len(resourceTranslations))
+	for typ := range resourceTranslations {
+		translationTypes = append(translationTypes, typ)
+	}
+	sort.Strings(translationTypes)
+
+	var out []ActionListEntry
+	seen := make(map[string]struct{})
+	for _, typ := range translationTypes {
+		translation := resourceTranslations[typ]
+
+		actions := make([]string, 0, len(translation.mapping))
+		for action := range translation.mapping {
+			actions = append(actions, action)
+		}
+		sort.Strings(actions)
+
+		for _, action := range actions {
+			m := translation.mapping[action]
+			if _, ok := seen[action]; ok {
+				continue
+			}
+			group, resource, verb, ok := actionListParams(translation, m)
+			if !ok {
+				continue
+			}
+
+			seen[action] = struct{}{}
+			out = append(out, ActionListEntry{
+				Action:   action,
+				Group:    group,
+				Resource: resource,
+				Verb:     verb,
+			})
+		}
+	}
+	return out
+}()
+
+// SupportedActions returns every RBAC action that Zanzana can resolve,
+// derived from the resource translation table.
+func SupportedActions() []ActionListEntry {
+	return supportedActions
 }

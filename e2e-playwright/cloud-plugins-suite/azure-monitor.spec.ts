@@ -1,13 +1,12 @@
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
-import { Page } from 'playwright-core';
-import { v4 as uuidv4 } from 'uuid';
+import { type Page } from 'playwright-core';
 
 import {
-  CreateDataSourcePageArgs,
-  DashboardPage,
-  DataSourceConfigPage,
-  E2ESelectorGroups,
+  type CreateDataSourcePageArgs,
+  type DashboardPage,
+  type DataSourceConfigPage,
+  type E2ESelectorGroups,
   expect,
   test,
 } from '@grafana/plugin-e2e';
@@ -15,8 +14,8 @@ import {
 import { AzureQueryType } from '../../public/app/plugins/datasource/azuremonitor/dataquery.gen';
 import { selectors as azMonSelectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorDataSourceSecureJsonData,
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorDataSourceSecureJsonData,
 } from '../../public/app/plugins/datasource/azuremonitor/types/types';
 
 const provisioningPath = 'provisioning/datasources/azmonitor-ds.yaml';
@@ -28,7 +27,7 @@ type AzureMonitorConfig = {
 
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
 
-const dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
+const dataSourceName = `Azure Monitor E2E Tests - ${crypto.randomUUID()}`;
 const storageAcctName = 'azmonteststorage';
 const logAnalyticsName = 'az-mon-test-logs';
 const applicationInsightsName = 'az-mon-test-ai-a';

@@ -1,16 +1,21 @@
 import { lastValueFrom, of } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  Field,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type Field,
   FieldType,
   LogLevel,
   LogRowContextQueryDirection,
-  LogRowModel,
+  type LogRowModel,
 } from '@grafana/data';
 
-import { CloudWatchLogsAnomaliesQuery, CloudWatchLogsQuery, LogsMode, LogsQueryLanguage } from '../dataquery.gen';
+import {
+  type CloudWatchLogsAnomaliesQuery,
+  type CloudWatchLogsQuery,
+  LogsMode,
+  LogsQueryLanguage,
+} from '../dataquery.gen';
 import { logGroupNamesVariable, regionVariable } from '../mocks/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
 import { LogsRequestMock } from '../mocks/Request';

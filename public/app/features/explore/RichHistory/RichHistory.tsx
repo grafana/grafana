@@ -1,13 +1,13 @@
 import { debounce } from 'lodash';
 import { useState, useEffect } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { TabbedContainer, type TabConfig } from '@grafana/ui';
 import { createDatasourcesList } from 'app/core/utils/richHistory';
-import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
-import { RichHistoryQuery } from 'app/types/explore';
+import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { type RichHistoryQuery } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';

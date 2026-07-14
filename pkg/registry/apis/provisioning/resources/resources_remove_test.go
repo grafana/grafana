@@ -76,7 +76,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "my-dashboard", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "my-dashboard", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, folderName, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/my-dashboard.json", "abc123")
 
 		require.NoError(t, err)
@@ -95,7 +95,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, fileInfo).
 			Return(nil, NewResourceValidationError(errors.New("cannot declare folders through files")))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "folders/my-folder.json", "abc123")
 
 		require.Error(t, err)
@@ -115,7 +115,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, fileInfo).
 			Return(nil, NewResourceValidationError(fmt.Errorf("file does not contain a valid resource")))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "config/settings.json", "abc123")
 
 		require.Error(t, err)
@@ -132,7 +132,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		repo.On("Read", mock.Anything, "dashboards/missing.json", "abc123").
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/missing.json", "abc123")
 
 		require.Error(t, err)
@@ -162,7 +162,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "deleted-dashboard", metav1.GetOptions{}, mock.Anything).
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "deleted-dashboard"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/deleted.json", "abc123")
 
 		require.NoError(t, err)
@@ -197,7 +197,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, "fail-dashboard", metav1.DeleteOptions{}, mock.Anything).
 			Return(fmt.Errorf("Folder cannot be deleted: folder is not empty"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, folderName, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/fail.json", "abc123")
 
 		require.Error(t, err)
@@ -259,7 +259,7 @@ func TestRenameResourceFile(t *testing.T) {
 		})
 		mockClient.On("Get", mock.Anything, "same-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err, "write step is expected to fail (no client)")
@@ -314,7 +314,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err, "write step fails (no client)")
@@ -349,7 +349,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, newFileInfo).
 			Return(nil, fmt.Errorf("invalid json"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err)
@@ -365,7 +365,7 @@ func TestRenameResourceFile(t *testing.T) {
 		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err)
@@ -411,7 +411,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "dash-uid"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err, "write step fails (no client on newParsed)")
@@ -432,7 +432,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		tree := NewEmptyFolderTree()
 		tree.Add(ParseFolder("team/", testRepoName), "")
-		folderMgr := NewFolderManager(repo, nil, tree)
+		folderMgr := NewFolderManager(repo, nil, tree, FolderKind)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "team/old-dash.json"}
 		repo.On("Read", mock.Anything, "team/old-dash.json", "old-ref").Return(oldFileInfo, nil)
@@ -473,7 +473,7 @@ func TestRenameResourceFile(t *testing.T) {
 		dashClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, folderMgr, mockParser, nil)
+		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
 		name, folderName, gvk, err := mgr.RenameResourceFile(context.Background(), "team/old-dash.json", "old-ref", "team/new-dash.json", "new-ref")
 
 		require.NoError(t, err)
@@ -495,7 +495,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		tree := NewEmptyFolderTree()
 		tree.Add(ParseFolder("b-team/", testRepoName), "")
-		folderMgr := NewFolderManager(repo, nil, tree)
+		folderMgr := NewFolderManager(repo, nil, tree, FolderKind)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "a-team/dash.json"}
 		repo.On("Read", mock.Anything, "a-team/dash.json", "old-ref").Return(oldFileInfo, nil)
@@ -536,7 +536,7 @@ func TestRenameResourceFile(t *testing.T) {
 		dashClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, folderMgr, mockParser, nil)
+		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
 		name, folderName, gvk, err := mgr.RenameResourceFile(context.Background(), "a-team/dash.json", "old-ref", "b-team/dash.json", "new-ref")
 
 		require.NoError(t, err)
@@ -545,4 +545,323 @@ func TestRenameResourceFile(t *testing.T) {
 		require.NotEqual(t, newFolderID, folderName)
 		require.Equal(t, dashboardGVK, gvk)
 	})
+
+	// Pure path-only renames (git blob hash unchanged) skip strict server-side
+	// validation: the spec already lives in the cluster and may legitimately
+	// fail rules introduced after it was first persisted. A synthetic GVR is
+	// used so the EnableFolderSupport path and the v1-dashboard exemption
+	// do not interfere with the assertion.
+	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+	makeRenameMocks := func(t *testing.T, oldHash, newHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+		t.Helper()
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old/x.json", Hash: oldHash}
+		repo.On("Read", mock.Anything, "old/x.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "fake.grafana.app/v1",
+				"kind":       "Fake",
+				"metadata":   map[string]any{"name": "same-name"},
+			}},
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "fake.grafana.app/v1",
+			"kind":       "Fake",
+			"metadata":   map[string]any{"name": "same-name"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new/x.json", Hash: newHash}
+		repo.On("Read", mock.Anything, "new/x.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("same-name", "default", nil)
+		mockClient.On("Get", mock.Anything, "same-name", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		return repo, mockParser, mockClient, newObj
+	}
+
+	t.Run("same identity rename with unchanged hash sends FieldValidation Ignore", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeRenameMocks(t, "blob-1", "blob-1")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "same-name", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("same identity rename with changed hash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeRenameMocks(t, "blob-1", "blob-2")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "same-name", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("same identity rename with empty hashes keeps FieldValidation Strict", func(t *testing.T) {
+		// Defensive case: if Hash is unavailable on either side, fall back to
+		// strict validation rather than silently bypassing it.
+		repo, mockParser, mockClient, newObj := makeRenameMocks(t, "", "")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "same-name", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+}
+
+// TestWriteResourceFromFile_ExistingHashSkipsValidation verifies that
+// WithExistingHash skips strict validation when the file hash matches
+// (content unchanged, e.g. folder re-parenting) and keeps strict validation
+// when hashes differ or are empty.
+func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
+	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+	makeWriteMocks := func(t *testing.T, fileHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+		t.Helper()
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "fake.grafana.app/v1",
+			"kind":       "Fake",
+			"metadata":   map[string]any{"name": "my-resource"},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "folder/resource.json", Hash: fileHash}
+		repo.On("Read", mock.Anything, "folder/resource.json", "ref").Return(fileInfo, nil)
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(&ParsedResource{
+			Obj:    obj,
+			Meta:   meta,
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("my-resource", "default", nil)
+		mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		return repo, mockParser, mockClient, obj
+	}
+
+	t.Run("matching existing hash sends FieldValidation Ignore", func(t *testing.T) {
+		repo, mockParser, mockClient, obj := makeWriteMocks(t, "content-hash")
+		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+			Return(obj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("content-hash"))
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+	})
+
+	t.Run("different existing hash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, obj := makeWriteMocks(t, "new-hash")
+		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(obj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("old-hash"))
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+
+	t.Run("no WithExistingHash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, obj := makeWriteMocks(t, "any-hash")
+		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(obj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+
+	t.Run("empty existing hash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, obj := makeWriteMocks(t, "any-hash")
+		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(obj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash(""))
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+}
+
+// TestReplaceResourceFromFileByRef_HashComparison verifies that
+// ReplaceResourceFromFileByRef automatically skips strict validation when the
+// old and new file hashes match, and keeps strict validation otherwise.
+func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
+	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+	makeReplaceMocks := func(t *testing.T, oldHash, newHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+		t.Helper()
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		// Use distinct Data bytes so testify can distinguish old vs new FileInfo
+		// even when hashes match (deep equality).
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{"v":"old"}`), Path: "resource.json", Hash: oldHash}
+		repo.On("Read", mock.Anything, "resource.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "fake.grafana.app/v1",
+				"kind":       "Fake",
+				"metadata":   map[string]any{"name": "my-resource"},
+			}},
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "fake.grafana.app/v1",
+			"kind":       "Fake",
+			"metadata":   map[string]any{"name": "my-resource"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+		newFileInfo := &repository.FileInfo{Data: []byte(`{"v":"new"}`), Path: "resource.json", Hash: newHash}
+		repo.On("Read", mock.Anything, "resource.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("my-resource", "default", nil)
+		mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		return repo, mockParser, mockClient, newObj
+	}
+
+	t.Run("matching hashes sends FieldValidation Ignore", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeReplaceMocks(t, "same-hash", "same-hash")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+	})
+
+	t.Run("different hashes keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeReplaceMocks(t, "old-hash", "new-hash")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+
+	t.Run("empty old hash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeReplaceMocks(t, "", "some-hash")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+}
+
+// TestReplaceResourceFromFile_PassesExistingHash verifies that
+// ReplaceResourceFromFile forwards WithExistingHash to WriteResourceFromFile.
+func TestReplaceResourceFromFile_PassesExistingHash(t *testing.T) {
+	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+	repo := repository.NewMockReaderWriter(t)
+	mockParser := NewMockParser(t)
+	mockClient := &MockDynamicResourceInterface{}
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "fake.grafana.app/v1",
+		"kind":       "Fake",
+		"metadata":   map[string]any{"name": "my-resource"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+
+	fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "resource.json", Hash: "matching-hash"}
+	repo.On("Read", mock.Anything, "resource.json", "ref").Return(fileInfo, nil)
+	mockParser.On("Parse", mock.Anything, fileInfo).Return(&ParsedResource{
+		Obj:    obj,
+		Meta:   meta,
+		GVK:    fakeGVK,
+		GVR:    fakeGVR,
+		Client: mockClient,
+		Repo:   testRepoInfo(),
+	}, nil)
+
+	grafanaObj := managedGrafanaObj("my-resource", "default", nil)
+	mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+	mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+		Return(obj, nil)
+
+	mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+	name, _, err := mgr.ReplaceResourceFromFile(context.Background(), "resource.json", "ref", "my-resource", fakeGVR, WithExistingHash("matching-hash"))
+
+	require.NoError(t, err)
+	require.Equal(t, "my-resource", name)
+	mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
 }

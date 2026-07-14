@@ -1,13 +1,14 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataQuery } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type DataQuery } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import { PreferencesService } from '../services/PreferencesService';
-import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
+import { type RichHistorySearchFilters, type RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
-import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
+import { type default as RichHistoryStorage, type RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { fromDTO } from './remoteStorageConverter';
 
 export type RichHistoryRemoteStorageDTO = {
@@ -45,7 +46,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
       queries: newRichHistoryQuery.queries,
     });
     return {
-      richHistoryQuery: fromDTO(result),
+      richHistoryQuery: await fromDTO(result),
     };
   }
 
@@ -58,7 +59,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 
   async getRichHistory(filters: RichHistorySearchFilters) {
-    const params = buildQueryParams(filters);
+    const params = await buildQueryParams(filters);
 
     let requestId = 'query-history-get-all';
 
@@ -76,7 +77,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     );
 
     const data = queryHistory.data;
-    const richHistory = (data.result.queryHistory || []).map(fromDTO);
+    const richHistory = await Promise.all((data.result.queryHistory || []).map(fromDTO));
     const total = data.result.totalCount || 0;
 
     return { richHistory, total };
@@ -118,13 +119,14 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 }
 
-function buildQueryParams(filters: RichHistorySearchFilters): string {
-  let params = `${filters.datasourceFilters
-    .map((datasourceName) => {
-      const uid = getDataSourceSrv().getInstanceSettings(datasourceName)!.uid;
+async function buildQueryParams(filters: RichHistorySearchFilters): Promise<string> {
+  const datasourceUidParams = await Promise.all(
+    filters.datasourceFilters.map(async (datasourceName) => {
+      const uid = (await getDataSourceInstanceSettings(datasourceName))!.uid;
       return `datasourceUid=${encodeURIComponent(uid)}`;
     })
-    .join('&')}`;
+  );
+  let params = datasourceUidParams.join('&');
   if (filters.search) {
     params = params + `&searchString=${filters.search}`;
   }

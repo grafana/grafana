@@ -10,40 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-// mockOpenFGAServer implements only the Read method; all others panic via the embedded Unimplemented.
-type mockOpenFGAServer struct {
-	openfgav1.UnimplementedOpenFGAServiceServer
-	// pages is a list of tuple pages to return on successive Read calls.
-	pages [][]*openfgav1.Tuple
-}
-
-func (m *mockOpenFGAServer) Read(_ context.Context, _ *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
-	if len(m.pages) == 0 {
-		return &openfgav1.ReadResponse{}, nil
-	}
-	page := m.pages[0]
-	m.pages = m.pages[1:]
-
-	token := ""
-	if len(m.pages) > 0 {
-		token = "next"
-	}
-	return &openfgav1.ReadResponse{
-		Tuples:            page,
-		ContinuationToken: token,
-	}, nil
-}
-
 // mockServerInternal satisfies zanzana.ServerInternal for computeDiffStreaming tests.
 type mockServerInternal struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
-	fga *mockOpenFGAServer
+	pages [][]*openfgav1.Tuple
 }
 
 func (m *mockServerInternal) Close()                              {}
@@ -63,8 +42,25 @@ func (m *mockServerInternal) ListAllStores(context.Context) ([]zanzana.StoreInfo
 func (m *mockServerInternal) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) error {
 	return nil
 }
+func (m *mockServerInternal) ReadTuples(_ context.Context, _ *zanzana.StoreInfo, _ *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	if len(m.pages) == 0 {
+		return &openfgav1.ReadResponse{}, nil
+	}
+	page := m.pages[0]
+	m.pages = m.pages[1:]
+
+	token := ""
+	if len(m.pages) > 0 {
+		token = "next"
+	}
+
+	return &openfgav1.ReadResponse{
+		Tuples:            page,
+		ContinuationToken: token,
+	}, nil
+}
 func (m *mockServerInternal) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
-	return m.fga
+	return nil
 }
 
 func makeTuple(user, relation, object string) *openfgav1.TupleKey {
@@ -115,8 +111,11 @@ func toTuple(tk *openfgav1.TupleKey) *openfgav1.Tuple {
 
 func newTestReconciler(pages [][]*openfgav1.Tuple) *Reconciler {
 	return &Reconciler{
-		server: &mockServerInternal{fga: &mockOpenFGAServer{pages: pages}},
-		tracer: tracing.NewNoopTracerService(),
+		server:  &mockServerInternal{pages: pages},
+		cfg:     Config{CRDs: DefaultCRDs},
+		logger:  log.NewNopLogger(),
+		tracer:  tracing.NewNoopTracerService(),
+		metrics: newReconcilerMetrics(prometheus.NewRegistry()),
 	}
 }
 

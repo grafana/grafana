@@ -1,8 +1,8 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { Field, LinkModel, LinkTarget } from '@grafana/data';
+import { type Field, type LinkModel, type LinkTarget } from '@grafana/data';
 
-import { TraceSpan } from './trace';
+import { type TraceSpan } from './trace';
 
 export enum SpanLinkType {
   Logs = 'log',

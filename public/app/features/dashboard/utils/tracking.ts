@@ -1,17 +1,17 @@
-import { SceneObject } from '@grafana/scenes';
-import { VariableModel } from '@grafana/schema';
+import { type SceneObject } from '@grafana/scenes';
+import { type VariableModel } from '@grafana/schema';
 import {
-  AdhocVariableKind,
-  CustomVariableKind,
-  DatasourceVariableKind,
-  QueryVariableKind,
-  VariableKind,
+  type AdhocVariableKind,
+  type CustomVariableKind,
+  type DatasourceVariableKind,
+  type QueryVariableKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
 import { TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { DashboardModel } from '../state/DashboardModel';
+import { type DashboardModel } from '../state/DashboardModel';
 
 export function trackDashboardLoaded(dashboard: DashboardModel, duration?: number, versionBeforeMigration?: number) {
   // Count the different types of variables
@@ -134,7 +134,7 @@ export const getLayoutType = (obj?: SceneObject): 'row' | 'tab' | 'dashboard' =>
   return 'dashboard';
 };
 
-export const variableName = (type: string) => `variable_type_${type}_count`;
+const variableName = (type: string) => `variable_type_${type}_count`;
 const panelName = (type: string) => `panel_type_${type}_count`;
 
 const isAdhocVar: (v: VariableKind) => v is AdhocVariableKind = (v) => v.kind === 'AdhocVariable';
@@ -144,6 +144,6 @@ const isQueryVar: (v: VariableKind) => v is QueryVariableKind = (v) => v.kind ==
 const getDatasourceFromVar = (v: VariableKind) =>
   isAdhocVar(v) ? v.group : isDatasourceVar(v) ? v.spec.pluginId : isQueryVar(v) ? v.spec?.query.group : '';
 
-export function isCustomVariable(variable: VariableKind): variable is CustomVariableKind {
+function isCustomVariable(variable: VariableKind): variable is CustomVariableKind {
   return variable.kind === 'CustomVariable';
 }

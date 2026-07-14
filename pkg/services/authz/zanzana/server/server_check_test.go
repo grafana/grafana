@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"testing"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -231,11 +232,100 @@ func TestIntegrationServerCheck(t *testing.T) {
 		assert.Equal(t, true, res.GetAllowed())
 	})
 
+	t.Run("user should check dashboard access through teams from request", func(t *testing.T) {
+		req := newReq("user:contextual", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard")
+		req.Teams = []string{"ctx-check"}
+		res, err := server.Check(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:contextual", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user should check dashboard access with one thousand request teams", func(t *testing.T) {
+		groups := make([]string, 1000)
+		for i := range groups {
+			groups[i] = fmt.Sprintf("irrelevant-%04d", i)
+		}
+		groups[999] = "ctx-1000"
+
+		req := newReq("user:contextual-1000", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-1000-dashboard")
+		req.Teams = groups
+		res, err := server.Check(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
 	t.Run("wildcard name for typed resource should be allowed when subject has group_resource get_permissions and returns no error", func(t *testing.T) {
 		// user:19 has get_permissions on the group_resource for users — they can manage
 		// permissions for all users. A check with name="*" must succeed via group_resource only.
 		res, err := server.Check(newContextWithNamespace(), newReq("user:19", utils.VerbGetPermissions, userGroup, userResource, "", "", "*"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
+	})
+
+	// Typed `create` checks. user / service-account have no per-object `create`, so a named
+	// create check must resolve to denied rather than issue an invalid Check that errors.
+	t.Run("named create check on user without access is denied, not errored", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:1", utils.VerbCreate, userGroup, userResource, "", "", "someuser"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("named create check on service-account without access is denied, not errored", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:1", utils.VerbCreate, serviceAccountGroup, serviceAccountResource, "", "", "some-sa"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user:20 create check on users is allowed via group_resource", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:20", utils.VerbCreate, userGroup, userResource, "", "", ""))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:21 (team admin) create check on their team is denied: team create is group_resource only", func(t *testing.T) {
+		// teams have no per-object `create`; being admin of a team does not grant creating it.
+		res, err := server.Check(newContextWithNamespace(), newReq("user:21", utils.VerbCreate, teamGroup, teamResource, "", "", "admin-team"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	// Subresource `create` must still resolve even though the base `create` relation does not
+	// exist on user / service-account: the base-relation guard must not block the subresource
+	// branch (the model defines resource_create for these types).
+	t.Run("user:22 subresource create on a user is allowed via resource_create", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:22", utils.VerbCreate, userGroup, userResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:23 subresource create on a service-account is allowed via resource_create", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:23", utils.VerbCreate, serviceAccountGroup, serviceAccountResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:1 subresource create without grant is denied, not errored", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:1", utils.VerbCreate, userGroup, userResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	// user/team have no subresource get/set_permissions in the model (folder-only). A subresource
+	// permissions check on them must not issue can_resource_get_permissions (which OpenFGA would
+	// reject); the subresource branch is skipped and it resolves via the base relation instead.
+	t.Run("user subresource get_permissions is denied, not errored", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:1", utils.VerbGetPermissions, userGroup, userResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("team subresource set_permissions is denied, not errored", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:1", utils.VerbSetPermissions, teamGroup, teamResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
 	})
 }

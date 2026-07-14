@@ -1,5 +1,5 @@
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
@@ -7,7 +7,7 @@ import {
   DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE,
   getDashboardPanelPrompt,
   getPanelStrings,
-  Message,
+  type Message,
   Role,
 } from './utils';
 

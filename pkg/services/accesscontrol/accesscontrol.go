@@ -75,6 +75,7 @@ type Store interface {
 	DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
+	CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error
 }
 
 type RoleRegistry interface {

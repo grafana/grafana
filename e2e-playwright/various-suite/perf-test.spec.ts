@@ -39,6 +39,8 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
   await client.send('HeapProfiler.collectGarbage');
   let usedJSHeapSize = (await client.send('Runtime.getHeapUsage')).usedSize;
 
+  await stopListening();
+
   const responseMetrics = recorder.getMetrics();
   for (const metric of responseMetrics) {
     promRegistry.registerMetric(metric);
@@ -53,6 +55,5 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
   console.log(metricsText);
   fs.writeFileSync(process.env.METRICS_OUTPUT_PATH || '/tmp/asset-metrics.txt', metricsText);
 
-  await stopListening();
-  page.close();
+  await page.close();
 });

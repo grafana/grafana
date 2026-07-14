@@ -1,12 +1,12 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 import * as React from 'react';
 import { of } from 'rxjs';
 
 import {
   LoadingState,
-  PanelData,
+  type PanelData,
   getDefaultTimeRange,
   toDataFrame,
   FieldType,
@@ -15,6 +15,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
@@ -33,12 +34,6 @@ const promDatasource = mockDataSource({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      multiPropsVariables: true,
-    },
-  },
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
@@ -73,6 +68,10 @@ jest.mock('app/features/variables/editor/getVariableQueryEditor', () => ({
 }));
 
 describe('QueryVariableEditorForm', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   const mockOnDataSourceChange = jest.fn();
   const mockOnQueryChange = jest.fn();
   const mockOnLegacyQueryChange = jest.fn();

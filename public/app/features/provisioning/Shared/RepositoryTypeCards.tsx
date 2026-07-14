@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Card, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -41,7 +41,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
               >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
-                    <RepoIcon type={config.type} />
+                    <RepoIcon type={config.type} autoHeight />
                     <Trans
                       i18nKey="provisioning.repository-type-cards.configure-with-provider"
                       values={{ provider: config.label }}
@@ -84,7 +84,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
               >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
-                    <RepoIcon type={config.type} />
+                    <RepoIcon type={config.type} autoHeight />
                     {config.type === 'local' ? (
                       <Trans i18nKey="provisioning.repository-type-cards.configure-file">
                         Configure file provisioning

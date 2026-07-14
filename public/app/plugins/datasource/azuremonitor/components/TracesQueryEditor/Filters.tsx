@@ -1,13 +1,13 @@
 import { uniq } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorList } from '@grafana/plugin-ui';
 import { Field } from '@grafana/ui';
 
-import { AzureTracesFilter } from '../../dataquery.gen';
-import { AzureQueryEditorFieldProps } from '../../types/types';
+import { type AzureTracesFilter } from '../../dataquery.gen';
+import { type AzureQueryEditorFieldProps } from '../../types/types';
 
 import { makeRenderItem } from './Filter';
 import { tablesSchema } from './consts';

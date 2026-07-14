@@ -1,15 +1,15 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
-import { DataTransformerConfig, MatcherConfig } from '../../types/transformations';
+import { type DataTransformerConfig, type MatcherConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ValueMatcherID } from '../matchers/ids';
-import { BasicValueMatcherOptions } from '../matchers/valueMatchers/types';
+import { type BasicValueMatcherOptions } from '../matchers/valueMatchers/types';
 import { transformDataFrame } from '../transformDataFrame';
 
 import {
   FilterByValueMatch,
   filterByValueTransformer,
-  FilterByValueTransformerOptions,
+  type FilterByValueTransformerOptions,
   FilterByValueType,
 } from './filterByValue';
 import { DataTransformerID } from './ids';

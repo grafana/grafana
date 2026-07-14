@@ -1,8 +1,8 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { MultiSelect, MultiSelectCommonProps } from '@grafana/ui';
-import { MuteTiming, useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
-import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
+import { MultiSelect, type MultiSelectCommonProps } from '@grafana/ui';
+import { type MuteTiming, useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { type BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
 
 const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<string> => ({

@@ -16,11 +16,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
-	"k8s.io/klog/v2"
 
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
@@ -36,13 +34,7 @@ func New(cfg app.Config) (app.App, error) {
 	pluginKind := simple.AppManagedKind{
 		Kind: pluginsv0alpha1.PluginKind(),
 	}
-
-	if specificConfig.EnableChildReconciler {
-		logger := logging.DefaultLogger.With("app", "plugins.app")
-		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
-		registrar := install.NewInstallRegistrar(logger, clientGenerator)
-		pluginKind.Reconciler = install.NewChildPluginReconciler(logger, specificConfig.MetaProviderManager, registrar)
-	}
+	logger := logging.DefaultLogger.With("app", "plugins.app")
 
 	simpleConfig := simple.AppConfig{
 		Name:       "plugins",
@@ -50,7 +42,7 @@ func New(cfg app.Config) (app.App, error) {
 		InformerConfig: simple.AppInformerConfig{
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
-					klog.ErrorS(err, "Informer processing error")
+					logger.Error("Child plugin informer failed", "error", err)
 				},
 			},
 		},
@@ -74,19 +66,26 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 type PluginAppConfig struct {
-	MetaProviderManager   *meta.ProviderManager
-	EnableChildReconciler bool
+	MetaProviderManager *meta.ProviderManager
+}
+
+type PluginAppInstallerConfig struct {
+	Logger              logging.Logger
+	Authorizer          authorizer.Authorizer
+	MetaProviderManager *meta.ProviderManager
+	// WrapPluginStorageAfterHooks, if non-nil, wraps the default
+	// PluginStorageAfterHookProvider (built around the resolved storage) with
+	// additional behavior, e.g. recording installs in an external system. Begin
+	// hooks always use the default provider so pre-commit storage mutations stay
+	// owned by this app.
+	WrapPluginStorageAfterHooks func(base PluginStorageAfterHookProvider) PluginStorageAfterHookProvider
 }
 
 func NewPluginsAppInstaller(
-	logger logging.Logger,
-	authorizer authorizer.Authorizer,
-	metaProviderManager *meta.ProviderManager,
-	enableChildReconciler bool,
+	installerConfig PluginAppInstallerConfig,
 ) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
-		MetaProviderManager:   metaProviderManager,
-		EnableChildReconciler: enableChildReconciler,
+		MetaProviderManager: installerConfig.MetaProviderManager,
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
 	appConfig := app.Config{
@@ -101,9 +100,7 @@ func NewPluginsAppInstaller(
 
 	appInstaller := &PluginAppInstaller{
 		AppInstaller: defaultInstaller,
-		authorizer:   authorizer,
-		metaManager:  metaProviderManager,
-		logger:       logger,
+		config:       installerConfig,
 		ready:        make(chan struct{}),
 	}
 	return appInstaller, nil
@@ -111,9 +108,7 @@ func NewPluginsAppInstaller(
 
 type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	metaManager *meta.ProviderManager
-	authorizer  authorizer.Authorizer
-	logger      logging.Logger
+	config PluginAppInstallerConfig
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
@@ -153,16 +148,23 @@ func (p *PluginAppInstaller) InstallAPIs(
 	}
 
 	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
+	pluginGVR := pluginsv0alpha1.PluginKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: NewMetaStorage(p.logger, p.metaManager, clientFactory),
+		pluginMetaGVR: NewMetaStorage(p.config.Logger, p.config.MetaProviderManager, clientFactory),
+	}
+	wrappedStorage := map[schema.GroupVersionResource]func(rest.Storage) (rest.Storage, error){
+		pluginGVR: func(storage rest.Storage) (rest.Storage, error) {
+			return newPluginStorage(storage, p.config.Logger, p.config.MetaProviderManager, p.config.WrapPluginStorageAfterHooks)
+		},
 	}
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,
 		replace: replacedStorage,
+		wrap:    wrappedStorage,
 	}
 	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
 }
 
 func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return p.authorizer
+	return p.config.Authorizer
 }

@@ -1,25 +1,14 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import {
-  LogsDedupStrategy,
-  LogsMetaItem,
-  LogsMetaKind,
-  LogRowModel,
-  CoreApp,
-  Labels,
-  store,
-  shallowCompare,
-} from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, type Labels, store, shallowCompare } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Button, useStyles2 } from '@grafana/ui';
 
-import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/components/LogLabels';
-import { DownloadFormat, downloadLogs } from '../../logs/utils';
-import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
+import { LogLabels, LogLabelsList, type Props as LogLabelsProps } from '../../logs/components/LogLabels';
+import { MetaInfoText, type MetaItemProps } from '../MetaInfoText';
 
-import { LogsVisualisationType } from './constants';
+import { type LogsVisualisationType } from './constants';
 import { SETTINGS_KEYS } from './utils/logs';
 
 const getStyles = () => ({
@@ -39,7 +28,6 @@ export type Props = {
   dedupStrategy: LogsDedupStrategy;
   dedupCount: number;
   displayedFields: string[];
-  logRows: LogRowModel[];
   clearDisplayedFields: () => void;
   defaultDisplayedFields: string[];
   visualisationType: LogsVisualisationType;
@@ -52,7 +40,6 @@ export const LogsMetaRow = memo(
     dedupCount,
     displayedFields,
     clearDisplayedFields,
-    logRows,
     defaultDisplayedFields,
     visualisationType,
   }: Props) => {
@@ -91,26 +78,6 @@ export const LogsMetaRow = memo(
       );
     }
 
-    function download(format: DownloadFormat) {
-      reportInteraction('grafana_logs_download_logs_clicked', {
-        app: CoreApp.Explore,
-        format,
-        area: 'logs-meta-row',
-      });
-      downloadLogs(format, logRows, meta);
-    }
-
-    const downloadMenu = (
-      <Menu>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <Menu.Item label="txt" onClick={() => download(DownloadFormat.Text)} />
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <Menu.Item label="json" onClick={() => download(DownloadFormat.Json)} />
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <Menu.Item label="csv" onClick={() => download(DownloadFormat.CSV)} />
-      </Menu>
-    );
-
     const onCommonLabelsToggle = (state: boolean) => {
       store.set(SETTINGS_KEYS.commonLabels, state);
     };
@@ -133,15 +100,6 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!config.featureToggles.logsPanelControls &&
-              !config.featureToggles.newLogsPanel &&
-              !config.exploreHideLogsDownload && (
-                <Dropdown overlay={downloadMenu}>
-                  <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                    <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
-                  </ToolbarButton>
-                </Dropdown>
-              )}
           </div>
         )}
       </>

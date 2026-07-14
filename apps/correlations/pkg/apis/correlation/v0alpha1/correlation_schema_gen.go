@@ -5,13 +5,26 @@
 package v0alpha1
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaCorrelation = resource.NewSimpleSchema("correlations.grafana.app", "v0alpha1", NewCorrelation(), &CorrelationList{}, resource.WithKind("Correlation"),
-		resource.WithPlural("correlations"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("correlations"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+			FieldSelector: "spec.source.name",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*Correlation)
+				if !ok {
+					return "", errors.New("provided object must be of type *Correlation")
+				}
+
+				return string(cast.Spec.Source.Name), nil
+			},
+		},
+		}))
 	kindCorrelation = resource.Kind{
 		Schema: schemaCorrelation,
 		Codecs: map[resource.KindEncoding]resource.Codec{

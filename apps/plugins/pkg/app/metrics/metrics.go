@@ -11,25 +11,6 @@ const (
 )
 
 var (
-	// Plugin reconciliation metrics
-	ChildReconciliationTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: namespace,
-			Name:      "plugin_child_reconciliation_total",
-			Help:      "Total number of child plugin reconciliation operations",
-		},
-		[]string{"status"},
-	)
-
-	ChildReconciliationDurationSeconds = prometheus.NewHistogram(
-		prometheus.HistogramOpts{
-			Namespace: namespace,
-			Name:      "plugin_child_reconciliation_duration_seconds",
-			Help:      "Duration of child plugin reconciliation operations in seconds",
-			Buckets:   prometheus.DefBuckets,
-		},
-	)
-
 	// Plugin registration metrics
 	RegistrationOperationsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -87,6 +68,15 @@ var (
 		[]string{"provider", "status"}, // provider: "catalog", etc; status: "success", "error", "not_found"
 	)
 
+	MetaFetchErrorsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_fetch_errors_total",
+			Help:      "Total number of metadata fetch errors by provider and error type.",
+		},
+		[]string{"provider", "error_type"},
+	)
+
 	// Meta request metrics
 	MetaRequestsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -100,14 +90,13 @@ var (
 
 func MustRegister(registerer prometheus.Registerer) {
 	metricsToRegister := []prometheus.Collector{
-		ChildReconciliationTotal,
-		ChildReconciliationDurationSeconds,
 		RegistrationOperationsTotal,
 		RegistrationDurationSeconds,
 		MetaCacheLookupTotal,
 		MetaCacheSize,
 		MetaCacheEvictionsTotal,
 		MetaFetchDurationSeconds,
+		MetaFetchErrorsTotal,
 		MetaRequestsTotal,
 	}
 

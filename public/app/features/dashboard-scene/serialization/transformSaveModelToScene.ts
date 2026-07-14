@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
+import { type DataFrameDTO, type DataFrameJSON } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -10,14 +10,14 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   SceneRefreshPicker,
-  SceneObject,
+  type SceneObject,
   VizPanelMenu,
   behaviors,
-  VizPanelState,
-  SceneGridItemLike,
-  SceneDataLayerProvider,
+  type VizPanelState,
+  type SceneGridItemLike,
+  type SceneDataLayerProvider,
   UserActionEvent,
-  SceneObjectState,
+  type SceneObjectState,
   LocalValueVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
@@ -29,11 +29,14 @@ import {
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
-import { LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
+import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
+import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { setPanelInspectorOpener } from '../inspect/panelInspectorOpener';
+import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -47,7 +50,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
-import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
+import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
@@ -56,24 +59,14 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { getDashboardSceneFor, getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
-
-export interface DashboardLoaderState {
-  dashboard?: DashboardScene;
-  isLoading?: boolean;
-  loadError?: string;
-}
-
-export interface SaveModelToSceneOptions {
-  isEmbedded?: boolean;
-}
 
 type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
 
@@ -125,7 +118,7 @@ export function transformSaveModelToScene(
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
   const v1Config = getK8sV1DashboardApiConfig();
-  const apiVersion = config.featureToggles.kubernetesDashboards ? `${v1Config.group}/${v1Config.version}` : undefined;
+  const apiVersion = `${v1Config.group}/${v1Config.version}`;
 
   scene.setInitialSaveModel(rsp.dashboard, rsp.meta, apiVersion);
 
@@ -390,6 +383,9 @@ export function createDashboardSceneFromDashboardModel(
     // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
     behaviorList.push(dashboardAnalyticsInitializer);
   }
+
+  behaviorList.push(new DefaultControlsBehavior());
+
   // Will be enabled in the dashboard creation below
 
   let body: DashboardLayoutManager;
@@ -409,7 +405,6 @@ export function createDashboardSceneFromDashboardModel(
 
   const dashboardScene = new DashboardScene(
     {
-      id: oldModel.id,
       uid,
       description: oldModel.description,
       editable: oldModel.editable,
@@ -472,9 +467,13 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     })
   );
 
-  titleItems.push(new PanelNotices());
+  // The new errors & notices UI surfaces notices in the header popover instead, so the
+  // standalone notices title item is only shown with the legacy UI.
+  if (!isNewPanelQueryErrorsUIEnabled()) {
+    titleItems.push(new PanelNotices());
+  }
 
-  const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
+  const timeOverrideShown = (panel.timeFrom || panel.timeShift || panel.timeCompare) && !panel.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
@@ -492,7 +491,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $data: createPanelDataProvider(panel),
     titleItems,
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     subHeader: new VizPanelSubHeader({
       hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
@@ -500,6 +499,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   if (panel.libraryPanel) {
@@ -554,6 +554,13 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     ...repeatOptions,
   });
 }
+
+// Register how the panel status popover opens the inspector. Done here (rather than in
+// setDashboardPanelContext) so the heavy PanelInspectDrawer isn't imported by low-level panel
+// setup, which would introduce a circular dependency.
+setPanelInspectorOpener((panel, tab) => {
+  getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
+});
 
 export function registerPanelInteractionsReporter(scene: DashboardScene) {
   // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated

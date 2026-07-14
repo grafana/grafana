@@ -6,13 +6,14 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // testLogger implements logging.Logger and captures log calls for testing
@@ -414,6 +415,106 @@ func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
 	assert.Contains(t, recorder.failedDeletions, "folder3/file1.json")
 	assert.Contains(t, recorder.failedDeletions, "folder4/subfolder/file2.json")
 	recorder.mu.RUnlock()
+}
+
+func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	// Folder depth violations are surfaced as warnings instead of errors so
+	// the job is not retried in a loop. They must still populate
+	// failedCreations so that descendant resources are short-circuited
+	// instead of generating duplicate bad requests for the same offending
+	// path.
+	depthErr := resources.NewFolderDepthExceededError(
+		"too/deep/folder/",
+		errors.New("folder max depth exceeded, max depth is 4"),
+	)
+	pathErr := &resources.PathCreationError{
+		Path: "too/deep/folder/",
+		Err:  depthErr,
+	}
+	recorder.Record(ctx, NewFolderResult("too/deep/folder/").
+		WithAction(repository.FileActionCreated).
+		WithError(pathErr).
+		Build())
+
+	recorder.mu.RLock()
+	defer recorder.mu.RUnlock()
+	assert.Contains(t, recorder.failedCreations, "too/deep/folder/", "depth-exceeded warning should still mark the path as a failed creation")
+	assert.Empty(t, recorder.errors, "depth-exceeded warning should not contribute to the error list")
+	assert.Equal(t, 0, recorder.errorCount, "depth-exceeded warning should not increment error count")
+}
+
+func TestJobProgressRecorderFolderUIDTooLongFailureTrackingFromWarning(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	// Folder UID-length violations are surfaced as warnings instead of
+	// errors so the job is not retried in a loop. They must still populate
+	// failedCreations so that descendant resources are short-circuited
+	// instead of generating duplicate bad requests for the same offending
+	// path.
+	uidErr := resources.NewFolderUIDTooLongError(
+		"GMPO/bare-metal-services-engineering/",
+		"a0123456789012345678901234567890123456789",
+		errors.New("uid too long, max 40 characters"),
+	)
+	pathErr := &resources.PathCreationError{
+		Path: "GMPO/bare-metal-services-engineering/",
+		Err:  uidErr,
+	}
+	recorder.Record(ctx, NewFolderResult("GMPO/bare-metal-services-engineering/").
+		WithAction(repository.FileActionCreated).
+		WithError(pathErr).
+		Build())
+
+	recorder.mu.RLock()
+	defer recorder.mu.RUnlock()
+	assert.Contains(t, recorder.failedCreations, "GMPO/bare-metal-services-engineering/", "uid-too-long warning should still mark the path as a failed creation")
+	assert.Empty(t, recorder.errors, "uid-too-long warning should not contribute to the error list")
+	assert.Equal(t, 0, recorder.errorCount, "uid-too-long warning should not increment error count")
+}
+
+func TestJobProgressRecorderFolderValidationFailureTrackingFromWarning(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	// Generic folder-API validation rejections (illegal-uid-chars,
+	// reserved-uid, future folder validations) must follow the same
+	// failed-creations short-circuit as the more specific depth/UID
+	// cases so descendant resources don't burst-write identical bad
+	// requests against the folder API.
+	validationErr := resources.NewFolderValidationError(
+		"bad-folder/",
+		errors.New("uid contains illegal characters"),
+	)
+	pathErr := &resources.PathCreationError{
+		Path: "bad-folder/",
+		Err:  validationErr,
+	}
+	recorder.Record(ctx, NewFolderResult("bad-folder/").
+		WithAction(repository.FileActionCreated).
+		WithError(pathErr).
+		Build())
+
+	recorder.mu.RLock()
+	defer recorder.mu.RUnlock()
+	assert.Contains(t, recorder.failedCreations, "bad-folder/", "folder validation warning should still mark the path as a failed creation")
+	assert.Empty(t, recorder.errors, "folder validation warning should not contribute to the error list")
+	assert.Equal(t, 0, recorder.errorCount, "folder validation warning should not increment error count")
 }
 
 func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
@@ -948,7 +1049,7 @@ func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 			recorder.Record(ctx, NewPathOnlyResult("file.json").

@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import { type MouseEvent, type ChangeEvent, type KeyboardEvent, useState, useMemo } from 'react';
 
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
 export interface OutlineRenameState {
   isRenaming?: boolean;
@@ -11,7 +11,7 @@ export interface OutlineRenameState {
 export function useOutlineRename(editableElement: EditableDashboardElement, isEditing: boolean | undefined) {
   const [state, setState] = useState<OutlineRenameState>({});
 
-  const onNameDoubleClicked = (evt: React.MouseEvent) => {
+  const onNameDoubleClicked = (evt: MouseEvent) => {
     if (!isEditing) {
       return;
     }
@@ -38,7 +38,7 @@ export function useOutlineRename(editableElement: EditableDashboardElement, isEd
     };
   }, []);
 
-  const onChangeName = (evt: React.ChangeEvent<HTMLInputElement>) => {
+  const onChangeName = (evt: ChangeEvent<HTMLInputElement>) => {
     const result = editableElement.onChangeName!(evt.target.value);
     if (result?.errorMessage) {
       setState({ ...state, error: result.errorMessage });
@@ -47,7 +47,7 @@ export function useOutlineRename(editableElement: EditableDashboardElement, isEd
     }
   };
 
-  const onInputKeyDown = (evt: React.KeyboardEvent) => {
+  const onInputKeyDown = (evt: KeyboardEvent) => {
     if (evt.key === 'Enter') {
       onInputBlur();
     }

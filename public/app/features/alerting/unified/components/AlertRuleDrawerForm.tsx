@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Drawer, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { RuleDefinitionSection } from 'app/features/alerting/unified/components/RuleDefinitionSection';
+import { useDispatch } from 'app/types/store';
 
 import {
   logError,
@@ -16,14 +17,25 @@ import {
   trackCreateRuleFromPanelDrawerRuleCreated,
 } from '../Analytics';
 import { isCloudGroupUpdatedResponse, isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
+import { alertingApi } from '../api/alertingApi';
+import { shouldUseRulesAPIV2 } from '../featureToggles';
 import { useAddRuleToRuleGroup } from '../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useUpsertUngroupedGrafanaRule } from '../hooks/useUpsertUngroupedGrafanaRule';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 import { formValuesToRulerGrafanaRuleDTO, normalizeContactPoints } from '../utils/rule-form';
 import { getRuleGroupLocationFromFormValues } from '../utils/rules';
 
 import { RuleConditionSection } from './RuleConditionSection';
 import { RuleNotificationSection } from './RuleNotificationSection';
+import { legacyRuleCacheTagsForUid } from './rule-editor/alert-rule-form/formValuesToAppPlatform';
+
+function getDrawerDefaultValues(prefill?: Partial<RuleFormValues>): RuleFormValues {
+  // The drawer never exposes a pending period input, so we pin it to 0s (immediate firing).
+  // Otherwise the inherited 1m default fails validation on the edit page whenever the user
+  // picks an evaluation interval longer than 1m.
+  return { ...getDefaultFormValues(RuleFormType.grafana), ...prefill, evaluateFor: '0s' };
+}
 
 export interface AlertRuleDrawerFormProps {
   isOpen: boolean;
@@ -40,22 +52,26 @@ export function AlertRuleDrawerForm({
   onContinueInAlerting,
   prefill,
 }: AlertRuleDrawerFormProps) {
-  const baseDefaults = useMemo(() => getDefaultFormValues(RuleFormType.grafana), []);
   const methods = useForm<RuleFormValues>({
-    defaultValues: prefill ? { ...baseDefaults, ...prefill } : baseDefaults,
+    defaultValues: getDrawerDefaultValues(prefill),
   });
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
+  const upsertUngroupedGrafanaRule = useUpsertUngroupedGrafanaRule();
   const notifyApp = useAppNotification();
   const ruleCreatedRef = useRef(false);
+  // When rule API v2 is on, the drawer creates rules through the App Platform groupless
+  // endpoint and we can drop the "derive group from rule name" fallback below.
+  const useRuleAPIV2 = shouldUseRulesAPIV2();
 
   // Reset form and ref when drawer opens
   useEffect(() => {
     if (isOpen) {
       ruleCreatedRef.current = false;
-      methods.reset(prefill ? { ...baseDefaults, ...prefill } : baseDefaults);
+      methods.reset(getDrawerDefaultValues(prefill));
     }
-  }, [isOpen, prefill, methods, baseDefaults]);
+  }, [isOpen, prefill, methods]);
 
   if (!isOpen) {
     return null;
@@ -70,6 +86,27 @@ export function AlertRuleDrawerForm({
 
   const submit = async (values: RuleFormValues) => {
     try {
+      if (useRuleAPIV2) {
+        // Force ungrouped so this can't be misrouted by a stale prefill.
+        const savedUid = await upsertUngroupedGrafanaRule({
+          values: { ...values, isUngroupedRuleGroup: true },
+          existingUid: undefined,
+        });
+
+        // The app-platform mutations live on a separate cache slice, so invalidate the legacy tags
+        // the panel alerts list relies on; otherwise it stays stale until the next poll.
+        dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(savedUid)));
+
+        ruleCreatedRef.current = true;
+        trackCreateRuleFromPanelDrawerRuleCreated();
+        notifyApp.success(
+          t('alerting.alert-rule-drawer.success-title', 'Alert rule created'),
+          t('alerting.alert-rule-drawer.success-message', 'Your alert rule has been created successfully.')
+        );
+        onClose();
+        return;
+      }
+
       // The drawer doesn't expose a group field to keep the UX simple.
       // We derive the group name from the rule name as a sensible default.
       // The 'default' fallback should rarely occur since 'name' is a required field.
@@ -128,7 +165,7 @@ export function AlertRuleDrawerForm({
         <FormProvider {...methods}>
           <RuleDefinitionSection />
           <div className={styles.divider} aria-hidden="true" />
-          <RuleConditionSection />
+          <RuleConditionSection hideEvaluationGroup={useRuleAPIV2} />
           <div className={styles.divider} aria-hidden="true" />
           <RuleNotificationSection />
           <div className={styles.footer}>
@@ -137,7 +174,7 @@ export function AlertRuleDrawerForm({
                 variant="secondary"
                 type="button"
                 onClick={() => {
-                  methods.reset(prefill ? { ...baseDefaults, ...prefill } : baseDefaults);
+                  methods.reset(getDrawerDefaultValues(prefill));
                   handleClose();
                 }}
               >

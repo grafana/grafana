@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef, HTMLProps, ReactNode, useContext } from 'react';
+import { forwardRef, type HTMLProps, type ReactNode, useContext } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
+import { useFieldContext } from '../Forms/FieldContext';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -46,11 +47,23 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
     addonBefore,
     prefix,
     suffix: suffixProp,
-    invalid,
-    loading,
+    invalid: invalidProp,
+    loading: loadingProp,
     width = 0,
+    id: idProp,
+    disabled: disabledProp,
+    'aria-describedby': ariaDescribedByProp,
+    'aria-labelledby': ariaLabelledByProp,
     ...restProps
   } = props;
+
+  const fieldContext = useFieldContext();
+  const invalid = invalidProp ?? fieldContext.invalid;
+  const loading = loadingProp ?? fieldContext.loading;
+  const id = idProp ?? fieldContext.id;
+  const disabled = disabledProp ?? fieldContext.disabled;
+  const ariaDescribedBy = ariaDescribedByProp ?? fieldContext['aria-describedby'];
+  const ariaLabelledBy = ariaLabelledByProp ?? fieldContext['aria-labelledby'];
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -94,6 +107,11 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
         <input
           ref={ref}
           className={styles.input}
+          aria-invalid={!!invalid}
+          id={id}
+          disabled={disabled}
+          aria-describedby={ariaDescribedBy}
+          aria-labelledby={ariaLabelledBy}
           {...restProps}
           onWheel={
             restProps.type === 'number'

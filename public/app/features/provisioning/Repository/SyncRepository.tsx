@@ -1,7 +1,7 @@
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useGetActiveJob } from '../useGetActiveJob';
 

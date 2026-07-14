@@ -1,16 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
+import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
-import { getFeatureToggle } from '../../utils/featureToggle';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
@@ -23,6 +22,7 @@ import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
+import { type PanelStatusItem } from './types';
 
 /**
  * @internal
@@ -32,7 +32,10 @@ export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | Hov
 interface BaseProps {
   padding?: PanelPadding;
   title?: string | React.ReactElement;
+  /** Shown in info icon tooltip next to the title, supports simple html markup */
   description?: string | (() => string);
+  /** Shown in as text below the title, supports simple html markup */
+  subtitle?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
@@ -48,6 +51,10 @@ interface BaseProps {
    * Used to display status message (used for panel errors currently)
    */
   statusMessage?: string;
+  /**
+   * Structured list of errors and notices shown in the panel header status popover.
+   */
+  statusItems?: PanelStatusItem[];
   /**
    * Handle opening error details view (like inspect / error tab)
    */
@@ -143,6 +150,7 @@ export function PanelChrome({
   hoverHeaderOffset,
   loadingState,
   statusMessage,
+  statusItems,
   statusMessageOnClick,
   leftItems,
   actions,
@@ -158,8 +166,10 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
   subHeaderContent,
+  subtitle,
 }: PanelChromeProps) {
   const theme = useTheme2();
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
@@ -181,12 +191,21 @@ export function PanelChrome({
     collapsed = !isOpen;
   }
 
+  const descriptionTitleItem = description && (
+    <PanelDescription description={description} className={dragClassCancel} />
+  );
+
+  const subtitleContent = subtitle && <PanelDescription description={subtitle} inSubHeader />;
+
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
+  const showSubHeader = !collapsed && Boolean(subHeaderContent || subtitleContent);
 
-  const headerHeight = getHeaderHeight(theme, hasHeader);
-  const subHeaderHeight = Math.min(measuredSubHeaderHeight, headerHeight);
+  // in dashboards we always have a subHeaderContent react node that sometimes is empty so showSubHeader can be true but 0 height
+  const subHeaderHeight = showSubHeader ? measuredSubHeaderHeight : 0;
+  const headerHeight = getHeaderHeight(theme, hasHeader, subHeaderHeight);
+
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
@@ -244,10 +263,16 @@ export function PanelChrome({
     (evt: React.PointerEvent) => {
       // Ignore clicks inside buttons, links, canvas and svg elments
       // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      // '[role="columnheader"]' targets table column headers (e.g. react-data-grid), preventing sort clicks
+      // and column resize drags from selecting the panel in edit mode.
+      // '.u-axis' targets uPlot axis elements, preventing axis interactions from selecting the panel.
       if (
         evt.target instanceof Element &&
-        (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container') ||
-          evt.target.classList.contains('u-over'))
+        (evt.target.closest(
+          'button,a,canvas,svg,[role="button"],[role="combobox"],#grafana-portal-container,[role="columnheader"]'
+        ) ||
+          evt.target.classList.contains('u-over') ||
+          evt.target.classList.contains('u-axis'))
       ) {
         // Stop propagation otherwise row config editor will get selected
         evt.stopPropagation();
@@ -307,9 +332,9 @@ export function PanelChrome({
         </div>
       )}
 
-      {(titleItems || description) && (
+      {(titleItems || descriptionTitleItem) && (
         <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-          <PanelDescription description={description} className={dragClassCancel} />
+          {descriptionTitleItem}
           {titleItems}
         </div>
       )}
@@ -392,10 +417,11 @@ export function PanelChrome({
               </HoverWidget>
             )}
 
-            {statusMessage && (
+            {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
               <div className={styles.errorContainerFloating}>
                 <PanelStatus
                   message={statusMessage}
+                  items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
                 />
@@ -415,10 +441,11 @@ export function PanelChrome({
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               onPointerUp={onPointerUp}
             >
-              {statusMessage && (
+              {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
                 <div className={dragClassCancel}>
                   <PanelStatus
                     message={statusMessage}
+                    items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
                   />
@@ -438,8 +465,9 @@ export function PanelChrome({
                 />
               )}
             </div>
-            {!collapsed && subHeaderContent && (
+            {!collapsed && (subHeaderContent || subtitleContent) && (
               <div className={styles.subHeader} ref={subHeaderRef}>
+                {subtitleContent}
                 {subHeaderContent}
               </div>
             )}
@@ -450,7 +478,9 @@ export function PanelChrome({
           <div
             id={panelContentId}
             data-testid={selectors.components.Panels.Panel.content}
-            className={cx(styles.content, height === undefined && styles.containNone)}
+            className={cx(styles.content, height === undefined && styles.containNone, {
+              [styles.contentTransparent]: visualRefreshEnabled && isPanelTransparent,
+            })}
             style={contentStyle}
             onPointerDown={onContentPointerDown}
           >
@@ -467,13 +497,12 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
+const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
-    if (getFeatureToggle('newPanelPadding')) {
-      return theme.spacing.gridSize * 5;
-    }
-
-    return theme.spacing.gridSize * theme.components.panel.headerHeight;
+    // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
+    return (
+      theme.spacing.gridSize * theme.components.panel.headerHeight - (subHeaderHeight > 0 ? theme.spacing.gridSize : 0)
+    );
   }
 
   return 0;
@@ -515,8 +544,8 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor } = theme.components.panel;
-  const newPanelPadding = getFeatureToggle('newPanelPadding');
+  const { background, borderColor, contentBackground, contentBorderColor } = theme.components.panel;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   return {
     container: css({
@@ -528,11 +557,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'unset',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden',
+      overflow: visualRefreshEnabled ? 'unset' : 'hidden',
 
       '.always-show': {
         background: 'none',
@@ -573,6 +602,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         border: `1px solid ${borderColor}`,
       },
     }),
+    contentTransparent: css({
+      backgroundColor: 'transparent',
+      border: '1px solid transparent',
+    }),
     loadingBarContainer: css({
       label: 'panel-loading-bar-container',
       position: 'absolute',
@@ -586,17 +619,25 @@ const getStyles = (theme: GrafanaTheme2) => {
     containNone: css({
       contain: 'none',
     }),
-    content: css({
-      label: 'panel-content',
-      flexGrow: 1,
-      contain: 'size layout',
-    }),
+    content: css(
+      {
+        label: 'panel-content',
+        flexGrow: 1,
+        contain: 'size layout',
+      },
+      visualRefreshEnabled && {
+        backgroundColor: contentBackground,
+        border: `1px solid ${contentBorderColor}`,
+        borderRadius: theme.shape.radius.lg,
+        overflow: 'hidden',
+        margin: '-1px', // to overlay the nested borders nicely
+      }
+    ),
     headerContainer: css({
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      // remove logic after newPanelPadding feature toggle is removed
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1) : theme.spacing(0, 0.5, 0, 1),
+      padding: theme.spacing(0, 1, 0, 1),
       gap: theme.spacing(1),
     }),
     subHeader: css({
@@ -604,7 +645,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      padding: theme.spacing(0, 1, 0, 1.5),
       overflow: 'hidden',
       gap: theme.spacing(1),
     }),

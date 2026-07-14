@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { MouseEvent, memo } from 'react';
+import { type MouseEvent, memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { NodesMarker } from './types';
+import { type NodesMarker } from './types';
 
 const nodeR = 40;
 
@@ -60,7 +60,11 @@ export const Marker = memo(function Marker(props: {
             <span>
               {marker.count > 100
                 ? t('nodeGraph.marker.100-node-count', '>100 nodes')
-                : t('nodeGraph.marker.node-count', '{{count}} nodes', { count: marker.count })}
+                : t('nodeGraph.marker.node-count', '', {
+                    count: marker.count,
+                    defaultValue_one: '{{count}} nodes',
+                    defaultValue_other: '{{count}} nodes',
+                  })}
             </span>
           </div>
         </foreignObject>

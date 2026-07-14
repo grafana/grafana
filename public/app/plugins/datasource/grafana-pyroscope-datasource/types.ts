@@ -1,6 +1,6 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { type DataSourceJsonData } from '@grafana/data';
 
-import { GrafanaPyroscopeDataQuery, PyroscopeQueryType } from './dataquery.gen';
+import { type GrafanaPyroscopeDataQuery, type PyroscopeQueryType } from './dataquery.gen';
 
 export interface Query extends GrafanaPyroscopeDataQuery {
   queryType: PyroscopeQueryType;
@@ -18,18 +18,18 @@ export interface PyroscopeDataSourceOptions extends DataSourceJsonData {
   minStep?: string;
 }
 
-export type ProfileTypeQuery = {
+type ProfileTypeQuery = {
   type: 'profileType';
   refId: string;
 };
 
-export type LabelQuery = {
+type LabelQuery = {
   type: 'label';
   profileTypeId?: string;
   refId: string;
 };
 
-export type LabelValueQuery = {
+type LabelValueQuery = {
   type: 'labelValue';
   profileTypeId?: string;
   labelName?: string;

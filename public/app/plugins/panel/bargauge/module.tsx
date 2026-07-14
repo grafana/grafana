@@ -7,7 +7,7 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import { BarGaugePanel } from './BarGaugePanel';
-import { Options, defaultOptions } from './panelcfg.gen';
+import { type Options, defaultOptions } from './panelcfg.gen';
 import { barGaugePresetsSupplier } from './presets';
 import { barGaugeSugggestionsSupplier } from './suggestions';
 

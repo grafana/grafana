@@ -1,4 +1,4 @@
-import { LanguageDefinition } from '../monarch/register';
+import { type LanguageDefinition } from '../monarch/register';
 
 const cloudWatchDynamicLabelsLanguageDefinition: LanguageDefinition = {
   id: 'cloudwatch-dynamicLabels',

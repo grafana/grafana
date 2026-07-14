@@ -1,8 +1,8 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { IconName } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { type IconName } from '@grafana/data';
+import { type SceneObject } from '@grafana/scenes';
+import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 /**
  * Interface for elements that have options
@@ -25,6 +25,11 @@ export interface EditableDashboardElement {
    * Panel Actions
    **/
   renderActions?(): ReactNode;
+
+  /**
+   * Panel Actions
+   **/
+  renderTopButton?(): ReactNode;
 
   /**
    * Supports delete action
@@ -82,6 +87,8 @@ export interface EditableDashboardElementInfo {
   typeName: string;
   icon: IconName;
   isHidden?: boolean;
+  /** Optional tooltip shown when hovering the element name in the outline */
+  tooltip?: string;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {

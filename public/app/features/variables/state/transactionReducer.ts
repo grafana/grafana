@@ -1,4 +1,4 @@
-import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { TransactionStatus } from '../types';
 

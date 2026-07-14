@@ -1,20 +1,21 @@
 import { escapeRegex } from '@grafana/data';
-import { BaseTransport, defaultInternalLoggerLevel, type Faro } from '@grafana/faro-core';
+import { type BaseTransport, defaultInternalLoggerLevel, type Faro } from '@grafana/faro-core';
 import { ReplayInstrumentation } from '@grafana/faro-instrumentation-replay';
 import {
   initializeFaro,
-  BrowserConfig,
+  type BrowserConfig,
   FetchTransport,
   getWebInstrumentations,
   type Instrumentation,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
-import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
-import { GrafanaJavascriptAgentBackendOptions, GrafanaJavascriptAgentEchoEvent } from './types';
+import { setupFaroPageMeta } from './faroPageMeta';
+import { type GrafanaJavascriptAgentBackendOptions, type GrafanaJavascriptAgentEchoEvent } from './types';
 
 function isCrossOriginIframe() {
   try {
@@ -54,11 +55,22 @@ export class GrafanaJavascriptAgentBackend
       ignoreUrls.unshift(new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`));
     }
 
+    const sessionReplayEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false);
+
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
 
     // If in cross origin iframe, default to writing to instance logging endpoint
     if (options.customEndpoint && !isCrossOriginIframe()) {
-      transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
+      transports.push(
+        new FetchTransport({
+          url: options.customEndpoint,
+          apiKey: options.apiKey,
+          // When session replay is enabled, gzip-compress request bodies via the browser's
+          // CompressionStream — session replay produces the large payloads that benefit most.
+          // Falls back to uncompressed when CompressionStream is unavailable.
+          ...(sessionReplayEnabled ? { requestCompression: true } : {}),
+        })
+      );
     }
 
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
@@ -90,7 +102,8 @@ export class GrafanaJavascriptAgentBackend
         persistent: true,
       },
       batching: {
-        sendTimeout: 1000,
+        sendTimeout: 2000,
+        itemLimit: 250,
       },
       beforeSend: (item) => beforeSendHandler(options.botFilterEnabled, item),
       internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
@@ -98,8 +111,13 @@ export class GrafanaJavascriptAgentBackend
 
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
-    if (faro && getFeatureFlagClient().getBooleanValue('faroSessionReplay', false)) {
-      this.initReplayAfterDomRendered(faro);
+    if (faro) {
+      // Attach navigation context (referrer, previousUrl) to the meta of every emitted signal.
+      setupFaroPageMeta(faro);
+
+      if (sessionReplayEnabled) {
+        this.initReplayAfterDomRendered(faro);
+      }
     }
   }
 

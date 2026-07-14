@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr/metrics"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -102,8 +103,26 @@ func (s *Service) isDisabled() bool {
 }
 
 // BuildPipeline builds a pipeline from a request.
+// If any nodes are disabled (e.g. missing dependencies), it returns an error
+// rather than a degraded pipeline. This preserves safety for callers such as
+// alerting that cannot handle partial results.
 func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
-	return s.buildPipeline(ctx, req)
+	pipeline, err := s.buildPipeline(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range pipeline {
+		if nodeErr := node.DisabledErr(); nodeErr != nil {
+			// Record SQL metrics before returning, matching the behavior of
+			// the non-degraded path where instrumentSQLError fires on failure.
+			var sqlErr *sql.ErrorWithCategory
+			if errors.As(nodeErr, &sqlErr) {
+				s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+			}
+			return nil, nodeErr
+		}
+	}
+	return pipeline, nil
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.

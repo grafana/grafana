@@ -59,12 +59,12 @@ func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 
 	testRepo := common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
-		Path:                   repoPath,
+		SyncTarget:             "folder",
+		LocalPath:              repoPath,
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Step 3: Trigger a pull job — it should hit the unmanaged conflict.
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -127,12 +127,13 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	const repo = "migrate-takeover-repo"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance",
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
 		ExpectedDashboards: 2,
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Step 3: Trigger a migration job (export + sync).
 	spec := provisioning.JobSpec{
@@ -208,10 +209,11 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	// Create repo1 and migrate — should export both dashboards.
 	const repo1 = "first-repository"
 	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repo1,
-		Target:             "folder",
-		Path:               repo1Path,
+		SyncTarget:         "folder",
+		Workflows:          []string{"write"},
+		LocalPath:          repo1Path,
 		Copies:             map[string]string{},
 		ExpectedDashboards: 2,
 		ExpectedFolders:    1,
@@ -230,10 +232,11 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	// Create repo2 and sync it (no migration yet — just so it exists).
 	const repo2 = "second-repository"
 	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo2,
-		Target:                 "folder",
-		Path:                   repo2Path,
+		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
+		LocalPath:              repo2Path,
 		Copies:                 map[string]string{},
 		SkipResourceAssertions: true,
 	})

@@ -7,7 +7,7 @@ import { getPositioningMiddleware } from '../../utils/floating';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
-import { PopoverContent, TooltipPlacement } from './types';
+import { type PopoverContent, type TooltipPlacement } from './types';
 
 interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   show: boolean;

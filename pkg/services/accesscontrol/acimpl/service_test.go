@@ -3,7 +3,10 @@ package acimpl
 import (
 	"context"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -35,6 +39,8 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
 
+	sql := db.InitTestDB(t)
+
 	ac := &Service{
 		cache:          localcache.ProvideService(),
 		cfg:            cfg,
@@ -42,7 +48,8 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 		log:            log.New("accesscontrol"),
 		registrations:  accesscontrol.RegistrationList{},
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          database.ProvideService(db.InitTestDB(t)),
+		store:          database.ProvideService(sql),
+		sql:            sql,
 		permRegistry:   permreg.ProvidePermissionRegistry(),
 		actionResolver: resourcepermissions.NewActionSetService(),
 	}
@@ -52,6 +59,64 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	}
 
 	return ac
+}
+
+func TestService_getCachedPermissions_CoalescesConcurrentMisses(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+
+	var calls atomic.Int64
+	fn := func(_ context.Context) ([]accesscontrol.Permission, error) {
+		calls.Add(1)
+		// Hold the computation long enough for the other workers to block on the lock.
+		time.Sleep(20 * time.Millisecond)
+		return []accesscontrol.Permission{{Action: "test:action"}}, nil
+	}
+
+	const numWorkers = 20
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	results := make([][]accesscontrol.Permission, numWorkers)
+	errs := make([]error, numWorkers)
+	for i := range numWorkers {
+		wg.Go(func() {
+			<-start
+			results[i], errs[i] = s.getCachedPermissions(context.Background(), "test-key", fn, accesscontrol.Options{})
+		})
+	}
+	close(start)
+	wg.Wait()
+
+	require.Equal(t, int64(1), calls.Load(), "getPermissionsFn should run once for concurrent cache misses")
+	for i := range numWorkers {
+		require.NoError(t, errs[i])
+		require.Len(t, results[i], 1)
+		require.Equal(t, "test:action", results[i][0].Action)
+	}
+}
+
+func TestService_getCachedPermissions_ReloadCacheRecomputes(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+	ctx := context.Background()
+
+	var calls atomic.Int64
+	fn := func(_ context.Context) ([]accesscontrol.Permission, error) {
+		calls.Add(1)
+		return []accesscontrol.Permission{{Action: "test:action"}}, nil
+	}
+
+	_, err := s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), calls.Load())
+
+	// A subsequent read is served from cache without recomputing.
+	_, err = s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), calls.Load())
+
+	// ReloadCache forces a fresh computation.
+	_, err = s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{ReloadCache: true})
+	require.NoError(t, err)
+	require.Equal(t, int64(2), calls.Load())
 }
 
 func TestIntegrationUsageMetrics(t *testing.T) {
@@ -940,8 +1005,9 @@ func TestIntegrationService_SearchUsersPermissions_ActionSets(t *testing.T) {
 
 	// Set up action sets
 	actionSetSvc := resourcepermissions.NewActionSetService()
-	actionSetSvc.StoreActionSet(resourcepermissions.GetActionSetName("dashboards", "view"), []string{"dashboards:read"})
-	actionSetSvc.StoreActionSet(resourcepermissions.GetActionSetName("dashboards", "edit"), []string{"dashboards:read", "dashboards:write"})
+	dashboardsOptions := resourcepermissions.Options{Resource: "dashboards"}
+	actionSetSvc.StoreActionSet(dashboardsOptions.GetActionSetName("view"), []string{"dashboards:read"})
+	actionSetSvc.StoreActionSet(dashboardsOptions.GetActionSetName("edit"), []string{"dashboards:read", "dashboards:write"})
 	ac.actionResolver = actionSetSvc
 
 	ac.roles = map[string]*accesscontrol.RoleDTO{}
@@ -1187,7 +1253,10 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 			if tt.withActionSets {
 				actionSetSvc := resourcepermissions.NewActionSetService()
 				for set, actions := range tt.actionSets {
-					actionSetName := resourcepermissions.GetActionSetName(strings.Split(set, ":")[0], strings.Split(set, ":")[1])
+					resourceName := strings.Split(set, ":")[0]
+					permissionName := strings.Split(set, ":")[1]
+					setOptions := resourcepermissions.Options{Resource: resourceName}
+					actionSetName := setOptions.GetActionSetName(permissionName)
 					actionSetSvc.StoreActionSet(actionSetName, actions)
 				}
 				ac.actionResolver = actionSetSvc
@@ -1397,4 +1466,49 @@ func TestIntegrationService_GetRoleByName(t *testing.T) {
 		require.NotNil(t, role)
 		require.Equal(t, roleName, role.Name)
 	})
+}
+
+func TestIntegrationCleanupPluginRBAC(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	svc := setupTestEnv(t, false)
+
+	backend := svc.store.(*database.AccessControlStore)
+	// Setup seeder to write roles to the DB
+	svc.seeder = seeding.New(log.New("test"), backend, backend)
+
+	pluginID := "test-plugin"
+	otherPluginID := "other-plugin"
+
+	for _, id := range []string{pluginID, otherPluginID} {
+		require.NoError(t, svc.DeclarePluginRoles(ctx, id, id, []plugins.RoleRegistration{
+			{
+				Role:   plugins.Role{Name: "Admin", Permissions: []plugins.Permission{{Action: id + ".dashboards:read"}}},
+				Grants: []string{"Admin"},
+			},
+		}))
+	}
+	require.NoError(t, svc.RegisterFixedRoles(ctx))
+
+	require.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+pluginID+":%"))
+	require.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+otherPluginID+":%"))
+
+	require.NoError(t, svc.CleanupPluginRBAC(ctx, pluginID))
+
+	assert.Zero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+pluginID+":%"), "plugin role should be deleted")
+	assert.Zero(t, countDBRows(t, ctx, svc.sql, "permission", "action LIKE ?", pluginID+".%"), "plugin permissions should be deleted")
+	assert.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+otherPluginID+":%"), "other plugin role should survive")
+	assert.NotZero(t, countDBRows(t, ctx, svc.sql, "permission", "action LIKE ?", otherPluginID+".%"), "other plugin permissions should survive")
+}
+
+func countDBRows(t testing.TB, ctx context.Context, store db.DB, table, where string, args ...any) int64 {
+	t.Helper()
+	var count int64
+	require.NoError(t, store.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		count, err = sess.Table(table).Where(where, args...).Count()
+		return err
+	}))
+	return count
 }

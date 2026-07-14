@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
@@ -6,7 +7,7 @@ import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { PanelProps, store, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
+import { type PanelProps, store, systemDateFormats, type SystemDateFormatsState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import {
@@ -17,17 +18,18 @@ import {
 } from '@grafana/runtime';
 import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
-import { DashboardScenePage, Props } from './DashboardScenePage';
+import { DashboardScenePage, type Props } from './DashboardScenePage';
 import {
   DashboardScenePageStateManager,
   DashboardScenePageStateManagerV2,
@@ -72,18 +74,22 @@ function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps
 
   const renderResult = render(
     <TestProvider grafanaContext={context}>
-      <LocationServiceProvider service={locationService}>
-        <DashboardScenePage {...props} />
-      </LocationServiceProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <LocationServiceProvider service={locationService}>
+          <DashboardScenePage {...props} />
+        </LocationServiceProvider>
+      </OpenFeatureProvider>
     </TestProvider>
   );
 
   const rerender = (newProps: Props) => {
     renderResult.rerender(
       <TestProvider grafanaContext={context}>
-        <LocationServiceProvider service={locationService}>
-          <DashboardScenePage {...newProps} />
-        </LocationServiceProvider>
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <LocationServiceProvider service={locationService}>
+            <DashboardScenePage {...newProps} />
+          </LocationServiceProvider>
+        </OpenFeatureProvider>
       </TestProvider>
     );
   };

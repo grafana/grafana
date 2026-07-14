@@ -1,8 +1,8 @@
 import { defaultsDeep } from 'lodash';
 
-import { VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
+import { type VisualizationSuggestion, type VisualizationSuggestionsSupplier } from '@grafana/data';
 
-import { TracesPanelOptions } from './TracesPanel';
+import { type TracesPanelOptions } from './TracesPanel';
 
 const withDefaults = (
   suggestion: VisualizationSuggestion<TracesPanelOptions>

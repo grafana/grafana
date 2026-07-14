@@ -14,42 +14,43 @@
 
 import { css, cx } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import useMeasure from 'react-use/lib/useMeasure';
 
 import {
-  CoreApp,
-  DataFrame,
+  type CoreApp,
+  type DataFrame,
   dateTimeFormat,
-  GrafanaTheme2,
-  LinkModel,
-  TimeRange,
-  TraceKeyValuePair,
-  TraceLog,
-  PluginExtensionResourceAttributesContext,
+  type GrafanaTheme2,
+  type LinkModel,
+  type TimeRange,
+  type TraceKeyValuePair,
+  type TraceLog,
+  type PluginExtensionResourceAttributesContext,
   PluginExtensionPoints,
-  IconName,
+  type IconName,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc } from '../../types/links';
-import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { type SpanLinkFunc } from '../../types/links';
+import { type TraceProcess, type TraceSpan, type TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
 import { getServiceDisplayName } from '../../utils/service-name';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
-import DetailState from './DetailState';
+import type DetailState from './DetailState';
 import { ShareSpanButton } from './ShareSpanButton';
-import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
+import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
 const useResourceAttributesExtensionLinks = ({
@@ -349,7 +350,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
-  const mainContainerRef = useRef<HTMLDivElement>(null);
+  const [mainContainerRef, { width: mainContainerWidth }] = useMeasure<HTMLDivElement>();
 
   const styles = useStyles2(getStyles);
   if (span.kind) {
@@ -405,16 +406,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     traceID,
     spanID,
     spanStartTime: startTime,
-  });
-
-  const linksComponent = getSpanDetailLinkButtons({
-    span,
-    createSpanLink,
-    datasourceType,
-    traceToProfilesOptions,
-    timeRange,
-    app,
-    shareButton: <ShareSpanButton focusSpanLink={focusSpanLink} />,
   });
 
   const listOfContentCards = [];
@@ -525,14 +516,23 @@ export default function SpanDetail(props: SpanDetailProps) {
           <h6 className={styles.operationName} title={operationName}>
             {operationName}
           </h6>
-          {linksComponent}
+          <SpanDetailLinkButtons
+            span={span}
+            createSpanLink={createSpanLink}
+            datasourceType={datasourceType}
+            datasourceUid={datasourceUid}
+            traceToProfilesOptions={traceToProfilesOptions}
+            timeRange={timeRange}
+            app={app}
+            shareButton={<ShareSpanButton focusSpanLink={focusSpanLink} />}
+          />
         </div>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
         </div>
       </div>
       <div className={styles.content}>
-        <CardsContainer listOfContentCards={listOfContentCards} mainContainerRef={mainContainerRef} />
+        <CardsContainer listOfContentCards={listOfContentCards} containerWidth={mainContainerWidth} />
 
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
@@ -571,20 +571,19 @@ export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
 
 const CardsContainer = ({
   listOfContentCards,
-  mainContainerRef,
+  containerWidth,
 }: {
   listOfContentCards: React.ReactNode[];
-  mainContainerRef?: React.RefObject<HTMLDivElement | null>;
+  containerWidth: number;
 }) => {
   const styles = useStyles2(getStyles);
 
-  const useTwoColumns =
-    mainContainerRef && mainContainerRef.current && mainContainerRef.current.getBoundingClientRect().width > 1000;
+  const useTwoColumns = containerWidth > 1000;
 
   if (useTwoColumns) {
     return (
       <>
-        <div className={css({ float: 'left', width: '50%' })}>
+        <div data-testid="span-detail-cards-column" className={css({ float: 'left', width: '50%' })}>
           {listOfContentCards.map((card, index) =>
             index % 2 === 0 ? (
               <div className={styles.card} key={index}>
@@ -594,7 +593,7 @@ const CardsContainer = ({
           )}
         </div>
 
-        <div className={css({ float: 'right', width: '50%' })}>
+        <div data-testid="span-detail-cards-column" className={css({ float: 'right', width: '50%' })}>
           {listOfContentCards.map((card, index) =>
             index % 2 === 1 ? (
               <div className={styles.card} key={index}>
@@ -608,7 +607,7 @@ const CardsContainer = ({
   }
 
   return (
-    <div className={css({ clear: 'both', width: '100%' })}>
+    <div data-testid="span-detail-cards-column" className={css({ clear: 'both', width: '100%' })}>
       {listOfContentCards.map((card, index) => (
         <div className={styles.card} key={index}>
           {card}

@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 
-import { DataSourceSettings } from '@grafana/data';
+import { type DataSourceSettings } from '@grafana/data';
 
-import { SQLOptions } from '../../types';
+import { type SQLOptions } from '../../types';
 
 import { useMigrateDatabaseFields } from './useMigrateDatabaseFields';
 

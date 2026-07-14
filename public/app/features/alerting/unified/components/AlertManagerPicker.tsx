@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { ComponentProps, useMemo } from 'react';
+import { type ComponentProps, useMemo } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
-import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface Props {
   disabled?: boolean;

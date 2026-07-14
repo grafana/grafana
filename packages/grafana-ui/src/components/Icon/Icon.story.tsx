@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { Meta } from '@storybook/react';
-import { ChangeEvent, useState } from 'react';
+import { type Meta } from '@storybook/react-webpack5';
+import { type ChangeEvent, useState } from 'react';
 
-import { toIconName, IconName } from '@grafana/data';
+import { toIconName, type IconName } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getAvailableIcons } from '../../types/icon';
@@ -57,8 +57,9 @@ const IconWrapper = ({ name }: { name: IconName }) => {
   );
 };
 
+const collator = new Intl.Collator();
 const icons = [...getAvailableIcons()];
-icons.sort((a, b) => a.localeCompare(b));
+icons.sort((a, b) => collator.compare(a, b));
 
 export const IconsOverview = () => {
   const [filter, setFilter] = useState('');

@@ -1,4 +1,4 @@
-import { PluginState } from '@grafana/data';
+import { type PluginState } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 
 import { DashboardInteractions } from '../../utils/interactions';
 
@@ -8,6 +8,7 @@ import { VersionHistoryTable } from './VersionHistoryTable';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     versionRestoreClicked: jest.fn(),
     showMoreVersionsClicked: jest.fn(),
   },

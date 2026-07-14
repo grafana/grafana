@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -82,6 +83,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		attribute.String("export.branch", options.Branch),
 		attribute.String("export.folder", options.Folder),
 		attribute.String("export.path", options.Path),
+		attribute.Int("export.resources_count", len(options.Resources)),
 	)
 
 	start := time.Now()
@@ -96,15 +98,21 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	if err := checkExportQuota(ctx, cfg, r.resourceLister); err != nil {
+	clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
+	if err != nil {
+		return fmt.Errorf("create clients: %w", err)
+	}
+
+	if err := checkExportQuota(ctx, cfg, *options, r.resourceLister, clients); err != nil {
 		progress.Complete(ctx, err)
 		return err
 	}
 
-	msg := options.Message
-	if msg == "" {
-		msg = fmt.Sprintf("Export from Grafana %s", job.Name)
+	defaultMsg := options.Message
+	if defaultMsg == "" {
+		defaultMsg = fmt.Sprintf("Export from Grafana %s", job.Name)
 	}
+	msg := jobs.CommitMessage(job, defaultMsg)
 
 	cloneOptions := repository.StageOptions{
 		Ref:                   options.Branch,
@@ -115,12 +123,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	fn := func(repo repository.Repository, _ bool) error {
-		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
-		if err != nil {
-			logger.Error("failed to create clients", "error", err)
-			return fmt.Errorf("create clients: %w", err)
-		}
-
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
 			logger.Error("export job submitted targeting repository that is not a ReaderWriter")
@@ -136,7 +138,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
 	}
 
-	err := r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
+	err = r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
 
 	// Set RefURLs if the repository supports it and we have a target branch
 	if options.Branch != "" {
@@ -161,7 +163,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	return nil
 }
 
-func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister resources.ResourceLister) error {
+func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, options provisioning.ExportJobOptions, lister resources.ResourceLister, clients resources.ResourceClients) error {
 	quota := cfg.Status.Quota
 	if quota.MaxResourcesPerRepository == 0 {
 		return nil
@@ -169,12 +171,25 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 
 	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
 
-	stats, err := lister.Stats(ctx, cfg.Namespace, "")
-	if err != nil {
-		return fmt.Errorf("get resource stats for quota check: %w", err)
-	}
+	var netChange int64
+	if len(options.Resources) > 0 {
+		// A selective export only writes the explicitly listed resources, so the
+		// net change is bounded by that list — not every unmanaged resource in
+		// the namespace. Counting the whole namespace here would reject exports
+		// whose actual selection stays well within quota.
+		netChange = int64(len(options.Resources))
+	} else {
+		// A full export takes over every unmanaged resource in the namespace.
+		stats, err := lister.Stats(ctx, cfg.Namespace, "")
+		if err != nil {
+			return fmt.Errorf("get resource stats for quota check: %w", err)
+		}
 
-	netChange := countSupportedResources(stats.Unmanaged)
+		netChange, err = countSupportedResources(ctx, stats.Unmanaged, clients)
+		if err != nil {
+			return err
+		}
+	}
 
 	if !quotas.WouldStayWithinQuota(quota, usage, netChange) {
 		total := usage.TotalResources + netChange
@@ -186,15 +201,23 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 }
 
 // countSupportedResources sums counts for resource types that support provisioning.
-func countSupportedResources(stats []provisioning.ResourceCount) int64 {
+// The supported set is identified by group+kind; the plural resource used to match the
+// stats is resolved via discovery.
+func countSupportedResources(ctx context.Context, stats []provisioning.ResourceCount, clients resources.ResourceClients) (int64, error) {
+	supported := make(map[schema.GroupResource]bool)
+	for _, kind := range clients.SupportedResources() {
+		_, gvr, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return 0, fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
+		supported[gvr.GroupResource()] = true
+	}
+
 	var total int64
 	for _, stat := range stats {
-		for _, kind := range resources.SupportedProvisioningResources {
-			if stat.Group == kind.Group && stat.Resource == kind.Resource {
-				total += stat.Count
-				break
-			}
+		if supported[schema.GroupResource{Group: stat.Group, Resource: stat.Resource}] {
+			total += stat.Count
 		}
 	}
-	return total
+	return total, nil
 }

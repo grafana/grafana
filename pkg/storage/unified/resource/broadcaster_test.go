@@ -2,9 +2,13 @@ package resource
 
 import (
 	"context"
+	"errors"
+	"io"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,6 +19,18 @@ func drainChan[T any](ch chan T) []T {
 		out = append(out, v)
 	}
 	return out
+}
+
+func requireMetricValue(t *testing.T, collector prometheus.Collector, expected float64) {
+	t.Helper()
+	require.Equal(t, expected, testutil.ToFloat64(collector))
+}
+
+func requireMetricEventually(t *testing.T, collector prometheus.Collector, expected float64) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		return testutil.ToFloat64(collector) == expected
+	}, time.Second, 10*time.Millisecond)
 }
 
 func TestRingBuffer(t *testing.T) {
@@ -62,6 +78,8 @@ func TestRingBuffer(t *testing.T) {
 func TestBroadcaster(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ch := make(chan int)
+	reg := prometheus.NewPedanticRegistry()
+	metrics := newBroadcasterMetrics(reg)
 	input := []int{1, 2, 3}
 	go func() {
 		for _, v := range input {
@@ -72,9 +90,9 @@ func TestBroadcaster(t *testing.T) {
 		close(ch)
 	})
 
-	b := NewBroadcaster(ctx, ch)
+	b := NewBroadcaster(ctx, ch, metrics, nil)
 
-	sub, err := b.Subscribe(ctx, "test")
+	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
 
 	for _, expected := range input {
@@ -82,11 +100,16 @@ func TestBroadcaster(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, expected, v)
 	}
+	requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultOK), 1)
+	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues("unknown"), float64(len(input)))
+	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 1)
 
 	// cancel the context should close the stream
 	cancel()
 	_, ok := <-sub
 	require.False(t, ok)
+	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 0)
+	requireMetricValue(t, metrics.UnsubscriptionsTotal.WithLabelValues("test", unsubscriptionReasonShutdown), 1)
 }
 
 func TestBroadcasterUnsubscribe(t *testing.T) {
@@ -95,15 +118,17 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
+	reg := prometheus.NewPedanticRegistry()
+	metrics := newBroadcasterMetrics(reg)
 
-	b := NewBroadcaster(ctx, ch)
+	b := NewBroadcaster(ctx, ch, metrics, nil)
 
 	// subscribe three, then unsubscribe all
-	sub1, err := b.Subscribe(ctx, "sub1")
+	sub1, err := b.Subscribe(ctx, "sub1", "test")
 	require.NoError(t, err)
-	sub2, err := b.Subscribe(ctx, "sub2")
+	sub2, err := b.Subscribe(ctx, "sub2", "test")
 	require.NoError(t, err)
-	sub3, err := b.Subscribe(ctx, "sub3")
+	sub3, err := b.Subscribe(ctx, "sub3", "test")
 	require.NoError(t, err)
 
 	b.Unsubscribe(sub1)
@@ -119,13 +144,17 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 	require.False(t, ok)
 
 	// broadcaster should still work — new subscriber receives data
-	sub4, err := b.Subscribe(ctx, "sub4")
+	sub4, err := b.Subscribe(ctx, "sub4", "test")
 	require.NoError(t, err)
 
 	ch <- 42
 	v, ok := <-sub4
 	require.True(t, ok)
 	require.Equal(t, 42, v)
+	requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultOK), 4)
+	requireMetricValue(t, metrics.UnsubscriptionsTotal.WithLabelValues("test", unsubscriptionReasonClient), 3)
+	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues("unknown"), 1)
+	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 1)
 }
 
 func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
@@ -137,13 +166,13 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// Use small overflow cap so slow consumers get disconnected quickly.
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
 
 	// Create 101 subscribers that never read — enough to exceed the
 	// internal unsubscribe channel buffer and exercise bulk disconnect.
 	const numSubs = internalChanSize + 1
 	for i := 0; i < numSubs; i++ {
-		_, err := b.Subscribe(ctx, "test")
+		_, err := b.Subscribe(ctx, "test", "test")
 		require.NoError(t, err)
 	}
 
@@ -175,9 +204,9 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
 
-	sub, err := b.Subscribe(ctx, "test")
+	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
 
 	// Send more items than the subscriber buffer can hold.
@@ -207,12 +236,14 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
+	reg := prometheus.NewPedanticRegistry()
+	metrics := newBroadcasterMetrics(reg)
 
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
 
-	sub, err := b.Subscribe(ctx, "test")
+	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
 
 	// Send enough items to fill buffer + exceed overflow cap.
@@ -238,6 +269,11 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 		select {
 		case _, ok := <-sub:
 			if !ok {
+				requireMetricEventually(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultOK), 1)
+				requireMetricEventually(t, metrics.EventsReceivedTotal.WithLabelValues("unknown"), float64(subBuf+ovfCap+10))
+				requireMetricEventually(t, metrics.OverflowEventsTotal.WithLabelValues("test"), float64(ovfCap+1))
+				requireMetricEventually(t, metrics.UnsubscriptionsTotal.WithLabelValues("test", unsubscriptionReasonOverflowCap), 1)
+				requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 0)
 				return
 			}
 		case <-time.After(5 * time.Second):
@@ -257,7 +293,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 	// so readInto should leave headroom.
 	const subBuf = defaultCacheSize + 100
 	const ovfCap = 1000
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
 
 	// Fill the cache to capacity by sending items through the input channel
 	// (no subscribers yet, so items only go to cache).
@@ -266,7 +302,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 	}
 
 	// Subscribe — readInto sends all cached items into the subscriber channel.
-	sub, err := b.Subscribe(ctx, "test")
+	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
 
 	// Read one cached item to confirm the subscription is active.
@@ -301,12 +337,14 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
+	reg := prometheus.NewPedanticRegistry()
+	metrics := newBroadcasterMetrics(reg)
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
 
-	sub, err := b.Subscribe(ctx, "test")
+	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
 
 	// Send more items than the channel buffer can hold, causing overflow.
@@ -343,4 +381,46 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 	s := b.subs[sub]
 	require.NotNil(t, s, "subscriber should still exist")
 	require.Nil(t, s.overflow, "overflow should be nil after subscriber caught up")
+	requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultOK), 1)
+	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues("unknown"), float64(totalItems+1))
+	requireMetricValue(t, metrics.UnsubscriptionsTotal.WithLabelValues("test", unsubscriptionReasonOverflowCap), 0)
+	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 1)
+}
+
+func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
+	t.Run("context canceled", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		metrics := newBroadcasterMetrics(reg)
+
+		ctx := context.Background()
+		subCtx, subCancel := context.WithCancel(ctx)
+		subCancel()
+
+		b := &broadcaster[int]{
+			subscribe:    make(chan *subscription[int]),
+			terminated:   make(chan struct{}),
+			metrics:      metrics,
+			watchBufSize: watchChanSize,
+		}
+
+		_, err := b.Subscribe(subCtx, "sub1", "test")
+		require.Error(t, err)
+		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultCtxCanceled), 1)
+	})
+
+	t.Run("terminated", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		metrics := newBroadcasterMetrics(reg)
+
+		ctx := context.Background()
+		input := make(chan int)
+		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil)
+		close(input)
+
+		require.Eventually(t, func() bool {
+			_, err := b.Subscribe(ctx, "sub1", "test")
+			return errors.Is(err, io.EOF)
+		}, time.Second, 10*time.Millisecond)
+		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultTerminated), 1)
+	})
 }

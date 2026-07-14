@@ -1,6 +1,8 @@
 package sync
 
 import (
+	"sort"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -10,10 +12,11 @@ import (
 // changes and all the remaining changes while tracking the paths already
 // claimed by the real diff.
 type folderMetadataDiffSplit struct {
-	otherChanges        []repository.VersionedFileChange
-	metadataChanges     []repository.VersionedFileChange
-	changedPaths        map[string]struct{}
-	metadataFolderPaths map[string]struct{}
+	otherChanges          []repository.VersionedFileChange
+	metadataChanges       []repository.VersionedFileChange
+	changedPaths          map[string]struct{}
+	metadataFolderPaths   map[string]struct{}
+	vacatingMetadataPaths map[string]struct{}
 }
 
 // splitMetadataChanges partitions the raw incremental diff into metadata
@@ -21,18 +24,23 @@ type folderMetadataDiffSplit struct {
 // nested folder metadata is expanded deterministically.
 func splitMetadataChanges(repoDiff []repository.VersionedFileChange) folderMetadataDiffSplit {
 	input := folderMetadataDiffSplit{
-		otherChanges:        make([]repository.VersionedFileChange, 0, len(repoDiff)),
-		metadataChanges:     make([]repository.VersionedFileChange, 0),
-		changedPaths:        make(map[string]struct{}, len(repoDiff)),
-		metadataFolderPaths: make(map[string]struct{}),
+		otherChanges:          make([]repository.VersionedFileChange, 0, len(repoDiff)),
+		metadataChanges:       make([]repository.VersionedFileChange, 0),
+		changedPaths:          make(map[string]struct{}, len(repoDiff)),
+		metadataFolderPaths:   make(map[string]struct{}),
+		vacatingMetadataPaths: make(map[string]struct{}),
 	}
 
 	for _, change := range repoDiff {
 		if isHandledFolderMetadataChange(change) {
 			input.metadataChanges = append(input.metadataChanges, change)
 			input.metadataFolderPaths[folderPathForMetadataChange(change.Path)] = struct{}{}
+			if change.Action == repository.FileActionDeleted {
+				input.vacatingMetadataPaths[folderPathForMetadataChange(change.Path)] = struct{}{}
+			}
 			if change.Action == repository.FileActionRenamed && resources.IsFolderMetadataFile(change.PreviousPath) {
 				input.metadataFolderPaths[folderPathForMetadataChange(change.PreviousPath)] = struct{}{}
+				input.vacatingMetadataPaths[folderPathForMetadataChange(change.PreviousPath)] = struct{}{}
 			}
 			continue
 		}
@@ -44,9 +52,7 @@ func splitMetadataChanges(repoDiff []repository.VersionedFileChange) folderMetad
 		}
 	}
 
-	safepath.SortByDepth(input.metadataChanges, func(change repository.VersionedFileChange) string {
-		return change.Path
-	}, false)
+	sortMetadataChanges(input.metadataChanges)
 
 	return input
 }
@@ -76,6 +82,13 @@ func (input folderMetadataDiffSplit) HasMetadataFolderAt(path string) bool {
 	return ok
 }
 
+// IsMetadataVacatingAt reports whether _folder.json is being removed from the
+// given folder path (deleted or renamed away).
+func (input folderMetadataDiffSplit) IsMetadataVacatingAt(path string) bool {
+	_, ok := input.vacatingMetadataPaths[path]
+	return ok
+}
+
 // isHandledFolderMetadataChange reports whether the diff entry is a `_folder.json`
 // action that the incremental metadata builder knows how to rewrite.
 // Renamed _folder.json files (from directory renames) are included so they are
@@ -90,4 +103,30 @@ func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
 		change.Action == repository.FileActionUpdated ||
 		change.Action == repository.FileActionDeleted ||
 		change.Action == repository.FileActionRenamed
+}
+
+// sortMetadataChanges orders metadata changes deepest-first (so nested folders
+// are expanded before their parents) with a secondary sort that places renames
+// before other actions at the same depth. This guarantees that a legitimate
+// folder move are proccessed before folder updates that might reference the same UID.
+func sortMetadataChanges(changes []repository.VersionedFileChange) {
+	sort.SliceStable(changes, func(i, j int) bool {
+		di, dj := safepath.Depth(changes[i].Path), safepath.Depth(changes[j].Path)
+		if di != dj {
+			return di > dj
+		}
+		ri := metadataActionPriority(changes[i].Action)
+		rj := metadataActionPriority(changes[j].Action)
+		if ri != rj {
+			return ri < rj
+		}
+		return changes[i].Path < changes[j].Path
+	})
+}
+
+func metadataActionPriority(action repository.FileAction) int {
+	if action == repository.FileActionRenamed {
+		return 0
+	}
+	return 1
 }

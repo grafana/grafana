@@ -4,7 +4,7 @@ import { merge } from 'webpack-merge';
 import grafanaConfig, { type Env } from '@grafana/plugin-configs/webpack.config.ts';
 
 const config = async (env: Env): Promise<Configuration> => {
-  const baseConfig = await grafanaConfig(env);
+  const baseConfig = await grafanaConfig(env, import.meta.dirname);
 
   return merge(baseConfig, {
     externals: ['@kusto/monaco-kusto', 'i18next'],

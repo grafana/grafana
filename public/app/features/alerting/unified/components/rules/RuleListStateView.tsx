@@ -3,7 +3,7 @@ import { useMeasure } from 'react-use';
 
 import { Counter, LoadingBar, Pagination, Stack } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
-import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { type CombinedRule, type CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
@@ -24,6 +24,8 @@ interface Props {
 }
 
 type GroupedRules = Map<PromAlertingRuleState, CombinedRule[]>;
+
+const collator = new Intl.Collator();
 
 export const RuleListStateView = ({ namespaces }: Props) => {
   const [ref, { width }] = useMeasure<HTMLUListElement>();
@@ -52,7 +54,7 @@ export const RuleListStateView = ({ namespaces }: Props) => {
       )
     );
 
-    result.forEach((rules) => rules.sort((a, b) => a.name.localeCompare(b.name)));
+    result.forEach((rules) => rules.sort((a, b) => collator.compare(a.name, b.name)));
 
     return result;
   }, [namespaces]);

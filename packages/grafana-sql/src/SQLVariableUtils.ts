@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
 
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 
 import { applyQueryDefaults } from './defaults';

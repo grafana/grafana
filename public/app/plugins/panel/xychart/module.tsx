@@ -6,7 +6,7 @@ import { SeriesEditor } from './SeriesEditor';
 import { XYChartPanel2 } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
 import { xyChartMigrationHandler } from './migrations';
-import { FieldConfig, defaultFieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig, defaultFieldConfig, type Options } from './panelcfg.gen';
 import { xychartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)

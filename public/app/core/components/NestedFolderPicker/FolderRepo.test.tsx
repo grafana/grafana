@@ -1,16 +1,20 @@
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { DashboardViewItem } from 'app/features/search/types';
+import type * as useGetResourceRepositoryViewModule from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { type DashboardViewItem } from 'app/features/search/types';
 
 import { FolderRepo } from './FolderRepo';
 
-jest.mock('@grafana/runtime', () => ({
-  config: { featureToggles: { provisioning: true } },
-}));
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    config: { featureToggles: { provisioning: true } },
+  };
+});
 
 const mockUseGetFrontendSettingsQuery = jest.fn();
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
@@ -19,7 +23,7 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 
 const mockUseGetResourceRepositoryView = jest.fn();
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
-  const actual = jest.requireActual<typeof import('app/features/provisioning/hooks/useGetResourceRepositoryView')>(
+  const actual = jest.requireActual<typeof useGetResourceRepositoryViewModule>(
     'app/features/provisioning/hooks/useGetResourceRepositoryView'
   );
   return {

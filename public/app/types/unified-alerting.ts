@@ -1,19 +1,19 @@
 /* Prometheus internal models */
 
-import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
-import { PromOptions } from '@grafana/prometheus';
-import { LokiOptions } from 'app/plugins/datasource/loki/types';
+import { type AlertState, type DataSourceInstanceSettings } from '@grafana/data';
+import { type PromOptions } from '@grafana/prometheus';
+import { type LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
-  Annotations,
-  GrafanaAlertState,
-  GrafanaAlertStateWithReason,
-  Labels,
+  type Annotations,
+  type GrafanaAlertState,
+  type GrafanaAlertStateWithReason,
+  type Labels,
   mapStateWithReasonToBaseState,
-  PromAlertingRuleState,
-  PromRuleType,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
+  type PromAlertingRuleState,
+  type PromRuleType,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
 } from './unified-alerting-dto';
 
 export type Alert = {
@@ -84,8 +84,6 @@ export interface GrafanaRecordingRule extends RecordingRule {
 
 export type GrafanaRule = GrafanaAlertingRule | GrafanaRecordingRule;
 
-export type BaseRuleGroup = { name: string };
-
 type TotalsWithoutAlerting = Exclude<AlertInstanceTotalState, AlertInstanceTotalState.Alerting>;
 enum FiringTotal {
   Firing = 'firing',
@@ -98,28 +96,10 @@ export interface RuleGroup {
   totals?: Partial<Record<TotalsWithoutAlerting | FiringTotal, number>>;
 }
 
-export interface DataSourceRuleGroup {
-  id: DataSourceRuleGroupIdentifier;
-  interval: number;
-  rules: Rule[];
-}
-
-export interface DataSourceRuleNamespace {
-  rulesSource: DataSourceRulesSourceIdentifier;
-  id: DataSourceNamespaceIdentifier;
-  groups: DataSourceRuleGroup[];
-}
-
 export interface RuleNamespace {
   dataSourceName: string;
   name: string;
   groups: RuleGroup[];
-}
-
-export interface RulesSourceResult {
-  dataSourceName: string;
-  error?: unknown;
-  namespaces?: RuleNamespace[];
 }
 
 /** @deprecated use RulesSourceIdentifier instead */
@@ -229,13 +209,6 @@ export type RuleGroupIdentifierV2 = GrafanaRuleGroupIdentifier | DataSourceRuleG
 
 export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
 
-export interface PromRuleWithLocation {
-  rule: AlertingRule;
-  dataSourceName: string;
-  namespaceName: string;
-  groupName: string;
-}
-
 export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
@@ -316,12 +289,6 @@ export interface RulerDataSourceConfig {
   dataSourceName: string;
   dataSourceUid: string;
   apiVersion: 'legacy' | 'config';
-}
-
-export interface PromBasedDataSource {
-  name: string;
-  id: string | number;
-  rulerConfig?: RulerDataSourceConfig;
 }
 
 export interface PaginationProps {

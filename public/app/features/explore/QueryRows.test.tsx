@@ -1,13 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
-import { DataSourceApi } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataSourceApi } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState } from 'app/types/explore';
+import { type ExploreState } from 'app/types/explore';
 
-import { UserState } from '../profile/state/reducers';
+import { type UserState } from '../profile/state/reducers';
 
 import { QueryRows } from './QueryRows';
 import { makeExplorePaneState } from './state/utils';
@@ -90,6 +91,6 @@ describe('Explore QueryRows', () => {
     fireEvent.click(duplicateButton);
 
     // We should have another row with refId B
-    expect(await screen.findByLabelText('Query editor row title B')).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.components.QueryEditorRow.title('B'))).toBeInTheDocument();
   });
 });

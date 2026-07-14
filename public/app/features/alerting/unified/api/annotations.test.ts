@@ -1,5 +1,5 @@
 import '@grafana/runtime';
-import { StateHistoryItem } from 'app/types/unified-alerting';
+import { type StateHistoryItem } from 'app/types/unified-alerting';
 
 import { fetchAnnotations, sortStateHistory } from './annotations';
 

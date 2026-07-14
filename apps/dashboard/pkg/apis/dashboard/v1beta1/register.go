@@ -8,9 +8,11 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -36,22 +38,25 @@ type (
 	DashboardAccess           = v1.DashboardAccess
 	AnnotationPermission      = v1.AnnotationPermission
 	AnnotationActions         = v1.AnnotationActions
-	DashboardClient           = v1.DashboardClient
 	DashboardJSONCodec        = v1.DashboardJSONCodec
 )
 
 var (
-	NewDashboard                    = v1.NewDashboard
-	NewDashboardSpec                = v1.NewDashboardSpec
-	NewDashboardStatus              = v1.NewDashboardStatus
-	NewDashboardClient              = v1.NewDashboardClient
-	NewDashboardClientFromGenerator = v1.NewDashboardClientFromGenerator
+	NewDashboard       = v1.NewDashboard
+	NewDashboardSpec   = v1.NewDashboardSpec
+	NewDashboardStatus = v1.NewDashboardStatus
 
-	DashboardKind         = v1.DashboardKind
-	DashboardSchema       = v1.DashboardSchema
 	GetOpenAPIDefinitions = v1.GetOpenAPIDefinitions
 	ValidateDashboardSpec = v1.ValidateDashboardSpec
 )
+
+var (
+	schemaDashboard *resource.SimpleSchema
+	kindDashboard   resource.Kind
+)
+
+func DashboardKind() resource.Kind            { return kindDashboard }
+func DashboardSchema() *resource.SimpleSchema { return schemaDashboard }
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"dashboards", "dashboard", "Dashboard",
@@ -60,21 +65,22 @@ var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The dashboard name"},
+			{Name: "Title", Type: "string", Description: "The dashboard name"},
+			{Name: "Tags", Type: "array", Format: "string", Description: "Dashboard tags"},
 			{Name: "Created At", Type: "date"},
 		},
-		Reader: func(obj any) ([]interface{}, error) {
+		Reader: func(obj any) ([]any, error) {
 			dash, ok := obj.(*Dashboard)
-			if ok {
-				if dash != nil {
-					return []interface{}{
-						dash.Name,
-						dash.Spec.GetNestedString("title"),
-						dash.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				}
+			if !ok || dash == nil {
+				return nil, fmt.Errorf("expected dashboard")
 			}
-			return nil, fmt.Errorf("expected dashboard")
+			tags, _, _ := unstructured.NestedStringSlice(dash.Spec.Object, "tags")
+			return []any{
+				dash.Name,
+				dash.Spec.GetNestedString("title"),
+				tags,
+				dash.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
 		},
 	},
 )
@@ -87,6 +93,10 @@ var (
 )
 
 func init() {
+	k := v1.DashboardKind()
+	schemaDashboard = resource.NewSimpleSchema(GROUP, VERSION, k.ZeroValue(), k.ZeroListValue(),
+		resource.WithKind(k.Kind()), resource.WithPlural(k.Plural()), resource.WithScope(k.Scope()))
+	kindDashboard = resource.Kind{Codecs: k.Codecs, Schema: schemaDashboard}
 	localSchemeBuilder.Register(addKnownTypes)
 }
 

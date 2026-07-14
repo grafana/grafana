@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
@@ -41,6 +42,29 @@ func TestValidateOnCreate(t *testing.T) {
 				},
 			},
 			want: errInvalidName,
+		},
+		{
+			name: "wildcard resource name - should fail",
+			obj: &iamv0alpha1.ResourcePermission{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "folder.grafana.app-folders-*",
+				},
+				Spec: iamv0alpha1.ResourcePermissionSpec{
+					Resource: iamv0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "folder.grafana.app",
+						Resource: "folders",
+						Name:     "*",
+					},
+					Permissions: []iamv0alpha1.ResourcePermissionspecPermission{
+						{
+							Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+							Name: "Editor",
+							Verb: "edit",
+						},
+					},
+				},
+			},
+			want: errInvalidSpec,
 		},
 		{
 			name: "mismatched name and spec - should fail",
@@ -169,6 +193,123 @@ func TestValidateOnCreate(t *testing.T) {
 	}
 }
 
+func TestValidateOnCreate_KindAndVerbRestrictions(t *testing.T) {
+	mappers := NewMappersRegistry()
+	mappers.RegisterMapper(
+		schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"},
+		NewMapperWithAttribute("serviceaccounts", []string{"Edit", "Admin"}, ScopeAttributeID,
+			[]iamv0alpha1.ResourcePermissionSpecPermissionKind{
+				iamv0alpha1.ResourcePermissionSpecPermissionKindUser,
+				iamv0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
+				iamv0alpha1.ResourcePermissionSpecPermissionKindTeam,
+			}),
+		nil,
+	)
+
+	tests := []struct {
+		name    string
+		obj     *iamv0alpha1.ResourcePermission
+		wantErr bool
+	}{
+		{
+			name: "serviceaccount with BasicRole kind - should fail",
+			obj: &iamv0alpha1.ResourcePermission{
+				ObjectMeta: v1.ObjectMeta{Name: "iam.grafana.app-serviceaccounts-sa-abc123"},
+				Spec: iamv0alpha1.ResourcePermissionSpec{
+					Resource: iamv0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "iam.grafana.app",
+						Resource: "serviceaccounts",
+						Name:     "sa-abc123",
+					},
+					Permissions: []iamv0alpha1.ResourcePermissionspecPermission{
+						{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "serviceaccount with view verb - should fail",
+			obj: &iamv0alpha1.ResourcePermission{
+				ObjectMeta: v1.ObjectMeta{Name: "iam.grafana.app-serviceaccounts-sa-abc123"},
+				Spec: iamv0alpha1.ResourcePermissionSpec{
+					Resource: iamv0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "iam.grafana.app",
+						Resource: "serviceaccounts",
+						Name:     "sa-abc123",
+					},
+					Permissions: []iamv0alpha1.ResourcePermissionspecPermission{
+						{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-xyz", Verb: "view"},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "serviceaccount with User kind and edit verb - should pass",
+			obj: &iamv0alpha1.ResourcePermission{
+				ObjectMeta: v1.ObjectMeta{Name: "iam.grafana.app-serviceaccounts-sa-abc123"},
+				Spec: iamv0alpha1.ResourcePermissionSpec{
+					Resource: iamv0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "iam.grafana.app",
+						Resource: "serviceaccounts",
+						Name:     "sa-abc123",
+					},
+					Permissions: []iamv0alpha1.ResourcePermissionspecPermission{
+						{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-xyz", Verb: "edit"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "serviceaccount with Team kind and admin verb - should pass",
+			obj: &iamv0alpha1.ResourcePermission{
+				ObjectMeta: v1.ObjectMeta{Name: "iam.grafana.app-serviceaccounts-sa-abc123"},
+				Spec: iamv0alpha1.ResourcePermissionSpec{
+					Resource: iamv0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "iam.grafana.app",
+						Resource: "serviceaccounts",
+						Name:     "sa-abc123",
+					},
+					Permissions: []iamv0alpha1.ResourcePermissionspecPermission{
+						{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-abc", Verb: "admin"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "folder with BasicRole kind - should still pass (no kind restriction)",
+			obj: &iamv0alpha1.ResourcePermission{
+				ObjectMeta: v1.ObjectMeta{Name: "folder.grafana.app-folders-test_folder"},
+				Spec: iamv0alpha1.ResourcePermissionSpec{
+					Resource: iamv0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "folder.grafana.app",
+						Resource: "folders",
+						Name:     "test_folder",
+					},
+					Permissions: []iamv0alpha1.ResourcePermissionspecPermission{
+						{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := ValidateCreateAndUpdateInput(context.Background(), test.obj, mappers)
+			if test.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestValidateDeleteInput(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -179,6 +320,11 @@ func TestValidateDeleteInput(t *testing.T) {
 			name:    "invalid name - should fail",
 			objName: "some-invalid-name",
 			want:    errInvalidName,
+		},
+		{
+			name:    "wildcard resource name - should fail",
+			objName: "folder.grafana.app-folders-*",
+			want:    errInvalidSpec,
 		},
 		{
 			name:    "enabled group/resource (folder) - should pass",

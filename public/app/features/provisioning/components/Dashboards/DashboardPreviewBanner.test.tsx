@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -52,7 +52,7 @@ interface PullRequestParamReturn {
   prURL?: string;
   newPrURL?: string;
   repoURL?: string;
-  repoType?: string;
+  repoType?: 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' | 'local';
 }
 
 interface FileQueryData {
@@ -112,6 +112,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
     ...overrides.pullRequestParam,
     resourcePushedTo: 'abc',
     action: 'create',
+    prTitle: undefined,
   });
 
   mockUseGetResourceRepositoryView.mockReturnValue({
@@ -121,6 +122,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
     isLoading: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
+    isMissingRepo: false,
   });
 
   mockUseGetRepositoryFilesWithPathQuery.mockReturnValue({

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { Playlist } from '../../api/clients/playlist/v1';
+import { type Playlist } from '../../api/clients/playlist/v1';
 
-import { PlaylistMode } from './types';
+import { type PlaylistMode } from './types';
 
 export interface Props {
   playlist: Playlist;
@@ -61,12 +61,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   };
 
   return (
-    <Modal
-      isOpen={true}
-      icon="play"
-      title={t('playlist.start-modal.title-start-playlist', 'Start playlist')}
-      onDismiss={onDismiss}
-    >
+    <Modal isOpen={true} title={t('playlist.start-modal.title-start-playlist', 'Start playlist')} onDismiss={onDismiss}>
       <FieldSet>
         <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
           <Field noMargin label={t('playlist.start-modal.label-mode', 'Mode')}>
@@ -121,39 +116,37 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
               />
             </Field>
           )}
-          {config.featureToggles.dashboardScene && (
-            <Field
-              noMargin
-              label={t('playlist.start-modal.label-display-dashboard-controls', 'Display dashboard controls')}
-              description={t(
-                'playlist.start-modal.description-customize-dashboard-elements-visibility',
-                'Customize dashboard elements visibility'
-              )}
-            >
-              <Box marginTop={2} marginBottom={2}>
-                <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
-                  <Checkbox
-                    label={t('playlist.start-modal.label-time-and-refresh', 'Time and refresh')}
-                    name="displayTimePicker"
-                    value={displayTimePicker}
-                    onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
-                  />
-                  <Checkbox
-                    label={t('playlist.start-modal.label-variables', 'Variables')}
-                    name="displayVariableControls"
-                    value={displayVariables}
-                    onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
-                  />
-                  <Checkbox
-                    label={t('playlist.start-modal.label-dashboard-links', 'Dashboard links')}
-                    name="displayLinks"
-                    value={displayLinks}
-                    onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
-                  />
-                </Stack>
-              </Box>
-            </Field>
-          )}
+          <Field
+            noMargin
+            label={t('playlist.start-modal.label-display-dashboard-controls', 'Display dashboard controls')}
+            description={t(
+              'playlist.start-modal.description-customize-dashboard-elements-visibility',
+              'Customize dashboard elements visibility'
+            )}
+          >
+            <Box marginTop={2} marginBottom={2}>
+              <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
+                <Checkbox
+                  label={t('playlist.start-modal.label-time-and-refresh', 'Time and refresh')}
+                  name="displayTimePicker"
+                  value={displayTimePicker}
+                  onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
+                />
+                <Checkbox
+                  label={t('playlist.start-modal.label-variables', 'Variables')}
+                  name="displayVariableControls"
+                  value={displayVariables}
+                  onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
+                />
+                <Checkbox
+                  label={t('playlist.start-modal.label-dashboard-links', 'Dashboard links')}
+                  name="displayLinks"
+                  value={displayLinks}
+                  onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
+                />
+              </Stack>
+            </Box>
+          </Field>
         </Stack>
       </FieldSet>
       <Modal.ButtonRow>

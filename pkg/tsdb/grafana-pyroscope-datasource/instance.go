@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/prometheus/model/labels"
@@ -19,6 +20,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 )
 
@@ -36,6 +38,7 @@ type ProfilingClient interface {
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64, exemplarType typesv1.ExemplarType) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64, profileIdSelector []string) (*ProfileResponse, error)
 	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
+	GetHeatmap(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, queryType querierv1.HeatmapQueryType, limit *int64, includeExemplars bool) (*HeatmapResponse, error)
 }
 
 // PyroscopeDatasource is a datasource for querying application performance profiles.
@@ -43,14 +46,18 @@ type PyroscopeDatasource struct {
 	httpClient *http.Client
 	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
+	logger     log.Logger
 }
 
 // NewPyroscopeDatasource creates a new datasource instance.
-func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, logger log.Logger) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, backend.DownstreamErrorf("failed to get HTTP client options: %w. function: %s", err, logEntrypoint())
 	}
+
+	opt.ForwardHTTPHeaders = true
+
 	httpClient, err := httpClientProvider.New(opt)
 	if err != nil {
 		return nil, backend.DownstreamErrorf("failed to create HTTP client: %w. function: %s", err, logEntrypoint())
@@ -60,11 +67,12 @@ func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.P
 		httpClient: httpClient,
 		client:     NewPyroscopeClient(httpClient, settings.URL),
 		settings:   settings,
+		logger:     logger,
 	}, nil
 }
 
 func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctxLogger := logger.FromContext(ctx)
+	ctxLogger := d.logger.FromContext(ctx)
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.CallResource", trace.WithAttributes(attribute.String("path", req.Path), attribute.String("method", req.Method)))
 	defer span.End()
 	ctxLogger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body, "function", logEntrypoint())
@@ -134,7 +142,7 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
 	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
 	labelSelector := query.Get("query")
-	matchers, err := parser.ParseMetricSelector(labelSelector)
+	matchers, err := parser.NewParser(parser.Options{}).ParseMetricSelector(labelSelector)
 	if err != nil {
 		return backend.DownstreamErrorf("failed parsing label selector: %w. function: %s", err, logEntrypoint())
 	}
@@ -229,7 +237,7 @@ func (d *PyroscopeDatasource) profileMetadata(ctx context.Context, _ *backend.Ca
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	ctxLogger := logger.FromContext(ctx)
+	ctxLogger := d.logger.FromContext(ctx)
 	ctxLogger.Debug("Processing queries", "queryLength", len(req.Queries), "function", logEntrypoint())
 
 	// create response struct
@@ -254,7 +262,7 @@ func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryD
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.FromContext(ctx).Debug("CheckHealth called", "function", logEntrypoint())
+	d.logger.FromContext(ctx).Debug("CheckHealth called", "function", logEntrypoint())
 
 	status := backend.HealthStatusOk
 	message := "Data source is working"
@@ -277,7 +285,7 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 // SubscribeStream is called when a client wants to connect to a stream.
 // This callback allows sending the first message.
 func (d *PyroscopeDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	logger.Debug("Subscribing stream called", "function", logEntrypoint())
+	d.logger.Debug("Subscribing stream called", "function", logEntrypoint())
 
 	status := backend.SubscribeStreamStatusPermissionDenied
 	if req.Path == "stream" {
@@ -292,7 +300,7 @@ func (d *PyroscopeDatasource) SubscribeStream(_ context.Context, req *backend.Su
 // RunStream is called once for any open channel.
 // Results are shared with everyone subscribed to the same channel.
 func (d *PyroscopeDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	ctxLogger := logger.FromContext(ctx)
+	ctxLogger := d.logger.FromContext(ctx)
 	ctxLogger.Debug("Running stream", "path", req.Path, "function", logEntrypoint())
 
 	// Create the same data frame as for query data.
@@ -330,7 +338,7 @@ func (d *PyroscopeDatasource) RunStream(ctx context.Context, req *backend.RunStr
 
 // PublishStream is called when a client sends a message to the stream.
 func (d *PyroscopeDatasource) PublishStream(ctx context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	logger.FromContext(ctx).Debug("Publishing stream", "function", logEntrypoint())
+	d.logger.FromContext(ctx).Debug("Publishing stream", "function", logEntrypoint())
 
 	// Do not allow publishing at all.
 	return &backend.PublishStreamResponse{

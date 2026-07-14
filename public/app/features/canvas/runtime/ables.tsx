@@ -1,8 +1,8 @@
-import { MoveableManagerInterface, Renderer } from 'moveable';
+import { type MoveableManagerInterface, type Renderer } from 'moveable';
 
 import { VerticalConstraint, HorizontalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { Scene } from './scene';
+import { type Scene } from './scene';
 import { findElementByTarget } from './sceneElementManagement';
 
 export const settingsViewable = (scene: Scene) => ({

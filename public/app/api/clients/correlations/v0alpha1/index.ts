@@ -23,15 +23,40 @@ export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         }
         return originalQuery(requestOptions);
       };
+
+      endpointDefinition.onQueryStarted = async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(
+            notifyApp(createSuccessNotification(t('correlations.notify.create-success', 'Correlation created')))
+          );
+        } catch (e) {
+          handleError(e, dispatch, t('correlations.notify.create-error', 'Error creating correlation'));
+        }
+      };
     },
     updateCorrelation: {
       onQueryStarted: async ({}, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
 
-          dispatch(notifyApp(createSuccessNotification(t('correlation.edit-success', 'Correlation updated'))));
+          dispatch(notifyApp(createSuccessNotification(t('correlations.notify.edit-success', 'Correlation updated'))));
         } catch (e) {
-          handleError(e, dispatch, t('correlation.edit-error', 'Error updating correlation'));
+          handleError(e, dispatch, t('correlations.notify.edit-error', 'Error updating correlation'));
+        }
+      },
+    },
+    deleteCorrelation: {
+      onQueryStarted: async ({}, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(
+            notifyApp(createSuccessNotification(t('correlations.notify.delete-success', 'Correlation deleted')))
+          );
+        } catch (e) {
+          handleError(e, dispatch, t('correlations.notify.delete-error', 'Error deleting correlation'));
         }
       },
     },

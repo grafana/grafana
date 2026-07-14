@@ -1,4 +1,4 @@
-import { SceneObject, VizPanel, sceneGraph, PATH_ID_SEPARATOR } from '@grafana/scenes';
+import { type SceneObject, VizPanel, sceneGraph } from '@grafana/scenes';
 
 import { getVizPanelKeyForPanelId } from './utils';
 
@@ -25,8 +25,4 @@ export function findVizPanelByPathId(scene: SceneObject, pathId: string): VizPan
   }
 
   return null;
-}
-
-export function containsPathIdSeparator(key: string): boolean {
-  return key.includes(PATH_ID_SEPARATOR);
 }

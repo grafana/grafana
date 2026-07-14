@@ -21,6 +21,7 @@ export function BrowseFilters() {
       onPanelTypeChange={stateManager.onPanelTypeChange}
       onSetIncludePanels={stateManager.onSetIncludePanels}
       onCreatedByChange={stateManager.onCreatedByChange}
+      onOwnerReferenceChange={stateManager.onOwnerReferenceChange}
     />
   );
 }

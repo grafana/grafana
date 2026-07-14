@@ -4,19 +4,24 @@ on:
   pull_request:
     types: [opened]
     paths:
-      - "public/app/plugins/datasource/elasticsearch/**"
+      - "packages/grafana-prometheus/**"
       - "public/app/plugins/datasource/cloudwatch/**"
-      - "public/app/plugins/datasource/cloud-monitoring/**"
-      - "public/app/plugins/datasource/zipkin/**"
-      - "pkg/tsdb/elasticsearch/**"
+      - "public/app/plugins/datasource/graphite/**"
+      - "public/app/plugins/datasource/influxdb/**"
+      - "public/app/plugins/datasource/mssql/**"
+      - "public/app/plugins/datasource/prometheus/**"
+      - "public/app/plugins/datasource/grafana-pyroscope-datasource/**"
       - "pkg/tsdb/cloudwatch/**"
-      - "pkg/tsdb/cloud-monitoring/**"
-      - "pkg/tsdb/zipkin/**"
+      - "pkg/tsdb/graphite/**"
+      - "pkg/tsdb/influxdb/**"
+      - "pkg/tsdb/mssql/**"
+      - "pkg/tsdb/prometheus/**"
+      - "pkg/tsdb/grafana-pyroscope-datasource/**"
 
 jobs:
   add-comment:
     if: ${{ ! github.event.pull_request.head.repo.fork }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     permissions:
       pull-requests: write
     steps:

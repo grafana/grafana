@@ -1,13 +1,13 @@
 import memoizeOne from 'memoize-one';
 
-import { PanelPlugin } from '@grafana/data';
+import { type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-import { PanelEditorTab, PanelEditorTabId } from '../types';
+import { type PanelEditorTab, PanelEditorTabId } from '../types';
 
 export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin) => {
   const tabs: PanelEditorTab[] = [];
@@ -55,7 +55,7 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
   return tabs;
 });
 
-export function shouldShowAlertingTab(plugin: PanelPlugin) {
+function shouldShowAlertingTab(plugin: PanelPlugin) {
   const { unifiedAlertingEnabled = false } = getConfig();
   const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
   const isAlertingAvailable = unifiedAlertingEnabled && hasRuleReadPermissions;

@@ -2,8 +2,8 @@ import { memo, useMemo } from 'react';
 
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
-import { GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
-import { FlameGraphDataContainer, LevelItem } from '../FlameGraph/dataTransform';
+import { type GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
+import { type FlameGraphDataContainer, type LevelItem } from '../FlameGraph/dataTransform';
 import { PaneView, ViewMode } from '../types';
 
 type ActionsCellProps = {

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
-import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -14,7 +14,8 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
-import { RulesFilterProps } from '../../../rule-list/filter/RulesFilter';
+import { type RulesFilterProps as RulesFilterV2Props } from '../../../rule-list/filter/RulesFilter.v2';
+type RulesFilterProps = RulesFilterV2Props & { onClear?: () => void };
 import { RuleHealth, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';

@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
 
-import { PanelChrome, PanelChromeProps } from './PanelChrome';
+import { PanelChrome, type PanelChromeProps } from './PanelChrome';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
@@ -243,11 +243,15 @@ it('does not select the panel when clicking interactive content', async () => {
         {() => (
           <div>
             <button type="button">Button text</button>
+            <input role="combobox" />
+            {/* eslint-disable-next-line @grafana/no-plain-links */}
             <a href="#">Anchor text</a>
             <canvas />
             <svg />
             <div className="u-over" />
+            <div className="u-axis" />
             <div role="button" />
+            <div role="columnheader">Column header</div>
             <div>Non-interactive</div>
           </div>
         )}
@@ -257,6 +261,9 @@ it('does not select the panel when clicking interactive content', async () => {
       </div>
     </ElementSelectionContext.Provider>
   );
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('combobox') });
+  expect(onSelect).not.toHaveBeenCalled();
 
   await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('button', { name: 'Button text' }) });
   expect(onSelect).not.toHaveBeenCalled();
@@ -274,6 +281,12 @@ it('does not select the panel when clicking interactive content', async () => {
   expect(onSelect).not.toHaveBeenCalled();
 
   await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('div[role="button"]')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('.u-axis')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('columnheader', { name: 'Column header' }) });
   expect(onSelect).not.toHaveBeenCalled();
 
   await user.pointer({ keys: '[MouseLeft>]', target: screen.getByText('Non-interactive') });

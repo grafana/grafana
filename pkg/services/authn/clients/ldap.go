@@ -135,7 +135,7 @@ func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *
 		IsGrafanaAdmin:  info.IsGrafanaAdmin,
 		AuthenticatedBy: info.AuthModule,
 		AuthID:          info.AuthId,
-		Groups:          info.Groups,
+		ExternalGroups:  info.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,

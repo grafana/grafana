@@ -1,17 +1,16 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, TextLink, Icon } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip } from '@grafana/ui';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { AddNewEditPane } from 'app/features/dashboard-scene/edit-pane/add-new/AddNewEditPane';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-
-import { BasicProvisionedDashboardsEmptyPage } from '../DashboardLibrary/BasicProvisionedDashboardsEmptyPage';
-import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
+import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -35,28 +34,15 @@ const InternalDashboardEmpty = ({
   onImportDashboard,
 }: InternalProps) => {
   const styles = useStyles2(getStyles);
-  const [searchParams] = useSearchParams();
-  const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   return (
     <>
       <Stack alignItems="center" justifyContent="center">
-        <div
-          className={cx(styles.wrapper, {
-            [styles.wrapperMaxWidth]:
-              !(config.featureToggles.dashboardLibrary || config.featureToggles.suggestedDashboards) ||
-              !dashboardLibraryDatasourceUid,
-          })}
-        >
+        <div className={`${styles.wrapper} ${styles.wrapperMaxWidth}`}>
           {config.featureToggles.dashboardNewLayouts && dashboard instanceof DashboardScene ? (
-            <NewLayoutEmpty
-              dashboard={dashboard}
-              styles={styles}
-              dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
-            />
+            <NewLayoutEmpty dashboard={dashboard} styles={styles} />
           ) : (
             <OldLayoutEmpty
-              dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
               onAddVisualization={onAddVisualization}
               onAddLibraryPanel={onAddLibraryPanel}
               onImportDashboard={onImportDashboard}
@@ -68,25 +54,6 @@ const InternalDashboardEmpty = ({
   );
 };
 
-const DashboardExtensionsComponents = ({
-  dashboardLibraryDatasourceUid,
-}: {
-  dashboardLibraryDatasourceUid: string | null;
-}) => (
-  <>
-    {/* Suggested Dashboards Section */}
-    {config.featureToggles.suggestedDashboards &&
-      config.featureToggles.dashboardLibrary &&
-      dashboardLibraryDatasourceUid && <SuggestedDashboards datasourceUid={dashboardLibraryDatasourceUid} />}
-
-    {/* Basic Provisioned Dashboards Section that don't include community dashboards */}
-    {config.featureToggles.dashboardLibrary &&
-      !config.featureToggles.suggestedDashboards &&
-      dashboardLibraryDatasourceUid && (
-        <BasicProvisionedDashboardsEmptyPage datasourceUid={dashboardLibraryDatasourceUid} />
-      )}
-  </>
-);
 interface NewLayoutEmptyProps {
   dashboard: DashboardScene;
   styles: {
@@ -94,23 +61,37 @@ interface NewLayoutEmptyProps {
     wrapperMaxWidth: string;
     appsIcon: string;
   };
-  dashboardLibraryDatasourceUid: string | null;
 }
 
-const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: NewLayoutEmptyProps) => {
-  const { uid, isEditing, editPane } = dashboard.state;
+const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
+  const { uid, isEditing, editPane, body } = dashboard.useState();
   const isEditingNewDashboard = isEditing && !uid;
+  const isAutoGrid = body instanceof AutoGridLayoutManager;
 
   // open the edit pane when the dashboard is new and in editing mode
   // will only happen when the default empty state is shown (not overridden by extension point)
   useEffect(() => {
-    if (isEditingNewDashboard) {
-      editPane.openPane('add');
+    if (isEditingNewDashboard && editPane.state.openPane?.getId() !== 'add') {
+      editPane.openPane(new AddNewEditPane({}));
     }
   }, [isEditingNewDashboard, editPane]);
 
+  const onSelectAutoGrid = () => {
+    dashboard.switchLayout(AutoGridLayoutManager.createEmpty());
+    if (config.featureToggles.dashboardDefaultLayoutSelector) {
+      dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
+    }
+  };
+
+  const onSelectCustomGrid = () => {
+    dashboard.switchLayout(DefaultGridLayoutManager.createEmpty());
+    if (config.featureToggles.dashboardDefaultLayoutSelector) {
+      dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
+    }
+  };
+
   return (
-    <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
+    <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column" width="100%">
       <Box padding={4}>
         <Box marginBottom={2} paddingX={4} display="flex" justifyContent="center">
           <Icon name="apps" size="xxl" className={styles.appsIcon} />
@@ -123,24 +104,58 @@ const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: Ne
             <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
           </Text>
         </Box>
+        {config.featureToggles.dashboardDefaultLayoutSelector && (
+          <>
+            <Box marginTop={3} paddingX={4} display="flex" justifyContent="center" alignItems="center" gap={1}>
+              <Text element="p" textAlignment="center" color="secondary">
+                <Trans i18nKey="dashboard.empty.select-layout-header">Select layout</Trans>
+              </Text>
+              <Tooltip
+                placement="top"
+                content={
+                  <Trans i18nKey="dashboard.empty.layout-default-hint">
+                    The selected layout will also be used as the default for all new tabs and rows. You can change this
+                    later in Dashboard Settings &gt; General.
+                  </Trans>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Box>
+            <Box marginTop={1} display="flex" justifyContent="center">
+              <Stack gap={1}>
+                <FilterPill
+                  label={t('dashboard.empty.auto-grid', 'Auto grid')}
+                  selected={isAutoGrid}
+                  onClick={onSelectAutoGrid}
+                />
+                <FilterPill
+                  label={t('dashboard.empty.custom-grid', 'Custom grid')}
+                  selected={!isAutoGrid}
+                  onClick={onSelectCustomGrid}
+                />
+              </Stack>
+            </Box>
+            <Box marginTop={1} paddingX={4}>
+              <Text element="p" textAlignment="center" color="secondary">
+                {isAutoGrid
+                  ? t('dashboard.empty.auto-grid-description', 'Panels resize to fit and form uniform grids')
+                  : t('dashboard.empty.custom-grid-description', 'Position and size each panel individually')}
+              </Text>
+            </Box>
+          </>
+        )}
       </Box>
-      <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
     </Stack>
   );
 };
 
 interface OldLayoutEmptyProps {
-  dashboardLibraryDatasourceUid: string | null;
   onAddVisualization?: () => void;
   onAddLibraryPanel?: () => void;
   onImportDashboard?: () => void;
 }
-const OldLayoutEmpty = ({
-  dashboardLibraryDatasourceUid,
-  onAddVisualization,
-  onAddLibraryPanel,
-  onImportDashboard,
-}: OldLayoutEmptyProps) => (
+const OldLayoutEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: OldLayoutEmptyProps) => (
   <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
     <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>
@@ -168,8 +183,6 @@ const OldLayoutEmpty = ({
         </Button>
       </Stack>
     </Box>
-
-    <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
 
     <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
       <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
@@ -268,6 +281,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing.gridSize * 4,
       paddingTop: theme.spacing(2),
+      width: '100%',
 
       [theme.breakpoints.up('sm')]: {
         paddingTop: theme.spacing(12),

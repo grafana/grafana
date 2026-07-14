@@ -10,6 +10,7 @@ type checkRequest struct {
 	ActionSets   []string
 	Group        string
 	Resource     string
+	Subresource  string
 	Verb         string
 	Name         string
 	ParentFolder string
@@ -21,6 +22,7 @@ type listRequest struct {
 	UserUID      string
 	Group        string
 	Resource     string
+	Subresource  string
 	Verb         string
 	Action       string
 	ActionSets   []string

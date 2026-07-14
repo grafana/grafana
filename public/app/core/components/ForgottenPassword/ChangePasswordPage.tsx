@@ -1,4 +1,4 @@
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import LoginCtrl from '../Login/LoginCtrl';
 import { LoginLayout, InnerBox } from '../Login/LoginLayout';

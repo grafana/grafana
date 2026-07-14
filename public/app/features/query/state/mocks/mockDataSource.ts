@@ -1,16 +1,16 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 import {
-  DataQuery,
-  DataSourceJsonData,
-  PluginMetaInfo,
-  DataSourcePluginMeta,
+  type DataQuery,
+  type DataSourceJsonData,
+  type PluginMetaInfo,
+  type DataSourcePluginMeta,
   PluginType,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   DataSourceApi,
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
 } from '@grafana/data';
 
 export interface TestQuery extends DataQuery {
@@ -36,7 +36,7 @@ const info: PluginMetaInfo = {
   version: '',
 };
 
-export const meta: DataSourcePluginMeta<DataSourceJsonData> = {
+const meta: DataSourcePluginMeta<DataSourceJsonData> = {
   id: '',
   name: '',
   type: PluginType.datasource,
@@ -55,7 +55,7 @@ export const TestDataSettings: DataSourceInstanceSettings<TestJsonData> = {
   access: 'direct',
 };
 
-export class TestDataSource extends DataSourceApi<TestQuery, DataSourceJsonData, {}> {
+class TestDataSource extends DataSourceApi<TestQuery, DataSourceJsonData, {}> {
   constructor(instanceSettings: DataSourceInstanceSettings<TestJsonData> = TestDataSettings) {
     super(instanceSettings);
   }

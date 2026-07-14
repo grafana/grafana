@@ -6,6 +6,7 @@ package v1beta1
 type KeeperAWSConfig struct {
 	Region     string               `json:"region"`
 	AssumeRole *KeeperAWSAssumeRole `json:"assumeRole,omitempty"`
+	KmsKeyId   *string              `json:"kmsKeyId,omitempty"`
 }
 
 // NewKeeperAWSConfig creates a new KeeperAWSConfig object.

@@ -1,11 +1,19 @@
 import { countBy, isEmpty } from 'lodash';
 
-import { Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
-import { ContactPoint } from '../api/notifications/v0alpha1/types';
+import { type ContactPoint, type ContactPointMetadataAnnotations } from '../api/notifications/v0alpha1/types';
 
 // Annotation key that indicates whether a contact point can be used in routes and rules
 const CAN_USE_ANNOTATION = 'grafana.com/canUse';
+
+/**
+ * Minimal structural type that any k8s alerting entity satisfies.
+ * Accepts ContactPoint, Receiver, and the app-internal EntityToCheck type alike.
+ */
+type WithContactPointAnnotations = {
+  metadata?: { annotations?: ContactPointMetadataAnnotations };
+};
 
 /**
  * Checks if a contact point can be used in routes and rules.
@@ -18,6 +26,39 @@ const CAN_USE_ANNOTATION = 'grafana.com/canUse';
 export function isUsableContactPoint(contactPoint: ContactPoint | Receiver): boolean {
   const canUse = contactPoint.metadata?.annotations?.[CAN_USE_ANNOTATION];
   return canUse === 'true';
+}
+
+/**
+ * Returns the number of notification policy routes that reference this contact point,
+ * as reported by the server-set `grafana.com/inUse/routes` annotation.
+ * Returns 0 when the annotation is absent.
+ */
+export function getContactPointInUseRoutes(contactPoint: WithContactPointAnnotations): number {
+  const value = contactPoint.metadata?.annotations?.['grafana.com/inUse/routes'];
+  return Number(value) || 0;
+}
+
+/**
+ * Returns the number of alert rules that reference this contact point via simplified routing,
+ * as reported by the server-set `grafana.com/inUse/rules` annotation.
+ * Returns 0 when the annotation is absent.
+ */
+export function getContactPointInUseRules(contactPoint: WithContactPointAnnotations): number {
+  const value = contactPoint.metadata?.annotations?.['grafana.com/inUse/rules'];
+  return Number(value) || 0;
+}
+
+/**
+ * Returns how many routes and rules currently reference this contact point,
+ * as reported by the server-set in-use annotations.
+ *
+ * @returns `{ routes, rules }` — each count is 0 when the annotation is absent.
+ */
+export function getContactPointInUse(contactPoint: WithContactPointAnnotations): { routes: number; rules: number } {
+  return {
+    routes: getContactPointInUseRoutes(contactPoint),
+    rules: getContactPointInUseRules(contactPoint),
+  };
 }
 
 /**

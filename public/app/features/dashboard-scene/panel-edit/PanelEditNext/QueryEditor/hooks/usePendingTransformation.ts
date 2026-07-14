@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { PendingTransformation } from '../QueryEditorContext';
+import { type PendingTransformation } from '../QueryEditorContext';
 
 interface UsePendingTransformationOptions {
   addTransformation: (transformationId: string, afterTransformId?: string) => string | undefined;
@@ -13,15 +13,12 @@ export function usePendingTransformation({
 }: UsePendingTransformationOptions) {
   const [pendingTransformation, setPendingTransformationState] = useState<PendingTransformation | null>(null);
 
-  const setPendingTransformation = useCallback(
-    (pending: PendingTransformation | null) => {
-      setPendingTransformationState(pending);
-      if (pending) {
-        onCardSelectionChange(null, null);
-      }
-    },
-    [onCardSelectionChange]
-  );
+  const setPendingTransformation = useCallback((pending: PendingTransformation | null) => {
+    // Don't touch card selection on open: the picker renders purely off pending state
+    // (via getEditorType / hasPendingPicker), so deselecting would wipe the bulk
+    // selection and leave multi-select mode in an inconsistent state on cancel.
+    setPendingTransformationState(pending);
+  }, []);
 
   const finalizePendingTransformation = useCallback(
     (transformationId: string) => {

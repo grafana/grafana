@@ -1,11 +1,11 @@
-import { UserEvent } from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
 
-import { render, screen, testWithFeatureToggles, waitFor } from '../../../../test/test-utils';
+import { render, screen, waitFor } from '../../../../test/test-utils';
 import { backendSrv } from '../../../core/services/backend_srv';
 import { contextSrv } from '../../../core/services/context_srv';
 
@@ -45,8 +45,6 @@ const attemptCreateTeam = async (
 };
 
 describe('Create team', () => {
-  testWithFeatureToggles({ enable: ['teamFolders'] });
-
   beforeEach(() => {
     contextSrv.licensedAccessControlEnabled = () => false;
     contextSrv.hasPermission = () => true;

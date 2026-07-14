@@ -14,7 +14,7 @@ export function getNewDashboardPhrase() {
 }
 
 export function getNewTemplateDashboardPhrase() {
-  return t('search.dashboard-actions.new-template-dashboard', 'Dashboard from template');
+  return t('search.dashboard-actions.new-template-dashboard', 'Use template');
 }
 
 export function getNewFolderPhrase() {
@@ -22,7 +22,7 @@ export function getNewFolderPhrase() {
 }
 
 export function getImportPhrase() {
-  return t('search.dashboard-actions.import', 'Import');
+  return t('search.dashboard-actions.import', 'Import dashboard');
 }
 
 export function getNewPhrase() {

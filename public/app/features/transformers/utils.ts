@@ -3,15 +3,15 @@ import * as React from 'react';
 import { useDebounce } from 'react-use';
 
 import {
-  DataFrame,
+  type DataFrame,
   getFieldDisplayName,
-  TransformerCategory,
-  SelectableValue,
+  type TransformerCategory,
+  type SelectableValue,
   getTimeZones,
   VariableOrigin,
-  VariableSuggestion,
+  type VariableSuggestion,
   SpecialValue,
-  TransformerUIProps,
+  type TransformerUIProps,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -59,7 +59,7 @@ export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFiel
   return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
 }
 
-export const TransformerMissingFieldsMessage = () => {
+const TransformerMissingFieldsMessage = () => {
   return React.createElement(
     FieldValidationMessage,
     null,

@@ -1,11 +1,11 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react';
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-webpack5';
 import { useId } from 'react';
 
 import { Field } from '@grafana/ui';
 
 import { defaultDecorators } from '../../../../../tests/story-utils';
 
-import { ContactPointSelector, ContactPointSelectorProps } from './ContactPointSelector';
+import { ContactPointSelector, type ContactPointSelectorProps } from './ContactPointSelector';
 import mdx from './ContactPointSelector.mdx';
 import { simpleContactPointsListScenario, withErrorScenario } from './ContactPointSelector.scenario';
 

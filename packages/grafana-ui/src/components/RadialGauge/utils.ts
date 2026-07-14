@@ -1,18 +1,18 @@
 import {
-  FieldConfig,
-  FieldDisplay,
+  type FieldConfig,
+  type FieldDisplay,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   getActiveThreshold,
   getDisplayProcessor,
-  GrafanaTheme,
-  GrafanaTheme2,
-  Threshold,
-  ThresholdsConfig,
+  type GrafanaTheme,
+  type GrafanaTheme2,
+  type Threshold,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 
-import { RadialGaugeDimensions } from './types';
+import { type RadialGaugeDimensions } from './types';
 
 const DEFAULT_THRESHOLDS: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -220,14 +220,6 @@ export function calculateDimensions(
     scaleLabelsFontSize,
     scaleLabelsSpacing,
     scaleLabelsRadius,
-  };
-}
-
-export function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-  let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
-  return {
-    x: centerX + radius * Math.cos(radian),
-    y: centerY + radius * Math.sin(radian),
   };
 }
 

@@ -2,7 +2,9 @@ package git
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
@@ -338,6 +340,56 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 
 		_, err = helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "dashboard.json")
 		require.Error(t, err, "file should not exist at old location")
+	})
+}
+
+func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
+	helper := sharedGitHelper(t)
+	ctx := context.Background()
+
+	repoName := "test-move-dir"
+	initialContent := map[string][]byte{
+		"mydir/dashboard.json": common.DashboardJSON("dir-dash", "Dir Dashboard", 1),
+	}
+
+	_, _ = helper.CreateGitRepo(t, repoName, initialContent, "write", "branch")
+	helper.SyncAndWait(t, repoName)
+
+	t.Run("move directory on branch succeeds with correct response", func(t *testing.T) {
+		branchName := "move-dir-branch"
+
+		resp := helper.PostFilesRequest(t, repoName, common.FilesPostOptions{
+			TargetPath:   "renamed/",
+			OriginalPath: "mydir/",
+			Message:      "rename directory",
+			Ref:          branchName,
+		})
+		defer func() { _ = resp.Body.Close() }()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move on branch should succeed")
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var wrapper map[string]interface{}
+		require.NoError(t, json.Unmarshal(body, &wrapper))
+
+		assert.Equal(t, "renamed/", wrapper["path"], "response path should be the target directory")
+		assert.Equal(t, branchName, wrapper["ref"], "response ref should match the requested branch")
+
+		resource, ok := wrapper["resource"].(map[string]interface{})
+		require.True(t, ok, "response should contain resource object")
+		assert.Equal(t, "move", resource["action"], "resource action should be 'move'")
+
+		// Verify the directory was actually moved on the branch
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repoName).
+			SubResource("files", "renamed", "dashboard.json").
+			Param("ref", branchName).
+			Do(ctx)
+		require.NoError(t, result.Error(), "dashboard should exist at new location on branch")
 	})
 }
 

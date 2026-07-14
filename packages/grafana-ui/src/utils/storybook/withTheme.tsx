@@ -1,7 +1,7 @@
-import { Decorator } from '@storybook/react';
+import { type Decorator } from '@storybook/react';
 import * as React from 'react';
 
-import { getThemeById, GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { getThemeById, type GrafanaTheme2, ThemeContext } from '@grafana/data';
 
 import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
 

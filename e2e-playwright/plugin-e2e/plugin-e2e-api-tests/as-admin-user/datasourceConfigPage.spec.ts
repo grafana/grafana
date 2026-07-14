@@ -28,21 +28,5 @@ test.describe(
         ).toBeOK();
       });
     });
-
-    test.describe('test data source with frontend only health check', () => {
-      test('valid credentials should display a success alert on the page', async ({
-        createDataSourceConfigPage,
-        page,
-      }) => {
-        const configPage = await createDataSourceConfigPage({ type: 'zipkin' });
-        configPage.mockHealthCheckResponse({ message: 'Data source is working', status: 'OK' }, 200);
-        await page.getByPlaceholder('http://localhost:9411').fill('http://localhost:9411');
-        await expect(configPage.saveAndTest()).toBeOK();
-        await expect(
-          configPage,
-          formatExpectError('Expected data source config to display success alert after save')
-        ).toHaveAlert('success', { hasNotText: 'Datasource updated' });
-      });
-    });
   }
 );

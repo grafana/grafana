@@ -1,4 +1,4 @@
-import { KeyValue } from '../../types/data';
+import { type KeyValue } from '../../types/data';
 
 import { type DataSourcePluginContextType, type PluginContextType } from './PluginContext';
 

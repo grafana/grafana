@@ -9,7 +9,7 @@
 
 import { t } from '@grafana/i18n';
 
-import { SavedSearch } from '../components/saved-searches/savedSearchesSchema';
+import { type SavedSearch } from '../components/saved-searches/savedSearchesSchema';
 
 import { buildTriageQueryStringFromParts } from './scene/triageSavedSearchUtils';
 import { defaultTimeRange } from './scene/utils';

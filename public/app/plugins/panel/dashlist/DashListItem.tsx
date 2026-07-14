@@ -1,9 +1,9 @@
 import { reportInteraction } from '@grafana/runtime';
 import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
-import { LocationInfo } from 'app/features/search/service/types';
+import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 
-import { Dashboard } from './DashList';
+import { type Dashboard } from './DashList';
 import { getStyles } from './styles';
 
 interface Props {
@@ -41,7 +41,7 @@ export function DashListItem({
     <>
       {layoutMode === 'list' ? (
         <div className={css.dashlistLink}>
-          <Link href={url}>
+          <Link href={url} onClick={onCardLinkClick}>
             <Text element="p">{dashboard.name}</Text>
             {showFolderNames && locationInfo && (
               <Text color="secondary" variant="bodySmall" element="p">

@@ -7,6 +7,7 @@ test.use({
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
+    dashboardUnifiedDrilldownControls: false,
   },
 });
 
@@ -30,16 +31,18 @@ test.describe(
         label: 'VariableUnderTest',
       };
 
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
       // Select datasource for the ad hoc variable
       const dataSource = 'gdev-loki';
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect)
         .click();
+      await page.keyboard.type(dataSource);
       await page.getByText(dataSource).click();
+      await page
+        .getByRole('alert', { name: /this data source does not support filters/ })
+        .waitFor({ state: 'detached' });
 
       // mock the API call to get the labels
       const labels = ['label1', 'label2'];

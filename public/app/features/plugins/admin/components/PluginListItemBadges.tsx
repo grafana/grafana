@@ -1,7 +1,7 @@
 import { PluginSignatureBadge, Stack } from '@grafana/ui';
 
 import { isPluginUpdatable } from '../helpers';
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginDeprecatedBadge } from './Badges/PluginDeprecatedBadge';
 import { PluginDisabledBadge } from './Badges/PluginDisabledBadge';

@@ -1,13 +1,18 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 import type { DashboardLink } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 import {
   LinkBooleanSwitch,
@@ -26,12 +31,12 @@ export function createDefaultLink(): DashboardLink {
   return { ...NEW_LINK, asDropdown: true };
 }
 
-function createLinkEdit(dashboard: DashboardScene, linkIndex: number): LinkEdit {
+function createLinkEdit(dashboard: DashboardSceneLike, linkIndex: number): LinkEdit {
   const selectionId = linkSelectionId(linkIndex);
   return new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
 }
 
-export function openAddLinkPane(dashboard: DashboardScene) {
+export function openAddLinkPane(dashboard: DashboardSceneLike) {
   const newLink = createDefaultLink();
   const linkIndex = (dashboard.state.links ?? []).length;
   const element = createLinkEdit(dashboard, linkIndex);
@@ -43,13 +48,13 @@ export function linkSelectionId(linkIndex: number) {
   return `dashboard-link-${linkIndex}`;
 }
 
-export function openLinkEditPane(dashboard: DashboardScene, linkIndex: number) {
+export function openLinkEditPane(dashboard: DashboardSceneLike, linkIndex: number) {
   const element = createLinkEdit(dashboard, linkIndex);
-  dashboard.state.editPane.selectObject(element, linkSelectionId(linkIndex), { force: true, multi: false });
+  dashboard.state.editPane.selectObject(element, { force: true, multi: false });
 }
 
 export interface LinkEditState extends SceneObjectState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
+  dashboardRef: SceneObjectRef<DashboardSceneLike>;
   linkIndex: number;
 }
 
@@ -204,6 +209,37 @@ export class LinkEditEditableElement implements EditableDashboardElement {
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.linkEdit);
 
+  public onDuplicate() {
+    const dashboard = this.linkEdit.state.dashboardRef.resolve();
+    const { links } = dashboard.state;
+
+    const link = { ...links[this.linkEdit.state.linkIndex] };
+    link.title = `${link.title} - Copy`;
+    const linkEdit = createLinkEdit(dashboard, this.linkEdit.state.linkIndex);
+
+    linkEditActions.addLink({ dashboard, link, addedObject: linkEdit });
+    openLinkEditPane(dashboard, links.length);
+  }
+
+  public onConfirmDelete(): void {
+    const dashboard = this.linkEdit.state.dashboardRef.resolve();
+    const links = dashboard.state.links ?? [];
+    const link = links[this.linkEdit.state.linkIndex];
+    const name = link?.title ?? t('dashboard-scene.link-editable-element.unnamed', 'Unnamed link');
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.link-editable-element.delete-title', 'Delete link'),
+        text: t('dashboard-scene.link-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
+          name,
+        }),
+        yesText: t('dashboard-scene.link-editable-element.delete-confirm', 'Delete link'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
+  }
+
   public onDelete(): void {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();
     const editPane = dashboard.state.editPane;
@@ -211,11 +247,11 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     const currentLinks = dashboard.state.links ?? [];
 
     if (linkIndex < 0 || linkIndex >= currentLinks.length) {
-      editPane.selectObject(dashboard, dashboard.state.key!);
+      editPane.selectObject(dashboard);
       return;
     }
 
     linkEditActions.removeLink({ dashboard, linkIndex });
-    editPane.selectObject(dashboard, dashboard.state.key!);
+    editPane.selectObject(dashboard);
   }
 }

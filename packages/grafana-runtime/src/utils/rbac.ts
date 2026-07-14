@@ -3,7 +3,7 @@ import {
   userHasPermissionInMetadata,
   userHasAllPermissions,
   userHasAnyPermission,
-  WithAccessControlMetadata,
+  type WithAccessControlMetadata,
 } from '@grafana/data';
 
 import { getCurrentUser } from '../services/user';

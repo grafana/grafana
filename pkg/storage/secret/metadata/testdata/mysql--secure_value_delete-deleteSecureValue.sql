@@ -1,7 +1,17 @@
 DELETE FROM 
   `secret_secure_value`
 WHERE 
-  `namespace` = 'ns' AND
-  `name` = 'name' AND
-  `version` = 1
-;
+  (`namespace`, `name`, `version`) IN
+  (
+      (
+        'a',
+        'b',
+        1
+      )
+        ,
+      (
+        'd',
+        'e',
+        2
+      )
+  );

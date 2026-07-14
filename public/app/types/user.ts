@@ -1,6 +1,6 @@
-import { OrgRole, SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { type OrgRole, type SelectableValue, type WithAccessControlMetadata } from '@grafana/data';
 
-import { Role } from './accessControl';
+import { type Role } from './accessControl';
 
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
@@ -21,16 +21,6 @@ export interface OrgUser extends WithAccessControlMetadata {
   isExternallySynced?: boolean;
   // Externally provisioned
   isProvisioned?: boolean;
-}
-
-export interface User {
-  id: number;
-  label: string;
-  avatarUrl: string;
-  login: string;
-  email: string;
-  name: string;
-  orgId?: number;
 }
 
 export type Unit = { name: string; url: string };

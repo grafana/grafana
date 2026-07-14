@@ -3,7 +3,7 @@ import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const BackToDashboardButton = ({ dashboard }: ToolbarActionProps) => (
   <Button

@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export function getDashboardGridStyles(theme: GrafanaTheme2) {
   return css({
@@ -45,8 +45,9 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.react-grid-item.react-grid-placeholder': {
-      boxShadow: `0 0 4px ${theme.colors.primary.border} !important`,
-      background: `${theme.colors.primary.transparent} !important`,
+      boxShadow: `0 0 4px ${theme.colors.accent.border} !important`,
+      borderRadius: theme.shape.radius.lg,
+      background: `${theme.colors.accent.transparent} !important`,
       zIndex: '-1 !important',
       opacity: 'unset !important',
     },
@@ -77,7 +78,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dashboard-selected-element': {
-      outline: `1px dashed ${theme.colors.primary.border}`,
+      outline: `1px dashed ${theme.colors.accent.border}`,
       outlineOffset: '0px',
       borderRadius: theme.shape.radius.default,
     },

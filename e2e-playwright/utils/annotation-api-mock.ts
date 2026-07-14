@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 /**
  * Annotation item shape matching the Grafana API response format.
@@ -129,6 +129,9 @@ export async function setupAnnotationApiMock(page: Page): Promise<void> {
           filtered = filtered.filter((a) => a.panelId === panelId);
         }
       }
+
+      // Mock annotation API taking a bit
+      await page.waitForTimeout(50);
 
       return route.fulfill({
         status: 200,

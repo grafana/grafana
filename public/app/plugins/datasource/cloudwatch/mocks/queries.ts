@@ -1,8 +1,8 @@
 import {
-  CloudWatchMetricsQuery,
+  type CloudWatchMetricsQuery,
   MetricQueryType,
   MetricEditorMode,
-  CloudWatchLogsQuery,
+  type CloudWatchLogsQuery,
   QueryEditorExpressionType,
 } from '../dataquery.gen';
 

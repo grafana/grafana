@@ -1,4 +1,4 @@
-import { arrayToDataFrame, createDataFrame, DataFrame, DataTopic, FieldType } from '@grafana/data';
+import { arrayToDataFrame, createDataFrame, type DataFrame, DataTopic, FieldType } from '@grafana/data';
 
 import {
   ANNOTATION_REGION_MIN_WIDTH,

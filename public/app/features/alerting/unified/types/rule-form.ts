@@ -1,5 +1,5 @@
-import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
+import { type EvalFunction } from 'app/features/alerting/state/alertDef';
+import { type AlertQuery, type GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
   grafana = 'grafana-alerting',
@@ -39,6 +39,8 @@ export interface RuleFormValues {
   type?: RuleFormType;
   dataSourceName: string | null;
   group: string;
+  // True when this Grafana-managed rule is saved without a real group (synthetic `no_group_for_rule_<uid>` group on the wire).
+  isUngroupedRuleGroup: boolean;
 
   labels: Array<{ key: string; value: string }>;
   annotations: Array<{ key: string; value: string }>;

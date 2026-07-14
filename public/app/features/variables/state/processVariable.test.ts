@@ -1,7 +1,7 @@
-import { UrlQueryMap, VariableRefresh } from '@grafana/data';
+import { type UrlQueryMap, VariableRefresh } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
@@ -14,7 +14,7 @@ import { customBuilder, queryBuilder } from '../shared/testing/builders';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { initDashboardTemplating, processVariable } from './actions';
-import { getTemplatingRootReducer, TemplatingReducerType } from './helpers';
+import { getTemplatingRootReducer, type TemplatingReducerType } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import { setCurrentVariableValue, variableStateCompleted, variableStateFetching } from './sharedReducer';
 import { variablesInitTransaction } from './transactionReducer';

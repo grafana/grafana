@@ -36,6 +36,7 @@ export { ButtonCascader } from './components/ButtonCascader/ButtonCascader';
 export { InlineToast } from './components/InlineToast/InlineToast';
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './components/LoadingPlaceholder/LoadingPlaceholder';
 export { LoadingBar, type LoadingBarProps } from './components/LoadingBar/LoadingBar';
+export { PageLoader } from './components/PageLoader/PageLoader';
 export { ColorPicker, SeriesColorPicker } from './components/ColorPicker/ColorPicker';
 export { ColorPickerInput } from './components/ColorPicker/ColorPickerInput';
 export {
@@ -120,7 +121,7 @@ export {
   type TableJsonViewCellOptions,
 } from './components/Table/types';
 
-export { TableInputCSV } from './components/TableInputCSV/TableInputCSV';
+export { TableInputCSV } from './graveyard/TableInputCSV/TableInputCSV';
 export { TabsBar } from './components/Tabs/TabsBar';
 export { Tab, type TabProps } from './components/Tabs/Tab';
 export { VerticalTab } from './components/Tabs/VerticalTab';
@@ -129,19 +130,37 @@ export { Counter } from './components/Tabs/Counter';
 export { RenderUserContentAsHTML } from './components/RenderUserContentAsHTML/RenderUserContentAsHTML';
 
 // Visualizations
+export { BigValue } from './components/BigValue/BigValue';
 export {
-  BigValue,
   BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-} from './components/BigValue/BigValue';
+} from './components/BigValue/BigValueTypes';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
   VizTooltip,
   VizTooltipContainer,
+  VizTooltipContent,
+  VizTooltipRow,
+  VizTooltipWrapper,
+  type VizTooltipWrapperProps,
+  VizTooltipFooter,
+  type VizTooltipFooterProps,
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
+  VizTooltipHeader,
+  type VizTooltipHeaderProps,
+  VizTooltipColorIndicator,
+  VizTooltipColorPlacement,
+  type VizTooltipItem,
+  DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR,
+  getFieldDisplayItems,
+  getFieldDisplayLinks,
+  isTooltipScrollable,
+  type TooltipScrollableOptions,
   SeriesTable,
   type SeriesTableProps,
   SeriesTableRow,
@@ -200,6 +219,7 @@ export {
   DataLinksContextMenu,
   type DataLinksContextMenuProps,
   type DataLinksContextMenuApi,
+  type DataLinksMenuTriggerProps,
 } from './components/DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './components/VizLegend/SeriesIcon';
 export { InfoBox } from './components/InfoBox/InfoBox';
@@ -248,7 +268,7 @@ export { ButtonGroup } from './components/Button/ButtonGroup';
 export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';
 export { ToolbarButtonRow } from './components/ToolbarButton/ToolbarButtonRow';
 export { ValuePicker } from './components/ValuePicker/ValuePicker';
-export { fieldMatchersUI } from './components/MatchersUI/fieldMatchersUI';
+export { fieldMatchersUI, useFieldMatchersOptions } from './components/MatchersUI/fieldMatchersUI';
 export {
   MatcherScopeSelector,
   getUniqueMatcherScopes,
@@ -265,6 +285,7 @@ export { ScrollContainer } from './components/ScrollContainer/ScrollContainer';
 
 export { Label } from './components/Forms/Label';
 export { Field, type FieldProps } from './components/Forms/Field';
+export { FieldContext, useFieldContext, type FieldContextType } from './components/Forms/FieldContext';
 export { Legend } from './components/Forms/Legend';
 export { FieldSet } from './components/Forms/FieldSet';
 export { FieldValidationMessage } from './components/Forms/FieldValidationMessage';
@@ -355,6 +376,7 @@ export { XYCanvas } from './components/uPlot/geometries/XYCanvas';
 export { Marker } from './components/uPlot/geometries/Marker';
 export { EventsCanvas } from './components/uPlot/geometries/EventsCanvas';
 export { TooltipPlugin2 } from './components/uPlot/plugins/TooltipPlugin2';
+export { CloseButton } from './components/uPlot/plugins/CloseButton';
 export { EventBusPlugin } from './components/uPlot/plugins/EventBusPlugin';
 export { KeyboardPlugin } from './components/uPlot/plugins/KeyboardPlugin';
 export { XAxisInteractionAreaPlugin } from './components/uPlot/plugins/XAxisInteractionAreaPlugin';
@@ -464,7 +486,13 @@ export { RunnerPlugin } from './slate-plugins/runner';
 export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
 export { SlatePrism, type Token } from './slate-plugins/slate-prism';
 export { SuggestionsPlugin } from './slate-plugins/suggestions';
-export { Sidebar, useSidebar, type SidebarPosition, type SidebarContextValue } from './components/Sidebar/Sidebar';
+export {
+  Sidebar,
+  useSidebar,
+  type SidebarPosition,
+  type SidebarContextValue,
+  useSidebarContext,
+} from './components/Sidebar/Sidebar';
 
 // @deprecated import from @grafana/schema
 export {

@@ -1,15 +1,15 @@
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 interface PermissionsEditViewState extends DashboardEditViewState {}
 

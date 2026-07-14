@@ -41,12 +41,13 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	const repo = "local-repository"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance",          // Export is only supported for instance sync
+		SyncTarget:         "instance", // Export is only supported for instance sync
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{}, // No initial files needed for export test
 		ExpectedDashboards: 4,                   // 4 dashboards created above (v0, v1, v2alpha1, v2beta1)
 		ExpectedFolders:    0,                   // No folders expected after sync
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Now export
 	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
@@ -71,9 +72,12 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 	common.PrintFileTree(t, helper.ProvisioningPath)
 
-	// Check that each file was exported with its stored version and new UIDs
+	// Check that each file was exported with its stored version and new UIDs.
+	// A dashboard created at v0 is relabeled to v1 on export: its body is already
+	// the lossless v1 representation, and a file labeled v0alpha1 cannot be loaded
+	// by the frontend dashboard loader once it is synced back in.
 	for _, test := range []props{
-		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
+		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
 		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
 		{title: "Test dashboard. Created at v2alpha1", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2alpha1", fileName: "test-dashboard-created-at-v2alpha1.json"},
 		{title: "Test dashboard. Created at v2beta1", apiVersion: "dashboard.grafana.app/v2beta1", name: "test-v2beta1", fileName: "test-dashboard-created-at-v2beta1.json"},
@@ -127,8 +131,10 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			},
 			expectedTitle: "Test dashboard. Created at v0",
 			expectedName:  "test-v0",
-			expectedVer:   "dashboard.grafana.app/v0alpha1",
-			fileName:      "test-dashboard-created-at-v0.json",
+			// v0 is relabeled to v1 on export so the synced file remains loadable;
+			// see the conversion shim in jobs/export/resources.go.
+			expectedVer: "dashboard.grafana.app/v1",
+			fileName:    "test-dashboard-created-at-v0.json",
 		},
 		{
 			name: "v1",
@@ -176,12 +182,13 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	const repo = "version-test-repository"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance", // Export is only supported for instance sync
+		SyncTarget:         "instance", // Export is only supported for instance sync
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
 		ExpectedDashboards: len(tests),
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Export dashboards
 	spec := provisioning.JobSpec{
@@ -205,10 +212,11 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			err = json.Unmarshal(body, &obj)
 			require.NoError(t, err, "exported file not json %s", fpath)
 
-			// Verify API version matches the stored version
+			// Verify the exported apiVersion. Non-v0 versions are preserved as stored;
+			// v0 is relabeled to v1 so the synced file stays loadable.
 			val, _, err := unstructured.NestedString(obj, "apiVersion")
 			require.NoError(t, err)
-			require.Equal(t, tt.expectedVer, val, "exported dashboard should have original stored version")
+			require.Equal(t, tt.expectedVer, val, "exported dashboard should have expected apiVersion")
 
 			// Verify title
 			val, _, err = unstructured.NestedString(obj, "spec", "title")
@@ -256,10 +264,10 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 
 							exportedVersion, _, err := unstructured.NestedString(obj, "apiVersion")
 							require.NoError(t, err)
-							// Extract version from apiVersion (e.g., "dashboard.grafana.app/v2alpha1" -> "v2alpha1")
-							expectedVersion := "dashboard.grafana.app/" + storedVersion
-							require.Equal(t, expectedVersion, exportedVersion,
-								"exported version should match storedVersion %s for dashboard %s", storedVersion, dashboardName)
+							// The exported apiVersion tracks the stored version, except v0
+							// which is relabeled to v1 (see the export conversion shim).
+							require.Equal(t, tt.expectedVer, exportedVersion,
+								"exported version for dashboard %s should be %s (storedVersion=%s)", dashboardName, tt.expectedVer, storedVersion)
 						}
 					}
 				}

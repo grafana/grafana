@@ -4,18 +4,18 @@ keywords:
   - Quickstart
   - Grafana Cloud
   - Terraform
-title: Creating and managing a Grafana Cloud stack using Terraform
+title: Create and manage a Grafana Cloud stack using Terraform
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-cloud-stack/
 ---
 
-# Creating and managing a Grafana Cloud stack using Terraform
+# Create and manage a Grafana Cloud stack using Terraform
 
 Learn how to add a data source, a dashboard, and a folder to a Grafana Cloud stack using Terraform.
 
 ## Prerequisites
 
-Before you begin, you should have the following available:
+Before you begin, ensure you have the following:
 
 - A Grafana Cloud account, as shown in [Get started](/docs/grafana-cloud/get-started/)
 - [Terraform](https://www.terraform.io/downloads) installed on your machine
@@ -91,7 +91,7 @@ All of the following Terraform configuration files should be saved in the same d
 
 1. Replace the following field values:
    - `<cloud-access-token>` with your Grafana Cloud Access Policy Token.
-     To create a new one, refer [Grafana Cloud Access Policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/)
+     To create a new one, refer to [Grafana Cloud Access Policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/).
      Add all stacks to the realms list.
      The scopes needed for the example are:
      - dashboards:read
@@ -224,8 +224,8 @@ Once you apply the changes in the Terraform configurations, you should be able t
 
   ![InfluxDB dashboard](/static/img/docs/grafana-cloud/terraform/influxdb_dashboard_tf.png)
 
-## Conclusion
+## Summary
 
 In this guide, you created a Grafana Cloud stack along with a data source, folder, and dashboard imported from a JSON file using Terraform.
 
-To learn more about managing Grafana Cloud using Terraform, see [Grafana provider's documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+To learn more about managing Grafana Cloud using Terraform, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).

@@ -1,5 +1,5 @@
-import { AzureMetricDimension } from '../../dataquery.gen';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMetricDimension } from '../../dataquery.gen';
+import { type AzureMonitorQuery } from '../../types/query';
 
 export function setCustomNamespace(query: AzureMonitorQuery, selection: string | undefined): AzureMonitorQuery {
   if (query.azureMonitor?.customNamespace === selection) {
@@ -108,13 +108,6 @@ export function appendDimensionFilter(
       filters,
     },
   ]);
-}
-
-export function removeDimensionFilter(query: AzureMonitorQuery, indexToRemove: number): AzureMonitorQuery {
-  const existingFilters = query.azureMonitor?.dimensionFilters ?? [];
-  const newFilters = [...existingFilters];
-  newFilters.splice(indexToRemove, 1);
-  return setDimensionFilters(query, newFilters);
 }
 
 export function setDimensionFilterValue<Key extends keyof AzureMetricDimension>(

@@ -1,44 +1,43 @@
 import { produce } from 'immer';
 
 import {
-  DataSourceInstanceSettings,
-  IntervalValues,
-  RelativeTimeRange,
-  ScopedVars,
-  TimeRange,
+  type IntervalValues,
+  type RelativeTimeRange,
+  type ScopedVars,
+  type TimeRange,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { VizPanel, sceneGraph } from '@grafana/scenes';
-import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type VizPanel, sceneGraph } from '@grafana/scenes';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   getDashboardSceneFor,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
 } from 'app/features/dashboard-scene/utils/utils';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import { type LokiQuery } from 'app/plugins/datasource/loki/types';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
-  AlertDataQuery,
-  AlertQuery,
-  Annotations,
-  GrafanaNotificationSettings,
-  GrafanaRuleDefinition,
-  Labels,
-  PostableRuleGrafanaRuleDTO,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
+  type AlertDataQuery,
+  type AlertQuery,
+  type Annotations,
+  type GrafanaNotificationSettings,
+  type GrafanaRuleDefinition,
+  type Labels,
+  type PostableRuleGrafanaRuleDTO,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
@@ -46,13 +45,13 @@ import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNo
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
-  AlertManagerManualRouting,
-  ContactPoint,
-  Folder,
-  KVObject,
+  type AlertManagerManualRouting,
+  type ContactPoint,
+  type Folder,
+  type KVObject,
   RuleFormType,
-  RuleFormValues,
-  SimplifiedEditor,
+  type RuleFormValues,
+  type SimplifiedEditor,
 } from '../types/rule-form';
 
 import { Annotation } from './constants';
@@ -64,7 +63,12 @@ import {
   isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
+import {
+  isGrafanaAlertingRuleByType,
+  isGrafanaRecordingRuleByType,
+  isUngroupedRuleGroup,
+  rulerRuleType,
+} from './rules';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -102,7 +106,7 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   throw new Error(`unexpected rule type: ${type}`);
 }
 
-export function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addEmpty: boolean): KVObject[] {
+function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addEmpty: boolean): KVObject[] {
   const list = [...recordToArray(item || {})];
   if (addEmpty) {
     list.push({ key: '', value: '' });
@@ -115,7 +119,9 @@ export function getNotificationSettingsForDTO(
   contactPoints?: AlertManagerManualRouting,
   selectedPolicy?: string
 ): GrafanaNotificationSettings | undefined {
-  if (config.featureToggles.alertingPolicyRoutingSettings && selectedPolicy && !manualRouting) {
+  // selectedPolicy is only populated for rules routed via notification_settings.policy so emit it in both toggle states.
+  // Legacy label-routed rules leave selectedPolicy unset and keep routing through the label.
+  if (selectedPolicy && !manualRouting) {
     return { policy: selectedPolicy };
   }
   if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
@@ -177,9 +183,10 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
-  // When the new policy routing is active, the legacy label must not be sent so that both
-  // routing mechanisms never coexist in the same payload.
-  if (config.featureToggles.alertingPolicyRoutingSettings) {
+  // The legacy label must not be sent whenever the policy field is in use, so the two routing
+  // mechanisms never coexist in the same payload: either when the new policy routing is active
+  // (toggle on) or when we are writing a route to notification_settings.policy.
+  if (config.featureToggles.alertingPolicyRoutingSettings || notificationSettings?.policy) {
     delete labels[NAMED_ROOT_LABEL_NAME];
   }
 
@@ -319,11 +326,6 @@ export function normalizeContactPoints(
 }
 
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
-  // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
-  if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
-    return undefined;
-  }
-
   if (ga.metadata?.editor_settings) {
     return {
       simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
@@ -354,6 +356,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         name: ga.title,
         type: RuleFormType.grafanaRecording,
         group: group.name,
+        isUngroupedRuleGroup: isUngroupedRuleGroup(group.name),
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         queries: ga.data,
         condition: ga.condition,
@@ -379,6 +382,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           name: ga.title,
           type: RuleFormType.grafana,
           group: group.name,
+          isUngroupedRuleGroup: isUngroupedRuleGroup(group.name),
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
           evaluateFor: normalizedRule.for || '0',
           keepFiringFor: normalizedRule.keep_firing_for || '0',
@@ -607,24 +611,6 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
       },
     },
     ...expressions,
-  ];
-};
-
-export const getDefaultRecordingRulesQueries = (
-  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>
-): AlertQuery[] => {
-  const relativeTimeRange = getDefaultRelativeTimeRange();
-
-  return [
-    {
-      refId: 'A',
-      datasourceUid: rulesSourcesWithRuler[0]?.uid || '',
-      queryType: '',
-      relativeTimeRange,
-      model: {
-        refId: 'A',
-      },
-    },
   ];
 };
 
@@ -952,7 +938,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
   return formValues;
 };
 
-export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
+function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
   if (!resolution) {
     if (lowLimit && rangeUtil.intervalToMs(lowLimit) > 1000) {
       return {

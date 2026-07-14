@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState, useEffect } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 type Props = {

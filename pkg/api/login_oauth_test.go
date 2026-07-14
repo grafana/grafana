@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -202,4 +204,63 @@ func TestOAuthLogin_Error(t *testing.T) {
 	errCookie := res.Cookies()[0]
 	assert.Equal(t, loginErrorCookieName, errCookie.Name)
 	require.NoError(t, res.Body.Close())
+}
+
+func TestOAuthLogin_RedirectToCookiePreservesEncodedCharacters(t *testing.T) {
+	// Go's net/http silently strips characters like " from cookie values
+	// because they are not valid per RFC 6265. OAuthLogin must URL-encode
+	// the redirectTo value before writing it to the cookie so that characters
+	// like " survive as %22, matching the url.QueryUnescape on the read side
+	// in handleLogin.
+
+	redirectTos := []string{
+		"/some/path",
+		"/some/path?flag=true&id=abc123",
+		`/some/path?query=metric{label="value"}`,
+		`/some/path?flag=true&query=up{instance="localhost:9090"}&dashboard=d402d94e`,
+	}
+
+	for _, redirectTo := range redirectTos {
+		t.Run(redirectTo, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.SecretsService = fakes.NewFakeSecretsService()
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagUseSessionStorageForRedirection)
+				hs.authnService = &authntest.FakeService{
+					ExpectedRedirect: &authn.Redirect{
+						URL: "https://oauth-provider.example.com/authorize",
+						Extra: map[string]string{
+							authn.KeyOAuthState: "test-state",
+						},
+					},
+				}
+			})
+
+			server.HttpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			}
+
+			res, err := server.Send(server.NewGetRequest(
+				"/login/generic_oauth?redirectTo=" + url.QueryEscape(redirectTo),
+			))
+			require.NoError(t, err)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+
+			assert.Equal(t, http.StatusFound, res.StatusCode)
+
+			var redirectToCookie *http.Cookie
+			for _, c := range res.Cookies() {
+				if c.Name == "redirectTo" {
+					redirectToCookie = c
+					break
+				}
+			}
+			require.NotNil(t, redirectToCookie, "OAuthLogin should write a redirectTo cookie")
+
+			decoded, err := url.QueryUnescape(redirectToCookie.Value)
+			require.NoError(t, err)
+			assert.Equal(t, redirectTo, decoded,
+				"redirectTo cookie should round-trip through QueryUnescape to the original value")
+		})
+	}
 }

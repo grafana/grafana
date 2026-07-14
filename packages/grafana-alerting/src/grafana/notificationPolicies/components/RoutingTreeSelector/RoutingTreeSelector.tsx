@@ -1,12 +1,12 @@
-import { ComponentProps, useMemo } from 'react';
+import { type ComponentProps, useMemo } from 'react';
 
-import { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
-import { Alert, Combobox, ComboboxOption, MultiCombobox } from '@grafana/ui';
+import { Alert, Combobox, type ComboboxOption, MultiCombobox } from '@grafana/ui';
 
-import { CustomComboBoxProps } from '../../../common/ComboBox.types';
-import { USER_DEFINED_TREE_NAME } from '../../consts';
+import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
 import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
+import { isDefaultRoutingTreeName } from '../../routingTrees';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
@@ -20,10 +20,6 @@ export type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
 
 /**
  * Routing Tree Combobox which lists all available notification policy trees.
- *
- * When the `alertingMultiplePolicies` feature toggle is enabled on the backend,
- * this shows all available routing trees. Otherwise, it shows only the default
- * "user-defined" tree.
  *
  * The default routing tree (named "user-defined") is displayed as "Default policy"
  * and is always listed first.
@@ -67,7 +63,7 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
     const opts: Array<ComboboxOption<string>> = routingTrees.items
       .map((tree) => {
         const name = tree.metadata.name ?? '';
-        const isDefault = name === USER_DEFINED_TREE_NAME;
+        const isDefault = isDefaultRoutingTreeName(name);
 
         lookup.set(name, tree);
 
@@ -86,10 +82,10 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
       })
       .sort((a, b) => {
         // Default policy always first
-        if (a.value === USER_DEFINED_TREE_NAME) {
+        if (isDefaultRoutingTreeName(a.value)) {
           return -1;
         }
-        if (b.value === USER_DEFINED_TREE_NAME) {
+        if (isDefaultRoutingTreeName(b.value)) {
           return 1;
         }
         return collator.compare(a.label, b.label);

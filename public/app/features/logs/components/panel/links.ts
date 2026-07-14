@@ -1,6 +1,6 @@
-import { LinkModel } from '@grafana/data';
+import { type LinkModel } from '@grafana/data';
 
-import { FieldDef } from '../logParser';
+import { type FieldDef } from '../logParser';
 
 export function getTempoTraceFromLinks(fields: FieldDef[]) {
   for (const field of fields) {
@@ -35,6 +35,13 @@ export type EmbeddedInternalLink = {
   query: string;
   queryType: string;
 };
+
+// Matches a TraceQL trace-id lookup, e.g. `{ trace:id = "abc" }`. The quote is back-referenced so both ends match.
+const TRACE_ID_QUERY_REGEX = /^\{\s*trace:id\s*=\s*(["`])([0-9A-Fa-f]+)\1\s*\}$/;
+
+export function getTraceIdFromTraceQlQuery(query: string): string | undefined {
+  return query.trim().match(TRACE_ID_QUERY_REGEX)?.[2];
+}
 
 type TempoQuery = {
   query: string;

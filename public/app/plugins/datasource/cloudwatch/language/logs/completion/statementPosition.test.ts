@@ -1,6 +1,6 @@
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 import { logsTestDataCommentOnlyQuery } from '../../../mocks/cloudwatch-logs-test-data/commentOnlyQuery';
 import { logsTestDataDiffModifierQuery } from '../../../mocks/cloudwatch-logs-test-data/diffModifierQuery';

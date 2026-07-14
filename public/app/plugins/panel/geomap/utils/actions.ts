@@ -2,10 +2,10 @@ import { cloneDeep } from 'lodash';
 
 import { FrameGeometrySourceMode } from '@grafana/schema';
 
-import { GeomapPanel } from '../GeomapPanel';
+import { type GeomapPanel } from '../GeomapPanel';
 import { geomapLayerRegistry } from '../layers/registry';
 import { defaultStyleConfig } from '../style/types';
-import { GeomapLayerActions, MapLayerState } from '../types';
+import { type GeomapLayerActions, type MapLayerState } from '../types';
 
 import { initLayer } from './layers';
 import { getNextLayerName } from './utils';

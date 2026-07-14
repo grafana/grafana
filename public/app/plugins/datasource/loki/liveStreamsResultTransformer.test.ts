@@ -1,7 +1,7 @@
 import { CircularDataFrame, FieldType } from '@grafana/data';
 
 import * as ResultTransformer from './liveStreamsResultTransformer';
-import { LokiTailResponse } from './types';
+import { type LokiTailResponse } from './types';
 
 describe('loki result transformer', () => {
   describe('appendResponseToBufferedData', () => {

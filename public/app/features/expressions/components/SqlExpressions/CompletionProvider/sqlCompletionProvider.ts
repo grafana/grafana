@@ -1,5 +1,10 @@
-import { SelectableValue } from '@grafana/data';
-import { ColumnDefinition, LanguageCompletionProvider, TableDefinition, TableIdentifier } from '@grafana/plugin-ui';
+import { type SelectableValue } from '@grafana/data';
+import {
+  type ColumnDefinition,
+  type LanguageCompletionProvider,
+  type TableDefinition,
+  type TableIdentifier,
+} from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 
 import { ALLOWED_FUNCTIONS } from '../../../utils/metaSqlExpr';

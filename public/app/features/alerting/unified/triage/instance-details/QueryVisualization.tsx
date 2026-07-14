@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Labels, LoadingState } from '@grafana/data';
+import { type DataFrame, type Labels, LoadingState } from '@grafana/data';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
+import { GraphDrawStyle, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 import { Box } from '@grafana/ui';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { getThresholdsForQueries } from '../../components/rule-editor/util';
+import { type getThresholdsForQueries } from '../../components/rule-editor/util';
 
 interface QueryVisualizationProps {
   query: AlertQuery;
@@ -65,7 +65,7 @@ export function QueryVisualization({ query, instanceLabels, thresholds, annotati
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden });
+      .setOption('legend', { showLegend: false });
 
     // Apply thresholds if available for this query
     const queryThresholds = thresholds?.[query.refId];

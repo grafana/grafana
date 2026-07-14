@@ -1,17 +1,20 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { IconButton, type IconSize, useStyles2 } from '@grafana/ui';
+
+import { AsyncIconButton } from './panel/AsyncIconButton';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRow: css({
     label: 'logs-stats-row',
     margin: `${parseInt(theme.spacing(2), 10) / 1.75}px 0`,
+    position: 'relative',
   }),
   logsStatsRowActive: css({
     label: 'logs-stats-row--active',
     color: theme.colors.primary.text,
-    position: 'relative',
   }),
   logsStatsRowLabel: css({
     label: 'logs-stats-row__label',
@@ -47,16 +50,35 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     background: theme.colors.primary.main,
   }),
+  logStatsActions: css({
+    position: 'absolute',
+    display: 'inline-block',
+    left: theme.spacing(-5.5),
+    top: theme.spacing(0.75),
+  }),
 });
 
 export interface Props {
+  isValueActive?(value: string): Promise<boolean>;
+  include?(value: string): void;
+  exclude?(value: string): void;
+  iconSize?: IconSize;
   active?: boolean;
   count: number;
   proportion: number;
   value?: string;
 }
 
-export const LogLabelStatsRow = ({ active, count, proportion, value }: Props) => {
+export const LogLabelStatsRow = ({
+  active,
+  count,
+  proportion,
+  value,
+  iconSize,
+  include,
+  exclude,
+  isValueActive,
+}: Props) => {
   const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };
@@ -64,15 +86,36 @@ export const LogLabelStatsRow = ({ active, count, proportion, value }: Props) =>
 
   return (
     <div className={className}>
-      <div className={cx([style.logsStatsRowLabel])}>
-        <div className={cx([style.logsStatsRowValue])} title={value}>
+      {(include || exclude) && value && (
+        <div className={style.logStatsActions}>
+          {include && (
+            <AsyncIconButton
+              name="search-plus"
+              onClick={() => include(value)}
+              isActive={isValueActive ? () => isValueActive(value) : undefined}
+              size={iconSize}
+              tooltipSuffix=""
+            />
+          )}
+          {exclude && (
+            <IconButton
+              name="search-minus"
+              size={iconSize}
+              tooltip={t('logs.log-line-details.fields.filter-out', 'Filter out value')}
+              onClick={() => exclude(value)}
+            />
+          )}
+        </div>
+      )}
+      <div className={style.logsStatsRowLabel}>
+        <div className={style.logsStatsRowValue} title={value}>
           {value}
         </div>
-        <div className={cx([style.logsStatsRowCount])}>{count}</div>
-        <div className={cx([style.logsStatsRowPercent])}>{percent}</div>
+        <div className={style.logsStatsRowCount}>{count}</div>
+        <div className={style.logsStatsRowPercent}>{percent}</div>
       </div>
-      <div className={cx([style.logsStatsRowBar])}>
-        <div className={cx([style.logsStatsRowInnerBar])} style={barStyle} />
+      <div className={style.logsStatsRowBar}>
+        <div className={style.logsStatsRowInnerBar} style={barStyle} />
       </div>
     </div>
   );

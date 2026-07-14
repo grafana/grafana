@@ -246,6 +246,9 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
+	// Cap the request body up-front so any downstream consumer inherits the limit.
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
+
 	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req})
 	if err != nil {
 		tokenErr := &auth.CreateTokenErr{}
@@ -257,26 +260,6 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 
 	metrics.MApiLoginPost.Inc()
 	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
-}
-
-func (hs *HTTPServer) LoginPasswordless(c *contextmodel.ReqContext) response.Response {
-	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientPasswordless, &authn.Request{HTTPRequest: c.Req})
-	if err != nil {
-		tokenErr := &auth.CreateTokenErr{}
-		if errors.As(err, &tokenErr) {
-			return response.Error(tokenErr.StatusCode, tokenErr.ExternalErr, tokenErr.InternalErr)
-		}
-		return response.Err(err)
-	}
-	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
-}
-
-func (hs *HTTPServer) StartPasswordless(c *contextmodel.ReqContext) {
-	redirect, err := hs.authnService.RedirectURL(c.Req.Context(), authn.ClientPasswordless, &authn.Request{HTTPRequest: c.Req})
-	if err != nil {
-		c.Redirect(hs.redirectURLWithErrorCookie(c, err))
-	}
-	c.JSON(http.StatusOK, redirect)
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {

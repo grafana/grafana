@@ -1,5 +1,5 @@
 import { expect, test } from '@grafana/plugin-e2e';
-import { AlertVariant } from '@grafana/ui';
+import { type AlertVariant } from '@grafana/ui';
 
 import {
   successfulAnnotationQueryWithData,
@@ -40,6 +40,14 @@ const scenarios: Scenario[] = [
     status: 200,
   },
 ];
+
+test.use({
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
+  },
+});
 
 test.describe('plugin-e2e-api-tests admin', { tag: ['@plugins'] }, () => {
   for (const scenario of scenarios) {

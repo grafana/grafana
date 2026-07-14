@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import type { JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 import { LayerName } from './LayerName';
-import { LayerElement } from './types';
+import { type LayerElement } from './types';
 
 export const DATA_TEST_ID = 'layer-drag-drop-list';
 

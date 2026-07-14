@@ -2,13 +2,11 @@ import { pick } from 'lodash';
 
 import { llm } from '@grafana/llm';
 import { isAppPluginInstalled } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { type Panel } from '@grafana/schema';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { NEW_PANEL_TITLE } from '../../utils/dashboard';
-
-import { getDashboardStringDiff } from './jsonDiffText';
 
 export enum Role {
   // System content cannot be overwritten by user prompts.
@@ -40,27 +38,6 @@ export const DEFAULT_LLM_MODEL: llm.Model = llm.Model.LARGE;
 export const sanitizeReply = (reply: string) => {
   return reply.replace(/^"|"$/g, '');
 };
-
-/**
- * Diff the current dashboard with the original dashboard and the dashboard after migration
- * to split the changes into user changes and migration changes.
- * * User changes: changes made by the user
- * * Migration changes: changes made by the DashboardMigrator after opening the dashboard
- *
- * @param dashboard current dashboard to be saved
- * @returns user changes and migration changes
- */
-export function getDashboardChanges(dashboard: DashboardModel): {
-  userChanges: string;
-  migrationChanges: string;
-} {
-  const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
-
-  return {
-    userChanges: userDiff,
-    migrationChanges: migrationDiff,
-  };
-}
 
 // Shared healthcheck promise so avoid multiple calls llm app settings and health check APIs
 let llmHealthCheck: Promise<boolean> | undefined;

@@ -2,12 +2,11 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, ReducerID, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Combobox,
-  ComboboxOption,
-  Icon,
+  type ComboboxOption,
   InlineField,
   InlineFieldRow,
   Input,
@@ -22,19 +21,26 @@ import { ExpressionDatasourceUID, reducerTypes, thresholdFunctions } from 'app/f
 import { isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
 
 import { createSimpleConditionExpressions } from '../rule-editor/formProcessing';
-import { RuleFormValues, SimpleCondition } from '../types/rule-form';
+import { type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 
 import { EvaluationGroupFieldRow } from './rule-editor/EvaluationGroupFieldRow';
+import { RuleEvaluationIntervalField } from './rule-editor/RuleEvaluationIntervalField';
 
 const DEFAULT_SIMPLE_CONDITION: SimpleCondition = {
   whenField: ReducerID.last,
   evaluator: { params: [0], type: EvalFunction.IsAbove },
 };
 
-export function RuleConditionSection() {
+interface RuleConditionSectionProps {
+  // Hides the evaluation group selector and exposes a per-rule evaluation
+  // interval input instead. Used by the drawer when the v2 groupless flow is
+  // active, since the rule won't belong to a group at all.
+  hideEvaluationGroup?: boolean;
+}
+
+export function RuleConditionSection({ hideEvaluationGroup = false }: RuleConditionSectionProps = {}) {
   const base = useStyles2(getStyles);
-  const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
-  const evaluateFor = watch('evaluateFor') || '0s';
+  const { setValue, getValues } = useFormContext<RuleFormValues>();
 
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(DEFAULT_SIMPLE_CONDITION);
 
@@ -172,17 +178,10 @@ export function RuleConditionSection() {
             </InlineField>
           </InlineFieldRow>
 
-          <EvaluationGroupFieldRow enableProvisionedGroups={false} />
-
-          {evaluateFor === '0s' && (
-            <Stack direction="row" gap={0.5} alignItems="center">
-              <Icon name="exclamation-triangle" aria-hidden="true" />
-              <Text variant="bodySmall" color="secondary">
-                <Trans i18nKey="alerting.simplified.evaluation.immediate-warning">
-                  Immediate firing might lead to unnecessary alerts being sent for temporary issues
-                </Trans>
-              </Text>
-            </Stack>
+          {hideEvaluationGroup ? (
+            <RuleEvaluationIntervalField />
+          ) : (
+            <EvaluationGroupFieldRow enableProvisionedGroups={false} />
           )}
         </Stack>
       </div>

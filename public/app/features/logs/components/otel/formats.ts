@@ -1,7 +1,7 @@
-import { LogRowModel } from '@grafana/data';
+import { type LogRowModel } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
-import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
+import { type LogListModel, NEWLINES_REGEX } from '../panel/processing';
 
 /**
  * The presence of this field along log fields determines OTel origin.
@@ -73,19 +73,76 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
 
   const fields = [...new Set([...suggestedFields, ...otelFields])];
 
+  const availableLabels = new Set<string>();
+  logs.forEach((log) => {
+    for (const label in log.labels) {
+      availableLabels.add(label.toLowerCase());
+    }
+  });
+
   return fields.filter(
     (field) =>
       field === LOG_LINE_BODY_FIELD_NAME ||
       field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME ||
-      logs.some((log) => log.labels[field] !== undefined)
+      availableLabels.has(field.toLowerCase())
   );
 }
 
-export function getSuggestedFieldsForAnyLogs() {
-  return ['app', 'service_name', 'message', 'msg', 'traceID', 'trace_id', 'environment', 'error'];
+function getSuggestedFieldsForAnyLogs() {
+  return [
+    'app',
+    'app_kubernetes_io_name',
+    'body',
+    'cluster',
+    'container',
+    'deployment_environment',
+    'duration',
+    'env',
+    'environment',
+    'err',
+    'error',
+    'error_message',
+    'exception',
+    'exception_message',
+    'exception_stacktrace',
+    'exception_type',
+    'filename',
+    'host',
+    'host_name',
+    'hostname',
+    'instance',
+    'job',
+    'k8s_cluster_name',
+    'k8s_pod_name',
+    'log',
+    'logger',
+    'message',
+    'method',
+    'msg',
+    'name',
+    'namespace',
+    'path',
+    'pod',
+    'scope_name',
+    'service',
+    'service_instance_id',
+    'service_name',
+    'service_namespace',
+    'service_version',
+    'severity_text',
+    'source',
+    'span_id',
+    'stack_trace',
+    'status',
+    'stream',
+    'thread',
+    'thread_name',
+    'trace_id',
+    'traceid',
+  ];
 }
 
-export function getSuggestedOTelDisplayFormat() {
+function getSuggestedOTelDisplayFormat() {
   return ['scope_name', ...getDefaultOTelDisplayFormat()];
 }
 
@@ -100,9 +157,9 @@ function getDefaultOTelDisplayFormat() {
 }
 
 const OTEL_RESOURCE_ATTRS_REGEX =
-  /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_|cluster$|namespace$|pod$)/;
+  /^(aws_|aws\.|cloud_|cloud\.|cloudfoundry_|cloudfoundry\.|container_|container\.|deployment_|deployment\.|faas_|faas\.|gcp_|gcp\.|host_|host\.|k8s_|k8s\.|os_|os\.|process_|process\.|service_|service\.|telemetry_|telemetry\.|cluster$|cluster\.|namespace$|namespace\.|pod$|pod\.)/;
 const OTEL_LOG_FIELDS_REGEX =
-  /^(flags|observed_timestamp|severity_number|severity_text|span_id|trace_id|detected_level)$/;
+  /^(flags|observed_timestamp|observed\.timestamp|severity_number|severity\.number|severity_text|severity\.text|span_id|span\.id|trace_id|trace\.id|detected_level)$/;
 
 export function getOtelAttributesField(log: LogListModel, wrapLogMessage: boolean) {
   const additionalFields = Object.keys(log.labels).filter(

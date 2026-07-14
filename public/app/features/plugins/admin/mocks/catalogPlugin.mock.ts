@@ -1,4 +1,4 @@
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 // Exported from the Redux store
 export default {

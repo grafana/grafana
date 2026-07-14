@@ -1,8 +1,8 @@
-import { KeyValue } from '@grafana/data';
+import { type KeyValue } from '@grafana/data';
 
-import { AzureMonitorDataSourceSettings } from '../types/types';
+import { type AzureMonitorDataSourceSettings } from '../types/types';
 
-import { DeepPartial } from './utils';
+import { type DeepPartial } from './utils';
 
 export const createMockDatasourceSettings = (
   overrides?: DeepPartial<AzureMonitorDataSourceSettings>,

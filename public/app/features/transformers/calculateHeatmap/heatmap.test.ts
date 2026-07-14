@@ -1,5 +1,5 @@
 import { FieldType, toDataFrame } from '@grafana/data';
-import { HeatmapCalculationOptions, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
+import { type HeatmapCalculationOptions, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
 
 import { rowsToCellsHeatmap, calculateHeatmapFromData, calculateBucketFactor } from './heatmap';
 

@@ -1,10 +1,20 @@
+import { type BootData } from '@grafana/data';
 export declare global {
   interface Window {
     __grafanaSceneContext: SceneObject;
     __grafana_app_bundle_loaded: boolean;
     __grafana_public_path__: string;
-    __grafana_load_failed: () => void;
-    grafanaBootData: import('@grafana/data').BootData;
+    __grafana_load_failed: (err: unknown) => void;
+    grafanaBootData: BootData;
+    __grafanaPublicDashboardAccessToken?: string;
+
+    /**
+     * Controls legacy `/api/` requests are handled in the frontend, for development.
+     * - `off`: requests are left untouched
+     * - `log`: requests are allowed but logged with a warning
+     * - `block`: requests are rejected before they are sent
+     */
+    __grafanaLegacyAPIMode?: string;
 
     /**
      * (Potential) wait for API call to fetch boot data and place it on `window.grafanaBootData`.

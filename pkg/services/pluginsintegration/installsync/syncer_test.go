@@ -211,6 +211,36 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			registeredIDs:      []string{"plugin-1", "plugin-2"},
 		},
 		{
+			name: "child plugins are ignored",
+			installedPlugins: []pluginstore.Plugin{
+				{
+					JSONData: plugins.JSONData{ID: "parent-plugin", Info: plugins.Info{Version: "1.0.0"}},
+					Class:    plugins.ClassExternal,
+				},
+				{
+					JSONData:        plugins.JSONData{ID: "child-plugin", Info: plugins.Info{Version: "1.0.0"}},
+					Class:           plugins.ClassExternal,
+					IncludedInAppID: "parent-plugin",
+				},
+			},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "child-plugin",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "child-plugin"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   1,
+			expectedUnregCalls: 1,
+			registeredIDs:      []string{"parent-plugin"},
+			unregisteredIDs:    []string{"child-plugin"},
+		},
+		{
 			name:             "API plugins only",
 			installedPlugins: []pluginstore.Plugin{},
 			apiPlugins: []pluginsv0alpha1.Plugin{
@@ -484,6 +514,10 @@ func (f *fakeClientGenerator) ClientFor(kind resource.Kind) (resource.Client, er
 }
 
 func (f *fakeClientGenerator) GetCustomRouteClient(schema.GroupVersion, string) (resource.CustomRouteClient, error) {
+	return nil, nil
+}
+
+func (f *fakeClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error) {
 	return nil, nil
 }
 
