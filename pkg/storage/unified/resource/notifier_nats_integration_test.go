@@ -122,7 +122,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			select {
 			case subj := <-got:
 				require.Equal(t, subject, subj)
-				require.Equal(t, "provisioning.grafana.app.default.repositories", subj)
+				require.Equal(t, "provisioning.grafana.app.repositories.default", subj)
 				return true
 			case <-time.After(20 * time.Millisecond):
 				return false

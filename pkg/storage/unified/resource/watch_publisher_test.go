@@ -55,7 +55,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		backend.publishWatchNotification(context.Background(), event)
 
 		require.Len(t, pub.subjects, 1)
-		assert.Equal(t, "provisioning.grafana.app.default.repositories", pub.subjects[0])
+		assert.Equal(t, "provisioning.grafana.app.repositories.default", pub.subjects[0])
 
 		var got resourcepb.WatchNotification
 		require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
