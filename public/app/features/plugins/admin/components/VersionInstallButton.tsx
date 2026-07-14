@@ -21,7 +21,6 @@ interface Props {
   disabled: boolean;
   tooltip?: string;
   onConfirmInstallation: () => void;
-  // Present a neutral "Install" action instead of Upgrade/Downgrade (used for managed plugins).
   hideInstallState?: boolean;
 }
 
@@ -40,8 +39,6 @@ export const VersionInstallButton = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
-  // installState drives the dispatched operation and tracking; displayInstallState drives the
-  // button label/icon, which managed plugins neutralize to a plain "Install".
   const installState = getInstallState(installedVersion, version.version);
   const displayInstallState = hideInstallState ? PluginStatus.INSTALL : installState;
 

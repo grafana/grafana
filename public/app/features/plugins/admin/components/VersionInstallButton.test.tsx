@@ -281,7 +281,6 @@ describe('VersionInstallButton', () => {
     expect(mockInstall).toHaveBeenCalledWith('test', '2.0.0', PluginStatus.UPDATE);
   });
 
-
   it('should show the installation button if invalid semver installed version is provided', () => {
     const version: Version = {
       version: '1.0.0',

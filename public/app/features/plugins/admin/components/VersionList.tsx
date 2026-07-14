@@ -22,9 +22,6 @@ export const VersionList = ({ plugin }: Props) => {
   const versions = useMemo(() => plugin.details?.versions ?? [], [plugin.details?.versions]);
   const disableInstallation = useMemo(() => shouldDisablePluginInstall(plugin), [plugin]);
 
-  // Managed plugins have no trustworthy per-instance installed version, so treat them as if
-  // nothing is installed for display and install-gating (see usePluginInfo, which shows
-  // "Managed by Grafana" for the same reason).
   const isManagedPlugin = plugin.managed.enabled;
   const installedVersion = isManagedPlugin ? undefined : plugin.installedVersion;
 
@@ -121,7 +118,6 @@ export const VersionList = ({ plugin }: Props) => {
                     pluginId={pluginId}
                     version={version}
                     latestCompatibleVersion={latestCompatibleVersion?.version}
-                    // Real version (not the managed-suppressed one) so the button can detect its own install completing.
                     installedVersion={plugin.installedVersion}
                     hideInstallState={isManagedPlugin}
                     onConfirmInstallation={onInstallClick}
