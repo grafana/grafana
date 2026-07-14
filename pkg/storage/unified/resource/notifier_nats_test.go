@@ -241,11 +241,11 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 	// and re-subscribe rather than closing it and losing the watch.
 	sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
 	n := newNatsNotifier(sub, nil, log.NewNopLogger())
-	n.retryInterval = 10 * time.Millisecond
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	out := n.Watch(ctx, WatchOptions{})
+	// Small backoff bounds keep the subscription retry loop fast for the test.
+	out := n.Watch(ctx, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond})
 
 	// The channel must stay open across the failed subscribe.
 	select {

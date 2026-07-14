@@ -2,11 +2,11 @@ package resource
 
 import (
 	"context"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -54,23 +54,21 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 // relist). Core NATS also delivers in arrival order, not RV order, so Watch runs
 // arrivals through the same settle buffer as the channel notifier (held for
 // SettleDelay, emitted sorted by RV) to keep downstream RVs monotonic.
-// natsNotifierRetryInterval is how long Watch waits before retrying a failed
-// subscription (e.g. the bus is not reachable yet at startup).
-const natsNotifierRetryInterval = 5 * time.Second
-
+//
+// A failed subscription (e.g. the bus is not reachable yet at startup) is
+// retried in the background with exponential backoff bounded by the watch's
+// MinBackoff/MaxBackoff.
 type natsNotifier struct {
-	subscriber    EventSubscriber
-	dropped       *prometheus.CounterVec // by reason; nil is allowed (no accounting)
-	retryInterval time.Duration
-	log           log.Logger
+	subscriber EventSubscriber
+	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
+	log        log.Logger
 }
 
 func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
 	return &natsNotifier{
-		subscriber:    subscriber,
-		dropped:       dropped,
-		retryInterval: natsNotifierRetryInterval,
-		log:           logger,
+		subscriber: subscriber,
+		dropped:    dropped,
+		log:        logger,
 	}
 }
 
@@ -111,12 +109,13 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 	// Once subscribed, the nats client auto-resumes across reconnects.
 	if !n.trySubscribe(ctx, handler) {
 		go func() {
-			for ctx.Err() == nil {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(n.retryInterval):
-				}
+			bo := backoff.New(ctx, backoff.Config{
+				MinBackoff: opts.MinBackoff,
+				MaxBackoff: opts.MaxBackoff,
+				MaxRetries: 0, // infinite retries; ctx cancel stops the loop
+			})
+			for bo.Ongoing() {
+				bo.Wait()
 				if n.trySubscribe(ctx, handler) {
 					return
 				}
@@ -133,7 +132,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject string, data []byte)) bool {
 	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAll, handler)
 	if err != nil {
-		n.log.Error("failed to subscribe to nats, will retry", "error", err, "retry_interval", n.retryInterval)
+		n.log.Error("failed to subscribe to nats, will retry", "error", err)
 		return false
 	}
 	n.log.Info("subscribed to nats watch stream")
