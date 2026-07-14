@@ -237,7 +237,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"dashboard":                        {},
 		"jaeger":                           {},
 		"mixed":                            {},
-		"grafana-pyroscope-datasource":     {},
 	}
 
 	expApps := map[string]struct{}{
