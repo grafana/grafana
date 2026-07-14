@@ -336,7 +336,9 @@ build-go: pkg/services/preference/themes_generated.go
 	@echo "compiling backend ($(OS)/$(ARCH))"
 	$(GO_BUILD_ENV) \
 	$(GO) build $(GO_BUILD_ARGS)
-	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
+	# Remove the destination before copying: overwriting an executable in place invalidates
+	# the macOS kernel's cached code signature and the binary is SIGKILLed on the next exec.
+	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then rm -f ./bin/grafana && cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
 
 bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe):
 	$(MAKE) build-go
@@ -346,7 +348,7 @@ build-backend: build-go
 
 .PHONY: build-air
 build-air: build-go
-	@cp ./bin/grafana ./bin/grafana-air
+	@rm -f ./bin/grafana-air && cp ./bin/grafana ./bin/grafana-air
 
 .PHONY: build-js
 build-js: ## Build frontend assets.

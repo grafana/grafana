@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,6 +14,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
+import { ImproveDashboardModal } from '../scene/new-toolbar/actions/ImproveDashboardButton';
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -38,6 +39,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid, viewPanel } = dashboard.useState();
+  const [showImproveModal, setShowImproveModal] = useState(false);
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
@@ -117,13 +119,6 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
               onClick={() => editPane.openPane(new DashboardCodePane({}))}
               active={openPane instanceof DashboardCodePane}
             />
-            {config.featureToggles.dashboardUndoRedo && (
-              <>
-                <Sidebar.Divider />
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
           </div>
         )}
         <div className={styles.viewGroup}>

@@ -4,6 +4,7 @@ import { config, usePluginLinks, useFavoriteDatasources, reportInteraction } fro
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { GenerateDashboardForDatasourceButton } from 'app/features/dashboard-wizard/GenerateDashboardForDatasourceButton';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
@@ -128,6 +129,7 @@ export function EditDataSourceActions({ uid }: Props) {
         </>
       )}
       <BuildDashboardButton dataSource={dataSource} size="sm" fill="solid" context="datasource_page" />
+      <GenerateDashboardForDatasourceButton datasourceUid={dataSource.uid} datasourceName={dataSource.name} />
     </>
   );
 }
