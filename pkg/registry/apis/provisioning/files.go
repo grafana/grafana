@@ -90,7 +90,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
 	if userAttributionEnabled(ctx) {
 		if author, ok := auth.GetAuthorFromRequester(ctx); ok {
-			ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: author.Name, Email: author.Email})
+			ctx = repository.WithAuthorSignature(ctx, author)
 		}
 	}
 	repo, err := c.getRepo(ctx, r.Method, name)

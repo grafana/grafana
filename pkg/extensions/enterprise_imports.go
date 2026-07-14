@@ -391,6 +391,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/folder"
 	_ "github.com/grafana/grafana/pkg/services/folder/cleaner"
 	_ "github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	_ "github.com/grafana/grafana/pkg/services/folderreconcile"
 	_ "github.com/grafana/grafana/pkg/services/grpcserver"
 	_ "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	_ "github.com/grafana/grafana/pkg/services/grpcserver/interceptors"

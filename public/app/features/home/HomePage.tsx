@@ -57,11 +57,14 @@ export default function HomePage() {
     props: {},
     components: extraComponents,
     pluginId: SETUPGUIDE_PLUGIN_ID,
-    wrapper: ({ children }) => (
-      <div className={styles.extra}>
-        <HomeSection>{children}</HomeSection>
-      </div>
-    ),
+    wrapper: ({ children }) =>
+      redesignEnabled ? (
+        children
+      ) : (
+        <div className={styles.extra}>
+          <HomeSection>{children}</HomeSection>
+        </div>
+      ),
   });
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();

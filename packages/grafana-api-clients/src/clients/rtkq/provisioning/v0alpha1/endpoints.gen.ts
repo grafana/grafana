@@ -1883,8 +1883,6 @@ export type GitHubRepositoryConfig = {
 export type GitHubEnterpriseRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Whether we should show dashboard previews for pull requests. */
-  generateDashboardPreviews?: boolean;
   /** Path is the subdirectory for the Grafana data inside the repository. */
   path?: string;
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
@@ -1908,6 +1906,8 @@ export type LocalRepositoryConfig = {
 export type PullRequestOptions = {
   /** When true, the PR title field in Save drawers is read-only. */
   enforceTemplate?: boolean;
+  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
+  generateDashboardPreviews?: boolean;
   /** Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used. */
   titleTemplate?: string;
 };

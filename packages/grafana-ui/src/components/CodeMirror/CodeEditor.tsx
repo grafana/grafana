@@ -99,16 +99,36 @@ export const CodeEditor = memo(function CodeEditor({
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const foldPlaceholderTheme = useMemo(
+    () =>
+      EditorView.theme({
+        '.cm-foldPlaceholder': {
+          backgroundColor: theme.colors.background.secondary,
+          borderColor: theme.colors.border.medium,
+          color: theme.colors.text.secondary,
+        },
+      }),
+    [theme]
+  );
 
   const extensions = useMemo(
     () => [
       autocompleteTabKeymap,
+      foldPlaceholderTheme,
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(completionSources, completionMode),
       ...(additionalExtensions ?? []),
     ],
-    [ariaLabel, ariaLabelledby, languageExtension, completionSources, completionMode, additionalExtensions]
+    [
+      ariaLabel,
+      ariaLabelledby,
+      languageExtension,
+      completionSources,
+      completionMode,
+      additionalExtensions,
+      foldPlaceholderTheme,
+    ]
   );
   return (
     <>
