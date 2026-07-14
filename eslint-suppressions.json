@@ -2663,16 +2663,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/EditorField.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/grafana-pyroscope-datasource/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/grafana-testdata-datasource/QueryEditor.tsx": {
     "@grafana/no-locale-compare": {
       "count": 1

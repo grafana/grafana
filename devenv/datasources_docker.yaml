@@ -140,10 +140,3 @@ datasources:
     access: proxy
     url: http://loki:3100
     editable: false
-
-  - name: gdev-pyroscope
-    type: grafana-pyroscope-datasource
-    uid: gdev-pyroscope
-    access: proxy
-    url: http://pyroscope:4040
-    editable: false
