@@ -76,19 +76,41 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 		establishInterest(t, ctx, out, backend)
 
-		// Guards the publish and consume switches (in separate files) staying in sync.
-		for _, action := range []kv.DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
+		// Guards the publish and consume switches (in separate files) staying in
+		// sync. Each action gets a distinct resource version so deliveries can be
+		// matched to their action regardless of arrival order. The publisher
+		// dual-publishes on the new and legacy subjects during the transition and
+		// this consumer watches the whole stream (SubjectAll), so a notification
+		// arrives more than once; collecting into a map keyed by RV absorbs the
+		// duplicates, and filtering by name drops any warm-up straggler.
+		want := map[int64]kv.DataAction{
+			1: DataActionCreated,
+			2: DataActionUpdated,
+			3: DataActionDeleted,
+		}
+		for rv, action := range want {
 			backend.publishWatchNotification(ctx, Event{
 				Namespace:       "default",
 				Group:           "playlist.grafana.app",
 				Resource:        "playlists",
 				Name:            "p-1",
-				ResourceVersion: 1,
+				ResourceVersion: rv,
 				Action:          action,
 			})
-			got := recvEvent(t, out)
-			assert.Equal(t, action, got.Action, "action %q must survive the round trip", action)
 		}
+
+		got := make(map[int64]kv.DataAction, len(want))
+		require.Eventually(t, func() bool {
+			select {
+			case evt := <-out:
+				if evt.Name == "p-1" {
+					got[evt.ResourceVersion] = evt.Action
+				}
+			case <-time.After(50 * time.Millisecond):
+			}
+			return len(got) == len(want)
+		}, 5*time.Second, time.Millisecond)
+		assert.Equal(t, want, got)
 	})
 
 	t.Run("publisher targets the resource-specific subject a per-resource consumer subscribes to", func(t *testing.T) {
