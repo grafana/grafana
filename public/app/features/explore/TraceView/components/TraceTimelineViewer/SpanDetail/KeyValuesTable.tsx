@@ -41,13 +41,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     body: css({
       label: 'body',
-      verticalAlign: 'baseline',
     }),
     row: css({
       label: 'row',
       '& > td': {
         padding: '0 0.5rem',
-        height: '30px',
+        minHeight: '30px',
+        verticalAlign: 'middle',
       },
       '&:nth-child(2n) > td': {
         background: autoColor(theme, '#f5f5f5'),
@@ -78,6 +78,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     copyColumn: css({
       label: 'copyColumn',
       textAlign: 'right',
+      verticalAlign: 'middle',
+      whiteSpace: 'nowrap',
     }),
     linkIcon: css({
       label: 'linkIcon',
