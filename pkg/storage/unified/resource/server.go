@@ -1429,14 +1429,23 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}, nil
 }
 
-func (s *server) checkStatsAccess(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) error {
+func (s *server) checkStatsReadAccess(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) error {
+	// must be able to read object in order to read its stats
+	rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+	if rsp.Error != nil {
+		if rsp.Error.Code == http.StatusNotFound {
+			return status.Error(codes.NotFound, rsp.Error.Message)
+		}
+		return status.Error(codes.Internal, rsp.Error.Message)
+	}
+
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
 		Name:      key.Name,
-	}, "")
+	}, rsp.Folder)
 	if err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -1454,15 +1463,17 @@ func (s *server) RecordEvent(ctx context.Context, req *resourcepb.RecordEventReq
 		return nil, status.Error(codes.Unimplemented, "usage stats are not enabled")
 	}
 
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
+	// TODO: revisit object-level authz on the ingest path. We intentionally only
+	// require the caller to be authenticated here and do not check that they can
+	// read the target object. This matches the legacy enterprise ingest endpoint
+	// (/api/ma/events), which recorded events for any signed-in user without a
+	// per-object permission check, relying on the client to only emit events for
+	// objects the user is already viewing.
+	if user, ok := claims.AuthInfoFrom(ctx); !ok || user == nil {
 		return nil, status.Error(codes.Unauthenticated, "no user found in context")
 	}
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, status.Error(codes.InvalidArgument, r.Message)
-	}
-	if err := s.checkStatsAccess(ctx, user, req.Key); err != nil {
-		return nil, err
 	}
 
 	if err := s.statsIngester.RecordEvent(ctx, req.Key, req.Events); err != nil {
@@ -1489,7 +1500,7 @@ func (s *server) GetResourceDailyStats(ctx context.Context, req *resourcepb.GetR
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
-	if err := s.checkStatsAccess(ctx, user, req.Key); err != nil {
+	if err := s.checkStatsReadAccess(ctx, user, req.Key); err != nil {
 		return nil, err
 	}
 
