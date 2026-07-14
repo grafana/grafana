@@ -1191,6 +1191,24 @@ describe('ScopesService', () => {
         expect(selectorService.changeScopes).not.toHaveBeenCalled();
       });
 
+      it('logs and does not throw when the apply promise rejects', async () => {
+        turnOnScopesFirstMode();
+        selectorService.state.appliedScopes = [];
+        selectorService.state.selectedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
+        selectorService.changeScopes = jest.fn().mockRejectedValue(new Error('apply failed'));
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        service.setEnabled(true);
+        // Wait long enough for the fetch to resolve, then the changeScopes
+        // rejection to propagate through the .catch() handler.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(errorSpy).toHaveBeenCalledWith('Failed to apply default scope:', expect.any(Error));
+        errorSpy.mockRestore();
+      });
+
       it('does not fetch twice when setEnabled(true) is called twice in a row', async () => {
         turnOnScopesFirstMode();
         selectorService.state.appliedScopes = [];
