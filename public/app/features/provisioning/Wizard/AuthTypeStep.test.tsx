@@ -23,13 +23,21 @@ jest.mock('./components/RepositoryField', () => {
   };
 });
 
-function FormWrapper({ children }: { children: ReactNode }) {
+jest.mock('./components/RepositoryTokenInput', () => {
+  const React = jest.requireActual('react');
+  return {
+    RepositoryTokenInput: () => React.createElement('div', null, 'Token input'),
+  };
+});
+
+function FormWrapper({ children, defaultValues }: { children: ReactNode; defaultValues?: Partial<WizardFormData> }) {
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: { type: 'github' },
       githubAuthType: 'github-app',
       githubAppMode: 'existing',
       githubApp: { connectionName: 'github-app' },
+      ...defaultValues,
     },
   });
 
@@ -50,5 +58,18 @@ describe('AuthTypeStep', () => {
     expect(
       githubAppConfiguration.compareDocumentPosition(repositoryUrl) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+
+  it('shows the repository URL before the token input for PAT auth', () => {
+    render(
+      <FormWrapper defaultValues={{ githubAuthType: 'pat' }}>
+        <AuthTypeStep onGitHubAppSubmit={jest.fn()} />
+      </FormWrapper>
+    );
+
+    const repositoryUrl = screen.getByText('Repository URL');
+    const tokenInput = screen.getByText('Token input');
+
+    expect(repositoryUrl.compareDocumentPosition(tokenInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
