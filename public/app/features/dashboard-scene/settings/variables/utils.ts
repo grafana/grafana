@@ -416,7 +416,7 @@ export function dropPredefinedVariableNamed(set: SceneVariableSet, name: string,
  * Re-injects a stashed predefined variable named `name` into `set` when nothing in
  * that set currently uses the name.
  */
-export function restorePredefinedVariableNamed(set: SceneVariableSet, name: string, ownerHint?: object): void {
+function restorePredefinedVariableNamed(set: SceneVariableSet, name: string, ownerHint?: object): void {
   if (set.state.variables.some((v) => v.state.name === name)) {
     return;
   }
