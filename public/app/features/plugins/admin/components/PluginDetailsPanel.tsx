@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type PageInfoItem } from '@grafana/runtime/internal';
 import {
   Stack,
@@ -55,7 +55,6 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   const onClickReportConcern = (pluginId: string) => {
     setReportAbuseModalOpen(true);
-    reportInteraction('plugin_detail_report_concern', { plugin_id: pluginId });
   };
 
   function createTestId(text: string) {
