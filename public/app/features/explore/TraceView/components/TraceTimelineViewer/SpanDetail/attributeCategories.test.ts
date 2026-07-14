@@ -13,12 +13,7 @@ describe('groupAttributesByCategory', () => {
 
     const grouped = groupAttributesByCategory(attributes, 'resource');
 
-    expect(grouped.map(({ category }) => category.id)).toEqual([
-      'service',
-      'kubernetes',
-      'telemetry-sdk',
-      'other',
-    ]);
+    expect(grouped.map(({ category }) => category.id)).toEqual(['service', 'kubernetes', 'telemetry-sdk', 'other']);
     expect(grouped[0].attributes).toHaveLength(2);
     expect(grouped[1].attributes).toHaveLength(2);
     expect(grouped[2].attributes).toHaveLength(1);
@@ -50,7 +45,10 @@ describe('groupAttributesByCategory', () => {
 
   it('matches underscore-prefixed attribute keys', () => {
     const resourceGrouped = groupAttributesByCategory(
-      [{ key: 'service_name', value: 'api' }, { key: 'k8s_pod_name', value: 'api-123' }],
+      [
+        { key: 'service_name', value: 'api' },
+        { key: 'k8s_pod_name', value: 'api-123' },
+      ],
       'resource'
     );
     const spanGrouped = groupAttributesByCategory([{ key: 'http_method', value: 'POST' }], 'span');
@@ -75,7 +73,10 @@ describe('groupAttributesByCategory', () => {
   });
 
   it('groups frontend span attributes such as session.id', () => {
-    const attributes = [{ key: 'session.id', value: 'abc123' }, { key: 'browser.name', value: 'Chrome' }];
+    const attributes = [
+      { key: 'session.id', value: 'abc123' },
+      { key: 'browser.name', value: 'Chrome' },
+    ];
 
     const grouped = groupAttributesByCategory(attributes, 'span');
 
@@ -134,7 +135,10 @@ describe('groupAttributesByCategory', () => {
 
   it('groups span-only prefixes in resource attributes', () => {
     const grouped = groupAttributesByCategory(
-      [{ key: 'http.method', value: 'GET' }, { key: 'exception.message', value: 'failed' }],
+      [
+        { key: 'http.method', value: 'GET' },
+        { key: 'exception.message', value: 'failed' },
+      ],
       'resource'
     );
 
@@ -143,7 +147,10 @@ describe('groupAttributesByCategory', () => {
 
   it('groups resource-only prefixes in span attributes', () => {
     const grouped = groupAttributesByCategory(
-      [{ key: 'service.name', value: 'api' }, { key: 'k8s.pod.name', value: 'pod-1' }],
+      [
+        { key: 'service.name', value: 'api' },
+        { key: 'k8s.pod.name', value: 'pod-1' },
+      ],
       'span'
     );
 

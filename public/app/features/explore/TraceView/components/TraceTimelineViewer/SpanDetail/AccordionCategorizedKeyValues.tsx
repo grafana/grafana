@@ -29,10 +29,7 @@ export default function AccordionCategorizedKeyValues({
 }: AccordionCategorizedKeyValuesProps) {
   const styles = useStyles2(getStyles);
   const isEmpty = !Array.isArray(data) || !data.length;
-  const groupedCategories = React.useMemo(
-    () => groupAttributesByCategory(data, sectionType),
-    [data, sectionType]
-  );
+  const groupedCategories = React.useMemo(() => groupAttributesByCategory(data, sectionType), [data, sectionType]);
   const [closedCategories, setClosedCategories] = React.useState<Set<string>>(() => new Set());
 
   React.useEffect(() => {
@@ -73,11 +70,7 @@ export default function AccordionCategorizedKeyValues({
 
   return (
     <div className={styles.container}>
-      <div
-        className={styles.header}
-        {...headerProps}
-        data-testid="AccordionCategorizedKeyValues--header"
-      >
+      <div className={styles.header} {...headerProps} data-testid="AccordionCategorizedKeyValues--header">
         {arrow}
         <strong className={styles.headerLabel}>{label}</strong>
         {showDataSummaryFields && (
@@ -99,10 +92,7 @@ export default function AccordionCategorizedKeyValues({
                   aria-expanded={isCategoryOpen}
                   onClick={() => toggleCategory(category.id)}
                 >
-                  <Icon
-                    name={isCategoryOpen ? 'angle-down' : 'angle-right'}
-                    className={styles.chevronIcon}
-                  />
+                  <Icon name={isCategoryOpen ? 'angle-down' : 'angle-right'} className={styles.chevronIcon} />
                   <Icon name={category.icon} className={styles.categoryIcon} />
                   <span className={styles.categoryLabel}>{category.label}</span>
                   <Counter value={attributes.length} variant="secondary" />

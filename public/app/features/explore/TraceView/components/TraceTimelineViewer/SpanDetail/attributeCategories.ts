@@ -181,14 +181,12 @@ function createPrefixMatcher(prefixes: string[], excludedPrefixes: string[] = []
 }
 
 function buildAttributeCategories(): AttributeCategoryDefinition[] {
-  return ATTRIBUTE_CATEGORY_CONFIG.map(
-    ({ id, labelKey, defaultLabel, icon, prefixes, excludedPrefixes = [] }) => ({
-      id,
-      label: t(labelKey, defaultLabel),
-      icon,
-      match: createPrefixMatcher(prefixes, excludedPrefixes),
-    })
-  );
+  return ATTRIBUTE_CATEGORY_CONFIG.map(({ id, labelKey, defaultLabel, icon, prefixes, excludedPrefixes = [] }) => ({
+    id,
+    label: t(labelKey, defaultLabel),
+    icon,
+    match: createPrefixMatcher(prefixes, excludedPrefixes),
+  }));
 }
 
 function orderAttributeCategories(
