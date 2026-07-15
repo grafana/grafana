@@ -78,7 +78,7 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
   - **+ Add from saved queries** - Add an additional query by reusing a saved query.
 
   {{< admonition type="note" >}}
-  [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+  [Saved queries](ref:saved-queries) is only available on Grafana Enterprise and Grafana Cloud.
   {{< /admonition >}}
 
 - **Query history** - Query history contains the list of queries that you created in Explore. You can also add queries from the history to your saved queries. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
