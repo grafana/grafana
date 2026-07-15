@@ -378,13 +378,13 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
    address = http://localhost:14268/api/traces
    ```
 
-1. Search/browse collected logs and traces in Grafana Explore
+1. Search/browse collected logs in Grafana Explore
 
-   You need provisioned `gdev-jaeger` and `gdev-loki` data sources. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for set up instructions.
+   You need a provisioned `gdev-loki` data source. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for set up instructions.
 
    Open Grafana explore and select the `gdev-loki` data source and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
 
-   You can then inspect any log message that includes a `traceID` and from there click `gdev-jaeger` to split the view and inspect the trace in question.
+   You can then inspect any log message that includes a `traceID` and copy it to look up the trace in the Jaeger UI (see the next step).
 
 1. Search or browse collected traces in Jaeger UI
 

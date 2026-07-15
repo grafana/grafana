@@ -300,7 +300,6 @@
 /devenv/docker/blocks/graphite1/ @grafana/data-sources-plugins
 /devenv/docker/blocks/influxdb/ @grafana/data-sources-plugins
 /devenv/docker/blocks/influxdb1/ @grafana/data-sources-plugins
-/devenv/docker/blocks/jaeger/ @grafana/data-sources-plugins
 /devenv/docker/blocks/jaegeronly/ @grafana/grafana-operator-experience-squad
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/data-sources-plugins
@@ -475,9 +474,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-view-panel.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/textbox-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
-/e2e-playwright/fixtures/exemplars-query-response.json @grafana/data-sources-plugins
-/e2e-playwright/fixtures/long-trace-response.json @grafana/observability-traces-and-profiling
-/e2e-playwright/fixtures/tempo-response.json @grafana/data-sources-plugins
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
 /e2e-playwright/panels-suite/ @grafana/dataviz-squad
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-frontend-navigation
@@ -497,7 +493,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/advisor.spec.ts @grafana/grafana-catalog
 /e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/bookmarks.spec.ts @grafana/grafana-frontend-navigation
-/e2e-playwright/various-suite/exemplars.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/explore.spec.ts @grafana/datapro
 /e2e-playwright/various-suite/filter-annotations.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/grafana-frontend-platform
@@ -522,7 +517,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/splash-screen.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/swagger.spec.ts @grafana/grafana-frontend-platform
-/e2e-playwright/various-suite/trace-view-scrolling.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/visualization-suggestions*.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/panel-presets.spec.ts @grafana/dataviz-squad
