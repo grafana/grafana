@@ -18,7 +18,7 @@ import {
   type AzureMonitorDataSourceSettings,
   type Subscription,
 } from '../../types/types';
-import { routeNames } from '../../utils/common';
+import { fetchAllArmPages, routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
 
@@ -76,16 +76,17 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.saveOptions();
 
     const query = `?api-version=2019-03-01`;
+    const resourcePath = `/api/datasources/uid/${this.props.options.uid}/resources/${routeNames.azureMonitor}`;
     try {
-      const result = await getBackendSrv()
-        .fetch<AzureAPIResponse<Subscription>>({
-          url: this.baseURL + query,
-          method: 'GET',
-        })
-        .toPromise();
+      const value = await fetchAllArmPages<Subscription>(resourcePath, this.baseURL + query, async (path) => {
+        const response = await getBackendSrv()
+          .fetch<AzureAPIResponse<Subscription>>({ url: path, method: 'GET' })
+          .toPromise();
+        return response?.data;
+      });
 
       this.setState({ error: undefined });
-      return ResponseParser.parseSubscriptionsForSelect(result);
+      return ResponseParser.parseSubscriptionsForSelect({ value });
     } catch (err) {
       if (isFetchError(err)) {
         this.setState({
