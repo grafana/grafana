@@ -43,9 +43,7 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
           <Button variant="secondary" fill="outline" size="sm" className={styles.dropdown}>
             <Stack direction="row" alignItems="center">
               <Text variant="bodySmall" color="secondary">
-                <span className={styles.subtitle}>
-                  <Trans i18nKey="home.recommendations.existing">Enabled solution</Trans>
-                </span>
+                <Trans i18nKey="home.recommendations.existing">Enabled solution</Trans>
               </Text>
 
               <Text variant="bodySmall" color="primary" weight="medium">
@@ -227,11 +225,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     padding: theme.spacing(1.5),
     lineHeight: 0,
-  }),
-  subtitle: css({
-    textTransform: 'uppercase',
-    letterSpacing: theme.spacing(0.125),
-    opacity: 0.75,
   }),
   alert: css({
     background: theme.colors.background.secondary,

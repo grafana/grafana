@@ -78,7 +78,7 @@ function LiveSolutionsCard({ settings, selectedTitle, onSelect }: LiveSolutionsC
     return <RecommendationExistingSkeleton />;
   }
 
-  const kubernetesItem: ExistingItem | null =
+  const kubernetesItem =
     !resolutionError && datasource
       ? buildKubernetesItem(
           {
