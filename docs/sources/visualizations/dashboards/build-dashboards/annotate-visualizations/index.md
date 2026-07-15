@@ -150,6 +150,90 @@ To add an annotation query to a dashboard, follow these steps:
 
 {{< /docs/list >}}
 
+### Saved queries
+
+{{< admonition type="note" >}}
+Saved queries is only available on Grafana Enterprise and Grafana Cloud.
+{{< /admonition >}}
+
+You can reuse queries you and others in your organization have saved in annotations.
+This helps users across your organization create annotations without having to create their own queries or know a query language.
+It also helps you avoid having several users build the same queries for the same data sources multiple times.
+
+Saved queries are supported in:
+
+- [Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#create-a-dashboard)
+- [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/query-editor/)
+- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries)
+
+Learn more about saved queries:
+
+- [Saved queries dialog box](#saved-queries-dialog-box)
+- [Roles, permission, and RBAC](#roles-permissions-and-rbac)
+- [Variables in saved queries](#variables-in-saved-queries)
+- [Known limitations](#known-limitations)
+
+#### Saved queries dialog box
+
+The **Saved queries** dialog box gives you access to all the saved queries in your organization:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v13.0.png" max-width="750px" alt="List of saved queries" >}}
+
+To access saved queries, click **Use saved query** in the annotations configuration.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-saved-query-v13.2.png" max-width="450px" alt="Access saved queries" >}}
+
+From the **Saved queries** dialog box, you can:
+
+- Search for queries by data source name, query content, title, or description.
+- Sort queries alphabetically or by creation date.
+- Filter by data source name, author name, and tags. The tag filter uses the `OR` operator, while the others use the `AND` operator. Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
+- Star queries so that they appear in the **Starred queries** filter view.
+- Duplicate or delete a saved query.
+- Edit a query title, description, or tags.
+
+You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
+
+{{< admonition type="tip">}}
+When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** dialog box displays a **Drilldown** button.
+Click the button to open the associated Drilldown app, while maintaining the context of the query.
+Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
+{{< /admonition >}}
+
+#### Roles, permissions, and RBAC
+
+Saved queries support role-based access controls.
+By default, saved queries have two RBAC roles:
+
+- **Writer**: Create, update, and delete all saved queries.
+- **Reader**: Reuse saved queries.
+
+If you used saved queries prior to the addition of RBAC support in Grafana v12.4, Grafana user roles are mapped as follows:
+
+- Admin > Writer
+- Editor > Writer
+- Viewer > Reader
+
+#### Variables in saved queries
+
+If a saved query includes variables, you can substitute the variables in the query without modifying it.
+This is useful in environments where variable names or available values differ between dashboards.
+
+You can map the original variables to either:
+
+- A variable in your dashboard
+- A custom value that you enter
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-query-variable-v13.0.png" max-width="450px" alt="A saved query with substituted variables" >}}
+
+Grafana applies your selections to the query before inserting it into the dashboard.
+However, the substitutions only apply to the query when it's reused, and the original saved query remains unchanged.
+
+#### Known limitations
+
+- No validation is performed when you save a query, so it's possible to save an invalid query. You should confirm the query is working properly before you save it.
+- You can save a maximum of 1000 queries.
+
 ## Built-in query
 
 After you add an annotation, they are still visible. This is due to the built-in annotation query that exists on all dashboards. This annotation query fetches all annotation events that originate from the current dashboard, which are stored in Grafana, and show them on the panel where they were created. This includes alert state history annotations.

@@ -184,7 +184,7 @@ You can save queries that you've created so they can be reused by you and others
 This helps users across your organization create dashboards without having to create their own queries or know a query language.
 It also helps you avoid having several users build the same queries for the same data sources multiple times.
 
-Saved queries are available in:
+Saved queries are supported in:
 
 - [Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#create-a-dashboard)
 - [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/query-editor/)
