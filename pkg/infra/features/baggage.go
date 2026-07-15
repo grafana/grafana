@@ -10,9 +10,6 @@ import (
 )
 
 const (
-	SlugKey      = "slug"
-	PlanKey      = "plan"
-	ChannelKey   = "channel"
 	NamespaceKey = "namespace"
 )
 
@@ -26,16 +23,9 @@ func InstanceContextFromBaggage(ctx context.Context) openfeature.EvaluationConte
 
 	contextAtributes := map[string]any{}
 
-	set := func(attrKey string) {
-		if v := bag.Member(attrKey).Value(); v != "" {
-			contextAtributes[attrKey] = v
-		}
+	for _, member := range bag.Members() {
+		contextAtributes[member.Key()] = member.Value()
 	}
-
-	set(SlugKey)
-	set(PlanKey)
-	set(ChannelKey)
-	set(NamespaceKey)
 
 	targetingKey := bag.Member(NamespaceKey).Value()
 	return openfeature.NewEvaluationContext(targetingKey, contextAtributes)

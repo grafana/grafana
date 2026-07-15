@@ -50,13 +50,6 @@ func TestInstanceContextFromBaggage(t *testing.T) {
 		assert.NotContains(t, attrs, "channel")
 	})
 
-	t.Run("non-canonical baggage members are not included", func(t *testing.T) {
-		req := baggageCtx(t, "namespace=stacks-42,custom-key=should-be-ignored")
-		evalCtx := InstanceContextFromBaggage(req.Context())
-
-		assert.NotContains(t, evalCtx.Attributes(), "custom-key")
-	})
-
 	t.Run("missing namespace results in empty targeting key", func(t *testing.T) {
 		req := baggageCtx(t, "slug=mystack,plan=pro")
 		evalCtx := InstanceContextFromBaggage(req.Context())
