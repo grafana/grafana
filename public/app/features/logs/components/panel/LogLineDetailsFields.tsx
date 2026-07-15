@@ -300,7 +300,7 @@ const LogLineDetailsField = ({
   }, [app, isLabel, log.datasourceType, log.uid, reportInteractionWrapper, showFieldsStats]);
 
   const reportLinkClick = useCallback((link: LinkModelWithIcon) => {
-    reportInteractionWrapper('logs_log_line_details_link_clicked', {
+    reportInteractionWrapper('logs_log_line_details_extension_link_clicked', {
       app,
       linkApp: resolveAppFromLink(link.href),
       fieldKey: keys[0],
