@@ -2,7 +2,7 @@ INSERT INTO {{ .Ident .QuotaTable }} (
   org_id,
   user_id,
   target,
-  {{ .Ident .LimitColumn }},
+  {{ .Ident "limit" }},
   created,
   updated
 )

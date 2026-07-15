@@ -252,7 +252,6 @@ func TestTemplates(t *testing.T) {
 					Data: insertQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						LimitColumn: "limit",
 						Cmd:         &quota.UpdateQuotaCmd{Target: "test", Limit: 3, UserID: 42},
 						Created:     now,
 						Updated:     now,
@@ -265,7 +264,6 @@ func TestTemplates(t *testing.T) {
 					Data: updateQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						LimitColumn: "limit",
 						QuotaID:     3,
 						Limit:       4,
 						Updated:     now,
@@ -278,7 +276,6 @@ func TestTemplates(t *testing.T) {
 					Data: userScopeQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						LimitColumn: "limit",
 						UserID:      42,
 						OrgID:       0,
 					},
@@ -290,7 +287,6 @@ func TestTemplates(t *testing.T) {
 					Data: orgScopeQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						LimitColumn: "limit",
 						UserID:      0,
 						OrgID:       8,
 					},

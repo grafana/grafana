@@ -95,22 +95,20 @@ func (q findQuotaQuery) Validate() error { return nil }
 
 type insertQuotaQuery struct {
 	sqltemplate.SQLTemplate
-	QuotaTable  string
-	LimitColumn string
-	Cmd         *quota.UpdateQuotaCmd
-	Created     time.Time
-	Updated     time.Time
+	QuotaTable string
+	Cmd        *quota.UpdateQuotaCmd
+	Created    time.Time
+	Updated    time.Time
 }
 
 func (q insertQuotaQuery) Validate() error { return nil }
 
 type updateQuotaQuery struct {
 	sqltemplate.SQLTemplate
-	QuotaTable  string
-	LimitColumn string
-	QuotaID     int64
-	Limit       int64
-	Updated     time.Time
+	QuotaTable string
+	QuotaID    int64
+	Limit      int64
+	Updated    time.Time
 }
 
 func (q updateQuotaQuery) Validate() error { return nil }
@@ -144,7 +142,6 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 			insertQuery := insertQuotaQuery{
 				SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 				QuotaTable:  dbHelper.Table("quota"),
-				LimitColumn: "limit",
 				Cmd:         cmd,
 				Created:     now,
 				Updated:     now,
@@ -160,7 +157,6 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 		updateQuery := updateQuotaQuery{
 			SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 			QuotaTable:  dbHelper.Table("quota"),
-			LimitColumn: "limit",
 			QuotaID:     quotaID,
 			Limit:       cmd.Limit,
 			Updated:     time.Now(),
@@ -176,10 +172,9 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 
 type userScopeQuotaQuery struct {
 	sqltemplate.SQLTemplate
-	QuotaTable  string
-	LimitColumn string
-	UserID      int64
-	OrgID       int64
+	QuotaTable string
+	UserID     int64
+	OrgID      int64
 }
 
 func (q userScopeQuotaQuery) Validate() error { return nil }
@@ -189,7 +184,6 @@ func (ss *sqlStore) getUserScopeQuota(ctx quota.Context, dbHelper *legacysql.Leg
 	query := userScopeQuotaQuery{
 		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 		QuotaTable:  dbHelper.Table("quota"),
-		LimitColumn: "limit",
 		UserID:      userID,
 		OrgID:       0,
 	}
@@ -222,10 +216,9 @@ func (ss *sqlStore) getUserScopeQuota(ctx quota.Context, dbHelper *legacysql.Leg
 
 type orgScopeQuotaQuery struct {
 	sqltemplate.SQLTemplate
-	QuotaTable  string
-	LimitColumn string
-	UserID      int64
-	OrgID       int64
+	QuotaTable string
+	UserID     int64
+	OrgID      int64
 }
 
 func (q orgScopeQuotaQuery) Validate() error { return nil }
@@ -235,7 +228,6 @@ func (ss *sqlStore) getOrgScopeQuota(ctx quota.Context, dbHelper *legacysql.Lega
 	query := orgScopeQuotaQuery{
 		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 		QuotaTable:  dbHelper.Table("quota"),
-		LimitColumn: "limit",
 		UserID:      0,
 		OrgID:       orgID,
 	}
