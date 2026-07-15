@@ -140,6 +140,16 @@ type ConvertPrometheusSrv struct {
 	featureToggles   featuremgmt.FeatureToggles
 	am               Alertmanager
 	importsAuthz     notifier.ExtraConfigAuthz
+	rulerSync        ExternalRulerSyncChecker
+}
+
+// ExternalRulerSyncChecker reports whether external Mimir/Cortex ruler sync is
+// configured for an org. When it is, the convert API rejects manual rule
+// imports for that org, since the sync worker owns the org's converted rules and
+// would overwrite/prune them. Satisfied by *rulesync.ExternalRulerSyncer; may be
+// nil (sync disabled / test paths) — treated as not configured.
+type ExternalRulerSyncChecker interface {
+	IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
 }
 
 type Alertmanager interface {
@@ -158,6 +168,7 @@ func NewConvertPrometheusSrv(
 	featureToggles featuremgmt.FeatureToggles,
 	am Alertmanager,
 	importsAuthz notifier.ExtraConfigAuthz,
+	rulerSync ExternalRulerSyncChecker,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -168,6 +179,7 @@ func NewConvertPrometheusSrv(
 		featureToggles:   featureToggles,
 		am:               am,
 		importsAuthz:     importsAuthz,
+		rulerSync:        rulerSync,
 	}
 }
 
@@ -369,6 +381,21 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
+
+	// Refuse manual rule imports when external ruler sync is configured for this
+	// org, mirroring the Alertmanager convert-API 409 gate. This keeps a single
+	// writer of converted rules for simplicity and parity with the AM side;
+	// prune safety itself is handled separately by SourceIdentifier scoping.
+	if srv.rulerSync != nil {
+		syncConfigured, err := srv.rulerSync.IsConfiguredForOrg(c.Req.Context(), c.GetOrgID())
+		if err != nil {
+			logger.Error("Failed to check external ruler sync configuration", "error", err)
+			return response.Error(http.StatusInternalServerError, "failed to check external ruler sync configuration", err)
+		}
+		if syncConfigured {
+			return response.Error(http.StatusConflict, "rule import is disabled while external ruler sync is configured for this organization", nil)
+		}
+	}
 
 	// 1. Parse the appropriate headers
 	workingFolderUID := getWorkingFolderUID(c)
