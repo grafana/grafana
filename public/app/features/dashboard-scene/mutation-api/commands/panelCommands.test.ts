@@ -374,6 +374,27 @@ describe('Panel mutation commands', () => {
       expect(status?.errorDetails).toEqual([{ message: 'backend boom', refId: 'A' }]);
     });
 
+    it('includeStatus does not flag hasError for an error object with no usable message (Done state)', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Empty Error Panel');
+      attachPanelData(
+        scene,
+        'Empty Error Panel',
+        makePanelData({ state: LoadingState.Done, series: [], errors: [{}] })
+      );
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(false);
+      expect(status?.errors).toBeUndefined();
+      expect(status?.errorDetails).toBeUndefined();
+    });
+
     it('includeStatus reports hasNoData for a done panel with no series', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);
