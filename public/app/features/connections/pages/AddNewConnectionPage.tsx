@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { PluginType, type GrafanaTheme2 } from '@grafana/data';
+import { PluginType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { RoadmapLinks } from 'app/features/plugins/admin/components/RoadmapLinks';
@@ -11,10 +11,18 @@ import { useGetUpdatable } from 'app/features/plugins/admin/state/hooks';
 
 import { AddNewConnection } from '../tabs/ConnectData/ConnectData';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   pageContainer: css({
     height: '100vh',
     overflow: 'hidden',
+    '[class*="page-inner"]': {
+      minHeight: 0,
+    },
+    '[class*="page-content"]': {
+      minHeight: 0,
+      display: 'flex',
+      flexDirection: 'column',
+    },
   }),
 });
 

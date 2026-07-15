@@ -89,8 +89,8 @@ func NewSearchOptions(
 		// docs is optional in some tests; only consult it when present so the
 		// hash check is a no-op rather than a nil deref. Real callers always
 		// pass a non-nil supplier.
-		var searchFieldsHashes map[string]string
-		var searchFieldsProviders map[string]resource.SearchFieldsProvider
+		var searchFieldsHashes map[resource.LowerGroupResource]string
+		var searchFieldsProviders map[resource.LowerGroupResource]resource.SearchFieldsProvider
 		if docs != nil {
 			builders, err := docs.GetDocumentBuilders()
 			if err != nil {

@@ -283,7 +283,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		newCp.Name = newName
 
 		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
-			revision.RenameReceiverInRoutes(oldName, newName, false)
+			revision.RenameReceiverInRoutes(oldName, newName)
 			return nil
 		}
 

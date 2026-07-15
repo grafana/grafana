@@ -47,6 +47,10 @@ const patchPreferencesHandler = () =>
 export const customGetUserPreferencesHandler = (resolver: HttpResponseResolver) =>
   http.get('/api/user/preferences', resolver);
 
+// Override the PATCH in a test — e.g. to simulate a pending/slow save or a failing request.
+export const customPatchUserPreferencesHandler = (resolver: HttpResponseResolver) =>
+  http.patch('/api/user/preferences', resolver);
+
 const getSignedInUserTeamListHandler = () =>
   http.get('/api/user/teams', async () => {
     return HttpResponse.json([]);

@@ -69,10 +69,10 @@ func TestGenerateComment(t *testing.T) {
 			RepositoryTitle: "My Repo",
 		}},
 		{"new dashboard", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
-			RepositoryURL:   "https://github.com/example/repo",
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -90,10 +90,10 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"update dashboard", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
-			RepositoryURL:   "https://github.com/example/repo",
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -114,10 +114,10 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"update dashboard missing renderer", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
-			RepositoryURL:   "https://github.com/example/repo",
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -136,11 +136,11 @@ func TestGenerateComment(t *testing.T) {
 			MissingImageRenderer: true,
 		}},
 		{"multiple files", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
-			RepositoryURL:   "https://github.com/example/repo",
-			SkippedFiles:    5,
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
+			SkippedFiles:       5,
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -218,10 +218,10 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"multiple files with stripped metadata", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
-			RepositoryURL:   "https://github.com/example/repo",
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{

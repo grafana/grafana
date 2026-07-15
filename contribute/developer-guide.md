@@ -112,7 +112,6 @@ If you want to contribute to any of the plugins listed below (that are found wit
 
 - azuremonitor
 - grafana-postgresql-datasource
-- grafana-pyroscope-datasource
 - grafana-testdata-datasource
 - jaeger
 - mysql
