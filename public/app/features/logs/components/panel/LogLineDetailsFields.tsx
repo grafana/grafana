@@ -299,16 +299,19 @@ const LogLineDetailsField = ({
     });
   }, [app, isLabel, log.datasourceType, log.uid, reportInteractionWrapper, showFieldsStats]);
 
-  const reportLinkClick = useCallback((link: LinkModelWithIcon) => {
-    reportInteractionWrapper('logs_log_line_details_extension_link_clicked', {
-      app,
-      linkApp: resolveAppFromLink(link.href),
-      fieldKey: keys[0],
-      fieldType: isLabel ? 'label' : 'field',
-      datasourceType: log.datasourceType,
-      logLevel: log.logLevel,
-    });
-  }, [app, isLabel, keys, log.datasourceType, log.logLevel, reportInteractionWrapper]);
+  const reportLinkClick = useCallback(
+    (link: LinkModelWithIcon) => {
+      reportInteractionWrapper('logs_log_line_details_extension_link_clicked', {
+        app,
+        linkApp: resolveAppFromLink(link.href),
+        fieldKey: keys[0],
+        fieldType: isLabel ? 'label' : 'field',
+        datasourceType: log.datasourceType,
+        logLevel: log.logLevel,
+      });
+    },
+    [app, isLabel, keys, log.datasourceType, log.logLevel, reportInteractionWrapper]
+  );
 
   const refIdTooltip = useMemo(
     () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
