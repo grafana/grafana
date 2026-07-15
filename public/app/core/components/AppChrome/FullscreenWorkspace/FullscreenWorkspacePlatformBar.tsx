@@ -61,7 +61,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   backdrop: css({
     position: 'absolute',
-    top: 'var(--agent-platform-top-offset, 0)',
+    top: 0,
     left: 0,
     right: 0,
     bottom: 0,
@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   drawer: css({
     position: 'absolute',
-    top: 'var(--agent-platform-top-offset, 0)',
+    top: 0,
     bottom: 0,
     left: 0,
     width: MENU_WIDTH,
