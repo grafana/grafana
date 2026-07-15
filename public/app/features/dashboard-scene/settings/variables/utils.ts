@@ -23,6 +23,7 @@ import {
 import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
@@ -158,19 +159,60 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'groupby',
 ];
 
-export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
+export interface VariableTypeSelectOptionsArgs {
+  /**
+   * True when the type selector renders outside a dashboard (e.g. the variables
+   * management page). Standalone contexts have no dedicated "Filter and Group by"
+   * entry point, so with unified drilldown controls the adhoc type stays selectable
+   * and is relabeled accordingly.
+   */
+  standalone?: boolean;
+}
+
+/**
+ * Display label for a variable type, shared by the type selector and any list
+ * views so the same variable is never called two different things. Under
+ * unified drilldown controls the adhoc type is presented as "Filter and Group
+ * by" in standalone contexts.
+ */
+export function getVariableTypeLabel(
+  variableType: EditableVariableType,
+  { standalone }: VariableTypeSelectOptionsArgs = {}
+): string {
+  if (variableType === 'adhoc' && standalone && config.featureToggles.dashboardUnifiedDrilldownControls) {
+    return t('dashboard-scene.add-filters.label', 'Filter and Group by');
+  }
+  return getEditableVariables()[variableType].name;
+}
+
+export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectOptionsArgs = {}): Array<
+  SelectableValue<EditableVariableType>
+> {
   const editableVariables = getEditableVariables();
-  const results = EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
-    label: editableVariables[variableType].name,
-    value: variableType,
-    description: editableVariables[variableType].description,
-  }));
+  const unifiedDrilldown = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls);
+
+  const results = EDITABLE_VARIABLES_SELECT_ORDER.map(
+    (variableType): SelectableValue<EditableVariableType> => ({
+      label: getVariableTypeLabel(variableType, { standalone }),
+      value: variableType,
+      description:
+        variableType === 'adhoc' && unifiedDrilldown && standalone
+          ? t(
+              'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
+              'Add key/value filters and group by keys on the fly'
+            )
+          : editableVariables[variableType].description,
+    })
+  );
 
   return results.filter((option) => {
+    // Legacy standalone groupby is experimental/deprecated; leave it gated only
+    // by groupByVariable and focus new work on the unified adhoc path.
     if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
       return false;
     }
-    if (config.featureToggles.dashboardUnifiedDrilldownControls && option.value === 'adhoc') {
+    if (option.value === 'adhoc' && unifiedDrilldown && !standalone) {
+      // Dashboards have a dedicated "Filter and Group by" entry point instead.
       return false;
     }
 
@@ -315,6 +357,157 @@ export interface VariableNameValidationResult {
   warningMessage?: string;
 }
 
+export const getPredefinedVariableShadowWarning = () =>
+  t(
+    'dashboard-scene.validate-variable-name.warning-predefined-shadow',
+    'A global or folder variable with this name exists and will be overwritten by this dashboard variable.'
+  );
+
+/**
+ * Predefined variables dropped for live shadowing are kept here so they can be
+ * re-injected when the shadowing local is renamed away or deleted.
+ *
+ * Keyed by the variable set's parent (dashboard / row / tab) — not the set itself —
+ * because mutation commands replace the SceneVariableSet instance while keeping the
+ * same owner. Falls back to the set when it has no parent (unit tests).
+ */
+const shadowedPredefinedByOwner = new WeakMap<object, Map<string, SceneVariable>>();
+
+function getShadowStash(set: SceneVariableSet, ownerHint?: object): Map<string, SceneVariable> {
+  // Prefer the live parent (dashboard / row / tab). Fall back to an explicit owner for
+  // mutation mocks / replace flows where the set may not be parented yet.
+  const owner: object = set.parent ?? ownerHint ?? set;
+  let byName = shadowedPredefinedByOwner.get(owner);
+  if (!byName) {
+    byName = new Map();
+    shadowedPredefinedByOwner.set(owner, byName);
+  }
+  return byName;
+}
+
+function stashPredefinedVariable(set: SceneVariableSet, variable: SceneVariable, ownerHint?: object): void {
+  getShadowStash(set, ownerHint).set(variable.state.name, variable);
+}
+
+/**
+ * Removes a predefined (global/folder) variable of the given name from the set so a
+ * dashboard/section-local variable can take over at runtime (nearest scope wins).
+ * Stashes the dropped variable for later restore when nothing local shadows it.
+ *
+ * `ownerHint` is used when `set.parent` is unset (e.g. mutation commands that replace
+ * the variable set on a mock / unparented owner).
+ */
+export function dropPredefinedVariableNamed(set: SceneVariableSet, name: string, ownerHint?: object): void {
+  const toDrop = set.state.variables.filter((v) => v.state.name === name && isPredefinedOrigin(v.state.origin));
+  if (toDrop.length === 0) {
+    return;
+  }
+
+  for (const variable of toDrop) {
+    stashPredefinedVariable(set, variable, ownerHint);
+  }
+
+  set.setState({
+    variables: set.state.variables.filter((v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin))),
+  });
+}
+
+/**
+ * Re-injects a stashed predefined variable named `name` into `set` when nothing in
+ * that set currently uses the name.
+ */
+function restorePredefinedVariableNamed(set: SceneVariableSet, name: string, ownerHint?: object): void {
+  if (set.state.variables.some((v) => v.state.name === name)) {
+    return;
+  }
+
+  const stashed = getShadowStash(set, ownerHint).get(name);
+  if (!stashed) {
+    return;
+  }
+
+  set.setState({ variables: [stashed, ...set.state.variables] });
+}
+
+export type VariableSetSnapshot = { set: SceneVariableSet; variables: SceneVariable[] };
+
+function forEachVariableSetAlongPath(from: SceneVariable | SceneVariableSet, visit: (set: SceneVariableSet) => void) {
+  const set = from instanceof SceneVariableSet ? from : from.parent;
+  if (!(set instanceof SceneVariableSet)) {
+    return;
+  }
+
+  visit(set);
+
+  let ancestor: SceneObject | undefined = set.parent;
+  while (ancestor) {
+    const ancestorVars = ancestor.state.$variables;
+    if (ancestorVars instanceof SceneVariableSet && ancestorVars !== set) {
+      visit(ancestorVars);
+    }
+    ancestor = ancestor.parent;
+  }
+}
+
+/**
+ * Snapshots this variable's set and ancestor sets. Used so rename/drop side effects
+ * (including predefined restore) can be undone by restoring the prior arrays.
+ */
+export function snapshotVariableSetsAlongPath(variable: SceneVariable): VariableSetSnapshot[] {
+  const snapshots: VariableSetSnapshot[] = [];
+  forEachVariableSetAlongPath(variable, (set) => {
+    snapshots.push({ set, variables: [...set.state.variables] });
+  });
+  return snapshots;
+}
+
+/**
+ * Snapshots variable sets that currently hold a predefined variable named `name`
+ * (this variable's set and ancestors). Used so a later drop can be undone.
+ */
+export function snapshotSetsWithPredefinedNamed(variable: SceneVariable, name: string): VariableSetSnapshot[] {
+  const snapshots: VariableSetSnapshot[] = [];
+  forEachVariableSetAlongPath(variable, (candidate) => {
+    if (candidate.state.variables.some((v) => v.state.name === name && isPredefinedOrigin(v.state.origin))) {
+      snapshots.push({ set: candidate, variables: [...candidate.state.variables] });
+    }
+  });
+  return snapshots;
+}
+
+export function restoreVariableSetSnapshots(snapshots: VariableSetSnapshot[]): void {
+  for (const { set, variables } of snapshots) {
+    set.setState({ variables });
+  }
+}
+
+/**
+ * Drops any predefined variable shadowed by `name` from this variable's set and
+ * ancestor sets. Safe when the collision is a non-predefined dashboard local —
+ * those are left in place (section shadowing does not delete them).
+ *
+ * Call only on name *commit* (blur / undoable edit action), never on each keystroke —
+ * intermediate typed names that briefly match a predefined variable must not drop it.
+ */
+export function dropShadowedPredefinedVariables(variable: SceneVariable, name: string): void {
+  forEachVariableSetAlongPath(variable, (set) => dropPredefinedVariableNamed(set, name));
+}
+
+/**
+ * Re-injects stashed predefined variables that are no longer shadowed by a local
+ * variable in this set or ancestor sets. Call after rename-away or delete of a local.
+ *
+ * `ownerHint` is forwarded when sets may be unparented (mutation replace flows).
+ */
+export function restoreUnshadowedPredefinedVariables(from: SceneVariable | SceneVariableSet, ownerHint?: object): void {
+  forEachVariableSetAlongPath(from, (set) => {
+    const stashed = getShadowStash(set, ownerHint);
+    for (const name of stashed.keys()) {
+      restorePredefinedVariableNamed(set, name, ownerHint);
+    }
+  });
+}
+
 export function validateVariableName(variable: SceneVariable, name: string): VariableNameValidationResult {
   const set = variable.parent;
   if (!(set instanceof SceneVariableSet)) {
@@ -335,6 +528,12 @@ export function validateVariableName(variable: SceneVariable, name: string): Var
   const varLookupByName = set.getByName(name);
 
   if (varLookupByName && varLookupByName !== variable) {
+    if (isPredefinedOrigin(varLookupByName.state.origin)) {
+      return {
+        isValid: true,
+        warningMessage: getPredefinedVariableShadowWarning(),
+      };
+    }
     return { isValid: false, errorMessage: 'Variable with the same name already exists' };
   }
 
@@ -347,8 +546,9 @@ export function validateVariableName(variable: SceneVariable, name: string): Var
       if (ancestorVar) {
         return {
           isValid: true,
-          warningMessage:
-            'A variable with this name already exists at the dashboard level. This variable will overwrite it.',
+          warningMessage: isPredefinedOrigin(ancestorVar.state.origin)
+            ? getPredefinedVariableShadowWarning()
+            : 'A variable with this name already exists at the dashboard level. This variable will overwrite it.',
         };
       }
     }
@@ -389,5 +589,5 @@ function findNameInDescendantSets(sceneObject: SceneObject, name: string, exclud
 }
 
 export function isVariableEditable(variable: SceneVariable) {
-  return variable.state.type !== 'system' && variable.state.origin === undefined;
+  return isEditableVariableType(variable.state.type) && variable.state.origin === undefined;
 }

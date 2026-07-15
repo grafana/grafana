@@ -1,8 +1,6 @@
 package builders
 
 import (
-	"slices"
-
 	"github.com/grafana/grafana-app-sdk/app"
 
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
@@ -21,7 +19,6 @@ const (
 	USER_LAST_SEEN_AT = "lastSeenAt"
 	USER_ROLE         = "role"
 	USER_DISABLED     = "disabled"
-	USER_CREATED      = "createdAt"
 )
 
 // UserSortableExtraFields are the additional fields that can be used for sorting user search results.
@@ -33,7 +30,7 @@ var UserSortableExtraFields = []string{
 }
 
 // userSearchFields are read from the generated IAM manifest (declared in
-// apps/iam/kinds/user.cue), plus the createdAt field appended below.
+// apps/iam/kinds/user.cue).
 //
 // lastSeenAt (int64) and disabled (boolean) declare the filter capability to
 // record that they are meant to be filterable and to drive the bleve mapping
@@ -43,16 +40,7 @@ var UserSortableExtraFields = []string{
 // would not match a numeric-indexed term yet. No in-tree client filters by
 // lastSeenAt or disabled today, so this is a known gap rather than a rollout
 // concern.
-var userSearchFields = slices.Concat(
-	resource.NewManifestBackedProvider(iamManifests).Fields(iamv0.UserResourceInfo.GroupVersionResource()),
-	[]resource.SearchFieldDefinition{
-		// createdAt reads from the standard document's Created value rather than a
-		// resource path, so it cannot be declared in the manifest and stays here.
-		// It mirrors that value into the per-kind fields.* sub-document because
-		// the top-level created field has no bleve mapping today.
-		{Name: USER_CREATED, CopyFromStandard: resource.StandardFieldCreated, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "The creation timestamp of the user, in epoch milliseconds"},
-	},
-)
+var userSearchFields = resource.NewManifestBackedProvider(iamManifests).Fields(iamv0.UserResourceInfo.GroupVersionResource())
 
 // UserTableColumnDefinitions exposes column-defs by name for wire-API
 // consumers (the IAM legacy SQL backend in user/legacy_search.go).

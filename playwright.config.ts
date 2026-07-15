@@ -96,10 +96,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/mysql'),
     }),
     withAuth({
-      name: 'mssql',
-      testDir: path.join(pluginDirRoot, '/mssql'),
-    }),
-    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
     }),

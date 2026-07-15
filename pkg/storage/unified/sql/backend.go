@@ -122,7 +122,7 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) {
 		o.EventSubscriber = s
-		o.UseNatsNotifier = true
+		o.EnableNatsNotifier = true
 	}
 }
 
