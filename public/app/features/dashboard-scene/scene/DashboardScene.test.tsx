@@ -234,6 +234,39 @@ describe('DashboardScene', () => {
         expect(startSpy).toHaveBeenCalled();
       });
 
+      it('activateEditPane activates an inactive edit pane and releases it on exit', () => {
+        const editPane = scene.state.editPane;
+        expect(editPane.isActive).toBe(false);
+
+        scene.activateEditPane();
+        expect(editPane.isActive).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(editPane.isActive).toBe(false);
+      });
+
+      it('activateEditPane is a no-op when the edit pane is already active', () => {
+        const editPane = scene.state.editPane;
+        const activateSpy = jest.spyOn(editPane, 'activate');
+        editPane.activate();
+
+        scene.activateEditPane();
+
+        expect(activateSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('releases the programmatically activated edit pane when discarding and keeping edit', () => {
+        const editPane = scene.state.editPane;
+        scene.activateEditPane();
+        expect(editPane.isActive).toBe(true);
+
+        scene.discardChangesAndKeepEditing();
+
+        // The swapped-in cloned pane is a different object, so the original must be deactivated.
+        expect(editPane.isActive).toBe(false);
+        expect(scene.state.editPane).not.toBe(editPane);
+      });
+
       it('Exiting already saved dashboard should not restore initial state', () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
