@@ -613,7 +613,7 @@ message ResourceEvent {
   // object's group/resource.
   string metric = 1;
   // Increment to apply for the metric. Must not be negative.
-  int64 value = 2;
+  uint64 value = 2;
 }
 
 message RecordEventRequest {
@@ -639,7 +639,7 @@ message DailyStat {
   // Calendar day, "YYYY-MM-DD" (UTC).
   string day = 1;
   // metric -> count for that day, e.g. {"views": 12, "queries": 40}.
-  map<string, int64> metrics = 2;
+  map<string, uint64> metrics = 2;
 }
 
 message GetResourceDailyStatsResponse {

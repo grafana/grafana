@@ -49,7 +49,7 @@ type Ingester struct {
 	maxBufferedObjects int
 
 	mu     sync.Mutex
-	buffer map[objectRef]map[string]int64
+	buffer map[objectRef]map[string]uint64
 
 	wg     sync.WaitGroup
 	cancel context.CancelFunc
@@ -103,7 +103,7 @@ func NewIngester(opts IngesterOptions) (*Ingester, error) {
 		now:                now,
 		flushInterval:      flushInterval,
 		maxBufferedObjects: maxBuffered,
-		buffer:             map[objectRef]map[string]int64{},
+		buffer:             map[objectRef]map[string]uint64{},
 	}, nil
 }
 
@@ -128,12 +128,8 @@ func (i *Ingester) RecordEvent(_ context.Context, key *resourcepb.ResourceKey, e
 
 	// Validate everything before mutating the buffer so a partially-invalid
 	// request doesn't record some events and reject others.
-	deltas := make(map[string]int64, len(events))
+	deltas := make(map[string]uint64, len(events))
 	for _, e := range events {
-		if e.Value < 0 {
-			i.metrics.dropEvents(reasonNegativeValue, len(events))
-			return ErrInvalidEvent
-		}
 		if !decl.HasMetric(e.Metric) {
 			i.metrics.dropEvents(reasonUnknownMetric, len(events))
 			return ErrInvalidEvent
@@ -151,7 +147,7 @@ func (i *Ingester) RecordEvent(_ context.Context, key *resourcepb.ResourceKey, e
 			i.metrics.dropEvents(reasonBufferFull, len(events))
 			return nil
 		}
-		cur = map[string]int64{}
+		cur = map[string]uint64{}
 		i.buffer[o] = cur
 	}
 	for metric, v := range deltas {
@@ -193,23 +189,23 @@ func (i *Ingester) Stop() {
 	i.wg.Wait()
 }
 
-func (i *Ingester) drain() map[objectRef]map[string]int64 {
+func (i *Ingester) drain() map[objectRef]map[string]uint64 {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	if len(i.buffer) == 0 {
 		return nil
 	}
 	out := i.buffer
-	i.buffer = map[objectRef]map[string]int64{}
+	i.buffer = map[objectRef]map[string]uint64{}
 	return out
 }
 
-func (i *Ingester) mergeBack(o objectRef, deltas map[string]int64) {
+func (i *Ingester) mergeBack(o objectRef, deltas map[string]uint64) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	cur, ok := i.buffer[o]
 	if !ok {
-		cur = map[string]int64{}
+		cur = map[string]uint64{}
 		i.buffer[o] = cur
 	}
 	for metric, v := range deltas {
@@ -217,7 +213,7 @@ func (i *Ingester) mergeBack(o objectRef, deltas map[string]int64) {
 	}
 }
 
-func groupByNamespace(objs map[objectRef]map[string]int64) map[groupResourceNamespaceRef][]objectRef {
+func groupByNamespace(objs map[objectRef]map[string]uint64) map[groupResourceNamespaceRef][]objectRef {
 	byNamespace := map[groupResourceNamespaceRef][]objectRef{}
 	for o := range objs {
 		scope := groupResourceNamespaceRef{Group: o.Group, Resource: o.Resource, Namespace: o.Namespace}
@@ -250,7 +246,7 @@ func (i *Ingester) flush(ctx context.Context) error {
 	return firstErr
 }
 
-func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamespaceRef, day string, objs []objectRef, drained map[objectRef]map[string]int64) error {
+func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamespaceRef, day string, objs []objectRef, drained map[objectRef]map[string]uint64) error {
 	decl, ok := i.decls.Lookup(scope.Group, scope.Resource)
 	if !ok {
 		// Declaration disappeared; nothing valid to write.
@@ -300,8 +296,8 @@ func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamesp
 	return nil
 }
 
-func aggregateDeltas(decl StatsDeclaration, deltas map[string]int64) map[string]int64 {
-	out := make(map[string]int64, len(deltas)*(len(decl.Windows)+1))
+func aggregateDeltas(decl StatsDeclaration, deltas map[string]uint64) map[string]uint64 {
+	out := make(map[string]uint64, len(deltas)*(len(decl.Windows)+1))
 	for metric, v := range deltas {
 		if v == 0 {
 			continue

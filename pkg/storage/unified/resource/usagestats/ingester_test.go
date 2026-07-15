@@ -67,11 +67,6 @@ func TestIngesterRecordEventValidation(t *testing.T) {
 		require.ErrorIs(t, err, ErrInvalidEvent)
 		require.Equal(t, float64(1), testutil.ToFloat64(ing.metrics.droppedEvents.WithLabelValues(reasonUnknownMetric)))
 
-		// Negative value is rejected.
-		err = ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: -1}})
-		require.ErrorIs(t, err, ErrInvalidEvent)
-		require.Equal(t, float64(1), testutil.ToFloat64(ing.metrics.droppedEvents.WithLabelValues(reasonNegativeValue)))
-
 		// A rejected request buffers nothing.
 		require.Empty(t, ing.buffer)
 		_ = reg
@@ -100,18 +95,18 @@ func TestIngesterFlush(t *testing.T) {
 		a := objectRefFromKey(dashKey("a"))
 		daily, err := store.ReadDailyForObject(ctx, a)
 		require.NoError(t, err)
-		require.Equal(t, int64(5), daily[day]["views"])
-		require.Equal(t, int64(5), daily[day]["queries"])
+		require.Equal(t, uint64(5), daily[day]["views"])
+		require.Equal(t, uint64(5), daily[day]["queries"])
 
 		// Aggregates are incremented for each window plus the total.
 		agg, err := store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, "default")
 		require.NoError(t, err)
-		require.Equal(t, int64(5), agg["a"]["views_last_1_days"])
-		require.Equal(t, int64(5), agg["a"]["views_last_7_days"])
-		require.Equal(t, int64(5), agg["a"]["views_last_30_days"])
-		require.Equal(t, int64(5), agg["a"]["views_total"])
-		require.Equal(t, int64(5), agg["a"]["queries_total"])
-		require.Equal(t, int64(1), agg["b"]["views_total"])
+		require.Equal(t, uint64(5), agg["a"]["views_last_1_days"])
+		require.Equal(t, uint64(5), agg["a"]["views_last_7_days"])
+		require.Equal(t, uint64(5), agg["a"]["views_last_30_days"])
+		require.Equal(t, uint64(5), agg["a"]["views_total"])
+		require.Equal(t, uint64(5), agg["a"]["queries_total"])
+		require.Equal(t, uint64(1), agg["b"]["views_total"])
 
 		// A second flush with no buffered data is a no-op.
 		require.NoError(t, ing.flush(ctx))
@@ -131,7 +126,7 @@ func TestIngesterFlushAccumulatesAcrossFlushes(t *testing.T) {
 
 		agg, err := store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, "default")
 		require.NoError(t, err)
-		require.Equal(t, int64(10), agg["a"]["views_total"])
+		require.Equal(t, uint64(10), agg["a"]["views_total"])
 	})
 }
 
@@ -175,7 +170,7 @@ func TestIngesterFlushDailyFailureNoDoubleCount(t *testing.T) {
 
 	agg, err := store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, "default")
 	require.NoError(t, err)
-	for name, v := range map[string]int64{"a": 2, "b": 3} {
+	for name, v := range map[string]uint64{"a": 2, "b": 3} {
 		daily, err := store.ReadDailyForObject(ctx, objectRefFromKey(dashKey(name)))
 		require.NoError(t, err)
 		require.Equal(t, v, daily[day]["views"], "daily views for %q", name)
@@ -212,7 +207,7 @@ func TestIngesterFlushAggregateFailureIsBestEffort(t *testing.T) {
 	require.NoError(t, ing.flush(ctx))
 
 	// Daily buckets are exact and were written exactly once.
-	for name, v := range map[string]int64{"a": 2, "b": 3} {
+	for name, v := range map[string]uint64{"a": 2, "b": 3} {
 		daily, err := store.ReadDailyForObject(ctx, objectRefFromKey(dashKey(name)))
 		require.NoError(t, err)
 		require.Equal(t, v, daily[day]["views"], "daily views for %q", name)
@@ -245,7 +240,7 @@ func TestIngesterBufferFull(t *testing.T) {
 
 		// But existing objects can still accumulate.
 		require.NoError(t, ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 5}}))
-		require.Equal(t, int64(6), ing.buffer[objectRefFromKey(dashKey("a"))]["views"])
+		require.Equal(t, uint64(6), ing.buffer[objectRefFromKey(dashKey("a"))]["views"])
 	})
 }
 
@@ -257,9 +252,9 @@ func TestIngesterGetResourceDailyStats(t *testing.T) {
 		o := objectRefFromKey(dashKey("a"))
 
 		// Persisted history across several days plus an overflow bucket.
-		require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-20", map[string]int64{"views": 3}))
-		require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-22", map[string]int64{"views": 7, "queries": 1}))
-		require.NoError(t, store.IncrementDaily(ctx, o, overflowBucket, map[string]int64{"views": 100}))
+		require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-20", map[string]uint64{"views": 3}))
+		require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-22", map[string]uint64{"views": 7, "queries": 1}))
+		require.NoError(t, store.IncrementDaily(ctx, o, overflowBucket, map[string]uint64{"views": 100}))
 
 		// A recent event only surfaces once it has been flushed to the KV
 		// store; buffered events are intentionally not read here.
@@ -270,15 +265,15 @@ func TestIngesterGetResourceDailyStats(t *testing.T) {
 
 		// Sorted ascending, overflow excluded, today absent (still buffered).
 		require.Equal(t, []string{"2026-06-20", "2026-06-22"}, daysList(days))
-		require.Equal(t, int64(3), metricsFor(days, "2026-06-20")["views"])
-		require.Equal(t, int64(7), metricsFor(days, "2026-06-22")["views"])
+		require.Equal(t, uint64(3), metricsFor(days, "2026-06-20")["views"])
+		require.Equal(t, uint64(7), metricsFor(days, "2026-06-22")["views"])
 
 		// After a flush, today's bucket becomes visible.
 		require.NoError(t, ing.flush(ctx))
 		days, err = ing.GetResourceDailyStats(ctx, dashKey("a"), "", "")
 		require.NoError(t, err)
 		require.Equal(t, []string{"2026-06-20", "2026-06-22", day}, daysList(days))
-		require.Equal(t, int64(2), metricsFor(days, day)["views"])
+		require.Equal(t, uint64(2), metricsFor(days, day)["views"])
 
 		// Range filter restricts the result.
 		days, err = ing.GetResourceDailyStats(ctx, dashKey("a"), "2026-06-21", "2026-06-22")
@@ -314,7 +309,7 @@ func TestIngesterFlushUnderLease(t *testing.T) {
 
 	agg, err := store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, "default")
 	require.NoError(t, err)
-	require.Equal(t, int64(9), agg["a"]["views_total"])
+	require.Equal(t, uint64(9), agg["a"]["views_total"])
 }
 
 func TestIngesterStartStopFinalFlush(t *testing.T) {
@@ -350,11 +345,11 @@ func TestIngesterStartStopFinalFlush(t *testing.T) {
 
 	agg, err = store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, "default")
 	require.NoError(t, err)
-	require.Equal(t, int64(4), agg["a"]["views_total"])
+	require.Equal(t, uint64(4), agg["a"]["views_total"])
 
 	daily, err := store.ReadDailyForObject(ctx, objectRefFromKey(dashKey("a")))
 	require.NoError(t, err)
-	require.Equal(t, int64(4), daily[day]["views"])
+	require.Equal(t, uint64(4), daily[day]["views"])
 }
 
 func daysList(days []*resourcepb.DailyStat) []string {
@@ -365,7 +360,7 @@ func daysList(days []*resourcepb.DailyStat) []string {
 	return out
 }
 
-func metricsFor(days []*resourcepb.DailyStat, day string) map[string]int64 {
+func metricsFor(days []*resourcepb.DailyStat, day string) map[string]uint64 {
 	for _, d := range days {
 		if d.Day == day {
 			return d.Metrics

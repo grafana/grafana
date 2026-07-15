@@ -23,7 +23,6 @@ type metrics struct {
 const (
 	reasonUntrackedResource = "untracked_resource"
 	reasonUnknownMetric     = "unknown_metric"
-	reasonNegativeValue     = "negative_value"
 	reasonBufferFull        = "buffer_full"
 )
 
