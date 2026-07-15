@@ -139,24 +139,13 @@ To save a query you've created:
 
 ### Variables in saved queries
 
-<!-- is this section applicable to Explore? -->
-
-If a saved query includes variables, you can substitute the variables in the query without modifying it.
+If a saved query includes variables, you can substitute the variables in the query without modifying it by mapping them to a custom value.
 This is useful in environments where variable names or available values differ between dashboards.
 
-You can map the original variables to either:
-
-- A variable in your dashboard
-- A custom value that you enter
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-query-variable-v13.0.png" max-width="450px" alt="A saved query with substituted variables" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-query-variable-v13.2.png" max-width="450px" alt="A saved query with substituted variables" >}}
 
 Grafana applies your selections to the query before inserting it into the dashboard.
 However, the substitutions only apply to the query when it's reused, and the original saved query remains unchanged.
-
-{{< admonition type="note">}}
-In Explore, you can map variables to custom values.
-{{< /admonition >}}
 
 ### Known limitations
 
