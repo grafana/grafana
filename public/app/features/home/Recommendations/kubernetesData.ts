@@ -72,11 +72,13 @@ const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
 
 // Priority: the k8s app's stored choice, then — skipping cloud utility datasources — the default, then list order.
 async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
-  const list = await getDataSourceInstanceList({
-    type: 'prometheus',
-    // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop prometheus-alias datasources.
-    filter: (ds) => ds.meta.id !== 'grafana',
-  });
+  const list = await withRetry(() =>
+    getDataSourceInstanceList({
+      type: 'prometheus',
+      // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop prometheus-alias datasources.
+      filter: (ds) => ds.meta.id !== 'grafana',
+    })
+  );
   let promName: string | undefined;
   try {
     // store.getObject absorbs missing/corrupt values; the try guards localStorage access itself throwing.
@@ -135,7 +137,14 @@ function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): { get()
     get() {
       if (!cached || Date.now() - cachedAt > ttlMs) {
         cachedAt = Date.now();
-        cached = fn();
+        const next: Promise<T> = fn().catch((err) => {
+          // A transient rejection must not poison the cache for a whole TTL window.
+          if (cached === next) {
+            cached = undefined;
+          }
+          throw err;
+        });
+        cached = next;
       }
       return cached;
     },

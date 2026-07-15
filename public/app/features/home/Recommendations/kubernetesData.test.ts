@@ -87,6 +87,7 @@ beforeEach(() => {
   probeAttempts = {};
   queryFailuresByRefId = {};
   queryErrorRefIds = new Set();
+  valuesByRefId = {};
   queryAttempts = {};
   mockCreateQueryRunner.mockImplementation(() => {
     // Per-runner capture: parallel probes each get their own runner, so a shared variable would race.
@@ -539,6 +540,43 @@ describe('Kubernetes Prometheus resolution', () => {
       await promise;
 
       expect(cpuCalls()).toHaveLength(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('retries a transient datasource-list failure', async () => {
+    mockGetDataSourceInstanceList
+      .mockRejectedValueOnce(new Error('gateway blip'))
+      .mockResolvedValue([createPrometheusListItem({ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true })]);
+    dataByUid = { 'k8s-uid': 2 };
+
+    jest.useFakeTimers();
+    try {
+      const promise = fetchKubernetesInventory();
+      await jest.advanceTimersByTimeAsync(10_000);
+      expect((await promise).clusters).toBe(2);
+      expect(mockGetDataSourceInstanceList).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not cache a failed resolution for the TTL window', async () => {
+    mockGetDataSourceInstanceList.mockRejectedValue(new Error('list down'));
+
+    jest.useFakeTimers();
+    try {
+      const failing = fetchKubernetesInventory();
+      failing.catch(() => {}); // keep the rejection handled while timers advance
+      await jest.advanceTimersByTimeAsync(10_000);
+      await expect(failing).rejects.toThrow('list down');
+
+      setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]); // replaces the rejecting mock impl
+      dataByUid = { 'k8s-uid': 2 };
+      const promise = fetchKubernetesInventory();
+      await jest.advanceTimersByTimeAsync(10_000);
+      expect((await promise).clusters).toBe(2);
     } finally {
       jest.useRealTimers();
     }
