@@ -9,6 +9,7 @@ import type TNil from '../../types/TNil';
 import { KeyValuesSummary } from './KeyValuesSummary';
 import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 import { type AttributeSectionType, groupAttributesByCategory } from './attributeCategories';
+import { ServiceHexagonIcon } from './icons/ServiceHexagonIcon';
 
 import { alignIcon } from '.';
 
@@ -95,7 +96,11 @@ export default function AccordionCategorizedKeyValues({
                 >
                   <Icon name={isCategoryOpen ? 'angle-down' : 'angle-right'} className={styles.chevronIcon} />
                   <span className={styles.categoryHeaderContent}>
-                    <Icon name={category.icon} className={styles.categoryIcon} />
+                    {category.id === 'service' ? (
+                      <ServiceHexagonIcon className={styles.categoryIcon} />
+                    ) : (
+                      <Icon name={category.icon} className={styles.categoryIcon} />
+                    )}
                     <span className={styles.categoryLabel}>{category.label}</span>
                     <span className={styles.categoryCounter}>
                       <Counter value={attributes.length} variant="secondary" />
