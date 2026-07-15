@@ -384,28 +384,27 @@ const LogLineDetailsField = ({
         </div>
       </div>
       {links?.map((link, i) => {
-        if (link.onClick && onPinLine) {
-          const originalOnClick = link.onClick;
-          link.onClick = (e, origin) => {
+        const originalOnClick = link.onClick;
+        link.onClick = (e, origin) => {
+          if (onPinLine) {
             // Pin the line
             onPinLine(log);
-
-            // Execute the link onClick function
-            originalOnClick(e, origin);
-
             closeDetails();
-          };
-        }
+          }
+
+          originalOnClick?.(e, origin);
+
+          reportInteractionWrapper('logs_log_line_details_link_clicked', {
+            app: resolveAppFromLink(link.href),
+          });
+        };
         return (
           <div className={styles.row} key={`${link.title}-${i}`}>
             <div className={disableActions ? styles.linkNoActions : styles.link}>
               <DataLinkButton
                 buttonProps={{
                   // Show tooltip message if max number of pinned lines has been reached
-                  tooltip:
-                    typeof pinLineButtonTooltipTitle === 'object' && link.onClick
-                      ? pinLineButtonTooltipTitle
-                      : undefined,
+                  tooltip: typeof pinLineButtonTooltipTitle === 'object' ? pinLineButtonTooltipTitle : undefined,
                   variant: 'secondary',
                   fill: 'outline',
                   ...(link.icon && { icon: link.icon }),
@@ -578,6 +577,10 @@ export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: str
     </>
   );
 };
+
+export function resolveAppFromLink(href: string): string | undefined {
+  return href.match(/\/a\/([^/?#]+)/)?.[1];
+}
 
 export function filterFields(fields: FieldDef[], search: string) {
   const keys = fields.map((field) => field.keys.join(' '));
