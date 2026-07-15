@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +19,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -708,6 +710,53 @@ func TestDatasourceRequiresSTPaths(t *testing.T) {
 			if tt.wantForce {
 				assert.Equal(t, tt.wantReason, gotReason)
 			}
+		})
+	}
+}
+
+// skipCaptureCacheService is a CacheService spy that records the skipCache
+// value passed to GetDatasourceByUID so tests can verify it is forwarded correctly.
+type skipCaptureCacheService struct {
+	ds            *datasources.DataSource
+	lastSkipCache bool
+}
+
+func (s *skipCaptureCacheService) GetDatasourceByUID(_ context.Context, uid string, _ identity.Requester, skipCache bool) (*datasources.DataSource, error) {
+	s.lastSkipCache = skipCache
+	if s.ds != nil && s.ds.UID == uid {
+		return s.ds, nil
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+func (s *skipCaptureCacheService) GetDatasource(_ context.Context, _ int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+var _ datasources.CacheService = (*skipCaptureCacheService)(nil)
+
+// TestDatasourceRequiresSTPaths_HonorsSkipCache verifies that the skipCache flag
+// received from the HTTP request context (c.SkipDSCache / X-Grafana-NoCache) is
+// forwarded to the cache service instead of being hardcoded to false.
+// Without this, a stale cached entry could cause an oauthPassThru or LBAC datasource
+// to be incorrectly redirected to the MT path on the same request that would
+// read the updated settings if it reached the legacy handler.
+func TestDatasourceRequiresSTPaths_HonorsSkipCache(t *testing.T) {
+	ds := &datasources.DataSource{UID: "test-uid"} // plain datasource, no ST flags
+
+	for _, skipCache := range []bool{false, true} {
+		t.Run(fmt.Sprintf("skipCache=%v", skipCache), func(t *testing.T) {
+			cache := &skipCaptureCacheService{ds: ds}
+			hs := &HTTPServer{
+				Cfg:             setting.NewCfg(),
+				DataSourceCache: cache,
+				log:             log.NewNopLogger(),
+			}
+
+			hs.datasourceRequiresSTPaths(context.Background(), "test-uid", &user.SignedInUser{}, skipCache)
+
+			assert.Equal(t, skipCache, cache.lastSkipCache,
+				"skipCache must be forwarded to the cache service, not hardcoded")
 		})
 	}
 }
