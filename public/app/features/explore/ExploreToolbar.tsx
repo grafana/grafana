@@ -25,6 +25,7 @@ import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
+import { ExploreGenerateDashboardButton } from './ExploreGenerateDashboardButton';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
@@ -291,6 +292,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             timeZone={timeZone}
             extensionsToShow="basic"
           />,
+          <ExploreGenerateDashboardButton key="generate-dashboard" exploreId={exploreId} />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"

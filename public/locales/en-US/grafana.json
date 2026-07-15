@@ -4373,6 +4373,9 @@
     "create-new": {
       "dashboard-group": "Dashboard"
     },
+    "create-new-button": {
+      "generate-dashboard": "Generate dashboard"
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
@@ -6357,6 +6360,7 @@
             "as-code": "Export as code"
           }
         },
+        "improve-dashboard-tooltip": "Let the Grafana Assistant improve this dashboard",
         "more-save-options": "More save options",
         "playlist-next": "Go to next dashboard",
         "playlist-previous": "Go to previous dashboard",
@@ -7881,6 +7885,60 @@
       "title": "Versions"
     }
   },
+  "dashboard-wizard": {
+    "context-picker": {
+      "add": "Add context",
+      "remove": "Remove {{name}}"
+    },
+    "datasource-entry": {
+      "generate-dashboard": "Generate dashboard"
+    },
+    "generation": {
+      "assistant-unavailable": "The Grafana Assistant is not available.",
+      "cancel": "Cancel",
+      "continue-in-assistant": "Continue in Assistant",
+      "dismiss": "Dismiss",
+      "failed-title": "Dashboard generation failed",
+      "rate-down": "Poor result",
+      "rate-thanks": "Thanks for the feedback!",
+      "rate-up": "Good result",
+      "starting": "Reading your data sources",
+      "starting-improve": "Reading your dashboard",
+      "subtitle": "This usually takes a few seconds. Hang tight.",
+      "success-title": "Dashboard generated",
+      "success-title-improve": "Dashboard improved",
+      "tip-body": "The Assistant checks which metrics and labels actually exist in your data sources, so every panel is built from real data.",
+      "tip-title": "About Grafana Assistant",
+      "title": "Building your dashboard",
+      "title-improve": "Improving your dashboard"
+    },
+    "improve-modal": {
+      "description": "Describe the changes — add panels, reorganize sections, fix queries, add variables, polish the visuals.",
+      "label": "What should the Assistant improve?",
+      "placeholder": "e.g. Add a section with error rates per service, and a variable to filter by namespace",
+      "submit": "Improve it",
+      "title": "Improve this dashboard"
+    },
+    "modal": {
+      "error-title": "Something went wrong",
+      "title": "Let's build a dashboard"
+    },
+    "prompt-step": {
+      "analyzing": "Analyzing your request…",
+      "build-it": "Build it",
+      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
+      "or": "or",
+      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
+      "show-me": "Just show me what Grafana can do",
+      "show-me-description": "We will make assumptions based on your data and build a dashboard for you.",
+      "title": "What do you want to monitor?"
+    },
+    "questions-step": {
+      "back": "Back",
+      "generate": "Generate dashboard",
+      "title": "A couple of quick questions"
+    }
+  },
   "dashboards": {
     "filters-overview": {
       "all-filters": "All filters",
@@ -8509,6 +8567,9 @@
     "feature-toggle-page": {
       "description-explore-disabled": "To enable Explore, enable it in the Grafana config:",
       "title-explore-disabled": "Explore is disabled"
+    },
+    "generate-dashboard-button": {
+      "tooltip": "Generate a dashboard from this data with the Grafana Assistant"
     },
     "get-field-links-for-explore": {
       "text": {
@@ -12328,6 +12389,7 @@
     },
     "quick-add": {
       "aria-label": "New",
+      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"

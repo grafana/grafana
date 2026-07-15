@@ -1565,6 +1565,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardGenerationWizard",
+        "resourceVersion": "1783598235144",
+        "creationTimestamp": "2026-07-09T11:57:15Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard wizard",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardJourneyTracking",
         "resourceVersion": "1776076870100",
         "creationTimestamp": "2026-04-13T00:00:00Z",

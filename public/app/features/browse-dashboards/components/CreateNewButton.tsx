@@ -1,7 +1,8 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
+import { useAssistant } from '@grafana/assistant';
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -31,6 +32,12 @@ import { type FolderDTO } from 'app/types/folders';
 
 import { NewFolderForm } from './NewFolderForm';
 
+const GenerateDashboardModal = lazy(() =>
+  import('app/features/dashboard-wizard/GenerateDashboardModal').then((module) => ({
+    default: module.GenerateDashboardModal,
+  }))
+);
+
 interface Props {
   parentFolder?: FolderDTO;
   canCreateFolder: boolean;
@@ -50,11 +57,15 @@ export default function CreateNewButton({
   const location = useLocation();
   const [newFolder] = useCreateFolder();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
+  const [showGenerateDashboardWizard, setShowGenerateDashboardWizard] = useState(false);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
+  const { isAvailable: isAssistantAvailable } = useAssistant();
+  const renderGenerateDashboardAction =
+    Boolean(config.featureToggles.dashboardGenerationWizard) && isAssistantAvailable;
 
   const theme = useTheme2();
 
@@ -150,6 +161,14 @@ export default function CreateNewButton({
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
             />
           )}
+          {renderGenerateDashboardAction && (
+            <Menu.Item
+              label={t('browse-dashboards.create-new-button.generate-dashboard', 'Generate dashboard')}
+              icon="ai-sparkle"
+              iconColor={dashboardIconColor}
+              onClick={() => setShowGenerateDashboardWizard(true)}
+            />
+          )}
         </Menu.Group>
       )}
       {canCreateFolder && (
@@ -195,6 +214,11 @@ export default function CreateNewButton({
             />
           )}
         </Drawer>
+      )}
+      {showGenerateDashboardWizard && (
+        <Suspense fallback={null}>
+          <GenerateDashboardModal onDismiss={() => setShowGenerateDashboardWizard(false)} />
+        </Suspense>
       )}
     </>
   );

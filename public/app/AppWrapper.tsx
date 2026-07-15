@@ -22,6 +22,7 @@ import { type RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
+import { DashboardGenerationHost } from './features/dashboard-wizard/DashboardGenerationHost';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
@@ -153,6 +154,7 @@ export function AppWrapper({ context }: AppWrapperProps) {
                                 <div className="grafana-app">
                                   <RouterWrapper {...routerWrapperProps} />
                                   <LiveConnectionWarning />
+                                  <DashboardGenerationHost />
                                   <PortalContainer />
                                 </div>
                               </UNSAFE_PortalProvider>

@@ -358,3 +358,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-01,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-07-09,dashboardGenerationWizard,experimental,@grafana/dashboards-squad,false,false,true
