@@ -79,7 +79,6 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 	return resource.DocumentBuilderInfo{
 		GroupResource:        gr,
 		Namespaced:           namespaced,
-		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
 		SearchFieldsProvider: provider,
 	}, nil
 }

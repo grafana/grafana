@@ -756,6 +756,40 @@ describe('AzureMonitorDatasource', () => {
           expect(results[0].value).toEqual('99999999-cccc-bbbb-aaaa-9106972f9572');
         });
       });
+
+      it('should follow nextLink and aggregate all pages of subscriptions', async () => {
+        const firstPage = {
+          value: [
+            { subscriptionId: 'sub-1', displayName: 'Subscription 1' },
+            { subscriptionId: 'sub-2', displayName: 'Subscription 2' },
+          ],
+          nextLink: 'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN123',
+        };
+        const secondPage = {
+          value: [{ subscriptionId: 'sub-3', displayName: 'Subscription 3' }],
+        };
+        const getResource = jest.fn().mockResolvedValueOnce(firstPage).mockResolvedValueOnce(secondPage);
+        ctx.ds.azureMonitorDatasource.getResource = getResource;
+
+        const results = await ctx.ds.getSubscriptions();
+
+        expect(results.map((r: { value: string }) => r.value)).toEqual(['sub-1', 'sub-2', 'sub-3']);
+        expect(getResource).toHaveBeenCalledTimes(2);
+        expect(getResource).toHaveBeenNthCalledWith(
+          2,
+          'azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN123'
+        );
+      });
+
+      it('should stop paginating once nextLink is absent', async () => {
+        const getResource = jest.fn().mockResolvedValue({ value: [{ subscriptionId: 'only', displayName: 'Only' }] });
+        ctx.ds.azureMonitorDatasource.getResource = getResource;
+
+        const results = await ctx.ds.getSubscriptions();
+
+        expect(results.length).toEqual(1);
+        expect(getResource).toHaveBeenCalledTimes(1);
+      });
     });
 
     describe('When performing getResourceGroups', () => {

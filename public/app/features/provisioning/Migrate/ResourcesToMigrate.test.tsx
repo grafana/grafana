@@ -42,7 +42,7 @@ describe('ResourcesToMigrate', () => {
 
     expect(screen.getByText('Resources to migrate')).toBeInTheDocument();
     expect(screen.getByText('Team A')).toBeInTheDocument();
-    expect(screen.getByText('Showing 1 of 1 folder')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1–1 of 1 folder')).toBeInTheDocument();
   });
 
   it('expands a folder to reveal its resources', async () => {
@@ -117,6 +117,9 @@ describe('ResourcesToMigrate', () => {
     setup({ folders: [] });
 
     expect(screen.getByText('All supported resources are already managed by Git.')).toBeInTheDocument();
+    // The "Showing …" range footer is hidden when nothing matches, so it never
+    // reads "0–0 of 0" under the empty state.
+    expect(screen.queryByText(/showing/i)).not.toBeInTheDocument();
   });
 
   describe('folder-less kinds grouped under a synthetic folder', () => {
@@ -162,6 +165,94 @@ describe('ResourcesToMigrate', () => {
       // Order follows the default count-desc sort; the two folders tie on count
       // (2 each), so they fall back to title order ("Playlists" before "Team A").
       expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['__playlists__', 'team-a'], true);
+    });
+  });
+
+  describe('pagination', () => {
+    // 25 folders with descending resource counts so the default count-desc sort
+    // keeps them in creation order (Folder 0 first), making page contents
+    // predictable.
+    const manyFolders: FolderRow[] = Array.from({ length: 25 }, (_, i) => ({
+      uid: `folder-${i}`,
+      title: `Folder ${i}`,
+      resourceCount: 25 - i,
+      directResources: [{ uid: `r-${i}`, title: `Resource ${i}`, kind: resourceKindInfos.dashboard }],
+    }));
+
+    it('paginates when there are more folders than a page holds', () => {
+      setup({ folders: manyFolders });
+
+      // First page shows the first 10 folders only.
+      expect(screen.getByText('Folder 0')).toBeInTheDocument();
+      expect(screen.getByText('Folder 9')).toBeInTheDocument();
+      expect(screen.queryByText('Folder 10')).not.toBeInTheDocument();
+
+      // 25 folders / 10 per page => 3 pages; the footer reports the visible page
+      // range against the full matching count.
+      expect(screen.getByText('Showing 1–10 of 25 folders')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '3' })).toBeInTheDocument();
+    });
+
+    it('navigates to another page', async () => {
+      const { user } = setup({ folders: manyFolders });
+
+      await user.click(screen.getByRole('button', { name: '2' }));
+
+      expect(screen.getByText('Folder 10')).toBeInTheDocument();
+      expect(screen.queryByText('Folder 0')).not.toBeInTheDocument();
+      // Footer tracks the page range, not just page 1.
+      expect(screen.getByText('Showing 11–20 of 25 folders')).toBeInTheDocument();
+    });
+
+    it('jumps back to the first page when the sort changes', async () => {
+      const { user } = setup({ folders: manyFolders });
+
+      await user.click(screen.getByRole('button', { name: '2' }));
+      // Under the default count-desc sort, page 2 holds Folder 10–19.
+      expect(screen.getByText('Folder 10')).toBeInTheDocument();
+
+      // Switch to "Fewest resources" (count-asc). Folder 24 has the fewest, so
+      // it heads the list — visible only if we're back on page 1, proving the
+      // sort change reset the page rather than leaving us stranded on page 2.
+      const sort = screen.getByRole('combobox');
+      await user.click(sort);
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      expect(screen.getByText('Folder 24')).toBeInTheDocument();
+      expect(screen.queryByText('Folder 10')).not.toBeInTheDocument();
+    });
+
+    it('does not render pagination for a single page of folders', () => {
+      setup({ folders: manyFolders.slice(0, 10) });
+
+      expect(screen.queryByRole('button', { name: '2' })).not.toBeInTheDocument();
+    });
+
+    it('jumps back to the first page when the search changes', async () => {
+      const { user } = setup({ folders: manyFolders });
+
+      await user.click(screen.getByRole('button', { name: '2' }));
+      expect(screen.getByText('Folder 19')).toBeInTheDocument();
+
+      // 'Folder 1' still matches 11 folders (Folder 1 + Folder 10–19), so the
+      // result stays multi-page — page 2 is still offered. The view must land on
+      // page 1 (Folder 1 shown, the last match Folder 19 pushed to page 2)
+      // rather than clinging to the previous page.
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'Folder 1');
+      expect(screen.getByText('Folder 1')).toBeInTheDocument();
+      expect(screen.queryByText('Folder 19')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument();
+    });
+
+    it('select-all still spans every filtered folder across pages', async () => {
+      const { props, user } = setup({ folders: manyFolders });
+
+      await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(
+        manyFolders.map((f) => f.uid),
+        true
+      );
     });
   });
 

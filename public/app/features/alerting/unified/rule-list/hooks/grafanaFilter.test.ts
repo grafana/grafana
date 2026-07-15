@@ -197,18 +197,23 @@ describe('grafana-managed rules', () => {
       const ruleWithNoSettings = mockGrafanaPromAlertingRule({
         name: 'Rule with no notification settings',
       });
-      const ruleWithExplicitDefaultAliasPolicy = mockGrafanaPromAlertingRule({
-        name: 'Rule explicitly set to the default alias policy',
-        notificationSettings: { policy: DEFAULT_ROUTING_TREE_NAME_ALIAS },
+      const ruleWithContactPoint = mockGrafanaPromAlertingRule({
+        name: 'Rule with Contact Point',
+        notificationSettings: { receiver: 'slack' },
       });
       const ruleWithExplicitPolicy = mockGrafanaPromAlertingRule({
         name: 'Rule with Explicit Policy',
         notificationSettings: { policy: 'team-a-policy' },
       });
+      const ruleWithExplicitDefaultAliasPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule explicitly set to the default alias policy',
+        notificationSettings: { policy: DEFAULT_ROUTING_TREE_NAME_ALIAS },
+      });
 
       const { frontendFilter } = getGrafanaFilter(getFilter({ policy: DEFAULT_ROUTING_TREE_NAME_ALIAS }));
       expect(frontendFilter.ruleMatches(ruleWithNoSettings)).toBe(true);
       expect(frontendFilter.ruleMatches(ruleWithExplicitDefaultAliasPolicy)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
       expect(frontendFilter.ruleMatches(ruleWithExplicitPolicy)).toBe(false);
     });
 

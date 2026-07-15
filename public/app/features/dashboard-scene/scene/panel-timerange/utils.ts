@@ -39,7 +39,7 @@ export function getUpdatedHoverHeader(title: string, timeOverride?: Partial<Pane
   }
 
   if (timeOverride && !timeOverride.hideTimeOverride) {
-    if (timeOverride.timeFrom || timeOverride.timeShift) {
+    if (timeOverride.timeFrom || timeOverride.timeShift || timeOverride.compareWith) {
       return false;
     }
   }

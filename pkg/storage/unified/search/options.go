@@ -86,20 +86,20 @@ func NewSearchOptions(
 			return resource.SearchOptions{}, err
 		}
 
-		// docs is optional in some tests; only consult it when present so the
-		// hash check is a no-op rather than a nil deref. Real callers always
-		// pass a non-nil supplier.
-		var searchFieldsHashes map[string]string
-		var searchFieldsProviders map[string]resource.SearchFieldsProvider
+		// docs is optional in some tests; only install the search-field mappings
+		// and their hashes when a real supplier is present. Both come from the app
+		// manifests, and the hashes are derived from the same providers that drive
+		// the mappings so the two always agree.
+		var searchFieldsHashes map[resource.LowerGroupResource]string
+		var searchFieldsProviders map[resource.LowerGroupResource]resource.SearchFieldsProvider
 		if docs != nil {
-			builders, err := docs.GetDocumentBuilders()
+			// Search fields come from the app manifests: every in-tree kind that
+			// has custom search fields declares them in its CUE manifest.
+			searchFieldsProviders, err = resource.SearchFieldProviders(resource.AppManifests())
 			if err != nil {
 				return resource.SearchOptions{}, err
 			}
-			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
-			// Search fields come from the app manifests: every in-tree kind that
-			// has custom search fields declares them in its CUE manifest.
-			searchFieldsProviders = resource.SearchFieldProviders(resource.AppManifests())
+			searchFieldsHashes = resource.SearchFieldsHashesForProviders(searchFieldsProviders)
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{

@@ -259,11 +259,19 @@ type mapProvider struct {
 // maps. Both arguments may be nil. The provider takes ownership of the maps;
 // callers must not mutate them after the call.
 //
-// Panics if any SearchFieldDefinition violates validateSearchFieldDefinitions
-// (e.g. SearchCapabilitySort declared on a numeric or boolean type). Such a
-// declaration is a programmer error in static configuration; the process
-// cannot serve correct results with an invalid mapping.
+// Panics on an invalid definition: in static build-time config that is a
+// programmer error. Runtime callers use newMapProvider instead.
 func NewMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefinition, preferredVersions map[schema.GroupResource]string) SearchFieldsProvider {
+	p, err := newMapProvider(fields, preferredVersions)
+	if err != nil {
+		panic(err.Error())
+	}
+	return p
+}
+
+// newMapProvider is NewMapProvider's error-returning core, so a caller
+// ingesting definitions at runtime can reject a bad set instead of crashing.
+func newMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefinition, preferredVersions map[schema.GroupResource]string) (SearchFieldsProvider, error) {
 	if fields == nil {
 		fields = map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	}
@@ -272,16 +280,16 @@ func NewMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefiniti
 	}
 	for gvr, sfds := range fields {
 		if err := validateSearchFieldDefinitions(sfds); err != nil {
-			panic("invalid SearchFieldDefinitions for " + gvr.String() + ": " + err.Error())
+			return nil, fmt.Errorf("invalid SearchFieldDefinitions for %s: %w", gvr.String(), err)
 		}
 	}
 	if err := validateCrossVersionConsistency(fields); err != nil {
-		panic("inconsistent SearchFieldDefinitions across versions: " + err.Error())
+		return nil, fmt.Errorf("inconsistent SearchFieldDefinitions across versions: %w", err)
 	}
 	return &mapProvider{
 		fields:           fields,
 		preferredVersion: preferredVersions,
-	}
+	}, nil
 }
 
 // mappingAttributes is the bleve-mapping-affecting projection of a

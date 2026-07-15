@@ -149,11 +149,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features for dashboards to auto-summary changes when saving
-  * @default false
-  */
-  aiGeneratedDashboardChanges?: boolean;
-  /**
   * Enables configuration of PDF report settings
   * @default false
   */
@@ -309,20 +304,10 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Enables annotation clustering and switches to refactored annotation code
-  * @default true
-  */
-  annotationsClustering?: boolean;
-  /**
   * Enables new dashboard layouts
   * @default true
   */
   dashboardNewLayouts?: boolean;
-  /**
-  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
-  * @default false
-  */
-  dashboardNotebookLayout?: boolean;
   /**
   * Enables default layout selector in dashboard settings
   * @default true
@@ -338,11 +323,6 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardUndoRedo?: boolean;
-  /**
-  * Enables unlimited dashboard panel grouping
-  * @default false
-  */
-  unlimitedLayoutsNesting?: boolean;
   /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false
@@ -675,11 +655,6 @@ export interface FeatureToggles {
   */
   groupAttributeSync?: boolean;
   /**
-  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-  * @default false
-  */
-  groupToNestedTableV2?: boolean;
-  /**
   * Enables step mode for alerting queries and expressions
   * @default true
   */
@@ -785,6 +760,11 @@ export interface FeatureToggles {
   */
   alertingAIAnalyzeCentralStateHistory?: boolean;
   /**
+  * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+  * @default false
+  */
+  ['alerting.ruleQuality']?: boolean;
+  /**
   * Enables simplified step mode in the notifications section
   * @default true
   */
@@ -825,11 +805,6 @@ export interface FeatureToggles {
   */
   teamLBACApiWriteFromAppPlatform?: boolean;
   /**
-  * Enables Advisor app
-  * @default true
-  */
-  grafanaAdvisor?: boolean;
-  /**
   * Enables less memory intensive Elasticsearch result parsing
   * @default false
   */
@@ -839,6 +814,11 @@ export interface FeatureToggles {
   * @default false
   */
   datasourceConnectionsTab?: boolean;
+  /**
+  * Enables the new sidebar filter panel in the Add new connection page
+  * @default false
+  */
+  connectionsFilterSidebar?: boolean;
   /**
   * Use a POST request to list rules by passing down the namespaces user has access to
   * @default false
@@ -1161,26 +1141,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable style actions (copy/paste) in the panel editor
-  * @default true
-  */
-  panelStyleActions?: boolean;
-  /**
-  * Enable visualization presets
-  * @default true
-  */
-  vizPresets?: boolean;
-  /**
-  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
-  * @default false
-  */
-  nestedFramesFieldOverrides?: boolean;
-  /**
-  * Enable faceted labels filter for series visibility in the legend
-  * @default true
-  */
-  vizLegendFacetedFilter?: boolean;
-  /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
   */
@@ -1221,16 +1181,6 @@ export interface FeatureToggles {
   */
   panelTimeSettings?: boolean;
   /**
-  * Enables the raw DSL query editor in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchRawDSLQuery?: boolean;
-  /**
-  * Enables the ES|QL query editor in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchESQLQuery?: boolean;
-  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1250,11 +1200,6 @@ export interface FeatureToggles {
   * @default false
   */
   lokiQueryLimitsContext?: boolean;
-  /**
-  * Enables the new version of rudderstack
-  * @default false
-  */
-  rudderstackUpgrade?: boolean;
   /**
   * Adds support for Kubernetes alerting historian APIs
   * @default false
@@ -1351,11 +1296,6 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
-  * Enables the ability to create multiple notification policies in alerting
-  * @default true
-  */
-  alertingMultiplePolicies?: boolean;
-  /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false
   */
@@ -1441,11 +1381,6 @@ export interface FeatureToggles {
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
-  * Enables fine-grained Y-axis tick options beyond the auto-ticks
-  * @default false
-  */
-  yAxisTickControl?: boolean;
-  /**
   * Enables the logs tableNG panel to replace existing tableRT
   * @default false
   */
@@ -1480,11 +1415,6 @@ export interface FeatureToggles {
   * @default false
   */
   tracesDrilldownTimeSeeker?: boolean;
-  /**
-  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default true
-  */
-  clearPreviousFieldValues?: boolean;
   /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false

@@ -29,7 +29,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
@@ -44,6 +43,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesServiceAccountsApi,
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
+			featuremgmt.FlagGlobalDashboardVariables,
+			featuremgmt.FlagDashboardNotebooks,
 		},
 	})
 

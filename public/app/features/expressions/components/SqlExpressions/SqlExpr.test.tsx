@@ -93,6 +93,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref: unknown) => mockDataSourceSrv.get(ref),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
 }));
 

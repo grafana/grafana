@@ -95,6 +95,10 @@ const (
 	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
 	FlagProvisioningGitConventions = "provisioning.gitConventions"
 
+	// FlagProvisioningUserAttribution
+	// Author Git Sync commits as the acting Grafana user
+	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -223,6 +227,10 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagDashboardNotebooks
+	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
+	FlagDashboardNotebooks = "dashboard.notebooks"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -323,6 +331,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagGrafanaSavedQueriesPage
+	// Enables the dedicated Saved queries page and its navigation entry
+	FlagGrafanaSavedQueriesPage = "grafana.savedQueriesPage"
+
 	// FlagPlaylistsRBAC
 	// Enables RBAC for playlists
 	FlagPlaylistsRBAC = "playlistsRBAC"
@@ -415,10 +427,6 @@ const (
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
 
-	// FlagGroupToNestedTableV2
-	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
-
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
@@ -487,6 +495,10 @@ const (
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
+	// FlagAlertingRuleQuality
+	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+	FlagAlertingRuleQuality = "alerting.ruleQuality"
+
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
@@ -514,10 +526,6 @@ const (
 	// FlagTeamLBACApiWriteFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
 	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
-
-	// FlagGrafanaAdvisor
-	// Enables Advisor app
-	FlagGrafanaAdvisor = "grafanaAdvisor"
 
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
@@ -722,14 +730,6 @@ const (
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
 
-	// FlagElasticsearchRawDSLQuery
-	// Enables the raw DSL query editor in the Elasticsearch data source
-	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
-
-	// FlagElasticsearchESQLQuery
-	// Enables the ES|QL query editor in the Elasticsearch data source
-	FlagElasticsearchESQLQuery = "elasticsearchESQLQuery"
-
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
@@ -782,6 +782,10 @@ const (
 	// Enables SSO settings APIs in the app platform
 	FlagKubernetesSsoSettingsApi = "kubernetesSsoSettingsApi"
 
+	// FlagGrafanaSsoSettingsToMTSettings
+	// Enables reading and writing SSO settings through the MT-Settings service
+	FlagGrafanaSsoSettingsToMTSettings = "grafana.ssoSettingsToMTSettings"
+
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
 	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"
@@ -797,10 +801,6 @@ const (
 	// FlagKubernetesUsersRedirect
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
-
-	// FlagAlertingMultiplePolicies
-	// Enables the ability to create multiple notification policies in alerting
-	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
@@ -829,6 +829,10 @@ const (
 	// FlagAlertingNotificationHistoryDetail
 	// Enables the notification history detail page
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
+
+	// FlagDeletedFolderResourceCleanup
+	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server
+	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
@@ -965,4 +969,8 @@ const (
 	// FlagGrafanaOnDemandDiagnostics
 	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
 	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
+
+	// FlagGrafanaFrontendLegacyAPIHandling
+	// Controls whether the frontend blocks calls to legacy /api/ endpoints
+	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 )
