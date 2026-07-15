@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -38,6 +39,8 @@ func (s groupResourceNamespaceRef) leaseName() string {
 }
 
 type Ingester struct {
+	services.Service
+
 	store   *Store
 	decls   *Declarations
 	leases  *lease.Manager
@@ -50,9 +53,6 @@ type Ingester struct {
 
 	mu     sync.Mutex
 	buffer map[objectRef]map[string]uint64
-
-	wg     sync.WaitGroup
-	cancel context.CancelFunc
 }
 
 type IngesterOptions struct {
@@ -94,7 +94,7 @@ func NewIngester(opts IngesterOptions) (*Ingester, error) {
 	if logger == nil {
 		logger = log.New("unified-storage.usagestats")
 	}
-	return &Ingester{
+	i := &Ingester{
 		store:              opts.Store,
 		decls:              decls,
 		leases:             opts.Leases,
@@ -104,7 +104,9 @@ func NewIngester(opts IngesterOptions) (*Ingester, error) {
 		flushInterval:      flushInterval,
 		maxBufferedObjects: maxBuffered,
 		buffer:             map[objectRef]map[string]uint64{},
-	}, nil
+	}
+	i.Service = services.NewBasicService(nil, i.running, i.stopping)
+	return i, nil
 }
 
 func objectRefFromKey(key *resourcepb.ResourceKey) objectRef {
@@ -156,37 +158,28 @@ func (i *Ingester) RecordEvent(_ context.Context, key *resourcepb.ResourceKey, e
 	return nil
 }
 
-func (i *Ingester) Start(ctx context.Context) {
-	ctx, cancel := context.WithCancel(ctx)
-	i.cancel = cancel
-	i.wg.Add(1)
-	go func() {
-		defer i.wg.Done()
-		ticker := time.NewTicker(i.flushInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				flushCtx, c := context.WithTimeout(context.Background(), i.flushInterval)
-				if err := i.flush(flushCtx); err != nil {
-					i.log.Warn("final usage stats flush failed", "error", err)
-				}
-				c()
-				return
-			case <-ticker.C:
-				if err := i.flush(ctx); err != nil {
-					i.log.Warn("usage stats flush failed", "error", err)
-				}
+func (i *Ingester) running(ctx context.Context) error {
+	ticker := time.NewTicker(i.flushInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			if err := i.flush(ctx); err != nil {
+				i.log.Warn("usage stats flush failed", "error", err)
 			}
 		}
-	}()
+	}
 }
 
-func (i *Ingester) Stop() {
-	if i.cancel != nil {
-		i.cancel()
+func (i *Ingester) stopping(_ error) error {
+	flushCtx, cancel := context.WithTimeout(context.Background(), i.flushInterval)
+	defer cancel()
+	if err := i.flush(flushCtx); err != nil {
+		i.log.Warn("final usage stats flush failed", "error", err)
 	}
-	i.wg.Wait()
+	return nil
 }
 
 func (i *Ingester) drain() map[objectRef]map[string]uint64 {

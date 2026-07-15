@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
@@ -329,7 +330,7 @@ func TestIngesterStartStopFinalFlush(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	ing.Start(ctx)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, ing))
 	require.NoError(t, ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 4}}))
 
 	// Nothing has been persisted yet: the event is still buffered in memory.
@@ -339,7 +340,7 @@ func TestIngesterStartStopFinalFlush(t *testing.T) {
 	require.Len(t, ing.buffer, 1)
 
 	// Stop triggers a best-effort final flush of the buffered event.
-	ing.Stop()
+	require.NoError(t, services.StopAndAwaitTerminated(ctx, ing))
 
 	require.Empty(t, ing.buffer, "buffer should be drained by the shutdown flush")
 

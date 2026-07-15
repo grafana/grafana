@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
@@ -717,7 +718,7 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		if s.initErr == nil && s.statsIngester != nil {
-			s.statsIngester.Start(s.ctx)
+			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
 		if s.initErr != nil {
@@ -800,7 +801,9 @@ func (s *server) Stop(ctx context.Context) error {
 	var stopFailed bool
 
 	if s.statsIngester != nil {
-		s.statsIngester.Stop()
+		if err := services.StopAndAwaitTerminated(ctx, s.statsIngester); err != nil {
+			s.log.Warn("usage stats ingester failed to stop cleanly", "error", err)
+		}
 	}
 
 	if s.search != nil {

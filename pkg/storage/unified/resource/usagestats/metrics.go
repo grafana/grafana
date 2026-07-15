@@ -37,6 +37,8 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 		flushDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name: "unified_storage_stats_flush_duration_seconds",
 			Help: "Duration of a usage stats flush cycle.",
+			// Native histogram only (no classic Buckets): flush duration spans a
+			// wide, hard-to-predict range, and this avoids per-bucket series.
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  100,
 			NativeHistogramMinResetDuration: time.Hour,
