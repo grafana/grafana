@@ -4,7 +4,7 @@ import { type RefCallback } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginComponent } from '@grafana/runtime';
-import { Button, EmptyState, ErrorBoundary, PageLoader, useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, ErrorBoundary, PageLoader, Stack, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 const FULLSCREEN_WORKSPACE_COMPONENT_ID = 'grafana-assistant-app/fullscreen-workspace/v1';
@@ -34,12 +34,14 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
     );
   }
 
+  const exitWorkspace = () => chrome.setFullscreenWorkspace(false);
+
   // No component once loading has finished means the plugin isn't available (not installed,
   // disabled, or failed to load). Show a minimal error rather than a blank page.
   if (!PluginWorkspace) {
     return (
       <div className={styles.root}>
-        <WorkspaceError />
+        <WorkspaceError onExit={exitWorkspace} />
       </div>
     );
   }
@@ -51,12 +53,9 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
           // A crash inside the plugin workspace is contained here so it can't take down the
           // whole app; fall back to the same minimal error message.
           error ? (
-            <WorkspaceError />
+            <WorkspaceError onExit={exitWorkspace} />
           ) : (
-            <PluginWorkspace
-              workspaceHostRef={workspaceHostRef}
-              onExitFullscreenWorkspace={() => chrome.setFullscreenWorkspace(false)}
-            />
+            <PluginWorkspace workspaceHostRef={workspaceHostRef} onExitFullscreenWorkspace={exitWorkspace} />
           )
         }
       </ErrorBoundary>
@@ -64,7 +63,10 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
   );
 }
 
-function WorkspaceError() {
+// `onExit` leaves workspace mode without a reload: AppChrome reparents the still-mounted live page
+// back into <main>, which always works since normal Grafana doesn't depend on the plugin. Reload is
+// offered as a secondary fallback.
+function WorkspaceError({ onExit }: { onExit: () => void }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.message}>
@@ -73,9 +75,12 @@ function WorkspaceError() {
         role="alert"
         message={t('navigation.fullscreen-workspace.error-title', 'Workspace unavailable')}
         button={
-          <Button variant="secondary" onClick={() => window.location.reload()}>
-            {t('navigation.fullscreen-workspace.error-reload', 'Reload page')}
-          </Button>
+          <Stack direction="row" gap={2}>
+            <Button onClick={onExit}>{t('navigation.fullscreen-workspace.error-exit', 'Exit workspace')}</Button>
+            <Button variant="secondary" onClick={() => window.location.reload()}>
+              {t('navigation.fullscreen-workspace.error-reload', 'Reload page')}
+            </Button>
+          </Stack>
         }
       >
         {t('navigation.fullscreen-workspace.error-message', 'The Grafana Assistant workspace could not be loaded.')}

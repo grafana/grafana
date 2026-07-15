@@ -46,11 +46,16 @@ describe('FullscreenWorkspaceShell', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    renderShell();
+    const { chrome } = renderShell();
+    chrome.setFullscreenWorkspace(true);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Workspace unavailable')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reload page' })).toBeInTheDocument();
+
+    // The primary action exits workspace mode without a reload.
+    screen.getByRole('button', { name: 'Exit workspace' }).click();
+    expect(chrome.state.getValue().fullscreenWorkspace).toBe(false);
   });
 
   it('renders the plugin workspace and wires the platform host and exit callback', () => {
@@ -90,10 +95,14 @@ describe('FullscreenWorkspaceShell', () => {
     // React logs caught errors via console.error; silence it so jest-fail-on-console passes.
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    renderShell();
+    const { chrome } = renderShell();
+    chrome.setFullscreenWorkspace(true);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Workspace unavailable')).toBeInTheDocument();
+
+    screen.getByRole('button', { name: 'Exit workspace' }).click();
+    expect(chrome.state.getValue().fullscreenWorkspace).toBe(false);
 
     consoleError.mockRestore();
   });

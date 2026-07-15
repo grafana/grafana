@@ -12261,6 +12261,7 @@
     },
     "fullscreen-workspace": {
       "enter": "Enter Workspace",
+      "error-exit": "Exit workspace",
       "error-message": "The Grafana Assistant workspace could not be loaded.",
       "error-reload": "Reload page",
       "error-title": "Workspace unavailable"
