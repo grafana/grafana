@@ -171,6 +171,24 @@ The Schema inspector has a tab for each source query and lists the following det
 - **Nullable**: Whether the column can contain null values.
 - **Sample values**: Example values from the query result.
 
+## SQL expressions examples
+
+1. Create the following Prometheus query:
+
+   ```promql
+   sum(
+     rate(go_cpu_classes_gc_total_cpu_seconds_total{namespace=~".*(namespace).*5."}[$__rate_interval])
+   ) by (namespace)
+   ```
+
+   The panel displays the CPU usage by Go garbage collection (GC) over time, broken down by namespace.
+
+   ![Example using a Prometheus query](/media/docs/sql-expressions/sql-expressions-prom-query-example.png)
+
+2. Add the SQL expression `SELECT * from A`. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
+
+   ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
+
 ## SQL conversion rules
 
 When you reference a RefID within a SQL statement (for example, `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
@@ -179,6 +197,44 @@ The SQL conversion path:
 
 - The query result appears as a single data frame, without labels, and maps directly to a tabular format.
 - If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example: labeled formats), Grafana automatically converts the data into a table structure.
+
+## Data source response formats
+
+Grafana supports three types of data source response formats:
+
+1. **Single Table-like Frame**:  
+   This refers to data returned in a standard tabular structure that organizes all values into rows and columns, similar to what you'd get from a SQL query.
+   - **Example**: Any query against a SQL data source (for example, PostgreSQL, MySQL) with the format set to Table.
+
+2. **Dataplane: Time Series Format**:  
+   This format represents time series data with timestamps and associated values. It is typically returned from monitoring data sources.
+   - **Example**: Prometheus or Loki Range Queries (queries that return a set of values over time).
+
+3. **Dataplane: Numeric Long Format**:  
+   This format represents point-in-time (instant) metric queries that return a single value (or a set of values) at a specific moment.
+   - **Example**: Prometheus or Loki Instant Queries (queries that return the current value of a metric).
+
+<!-- vale Grafana.Spelling = NO -->
+
+For more information on these formats, refer to the [Grafana Dataplane documentation](https://grafana.com/developers/dataplane).
+
+<!-- vale Grafana.Spelling = YES -->
+
+The following non-tabular formats are automatically converted to a tabular format (`FullLong`) when used in SQL expressions:
+
+- **Time Series Wide**: Label keys become column names.
+- **Time Series Multi**: Label values become the values in each row (or null if a label is missing).
+- **Numeric Wide**: The `value` column contains the numeric metric value.
+- **Numeric Multi**: If a display name exists, it will appear in the `display_name` column.
+
+During conversion:
+
+- Label keys become column names.
+- Label values populate the corresponding rows (null if a label is missing).
+- The `value` column contains the numeric metric.
+- If available, the `display_name` column contains a human-readable name.
+- The `metric_name` column stores the raw metric identifier.
+- For time series data, Grafana includes a `time` column with timestamps
 
 ## Supported functions
 
@@ -230,44 +286,6 @@ Following are some best practices for alerting and recording rules:
 - Avoid too many unique label combinations, as this can result in high cardinality.
 - Always use `GROUP BY` to avoid duplicate label errors.
 - Aggregate numeric values logically (for example: `SUM(error_count)`).
-
-## Supported data source formats
-
-Grafana supports three types of data source response formats:
-
-1. **Single Table-like Frame**:  
-   This refers to data returned in a standard tabular structure that organizes all values into rows and columns, similar to what you'd get from a SQL query.
-   - **Example**: Any query against a SQL data source (for example, PostgreSQL, MySQL) with the format set to Table.
-
-2. **Dataplane: Time Series Format**:  
-   This format represents time series data with timestamps and associated values. It is typically returned from monitoring data sources.
-   - **Example**: Prometheus or Loki Range Queries (queries that return a set of values over time).
-
-3. **Dataplane: Numeric Long Format**:  
-   This format represents point-in-time (instant) metric queries that return a single value (or a set of values) at a specific moment.
-   - **Example**: Prometheus or Loki Instant Queries (queries that return the current value of a metric).
-
-<!-- vale Grafana.Spelling = NO -->
-
-For more information on these formats, refer to the [Grafana Dataplane documentation](https://grafana.com/developers/dataplane).
-
-<!-- vale Grafana.Spelling = YES -->
-
-The following non-tabular formats are automatically converted to a tabular format (`FullLong`) when used in SQL expressions:
-
-- **Time Series Wide**: Label keys become column names.
-- **Time Series Multi**: Label values become the values in each row (or null if a label is missing).
-- **Numeric Wide**: The `value` column contains the numeric metric value.
-- **Numeric Multi**: If a display name exists, it will appear in the `display_name` column.
-
-During conversion:
-
-- Label keys become column names.
-- Label values populate the corresponding rows (null if a label is missing).
-- The `value` column contains the numeric metric.
-- If available, the `display_name` column contains a human-readable name.
-- The `metric_name` column stores the raw metric identifier.
-- For time series data, Grafana includes a `time` column with timestamps
 
 ## Known limitations
 
@@ -372,24 +390,6 @@ FULL OUTER JOIN (
 <!-- vale Grafana.Spelling = YES -->
 
 This approach ensures that a schema exists even when one query returns no data.
-
-## SQL expressions examples
-
-1. Create the following Prometheus query:
-
-   ```promql
-   sum(
-     rate(go_cpu_classes_gc_total_cpu_seconds_total{namespace=~".*(namespace).*5."}[$__rate_interval])
-   ) by (namespace)
-   ```
-
-   The panel displays the CPU usage by Go garbage collection (GC) over time, broken down by namespace.
-
-   ![Example using a Prometheus query](/media/docs/sql-expressions/sql-expressions-prom-query-example.png)
-
-2. Add the SQL expression `SELECT * from A`. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
-
-   ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
 
 ## Grafana Assistant integration
 
