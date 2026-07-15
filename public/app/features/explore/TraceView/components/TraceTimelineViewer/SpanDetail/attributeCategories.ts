@@ -7,7 +7,7 @@ export const SERVICE_CATEGORY_ID = 'service' as const;
 
 export const SERVICE_HEXAGON_CATEGORY_ICON = 'service-hexagon' as const;
 
-export type AttributeCategoryIcon = IconName | typeof SERVICE_HEXAGON_CATEGORY_ICON;
+type AttributeCategoryIcon = IconName | typeof SERVICE_HEXAGON_CATEGORY_ICON;
 
 interface AttributeCategoryDefinition {
   id: string;
