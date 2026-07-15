@@ -43,7 +43,7 @@ type kvSecureValueMetadataStorage struct {
 	metrics      *metrics.StorageMetrics
 }
 
-func NewkvSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock, tracer trace.Tracer, reg prometheus.Registerer) contracts.SecureValueMetadataStorage {
+func NewKVSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock, tracer trace.Tracer, reg prometheus.Registerer) contracts.SecureValueMetadataStorage {
 	return &kvSecureValueMetadataStorage{
 		kv:           kv,
 		clock:        clock,
