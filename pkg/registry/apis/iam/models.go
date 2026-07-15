@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -105,9 +105,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
 
-	// Toggle for enabling authz management apis
-	features featuremgmt.FeatureToggles
-
 	tracing tracing.Tracer
 
 	// Getters for existence validation during TeamBinding create
@@ -116,6 +113,10 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
+
+	// ofClient evaluates the feature flags gating the IAM APIs. The default
+	// client resolves the globally-registered provider at evaluation time.
+	ofClient openfeature.IClient
 
 	apiConfig Config
 }

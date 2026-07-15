@@ -163,7 +163,7 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
   header: css({
     position: 'sticky',
     top: 0,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.components.panel.background,
 
     color: theme.colors.primary.text,
   }),
