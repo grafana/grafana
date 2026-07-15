@@ -46,7 +46,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'row',
       '& > td': {
         padding: '0 0.5rem',
-        minHeight: '30px',
+        height: '30px',
         verticalAlign: 'middle',
       },
       '&:nth-child(2n) > td': {
