@@ -749,9 +749,6 @@ func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namesp
 	value.ExternalID = externalID.String()
 
 	if err := s.writeValue(ctx, key, value); err != nil {
-		if errors.Is(err, kv.ErrNotFound) {
-			return nil
-		}
 		return fmt.Errorf("storing secure value in kv store: %w", err)
 	}
 
@@ -841,6 +838,9 @@ func (s *kvSecureValueMetadataStorage) SetVersionToInactive(ctx context.Context,
 	// TODO: Race condition
 	value, err := s.readValue(ctx, key)
 	if err != nil {
+		if errors.Is(err, contracts.ErrSecureValueNotFound) {
+			return nil
+		}
 		return err
 	}
 
@@ -1006,6 +1006,7 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 				Value: value,
 			})
 		}
+		// TODO: max 20 ops per batch
 		if err := s.kv.Batch(ctx, kvSectionSecureValues, ops); err != nil {
 			return fmt.Errorf("batch updating secure values: %w", err)
 		}
