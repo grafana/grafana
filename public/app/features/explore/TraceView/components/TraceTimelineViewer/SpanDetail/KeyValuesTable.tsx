@@ -27,7 +27,7 @@ import type TNil from '../../types/TNil';
 import jsonMarkup from './jsonMarkup';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const keyColor = autoColor(theme, '#888');
+  const keyColor = theme.colors.text.secondary;
 
   return {
     KeyValueTable: css({

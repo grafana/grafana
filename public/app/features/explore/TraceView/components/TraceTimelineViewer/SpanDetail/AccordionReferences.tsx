@@ -51,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   AccordionReferencesFooter: css({
     label: 'AccordionReferencesFooter',
-    color: autoColor(theme, '#999'),
+    color: theme.colors.text.secondary,
   }),
   AccordionKeyValuesItem: css({
     marginBottom: theme.spacing(0.5),
@@ -91,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   debugLabel: css({
     margin: '0 5px 0 5px',
     '&::before': {
-      color: autoColor(theme, '#666'),
+      color: theme.colors.text.secondary,
       content: 'attr(data-label)',
     },
   }),

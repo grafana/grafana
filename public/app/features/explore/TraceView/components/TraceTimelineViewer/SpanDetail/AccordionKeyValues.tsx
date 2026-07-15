@@ -58,7 +58,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     emptyIcon: css({
       label: 'emptyIcon',
-      color: autoColor(theme, '#aaa'),
+      color: theme.colors.text.secondary,
     }),
   };
 };

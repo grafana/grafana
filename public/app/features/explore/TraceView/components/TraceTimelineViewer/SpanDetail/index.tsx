@@ -221,7 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     debugLabel: css({
       label: 'debugLabel',
       '&::before': {
-        color: autoColor(theme, '#bbb'),
+        color: theme.colors.text.secondary,
         content: 'attr(data-label)',
       },
     }),

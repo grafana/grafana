@@ -46,13 +46,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     AccordionLogsFooter: css({
       label: 'AccordionLogsFooter',
-      color: autoColor(theme, '#999'),
+      color: theme.colors.text.secondary,
     }),
     AccordionKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
     }),
     parenthesis: css({
-      color: `${autoColor(theme, '#777')}`,
+      color: theme.colors.text.secondary,
     }),
   };
 };
