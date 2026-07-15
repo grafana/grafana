@@ -1101,7 +1101,14 @@ const listPanelsPayloadSchema = z.object({
     .optional()
     .default(false)
     .describe(
-      'When true, include runtime status (isLoading, hasError, hasNoData, errors) and data frame schema per panel'
+      'When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source query/plugin/notice, message, refId/type), and info/warning notices'
+    ),
+  includeSchema: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'When true, include per-panel dataSchema: the fields each result frame produced ({ name, type, labels }), for targeting field names in transformations or byName overrides'
     ),
 });
 
