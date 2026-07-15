@@ -13869,6 +13869,10 @@
       "playlists": "Playlists"
     },
     "resource-tree": {
+      "collapse-all": "Collapse all",
+      "collapse-folder": "Collapse {{title}}",
+      "expand-all": "Expand all",
+      "expand-folder": "Expand {{title}}",
       "header-hash": "Hash",
       "header-status": "Status",
       "header-title": "Title",

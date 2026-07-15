@@ -198,21 +198,48 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   return roots;
 }
 
-export function flattenTree(items: TreeItem[], level = 0): FlatTreeItem[] {
+/**
+ * Flatten a tree into the ordered list the table renders. A folder's descendants are only
+ * included when it is expanded. `expandedPaths` holds the set of folder paths currently expanded;
+ * pass `undefined` to expand everything (e.g. while searching, so all matches stay visible).
+ */
+export function flattenTree(items: TreeItem[], expandedPaths?: Set<string>, level = 0): FlatTreeItem[] {
   const result: FlatTreeItem[] = [];
 
   for (const item of items) {
+    const isExpandable = item.children.length > 0;
+    const isExpanded = isExpandable && (!expandedPaths || expandedPaths.has(item.path));
+
     result.push({
       item: { ...item, level },
       level,
+      isExpandable,
+      isExpanded,
     });
 
-    if (item.children.length > 0) {
-      result.push(...flattenTree(item.children, level + 1));
+    if (isExpanded) {
+      result.push(...flattenTree(item.children, expandedPaths, level + 1));
     }
   }
 
   return result;
+}
+
+/** Collect the paths of every folder that has children, so the UI can expand them all at once. */
+export function getAllFolderPaths(items: TreeItem[]): string[] {
+  const paths: string[] = [];
+
+  const walk = (nodes: TreeItem[]) => {
+    for (const node of nodes) {
+      if (node.children.length > 0) {
+        paths.push(node.path);
+        walk(node.children);
+      }
+    }
+  };
+
+  walk(items);
+  return paths;
 }
 
 /**

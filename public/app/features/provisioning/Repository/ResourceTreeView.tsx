@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type CellProps,
   type Column,
+  Button,
   FilterInput,
   Icon,
+  IconButton,
   InteractiveTable,
   Link,
   LinkButton,
@@ -26,7 +28,14 @@ import {
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
 import { getKindInfoByItemType } from '../utils/resourceKinds';
-import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
+import {
+  buildTree,
+  filterTree,
+  flattenTree,
+  getAllFolderPaths,
+  getIconName,
+  mergeFilesAndResources,
+} from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
   repo: Repository;
@@ -49,23 +58,47 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourcesQuery = useGetRepositoryResourcesQuery({ name });
 
   const [searchQuery, setSearchQuery] = useState('');
+  // Folder paths that are currently unfolded. Empty by default so the tree starts fully folded.
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
   const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
-  const flatItems = useMemo(() => {
+  const tree = useMemo(() => {
     const files = filesQuery.data?.items ?? [];
     const resources = resourcesQuery.data?.items ?? [];
 
     const merged = mergeFilesAndResources(files, resources);
-    let tree = buildTree(merged);
+    const built = buildTree(merged);
 
-    if (searchQuery) {
-      tree = filterTree(tree, searchQuery);
-    }
-
-    return flattenTree(tree);
+    return searchQuery ? filterTree(built, searchQuery) : built;
   }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery]);
+
+  // While searching, ignore the folded state so every matching item stays visible.
+  const flatItems = useMemo(
+    () => flattenTree(tree, searchQuery ? undefined : expandedPaths),
+    [tree, expandedPaths, searchQuery]
+  );
+
+  const handleToggleExpand = useCallback((path: string) => {
+    setExpandedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleExpandAll = useCallback(() => {
+    setExpandedPaths(new Set(getAllFolderPaths(tree)));
+  }, [tree]);
+
+  const handleCollapseAll = useCallback(() => {
+    setExpandedPaths(new Set());
+  }, []);
 
   const columns: Array<Column<FlatTreeItem>> = useMemo(
     () => [
@@ -73,12 +106,26 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'title',
         header: t('provisioning.resource-tree.header-title', 'Title'),
         cell: ({ row: { original } }: TreeCell) => {
-          const { item, level } = original;
+          const { item, level, isExpandable, isExpanded } = original;
           const iconName = getIconName(item.type);
           const link = getGrafanaLink(item);
 
           return (
             <div className={styles.titleCell} style={{ paddingLeft: level * 24 }}>
+              {isExpandable ? (
+                <IconButton
+                  name={isExpanded ? 'angle-down' : 'angle-right'}
+                  size="sm"
+                  onClick={() => handleToggleExpand(item.path)}
+                  aria-label={
+                    isExpanded
+                      ? t('provisioning.resource-tree.collapse-folder', 'Collapse {{title}}', { title: item.title })
+                      : t('provisioning.resource-tree.expand-folder', 'Expand {{title}}', { title: item.title })
+                  }
+                />
+              ) : (
+                <span className={styles.expandSpacer} />
+              )}
               <Icon name={iconName} className={styles.icon} />
               {link ? <Link href={link}>{item.title}</Link> : <span>{item.title}</span>}
             </div>
@@ -189,7 +236,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [provisioningFolderMetadataEnabled, repo.spec, styles]
+    [handleToggleExpand, provisioningFolderMetadataEnabled, repo.spec, styles]
   );
 
   if (isLoading) {
@@ -202,12 +249,34 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      <FilterInput
-        placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
-        autoFocus={true}
-        value={searchQuery}
-        onChange={setSearchQuery}
-      />
+      <Stack direction="row" gap={2} alignItems="center">
+        <div className={styles.filter}>
+          <FilterInput
+            placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
+            autoFocus={true}
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+        </div>
+        <Button
+          variant="secondary"
+          fill="text"
+          icon="angle-double-down"
+          onClick={handleExpandAll}
+          disabled={!!searchQuery}
+        >
+          <Trans i18nKey="provisioning.resource-tree.expand-all">Expand all</Trans>
+        </Button>
+        <Button
+          variant="secondary"
+          fill="text"
+          icon="angle-double-up"
+          onClick={handleCollapseAll}
+          disabled={!!searchQuery}
+        >
+          <Trans i18nKey="provisioning.resource-tree.collapse-all">Collapse all</Trans>
+        </Button>
+      </Stack>
       <InteractiveTable
         columns={columns}
         data={flatItems}
@@ -219,10 +288,19 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  filter: css({
+    flexGrow: 1,
+  }),
   titleCell: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+  }),
+  // Keeps rows without a fold control aligned with the chevron on foldable rows.
+  expandSpacer: css({
+    display: 'inline-block',
+    width: theme.spacing(2),
+    flexShrink: 0,
   }),
   icon: css({
     color: theme.colors.text.secondary,
