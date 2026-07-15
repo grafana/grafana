@@ -1538,9 +1538,8 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 	}
 
 	// Search-field metadata that affects what gets indexed (paths, types,
-	// capabilities, EmitZeroIfAbsent, CopyFromStandard) has changed since the
-	// index was built. Rebuild so documents are re-extracted with the new
-	// declarations.
+	// capabilities, EmitZeroIfAbsent) has changed since the index was built.
+	// Rebuild so documents are re-extracted with the new declarations.
 	//
 	// An empty expected hash means "no opinion" for this kind: either no
 	// SearchFieldsProvider is registered today, or the running binary doesn't
