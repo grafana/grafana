@@ -27,7 +27,6 @@ Grafana uses the term LBAC as an umbrella term for label-based access control fo
 Traces use **attributes**, not labels, for access control, but the Grafana UI surfaces this functionality as LBAC for consistency.
 
 This feature only applies to Grafana Cloud Traces, specifically, the Cloud-provisioned tracing data source.
-If you want to use this feature with a Tempo data source, contact Grafana Support to make sure that this is enabled in your organization. Data source LBAC is currently in private preview.
 
 ## How LBAC works
 
