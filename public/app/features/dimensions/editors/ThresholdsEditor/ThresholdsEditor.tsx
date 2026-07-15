@@ -38,7 +38,12 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     const currentSteps = stepsRef.current;
     const changed =
       currentSteps.length !== nextSteps.length ||
-      currentSteps.some((s, i) => s.color !== nextSteps[i].color || s.value !== (nextSteps[i].value ?? -Infinity));
+      currentSteps.some(
+        (s, i) =>
+          s.color !== nextSteps[i].color ||
+          s.value !== (nextSteps[i].value ?? -Infinity) ||
+          s.valueExpr !== nextSteps[i].valueExpr
+      );
     if (changed) {
       const newSteps = toThresholdsWithKey(thresholds.steps);
       newSteps[0].value = -Infinity;
@@ -101,15 +106,22 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   }
 
   function onChangeThresholdValue(event: ChangeEvent<HTMLInputElement>, threshold: ThresholdWithKey) {
-    const cleanValue = event.target.value.replace(/,/g, '.');
-    const parsedValue = parseFloat(cleanValue);
-    const value = isNaN(parsedValue) ? '' : parsedValue;
+    const rawValue = event.target.value;
 
     const newSteps = steps.map((t) => {
-      if (t.key === threshold.key) {
-        t = { ...t, value: value as number };
+      if (t.key !== threshold.key) {
+        return t;
       }
-      return t;
+
+      if (rawValue.includes('$')) {
+        // a variable expression: store it alongside the numeric value, which stays as the fallback
+        return { ...t, valueExpr: rawValue };
+      }
+
+      const cleanValue = rawValue.replace(/,/g, '.');
+      const parsedValue = parseFloat(cleanValue);
+      const { valueExpr, ...numericStep } = t;
+      return { ...numericStep, value: (isNaN(parsedValue) ? '' : parsedValue) as number };
     });
 
     if (newSteps.length) {
@@ -176,11 +188,11 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
 
     return (
       <Input
-        type="number"
-        step="0.0001"
+        // text input so variable expressions (e.g. $myVar) can be typed
+        type="text"
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChangeThresholdValue(event, threshold)}
-        value={threshold.value}
+        value={threshold.valueExpr ?? threshold.value}
         aria-label={ariaLabel}
         ref={idx === 0 ? latestThresholdInputRef : null}
         onBlur={onBlur}
@@ -273,12 +285,17 @@ function toThresholdsWithKey(steps?: Threshold[]): ThresholdWithKey[] {
 
   return steps
     .filter((t, i) => isNumber(t.value) || i === 0)
-    .map((t) => {
-      return {
+    .map((t, i) => {
+      const step: ThresholdWithKey = {
         color: t.color,
         value: t.value === null ? -Infinity : t.value,
         key: counter++,
       };
+      // the base step never carries an expression
+      if (t.valueExpr && i > 0) {
+        step.valueExpr = t.valueExpr;
+      }
+      return step;
     });
 }
 
