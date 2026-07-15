@@ -20,8 +20,6 @@ refs:
 
 # SQL expressions
 
-{{< docs/public-preview product="SQL expressions" >}}
-
 SQL Expressions are server-side expressions that manipulate and transform the results of data source queries using MySQL-like syntax. They allow you to easily query and transform your data after it has been queried, using SQL, which provides a familiar and powerful syntax that can handle everything from simple filters to highly complex, multi-step transformations.
 
 In Grafana, a server-side expression is a way to transform or calculate data after it has been retrieved from the data source, but before it is sent to the frontend for visualization. Grafana evaluates these expressions on the server, not in the browser or at the data source.
@@ -37,15 +35,8 @@ For information about the new panel query editor experience, currently in public
 
 ## Before you begin
 
-- Enable SQL expressions under the feature toggle `sqlExpressions`.
-  - If you self-host Grafana, you can find feature toggles in the configuration file `grafana.ini`.
-
-```
-[feature_toggles]
-enable = sqlExpressions
-```
-
-- If you are using Grafana Cloud, contact [Support](https://grafana.com/help/) to enable this feature.
+- SQL expressions are enabled by default. You don't need to set a feature toggle or change your configuration to use them.
+- You must query a backend data source. SQL expressions don't work with frontend-only data sources.
 
 ## Transform data with SQL expressions
 
