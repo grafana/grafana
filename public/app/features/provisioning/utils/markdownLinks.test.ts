@@ -150,6 +150,69 @@ describe('rewriteRelativeMarkdownLinks', () => {
     );
   });
 
+  describe('Grafana in-app links', () => {
+    it('rewrites a link to a Grafana page when the resolver returns a URL', () => {
+      const html = `<p><a href="./cpu.json">CPU</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, {
+        repository: githubRepo,
+        baseDirInRepo: baseDir,
+        resolveGrafanaHref: (path) => (path === `${baseDir}/cpu.json` ? '/d/abc' : undefined),
+      });
+
+      expect(out).toContain('href="/d/abc"');
+    });
+
+    it('keeps Grafana links same-tab (no target=_blank)', () => {
+      const html = `<p><a href="./cpu.json">CPU</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, {
+        repository: githubRepo,
+        baseDirInRepo: baseDir,
+        resolveGrafanaHref: () => '/d/abc',
+      });
+
+      expect(out).not.toMatch(/target="_blank"/);
+    });
+
+    it('passes the resolved directory path (trailing slash) to the resolver', () => {
+      const html = `<p><a href="../GTM/">GTM</a></p>`;
+      const seen: string[] = [];
+      rewriteRelativeMarkdownLinks(html, {
+        repository: githubRepo,
+        baseDirInRepo: baseDir,
+        resolveGrafanaHref: (path) => {
+          seen.push(path);
+          return undefined;
+        },
+      });
+
+      expect(seen).toContain('ops/resources/GTM/');
+    });
+
+    it('falls back to the host link when the resolver returns undefined', () => {
+      const html = `<p><a href="./cpu.json">CPU</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, {
+        repository: githubRepo,
+        baseDirInRepo: baseDir,
+        resolveGrafanaHref: () => undefined,
+      });
+
+      expect(out).toContain('href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/cpu.json"');
+    });
+
+    it('does not apply the resolver to images', () => {
+      const html = `<p><img src="./diagram.png"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, {
+        repository: githubRepo,
+        baseDirInRepo: baseDir,
+        resolveGrafanaHref: () => '/d/abc',
+      });
+
+      expect(out).toContain(
+        'src="https://github.com/grafana/grafana-manifests/raw/main/ops/resources/RnD/diagram.png"'
+      );
+    });
+  });
+
   describe('images', () => {
     it('rewrites a relative image src to the host raw URL', () => {
       const html = `<p><img src="./diagram.png" alt="diagram"></p>`;

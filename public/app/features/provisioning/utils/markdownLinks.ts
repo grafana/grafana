@@ -6,6 +6,13 @@ interface RewriteOptions {
   repository: RepositoryView;
   /** Repo-relative directory containing the README (e.g. "ops/resources/RnD"). */
   baseDirInRepo: string;
+  /**
+   * Resolves a resolved repo path to an in-app Grafana URL when it maps to a
+   * synced resource (dashboard, folder, ...); returns undefined to fall back to
+   * the host repository link. Injected by the caller so this module stays free
+   * of the resource registry. Applies to links only, not images.
+   */
+  resolveGrafanaHref?: (repoPath: string) => string | undefined;
 }
 
 const SCHEME_RE = /^[a-z][a-z0-9+\-.]*:/i;
@@ -38,6 +45,15 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
 
     const result = resolveRepoRelativePath(options.baseDirInRepo, href);
     if (!result) {
+      return;
+    }
+
+    // Prefer an in-app Grafana link when the target maps to a synced resource,
+    // so the link opens the dashboard/folder page in Grafana. Kept same-tab (no
+    // target=_blank) since it navigates within the app.
+    const grafanaHref = options.resolveGrafanaHref?.(result.path);
+    if (grafanaHref) {
+      anchor.setAttribute('href', grafanaHref);
       return;
     }
 

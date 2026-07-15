@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, useGetRepositoryResourcesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
+import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
 
 import { FolderReadmeEvents } from './analytics/main';
 
@@ -181,8 +182,16 @@ function RenderedMarkdown({
   baseDirInRepo: string;
   repositoryType: RepositoryView['type'];
 }) {
+  // Resource listing for this repo powers the path → Grafana page rewrite; while
+  // it loads, links fall back to the host repository URL and update on arrival.
+  const { data: resourcesData } = useGetRepositoryResourcesQuery({ name: repository.name });
+  const resolveGrafanaHref = useMemo(
+    () => createGrafanaLinkResolver(resourcesData?.items ?? [], repository.path),
+    [resourcesData?.items, repository.path]
+  );
+
   const html = renderMarkdown(markdown);
-  const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
+  const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo, resolveGrafanaHref });
   const safe = textUtil.sanitize(rewritten);
   const containerRef = useRef<HTMLDivElement>(null);
 

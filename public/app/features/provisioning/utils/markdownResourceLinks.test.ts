@@ -1,0 +1,87 @@
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+
+import { createGrafanaLinkResolver } from './markdownResourceLinks';
+
+function resource(overrides: Partial<ResourceListItem>): ResourceListItem {
+  return { group: '', hash: '', name: '', path: '', resource: '', ...overrides };
+}
+
+describe('createGrafanaLinkResolver', () => {
+  it('resolves a dashboard file to its in-app dashboard route', () => {
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+      undefined
+    );
+
+    expect(resolve('team-a/cpu.json')).toBe('/d/abc');
+  });
+
+  it('resolves a folder directory link to its in-app folder route', () => {
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+      undefined
+    );
+
+    // Directory links carry a trailing slash from the markdown resolver.
+    expect(resolve('team-a/')).toBe('/dashboards/f/fold1');
+    expect(resolve('team-a')).toBe('/dashboards/f/fold1');
+  });
+
+  it('resolves a link to a folder _folder.json to the folder it describes', () => {
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+      undefined
+    );
+
+    expect(resolve('team-a/_folder.json')).toBe('/dashboards/f/fold1');
+  });
+
+  it('normalizes a trailing slash on the resource path', () => {
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'folders', name: 'fold1', path: 'team-a/' })],
+      undefined
+    );
+
+    expect(resolve('team-a')).toBe('/dashboards/f/fold1');
+  });
+
+  it('resolves a playlist to its edit route', () => {
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'playlists', name: 'pl1', path: 'playlists/weekly.json' })],
+      undefined
+    );
+
+    expect(resolve('playlists/weekly.json')).toBe('/playlists/edit/pl1');
+  });
+
+  it('returns undefined for kinds without a per-item route (library panels)', () => {
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'librarypanels', name: 'lp1', path: 'panels/graph.json' })],
+      undefined
+    );
+
+    expect(resolve('panels/graph.json')).toBeUndefined();
+  });
+
+  it('returns undefined for a path with no synced resource', () => {
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+      undefined
+    );
+
+    expect(resolve('team-a/notes.md')).toBeUndefined();
+    expect(resolve('')).toBeUndefined();
+  });
+
+  it('joins the repository configured path when matching resource paths', () => {
+    // Resource paths from the API are relative to the configured root; the paths
+    // passed to the resolver are full repo-root paths that include that prefix.
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+      'grafana'
+    );
+
+    expect(resolve('grafana/team-a/cpu.json')).toBe('/d/abc');
+    expect(resolve('team-a/cpu.json')).toBeUndefined();
+  });
+});
