@@ -114,7 +114,9 @@ func TestKeyHelpers(t *testing.T) {
 }
 
 func TestDayHelpers(t *testing.T) {
-	ts := time.Date(2026, 6, 23, 15, 4, 5, 0, time.UTC).Unix()
+	// Days are bucketed in the server's local timezone, so build the
+	// timestamp in the same location the code under test formats with.
+	ts := time.Date(2026, 6, 23, 15, 4, 5, 0, time.Local).Unix()
 	require.Equal(t, "2026-06-23", dayString(ts))
 
 	d, err := parseDay("2026-06-23")

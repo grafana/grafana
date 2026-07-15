@@ -629,14 +629,14 @@ message RecordEventResponse {}
 message GetResourceDailyStatsRequest {
   // The object to read daily stats for (group/resource/namespace/name).
   ResourceKey key = 1;
-  // Inclusive lower bound, "YYYY-MM-DD" (UTC). Empty means no lower bound.
+  // Inclusive lower bound, "YYYY-MM-DD". Empty means no lower bound.
   string from_day = 2;
-  // Inclusive upper bound, "YYYY-MM-DD" (UTC). Empty means no upper bound.
+  // Inclusive upper bound, "YYYY-MM-DD". Empty means no upper bound.
   string to_day = 3;
 }
 
 message DailyStat {
-  // Calendar day, "YYYY-MM-DD" (UTC).
+  // Calendar day, "YYYY-MM-DD".
   string day = 1;
   // metric -> count for that day, e.g. {"views": 12, "queries": 40}.
   map<string, uint64> metrics = 2;

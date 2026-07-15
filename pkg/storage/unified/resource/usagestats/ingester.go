@@ -230,7 +230,7 @@ func (i *Ingester) flush(ctx context.Context) error {
 	start := i.now()
 	defer func() { i.metrics.flushDuration.Observe(i.now().Sub(start).Seconds()) }()
 
-	day := i.now().UTC().Format(dayLayout)
+	day := i.now().Format(dayLayout)
 	var firstErr error
 
 	for scope, objs := range groupByNamespace(drained) {

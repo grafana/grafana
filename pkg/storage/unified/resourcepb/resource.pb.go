@@ -2753,9 +2753,9 @@ type GetResourceDailyStatsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The object to read daily stats for (group/resource/namespace/name).
 	Key *ResourceKey `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// Inclusive lower bound, "YYYY-MM-DD" (UTC). Empty means no lower bound.
+	// Inclusive lower bound, "YYYY-MM-DD". Empty means no lower bound.
 	FromDay string `protobuf:"bytes,2,opt,name=from_day,json=fromDay,proto3" json:"from_day,omitempty"`
-	// Inclusive upper bound, "YYYY-MM-DD" (UTC). Empty means no upper bound.
+	// Inclusive upper bound, "YYYY-MM-DD". Empty means no upper bound.
 	ToDay         string `protobuf:"bytes,3,opt,name=to_day,json=toDay,proto3" json:"to_day,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2814,7 +2814,7 @@ func (x *GetResourceDailyStatsRequest) GetToDay() string {
 
 type DailyStat struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Calendar day, "YYYY-MM-DD" (UTC).
+	// Calendar day, "YYYY-MM-DD".
 	Day string `protobuf:"bytes,1,opt,name=day,proto3" json:"day,omitempty"`
 	// metric -> count for that day, e.g. {"views": 12, "queries": 40}.
 	Metrics       map[string]uint64 `protobuf:"bytes,2,rep,name=metrics,proto3" json:"metrics,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
