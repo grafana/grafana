@@ -15,8 +15,6 @@ import {
 } from './attributeCategories';
 import { ServiceHexagonIcon } from './icons/ServiceHexagonIcon';
 
-import { alignIcon } from '.';
-
 export type AccordionCategorizedKeyValuesProps = {
   data: TraceKeyValuePair[];
   sectionType: AttributeSectionType;
@@ -128,6 +126,8 @@ export default function AccordionCategorizedKeyValues({
 const getStyles = (theme: GrafanaTheme2) => {
   const sectionPaddingX = theme.spacing(0.5);
   const categoryIndent = theme.spacing(0.5);
+  const iconGap = theme.spacing(0.5);
+  const categoryIconSize = theme.spacing(2);
 
   return {
     container: css({
@@ -140,6 +140,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'header',
       display: 'flex',
       alignItems: 'center',
+      gap: iconGap,
       cursor: 'pointer',
       overflow: 'hidden',
       padding: `${theme.spacing(0.5)} 0`,
@@ -154,7 +155,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginLeft: '0.7em',
     }),
     categories: css({
-      padding: `0 0 0 ${categoryIndent}`,
+      padding: `0 ${categoryIndent}`,
     }),
     category: css({
       marginTop: theme.spacing(1),
@@ -162,6 +163,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     categoryHeader: css({
       display: 'flex',
       alignItems: 'center',
+      gap: iconGap,
       minHeight: theme.spacing(3),
       padding: `0 ${theme.spacing(0.5)}`,
       lineHeight: 1,
@@ -185,23 +187,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'categoryHeaderContent',
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
+      gap: iconGap,
       minWidth: 0,
     }),
     categoryContent: css({
-      padding: `0 ${theme.spacing(0.5)} 0 0`,
+      padding: 0,
     }),
     chevronIcon: css({
       label: 'chevronIcon',
       display: 'inline-flex',
       alignItems: 'center',
       flexShrink: 0,
-    }, alignIcon),
+    }),
     categoryIcon: css({
       label: 'categoryIcon',
       display: 'inline-flex',
       alignItems: 'center',
+      justifyContent: 'center',
       flexShrink: 0,
+      boxSizing: 'border-box',
+      width: categoryIconSize,
+      height: categoryIconSize,
+      paddingRight: categoryIndent,
     }),
     categoryLabel: css({
       label: 'categoryLabel',
