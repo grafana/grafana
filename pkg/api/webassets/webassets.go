@@ -78,11 +78,11 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 		openfeature.TransactionContext(ctx), // Extract evaluation context from the request
 	)
 
-	var assetsFilename string
-	if useReact19 {
+	assetsFilename := "assets-manifest.json"
+
+	// only use react19 manifest for grafana builds.
+	if useReact19 && buildDir == "build" {
 		assetsFilename = "assets-manifest-react19.json"
-	} else {
-		assetsFilename = "assets-manifest.json"
 	}
 
 	if result == nil {
