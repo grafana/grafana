@@ -14,8 +14,6 @@ import {
 
 const EXEMPLAR_FRAME_NAME = 'exemplar';
 const XYMARK_FRAME_NAME = 'xymark';
-const EXEMPLAR_TIME_FIELD = 'Time';
-const EXEMPLAR_VALUE_FIELD = 'Value';
 // Bound the context payload size.
 const MAX_MATCHES = 5;
 
@@ -128,37 +126,6 @@ function matchAnnotations(frames: DataFrame[], xVal: number, windowMs: number) {
   return matches;
 }
 
-function matchExemplars(frames: DataFrame[], xVal: number, windowMs: number) {
-  const matches: Array<Record<string, unknown>> = [];
-  for (const frame of frames) {
-    if (frame.name !== EXEMPLAR_FRAME_NAME) {
-      continue;
-    }
-    const timeF = findField(frame, EXEMPLAR_TIME_FIELD) ?? frame.fields.find((f) => f.type === FieldType.time);
-    const valueF = findField(frame, EXEMPLAR_VALUE_FIELD) ?? frame.fields.find((f) => f.type === FieldType.number);
-    if (!timeF) {
-      continue;
-    }
-    // String fields carry exemplar identity
-    const stringFields = frame.fields.filter((f) => f.type === FieldType.string);
-
-    for (let i = 0; i < frame.length; i++) {
-      const t = timeF.values[i];
-      if (Math.abs(t - xVal) <= windowMs) {
-        const extra: Record<string, unknown> = {};
-        for (const sf of stringFields) {
-          extra[sf.name] = sf.values[i];
-        }
-        matches.push({ time: toIso(t), ...(valueF != null ? { value: valueF.values[i] } : {}), ...extra });
-        if (matches.length >= MAX_MATCHES) {
-          return matches;
-        }
-      }
-    }
-  }
-  return matches;
-}
-
 /** Builds a single context pill for a hovered data point. */
 export function buildDatapointAssistantContext({
   alignedFrame,
@@ -198,7 +165,6 @@ export function buildDatapointAssistantContext({
 
   const windowMs = isTime ? getStepMs(xField.values, xIdx) : 0;
   const matchedAnnotations = isTime ? matchAnnotations(annotations, xVal, windowMs) : [];
-  const matchedExemplars = isTime ? matchExemplars(annotations, xVal, windowMs) : [];
 
   const calcs = reduceField({ field, reducers: SERIES_REDUCERS });
   const stats = {
@@ -227,7 +193,6 @@ export function buildDatapointAssistantContext({
         displayValue,
         unit,
         ...(matchedAnnotations.length > 0 ? { annotations: matchedAnnotations } : {}),
-        ...(matchedExemplars.length > 0 ? { exemplars: matchedExemplars } : {}),
       },
       series: {
         name: seriesName,
