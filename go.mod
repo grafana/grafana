@@ -274,7 +274,7 @@ require (
 
 // Replace grafana-app-sdk to my own copy for v1alpha3
 replace (
-  github.com/grafana/grafana-app-sdk => ../grafana-app-sdk
+  github.com/grafana/grafana-app-sdk => github.com/grafana/grafana-app-sdk v1alpha3-runtime-delpoyment-breakout
 )
 
 // Replace references to internal workspaces
