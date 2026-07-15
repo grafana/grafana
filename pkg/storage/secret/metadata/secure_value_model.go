@@ -263,7 +263,7 @@ func toNullString(s *string) sql.NullString {
 }
 
 type versionAndCreated struct {
-	CreatedAt int64
-	CreatedBy string
-	Version   int64
+	createdAt int64
+	createdBy string
+	version   int64
 }

@@ -87,8 +87,8 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	}
 
 	version := int64(1)
-	if latest.Version > 0 {
-		version = latest.Version + 1
+	if latest.version > 0 {
+		version = latest.version + 1
 	}
 
 	// Some other concurrent request may have created the version we're trying to create,
@@ -101,14 +101,14 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 		now := s.clock.Now().UTC().Unix()
 
 		createdAt := now
-		if latest.CreatedAt > 0 {
-			createdAt = latest.CreatedAt
+		if latest.createdAt > 0 {
+			createdAt = latest.createdAt
 		}
 		updatedAt := now
 
 		createdBy := actorUID
-		if latest.CreatedBy != "" {
-			createdBy = latest.CreatedBy
+		if latest.createdBy != "" {
+			createdBy = latest.createdBy
 		}
 		updatedBy := actorUID
 
@@ -213,9 +213,9 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Cont
 	}
 
 	return versionAndCreated{
-		CreatedAt: createdAt,
-		CreatedBy: createdBy,
-		Version:   version,
+		createdAt: createdAt,
+		createdBy: createdBy,
+		version:   version,
 	}, nil
 }
 
