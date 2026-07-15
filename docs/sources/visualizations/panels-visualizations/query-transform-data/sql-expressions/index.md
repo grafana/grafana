@@ -30,9 +30,9 @@ refs:
 
 # SQL expressions
 
-SQL Expressions are server-side expressions that manipulate and transform the results of data source queries using MySQL-like syntax. They allow you to easily query and transform your data after it has been queried, using SQL, which provides a familiar and powerful syntax that can handle everything from simple filters to highly complex, multi-step transformations.
+SQL Expressions are server-side expressions that manipulate and transform the results of data source queries using MySQL-like syntax. They allow you to easily query and transform your data after the data source returns it, using SQL, which provides a familiar and powerful syntax that can handle everything from simple filters to highly complex, multi-step transformations.
 
-In Grafana, a server-side expression is a way to transform or calculate data after it has been retrieved from the data source, but before it is sent to the frontend for visualization. Grafana evaluates these expressions on the server, not in the browser or at the data source.
+In Grafana, a server-side expression is a way to transform or calculate data after Grafana retrieves it from the data source, but before Grafana sends it to the frontend for visualization. Grafana evaluates these expressions on the server, not in the browser or at the data source.
 
 For general information on Grafana expressions, refer to [Write expression queries](ref:expressions).
 
@@ -138,7 +138,7 @@ Use the following workflow to create a SQL expression:
 
 When selecting a visualization type, **ensure your SQL expression returns data in the required shape**. For example, time series panels require a column with a time field (such as a timestamp) and a numeric value column (such as `__value__`). If the output is not shaped correctly, your visualization may appear empty or fail to render.
 
-The SQL expression workflow in Grafana is designed with the following behaviors:
+The SQL expression workflow in Grafana has the following behaviors:
 
 - **Unhidden queries are visualized automatically.** If an input query is not hidden, Grafana will attempt to render it alongside your SQL expression. This can clutter the output, especially in table visualizations.
 
@@ -150,7 +150,7 @@ The SQL expression workflow in Grafana is designed with the following behaviors:
 
 The SQL expression editor provides several tools to help you write and run queries.
 
-- **Run query**: Runs your SQL expression and refreshes the result. You can also press Ctrl+Enter, or Cmd+Enter on macOS, while the editor is focused.
+- **Run query**: Runs your SQL expression and refreshes the result. You can also press Ctrl+Enter, or Cmd+Enter on macOS, while your cursor is in the editor.
 - **Format query**: Formats your SQL for readability while preserving template variables.
 - **Copy query**: Copies the current SQL to your clipboard.
 
@@ -162,7 +162,7 @@ An enhanced editor built on CodeMirror is available on an experimental basis beh
 
 ### Schema inspector
 
-When the query service API is enabled on your instance, the editor includes a **Schema inspector** side panel. Click the eye icon next to the editor to show or hide it.
+When you enable the query service API on your instance, the editor includes a **Schema inspector** side panel. Click the eye icon next to the editor to show or hide it.
 
 The Schema inspector has a tab for each source query and lists the following details for every column, so you can reference the correct field names and types as you write your SQL:
 
@@ -177,7 +177,7 @@ When you reference a RefID within a SQL statement (for example, `SELECT * FROM A
 
 The SQL conversion path:
 
-- The query result appears as a single data frame, without labels, and is mapped directly to a tabular format.
+- The query result appears as a single data frame, without labels, and maps directly to a tabular format.
 - If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example: labeled formats), Grafana automatically converts the data into a table structure.
 
 ## Supported functions
@@ -236,7 +236,7 @@ Following are some best practices for alerting and recording rules:
 Grafana supports three types of data source response formats:
 
 1. **Single Table-like Frame**:  
-   This refers to data returned in a standard tabular structure, where all values are organized into rows and columns, similar to what you'd get from a SQL query.
+   This refers to data returned in a standard tabular structure that organizes all values into rows and columns, similar to what you'd get from a SQL query.
    - **Example**: Any query against a SQL data source (for example, PostgreSQL, MySQL) with the format set to Table.
 
 2. **Dataplane: Time Series Format**:  
@@ -244,7 +244,7 @@ Grafana supports three types of data source response formats:
    - **Example**: Prometheus or Loki Range Queries (queries that return a set of values over time).
 
 3. **Dataplane: Numeric Long Format**:  
-   This format is used for point-in-time (instant) metric queries that return a single value (or a set of values) at a specific moment.
+   This format represents point-in-time (instant) metric queries that return a single value (or a set of values) at a specific moment.
    - **Example**: Prometheus or Loki Instant Queries (queries that return the current value of a metric).
 
 <!-- vale Grafana.Spelling = NO -->
@@ -275,7 +275,7 @@ During conversion:
 - A SQL expression can only reference data source queries. It can't reference other expressions, and you can't use the output of a SQL expression as the input to another expression.
 - Each SQL expression query must include a time range.
 - SQL expressions aren't supported on 32-bit ARM builds of Grafana.
-- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+- Autocomplete is available, but column and field autocomplete requires the experimental `sqlExpressionsColumnAutoComplete` feature toggle.
 
 ### Query limits
 
@@ -290,7 +290,7 @@ For each limit, a value of `0` means no limit.
 
 ### Regular expression limitations in SQL expressions
 
-SQL expressions depend on a third-party SQL engine that uses `cgo` by default for full regular expression compatibility with MySQL. However, Grafana is built without `cgo`, which limits regular expression support.
+SQL expressions depend on a third-party SQL engine that uses `cgo` by default for full regular expression compatibility with MySQL. However, Grafana builds don't include `cgo`, which limits regular expression support.
 
 SQL expressions that use regular expression functions have limitations such as:
 
@@ -304,9 +304,9 @@ For implementation context, refer to the [`go-mysql-server` regular expression c
 
 ### Schema changes and missing data
 
-SQL expressions have known limitations that may cause queries to fail or return unexpected results. These constraints are inherent to how the feature is implemented and should be understood when building queries.
+SQL expressions have known limitations that may cause queries to fail or return unexpected results. These constraints are inherent to how the feature works, so keep them in mind when you build queries.
 
-The following situations are affected:
+These limitations affect the following situations:
 
 - **Error responses**: When a data source query returns an error, SQL expressions cannot interpret the result.
 
@@ -314,7 +314,7 @@ The following situations are affected:
 
 - **Dynamic schema responses**: If the set of columns or labels changes between query executions, SQL expressions may fail because it treats column changes as schema changes.
 
-SQL expressions are powered by an embedded SQL engine where each query result is treated as a table. The schema of that table is derived from the columns returned by the underlying data source.
+An embedded SQL engine powers SQL expressions, treating each query result as a table. Grafana derives the schema of that table from the columns that the underlying data source returns.
 
 Unlike traditional SQL databases, where schemas are usually fixed, many Grafana data sources (for example, Prometheus) can return results with varying label sets or no data at all.
 
