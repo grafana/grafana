@@ -261,12 +261,17 @@ func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
 func TestRuleSearchBuilders_expose_search_fields_hash(t *testing.T) {
 	alertInfo, err := GetAlertRuleSearchBuilder()
 	require.NoError(t, err)
-	assert.NotEmpty(t, alertInfo.SearchFieldsHash)
+	require.NotNil(t, alertInfo.SearchFieldsProvider)
 
 	recordingInfo, err := GetRecordingRuleSearchBuilder()
 	require.NoError(t, err)
-	assert.NotEmpty(t, recordingInfo.SearchFieldsHash)
+	require.NotNil(t, recordingInfo.SearchFieldsProvider)
+
+	alertHash := alertInfo.SearchFieldsProvider.IndexAffectingHash(alertInfo.GroupResource.Group, alertInfo.GroupResource.Resource)
+	recordingHash := recordingInfo.SearchFieldsProvider.IndexAffectingHash(recordingInfo.GroupResource.Group, recordingInfo.GroupResource.Resource)
+	assert.NotEmpty(t, alertHash)
+	assert.NotEmpty(t, recordingHash)
 
 	// The two kinds declare different fields, so their hashes must differ.
-	assert.NotEqual(t, alertInfo.SearchFieldsHash, recordingInfo.SearchFieldsHash)
+	assert.NotEqual(t, alertHash, recordingHash)
 }

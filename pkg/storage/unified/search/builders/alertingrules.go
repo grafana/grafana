@@ -40,7 +40,6 @@ func GetAlertRuleSearchBuilder() (resource.DocumentBuilderInfo, error) {
 	return resource.DocumentBuilderInfo{
 		GroupResource:        gr,
 		Builder:              &alertRuleSearchBuilder{declared: resource.StandardDocumentBuilderWithFields(rulesManifests, rulesSearchFieldsProvider)},
-		SearchFieldsHash:     rulesSearchFieldsProvider.IndexAffectingHash(gr.Group, gr.Resource),
 		SearchFieldsProvider: rulesSearchFieldsProvider,
 	}, nil
 }
@@ -50,7 +49,6 @@ func GetRecordingRuleSearchBuilder() (resource.DocumentBuilderInfo, error) {
 	return resource.DocumentBuilderInfo{
 		GroupResource:        gr,
 		Builder:              &recordingRuleSearchBuilder{declared: resource.StandardDocumentBuilderWithFields(rulesManifests, rulesSearchFieldsProvider)},
-		SearchFieldsHash:     rulesSearchFieldsProvider.IndexAffectingHash(gr.Group, gr.Resource),
 		SearchFieldsProvider: rulesSearchFieldsProvider,
 	}, nil
 }
