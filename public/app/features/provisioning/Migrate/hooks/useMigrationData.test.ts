@@ -78,6 +78,24 @@ describe('useMigrationData (folder-scoped kinds)', () => {
     expect(result.current.data.find((f) => f.uid === 'child')?.directResources.map((d) => d.uid)).toEqual(['d2']);
   });
 
+  it('records the ancestor path for nested folders and leaves root/general rows pathless', async () => {
+    mockSearch([
+      folder('grandparent'),
+      folder('parent', 'grandparent'),
+      folder('child', 'parent'),
+      dashboard('d1', 'child'),
+      dashboard('r1', ''),
+    ]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The deeply-nested folder carries its ancestors, outermost first, excluding itself.
+    expect(result.current.data.find((f) => f.uid === 'child')?.path).toEqual(['grandparent', 'parent']);
+    // Root resources roll into the pathless General row.
+    expect(result.current.data.find((f) => f.uid === 'general')?.path).toEqual([]);
+  });
+
   it('rolls root-level dashboards into a synthetic General row and excludes managed ones', async () => {
     mockSearch([
       folder('a'),
