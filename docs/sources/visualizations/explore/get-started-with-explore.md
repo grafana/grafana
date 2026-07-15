@@ -3,11 +3,9 @@ aliases:
   - ../../explore/get-started-with-explore/ # /docs/grafana/next/explore/get-started-with-explore/
 keywords:
   - explore
-  - query editor
   - split view
   - time picker
   - mixed data source
-  - saved queries
   - share
 labels:
   products:
@@ -15,17 +13,6 @@ labels:
     - enterprise
     - oss
 title: Get started with Explore
-refs:
-  saved-queries:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
-  save-query:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 weight: 1
 ---
 
@@ -112,24 +99,14 @@ Click **Close** to quit split view.
 
 ### Query editor
 
-The query editor is the interface where you construct the query for a specific data source.
-Query editor elements differ based on data source.
+The query editor is the interface where you construct the query for a data source.
+Each data source's query editor provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
 To run queries across multiple data sources you need to select **Mixed** from the data source picker.
-When you select Mixed, you can select a different data source for each new query that you add.
+When you select **Mixed**, you can select a different data source for each new query that you add.
 
 You can also reuse previously created queries with the saved queries feature.
 
-#### Saved queries
-
-{{< admonition type="note" >}}
-[Saved queries](ref:saved-queries) is only available on Grafana Enterprise and Grafana Cloud.
-{{< /admonition >}}
-
-  - **Saved queries**:
-    - **Save query** - To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
-    - **Replace query** - Reuse a saved query.
-  - **+ Add query** - Add an additional query.
-  - **+ Add from saved queries** - Add an additional query by reusing a saved query.
+Refer to [Query editor in Explore](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/query-editor/) for detailed information on the query editor.
 
 ### Query history
 
