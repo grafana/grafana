@@ -205,6 +205,10 @@
       "label-order-by": "Order By",
       "tooltip-order-by": "Sort results based on one or more columns in ascending or descending order."
     },
+    "pagination": {
+      "results-truncated-message": "Stopped loading after {{maxPages}} pages; some results may be omitted.",
+      "results-truncated-title": "Azure Monitor"
+    },
     "query-editor": {
       "alert-error-occurred": "An error occurred while requesting metadata from Azure Monitor"
     },

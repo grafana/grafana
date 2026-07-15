@@ -1,13 +1,13 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks, useFavoriteDatasources, reportInteraction } from '@grafana/runtime';
+import { usePluginLinks, useFavoriteDatasources, reportInteraction } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
-import { trackDsConfigClicked, trackExploreClicked } from '../tracking';
+import { trackDsConfigClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { BuildDashboardButton } from './BuildDashboardButton';
@@ -77,12 +77,6 @@ export function EditDataSourceActions({ uid }: Props) {
 
   const handleExploreClick = () => {
     trackDsConfigClicked('explore');
-    trackExploreClicked({
-      grafana_version: config.buildInfo.version,
-      datasource_uid: dataSource.uid,
-      plugin_name: dataSource.typeName,
-      path: window.location.pathname,
-    });
   };
 
   const exploreMenu = (

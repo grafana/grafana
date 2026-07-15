@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
+  AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
@@ -65,6 +67,10 @@ export const FlagKeys = {
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
+  GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
+  /** Enables the dedicated Saved queries page and its navigation entry */
+  GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
@@ -103,6 +109,8 @@ export const FlagKeys = {
   ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
+  /** Author Git Sync commits as the acting Grafana user */
+  ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -130,6 +138,17 @@ export const FlagKeys = {
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
+
+/**
+ * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleQuality`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleQuality", false, options).value;
+};
 
 /**
  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
@@ -389,10 +408,10 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `grafana.newPreferencesPage`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPreferencesPage", false, options).value;
+  return useFlag("grafana.newPreferencesPage", true, options).value;
 };
 
 /**
@@ -415,6 +434,28 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options
+ *
+ * **Details:**
+ * - flag key: `grafana.queryVarEditorRedesign`
+ * - default value: `true`
+ */
+export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.queryVarEditorRedesign", true, options).value;
+};
+
+/**
+ * Enables the dedicated Saved queries page and its navigation entry
+ *
+ * **Details:**
+ * - flag key: `grafana.savedQueriesPage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSavedQueriesPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.savedQueriesPage", false, options).value;
 };
 
 /**
@@ -624,6 +665,17 @@ export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationO
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioning.readmes", true, options).value;
+};
+
+/**
+ * Author Git Sync commits as the acting Grafana user
+ *
+ * **Details:**
+ * - flag key: `provisioning.userAttribution`
+ * - default value: `false`
+ */
+export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.userAttribution", false, options).value;
 };
 
 /**

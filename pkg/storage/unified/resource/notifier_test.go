@@ -39,9 +39,9 @@ func TestNewNotifierSelection(t *testing.T) {
 
 	t.Run("nats notifier when requested with an enabled subscriber", func(t *testing.T) {
 		n := newNotifier(nil, notifierOptions{
-			log:             nop,
-			useNatsNotifier: true,
-			eventSubscriber: &fakeEventSubscriber{enabled: true},
+			log:                nop,
+			enableNatsNotifier: true,
+			eventSubscriber:    &fakeEventSubscriber{enabled: true},
 		})
 		assert.IsType(t, &natsNotifier{}, n)
 	})
@@ -49,7 +49,7 @@ func TestNewNotifierSelection(t *testing.T) {
 	t.Run("nats takes precedence over channel notifier", func(t *testing.T) {
 		n := newNotifier(nil, notifierOptions{
 			log:                nop,
-			useNatsNotifier:    true,
+			enableNatsNotifier: true,
 			useChannelNotifier: true,
 			eventSubscriber:    &fakeEventSubscriber{enabled: true},
 		})
@@ -58,15 +58,15 @@ func TestNewNotifierSelection(t *testing.T) {
 
 	t.Run("falls back to polling when subscriber is disabled", func(t *testing.T) {
 		n := newNotifier(nil, notifierOptions{
-			log:             nop,
-			useNatsNotifier: true,
-			eventSubscriber: &fakeEventSubscriber{enabled: false},
+			log:                nop,
+			enableNatsNotifier: true,
+			eventSubscriber:    &fakeEventSubscriber{enabled: false},
 		})
 		assert.IsType(t, &pollingNotifier{}, n)
 	})
 
 	t.Run("falls back to polling when subscriber is nil", func(t *testing.T) {
-		n := newNotifier(nil, notifierOptions{log: nop, useNatsNotifier: true})
+		n := newNotifier(nil, notifierOptions{log: nop, enableNatsNotifier: true})
 		assert.IsType(t, &pollingNotifier{}, n)
 	})
 

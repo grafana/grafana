@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	kvtest "github.com/grafana/grafana/pkg/storage/unified/resource/kv/test"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -21,7 +22,7 @@ func TestBadgerKV(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, bdb.Close()) })
 
-	RunKVTest(t, resource.NewBadgerKV(bdb), &KVTestOptions{NSPrefix: "badger-kv-test"})
+	kvtest.RunKVTest(t, resource.NewBadgerKV(bdb), &kvtest.KVTestOptions{NSPrefix: "badger-kv-test"})
 }
 
 func TestMain(m *testing.M) {
@@ -37,5 +38,5 @@ func TestSQLKV(t *testing.T) {
 	sqlKV, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
 
-	RunKVTest(t, sqlKV, &KVTestOptions{NSPrefix: "sql-kv-test"})
+	kvtest.RunKVTest(t, sqlKV, &kvtest.KVTestOptions{NSPrefix: "sql-kv-test"})
 }

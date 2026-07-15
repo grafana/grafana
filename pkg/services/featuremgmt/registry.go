@@ -284,8 +284,8 @@ var (
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true",
-			Generate:    Generate{Go: true},
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
@@ -992,6 +992,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.savedQueriesPage",
+			Description: "Enables the dedicated Saved queries page and its navigation entry",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "playlistsRBAC",
 			Description: "Enables RBAC for playlists",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1448,6 +1456,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "alerting.ruleQuality",
+			Description:  "Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
+		},
+		{
 			Name:        "alertingNotificationsStepMode",
 			Description: "Enables simplified step mode in the notifications section",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1514,14 +1531,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafanaAdvisor",
-			Description: "Enables Advisor app",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
@@ -1537,6 +1546,14 @@ var (
 			RequiresDevMode: false,
 			Generate:        Generate{LegacyFrontend: true},
 			Expression:      "false",
+		},
+		{
+			Name:        "connectionsFilterSidebar",
+			Description: "Enables the new sidebar filter panel in the Add new connection page",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
 		},
 		{
 			Name:         "fetchRulesUsingPost",
@@ -1615,7 +1632,7 @@ var (
 			Name:        "grafana.assetSriChecks",
 			Description: "Enables SRI checks for Grafana JavaScript assets",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendOpsWG,
+			Owner:       grafanaFrontendPlatformSquad,
 			Generate:    Generate{Go: true},
 			Expression:  "false",
 		},
@@ -2115,14 +2132,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "vizPresets",
-			Description: "Enable visualization presets",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "heatmapNegativeLogBuckets",
 			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
 			Stage:       FeatureStageExperimental,
@@ -2207,22 +2216,6 @@ var (
 			RequiresRestart: false,
 			HideFromDocs:    false,
 			Expression:      "false",
-		},
-		{
-			Name:        "elasticsearchRawDSLQuery",
-			Description: "Enables the raw DSL query editor in the Elasticsearch data source",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "elasticsearchESQLQuery",
-			Description: "Enables the ES|QL query editor in the Elasticsearch data source",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "awsDatasourcesHttpProxy",
@@ -2405,6 +2398,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "grafana.ssoSettingsToMTSettings",
+			Description:  "Enables reading and writing SSO settings through the MT-Settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2439,14 +2441,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingMultiplePolicies",
-			Description: "Enables the ability to create multiple notification policies in alerting",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingPolicyRoutingSettings",
@@ -2519,6 +2513,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "deletedFolderResourceCleanup",
+			Description:  "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
 		},
 		{
 			Name:        "react19",
@@ -2641,13 +2644,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-		}, {
-			Name:        "yAxisTickControl",
-			Description: "Enables fine-grained Y-axis tick options beyond the auto-ticks",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
 		},
 		{
 			Name:         "logsTablePanelNG",
@@ -2778,10 +2774,10 @@ var (
 		{
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "datasource.useNewCRUDAPIs",
@@ -2876,10 +2872,10 @@ var (
 		{
 			Name:        "preferences.rerouteLegacyAPIs",
 			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:            "plugins.marketplaceLicensing",
@@ -2995,6 +2991,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.queryVarEditorRedesign",
+			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "table.refactorNested",

@@ -80,22 +80,21 @@ type BleveOptions struct {
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
 
-	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
+	// Selectable fields per kind, keyed by (group, kind) and (group, plural).
 	// Only given fields are indexed (have mapping).
-	SelectableFieldsForKinds map[string][]string
+	SelectableFieldsForKinds map[resource.LowerGroupResource][]string
 
-	// Map "group/resource" -> hash of the SearchFieldDefinition slices
-	// registered for that (group, resource), across every version. The
-	// value is recorded in each new index's IndexBuildInfo so a future run
-	// can detect drift and rebuild. Keys must be lower-case.
-	SearchFieldsHashesForKinds map[string]string
+	// Hash of the SearchFieldDefinition slices registered for a (group,
+	// resource) across every version, keyed by (group, resource). The value
+	// is recorded in each new index's IndexBuildInfo so a future run can
+	// detect drift and rebuild.
+	SearchFieldsHashesForKinds map[resource.LowerGroupResource]string
 
-	// Map "group/resource" -> SearchFieldsProvider that drives the bleve
-	// mapping for that (group, resource). When a provider is registered
-	// for a kind, the bleve mapping is built from the provider's
-	// SearchFieldDefinitions rather than from the legacy column-definition
-	// list carried by SearchableDocumentFields. Keys must be lower-case.
-	SearchFieldsProvidersForKinds map[string]resource.SearchFieldsProvider
+	// SearchFieldsProvider per (group, resource) that drives the bleve
+	// mapping. When a provider is registered for a kind, the bleve mapping is
+	// built from the provider's SearchFieldDefinitions rather than from the
+	// legacy column-definition list carried by SearchableDocumentFields.
+	SearchFieldsProvidersForKinds map[resource.LowerGroupResource]resource.SearchFieldsProvider
 
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
@@ -190,9 +189,9 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	selectableFields     map[string][]string
-	searchFieldsHashes   map[string]string
-	searchFieldsProvider map[string]resource.SearchFieldsProvider
+	selectableFields     map[resource.LowerGroupResource][]string
+	searchFieldsHashes   map[resource.LowerGroupResource]string
+	searchFieldsProvider map[resource.LowerGroupResource]resource.SearchFieldsProvider
 
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
@@ -752,7 +751,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	sfKey := strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))
+	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
 	selectableFields := b.selectableFields[sfKey]
 	searchFieldsHash := b.searchFieldsHashes[sfKey]
 	searchFieldsProvider := b.searchFieldsProvider[sfKey]
@@ -3114,11 +3113,7 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 
 	if custom != nil {
 		for _, name := range custom.Fields() {
-			f := custom.Field(name)
-			if f.Priority > 10 {
-				continue
-			}
-			fields = append(fields, f)
+			fields = append(fields, custom.Field(name))
 		}
 	}
 	for _, field := range fields {

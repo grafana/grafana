@@ -20,29 +20,17 @@ export const flows = {
     await controls.enterEditMode();
 
     await sidebar.toolbar.clickButton('Add');
-    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.addNewVariableButton).click();
+    await sidebar.addOptions.clickNewVariableButton();
 
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
-      .click();
+    await sidebar.variableOptions.selectVariableType(variable.type);
 
     // New variable creation schedules a delayed autofocus to name input
     // Let that timer finish before we interact to prevent focus on the wrong input
     await dashboardPage.ctx.page.waitForTimeout(250);
 
-    const variableNameInput = dashboardPage.getByGrafanaSelector(
-      selectors.components.PanelEditor.ElementEditPane.variableNameInput
-    );
-    await variableNameInput.click();
-    await variableNameInput.fill(variable.name);
-    await variableNameInput.blur();
+    await sidebar.variableOptions.setName(variable.name);
     if (variable.label) {
-      const variableLabelInput = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.ElementEditPane.variableLabelInput
-      );
-      await variableLabelInput.click();
-      await variableLabelInput.fill(variable.label);
-      await variableLabelInput.blur();
+      await sidebar.variableOptions.setLabel(variable.label);
     }
   },
   async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
