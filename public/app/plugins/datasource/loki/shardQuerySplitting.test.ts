@@ -1,10 +1,12 @@
 import { of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 import { type DataQueryRequest, type DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
 import { type LokiDatasource } from './datasource';
+import { getIncrementalSplitQueryLoadingState } from './incrementalQueryLoadingState';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
 import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils';
@@ -85,6 +87,22 @@ describe('runShardSplitQuery()', () => {
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 5 shards, 3 groups + empty shard group, 4 requests * 3 days, 3 chunks, 3 requests = 12 requests
       expect(datasource.runQuery).toHaveBeenCalledTimes(12);
+    });
+  });
+
+  test('Emits incremental loading state for intermediate responses and Done for the final response', async () => {
+    const incrementalState = getIncrementalSplitQueryLoadingState();
+    const capturedStates: Array<LoadingState | undefined> = [];
+    await expect(
+      runShardSplitQuery(datasource, request).pipe(tap((r) => capturedStates.push(r.state)))
+    ).toEmitValuesWith(() => {
+      expect(capturedStates.length).toBeGreaterThan(1);
+      const intermediateStates = capturedStates.slice(0, -1);
+      const finalState = capturedStates[capturedStates.length - 1];
+      for (const state of intermediateStates) {
+        expect(state).toBe(incrementalState);
+      }
+      expect(finalState).toBe(LoadingState.Done);
     });
   });
 
