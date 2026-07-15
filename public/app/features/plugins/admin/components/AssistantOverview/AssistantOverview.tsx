@@ -18,6 +18,16 @@ interface AssistantJsonData {
   isAccessTokenSet?: boolean;
 }
 
+function isAssistantJsonData(value: unknown): value is AssistantJsonData {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (!('trialMode' in value) || typeof value.trialMode === 'boolean') &&
+    (!('backendUrl' in value) || typeof value.backendUrl === 'string') &&
+    (!('isAccessTokenSet' in value) || typeof value.isAccessTokenSet === 'boolean')
+  );
+}
+
 interface Props {
   plugin: CatalogPlugin;
   pluginConfig?: GrafanaPlugin | null;
@@ -30,7 +40,7 @@ export function AssistantOverview({ plugin, pluginConfig, pluginConfigLoading, f
   const { isInstalling } = useInstallStatus();
   const { component: AssistantOnboardingOverview, isLoading: isLoadingOverview } =
     usePluginComponent<AssistantOverviewProps>(ASSISTANT_ONBOARDING_OVERVIEW_COMPONENT_ID);
-  const jsonData = pluginConfig?.meta.jsonData as AssistantJsonData | undefined;
+  const jsonData = isAssistantJsonData(pluginConfig?.meta.jsonData) ? pluginConfig?.meta.jsonData : undefined;
 
   if (!AssistantOnboardingOverview) {
     return isLoadingOverview ? null : <>{fallback}</>;
