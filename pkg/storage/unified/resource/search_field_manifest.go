@@ -13,9 +13,6 @@ import (
 // same map-backed provider NewMapProvider produces, so the per-field and
 // cross-version consistency checks apply here too.
 //
-// CopyFromStandard has no manifest counterpart and is never set from a
-// manifest. A kind that needs it keeps a builder-side provider instead.
-//
 // Panics on an invalid declaration, like NewMapProvider. Runtime callers use
 // newManifestBackedProvider instead.
 func NewManifestBackedProvider(manifests []app.Manifest) SearchFieldsProvider {
