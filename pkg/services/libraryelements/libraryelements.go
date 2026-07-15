@@ -29,9 +29,9 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		features:          features,
 		AccessControl:     ac,
 		k8sHandler:        newLibraryElementsK8sHandler(cfg, clientConfigProvider, folderService, userService, dashboardsService),
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		treeCache: newFolderTreeCache(folderService, features.IsEnabledGlobally(featuremgmt.FlagLibraryElementsFolderTreeViaSearch)),
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	l.treeCache = newFolderTreeCache(folderService, features != nil && features.IsEnabledGlobally(featuremgmt.FlagLibraryElementsFolderTreeViaSearch))
 
 	if routeRegister != nil {
 		l.registerAPIEndpoints()
