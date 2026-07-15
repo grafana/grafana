@@ -145,6 +145,67 @@ const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
   );
 };
 
+const createNestedDataFrameWithApplyToRow = (): DataFrame => {
+  const nestedFrame0 = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedData0',
+      fields: [{ name: 'Detail', type: FieldType.string, values: ['detail-A'], config: { custom: {} } }],
+    })
+  );
+  const nestedFrame1 = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedData1',
+      fields: [{ name: 'Detail', type: FieldType.string, values: ['detail-B'], config: { custom: {} } }],
+    })
+  );
+
+  const frame = withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 2,
+      fields: [
+        { name: 'Parent', type: FieldType.string, values: ['Parent-A', 'Parent-B'], config: { custom: {} } },
+        {
+          name: 'MatchTotal',
+          type: FieldType.number,
+          values: [16, 4],
+          config: { custom: {} },
+          display: displayNumber,
+          ...stdField,
+        },
+        { name: '__depth', type: FieldType.number, values: [0, 0], config: { custom: { hideFrom: { viz: true } } } },
+        { name: '__index', type: FieldType.number, values: [0, 1], config: { custom: { hideFrom: { viz: true } } } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[nestedFrame0], [nestedFrame1]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
+
+  const matchTotalField = frame.fields.find((f) => f.name === 'MatchTotal')!;
+  matchTotalField.config.custom = {
+    ...matchTotalField.config.custom,
+    cellOptions: {
+      type: TableCellDisplayMode.ColorBackground,
+      applyToRow: true,
+      mode: TableCellBackgroundDisplayMode.Basic,
+    },
+  };
+  const originalDisplay = matchTotalField.display!;
+  matchTotalField.display = (value: unknown) => {
+    const displayValue = originalDisplay(value);
+    return {
+      ...displayValue,
+      color: Number(value) === 16 ? '#ff0000' : '#0000ff',
+    };
+  };
+
+  return frame;
+};
+
 /**
  * A frame carrying a __nestedFrames field but with zero rows — the shape produced when a panel
  * returns no data yet still runs a Group to nested tables transform. There is no first nested
@@ -562,6 +623,25 @@ describe.each(IMPLEMENTATIONS)('TableNG (%s)', (_impl, TableNG) => {
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
       }
+    });
+
+    it('applies parent apply-to-row background color to nested rows using __parentIndex', async () => {
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrameWithApplyToRow()} width={800} height={600} />
+      );
+
+      const expandButtons = container.querySelectorAll('[aria-label="Expand row"]');
+      expect(expandButtons.length).toBe(2);
+
+      await user.click(expandButtons[1]);
+
+      expect(screen.getByText('detail-B')).toBeInTheDocument();
+
+      const detailCell = screen.getByText('detail-B').closest('[role="gridcell"]');
+      expect(detailCell).toBeInTheDocument();
+      expect(window.getComputedStyle(detailCell!).backgroundColor).toBe('rgb(0, 0, 255)');
     });
 
     it('auto-expands all rows when expandAllRows is set in frame meta', () => {
