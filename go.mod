@@ -211,9 +211,9 @@ require (
 	golang.org/x/text v0.39.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
-	google.golang.org/api v0.285.0 // @grafana/grafana-backend-group
+	google.golang.org/api v0.287.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260615183401-62b3387ff324 // @grafana/identity-access-team
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260615183401-62b3387ff324 // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260622175928-b703f567277d // @grafana/identity-access-team
 	google.golang.org/grpc v1.81.1 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // @grafana/grafana-catalog
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
@@ -474,7 +474,7 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.16 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.17 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675 // indirect
 	github.com/grafana/nanogit v1.4.0 // indirect
