@@ -1,17 +1,32 @@
 import { css } from '@emotion/css';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type Field, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { DataLinkButton, Icon, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { type FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { filterFields, MultipleValue, SingleValue } from './LogLineDetailsFields';
+import { filterFields, MultipleValue, resolveAppFromLink, SingleValue } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
+
+export function getLinkClickProperties(link: LinkModel<Field>) {
+  const linkApp = resolveAppFromLink(link.href);
+  const datasource = link.interpolatedParams?.query?.datasource;
+  if (datasource) {
+    return {
+      linkType: link.href.includes('/explore') ? 'explore' : linkApp,
+      datasourceType: datasource?.type,
+      datasourceUid: datasource?.uid,
+    };
+  }
+
+  return { linkType: 'external' };
+}
 
 interface LogLineDetailsLinksProps {
   fields: FieldDef[];
@@ -56,10 +71,24 @@ interface LogLineDetailsFieldProps {
 }
 
 const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
-  const { onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
+  const { app, noInteractions, onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
   const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles);
+
+  const reportLinkClick = useCallback(
+    (link: LinkModel<Field>) => {
+      if (noInteractions) {
+        return;
+      }
+      reportInteraction('logs_log_line_details_link_clicked', {
+        app,
+        fieldKey: field.keys[0],
+        ...getLinkClickProperties(link),
+      });
+    },
+    [app, field.keys, noInteractions]
+  );
 
   const singleKey = field.keys.length === 1;
   const singleValue = field.values.length === 1;
@@ -93,29 +122,26 @@ const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
       </div>
       <div className={styles.links}>
         {field.links?.map((link, i) => {
-          if (link.onClick && onPinLine) {
-            const originalOnClick = link.onClick;
-            link.onClick = (e, origin) => {
+          // Pin + report on the Button's onClick (not link.onClick) so we don't preventDefault:
+          // internal links keep their own onClick (split view), external links navigate via href.
+          const onLinkClick = () => {
+            if (onPinLine) {
               // Pin the line
               onPinLine(log);
-
-              // Execute the link onClick function
-              originalOnClick(e, origin);
-
               closeDetails();
-            };
-          }
+            }
+
+            reportLinkClick(link);
+          };
           return (
             <span key={`${link.title}-${i}`} className={styles.link}>
               <DataLinkButton
                 buttonProps={{
                   // Show tooltip message if max number of pinned lines has been reached
-                  tooltip:
-                    typeof pinLineButtonTooltipTitle === 'object' && link.onClick
-                      ? pinLineButtonTooltipTitle
-                      : undefined,
+                  tooltip: typeof pinLineButtonTooltipTitle === 'object' ? pinLineButtonTooltipTitle : undefined,
                   variant: 'secondary',
                   fill: 'outline',
+                  onClick: onLinkClick,
                 }}
                 link={link}
               />

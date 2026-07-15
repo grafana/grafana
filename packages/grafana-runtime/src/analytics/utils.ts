@@ -63,6 +63,7 @@ export const reportInteraction = (
   if (config.reportingStaticContext && config.reportingStaticContext instanceof Object) {
     properties = { ...properties, ...config.reportingStaticContext };
   }
+  console.log(interactionName, properties);
   getEchoSrv().addEvent<InteractionEchoEvent>({
     type: EchoEventType.Interaction,
     payload: {

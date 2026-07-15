@@ -384,15 +384,14 @@ const LogLineDetailsField = ({
         </div>
       </div>
       {links?.map((link, i) => {
-        const originalOnClick = link.onClick;
-        link.onClick = (e, origin) => {
+        // Pin + report on the Button's onClick (not link.onClick) so we don't preventDefault:
+        // internal links keep their own onClick (split view), external links navigate via href.
+        const onLinkClick = () => {
           if (onPinLine) {
             // Pin the line
             onPinLine(log);
             closeDetails();
           }
-
-          originalOnClick?.(e, origin);
 
           reportInteractionWrapper('logs_log_line_details_link_clicked', {
             app,
@@ -412,6 +411,7 @@ const LogLineDetailsField = ({
                   tooltip: typeof pinLineButtonTooltipTitle === 'object' ? pinLineButtonTooltipTitle : undefined,
                   variant: 'secondary',
                   fill: 'outline',
+                  onClick: onLinkClick,
                   ...(link.icon && { icon: link.icon }),
                 }}
                 link={link}
