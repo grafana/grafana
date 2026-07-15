@@ -124,20 +124,20 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 		return fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	// Check if quota is already defined in the DB
-	findQuery := findQuotaQuery{
-		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
-		QuotaTable:  dbHelper.Table("quota"),
-		Target:      cmd.Target,
-		UserID:      cmd.UserID,
-		OrgID:       cmd.OrgID,
-	}
-	findSQL, err := sqltemplate.Execute(findQuotaTemplate, findQuery)
-	if err != nil {
-		return err
-	}
-
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Check if quota is already defined in the DB
+		findQuery := findQuotaQuery{
+			SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+			QuotaTable:  dbHelper.Table("quota"),
+			Target:      cmd.Target,
+			UserID:      cmd.UserID,
+			OrgID:       cmd.OrgID,
+		}
+		findSQL, err := sqltemplate.Execute(findQuotaTemplate, findQuery)
+		if err != nil {
+			return err
+		}
+
 		var quotaID int64
 		has, err := sess.SQL(findSQL, findQuery.GetArgs()...).Get(&quotaID)
 		if err != nil {
