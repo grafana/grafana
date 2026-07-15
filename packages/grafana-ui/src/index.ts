@@ -80,7 +80,7 @@ export { TagList } from './components/Tags/TagList';
 export { FilterPill } from './components/FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
-/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; this export will be removed in a future release. */
+/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; this export may be removed in a future release. */
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
@@ -415,7 +415,7 @@ export {
 export type { Themeable, Themeable2 } from './types/theme';
 export type { ValidationRule, ValidationEvents } from './types/input';
 export type { SearchFunction, CompletionItemGroup, HighlightPart, CompletionItem } from './types/completion';
-/** @deprecated Slate typeahead types are being removed from `@grafana/ui`. Migrate to CodeMirror; these will be removed in a future release. */
+/** @deprecated Slate typeahead types are being removed from `@grafana/ui`. Migrate to CodeMirror; these may be removed in a future release. */
 export type { TypeaheadOutput, TypeaheadInput, SuggestionsState } from './types/completion';
 export { CompletionItemKind } from './types/completion';
 export type { FormsOnSubmit, FormFieldErrors, FormAPI, FieldArrayApi } from './types/forms';
@@ -439,7 +439,7 @@ export {
   sortedColors,
 } from './utils/colors';
 export { EventsWithValidation, validate, hasValidationEvent, regexValidation } from './utils/validate';
-/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; these exports will be removed in a future release. */
+/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; these exports may be removed in a future release. */
 export { SCHEMA, makeFragment, makeValue } from './utils/slate';
 export { linkModelToContextMenuItems } from './utils/dataLinks';
 export { getTagColorIndexFromName, getTagColorsFromName, getTagColor } from './utils/tags';
