@@ -55,7 +55,7 @@ describe('useDataSourceInfo', () => {
     expect(screen.getByText('Not supported')).toBeInTheDocument();
   });
 
-  it('should omit the Advisor badge when advisor is not available', () => {
+  it('should omit the Advisor badge when advisor has not checked the datasource', () => {
     const { result } = renderHook(() =>
       useDataSourceInfo({
         dataSourcePluginName: 'Prometheus',
@@ -66,12 +66,12 @@ describe('useDataSourceInfo', () => {
     expect(result.current.map((item) => item.label)).not.toContain('Advisor');
   });
 
-  it('should show a "Success" Advisor badge when advisor is available and there is no failure', () => {
+  it('should show a "Success" Advisor badge when advisor has checked the datasource and there is no failure', () => {
     const { result } = renderHook(() =>
       useDataSourceInfo({
         dataSourcePluginName: 'Prometheus',
         alertingSupported: true,
-        advisorAvailable: true,
+        advisorChecked: true,
       })
     );
 

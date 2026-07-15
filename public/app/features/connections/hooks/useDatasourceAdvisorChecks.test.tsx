@@ -225,12 +225,14 @@ describe('useDatasourceFailureByUID', () => {
     config.featureToggles = originalFeatureToggles;
   });
 
-  it('returns empty map when there is no check', () => {
+  it('returns empty map and reports no check when advisor is available but has not run yet', () => {
     mockPluginFunctions({});
 
     const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
+    expect(result.current.isAvailable).toBe(true);
+    expect(result.current.hasCheck).toBe(false);
   });
 
   it('reports advisor unavailable without hanging when the plugin is not installed', () => {
@@ -240,7 +242,18 @@ describe('useDatasourceFailureByUID', () => {
     const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.isAvailable).toBe(false);
+    expect(result.current.hasCheck).toBe(false);
     expect(result.current.isLoading).toBe(false);
+    expect(result.current.datasourceFailureByUID.size).toBe(0);
+  });
+
+  it('reports hasCheck when a completed check exists', () => {
+    const check = makeCheck({ failures: emptyReport });
+    mockPluginFunctions({ completedCheck: check });
+
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
+
+    expect(result.current.hasCheck).toBe(true);
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
 

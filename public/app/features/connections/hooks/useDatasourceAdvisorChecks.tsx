@@ -39,8 +39,6 @@ type CreateChecksFn = () => {
 interface AdvisorCheckContextValue {
   check?: Check;
   isLoading: boolean;
-  // Whether the advisor plugin is installed and has registered its extensions.
-  // Consumers use this to decide whether to surface advisor UI or query its APIs.
   isAvailable: boolean;
   retryCheck?: (checkName: string, itemID: string) => void;
   createChecks?: () => void;
@@ -79,9 +77,6 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
 
   const contextValue = useMemo<AdvisorCheckContextValue>(() => {
     if (!isPluginReady) {
-      // The advisor plugin's functions are either still loading or the plugin
-      // isn't installed. Only report loading while the lookup is in flight so
-      // consumers don't hang forever when advisor is unavailable.
       return { isLoading: isLoadingPlugins, isAvailable: false };
     }
     if (!advisorData) {
@@ -158,6 +153,8 @@ export type DatasourceFailuresResult = {
   isLoading: boolean;
   /** Whether the advisor plugin is available to evaluate datasources. */
   isAvailable: boolean;
+  /** Whether advisor has produced a completed datasource check. When false, no datasource has been evaluated yet. */
+  hasCheck: boolean;
 };
 
 /**
@@ -192,7 +189,7 @@ export function useDatasourceFailureByUID(): DatasourceFailuresResult {
     return byUID;
   }, [check, checkType]);
 
-  return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading, isAvailable };
+  return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading, isAvailable, hasCheck: Boolean(check) };
 }
 
 /**

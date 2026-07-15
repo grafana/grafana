@@ -12,10 +12,8 @@ type DataSourceInfo = {
   // while true, alertingSupported is not known yet and the badge is not rendered
   alertingLoading?: boolean;
   failure?: DatasourceFailureDetails;
-  // whether the advisor plugin is available to evaluate this datasource; the
-  // Advisor badge is only rendered when true, so pages that don't wire advisor
-  // data (e.g. feature-highlight pages) don't show a misleading "Success".
-  advisorAvailable?: boolean;
+  // whether advisor has produced a completed check for this datasource
+  advisorChecked?: boolean;
 };
 
 export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[] => {
@@ -48,7 +46,7 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
     });
   }
 
-  if (dataSourceInfo.advisorAvailable) {
+  if (dataSourceInfo.advisorChecked) {
     info.push({
       label: t('datasources.use-data-source-info.label.advisor', 'Advisor'),
       value: failureSeverity ? (
