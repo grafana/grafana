@@ -59,8 +59,10 @@ describe('ResourcesToMigrate', () => {
   it('omits the breadcrumb for a root-level folder', () => {
     setup();
 
-    // Team A has an empty path, so no breadcrumb separator is rendered.
-    expect(screen.queryByText(/\//)).not.toBeInTheDocument();
+    // Team A has an empty path, so the breadcrumb line (folder titles joined by
+    // " / ") is never rendered. Match the separator with its surrounding spaces
+    // so unrelated slashes elsewhere in the UI can't trip this assertion.
+    expect(screen.queryByText(/ \/ /)).not.toBeInTheDocument();
   });
 
   it('expands a folder to reveal its resources', async () => {

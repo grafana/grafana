@@ -79,6 +79,8 @@ function syntheticFolderUid(kind: ResourceKindInfo): string {
  * parent reference from looping forever.
  */
 function ancestorTitles(uid: string, folderByUid: Map<string, ListedResource>): string[] {
+  // Collected innermost-first while walking up, then reversed once so the walk
+  // stays linear (unshift-per-step would be O(depth²)).
   const titles: string[] = [];
   const seen = new Set<string>([uid]);
   let parentUid = folderByUid.get(uid)?.parentUid;
@@ -88,10 +90,10 @@ function ancestorTitles(uid: string, folderByUid: Map<string, ListedResource>): 
     if (!parent) {
       break;
     }
-    titles.unshift(parent.title);
+    titles.push(parent.title);
     parentUid = parent.parentUid;
   }
-  return titles;
+  return titles.reverse();
 }
 
 /**
