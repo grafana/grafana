@@ -106,7 +106,7 @@ func sqLite3TestDB() (*TestDB, error) {
 // SQLiteTestConnectionString returns the shared SQLite configuration for file-backed integration test databases.
 // It favors concurrency and speed over durability and must only be used with temporary test data.
 func SQLiteTestConnectionString(path string) string {
-	const sqliteTestConnectionOptions = "cache=private&mode=rwc&_cache_size=134217728&_mmap_size=134217728&_temp_store=MEMORY&_journal_mode=WAL&_synchronous=OFF"
+	const sqliteTestConnectionOptions = "cache=private&mode=rwc&_cache_size=134217728&_mmap_size=134217728&_temp_store=MEMORY"
 
 	return "file:" + path + "?" + sqliteTestConnectionOptions
 }
