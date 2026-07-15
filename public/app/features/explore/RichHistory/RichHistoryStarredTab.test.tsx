@@ -16,6 +16,11 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: () => ({ isLoading: false, items: [] }),
+}));
+
 const setup = (propOverrides?: Partial<RichHistoryStarredTabProps>) => {
   const props: RichHistoryStarredTabProps = {
     queries: [],
