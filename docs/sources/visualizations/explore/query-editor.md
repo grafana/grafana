@@ -159,7 +159,7 @@ To add a query, follow these steps:
 
 1. If you want use a data source that's not the default one, click the data source drop-down menu in the toolbar and make a selection.
 
-    If you want to use multiple data sources, select the **Mixed** data source at this step. The query editor displays a secondary data source picker.
+   If you want to use multiple data sources, select the **Mixed** data source at this step. The query editor displays a secondary data source picker.
 
 1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source.

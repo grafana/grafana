@@ -65,7 +65,7 @@ You can then click on any panel icon in the content outline to navigate to that 
 ### Toolbar
 
 The toolbar provides quick access to frequently used tools and settings.
-  
+
 - **Data source picker** - Select a data source from the dropdown menu, or use absolute time.
 - **Split** - Click to compare visualizations side by side. Refer to [Split and compare](#split-and-compare) for additional detail.
 - **Add** - Click to add your exploration to a dashboard. You can also use this to declare an incident,create a forecast, detect outliers and to run an investigation.
