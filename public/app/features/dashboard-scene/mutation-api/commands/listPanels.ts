@@ -77,12 +77,16 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   // deprecated single `error`. `errors` keeps the plain message strings so
   // existing consumers don't break.
   const sourceErrors: DataQueryError[] = errors?.length ? errors : error ? [error] : [];
-  const errorDetails: PanelRuntimeError[] = sourceErrors.map((e) => ({
-    ...(e.message !== undefined && { message: e.message }),
-    ...(e.refId !== undefined && { refId: e.refId }),
-    ...(e.type !== undefined && { type: e.type }),
-  }));
-  const errorMessages = sourceErrors.map((e) => e.message).filter((m): m is string => m !== undefined && m !== '');
+  const errorDetails: PanelRuntimeError[] = sourceErrors.map((e) => {
+    // HTTP/backend errors carry their text under `data.message` rather than the top-level `message`.
+    const message = e.message ?? e.data?.message;
+    return {
+      ...(message !== undefined && { message }),
+      ...(e.refId !== undefined && { refId: e.refId }),
+      ...(e.type !== undefined && { type: e.type }),
+    };
+  });
+  const errorMessages = errorDetails.map((e) => e.message).filter((m): m is string => m !== undefined && m !== '');
 
   // Data-frame notices (info/warning/error), deduped across all frames.
   const notices: PanelRuntimeNotice[] = [];
@@ -104,7 +108,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   return {
     loadingState: state,
     isLoading: false,
-    hasError: errorDetails.length > 0 || state === LoadingState.Error,
+    hasError: sourceErrors.length > 0 || state === LoadingState.Error,
     hasNoData: !hasData,
     ...(errorMessages.length > 0 && { errors: errorMessages }),
     ...(errorDetails.length > 0 && { errorDetails }),

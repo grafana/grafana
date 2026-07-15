@@ -350,6 +350,30 @@ describe('Panel mutation commands', () => {
       expect(status?.errorDetails).toEqual([{ message: 'boom', refId: 'A', type: DataQueryErrorType.Unknown }]);
     });
 
+    it('includeStatus reads the error message from data.message when the top-level message is absent', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Backend Error Panel');
+      attachPanelData(
+        scene,
+        'Backend Error Panel',
+        makePanelData({
+          state: LoadingState.Error,
+          errors: [{ refId: 'A', data: { message: 'backend boom' } }],
+        })
+      );
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(true);
+      expect(status?.errors).toEqual(['backend boom']);
+      expect(status?.errorDetails).toEqual([{ message: 'backend boom', refId: 'A' }]);
+    });
+
     it('includeStatus reports hasNoData for a done panel with no series', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);
