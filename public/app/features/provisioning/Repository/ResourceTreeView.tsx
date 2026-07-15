@@ -255,6 +255,9 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         columns={columns}
         data={flatItems}
         pageSize={25}
+        // Folding rows or clearing a search can shrink the list below the current page; reset to
+        // the first page so users aren't stranded on a now-empty page.
+        autoResetPage={true}
         getRowId={(item: FlatTreeItem) => item.item.path}
       />
     </Stack>
