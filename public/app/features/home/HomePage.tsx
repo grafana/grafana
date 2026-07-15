@@ -17,7 +17,7 @@ import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
-import Recommendations from './Recommendations/Recommendations';
+import { Recommendations } from './Recommendations/Recommendations';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {

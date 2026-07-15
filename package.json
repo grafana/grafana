@@ -161,6 +161,7 @@
     "@typescript-eslint/eslint-plugin": "8.56.0",
     "@typescript-eslint/parser": "8.56.0",
     "@typescript/native-preview": "7.0.0-dev.20260421.2",
+    "@yarnpkg/types": "^4.0.1",
     "autoprefixer": "10.4.21",
     "axe-core": "^4.11.1",
     "blob-polyfill": "9.0.20240710",

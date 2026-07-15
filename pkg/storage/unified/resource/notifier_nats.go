@@ -64,7 +64,20 @@ type natsNotifier struct {
 	log        log.Logger
 }
 
+const (
+	dropReasonBufferFull     = "buffer_full"
+	dropReasonUnmarshalError = "unmarshal_error"
+	dropReasonUnknownType    = "unknown_type"
+)
+
+var dropReasons = []string{dropReasonBufferFull, dropReasonUnmarshalError, dropReasonUnknownType}
+
 func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
+	if dropped != nil {
+		for _, r := range dropReasons {
+			dropped.WithLabelValues(r)
+		}
+	}
 	return &natsNotifier{
 		subscriber: subscriber,
 		dropped:    dropped,
@@ -98,7 +111,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		select {
 		case raw <- evt:
 		default:
-			n.drop("buffer_full")
+			n.drop(dropReasonBufferFull)
 			n.log.Warn("dropped watch notification, channel full", "subject", subject)
 		}
 	}
@@ -149,13 +162,13 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 	var notification resourcepb.WatchNotification
 	if err := proto.Unmarshal(data, &notification); err != nil {
-		n.drop("unmarshal_error")
+		n.drop(dropReasonUnmarshalError)
 		n.log.Warn("failed to unmarshal watch notification", "subject", subject, "error", err)
 		return Event{}, false
 	}
 	action, ok := watchNotificationTypeToAction(notification.Type)
 	if !ok {
-		n.drop("unknown_type")
+		n.drop(dropReasonUnknownType)
 		n.log.Warn("dropped watch notification with unknown type", "subject", subject)
 		return Event{}, false
 	}

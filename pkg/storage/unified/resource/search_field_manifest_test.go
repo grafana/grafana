@@ -98,7 +98,7 @@ func TestSearchFieldProviders_MapsDeclaredKinds(t *testing.T) {
 
 	// The one kind that declares search fields is present and provider-backed.
 	require.Len(t, got, 1)
-	provider := got["widgets.example.test/widgets"]
+	provider := got[NewLowerGroupResource("widgets.example.test", "widgets")]
 	require.NotNil(t, provider)
 
 	// The mapped provider answers for that kind's own (group, resource).
