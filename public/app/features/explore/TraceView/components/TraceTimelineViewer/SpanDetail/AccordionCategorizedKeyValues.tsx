@@ -94,10 +94,12 @@ export default function AccordionCategorizedKeyValues({
                   onClick={() => toggleCategory(category.id)}
                 >
                   <Icon name={isCategoryOpen ? 'angle-down' : 'angle-right'} className={styles.chevronIcon} />
-                  <Icon name={category.icon} className={styles.categoryIcon} />
-                  <span className={styles.categoryLabel}>{category.label}</span>
-                  <span className={styles.categoryCounter}>
-                    <Counter value={attributes.length} variant="secondary" />
+                  <span className={styles.categoryHeaderContent}>
+                    <Icon name={category.icon} className={styles.categoryIcon} />
+                    <span className={styles.categoryLabel}>{category.label}</span>
+                    <span className={styles.categoryCounter}>
+                      <Counter value={attributes.length} variant="secondary" />
+                    </span>
                   </span>
                 </button>
                 {isCategoryOpen && (
@@ -151,7 +153,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     categoryHeader: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
       minHeight: theme.spacing(3),
       padding: `0 ${theme.spacing(0.5)}`,
       lineHeight: 1,
@@ -170,6 +171,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         background: theme.colors.action.hover,
       },
+    }),
+    categoryHeaderContent: css({
+      label: 'categoryHeaderContent',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
     }),
     categoryContent: css({
       padding: `0 ${theme.spacing(0.5)} 0 0`,
