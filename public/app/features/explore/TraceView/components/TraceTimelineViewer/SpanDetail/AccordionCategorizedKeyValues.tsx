@@ -10,6 +10,8 @@ import { KeyValuesSummary } from './KeyValuesSummary';
 import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 import { type AttributeSectionType, groupAttributesByCategory } from './attributeCategories';
 
+import { alignIcon } from '.';
+
 export type AccordionCategorizedKeyValuesProps = {
   data: TraceKeyValuePair[];
   sectionType: AttributeSectionType;
@@ -50,11 +52,10 @@ export default function AccordionCategorizedKeyValues({
     });
   }, []);
 
-  const iconCls = styles.chevronIcon;
   const arrow = isOpen ? (
-    <Icon name="angle-down" className={iconCls} />
+    <Icon name="angle-down" className={styles.chevronIcon} />
   ) : (
-    <Icon name="angle-right" className={iconCls} />
+    <Icon name="angle-right" className={styles.chevronIcon} />
   );
 
   const headerProps =
@@ -95,7 +96,9 @@ export default function AccordionCategorizedKeyValues({
                   <Icon name={isCategoryOpen ? 'angle-down' : 'angle-right'} className={styles.chevronIcon} />
                   <Icon name={category.icon} className={styles.categoryIcon} />
                   <span className={styles.categoryLabel}>{category.label}</span>
-                  <Counter value={attributes.length} variant="secondary" />
+                  <span className={styles.categoryCounter}>
+                    <Counter value={attributes.length} variant="secondary" />
+                  </span>
                 </button>
                 {isCategoryOpen && (
                   <div className={styles.categoryContent}>
@@ -149,7 +152,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
-      padding: `${theme.spacing(0.5)} 0`,
+      minHeight: theme.spacing(3),
+      padding: `0 ${theme.spacing(0.5)}`,
+      lineHeight: 1,
       textTransform: 'uppercase',
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
@@ -170,16 +175,30 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: `0 ${theme.spacing(0.5)} 0 0`,
     }),
     chevronIcon: css({
+      label: 'chevronIcon',
       display: 'inline-flex',
       alignItems: 'center',
       flexShrink: 0,
-      marginRight: theme.spacing(0.5),
-    }),
+    }, alignIcon),
     categoryIcon: css({
+      label: 'categoryIcon',
+      display: 'inline-flex',
+      alignItems: 'center',
       flexShrink: 0,
     }),
     categoryLabel: css({
+      label: 'categoryLabel',
+      lineHeight: 1,
       flexShrink: 0,
+    }),
+    categoryCounter: css({
+      label: 'categoryCounter',
+      display: 'inline-flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      '& > span': {
+        marginLeft: 0,
+      },
     }),
   };
 };
