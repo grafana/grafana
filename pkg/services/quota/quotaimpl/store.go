@@ -88,7 +88,7 @@ func (ss *sqlStore) Get(ctx quota.Context, scopeParams *quota.ScopeParameters) (
 type findQuotaQuery struct {
 	sqltemplate.SQLTemplate
 	QuotaTable string
-	Cmd        *quota.UpdateQuotaCmd
+	Quota      quota.Quota
 }
 
 func (q findQuotaQuery) Validate() error { return nil }
@@ -96,9 +96,7 @@ func (q findQuotaQuery) Validate() error { return nil }
 type insertQuotaQuery struct {
 	sqltemplate.SQLTemplate
 	QuotaTable string
-	Cmd        *quota.UpdateQuotaCmd
-	Created    time.Time
-	Updated    time.Time
+	Quota      quota.Quota
 }
 
 func (q insertQuotaQuery) Validate() error { return nil }
@@ -106,9 +104,7 @@ func (q insertQuotaQuery) Validate() error { return nil }
 type updateQuotaQuery struct {
 	sqltemplate.SQLTemplate
 	QuotaTable string
-	QuotaID    int64
-	Limit      int64
-	Updated    time.Time
+	Quota      quota.Quota
 }
 
 func (q updateQuotaQuery) Validate() error { return nil }
@@ -120,10 +116,15 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 	}
 
 	// Check if quota is already defined in the DB
+	quotaRecord := quota.Quota{
+		Target: cmd.Target,
+		UserId: cmd.UserID,
+		OrgId:  cmd.OrgID,
+	}
 	findQuery := findQuotaQuery{
 		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 		QuotaTable:  dbHelper.Table("quota"),
-		Cmd:         cmd,
+		Quota:       quotaRecord,
 	}
 	findSQL, err := sqltemplate.Execute(findQuotaTemplate, findQuery)
 	if err != nil {
@@ -137,15 +138,15 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 			return err
 		}
 
+		quotaRecord.Updated = time.Now()
+		quotaRecord.Limit = cmd.Limit
 		if !has {
 			// No quota in the DB for this target, so create a new one.
-			now := time.Now()
+			quotaRecord.Created = time.Now()
 			insertQuery := insertQuotaQuery{
 				SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 				QuotaTable:  dbHelper.Table("quota"),
-				Cmd:         cmd,
-				Created:     now,
-				Updated:     now,
+				Quota:       quotaRecord,
 			}
 			insertSQL, err := sqltemplate.Execute(insertQuotaTemplate, insertQuery)
 			if err != nil {
@@ -155,12 +156,11 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 			return err
 		} else {
 			// update existing quota entry in the DB.
+			quotaRecord.Id = quotaID
 			updateQuery := updateQuotaQuery{
 				SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 				QuotaTable:  dbHelper.Table("quota"),
-				QuotaID:     quotaID,
-				Limit:       cmd.Limit,
-				Updated:     time.Now(),
+				Quota:       quotaRecord,
 			}
 			updateSQL, err := sqltemplate.Execute(updateQuotaTemplate, updateQuery)
 			if err != nil {

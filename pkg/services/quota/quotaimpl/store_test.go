@@ -226,7 +226,7 @@ func TestTemplates(t *testing.T) {
 					Data: findQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						Cmd:         &quota.UpdateQuotaCmd{Target: "test"},
+						Quota:       quota.Quota{Target: "test"},
 					},
 				},
 				{
@@ -234,7 +234,7 @@ func TestTemplates(t *testing.T) {
 					Data: findQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						Cmd:         &quota.UpdateQuotaCmd{Target: "test", UserID: 42},
+						Quota:       quota.Quota{Target: "test", UserId: 42},
 					},
 				},
 				{
@@ -242,7 +242,7 @@ func TestTemplates(t *testing.T) {
 					Data: findQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						Cmd:         &quota.UpdateQuotaCmd{Target: "test", OrgID: 8},
+						Quota:       quota.Quota{Target: "test", OrgId: 8},
 					},
 				},
 			},
@@ -252,9 +252,13 @@ func TestTemplates(t *testing.T) {
 					Data: insertQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						Cmd:         &quota.UpdateQuotaCmd{Target: "test", Limit: 3, UserID: 42},
-						Created:     now,
-						Updated:     now,
+						Quota: quota.Quota{
+							Target:  "test",
+							Limit:   3,
+							UserId:  42,
+							Created: now,
+							Updated: now,
+						},
 					},
 				},
 			},
@@ -264,9 +268,11 @@ func TestTemplates(t *testing.T) {
 					Data: updateQuotaQuery{
 						SQLTemplate: queryTemplate(),
 						QuotaTable:  quotaTable,
-						QuotaID:     3,
-						Limit:       4,
-						Updated:     now,
+						Quota: quota.Quota{
+							Id:      3,
+							Limit:   4,
+							Updated: now,
+						},
 					},
 				},
 			},
