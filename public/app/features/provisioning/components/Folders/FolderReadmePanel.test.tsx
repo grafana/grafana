@@ -133,8 +133,8 @@ describe('FolderReadmePanel', () => {
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
     });
 
-    it('opens the host URL when a JSON link has no synced resource', async () => {
-      const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+    it('opens the host URL in a new tab when a JSON link has no synced resource', async () => {
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue({} as Window);
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
       const { user } = setup();
@@ -149,6 +149,29 @@ describe('FolderReadmePanel', () => {
         )
       );
       expect(pushSpy).not.toHaveBeenCalled();
+    });
+
+    it('falls back to same-tab navigation when the host popup is blocked', async () => {
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(null);
+      const assignMock = jest.fn();
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+
+      const { user } = setup();
+      // window.location.assign is read-only in jsdom; replace it after render.
+      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
+      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
+      try {
+        await user.click(screen.getByRole('link', { name: 'CPU' }));
+
+        await waitFor(() =>
+          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json')
+        );
+        expect(openSpy).toHaveBeenCalled();
+      } finally {
+        if (originalLocation) {
+          Object.defineProperty(window, 'location', originalLocation);
+        }
+      }
     });
 
     it('leaves a non-resource link (markdown doc) to the host without a resource lookup', async () => {

@@ -220,8 +220,15 @@ function RenderedMarkdown({
         return;
       }
       const href = anchor.getAttribute('href');
-      if (href) {
-        window.open(href, '_blank', 'noopener,noreferrer');
+      if (!href) {
+        return;
+      }
+      // Default navigation was already suppressed on click; open the host link
+      // ourselves. A delayed window.open can be popup-blocked (no longer counted
+      // as user-initiated), so fall back to same-tab navigation to guarantee the
+      // click still goes somewhere.
+      if (!window.open(href, '_blank', 'noopener,noreferrer')) {
+        window.location.assign(href);
       }
     };
 

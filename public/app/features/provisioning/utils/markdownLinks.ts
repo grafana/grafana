@@ -158,18 +158,16 @@ function stripLeadingSlashes(s: string): string {
 
 /**
  * Whether a resolved repo path could map to a Grafana resource: a JSON/YAML file
- * (dashboard, playlist, folder metadata, ...) or a folder directory. Links that
- * fail this (docs, images, arbitrary files) never trigger a resource lookup.
+ * (dashboard, playlist, folder metadata, ...) or a folder directory. Folders are
+ * matched by their trailing slash — which the resolver preserves for directory
+ * links — rather than by "no extension", so extensionless files (README,
+ * LICENSE, Makefile) aren't tagged and never trigger a resource lookup. Links
+ * that fail this (docs, images, arbitrary files) are left as plain host links.
  */
 export function isResourceLinkCandidate(path: string): boolean {
-  const trimmed = path.replace(/\/+$/, '');
-  if (!trimmed) {
-    return false;
-  }
-  const lastSegment = trimmed.slice(trimmed.lastIndexOf('/') + 1);
-  if (/\.(json|ya?ml)$/i.test(lastSegment)) {
+  if (path.endsWith('/')) {
     return true;
   }
-  // A trailing slash, or a final segment with no extension, denotes a folder.
-  return path.endsWith('/') || !lastSegment.includes('.');
+  const lastSegment = path.slice(path.lastIndexOf('/') + 1);
+  return /\.(json|ya?ml)$/i.test(lastSegment);
 }

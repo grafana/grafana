@@ -196,11 +196,13 @@ describe('rewriteRelativeMarkdownLinks', () => {
   });
 
   describe('isResourceLinkCandidate', () => {
-    it.each(['a/dash.json', 'a/pl.yaml', 'a/pl.yml', 'a/DASH.JSON', 'a/sub/', 'a/sub', 'sub'])('accepts %s', (path) => {
+    it.each(['a/dash.json', 'a/pl.yaml', 'a/pl.yml', 'a/DASH.JSON', 'a/sub/', 'sub/'])('accepts %s', (path) => {
       expect(isResourceLinkCandidate(path)).toBe(true);
     });
 
-    it.each(['a/notes.md', 'a/logo.png', 'a/archive.tar.gz', ''])('rejects %s', (path) => {
+    // Extensionless paths (README, LICENSE, a folder link without a trailing
+    // slash) are not tagged, so they never trigger a resource lookup on click.
+    it.each(['a/notes.md', 'a/logo.png', 'a/archive.tar.gz', 'a/README', 'a/sub', 'sub', ''])('rejects %s', (path) => {
       expect(isResourceLinkCandidate(path)).toBe(false);
     });
   });
