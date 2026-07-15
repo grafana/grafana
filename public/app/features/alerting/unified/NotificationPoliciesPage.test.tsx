@@ -5,7 +5,6 @@ import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
-import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/hooks/abilities/alertmanager/useNotificationPolicyAbility';
@@ -723,8 +722,10 @@ describe.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
 
     it('labels the root policy "Default policy", not its raw name', async () => {
       renderNotificationPolicies();
-      const rootRoute = await getRootRoute();
-      expect(rootRoute).toHaveTextContent(/default policy/i);
+      // The multi-policy view renders one root container per policy tree, so query all of them and
+      // assert the default tree (presented under `backendName`) shows the friendly "Default policy" label.
+      const roots = await ui.rootRouteContainer.findAll();
+      expect(roots.some((root) => within(root).queryByText(/default policy/i))).toBe(true);
     });
   }
 );
