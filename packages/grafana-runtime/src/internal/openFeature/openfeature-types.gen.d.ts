@@ -14,6 +14,7 @@ declare module "@openfeature/core" {
     | "faroSessionReplay"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
+    | "grafana.timeNavigator"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "provisioning.gitConventions"

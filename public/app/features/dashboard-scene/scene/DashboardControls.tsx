@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, store, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -22,7 +23,7 @@ import {
   type SceneVariable,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { Box, Button, ButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -45,6 +46,10 @@ import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
+import { SceneTimeNavigator } from './time-navigator/SceneTimeNavigator';
+
+/** Per-user, per-browser show/hide preference for the time navigator. */
+const TIME_NAVIGATOR_VISIBLE_KEY = 'grafana.dashboard.timeNavigator.visible';
 
 function getPanelEditVariables(
   dashboard: DashboardScene,
@@ -92,6 +97,7 @@ function getPanelEditVariables(
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
+  timeNavigator: SceneTimeNavigator;
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
@@ -155,6 +161,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     super({
       timePicker: state.timePicker ?? new SceneTimePicker({}),
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
+      timeNavigator: state.timeNavigator ?? new SceneTimeNavigator({}),
       ...state,
     });
 
@@ -209,12 +216,25 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const {
     refreshPicker,
     timePicker,
+    timeNavigator,
     hideTimeControls,
     hideVariableControls,
     hideLinksControls,
     hideDashboardControls,
     hidePlaylistNav,
   } = model.useState();
+
+  const timeNavigatorEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaTimeNavigator, false);
+
+  // Show/hide preference for the time navigator. Read the saved value unconditionally (a harmless read, and
+  // it means enabling the flag mid-session still honours a previously hidden state); only the toggle writes
+  // it, and the toggle renders only when the feature is enabled, so a disabled instance never persists.
+  const [showTimeNavigator, setShowTimeNavigator] = useState(() => store.getBool(TIME_NAVIGATOR_VISIBLE_KEY, true));
+  const toggleTimeNavigator = () => {
+    const next = !showTimeNavigator;
+    setShowTimeNavigator(next);
+    store.set(TIME_NAVIGATOR_VISIBLE_KEY, next);
+  };
 
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
@@ -262,47 +282,66 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   }
 
   return (
-    <div
-      data-testid={selectors.pages.Dashboard.Controls}
-      className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
-    >
-      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
-        {!hideTimeControls && (
-          <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
-            <refreshPicker.Component model={refreshPicker} />
-          </div>
+    <>
+      <div
+        data-testid={selectors.pages.Dashboard.Controls}
+        className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
+      >
+        <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+          {!hideTimeControls && (
+            <div className={styles.fixedControls}>
+              <timePicker.Component model={timePicker} />
+              <refreshPicker.Component model={refreshPicker} />
+              {timeNavigatorEnabled && (
+                <ToolbarButton
+                  icon="bars-clock"
+                  variant={showTimeNavigator ? 'active' : 'default'}
+                  tooltip={
+                    showTimeNavigator
+                      ? t('time-navigator.hide', 'Hide time navigator (experimental)')
+                      : t('time-navigator.show', 'Show time navigator (experimental)')
+                  }
+                  onClick={toggleTimeNavigator}
+                />
+              )}
+            </div>
+          )}
+          {config.featureToggles.dashboardNewLayouts && (
+            <div className={styles.fixedControls}>
+              <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
+            </div>
+          )}
+          {config.featureToggles.dashboardUnifiedDrilldownControls && !config.featureToggles.dashboardNewLayouts && (
+            <div className={styles.fixedControls}>
+              <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+            </div>
+          )}
+        </div>
+        {config.featureToggles.scopeFilters && !editPanel && (
+          <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
         )}
-        {config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
-            <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
-          </div>
+        {!hideVariableControls && (
+          <>
+            <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
+            <DashboardDataLayerControls dashboard={dashboard} />
+          </>
         )}
-        {config.featureToggles.dashboardUnifiedDrilldownControls && !config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
-            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
-          </div>
-        )}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+        {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+        <DefaultControlsLoadingSkeleton
+          dashboard={dashboard}
+          hideVariableControls={hideVariableControls}
+          hideLinksControls={hideLinksControls}
+        />
+        {editPanel && <PanelEditControls panelEditor={editPanel} />}
+        {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && (
-        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
+      {timeNavigatorEnabled && !hideTimeControls && showTimeNavigator && (
+        <div style={{ width: '100%', padding: '4px 8px' }}>
+          <timeNavigator.Component model={timeNavigator} />
+        </div>
       )}
-      {!hideVariableControls && (
-        <>
-          <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
-          <DashboardDataLayerControls dashboard={dashboard} />
-        </>
-      )}
-      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-      {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
-      <DefaultControlsLoadingSkeleton
-        dashboard={dashboard}
-        hideVariableControls={hideVariableControls}
-        hideLinksControls={hideLinksControls}
-      />
-      {editPanel && <PanelEditControls panelEditor={editPanel} />}
-      {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
-    </div>
+    </>
   );
 }
 

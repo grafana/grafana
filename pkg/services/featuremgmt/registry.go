@@ -201,6 +201,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.timeNavigator",
+			Description: "Adds a dashboard time navigator control that drives the dashboard time range",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
