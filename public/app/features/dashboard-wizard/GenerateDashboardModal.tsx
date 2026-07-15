@@ -10,6 +10,7 @@ import { getMessageFromError } from 'app/core/utils/errors';
 
 import { PromptStep } from './PromptStep';
 import { QuestionsStep } from './QuestionsStep';
+import { SummaryStep } from './SummaryStep';
 import { getWizardDatasources, useWizardAssistant } from './api';
 import { formatContextItemsForPrompt, scopeDatasourcesToContext } from './context';
 import {
@@ -27,7 +28,7 @@ interface Props {
   seed?: WizardSeed;
 }
 
-type Step = 'prompt' | 'questions';
+type Step = 'prompt' | 'questions' | 'summary';
 
 /** Labels the build agent typically turns into template variables. */
 const COMMON_VARIABLE_LABELS = ['job', 'namespace', 'cluster', 'instance'];
@@ -111,16 +112,21 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
     setContextItems((prev) => prev.filter((existing) => existing.node.id !== item.node.id));
   };
 
-  const handleSubmitPrompt = async () => {
+  /** The user's free text plus any entry-point hint, as sent to the refine call. */
+  const composeRequest = () => {
     const written = freeText.trim();
-    if (written === '') {
+    return seed?.promptHint ? `${written}\n\nWhere this request came from:\n${seed.promptHint}` : written;
+  };
+
+  const handleSubmitPrompt = async () => {
+    if (freeText.trim() === '') {
       return;
     }
 
     setBusy(true);
     setError(undefined);
 
-    const request = seed?.promptHint ? `${written}\n\nWhere this request came from:\n${seed.promptHint}` : written;
+    const request = composeRequest();
     const contextNotes = formatContextItemsForPrompt(contextItems);
 
     try {
@@ -134,7 +140,8 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
         setAnswers({});
         setStep('questions');
       } else {
-        handOffToAssistant(result, []);
+        // No clarifications needed — go straight to the review step.
+        setStep('summary');
       }
     } catch (err) {
       setError(getMessageFromError(err));
@@ -144,17 +151,49 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
   };
 
   const handleShowMeWhatGrafanaCanDo = () => {
+    // The showcase path has no user intent to preview, so build directly.
     handOffToAssistant({ prompt: SHOWCASE_INTENT, questions: [] }, []);
   };
 
-  const handleGenerateWithAnswers = () => {
+  /** The clarifying questions the user answered, folded into the build request. */
+  const clarifications = questions
+    .map((question) => ({ question: question.text, answer: (answers[question.id] ?? []).join(', ') }))
+    .filter((clarification) => clarification.answer !== '');
+
+  const handleConfirmBuild = () => {
     if (!refinement) {
       return;
     }
-    const clarifications = questions
-      .map((question) => ({ question: question.text, answer: (answers[question.id] ?? []).join(', ') }))
-      .filter((clarification) => clarification.answer !== '');
     handOffToAssistant(refinement, clarifications);
+  };
+
+  /** Re-run the refine call with the current plan and the user's requested changes. */
+  const handleRefinePlan = async (feedback: string) => {
+    if (!refinement || feedback.trim() === '') {
+      return;
+    }
+
+    setBusy(true);
+    setError(undefined);
+
+    const contextNotes = formatContextItemsForPrompt(contextItems);
+
+    try {
+      const result = await refine(composeRequest(), datasources, contextNotes || undefined, {
+        previousPrompt: refinement.prompt,
+        previousSummary: refinement.summary,
+        feedback: feedback.trim(),
+      });
+      if (disposed.current) {
+        return;
+      }
+      reportInteraction('dashboard_wizard_plan_refined');
+      setRefinement(result);
+    } catch (err) {
+      setError(getMessageFromError(err));
+    } finally {
+      setBusy(false);
+    }
   };
 
   /**
@@ -182,6 +221,8 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
         dataNotes: result.dataNotes,
         findings: getFindings(),
         contextNotes: contextNotes || undefined,
+        summary: result.summary,
+        verifiedMetrics: result.verifiedMetrics,
       }),
     });
 
@@ -219,11 +260,26 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
           questions={questions}
           answers={answers}
           onAnswersChange={setAnswers}
-          onGenerate={handleGenerateWithAnswers}
+          onContinue={() => setStep('summary')}
           onBack={() => {
             setStep('prompt');
             setError(undefined);
           }}
+        />
+      )}
+
+      {step === 'summary' && refinement && (
+        <SummaryStep
+          summary={refinement.summary}
+          fallbackText={refinement.prompt}
+          // Only surface datasources when the set is a deliberate selection; the
+          // full instance list (when nothing was attached) is noise the agent picks from.
+          datasourceNames={datasources.length < allDatasources.length ? datasources.map((ds) => ds.name ?? ds.uid) : []}
+          clarifications={clarifications}
+          busy={busy}
+          onRefine={handleRefinePlan}
+          onGenerate={handleConfirmBuild}
+          onBack={() => setStep(questions.length > 0 ? 'questions' : 'prompt')}
         />
       )}
     </Modal>

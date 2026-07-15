@@ -11,12 +11,18 @@ import {
   clearDashboardGeneration,
   completeDashboardGeneration,
   getDashboardGenerationPhase,
+  startDashboardGeneration,
   subscribeToDashboardGeneration,
   type DashboardGenerationOutcome,
   type DashboardGenerationRequest,
 } from './generationState';
+import { buildRepairPrompt } from './prompts';
+import { validateGeneratedDashboard } from './validateGeneratedDashboard';
 
 const BUILDER_COMPONENT_ID = 'grafana-assistant-app/headless-dashboard-builder/v0';
+
+/** How many automatic post-build repair passes to attempt before giving up. */
+const MAX_REPAIR_PASSES = 1;
 
 /** How many progress steps the overlay keeps visible at once. */
 const MAX_VISIBLE_STEPS = 5;
@@ -105,6 +111,27 @@ function DashboardGenerationSurface({
     if (request === null) {
       return;
     }
+
+    // Deterministically check the freshly built scene for problems the agent
+    // commonly leaves behind (queries referencing undefined variables). If we
+    // find any and haven't exhausted our repair budget, run one corrective
+    // pass against the now-open dashboard instead of finishing.
+    const attempt = request.repairAttempt ?? 0;
+    const issues = validateGeneratedDashboard();
+    if (issues.undefinedVariables.length > 0 && attempt < MAX_REPAIR_PASSES) {
+      reportInteraction('dashboard_wizard_repair', {
+        attempt: attempt + 1,
+        undefinedVariables: issues.undefinedVariables.length,
+      });
+      startDashboardGeneration({
+        origin: request.origin,
+        target: 'current',
+        prompt: buildRepairPrompt(issues),
+        repairAttempt: attempt + 1,
+      });
+      return;
+    }
+
     completeDashboardGeneration({
       summary,
       origin: request.origin,
