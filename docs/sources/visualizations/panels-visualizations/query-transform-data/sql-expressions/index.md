@@ -59,7 +59,7 @@ SQL expressions allow you to:
   - Show, hide, or rename columns.
   - Filter rows based on conditions.
   - Aggregate data (for example: sum, average, count).
-- Write subqueries and Common Table Expressions (CTEs) to support more complex logic:
+- Write subqueries and Common Table Expressions (**CTEs**) to support more complex logic:
   - **Subqueries** are nested queries used for filtering, calculations, or transformations.
   - **CTEs** are temporary named result sets that help make complex queries more readable and reusable.
 
@@ -89,7 +89,7 @@ The following are compatible data sources:
 - TestData
 - Tempo
 - Prometheus
-- Cloudwatch
+- CloudWatch
 - GitHub
 - BigQuery
 
@@ -125,7 +125,7 @@ Use the following workflow to create a SQL expression:
    SELECT * FROM A LIMIT 10
    ```
 
-   This lets you see the available columns and sample rows from `query A`. Repeat this for each input query you want to use (e.g., `SELECT * FROM B LIMIT 10`).
+   This lets you see the available columns and sample rows from `query A`. Repeat this for each input query you want to use (for example, `SELECT * FROM B LIMIT 10`).
 
 1. **Inspect your data**. Repeat this for each input query to understand the column structure and data types you're working with.
 
@@ -136,7 +136,7 @@ Use the following workflow to create a SQL expression:
 1. **Construct the SQL expression.** Once you understand your data, you can write your SQL expression to join, filter, or otherwise transform the data.
 1. **Validate and iterate**. Click **Refresh** every time you update your SQL query to re-evaluate and see the updated result.
 
-When selecting a visualization type, **ensure your SQL expression returns data in the required shape**. For example, time series panels require a column with a time field (e.g., timestamp) and a numeric value column (e.g., \_\_value\_\_). If the output is not shaped correctly, your visualization may appear empty or fail to render.
+When selecting a visualization type, **ensure your SQL expression returns data in the required shape**. For example, time series panels require a column with a time field (such as a timestamp) and a numeric value column (such as `__value__`). If the output is not shaped correctly, your visualization may appear empty or fail to render.
 
 The SQL expression workflow in Grafana is designed with the following behaviors:
 
@@ -173,7 +173,7 @@ The Schema inspector has a tab for each source query and lists the following det
 
 ## SQL conversion rules
 
-When you reference a RefID within a SQL statement (e.g., `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
+When you reference a RefID within a SQL statement (for example, `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
 
 The SQL conversion path:
 
@@ -182,7 +182,7 @@ The SQL conversion path:
 
 ## Supported functions
 
-Grafana maintains a complete list of supported SQL keywords, operators, and functions in the SQL expressions query validator implementation.
+Grafana maintains a complete list of supported SQL keywords, operators, and functions in the SQL expressions query validation code.
 
 For the most up-to-date reference of all supported SQL functionality, refer to the `allowedNode` and `allowedFunction` definitions in the Grafana [codebase](https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go).
 
@@ -237,7 +237,7 @@ Grafana supports three types of data source response formats:
 
 1. **Single Table-like Frame**:  
    This refers to data returned in a standard tabular structure, where all values are organized into rows and columns, similar to what you'd get from a SQL query.
-   - **Example**: Any query against a SQL data source (e.g., PostgreSQL, MySQL) with the format set to Table.
+   - **Example**: Any query against a SQL data source (for example, PostgreSQL, MySQL) with the format set to Table.
 
 2. **Dataplane: Time Series Format**:  
    This format represents time series data with timestamps and associated values. It is typically returned from monitoring data sources.
@@ -247,7 +247,11 @@ Grafana supports three types of data source response formats:
    This format is used for point-in-time (instant) metric queries that return a single value (or a set of values) at a specific moment.
    - **Example**: Prometheus or Loki Instant Queries (queries that return the current value of a metric).
 
-For more information on Dataplane formats, refer to [Grafana Dataplane Documentation](https://grafana.com/developers/dataplane).
+<!-- vale Grafana.Spelling = NO -->
+
+For more information on these formats, refer to the [Grafana Dataplane documentation](https://grafana.com/developers/dataplane).
+
+<!-- vale Grafana.Spelling = YES -->
 
 The following non-tabular formats are automatically converted to a tabular format (`FullLong`) when used in SQL expressions:
 
@@ -304,11 +308,11 @@ SQL expressions have known limitations that may cause queries to fail or return 
 
 The following situations are affected:
 
-- Error responses – When a data source query returns an error, SQL expressions cannot interpret the result.
+- **Error responses**: When a data source query returns an error, SQL expressions cannot interpret the result.
 
-- No data responses – If a query returns no rows, the SQL expression engine cannot infer a schema.
+- **No data responses**: If a query returns no rows, the SQL expression engine cannot infer a schema.
 
-- Dynamic schema responses – If the set of columns or labels changes between query executions, SQL expressions may fail because it treats column changes as schema changes.
+- **Dynamic schema responses**: If the set of columns or labels changes between query executions, SQL expressions may fail because it treats column changes as schema changes.
 
 SQL expressions are powered by an embedded SQL engine where each query result is treated as a table. The schema of that table is derived from the columns returned by the underlying data source.
 
@@ -326,13 +330,15 @@ As a result, SQL expressions can’t gracefully handle changes in schema or no-d
 
 You can mitigate these issues in the following ways:
 
-- Avoid `SELECT *` – Explicitly select only the columns you expect to exist.
+- Avoid `SELECT *`: Explicitly select only the columns you expect to exist.
 
-- Ensure a consistent schema – If possible, configure your query to always return columns, even when no data is present.
+- Ensure a consistent schema: If possible, configure your query to always return columns, even when no data is present.
 
 #### Example: Handling Prometheus no data
 
 When joining results from the same Prometheus query across different data source instances, you can use this pattern:
+
+<!-- vale Grafana.Spelling = NO -->
 
 ```sql
 -- Prometheus query
@@ -364,6 +370,8 @@ FULL OUTER JOIN (
     LIMIT 5
 ) b ON a.time = b.time;
 ```
+
+<!-- vale Grafana.Spelling = YES -->
 
 This approach ensures that a schema exists even when one query returns no data.
 
