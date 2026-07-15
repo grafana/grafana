@@ -13,7 +13,12 @@ describe('groupAttributesByCategory', () => {
 
     const grouped = groupAttributesByCategory(attributes, 'resource');
 
-    expect(grouped.map(({ category }) => category.id)).toEqual([SERVICE_CATEGORY_ID, 'kubernetes', 'telemetry-sdk', 'other']);
+    expect(grouped.map(({ category }) => category.id)).toEqual([
+      SERVICE_CATEGORY_ID,
+      'kubernetes',
+      'telemetry-sdk',
+      'other',
+    ]);
     expect(grouped[0].attributes).toHaveLength(2);
     expect(grouped[1].attributes).toHaveLength(2);
     expect(grouped[2].attributes).toHaveLength(1);
@@ -167,7 +172,12 @@ describe('groupAttributesByCategory', () => {
 
     const grouped = groupAttributesByCategory(attributes, 'resource');
 
-    expect(grouped.map(({ category }) => category.id)).toEqual([SERVICE_CATEGORY_ID, 'cloud', 'kubernetes', 'telemetry-sdk']);
+    expect(grouped.map(({ category }) => category.id)).toEqual([
+      SERVICE_CATEGORY_ID,
+      'cloud',
+      'kubernetes',
+      'telemetry-sdk',
+    ]);
   });
 
   it('groups google cloud attributes under Cloud, not Runtime', () => {
