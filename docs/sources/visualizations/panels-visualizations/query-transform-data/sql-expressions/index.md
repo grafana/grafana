@@ -290,17 +290,15 @@ For each limit, a value of `0` means no limit.
 
 ### Regular expression limitations in SQL expressions
 
-SQL expressions depend on a third-party SQL engine that uses `cgo` by default for full regular expression compatibility with MySQL. However, Grafana builds don't include `cgo`, which limits regular expression support.
+SQL expressions run on an embedded SQL engine that evaluates regular expressions with Go's standard `regexp` package, which uses RE2 syntax instead of the SQL engine's full MySQL-compatible regular expressions. As a result, some regular expression features aren't available.
 
 SQL expressions that use regular expression functions have limitations such as:
 
 - Lack of back-references.
-- No before/after text matching.
+- No before or after text matching.
 - Differences in handling carriage return (`\r`) characters.
 
 There may be other minor differences as well.
-
-For implementation context, refer to the [`go-mysql-server` regular expression compatibility notes](https://github.com/grafana/go-mysql-server/blob/main/README.md).
 
 ### Schema changes and missing data
 
