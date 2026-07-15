@@ -26,7 +26,7 @@ type OrgMembershipLookup interface {
 
 type EmailIntegrationValidator interface {
 	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
-	ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
+	ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error
 }
 
 // OrgUserEmailValidator gates email address validation against org membership.
@@ -42,17 +42,24 @@ func NewEmailValidator(orgSvc OrgMembershipLookup, enabled bool) EmailIntegratio
 	return &NoopOrgEmailValidator{}
 }
 
-func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
 	if integration.Config.Type() != schema.EmailType {
 		return nil
 	}
-	cfg, err := IntegrationToIntegrationConfig(integration)
+	// Decrypt secure settings into a clone so the version parsers can read them as plain settings.
+	decrypted := integration.Clone()
+	if err := decrypted.Decrypt(decryptFn); err != nil {
+		return fmt.Errorf("failed to decrypt integration secure settings: %w", err)
+	}
+	cfg, err := IntegrationToIntegrationConfig(decrypted)
 	if err != nil {
 		return fmt.Errorf("failed to convert integration to integration config: %w", err)
 	}
 	return v.ValidateIntegrationConfig(ctx, orgID, cfg, logger)
 }
 
+// ValidateIntegrationConfig checks the integration's email addresses against org membership.
+// It expects any secure settings to already be decrypted into integration.Settings.
 func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
 	if integration.Type != schema.EmailType {
 		return nil
@@ -79,9 +86,9 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, o
 			addrs = append(addrs, addr)
 		}
 	case schema.V0mimir1:
-		// We only inspect the non-secret "to" field, but v0mimir1's NewConfig dereferences the
-		// decrypt func unconditionally (unlike v1's), so nil would panic. Returning the fallback
-		// with ok=false leaves the parsed settings untouched.
+		// Secure settings are already decrypted into the settings by the caller, so no decryption
+		// is needed here. v0mimir1's NewConfig dereferences the decrypt func unconditionally (unlike
+		// v1's), so pass a no-op that returns the fallback rather than nil, which would panic.
 		noDecrypt := func(_, fallback string) (string, bool) { return fallback, false }
 		cfg, err := emailV0.NewConfig(integration.Settings, noDecrypt)
 		if err != nil {
@@ -140,6 +147,6 @@ func (v *NoopOrgEmailValidator) ValidateIntegrationConfig(_ context.Context, _ i
 	return nil
 }
 
-func (v *NoopOrgEmailValidator) ValidateIntegration(_ context.Context, _ int64, _ models.Integration, _ log.Logger) error {
+func (v *NoopOrgEmailValidator) ValidateIntegration(_ context.Context, _ int64, _ models.Integration, _ models.DecryptFn, _ log.Logger) error {
 	return nil
 }
