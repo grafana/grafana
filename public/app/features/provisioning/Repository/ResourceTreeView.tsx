@@ -93,6 +93,9 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           const { item, level, isExpandable, isExpanded } = original;
           const iconName = getIconName(item.type);
           const link = getGrafanaLink(item);
+          // Label the fold toggle by the item's own title so screen readers announce which
+          // folder is being expanded/collapsed without needing a separate translated string.
+          const titleId = `resource-tree-item-${item.path}`;
 
           return (
             <div className={styles.titleCell} style={{ paddingLeft: level * 24 }}>
@@ -101,17 +104,20 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
                   name={isExpanded ? 'angle-down' : 'angle-right'}
                   size="sm"
                   onClick={() => handleToggleExpand(item.path)}
-                  aria-label={
-                    isExpanded
-                      ? t('provisioning.resource-tree.collapse-folder', 'Collapse {{title}}', { title: item.title })
-                      : t('provisioning.resource-tree.expand-folder', 'Expand {{title}}', { title: item.title })
-                  }
+                  aria-expanded={isExpanded}
+                  aria-labelledby={titleId}
                 />
               ) : (
                 <span className={styles.expandSpacer} />
               )}
               <Icon name={iconName} className={styles.icon} />
-              {link ? <Link href={link}>{item.title}</Link> : <span>{item.title}</span>}
+              {link ? (
+                <Link id={titleId} href={link}>
+                  {item.title}
+                </Link>
+              ) : (
+                <span id={titleId}>{item.title}</span>
+              )}
             </div>
           );
         },

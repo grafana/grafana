@@ -64,14 +64,19 @@ describe('ResourceTreeView', () => {
   it('reveals a folder’s children when its toggle is clicked and hides them again', async () => {
     render(<ResourceTreeView repo={repo} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /expand dashboards/i }));
+    // The fold toggle is labelled by the folder title (via aria-labelledby); state is on aria-expanded.
+    const toggle = screen.getByRole('button', { name: 'dashboards' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(toggle);
 
     expect(await screen.findByText('my-dashboard.json')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'dashboards' })).toHaveAttribute('aria-expanded', 'true');
     // The nested subfolder appears but stays folded, so its own file is still hidden.
     expect(screen.getByText('nested')).toBeInTheDocument();
     expect(screen.queryByText('other.json')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /collapse dashboards/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'dashboards' }));
 
     expect(screen.queryByText('my-dashboard.json')).not.toBeInTheDocument();
   });
