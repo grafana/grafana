@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
 import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, type TableResultsStyle } from 'app/types/explore';
@@ -80,12 +80,6 @@ export const RawPrometheusContainerPure = memo(
       return (
         <div className={styles.spacing}>
           <RadioButtonGroup
-            onClick={() => {
-              const props = {
-                state: resultsStyle === TABLE_RESULTS_STYLE.table ? TABLE_RESULTS_STYLE.raw : TABLE_RESULTS_STYLE.table,
-              };
-              reportInteraction('grafana_explore_prometheus_instant_query_ui_toggle_clicked', props);
-            }}
             size="sm"
             options={ALL_GRAPH_STYLE_OPTIONS}
             value={resultsStyle}

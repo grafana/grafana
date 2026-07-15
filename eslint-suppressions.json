@@ -2643,11 +2643,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/cloudwatch/language/cloudwatch-logs/CloudWatchLogsLanguageProvider.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/cloudwatch/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -2666,16 +2661,6 @@
   "public/app/plugins/datasource/dashboard/runSharedRequest.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/EditorField.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/grafana-pyroscope-datasource/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/grafana-testdata-datasource/QueryEditor.tsx": {

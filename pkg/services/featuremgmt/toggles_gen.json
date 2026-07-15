@@ -5925,7 +5925,8 @@
       "metadata": {
         "name": "yAxisTickControl",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-13T19:47:55Z"
       },
       "spec": {
         "description": "Enables fine-grained Y-axis tick options beyond the auto-ticks",

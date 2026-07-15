@@ -1386,11 +1386,6 @@ export interface FeatureToggles {
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
-  * Enables fine-grained Y-axis tick options beyond the auto-ticks
-  * @default false
-  */
-  yAxisTickControl?: boolean;
-  /**
   * Enables the logs tableNG panel to replace existing tableRT
   * @default false
   */

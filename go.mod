@@ -7,7 +7,6 @@ require (
 	cloud.google.com/go/aiplatform v1.125.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.31.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.63.0 // @grafana/grafana-backend-group
-	connectrpc.com/connect v1.19.2 // @grafana/data-sources-plugins
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
 	filippo.io/age v1.3.1 // @grafana/identity-access-team
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/data-sources-plugins
@@ -63,7 +62,6 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // @grafana/grafana-datasources-core-services
 	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // @grafana/grafana-datasources-core-services
-	github.com/dustin/go-humanize v1.0.1 // @grafana/observability-traces-and-profiling
 	github.com/emicklei/go-restful/v3 v3.13.0 // @grafana/grafana-app-platform-squad
 	github.com/fatih/color v1.19.0 // @grafana/grafana-backend-group
 	github.com/fsnotify/fsnotify v1.10.1 // @grafana/identity-access-team
@@ -118,7 +116,6 @@ require (
 	github.com/grafana/nanogit/gittest v1.4.0 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
-	github.com/grafana/pyroscope/api v1.3.0 // @grafana/data-sources-plugins
 	github.com/grafana/schemads v0.2.2 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
@@ -427,6 +424,7 @@ require (
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect; @grafana/observability-traces-and-profiling
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/edsrzf/mmap-go v1.2.1-0.20241212181136-fad1cd13edbd // indirect
 	github.com/elazarl/goproxy v1.8.3 // indirect
@@ -471,7 +469,6 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/cel-go v0.28.1 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
-	github.com/google/gnostic v0.7.1 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-github/v73 v73.0.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
