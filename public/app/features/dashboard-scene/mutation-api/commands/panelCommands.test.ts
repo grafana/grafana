@@ -454,7 +454,7 @@ describe('Panel mutation commands', () => {
       expect(status?.loadingState).toBe(LoadingState.Done);
     });
 
-    it('includeStatus surfaces deduped data-frame notices and the frame schema', async () => {
+    it('surfaces deduped data-frame notices (includeStatus) and the frame schema (includeSchema)', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);
       const name = await addPanel(client, 'Notice Panel');
@@ -469,13 +469,35 @@ describe('Panel mutation commands', () => {
 
       const result = await client.execute({
         type: 'LIST_PANELS',
-        payload: { elements: [name], includeStatus: true },
+        payload: { elements: [name], includeStatus: true, includeSchema: true },
       });
       const entry = (result.data as PanelElementsData).elements[0];
 
       expect(entry.status?.notices).toEqual([{ severity: 'warning', text: 'slow query' }]);
       expect(entry.status?.hasNoData).toBe(false);
       expect(entry.dataSchema?.[0].fields.map((f) => f.name)).toEqual(['time', 'value']);
+    });
+
+    it('includeStatus and includeSchema are independent', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Independent Panel');
+      const frame = toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [1] }] });
+      attachPanelData(scene, 'Independent Panel', makePanelData({ state: LoadingState.Done, series: [frame] }));
+
+      const statusOnly = (
+        (await client.execute({ type: 'LIST_PANELS', payload: { elements: [name], includeStatus: true } }))
+          .data as PanelElementsData
+      ).elements[0];
+      expect(statusOnly.status).toBeDefined();
+      expect(statusOnly.dataSchema).toBeUndefined();
+
+      const schemaOnly = (
+        (await client.execute({ type: 'LIST_PANELS', payload: { elements: [name], includeSchema: true } }))
+          .data as PanelElementsData
+      ).elements[0];
+      expect(schemaOnly.dataSchema).toBeDefined();
+      expect(schemaOnly.status).toBeUndefined();
     });
 
     it('includeStatus folds an error-severity notice into errors, not notices', async () => {

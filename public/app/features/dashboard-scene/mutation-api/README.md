@@ -611,8 +611,10 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 
 **Request (with runtime status and data schema):**
 
+`includeStatus` and `includeSchema` are independent; request either or both.
+
 ```json
-{ "type": "LIST_PANELS", "payload": { "includeStatus": true } }
+{ "type": "LIST_PANELS", "payload": { "includeStatus": true, "includeSchema": true } }
 ```
 
 **Response:**
@@ -673,7 +675,7 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 }
 ```
 
-`status` and `dataSchema` are only present when `includeStatus` is `true` and the panel has a data provider. This is a runtime side-channel: it is never part of the saved v2 dashboard spec (`element`), only the read result.
+`status` is present only when `includeStatus` is `true`, and `dataSchema` only when `includeSchema` is `true` (and the panel has a data provider). Both are a runtime side-channel: never part of the saved v2 dashboard spec (`element`), only the read result.
 
 `status` reports the panel's live query health:
 

@@ -202,15 +202,18 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
 
         const entry: PanelElementEntry = { element, layoutItem };
 
-        if (payload.includeStatus && vizPanel) {
-          const status = getPanelRuntimeStatus(vizPanel);
-          if (status) {
-            entry.status = status;
+        if (vizPanel) {
+          if (payload.includeStatus) {
+            const status = getPanelRuntimeStatus(vizPanel);
+            if (status) {
+              entry.status = status;
+            }
           }
-
-          const dataSchema = getDataFrameSchema(vizPanel);
-          if (dataSchema) {
-            entry.dataSchema = dataSchema;
+          if (payload.includeSchema) {
+            const dataSchema = getDataFrameSchema(vizPanel);
+            if (dataSchema) {
+              entry.dataSchema = dataSchema;
+            }
           }
         }
 
