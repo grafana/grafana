@@ -99,7 +99,10 @@ func NewSearchOptions(
 			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
 			// Search fields come from the app manifests: every in-tree kind that
 			// has custom search fields declares them in its CUE manifest.
-			searchFieldsProviders = resource.SearchFieldProviders(resource.AppManifests())
+			searchFieldsProviders, err = resource.SearchFieldProviders(resource.AppManifests())
+			if err != nil {
+				return resource.SearchOptions{}, err
+			}
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
