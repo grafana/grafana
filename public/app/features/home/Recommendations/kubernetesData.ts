@@ -11,9 +11,12 @@ import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './prom
 /** Kubernetes Monitoring app plugin ID. @lintignore */
 export const KUBERNETES_APP_ID = 'grafana-k8s-app';
 
-export interface KubernetesOverview {
+export interface KubernetesInventory {
   clusters: number;
   pods: number;
+}
+
+export interface KubernetesHealth {
   alertsFiring: number | null; // null = no firing alerts or Prometheus evaluates no rules (hide the count)
   unhealthyPods: number | null; // null = metric absent (hide the row); 0 = all healthy
   restarts1h: number | null; // null = metric absent (hide the row)
@@ -24,15 +27,20 @@ export interface KubernetesOverview {
 const KUBE_STATE_LOOKBACK = '24h';
 
 // refId -> portable kube-state-metrics PromQL: inventory uses last_over_time[24h], health stats are instant vectors.
-const OVERVIEW_QUERIES: Record<string, string> = {
+const INVENTORY_QUERIES: Record<string, string> = {
   clusters: `count(group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}])))`,
   pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info[${KUBE_STATE_LOOKBACK}])))`,
+};
+
+const HEALTH_QUERIES: Record<string, string> = {
   unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
   restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
   notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown"})',
-  // Unions datasource-managed ALERTS with Grafana-managed GRAFANA_ALERTS; kube-prometheus-stack heartbeats excluded.
+  // Firing alert instances scoped to Kubernetes workloads (`cluster!=""`); datasource-managed ALERTS unioned with
+  // Grafana-managed GRAFANA_ALERTS (ALERTS-only would miss stacks alerting via Grafana-managed rules); heartbeats
+  // excluded from both. Fixes series-level counting, missing k8s scoping, and the heartbeat matcher on GRAFANA_ALERTS.
   alertsFiring:
-    'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor"} or GRAFANA_ALERTS{alertstate="firing"})',
+    'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""} or GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""})',
 };
 
 // Cap the probe fan-out: only the first 10 candidates (in priority order) are probed per page load.
@@ -45,12 +53,12 @@ const NO_KUBERNETES_DATA_ERROR = 'No Prometheus datasource with Kubernetes data'
 const NAMESPACE_PROBE = `count(last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`;
 
 /** True when health signals show a problem, false when all clear, null when none are available. @lintignore */
-export function hasHealthProblems(o: KubernetesOverview): boolean | null {
-  if (o.alertsFiring === null && o.unhealthyPods === null && o.notReadyNodes === null && o.restarts1h === null) {
+export function hasHealthProblems(h: KubernetesHealth): boolean | null {
+  if (h.alertsFiring === null && h.unhealthyPods === null && h.notReadyNodes === null && h.restarts1h === null) {
     return null;
   }
   // null counts as 0 so a partial metric set still verdicts.
-  return (o.unhealthyPods ?? 0) + (o.notReadyNodes ?? 0) + (o.restarts1h ?? 0) + (o.alertsFiring ?? 0) > 0;
+  return (h.unhealthyPods ?? 0) + (h.notReadyNodes ?? 0) + (h.restarts1h ?? 0) + (h.alertsFiring ?? 0) > 0;
 }
 
 // localStorage key where the k8s app's PrometheusPicker persists the user's datasource choice.
@@ -140,16 +148,35 @@ export function resetKubernetesPrometheusResolution(): void {
   kubernetesPrometheusResolution.reset();
 }
 
-/** Overview counts via kube-state-metrics queries against the resolved datasource; throws when none has data. */
-export async function fetchKubernetesOverview(): Promise<KubernetesOverview> {
+/** Resolved Prometheus datasource with Kubernetes data, or null when none. */
+export async function resolveKubernetesDatasource(): Promise<DataSourceInstanceListItem | null> {
+  return kubernetesPrometheusResolution.get();
+}
+
+// All fetches await the same TTL-cached resolution promise, so concurrent mount = one probe, then
+// inventory/health/CPU requests run in parallel (a shared prerequisite, then parallel).
+
+/** Cluster and pod counts via kube-state-metrics; throws when no datasource has Kubernetes data. */
+export async function fetchKubernetesInventory(): Promise<KubernetesInventory> {
   const ds = await kubernetesPrometheusResolution.get();
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
-  const frames = await runInstantQueries(OVERVIEW_QUERIES, ds);
+  const frames = await runInstantQueries(INVENTORY_QUERIES, ds);
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
     pods: readScalar(frames, 'pods') ?? 0,
+  };
+}
+
+/** Health signals via kube-state-metrics and alert metrics; throws when no datasource has Kubernetes data. */
+export async function fetchKubernetesHealth(): Promise<KubernetesHealth> {
+  const ds = await kubernetesPrometheusResolution.get();
+  if (!ds) {
+    throw new Error(NO_KUBERNETES_DATA_ERROR);
+  }
+  const frames = await runInstantQueries(HEALTH_QUERIES, ds);
+  return {
     alertsFiring: readScalar(frames, 'alertsFiring'),
     unhealthyPods: readScalar(frames, 'unhealthyPods'),
     restarts1h: readScalar(frames, 'restarts1h'),

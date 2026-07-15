@@ -1,10 +1,17 @@
 import { render, screen } from 'test/test-utils';
 
-import { createDataFrame, FieldType, type PluginMeta } from '@grafana/data';
+import { createDataFrame, FieldType, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import { RecommendationExisting } from './RecommendationExisting';
-import { fetchClusterCpuSeries, fetchKubernetesOverview, type KubernetesOverview } from './kubernetesData';
+import {
+  fetchClusterCpuSeries,
+  fetchKubernetesHealth,
+  fetchKubernetesInventory,
+  resolveKubernetesDatasource,
+  type KubernetesHealth,
+  type KubernetesInventory,
+} from './kubernetesData';
 import { readSeries } from './promQuery';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
@@ -14,30 +21,44 @@ jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
 
 jest.mock('./kubernetesData', () => ({
   ...jest.requireActual('./kubernetesData'),
-  fetchKubernetesOverview: jest.fn(),
+  resolveKubernetesDatasource: jest.fn(),
+  fetchKubernetesInventory: jest.fn(),
+  fetchKubernetesHealth: jest.fn(),
   fetchClusterCpuSeries: jest.fn(),
 }));
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
-const mockFetchOverview = jest.mocked(fetchKubernetesOverview);
+const mockResolveDatasource = jest.mocked(resolveKubernetesDatasource);
+const mockFetchInventory = jest.mocked(fetchKubernetesInventory);
+const mockFetchHealth = jest.mocked(fetchKubernetesHealth);
 const mockFetchCpuSeries = jest.mocked(fetchClusterCpuSeries);
 
-// No `includes` entry for the bridge path means canAccessPluginPage grants access.
-const settings = { id: 'grafana-k8s-app' } as PluginMeta<{}>;
+const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
-const healthyOverview: KubernetesOverview = {
-  clusters: 3,
-  pods: 247,
+const settings = { id: 'grafana-k8s-app' } as PluginMeta<{}>;
+const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as DataSourceInstanceListItem;
+
+const healthyInventory: KubernetesInventory = { clusters: 3, pods: 247 };
+const healthyHealth: KubernetesHealth = {
   alertsFiring: null,
   unhealthyPods: 0,
   restarts1h: 0,
   notReadyNodes: 0,
 };
 
+function mockResolvedKubernetes(
+  inventory: KubernetesInventory = healthyInventory,
+  health: KubernetesHealth = healthyHealth
+) {
+  mockResolveDatasource.mockResolvedValue(datasource);
+  mockFetchInventory.mockResolvedValue(inventory);
+  mockFetchHealth.mockResolvedValue(health);
+  mockFetchCpuSeries.mockResolvedValue(null);
+}
+
 beforeEach(() => {
   mockUsePluginBridge.mockReturnValue({ loading: false, installed: true, settings });
-  mockFetchOverview.mockResolvedValue(healthyOverview);
-  mockFetchCpuSeries.mockResolvedValue(null);
+  mockResolvedKubernetes();
 });
 
 afterEach(() => jest.restoreAllMocks());
@@ -46,101 +67,179 @@ describe('RecommendationExisting', () => {
   it('opens the dropdown and switches the selected solution', async () => {
     const { user } = render(<RecommendationExisting />);
 
-    const trigger = await screen.findByRole('button');
-    const initialLabel = screen.getByRole('heading').textContent?.trim() ?? '';
-    expect(initialLabel).not.toBe('');
-
-    await user.click(trigger);
-
-    expect(await screen.findByRole('menu')).toBeInTheDocument();
-    const menuItems = screen.getAllByRole('menuitem');
-    expect(menuItems.length).toBeGreaterThan(1);
-
-    const nextItem = menuItems.find((item) => (item.textContent?.trim() ?? '') !== initialLabel);
-    expect(nextItem).toBeDefined();
-
-    const nextLabel = nextItem?.textContent?.trim() ?? '';
-    expect(nextLabel).not.toBe('');
-
-    await user.click(nextItem!);
-
-    expect(screen.getByRole('heading', { name: nextLabel })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: initialLabel })).not.toBeInTheDocument();
-  });
-
-  it('shows a skeleton instead of the stubs while the lookups are pending', () => {
-    // Both fetches pending — no async state updates, so synchronous assertions are act-safe.
-    const pending = Promise.race([]);
-    mockFetchOverview.mockReturnValue(pending);
-    mockFetchCpuSeries.mockReturnValue(pending);
-
-    render(<RecommendationExisting />);
-
-    expect(screen.getByTestId('recommendation-existing-skeleton')).toBeInTheDocument();
-    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
-  });
-
-  it('shows the Kubernetes entry while the CPU series loads', async () => {
-    mockFetchCpuSeries.mockReturnValue(Promise.race([]));
-
-    render(<RecommendationExisting />);
-
     expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+
+    expect(screen.getByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(screen.getByText('4.2M series')).toBeInTheDocument();
+  });
+
+  it('shows a full-card skeleton while settings are pending', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: true, installed: true, settings: undefined });
+    mockResolveDatasource.mockImplementation(() => new Promise(() => {}));
+    mockFetchInventory.mockImplementation(() => new Promise(() => {}));
+    mockFetchHealth.mockImplementation(() => new Promise(() => {}));
+    mockFetchCpuSeries.mockImplementation(() => new Promise(() => {}));
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByTestId('recommendation-existing-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+  });
+
+  it('shows stubs immediately when settings are unavailable without awaiting resolution', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    mockResolveDatasource.mockImplementation(() => new Promise(() => {}));
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
     expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
-    expect(screen.queryByText('Cluster CPU · last 24h')).not.toBeInTheDocument();
   });
 
-  it('resolves the skeleton straight to the Kubernetes entry without flashing a stub', async () => {
+  it('shows stubs when resolution returns null', async () => {
+    mockResolveDatasource.mockResolvedValue(null);
+    mockFetchInventory.mockRejectedValue(new Error('No Prometheus datasource with Kubernetes data'));
+    mockFetchHealth.mockRejectedValue(new Error('No Prometheus datasource with Kubernetes data'));
+
     render(<RecommendationExisting />);
 
-    expect(screen.getByTestId('recommendation-existing-skeleton')).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
-    expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
   });
 
-  it('shows the Kubernetes entry with live stats once the overview resolves', async () => {
+  it('shows stubs when resolution rejects without flashing the Kubernetes title', async () => {
+    mockResolveDatasource.mockRejectedValue(new Error('probe failed'));
+
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
-    expect(screen.getByText('3 clusters')).toBeInTheDocument();
-    expect(screen.getByText(/247 pods/)).toBeInTheDocument();
-    // Healthy cluster — no alert strip.
-    expect(screen.queryByText(/pods pending or failed/)).not.toBeInTheDocument();
-    // No CPU series resolved — the sparkline block stays hidden.
-    expect(screen.queryByText('Cluster CPU · last 24h')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Open K8s app/ })).toHaveAttribute('href', '/a/grafana-k8s-app/home');
+    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
   });
 
-  it('ceils fractional counts so partial numbers never render', async () => {
-    mockFetchOverview.mockResolvedValue({
-      clusters: 28.807541863863765,
-      pods: 246.2,
-      alertsFiring: 2.2,
-      unhealthyPods: 0,
+  it('shows the Kubernetes title and alert strip while inventory is still pending', async () => {
+    mockFetchInventory.mockImplementation(() => new Promise(() => {}));
+    mockFetchHealth.mockResolvedValue({
+      alertsFiring: 2,
+      unhealthyPods: 1,
       restarts1h: 0,
       notReadyNodes: 0,
     });
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByText('29 clusters')).toBeInTheDocument();
-    expect(screen.getByText('247 pods')).toBeInTheDocument();
-    // alertsFiring 2.2 gates the alert strip in (raw > 0) and displays ceiled.
-    expect(screen.getByText('3 alerts firing')).toBeInTheDocument();
-    expect(screen.queryByText(/28\.8/)).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.getByTestId('kubernetes-stats-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByText(/alert/i)).toBeInTheDocument();
+  });
+
+  it('shows the card without stats when inventory rejects but health resolves', async () => {
+    mockFetchInventory.mockRejectedValue(new Error('inventory failed'));
+    mockFetchHealth.mockResolvedValue({
+      alertsFiring: null,
+      unhealthyPods: 2,
+      restarts1h: 0,
+      notReadyNodes: 0,
+    });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
+    expect(screen.queryByText('3 clusters')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open K8s app' })).toBeInTheDocument();
+  });
+
+  it('shows stats without an alert strip when health rejects but inventory resolves', async () => {
+    mockFetchHealth.mockRejectedValue(new Error('health failed'));
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByText('3 clusters')).toBeInTheDocument();
+    expect(screen.queryByText(/alert firing/i)).not.toBeInTheDocument();
+  });
+
+  it('falls back to stubs when inventory and health both reject', async () => {
+    mockFetchInventory.mockRejectedValue(new Error('inventory failed'));
+    mockFetchHealth.mockRejectedValue(new Error('health failed'));
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+  });
+
+  it('shows a sparkline skeleton while CPU is pending', async () => {
+    mockFetchCpuSeries.mockImplementation(() => new Promise(() => {}));
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByTestId('kubernetes-sparkline-skeleton')).toBeInTheDocument();
+  });
+
+  it('omits the sparkline when CPU resolves null', async () => {
+    mockFetchCpuSeries.mockResolvedValue(null);
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByText('3 clusters')).toBeInTheDocument();
+    expect(screen.queryByTestId('kubernetes-sparkline-skeleton')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cluster CPU · last 24h')).not.toBeInTheDocument();
+  });
+
+  it('omits the stats row when inventory resolves to all zeros', async () => {
+    mockResolvedKubernetes({ clusters: 0, pods: 0 });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.queryByText(/cluster/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('compact-formats large pod counts', async () => {
+    const pods = 311101;
+    mockResolvedKubernetes({ clusters: 17, pods });
+
+    render(<RecommendationExisting />);
+
+    const expectedPods = compactFormatter.format(pods);
+    expect(await screen.findByText(`${expectedPods} pods`)).toBeInTheDocument();
+  });
+
+  it('shows stub stats without skeletons when switching away while Kubernetes data is pending', async () => {
+    mockFetchInventory.mockImplementation(() => new Promise(() => {}));
+    mockFetchCpuSeries.mockImplementation(() => new Promise(() => {}));
+
+    const { user } = render(<RecommendationExisting />);
+
+    expect(await screen.findByTestId('kubernetes-stats-skeleton')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+
+    expect(screen.getByText('4.2M series')).toBeInTheDocument();
+    expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kubernetes-sparkline-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('ceils fractional counts so partial numbers never render', async () => {
+    mockResolvedKubernetes({ clusters: 2.4, pods: 99.1 });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByText('3 clusters')).toBeInTheDocument();
+    expect(screen.getByText('100 pods')).toBeInTheDocument();
   });
 
   it('renders the CPU sparkline caption when the series resolves', async () => {
     const frame = createDataFrame({
       refId: 'cpu',
       fields: [
-        { name: 'Time', type: FieldType.time, values: [0, 1000, 2000] },
-        { name: 'Value', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [0.1, 0.2, 0.3] },
       ],
     });
-    // Build the sparkline through readSeries — the production path — so the fixture carries the
-    // y.state.range that uPlot's getYRange destructures.
     mockFetchCpuSeries.mockResolvedValue(readSeries([frame], 'cpu'));
 
     render(<RecommendationExisting />);
@@ -148,50 +247,16 @@ describe('RecommendationExisting', () => {
     expect(await screen.findByText('Cluster CPU · last 24h')).toBeInTheDocument();
   });
 
-  it('shows an alert strip when the cluster reports problems', async () => {
-    mockFetchOverview.mockResolvedValue({
-      clusters: 3,
-      pods: 247,
-      alertsFiring: null,
-      unhealthyPods: 2,
-      restarts1h: 14,
-      notReadyNodes: null,
-    });
-
-    render(<RecommendationExisting />);
-
-    expect(await screen.findByText('2 pods pending or failed')).toBeInTheDocument();
-    expect(screen.getByText(/14 restarts in the last hour/)).toBeInTheDocument();
-  });
-
   it('leads the alert strip with the firing-alert count when Prometheus reports one', async () => {
-    mockFetchOverview.mockResolvedValue({
-      clusters: 3,
-      pods: 247,
-      alertsFiring: 2,
-      unhealthyPods: 0,
-      restarts1h: 14,
+    mockFetchHealth.mockResolvedValue({
+      alertsFiring: 3,
+      unhealthyPods: 1,
+      restarts1h: 0,
       notReadyNodes: 0,
     });
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByText('2 alerts firing')).toBeInTheDocument();
-    expect(screen.getByText(/14 restarts in the last hour/)).toBeInTheDocument();
-    // The strip's View drills into the app's alerts page, not the app home.
-    expect(screen.getByRole('link', { name: /View/ })).toHaveAttribute('href', '/a/grafana-k8s-app/alerts');
-  });
-
-  it('falls back to the stubbed solutions when no clusters resolve', async () => {
-    mockFetchOverview.mockResolvedValue({ ...healthyOverview, clusters: 0 });
-
-    const { user } = render(<RecommendationExisting />);
-
-    const trigger = await screen.findByRole('button');
-    await user.click(trigger);
-
-    expect(await screen.findByRole('menu')).toBeInTheDocument();
-    expect(screen.queryByText('Kubernetes Monitoring')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('menuitem')).toHaveLength(2);
+    expect(await screen.findByText('3 alerts firing')).toBeInTheDocument();
   });
 });

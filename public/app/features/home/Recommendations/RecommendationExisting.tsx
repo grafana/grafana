@@ -12,23 +12,25 @@ import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unif
 import SolutionSparkline, { type SolutionSparklineData } from './SolutionSparkline';
 import {
   fetchClusterCpuSeries,
-  fetchKubernetesOverview,
+  fetchKubernetesHealth,
+  fetchKubernetesInventory,
   hasHealthProblems,
   KUBERNETES_APP_ID,
-  type KubernetesOverview,
+  resolveKubernetesDatasource,
+  type KubernetesHealth,
+  type KubernetesInventory,
 } from './kubernetesData';
+
+// Browser locale is the deliberate choice: the homepage number format follows the user's environment.
+const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
 interface ExistingItem {
   title: string;
   icon: IconName;
-  stats: {
-    primary: string;
-    secondary: string;
-  };
-  // Absent when the solution has no time series to show (e.g. the stubs, or the metric is missing).
+  stats?: { primary: string; secondary: string };
+  statsLoading?: boolean;
   sparkline?: SolutionSparklineData;
-  // Absent when the solution is healthy — real data only alerts when something is wrong.
-  // `secondary` is a list of detail segments so separators can be drawn (and dropped) per segment.
+  sparklineLoading?: boolean;
   alert?: {
     primary: string;
     secondary?: string[];
@@ -76,96 +78,120 @@ const stubbedExisting: ExistingItem[] = [
   },
 ];
 
-/**
- * Build the Kubernetes Monitoring entry from live Prometheus data. Returns null when the user
- * cannot access the app's home page — an entry whose every action dead-ends is worse than none.
- */
+function useKubernetesCardData() {
+  const { value: datasource, loading: resolving, error: resolutionError } = useAsync(resolveKubernetesDatasource, []);
+  const { value: inventory, loading: inventoryLoading, error: inventoryError } = useAsync(fetchKubernetesInventory, []);
+  const { value: health, loading: healthLoading, error: healthError } = useAsync(fetchKubernetesHealth, []);
+  const { value: cpuSeries, loading: cpuLoading } = useAsync(fetchClusterCpuSeries, []);
+  return {
+    datasource,
+    resolving,
+    resolutionError,
+    inventory,
+    inventoryLoading,
+    inventoryError,
+    health,
+    healthLoading,
+    healthError,
+    cpuSeries,
+    cpuLoading,
+  };
+}
+
+/** Build the Kubernetes Monitoring entry from live Prometheus data. */
 function buildKubernetesItem(
-  overview: KubernetesOverview,
-  cpuSeries: FieldSparkline | null,
-  settings?: PluginMeta<{}>
-): ExistingItem | null {
+  parts: {
+    inventory: KubernetesInventory | undefined;
+    inventoryLoading: boolean;
+    health: KubernetesHealth | undefined;
+    cpuSeries: FieldSparkline | null | undefined;
+    cpuLoading: boolean;
+  },
+  settings: PluginMeta<{}>
+): ExistingItem {
   const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
-  if (!settings || !canAccessPluginPage(settings, bridgePath)) {
-    return null;
-  }
-  // Wrap the raw /a/... bridge paths so copy-link / open-in-new-tab is correct under config.appSubUrl.
   const href = locationUtil.assureBaseUrl(bridgePath);
-  // The alert strip's View drills into the app's alerts page; fall back to the app home if the
-  // include role/action semantics deny that specific page.
   const alertsBridgePath = createBridgeURL(KUBERNETES_APP_ID, '/alerts');
   const alertsHref = canAccessPluginPage(settings, alertsBridgePath)
     ? locationUtil.assureBaseUrl(alertsBridgePath)
     : href;
 
-  // Filter on the RAW signal (>0), display with Math.ceil: a 0.4 restart signal still counts as a
-  // problem but must not round to "0 restarts", and increase() yields fractions we never want to show.
+  const { inventory, inventoryLoading, health, cpuSeries, cpuLoading } = parts;
+
   const healthRows: string[] = [];
-  if (overview.unhealthyPods !== null && overview.unhealthyPods > 0) {
-    healthRows.push(
-      t('home.recommendations.health.pods', '', {
-        count: Math.ceil(overview.unhealthyPods),
-        defaultValue_one: '{{count}} pod pending or failed',
-        defaultValue_other: '{{count}} pods pending or failed',
-      })
-    );
-  }
-  if (overview.restarts1h !== null && overview.restarts1h > 0) {
-    healthRows.push(
-      t('home.recommendations.health.restarts', '', {
-        count: Math.ceil(overview.restarts1h),
-        defaultValue_one: '{{count}} restart in the last hour',
-        defaultValue_other: '{{count}} restarts in the last hour',
-      })
-    );
-  }
-  if (overview.notReadyNodes !== null && overview.notReadyNodes > 0) {
-    healthRows.push(
-      t('home.recommendations.health.nodes', '', {
-        count: Math.ceil(overview.notReadyNodes),
-        defaultValue_one: '{{count}} node not ready',
-        defaultValue_other: '{{count}} nodes not ready',
-      })
-    );
+  if (health) {
+    if (health.unhealthyPods !== null && health.unhealthyPods > 0) {
+      healthRows.push(
+        t('home.recommendations.health.pods', '', {
+          count: Math.ceil(health.unhealthyPods),
+          defaultValue_one: '{{count}} pod pending or failed',
+          defaultValue_other: '{{count}} pods pending or failed',
+        })
+      );
+    }
+    if (health.restarts1h !== null && health.restarts1h > 0) {
+      healthRows.push(
+        t('home.recommendations.health.restarts', '', {
+          count: Math.ceil(health.restarts1h),
+          defaultValue_one: '{{count}} restart in the last hour',
+          defaultValue_other: '{{count}} restarts in the last hour',
+        })
+      );
+    }
+    if (health.notReadyNodes !== null && health.notReadyNodes > 0) {
+      healthRows.push(
+        t('home.recommendations.health.nodes', '', {
+          count: Math.ceil(health.notReadyNodes),
+          defaultValue_one: '{{count}} node not ready',
+          defaultValue_other: '{{count}} nodes not ready',
+        })
+      );
+    }
   }
 
-  const alertsFiring = overview.alertsFiring ?? 0;
-  // Every positive signal contributes either the firing count or a health row, so a problem verdict
-  // always has content to show.
-  const showAlert = hasHealthProblems(overview) === true;
+  const alertsFiring = health?.alertsFiring ?? 0;
+  const showAlert = health !== undefined && hasHealthProblems(health) === true;
+
+  const clusterCount = inventory ? Math.ceil(inventory.clusters) : 0;
+  const podCount = inventory ? Math.ceil(inventory.pods) : 0;
+  const hasInventoryStats = inventory !== undefined && (clusterCount > 0 || podCount > 0);
 
   return {
     title: t('home.recommendations.kubernetes.title', 'Kubernetes Monitoring'),
     icon: 'kubernetes',
-    // Counts are count()-derived and integral in theory; Math.ceil guards the display against a datasource returning fractional frames.
-    stats: {
-      primary: t('home.recommendations.kubernetes.clusters', '', {
-        count: Math.ceil(overview.clusters),
-        defaultValue_one: '{{count}} cluster',
-        defaultValue_other: '{{count}} clusters',
-      }),
-      secondary: t('home.recommendations.kubernetes.pods', '', {
-        count: Math.ceil(overview.pods),
-        defaultValue_one: '{{count}} pod',
-        defaultValue_other: '{{count}} pods',
-      }),
-    },
+    stats: hasInventoryStats
+      ? {
+          primary: t('home.recommendations.kubernetes.clusters', '', {
+            count: clusterCount,
+            value: compactFormatter.format(clusterCount),
+            defaultValue_one: '{{value}} cluster',
+            defaultValue_other: '{{value}} clusters',
+          }),
+          secondary: t('home.recommendations.kubernetes.pods', '', {
+            count: podCount,
+            value: compactFormatter.format(podCount),
+            defaultValue_one: '{{value}} pod',
+            defaultValue_other: '{{value}} pods',
+          }),
+        }
+      : undefined,
+    statsLoading: inventoryLoading,
     sparkline: cpuSeries
       ? {
           series: cpuSeries,
           caption: t('home.recommendations.kubernetes.cluster-cpu', 'Cluster CPU · last 24h'),
         }
       : undefined,
+    sparklineLoading: cpuLoading,
     alert: showAlert
       ? {
-          // The firing-alert count leads when present (matching the design); health rows follow as
-          // the detail line. Without firing alerts the worst health row takes the lead instead.
           primary:
             alertsFiring > 0
               ? t('home.recommendations.kubernetes.alerts-firing', '', {
                   count: Math.ceil(alertsFiring),
-                  defaultValue_one: '{{count}} alert firing',
-                  defaultValue_other: '{{count}} alerts firing',
+                  value: compactFormatter.format(Math.ceil(alertsFiring)),
+                  defaultValue_one: '{{value}} alert firing',
+                  defaultValue_other: '{{value}} alerts firing',
                 })
               : healthRows[0],
           secondary: alertsFiring > 0 ? healthRows : healthRows.slice(1),
@@ -181,29 +207,68 @@ function buildKubernetesItem(
 export function RecommendationExisting() {
   const styles = useStyles2(getStyles);
   const { settings, loading: settingsLoading } = usePluginBridge(KUBERNETES_APP_ID);
-  // Resolved from Prometheus (kube-state-metrics), not a plugin REST endpoint — the k8s app has no
-  // summary API. While settings and the overview load the card shows a skeleton; on error or no data the
-  // entry is omitted and the stubs remain.
-  const { value: overview, loading: overviewLoading } = useAsync(fetchKubernetesOverview, []);
-  // Fetched separately so a missing or slow cAdvisor metric only costs the chart, never the whole entry.
-  const { value: cpuSeries } = useAsync(fetchClusterCpuSeries, []);
+  const {
+    datasource,
+    resolving,
+    resolutionError,
+    inventory,
+    inventoryLoading,
+    inventoryError,
+    health,
+    healthLoading,
+    healthError,
+    cpuSeries,
+    cpuLoading,
+  } = useKubernetesCardData();
 
-  // Track selection by title so it survives the Kubernetes item appearing once its data resolves;
-  // storing the item object would go stale when the list is rebuilt.
   const [selectedTitle, setSelectedTitle] = useState<string>();
 
-  if (settingsLoading || overviewLoading) {
+  const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
+  const canAccessK8s = settings && canAccessPluginPage(settings, bridgePath);
+
+  if (!settingsLoading && !canAccessK8s) {
+    const existing = stubbedExisting;
+    const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
+    return renderExistingCard(existing, selected, styles, setSelectedTitle);
+  }
+
+  if (settingsLoading || resolving) {
     return <RecommendationExistingSkeleton />;
   }
 
-  const kubernetesItem =
-    overview && overview.clusters > 0 ? buildKubernetesItem(overview, cpuSeries ?? null, settings) : null;
+  const inventoryFailed = !inventoryLoading && Boolean(inventoryError);
+  const healthFailed = !healthLoading && Boolean(healthError);
+
+  let kubernetesItem: ExistingItem | null = null;
+  if (!resolutionError && datasource && settings) {
+    if (!(inventoryFailed && healthFailed)) {
+      kubernetesItem = buildKubernetesItem(
+        {
+          inventory,
+          inventoryLoading,
+          health,
+          cpuSeries: cpuSeries ?? null,
+          cpuLoading,
+        },
+        settings
+      );
+    }
+  }
+
   const existing = kubernetesItem ? [kubernetesItem, ...stubbedExisting] : stubbedExisting;
   const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
 
-  if (!selected) {
-    return null;
-  }
+  return renderExistingCard(existing, selected, styles, setSelectedTitle);
+}
+
+function renderExistingCard(
+  existing: ExistingItem[],
+  selected: ExistingItem,
+  styles: ReturnType<typeof getStyles>,
+  setSelectedTitle: (title: string) => void
+) {
+  const showStatsSparklineRow =
+    selected.statsLoading || selected.sparklineLoading || selected.stats || selected.sparkline;
 
   return (
     <Stack direction="column" justifyContent="space-between" gap={2} flex={1}>
@@ -254,24 +319,43 @@ export function RecommendationExisting() {
       </Stack>
 
       <Stack direction="column" gap={2}>
-        <Stack direction="row" gap={2} alignItems="center">
-          <div className={styles.stats}>
-            <Stack direction="column" gap={0}>
-              <Text variant="h2" color="primary">
-                {selected.stats.primary}
-              </Text>
-              <Text variant="body" color="secondary">
-                {selected.stats.secondary}
-              </Text>
-            </Stack>
-          </div>
+        {showStatsSparklineRow && (
+          <Stack direction="row" gap={2} alignItems="center">
+            {(selected.statsLoading || selected.stats) && (
+              <div className={styles.stats}>
+                {selected.statsLoading ? (
+                  <Stack direction="column" gap={0} data-testid="kubernetes-stats-skeleton">
+                    <Skeleton width={96} height={28} />
+                    <Skeleton width={72} />
+                  </Stack>
+                ) : (
+                  selected.stats && (
+                    <Stack direction="column" gap={0}>
+                      <Text variant="h2" color="primary">
+                        {selected.stats.primary}
+                      </Text>
+                      <Text variant="body" color="secondary">
+                        {selected.stats.secondary}
+                      </Text>
+                    </Stack>
+                  )
+                )}
+              </div>
+            )}
 
-          {selected.sparkline && (
-            <div className={styles.sparklineArea}>
-              <SolutionSparkline sparkline={selected.sparkline} />
-            </div>
-          )}
-        </Stack>
+            {selected.sparklineLoading ? (
+              <div className={styles.sparklineArea} data-testid="kubernetes-sparkline-skeleton">
+                <Skeleton height={56} />
+              </div>
+            ) : (
+              selected.sparkline && (
+                <div className={styles.sparklineArea}>
+                  <SolutionSparkline sparkline={selected.sparkline} />
+                </div>
+              )
+            )}
+          </Stack>
+        )}
 
         {selected.alert && (
           <div className={styles.alert}>
@@ -362,9 +446,6 @@ function SelectedCheck() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // Wrapping metadata row whose '·' separators are drawn inside the column gap by each non-first
-  // segment; overflow-hidden clips the dot of a segment that starts a new line, so wrapped lines
-  // never lead with an orphaned separator.
   metaRow: css({
     display: 'flex',
     flexWrap: 'wrap',
@@ -373,12 +454,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     rowGap: 0,
     overflow: 'hidden',
   }),
-  // The stat numbers must never be squeezed by the chart; the chart absorbs all remaining width.
   stats: css({
     flexShrink: 0,
   }),
-  // minWidth 0 lets the flex item actually shrink so SolutionSparkline's ResizeObserver measures
-  // the real available width instead of overflowing the card.
   sparklineArea: css({
     flex: '1 1 auto',
     minWidth: 0,
@@ -409,7 +487,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       transform: 'rotate(180deg)',
     },
   }),
-  // Right-center check over the menu item (position:relative); selectedBorder is the selection accent.
   selectedCheck: css({
     position: 'absolute',
     right: theme.spacing(1.5),

@@ -8,7 +8,12 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { Recommendations } from './Recommendations';
 import { fetchOrgUserCount } from './inviteTeam';
-import { fetchKubernetesOverview } from './kubernetesData';
+import {
+  fetchClusterCpuSeries,
+  fetchKubernetesHealth,
+  fetchKubernetesInventory,
+  resolveKubernetesDatasource,
+} from './kubernetesData';
 
 const mockGet = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -25,9 +30,9 @@ jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
 // cluster so tests exercise the (deterministic) stub entries instead of hitting a datasource.
 jest.mock('./kubernetesData', () => ({
   ...jest.requireActual('./kubernetesData'),
-  fetchKubernetesOverview: jest.fn().mockResolvedValue({
-    clusters: 0,
-    pods: 0,
+  resolveKubernetesDatasource: jest.fn().mockResolvedValue(null),
+  fetchKubernetesInventory: jest.fn().mockResolvedValue({ clusters: 0, pods: 0 }),
+  fetchKubernetesHealth: jest.fn().mockResolvedValue({
     alertsFiring: null,
     unhealthyPods: null,
     restarts1h: null,
@@ -294,18 +299,30 @@ describe('Recommendations', () => {
   });
 
   it('does not refetch the existing-solution data when collapsed and expanded', async () => {
-    const mockFetchOverview = jest.mocked(fetchKubernetesOverview);
-    mockFetchOverview.mockClear();
+    const mockResolve = jest.mocked(resolveKubernetesDatasource);
+    const mockInventory = jest.mocked(fetchKubernetesInventory);
+    const mockHealth = jest.mocked(fetchKubernetesHealth);
+    const mockCpu = jest.mocked(fetchClusterCpuSeries);
+    mockResolve.mockClear();
+    mockInventory.mockClear();
+    mockHealth.mockClear();
+    mockCpu.mockClear();
     const { user } = render(<Recommendations />);
 
     await screen.findByRole('button', { name: 'Next' });
-    expect(mockFetchOverview).toHaveBeenCalledTimes(1);
+    expect(mockResolve).toHaveBeenCalledTimes(1);
+    expect(mockInventory).toHaveBeenCalledTimes(1);
+    expect(mockHealth).toHaveBeenCalledTimes(1);
+    expect(mockCpu).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole('button', { name: 'Hide' }));
     await user.click(screen.getByRole('button', { name: 'Show' }));
 
     expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
-    expect(mockFetchOverview).toHaveBeenCalledTimes(1);
+    expect(mockResolve).toHaveBeenCalledTimes(1);
+    expect(mockInventory).toHaveBeenCalledTimes(1);
+    expect(mockHealth).toHaveBeenCalledTimes(1);
+    expect(mockCpu).toHaveBeenCalledTimes(1);
   });
 
   it('loads the collapsed state from local storage', async () => {
