@@ -167,14 +167,17 @@ describe('RecommendationExisting', () => {
     expect(screen.queryByText(/alert firing/i)).not.toBeInTheDocument();
   });
 
-  it('falls back to stubs when inventory and health both reject', async () => {
+  it('keeps the Kubernetes card when inventory and health both reject', async () => {
     mockFetchInventory.mockRejectedValue(new Error('inventory failed'));
     mockFetchHealth.mockRejectedValue(new Error('health failed'));
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.getByText('via k8s-prom')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open K8s app' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
   });
 
   it('shows a sparkline skeleton while CPU is pending', async () => {

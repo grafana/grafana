@@ -58,11 +58,11 @@ function setDataSources(list: Array<{ uid: string; name: string; isDefault?: boo
 let dataByUid: Record<string, number>;
 // Probe queries against these uids emit LoadingState.Error (unreachable/erroring datasource).
 let probeErrorUids: Set<string>;
-// Probe queries against these uids emit LoadingState.Error on the FIRST attempt only.
-let probeErrorOnceUids: Set<string>;
+// Probe queries against these uids emit LoadingState.Error for the first N attempts.
+let probeFailuresByUid: Record<string, number>;
 let probeAttempts: Record<string, number>;
-// Non-probe query batches: emit LoadingState.Error on the FIRST attempt only (keyed by first refId).
-let queryErrorOnceRefIds: Set<string>;
+// Non-probe query batches: emit LoadingState.Error for the first N attempts per refId (keyed by first refId).
+let queryFailuresByRefId: Record<string, number>;
 // Non-probe query batches: always emit LoadingState.Error.
 let queryErrorRefIds: Set<string>;
 let queryAttempts: Record<string, number>;
@@ -82,9 +82,9 @@ beforeEach(() => {
   resetKubernetesPrometheusResolution();
   dataByUid = {};
   probeErrorUids = new Set();
-  probeErrorOnceUids = new Set();
+  probeFailuresByUid = {};
   probeAttempts = {};
-  queryErrorOnceRefIds = new Set();
+  queryFailuresByRefId = {};
   queryErrorRefIds = new Set();
   queryAttempts = {};
   mockCreateQueryRunner.mockImplementation(() => {
@@ -100,17 +100,17 @@ beforeEach(() => {
         const isProbe = captured?.queries.some((q) => q.refId === 'namespaces') ?? false;
         if (isProbe) {
           probeAttempts[uid] = (probeAttempts[uid] ?? 0) + 1;
-          if (probeErrorUids.has(uid) || (probeErrorOnceUids.has(uid) && probeAttempts[uid] === 1)) {
+          if (probeErrorUids.has(uid) || probeAttempts[uid] <= (probeFailuresByUid[uid] ?? 0)) {
             return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
           }
         }
         if (!isProbe && captured) {
           const batchKey = captured.queries[0]?.refId ?? '';
           queryAttempts[batchKey] = (queryAttempts[batchKey] ?? 0) + 1;
-          const errorOnce =
-            captured.queries.some((q) => queryErrorOnceRefIds.has(q.refId)) && queryAttempts[batchKey] === 1;
+          const maxTransientFailures = Math.max(0, ...captured.queries.map((q) => queryFailuresByRefId[q.refId] ?? 0));
+          const errorTransient = maxTransientFailures > 0 && queryAttempts[batchKey] <= maxTransientFailures;
           const errorAlways = captured.queries.some((q) => queryErrorRefIds.has(q.refId));
-          if (errorAlways || errorOnce) {
+          if (errorAlways || errorTransient) {
             return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
           }
         }
@@ -425,26 +425,42 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'default-uid': 5, 'team-uid': 1 };
     probeErrorUids = new Set(['default-uid']);
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    jest.useFakeTimers();
+    try {
+      const inventoryPromise = fetchKubernetesInventory();
+      const healthPromise = fetchKubernetesHealth();
+      await jest.advanceTimersByTimeAsync(10_000);
+      const inventory = await inventoryPromise;
+      await healthPromise;
 
-    expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
-    expect(inventory.clusters).toBe(1);
+      expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
+      expect(inventory.clusters).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
-  it('retries an errored probe once so a transient failure keeps the default', async () => {
+  it('retries an errored probe so a transient failure keeps the default', async () => {
     setDataSources([
       { uid: 'default-uid', name: 'default-prom', isDefault: true },
       { uid: 'team-uid', name: 'team-prom' },
     ]);
     dataByUid = { 'default-uid': 5, 'team-uid': 1 };
-    probeErrorOnceUids = new Set(['default-uid']);
+    probeFailuresByUid = { 'default-uid': 1 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    jest.useFakeTimers();
+    try {
+      const inventoryPromise = fetchKubernetesInventory();
+      const healthPromise = fetchKubernetesHealth();
+      await jest.advanceTimersByTimeAsync(10_000);
+      const inventory = await inventoryPromise;
+      await healthPromise;
 
-    expect(inventoryCalls()[0][0].datasource.uid).toBe('default-uid');
-    expect(inventory.clusters).toBe(5);
+      expect(inventoryCalls()[0][0].datasource.uid).toBe('default-uid');
+      expect(inventory.clusters).toBe(5);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('rejects when every probe errors', async () => {
@@ -455,8 +471,17 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'a-uid': 3, 'b-uid': 3 };
     probeErrorUids = new Set(['a-uid', 'b-uid']);
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
-    expect(inventoryCalls()).toHaveLength(0);
+    jest.useFakeTimers();
+    try {
+      const assertion = expect(fetchKubernetesInventory()).rejects.toThrow(
+        'No Prometheus datasource with Kubernetes data'
+      );
+      await jest.advanceTimersByTimeAsync(10_000);
+      await assertion;
+      expect(inventoryCalls()).toHaveLength(0);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('probes only the leader when the top-priority datasource has data', async () => {
@@ -475,31 +500,93 @@ describe('Kubernetes Prometheus resolution', () => {
   it('retries a transient inventory query error instead of blanking the region', async () => {
     setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
     dataByUid = { 'k8s-uid': 2 };
-    queryErrorOnceRefIds = new Set(['clusters']);
+    queryFailuresByRefId = { clusters: 1 };
 
-    const inventory = await fetchKubernetesInventory();
+    jest.useFakeTimers();
+    try {
+      const promise = fetchKubernetesInventory();
+      await jest.advanceTimersByTimeAsync(10_000);
+      const inventory = await promise;
 
-    expect(inventory.clusters).toBe(2);
-    expect(inventoryCalls()).toHaveLength(2);
+      expect(inventory.clusters).toBe(2);
+      expect(inventoryCalls()).toHaveLength(2);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('retries a transient cpu query error', async () => {
     setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
     dataByUid = { 'k8s-uid': 2 };
-    queryErrorOnceRefIds = new Set(['cpu']);
+    queryFailuresByRefId = { cpu: 1 };
 
-    await fetchClusterCpuSeries();
+    jest.useFakeTimers();
+    try {
+      const promise = fetchClusterCpuSeries();
+      await jest.advanceTimersByTimeAsync(10_000);
+      await promise;
 
-    expect(cpuCalls()).toHaveLength(2);
+      expect(cpuCalls()).toHaveLength(2);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
-  it('rejects after two failed inventory attempts', async () => {
+  it('rejects after three failed inventory attempts', async () => {
     setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
     dataByUid = { 'k8s-uid': 2 };
     queryErrorRefIds = new Set(['clusters']);
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow();
-    expect(inventoryCalls()).toHaveLength(2);
+    jest.useFakeTimers();
+    try {
+      const assertion = expect(fetchKubernetesInventory()).rejects.toThrow();
+      await jest.advanceTimersByTimeAsync(10_000);
+      await assertion;
+      expect(inventoryCalls()).toHaveLength(3);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('recovers when only the third inventory attempt succeeds', async () => {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    queryFailuresByRefId = { clusters: 2 };
+
+    jest.useFakeTimers();
+    try {
+      const promise = fetchKubernetesInventory();
+      await jest.advanceTimersByTimeAsync(10_000);
+      const inventory = await promise;
+
+      expect(inventory.clusters).toBe(2);
+      expect(inventoryCalls()).toHaveLength(3);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps the default when its probe fails twice then succeeds', async () => {
+    setDataSources([
+      { uid: 'default-uid', name: 'default-prom', isDefault: true },
+      { uid: 'team-uid', name: 'team-prom' },
+    ]);
+    dataByUid = { 'default-uid': 5, 'team-uid': 1 };
+    probeFailuresByUid = { 'default-uid': 2 };
+
+    jest.useFakeTimers();
+    try {
+      const inventoryPromise = fetchKubernetesInventory();
+      await jest.advanceTimersByTimeAsync(10_000);
+      const inventory = await inventoryPromise;
+
+      expect(inventoryCalls()[0][0].datasource.uid).toBe('default-uid');
+      expect(inventory.clusters).toBe(5);
+      expect(probeAttempts['default-uid']).toBe(3);
+      expect(probeCalls().map(([o]) => o.datasource.uid)).not.toContain('team-uid');
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('rejects from fetchClusterCpuSeries when no datasource has Kubernetes data', async () => {

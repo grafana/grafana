@@ -81,8 +81,8 @@ const stubbedExisting: ExistingItem[] = [
 
 function useKubernetesCardData() {
   const { value: datasource, loading: resolving, error: resolutionError } = useAsync(resolveKubernetesDatasource, []);
-  const { value: inventory, loading: inventoryLoading, error: inventoryError } = useAsync(fetchKubernetesInventory, []);
-  const { value: health, loading: healthLoading, error: healthError } = useAsync(fetchKubernetesHealth, []);
+  const { value: inventory, loading: inventoryLoading } = useAsync(fetchKubernetesInventory, []);
+  const { value: health } = useAsync(fetchKubernetesHealth, []);
   const { value: cpuSeries, loading: cpuLoading } = useAsync(fetchClusterCpuSeries, []);
   return {
     datasource,
@@ -90,10 +90,7 @@ function useKubernetesCardData() {
     resolutionError,
     inventory,
     inventoryLoading,
-    inventoryError,
     health,
-    healthLoading,
-    healthError,
     cpuSeries,
     cpuLoading,
   };
@@ -210,19 +207,8 @@ function buildKubernetesItem(
 export function RecommendationExisting() {
   const styles = useStyles2(getStyles);
   const { settings, loading: settingsLoading } = usePluginBridge(KUBERNETES_APP_ID);
-  const {
-    datasource,
-    resolving,
-    resolutionError,
-    inventory,
-    inventoryLoading,
-    inventoryError,
-    health,
-    healthLoading,
-    healthError,
-    cpuSeries,
-    cpuLoading,
-  } = useKubernetesCardData();
+  const { datasource, resolving, resolutionError, inventory, inventoryLoading, health, cpuSeries, cpuLoading } =
+    useKubernetesCardData();
 
   const [selectedTitle, setSelectedTitle] = useState<string>();
 
@@ -239,24 +225,19 @@ export function RecommendationExisting() {
     return <RecommendationExistingSkeleton />;
   }
 
-  const inventoryFailed = !inventoryLoading && Boolean(inventoryError);
-  const healthFailed = !healthLoading && Boolean(healthError);
-
   let kubernetesItem: ExistingItem | null = null;
   if (!resolutionError && datasource && settings) {
-    if (!(inventoryFailed && healthFailed)) {
-      kubernetesItem = buildKubernetesItem(
-        {
-          inventory,
-          inventoryLoading,
-          health,
-          cpuSeries: cpuSeries ?? null,
-          cpuLoading,
-          datasourceName: datasource.name,
-        },
-        settings
-      );
-    }
+    kubernetesItem = buildKubernetesItem(
+      {
+        inventory,
+        inventoryLoading,
+        health,
+        cpuSeries: cpuSeries ?? null,
+        cpuLoading,
+        datasourceName: datasource.name,
+      },
+      settings
+    );
   }
 
   const existing = kubernetesItem ? [kubernetesItem, ...stubbedExisting] : stubbedExisting;

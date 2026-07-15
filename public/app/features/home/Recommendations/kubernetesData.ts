@@ -93,17 +93,35 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
   return storedMatch ? [storedMatch, ...ordered.filter((ds) => ds !== storedMatch)] : ordered;
 }
 
-// "Has Kubernetes data" = namespaces detected; an errored probe retries once, then counts as no data.
-async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
-  for (let attempt = 0; attempt < 2; attempt++) {
+// Spacing between retry attempts: the transient browser-side failures observed on the homepage
+// (connection queuing, gateway blips) can outlast an immediate retry; a short backoff covers
+// them while the region shows its skeleton. 3 attempts total.
+const RETRY_DELAYS_MS = [500, 1500];
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
     try {
-      const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds);
-      return (readScalar(frames, 'namespaces') ?? 0) > 0;
-    } catch {
-      // Retry once, then give up: an unusable datasource must not win the probe.
+      return await fn();
+    } catch (err) {
+      if (attempt >= RETRY_DELAYS_MS.length) {
+        throw err;
+      }
+      await sleep(RETRY_DELAYS_MS[attempt]);
     }
   }
-  return false;
+}
+
+// "Has Kubernetes data" = namespaces detected; an errored probe retries with backoff, then counts
+// as no data — an unusable datasource must not win the probe.
+async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
+  try {
+    const frames = await withRetry(() => runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds));
+    return (readScalar(frames, 'namespaces') ?? 0) > 0;
+  } catch {
+    return false;
+  }
 }
 
 // One shared resolution per TTL window; the TTL lets a later home visit re-resolve after datasource changes.
@@ -148,18 +166,6 @@ async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem
     }
   }
   return null;
-}
-
-// One immediate retry, mirroring hasKubernetesNamespaces: transient in-browser failures
-// (connection queuing, gateway blips) are common on a burst-loaded homepage; a second attempt
-// is cheap and keeps a region from blanking for the whole page view. No delay — the failure
-// modes observed are per-request, not sustained.
-async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
-  try {
-    return await fn();
-  } catch {
-    return fn();
-  }
 }
 
 const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, RESOLUTION_TTL_MS);
