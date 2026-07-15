@@ -2630,14 +2630,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "advisorDatasourceIntegration",
-			Description: "Enables the advisor report integration with datasource pages",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "inlineLogDetailsNoScrolls",
 			Description: "Enables an inline version of Log Details that creates no new scrolls",
 			Stage:       FeatureStageExperimental,

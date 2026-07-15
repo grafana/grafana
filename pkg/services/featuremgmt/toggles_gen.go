@@ -862,10 +862,6 @@ const (
 	// Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiServerEnableHealthEndpointRedirect = "datasourcesApiServerEnableHealthEndpointRedirect"
 
-	// FlagAdvisorDatasourceIntegration
-	// Enables the advisor report integration with datasource pages
-	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
 	// FlagStreamingForwardTeamHeadersTempo
 	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
 	FlagStreamingForwardTeamHeadersTempo = "streamingForwardTeamHeadersTempo"

@@ -37,7 +37,7 @@ type CreateChecksFn = () => {
 };
 
 export function isAdvisorEnabled(): boolean {
-  return Boolean(config.featureToggles.grafanaAdvisor && config.featureToggles.advisorDatasourceIntegration);
+  return Boolean(config.featureToggles.grafanaAdvisor);
 }
 
 interface AdvisorCheckContextValue {

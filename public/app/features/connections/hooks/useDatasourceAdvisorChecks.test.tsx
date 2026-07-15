@@ -165,7 +165,6 @@ describe('useLatestDatasourceCheck', () => {
     config.featureToggles = {
       ...originalFeatureToggles,
       grafanaAdvisor: true,
-      advisorDatasourceIntegration: true,
     };
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
@@ -242,7 +241,6 @@ describe('useDatasourceFailureByUID', () => {
     config.featureToggles = {
       ...originalFeatureToggles,
       grafanaAdvisor: true,
-      advisorDatasourceIntegration: true,
     };
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
@@ -388,7 +386,6 @@ describe('useRetryDatasourceAdvisorCheck', () => {
     config.featureToggles = {
       ...originalFeatureToggles,
       grafanaAdvisor: true,
-      advisorDatasourceIntegration: true,
     };
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
@@ -449,7 +446,6 @@ describe('useCreateDatasourceAdvisorChecks', () => {
     config.featureToggles = {
       ...originalFeatureToggles,
       grafanaAdvisor: true,
-      advisorDatasourceIntegration: true,
     };
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
