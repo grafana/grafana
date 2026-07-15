@@ -12,6 +12,12 @@ import { ASSISTANT_ONBOARDING_OVERVIEW_COMPONENT_ID, type AssistantOverviewProps
 
 const RELOAD_DELAY_MS = 1500;
 
+interface AssistantJsonData {
+  trialMode?: boolean;
+  backendUrl?: string;
+  isAccessTokenSet?: boolean;
+}
+
 interface Props {
   plugin: CatalogPlugin;
   pluginConfig?: GrafanaPlugin | null;
@@ -24,6 +30,7 @@ export function AssistantOverview({ plugin, pluginConfig, pluginConfigLoading, f
   const { isInstalling } = useInstallStatus();
   const { component: AssistantOnboardingOverview, isLoading: isLoadingOverview } =
     usePluginComponent<AssistantOverviewProps>(ASSISTANT_ONBOARDING_OVERVIEW_COMPONENT_ID);
+  const jsonData = pluginConfig?.meta.jsonData as AssistantJsonData | undefined;
 
   if (!AssistantOnboardingOverview) {
     return isLoadingOverview ? null : <>{fallback}</>;
@@ -32,7 +39,7 @@ export function AssistantOverview({ plugin, pluginConfig, pluginConfigLoading, f
   return (
     <AssistantOnboardingOverview
       isInstalled={plugin.isInstalled}
-      isConnected={Boolean(pluginConfig?.meta.enabled)}
+      isConnected={Boolean(jsonData?.trialMode || (jsonData?.backendUrl && jsonData.isAccessTokenSet))}
       isLoading={Boolean(pluginConfigLoading)}
       isInstalling={isInstalling}
       canInstall={contextSrv.hasPermission(AccessControlAction.PluginsInstall)}
