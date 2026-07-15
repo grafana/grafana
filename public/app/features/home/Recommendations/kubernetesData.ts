@@ -4,6 +4,7 @@ import {
   type FieldSparkline,
   store,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
@@ -36,12 +37,10 @@ const HEALTH_QUERIES: Record<string, string> = {
   unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
   restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
   notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown"})',
-  // Firing alert instances scoped to Kubernetes workloads (`cluster!=""`); datasource-managed ALERTS unioned with
-  // Grafana-managed GRAFANA_ALERTS (ALERTS-only would miss stacks alerting via Grafana-managed rules); heartbeats
-  // excluded from both. Fixes series-level counting, missing k8s scoping, and the heartbeat matcher on GRAFANA_ALERTS.
-  alertsFiring:
-    'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""} or GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""})',
 };
+
+// Firing alert instances scoped to Kubernetes workloads; heartbeats excluded.
+const ALERTS_MATCHER = '{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""}';
 
 // Cap the probe fan-out: only the first 10 candidates (in priority order) are probed per page load.
 const MAX_PROBED_DATASOURCES = 10;
@@ -99,7 +98,6 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
 // (connection queuing, gateway blips) can outlast an immediate retry; a short backoff covers
 // them while the region shows its skeleton. 3 attempts total.
 const RETRY_DELAYS_MS = [500, 1500];
-
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
@@ -211,15 +209,49 @@ export async function fetchKubernetesHealth(): Promise<KubernetesHealth> {
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
-  const frames = await withRetry(() => runInstantQueries(HEALTH_QUERIES, ds));
+  // Grafana-managed firing alerts live in the state-history target datasource under a
+  // configurable metric name; hard-coding GRAFANA_ALERTS on the k8s datasource misses them.
+  const grafanaMetric = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
+  const grafanaAlertsUid = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
+  const sameDatasource = !grafanaAlertsUid || grafanaAlertsUid === ds.uid;
+
+  const queries: Record<string, string> = {
+    ...HEALTH_QUERIES,
+    // Same datasource: union with `or` so identical series never double-count.
+    alertsFiring: sameDatasource
+      ? `count(ALERTS${ALERTS_MATCHER} or ${grafanaMetric}${ALERTS_MATCHER})`
+      : `count(ALERTS${ALERTS_MATCHER})`,
+  };
+
+  const [frames, grafanaAlertsFiring] = await Promise.all([
+    withRetry(() => runInstantQueries(queries, ds)),
+    sameDatasource ? Promise.resolve(null) : fetchGrafanaManagedAlertCount(grafanaAlertsUid, grafanaMetric),
+  ]);
+
+  const dsAlertsFiring = readScalar(frames, 'alertsFiring');
   const restarts1h = readScalar(frames, 'restarts1h');
   return {
-    alertsFiring: readScalar(frames, 'alertsFiring'),
+    alertsFiring:
+      dsAlertsFiring === null && grafanaAlertsFiring === null
+        ? null
+        : (dsAlertsFiring ?? 0) + (grafanaAlertsFiring ?? 0),
     unhealthyPods: readScalar(frames, 'unhealthyPods'),
     // increase() extrapolates to fractionals with zero real restarts; round so noise never renders as "1 restart".
     restarts1h: restarts1h === null ? null : Math.round(restarts1h),
     notReadyNodes: readScalar(frames, 'notReadyNodes'),
   };
+}
+
+// A broken/absent state-history datasource must not blank the whole health row: fail to null.
+async function fetchGrafanaManagedAlertCount(uid: string, metric: string): Promise<number | null> {
+  try {
+    const frames = await withRetry(() =>
+      runInstantQueries({ grafanaAlertsFiring: `count(${metric}${ALERTS_MATCHER})` }, { uid, type: 'prometheus' })
+    );
+    return readScalar(frames, 'grafanaAlertsFiring');
+  } catch {
+    return null;
+  }
 }
 
 /** Cluster CPU over 24h (cAdvisor); throws when no datasource has Kubernetes data, null when the metric is absent. */

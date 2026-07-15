@@ -9,7 +9,7 @@ import {
   type PanelData,
   type QueryRunner,
 } from '@grafana/data';
-import { createQueryRunner } from '@grafana/runtime';
+import { config, createQueryRunner } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import {
@@ -639,6 +639,69 @@ describe('Kubernetes Prometheus resolution', () => {
     }
   });
 
+  it('uses the configured state-history metric name in the alerts union', async () => {
+    const original = config.unifiedAlerting.stateHistory;
+    config.unifiedAlerting.stateHistory = { prometheusMetricName: 'MY_ALERTS' };
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    try {
+      await fetchKubernetesHealth();
+      const [health] = healthCalls();
+      const alertsExpr = health[0].queries.find((q) => q.refId === 'alertsFiring')?.expr;
+      expect(alertsExpr).toBe(
+        'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""} or MY_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""})'
+      );
+    } finally {
+      config.unifiedAlerting.stateHistory = original;
+    }
+  });
+
+  it('queries Grafana-managed alerts on the state-history datasource and sums the counts', async () => {
+    const original = config.unifiedAlerting.stateHistory;
+    config.unifiedAlerting.stateHistory = { prometheusTargetDatasourceUID: 'ash-uid' };
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2, 'ash-uid': 1 };
+    valuesByRefId = { alertsFiring: 1, grafanaAlertsFiring: 2 };
+    try {
+      const health = await fetchKubernetesHealth();
+      const ashCalls = (run.mock.calls as RunCall[]).filter(([o]) => o.datasource.uid === 'ash-uid');
+      expect(ashCalls).toHaveLength(1);
+      expect(ashCalls[0][0].queries).toEqual([
+        {
+          refId: 'grafanaAlertsFiring',
+          expr: 'count(GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""})',
+          instant: true,
+          range: false,
+        },
+      ]);
+      const [k8sHealth] = healthCalls();
+      const alertsExpr = k8sHealth[0].queries.find((q) => q.refId === 'alertsFiring')?.expr;
+      expect(alertsExpr).toBe('count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""})');
+      expect(alertsExpr).not.toContain('GRAFANA_ALERTS');
+      expect(health.alertsFiring).toBe(3);
+    } finally {
+      config.unifiedAlerting.stateHistory = original;
+    }
+  });
+
+  it('falls back to datasource-managed alerts when the state-history query errors', async () => {
+    const original = config.unifiedAlerting.stateHistory;
+    config.unifiedAlerting.stateHistory = { prometheusTargetDatasourceUID: 'ash-uid' };
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2, 'ash-uid': 1 };
+    valuesByRefId = { alertsFiring: 1 };
+    queryErrorRefIds = new Set(['grafanaAlertsFiring']);
+    jest.useFakeTimers();
+    try {
+      const promise = fetchKubernetesHealth();
+      await jest.advanceTimersByTimeAsync(10_000);
+      const health = await promise;
+      expect(health.alertsFiring).toBe(1);
+    } finally {
+      jest.useRealTimers();
+      config.unifiedAlerting.stateHistory = original;
+    }
+  });
   it('rejects from fetchClusterCpuSeries when no datasource has Kubernetes data', async () => {
     setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
 
