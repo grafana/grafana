@@ -1,6 +1,8 @@
 package usagestats
 
 import (
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -33,9 +35,11 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Help: "Total number of usage stats events dropped without being recorded.",
 		}, []string{"reason"}),
 		flushDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Name:    "unified_storage_stats_flush_duration_seconds",
-			Help:    "Duration of a usage stats flush cycle.",
-			Buckets: prometheus.DefBuckets,
+			Name: "unified_storage_stats_flush_duration_seconds",
+			Help: "Duration of a usage stats flush cycle.",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  100,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		aggregateWriteFailures: promauto.With(reg).NewCounter(prometheus.CounterOpts{
 			Name: "unified_storage_stats_aggregate_write_failures_total",
