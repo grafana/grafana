@@ -203,10 +203,12 @@ export async function fetchKubernetesHealth(): Promise<KubernetesHealth> {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
   const frames = await withRetry(() => runInstantQueries(HEALTH_QUERIES, ds));
+  const restarts1h = readScalar(frames, 'restarts1h');
   return {
     alertsFiring: readScalar(frames, 'alertsFiring'),
     unhealthyPods: readScalar(frames, 'unhealthyPods'),
-    restarts1h: readScalar(frames, 'restarts1h'),
+    // increase() extrapolates to fractionals with zero real restarts; round so noise never renders as "1 restart".
+    restarts1h: restarts1h === null ? null : Math.round(restarts1h),
     notReadyNodes: readScalar(frames, 'notReadyNodes'),
   };
 }

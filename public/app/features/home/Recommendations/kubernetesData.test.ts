@@ -65,6 +65,7 @@ let probeAttempts: Record<string, number>;
 let queryFailuresByRefId: Record<string, number>;
 // Non-probe query batches: always emit LoadingState.Error.
 let queryErrorRefIds: Set<string>;
+let valuesByRefId: Record<string, number>;
 let queryAttempts: Record<string, number>;
 
 type CapturedRun = { datasource: { uid: string }; queries: Array<{ refId: string; expr: string }> };
@@ -121,7 +122,7 @@ beforeEach(() => {
         } else if (!isProbe && count > 0 && captured) {
           // Inventory/health batches: answer each refId so positive tests assert counts.
           series = captured.queries.map((q) => {
-            const value = q.refId === 'clusters' || q.refId === 'pods' ? count : 0;
+            const value = valuesByRefId[q.refId] ?? (q.refId === 'clusters' || q.refId === 'pods' ? count : 0);
             return numberFrame(q.refId, [value]);
           });
         }
@@ -186,6 +187,17 @@ describe('Kubernetes Prometheus resolution', () => {
 
     const [probe] = probeCalls();
     expect(probe[0].queries[0].expr).toBe('count(last_over_time(kube_namespace_status_phase[24h]))');
+  });
+
+  it('rounds fractional restart increase() noise so phantom restarts never surface', async () => {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    valuesByRefId = { restarts1h: 0.0003 };
+
+    expect((await fetchKubernetesHealth()).restarts1h).toBe(0);
+
+    valuesByRefId = { restarts1h: 0.98 };
+    expect((await fetchKubernetesHealth()).restarts1h).toBe(1);
   });
 
   it('skips a default datasource without namespace data for a sibling that has it', async () => {
