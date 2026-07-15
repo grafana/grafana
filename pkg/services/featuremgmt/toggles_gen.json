@@ -2766,17 +2766,17 @@
     {
       "metadata": {
         "name": "grafana.newPreferencesPage",
-        "resourceVersion": "1781704114797",
+        "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-06-17 13:48:34.797786 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2839,6 +2839,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.savedQueriesPage",
+        "resourceVersion": "1784068714544",
+        "creationTimestamp": "2026-07-14T22:38:34Z"
+      },
+      "spec": {
+        "description": "Enables the dedicated Saved queries page and its navigation entry",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
       }
     },
     {
@@ -3008,7 +3021,8 @@
       "metadata": {
         "name": "grafanaAdvisor",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-01-20T10:08:00Z"
+        "creationTimestamp": "2025-01-20T10:08:00Z",
+        "deletionTimestamp": "2026-07-15T09:55:36Z"
       },
       "spec": {
         "description": "Enables Advisor app",
@@ -4533,14 +4547,17 @@
     {
       "metadata": {
         "name": "preferences.rerouteLegacyAPIs",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1783676521307",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use K8s client implementation for legacy preferences API",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5911,7 +5928,8 @@
       "metadata": {
         "name": "yAxisTickControl",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-13T19:47:55Z"
       },
       "spec": {
         "description": "Enables fine-grained Y-axis tick options beyond the auto-ticks",

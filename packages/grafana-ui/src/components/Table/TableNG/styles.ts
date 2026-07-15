@@ -46,7 +46,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   if (visualRefreshEnabled) {
-    bgColor = transparent ? theme.colors.background.page : theme.components.panel.contentBackground;
+    bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
   }
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells

@@ -119,7 +119,6 @@ func iamBuilder(ri utils.ResourceInfo, searchFields []resource.SearchFieldDefini
 	return resource.DocumentBuilderInfo{
 		GroupResource:        gr,
 		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
-		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
 		SearchFieldsProvider: provider,
 	}, nil
 }

@@ -31,11 +31,13 @@ import {
   type QueryVariableKind,
   type SwitchVariableKind,
   type TextVariableKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { type DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -380,6 +382,51 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       const variable = scene.state.$variables?.getByName('intervalVar') as IntervalVariable;
 
       expect(variable.state.value).toBe('$__auto');
+    });
+  });
+
+  describe('default variables', () => {
+    const predefinedVariable = (name: string): VariableKind =>
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      ({
+        kind: 'CustomVariable',
+        spec: {
+          name,
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: { type: 'global' },
+        },
+      }) as unknown as VariableKind;
+
+    it('should inject default variables ahead of dashboard variables', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard, {
+        uid: 'dashboard-uid',
+        route: DashboardRoutes.Normal,
+        defaultVariables: [predefinedVariable('injectedVar')],
+      });
+
+      const variables = scene.state.$variables?.state.variables!;
+      expect(variables[0].state.name).toBe('injectedVar');
+      expect(variables[0].state.origin).toEqual({ type: 'global' });
+      // Dashboard-local variables are still present after the injected ones.
+      expect(variables.some((v) => v.state.name === 'queryVar')).toBe(true);
+    });
+
+    it('should drop default variables shadowed by a dashboard variable of the same name', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard, {
+        uid: 'dashboard-uid',
+        route: DashboardRoutes.Normal,
+        defaultVariables: [predefinedVariable('customVar')],
+      });
+
+      const matching = scene.state.$variables?.state.variables.filter((v) => v.state.name === 'customVar')!;
+      expect(matching).toHaveLength(1);
+      // The dashboard-local variable wins, so no origin is set.
+      expect(matching[0].state.origin).toBeUndefined();
     });
   });
 

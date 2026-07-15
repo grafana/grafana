@@ -69,6 +69,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
+  /** Enables the dedicated Saved queries page and its navigation entry */
+  GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
@@ -406,10 +408,10 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `grafana.newPreferencesPage`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPreferencesPage", false, options).value;
+  return useFlag("grafana.newPreferencesPage", true, options).value;
 };
 
 /**
@@ -443,6 +445,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.queryVarEditorRedesign", true, options).value;
+};
+
+/**
+ * Enables the dedicated Saved queries page and its navigation entry
+ *
+ * **Details:**
+ * - flag key: `grafana.savedQueriesPage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSavedQueriesPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.savedQueriesPage", false, options).value;
 };
 
 /**
