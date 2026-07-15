@@ -46,4 +46,9 @@ type RuntimeConfig struct {
 	// watches all namespaces (on-prem default); in cloud it must be the stack
 	// namespace, else the all-namespace watch is rejected as a mismatch.
 	WatchNamespace string
+	// ValidateExternalRulerSyncDatasource is the admission check for the Config
+	// kind's spec.externalRulerSync.datasourceUid, implemented in the parent
+	// process (pkg/registry/apps/alerting/rules) where the datasource service and
+	// HTTP transport are in scope. Nil disables the check.
+	ValidateExternalRulerSyncDatasource func(ctx context.Context, uid string) error
 }

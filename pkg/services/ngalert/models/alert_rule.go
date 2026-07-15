@@ -406,6 +406,17 @@ type EditorSettings struct {
 
 type PrometheusStyleRule struct {
 	OriginalRuleDefinition string `json:"original_rule_definition,omitempty"`
+	// SourceIdentifier records which external source produced this converted
+	// rule: the external ruler sync worker sets it to the source Mimir/Cortex
+	// datasource UID (empty for manual convert-API imports), giving the worker a
+	// server-side ownership marker so it prunes only the rules it owns. It lives
+	// in metadata so it never reaches the data plane or the Prometheus definition.
+	//
+	// TODO: once a legacy backing field exists, this ownership marker could be
+	// expressed via the platform's manager metadata (grafana.app managed-by)
+	// instead of a bespoke field, which is the more idiomatic way to mark
+	// platform-managed resources.
+	SourceIdentifier string `json:"source_identifier,omitempty"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -563,6 +574,17 @@ func (alertRule *AlertRule) ImportedPrometheusRule() bool {
 func (alertRule *AlertRule) HasPrometheusRuleDefinition() bool {
 	_, err := alertRule.PrometheusRuleDefinition()
 	return err == nil
+}
+
+// PrometheusRuleSourceIdentifier returns the external source identifier stamped
+// on this rule by the ruler sync worker (the source datasource UID), or "" if
+// the rule was not produced by external ruler sync (e.g. a manual convert-API
+// import).
+func (alertRule *AlertRule) PrometheusRuleSourceIdentifier() string {
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		return alertRule.Metadata.PrometheusStyleRule.SourceIdentifier
+	}
+	return ""
 }
 
 func (alertRule *AlertRule) PrometheusRuleDefinition() (string, error) {
@@ -1135,6 +1157,12 @@ type ListAlertRulesQuery struct {
 	SearchRuleGroup string
 
 	HasPrometheusRuleDefinition *bool
+
+	// SourceIdentifier, when non-nil, filters rules to those whose converted
+	// metadata carries a matching PrometheusStyleRule.SourceIdentifier (exact
+	// match). Used by the external ruler sync worker to enumerate/prune only the
+	// rules it owns.
+	SourceIdentifier *string
 
 	// LabelMatchers filters rules by their labels.
 	// Only equality and inequality matchers are supported, no regex operators.

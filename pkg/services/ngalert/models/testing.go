@@ -238,6 +238,18 @@ func (a *AlertRuleMutators) WithPrometheusOriginalRuleDefinition(definition stri
 	}
 }
 
+// WithPrometheusSourceIdentifier stamps the converted-rule source identifier
+// (the external ruler sync source datasource UID) onto the rule metadata,
+// preserving any existing PrometheusStyleRule fields.
+func (a *AlertRuleMutators) WithPrometheusSourceIdentifier(identifier string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Metadata.PrometheusStyleRule == nil {
+			rule.Metadata.PrometheusStyleRule = &PrometheusStyleRule{}
+		}
+		rule.Metadata.PrometheusStyleRule.SourceIdentifier = identifier
+	}
+}
+
 func (a *AlertRuleMutators) WithGroupIndex(groupIndex int) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.RuleGroupIndex = groupIndex

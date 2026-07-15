@@ -804,8 +804,8 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				opts.ExcludeContactPointRouting = false
 			}
 
-			if query.HasPrometheusRuleDefinition != nil {
-				// Need Metadata for this filter
+			if query.HasPrometheusRuleDefinition != nil || query.SourceIdentifier != nil {
+				// Need Metadata for these filters
 				opts.ExcludeMetadata = false
 			}
 		}
@@ -947,6 +947,12 @@ func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesE
 
 	if query.HasPrometheusRuleDefinition != nil {
 		if *query.HasPrometheusRuleDefinition != rule.HasPrometheusRuleDefinition() {
+			return false
+		}
+	}
+
+	if query.SourceIdentifier != nil {
+		if *query.SourceIdentifier != rule.PrometheusRuleSourceIdentifier() {
 			return false
 		}
 	}
@@ -1337,6 +1343,10 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if query.SourceIdentifier != nil {
+		q = st.filterWithSourceIdentifier(*query.SourceIdentifier, q)
+	}
+
 	if len(query.LabelMatchers) > 0 {
 		q, err = st.filterByLabelMatchers(query.LabelMatchers, q)
 		if err != nil {
@@ -1409,6 +1419,11 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 	}
 	if query.HasPrometheusRuleDefinition != nil { // remove false-positive hits from the result
 		if *query.HasPrometheusRuleDefinition != converted.HasPrometheusRuleDefinition() {
+			return nil, false
+		}
+	}
+	if query.SourceIdentifier != nil { // remove false-positive hits from the result
+		if *query.SourceIdentifier != converted.PrometheusRuleSourceIdentifier() {
 			return nil, false
 		}
 	}
@@ -1844,6 +1859,14 @@ func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Sess
 		"%prometheus_style_rule%",
 		"%original_rule_definition%",
 	), nil
+}
+
+// filterWithSourceIdentifier narrows to rules whose converted metadata carries
+// the given PrometheusStyleRule.SourceIdentifier. The LIKE is a coarse
+// prefilter (metadata is stored as a JSON blob); callers must still refine with
+// an exact PrometheusRuleSourceIdentifier() comparison in memory.
+func (st DBstore) filterWithSourceIdentifier(value string, sess *xorm.Session) *xorm.Session {
+	return sess.And("metadata LIKE ?", "%\"source_identifier\":\""+value+"\"%")
 }
 
 // filterByLabelMatchers adds filtering for equality and inequality label matchers.

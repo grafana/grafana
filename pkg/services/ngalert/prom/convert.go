@@ -69,9 +69,14 @@ type Config struct {
 	// if saved to the alert rule metadata. If not, then it will not be possible to convert
 	// the alert rule back to Prometheus format.
 	KeepOriginalRuleDefinition *bool
-	RecordingRules             RulesConfig
-	AlertRules                 RulesConfig
-	NotificationSettings       *models.NotificationSettings
+	// SourceIdentifier, when set, is stamped onto each converted rule's
+	// metadata (PrometheusStyleRule.SourceIdentifier). The external ruler sync
+	// worker sets it to the source datasource UID so it can later identify and
+	// prune only the rules it owns. Manual convert-API imports leave it empty.
+	SourceIdentifier     string
+	RecordingRules       RulesConfig
+	AlertRules           RulesConfig
+	NotificationSettings *models.NotificationSettings
 	// ExtraLabels are labels that will be added to all rules during conversion.
 	// These labels have the lowest precedence and can be overridden by group or rule labels.
 	ExtraLabels map[string]string
@@ -297,9 +302,13 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		result.MissingSeriesEvalsToResolve = new(int64(1))
 	}
 
-	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {
+	keepOriginal := p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition
+	if keepOriginal || p.cfg.SourceIdentifier != "" {
 		result.Metadata.PrometheusStyleRule = &models.PrometheusStyleRule{
-			OriginalRuleDefinition: string(originalRuleDefinition),
+			SourceIdentifier: p.cfg.SourceIdentifier,
+		}
+		if keepOriginal {
+			result.Metadata.PrometheusStyleRule.OriginalRuleDefinition = string(originalRuleDefinition)
 		}
 	}
 
