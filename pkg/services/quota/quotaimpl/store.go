@@ -152,21 +152,22 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 			}
 			_, err = sess.Exec(append([]any{insertSQL}, insertQuery.GetArgs()...)...)
 			return err
-		}
-
-		updateQuery := updateQuotaQuery{
-			SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
-			QuotaTable:  dbHelper.Table("quota"),
-			QuotaID:     quotaID,
-			Limit:       cmd.Limit,
-			Updated:     time.Now(),
-		}
-		updateSQL, err := sqltemplate.Execute(updateQuotaTemplate, updateQuery)
-		if err != nil {
+		} else {
+			// Update existing quota entry in the DB.
+			updateQuery := updateQuotaQuery{
+				SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+				QuotaTable:  dbHelper.Table("quota"),
+				QuotaID:     quotaID,
+				Limit:       cmd.Limit,
+				Updated:     time.Now(),
+			}
+			updateSQL, err := sqltemplate.Execute(updateQuotaTemplate, updateQuery)
+			if err != nil {
+				return err
+			}
+			_, err = sess.Exec(append([]any{updateSQL}, updateQuery.GetArgs()...)...)
 			return err
 		}
-		_, err = sess.Exec(append([]any{updateSQL}, updateQuery.GetArgs()...)...)
-		return err
 	})
 }
 
