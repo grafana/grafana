@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -61,6 +61,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusCategory[]>([]);
+  const statusFilterLabelId = useId();
   const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
@@ -83,12 +84,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     const merged = mergeFilesAndResources(files, resources);
     let tree = buildTree(merged);
 
-    if (searchQuery) {
-      tree = filterTree(tree, searchQuery);
-    }
-
+    // Filter by status before search: status filtering relies on the aggregate folder statuses
+    // computed by buildTree, which filterTree would leave stale after pruning hidden children.
     if (statusFilter.length > 0) {
       tree = filterByStatusCategories(tree, statusFilter, provisioningFolderMetadataEnabled);
+    }
+
+    if (searchQuery) {
+      tree = filterTree(tree, searchQuery);
     }
 
     return flattenTree(tree);
@@ -244,6 +247,10 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
             onChange={setSearchQuery}
           />
         </div>
+        {/* MultiCombobox forwards aria-labelledby (not aria-label), so label it via a hidden element. */}
+        <span id={statusFilterLabelId} className="sr-only">
+          {t('provisioning.resource-tree.status-filter-aria-label', 'Filter by status')}
+        </span>
         <MultiCombobox
           prefixIcon="filter"
           options={statusFilterOptions}
@@ -252,7 +259,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           isClearable
           width={30}
           placeholder={t('provisioning.resource-tree.status-filter-placeholder', 'Filter by status')}
-          aria-label={t('provisioning.resource-tree.status-filter-aria-label', 'Filter by status')}
+          aria-labelledby={statusFilterLabelId}
         />
       </Stack>
       <InteractiveTable

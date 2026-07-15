@@ -36,13 +36,27 @@ const repo: Repository = {
 };
 
 const files = [
-  { path: 'synced.json', hash: 'aaa' },
-  { path: 'pending.json', hash: 'bbb' },
+  { path: 'folder/synced.json', hash: 'aaa' },
+  { path: 'folder/pending.json', hash: 'bbb' },
 ];
 
 const resources = [
-  { path: 'synced.json', hash: 'aaa', name: 'synced-dash', title: 'Synced Dashboard', resource: 'dashboards', group: 'dashboard.grafana.app' },
-  { path: 'pending.json', hash: 'zzz', name: 'pending-dash', title: 'Pending Dashboard', resource: 'dashboards', group: 'dashboard.grafana.app' },
+  {
+    path: 'folder/synced.json',
+    hash: 'aaa',
+    name: 'synced-dash',
+    title: 'Synced Dashboard',
+    resource: 'dashboards',
+    group: 'dashboard.grafana.app',
+  },
+  {
+    path: 'folder/pending.json',
+    hash: 'zzz',
+    name: 'pending-dash',
+    title: 'Pending Dashboard',
+    resource: 'dashboards',
+    group: 'dashboard.grafana.app',
+  },
 ];
 
 function setQueryData() {
@@ -68,12 +82,18 @@ describe('ResourceTreeView', () => {
     expect(screen.getByText('Pending Dashboard')).toBeInTheDocument();
   });
 
+  it('should give the status filter an accessible name', () => {
+    render(<ResourceTreeView repo={repo} />);
+
+    expect(screen.getByRole('combobox', { name: 'Filter by status' })).toBeInTheDocument();
+  });
+
   // The Combobox list is virtualized in jsdom (only the active row renders), so options are
   // selected by keyboard: opening leaves no option active, the first ArrowDown lands on index 0.
   it('should filter to only resources that are not in sync', async () => {
     const { user } = render(<ResourceTreeView repo={repo} />);
 
-    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
     await user.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // index 1: Not in sync
 
     expect(screen.getByText('Pending Dashboard')).toBeInTheDocument();
@@ -83,18 +103,32 @@ describe('ResourceTreeView', () => {
   it('should filter to only synced resources', async () => {
     const { user } = render(<ResourceTreeView repo={repo} />);
 
-    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
     await user.keyboard('{ArrowDown}{Enter}'); // index 0: Synced
 
     expect(screen.getByText('Synced Dashboard')).toBeInTheDocument();
     expect(screen.queryByText('Pending Dashboard')).not.toBeInTheDocument();
   });
 
+  it('should apply the status filter and search together (AND) without leaving empty folders', async () => {
+    const { user } = render(<ResourceTreeView repo={repo} />);
+
+    // Search for the synced dashboard, then filter to Not in sync: nothing matches both, so the
+    // parent folder must not linger just because it aggregates a (now hidden) pending child.
+    await user.type(screen.getByPlaceholderText('Search by path or title'), 'synced');
+    await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // index 1: Not in sync
+
+    expect(screen.queryByText('Synced Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pending Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('folder')).not.toBeInTheDocument();
+  });
+
   it('should expose the Warnings filter when the folder metadata flag is on', async () => {
     mockUseBooleanFlagValue.mockReturnValue(true);
     const { user } = render(<ResourceTreeView repo={repo} />);
 
-    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
     await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{Enter}'); // index 2: Warnings
 
     // None of the sample resources are missing metadata, so filtering by Warnings hides them all.
