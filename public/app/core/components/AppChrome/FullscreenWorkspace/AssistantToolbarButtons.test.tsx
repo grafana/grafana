@@ -1,29 +1,19 @@
-import { render, screen, fireEvent } from '@testing-library/react';
 import { createRef } from 'react';
 
-import { useGrafana } from 'app/core/context/GrafanaContext';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
+import { getWrapper, render, screen, fireEvent } from 'test/test-utils';
 
 import { AssistantToolbarButtons } from './AssistantToolbarButtons';
 
-jest.mock('@grafana/i18n', () => ({
-  t: (_: string, fallback: string) => fallback,
-}));
-
-jest.mock('app/core/context/GrafanaContext', () => ({
-  useGrafana: jest.fn(),
-}));
-
-const useGrafanaMock = jest.mocked(useGrafana);
-const setFullscreenWorkspace = jest.fn();
+function renderButtons(props: Partial<React.ComponentProps<typeof AssistantToolbarButtons>> = {}) {
+  const chrome = new AppChromeService();
+  const wrapper = getWrapper({ grafanaContext: { chrome } });
+  return { chrome, ...render(<AssistantToolbarButtons isOpen={false} {...props} />, { wrapper }) };
+}
 
 describe('AssistantToolbarButtons', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    useGrafanaMock.mockReturnValue({ chrome: { setFullscreenWorkspace } } as unknown as ReturnType<typeof useGrafana>);
-  });
-
   it('renders the Chat pill in its open state and an Enter Workspace button', () => {
-    render(<AssistantToolbarButtons isOpen={false} />);
+    renderButtons({ isOpen: false });
 
     const pill = screen.getByTestId('extension-toolbar-button-open');
     expect(pill).toBeInTheDocument();
@@ -34,7 +24,7 @@ describe('AssistantToolbarButtons', () => {
   });
 
   it('renders the Chat pill in its close state when open', () => {
-    render(<AssistantToolbarButtons isOpen={true} />);
+    renderButtons({ isOpen: true });
 
     const pill = screen.getByTestId('extension-toolbar-button-close');
     expect(pill).toHaveAttribute('aria-label', 'Close Grafana Assistant');
@@ -43,7 +33,7 @@ describe('AssistantToolbarButtons', () => {
 
   it('calls onClick when the Chat pill is clicked', () => {
     const onClick = jest.fn();
-    render(<AssistantToolbarButtons isOpen={false} onClick={onClick} />);
+    renderButtons({ isOpen: false, onClick });
 
     fireEvent.click(screen.getByTestId('extension-toolbar-button-open'));
 
@@ -51,16 +41,18 @@ describe('AssistantToolbarButtons', () => {
   });
 
   it('enters fullscreen workspace when the Enter Workspace button is clicked', () => {
-    render(<AssistantToolbarButtons isOpen={false} />);
+    const { chrome } = renderButtons({ isOpen: false });
 
     fireEvent.click(screen.getByRole('button', { name: 'Enter Workspace' }));
 
-    expect(setFullscreenWorkspace).toHaveBeenCalledWith(true);
+    expect(chrome.state.getValue().fullscreenWorkspace).toBe(true);
   });
 
   it('forwards the ref to the Chat pill button', () => {
     const ref = createRef<HTMLButtonElement>();
-    render(<AssistantToolbarButtons ref={ref} isOpen={false} />);
+    const chrome = new AppChromeService();
+    const wrapper = getWrapper({ grafanaContext: { chrome } });
+    render(<AssistantToolbarButtons ref={ref} isOpen={false} />, { wrapper });
 
     expect(ref.current).toBe(screen.getByTestId('extension-toolbar-button-open'));
   });

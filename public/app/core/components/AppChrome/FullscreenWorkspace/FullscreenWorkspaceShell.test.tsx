@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
 import { type RefCallback } from 'react';
 
 import { usePluginComponent } from '@grafana/runtime';
-import { useGrafana } from 'app/core/context/GrafanaContext';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
+import { getWrapper, render, screen } from 'test/test-utils';
 
 import { FullscreenWorkspaceShell } from './FullscreenWorkspaceShell';
 
@@ -16,18 +16,17 @@ jest.mock('@grafana/runtime', () => ({
   usePluginComponent: jest.fn(),
 }));
 
-jest.mock('app/core/context/GrafanaContext', () => ({
-  useGrafana: jest.fn(),
-}));
-
 const usePluginComponentMock = jest.mocked(usePluginComponent);
-const useGrafanaMock = jest.mocked(useGrafana);
-const setFullscreenWorkspace = jest.fn();
+
+function renderShell(workspaceHostRef: RefCallback<HTMLDivElement> = jest.fn()) {
+  const chrome = new AppChromeService();
+  const wrapper = getWrapper({ grafanaContext: { chrome } });
+  return { chrome, ...render(<FullscreenWorkspaceShell workspaceHostRef={workspaceHostRef} />, { wrapper }) };
+}
 
 describe('FullscreenWorkspaceShell', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useGrafanaMock.mockReturnValue({ chrome: { setFullscreenWorkspace } } as unknown as ReturnType<typeof useGrafana>);
   });
 
   it('renders nothing while the plugin component is loading', () => {
@@ -36,7 +35,7 @@ describe('FullscreenWorkspaceShell', () => {
       isLoading: true,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    const { container } = render(<FullscreenWorkspaceShell workspaceHostRef={jest.fn()} />);
+    const { container } = renderShell();
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -47,7 +46,7 @@ describe('FullscreenWorkspaceShell', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    const { container } = render(<FullscreenWorkspaceShell workspaceHostRef={jest.fn()} />);
+    const { container } = renderShell();
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -68,12 +67,13 @@ describe('FullscreenWorkspaceShell', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    render(<FullscreenWorkspaceShell workspaceHostRef={workspaceHostRef} />);
+    const { chrome } = renderShell(workspaceHostRef);
+    chrome.setFullscreenWorkspace(true);
 
     expect(screen.getByTestId('plugin-workspace')).toBeInTheDocument();
     expect(workspaceHostRef).toHaveBeenCalledWith(null);
 
     screen.getByTestId('plugin-workspace').click();
-    expect(setFullscreenWorkspace).toHaveBeenCalledWith(false);
+    expect(chrome.state.getValue().fullscreenWorkspace).toBe(false);
   });
 });
