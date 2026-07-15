@@ -987,7 +987,7 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 			return fmt.Errorf("reading secure value from kv store: %w", err)
 		}
 
-		if value.OwnerReferenceAPIGroup == apiGroup {
+		if value.Active && value.OwnerReferenceAPIGroup == apiGroup {
 			value.Active = false
 			toUpdate = append(toUpdate, entry{key: key, sv: value})
 		}
