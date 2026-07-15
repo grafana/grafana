@@ -5,7 +5,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getCanInviteUsersToOrg, getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import type { RecommendationItem } from './Recommendations';
+import type { RecommendationItem } from './types';
 
 // Minimal slice of the /api/org/users/search payload; the full result also carries orgUsers/paging.
 interface OrgUsersSearchResult {
