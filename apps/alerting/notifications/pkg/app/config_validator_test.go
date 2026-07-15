@@ -76,6 +76,63 @@ func TestNewConfigValidator(t *testing.T) {
 	})
 }
 
+func configWithTimings(t *v0alpha1.ConfigV0alpha1SpecAutogenRouteTimings) *v0alpha1.Config {
+	o := &v0alpha1.Config{}
+	o.SetName(v0alpha1.ConfigSingletonName)
+	o.Spec.AutogenRouteTimings = t
+	return o
+}
+
+func TestValidateAutogenRouteTimings(t *testing.T) {
+	ctx := context.Background()
+	v := newConfigValidator(&Config{ValidateExternalSyncDatasource: failIfCalled(t)})
+
+	t.Run("absent block is valid", func(t *testing.T) {
+		if err := v.ValidateFunc(ctx, &app.AdmissionRequest{Object: configWithTimings(nil)}); err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+	})
+
+	t.Run("empty block is valid", func(t *testing.T) {
+		if err := v.ValidateFunc(ctx, &app.AdmissionRequest{Object: configWithTimings(&v0alpha1.ConfigV0alpha1SpecAutogenRouteTimings{})}); err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+	})
+
+	t.Run("empty-string values are treated as unset", func(t *testing.T) {
+		obj := configWithTimings(&v0alpha1.ConfigV0alpha1SpecAutogenRouteTimings{GroupWait: ptr(""), GroupInterval: ptr(""), RepeatInterval: ptr("")})
+		if err := v.ValidateFunc(ctx, &app.AdmissionRequest{Object: obj}); err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+	})
+
+	t.Run("valid Prometheus durations are accepted", func(t *testing.T) {
+		obj := configWithTimings(&v0alpha1.ConfigV0alpha1SpecAutogenRouteTimings{GroupWait: ptr("30s"), GroupInterval: ptr("5m"), RepeatInterval: ptr("4h")})
+		if err := v.ValidateFunc(ctx, &app.AdmissionRequest{Object: obj}); err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+	})
+
+	t.Run("rejects unparseable duration", func(t *testing.T) {
+		for _, tc := range []struct {
+			name    string
+			timings *v0alpha1.ConfigV0alpha1SpecAutogenRouteTimings
+			field   string
+		}{
+			{"group_wait", &v0alpha1.ConfigV0alpha1SpecAutogenRouteTimings{GroupWait: ptr("nope")}, "group_wait"},
+			{"group_interval", &v0alpha1.ConfigV0alpha1SpecAutogenRouteTimings{GroupInterval: ptr("5")}, "group_interval"},
+			{"repeat_interval", &v0alpha1.ConfigV0alpha1SpecAutogenRouteTimings{RepeatInterval: ptr("1 hour")}, "repeat_interval"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				err := v.ValidateFunc(ctx, &app.AdmissionRequest{Object: configWithTimings(tc.timings)})
+				if err == nil || !strings.Contains(err.Error(), "autogenRouteTimings."+tc.field) {
+					t.Fatalf("expected %s duration rejection, got %v", tc.field, err)
+				}
+			})
+		}
+	})
+}
+
 type stubReceiverTestingHandler struct{}
 
 func (stubReceiverTestingHandler) HandleReceiverTestingRequest(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {

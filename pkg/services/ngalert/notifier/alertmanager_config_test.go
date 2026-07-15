@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -17,6 +19,49 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+type fakeAutogenTimingsReader struct {
+	timings *autogenRouteTimings
+	err     error
+}
+
+func (f *fakeAutogenTimingsReader) ReadAutogenRouteTimings(_ context.Context, _ int64) (*autogenRouteTimings, error) {
+	return f.timings, f.err
+}
+
+func TestPrepareConfigAutogenTimingsChangeHash(t *testing.T) {
+	moa := NewTestMultiOrgAlertmanager(t, WithSkipLoad())
+	reader := &fakeAutogenTimingsReader{}
+	moa.autogenTimingsReader = reader
+
+	orgID := int64(1)
+	dbConfig := &models.AlertConfiguration{AlertmanagerConfiguration: defaultConfig}
+
+	fingerprint := func() alertingNotify.ConfigFingerprint {
+		t.Helper()
+		cfg, err := moa.PrepareConfig(context.Background(), orgID, dbConfig, LogInvalidReceivers)
+		require.NoError(t, err)
+		return alertingNotify.CalculateConfigFingerprint(cfg)
+	}
+
+	// Tick 1: no override — autogen root uses the Alertmanager route defaults.
+	reader.timings = nil
+	hashDefault := fingerprint()
+
+	// Tick 2: the Config resource now sets a repeat_interval override. The stored
+	// AM config is untouched, but the prepared hash must move.
+	ri := model.Duration(1 * time.Hour)
+	reader.timings = &autogenRouteTimings{RepeatInterval: &ri}
+	hashOverride := fingerprint()
+	require.NotEqual(t, hashDefault, hashOverride, "changing autogen timings alone must change the prepared-config hash")
+
+	// Tick 3: nothing changed since tick 2 — hash is stable (no spurious re-apply).
+	require.Equal(t, hashOverride, fingerprint(), "unchanged config must produce a stable hash")
+
+	// Tick 4: clearing the override returns to the original default hash.
+	reader.timings = nil
+	require.Equal(t, hashDefault, fingerprint(), "clearing the override must return to the default hash")
+}
 
 // noopExtraConfigAuthz permits all alertmanager import operations — for use in tests
 // that exercise config logic rather than authorization.
