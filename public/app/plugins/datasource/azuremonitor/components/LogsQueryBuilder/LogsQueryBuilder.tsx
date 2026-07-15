@@ -34,6 +34,7 @@ import { LimitSection } from './LimitSection';
 import { OrderBySection } from './OrderBySection';
 import { TableSection, type TierAutoSwitchInfo } from './TableSection';
 import { DEFAULT_LOGS_BUILDER_QUERY } from './utils';
+import { type LogTier } from '../LogsQueryEditor/utils';
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
@@ -86,7 +87,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       columns?: string[];
       from?: BuilderQueryEditorPropertyExpression;
       basicLogsQuery?: boolean;
-      logTier?: 'Basic' | 'Auxiliary';
+      logTier?: LogTier;
     }) => {
       const datetimeColumn = allColumns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
 

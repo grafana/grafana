@@ -59,12 +59,24 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     let description = '';
     if (isBasic) {
       description = disabled
-        ? 'This table is on the Basic Logs plan. Enable "Basic Logs" in the data source settings to query it.'
-        : 'Selecting this table will switch the query mode to Basic Logs';
+        ? t(
+            'components.logs-table-section.description-basic-disabled',
+            'This table is on the Basic Logs plan. Enable "Basic Logs" in the data source settings to query it.'
+          )
+        : t(
+            'components.logs-table-section.description-basic-enabled',
+            'Selecting this table will switch the query mode to Basic Logs'
+          );
     } else if (isAux) {
       description = disabled
-        ? 'This table is on the Auxiliary Logs plan. Enable "Auxiliary Logs" in the data source settings to query it.'
-        : 'Selecting this table will switch the query mode to Auxiliary Logs';
+        ? t(
+            'components.logs-table-section.description-auxiliary-disabled',
+            'This table is on the Auxiliary Logs plan. Enable "Auxiliary Logs" in the data source settings to query it.'
+          )
+        : t(
+            'components.logs-table-section.description-auxiliary-enabled',
+            'Selecting this table will switch the query mode to Auxiliary Logs'
+          );
     }
     return {
       label: t.name,
@@ -81,7 +93,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   }));
 
   const selectAllOption: SelectableValue<string> = {
-    label: 'All Columns',
+    label: t('components.logs-table-section.label-all-columns', 'All Columns'),
     value: ALL_COLUMNS_VALUE,
   };
 

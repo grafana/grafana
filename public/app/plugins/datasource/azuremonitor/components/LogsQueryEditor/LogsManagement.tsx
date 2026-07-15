@@ -6,7 +6,7 @@ import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 import { type AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setDashboardTime, setKustoQuery, setLogTier } from './setQueryValue';
-import { getSelectedLogTier, type SelectedLogTier } from './utils';
+import { getSelectedLogTier, type SelectedLogTier, type LogTier } from './utils';
 
 interface LogsManagementProps extends AzureQueryEditorFieldProps {
   basicLogsEnabled?: boolean;
@@ -14,7 +14,7 @@ interface LogsManagementProps extends AzureQueryEditorFieldProps {
 }
 
 type RadioValue = SelectedLogTier;
-type PendingTier = 'Basic' | 'Auxiliary' | null;
+type PendingTier = LogTier | null;
 
 export function LogsManagement({
   query,
@@ -57,7 +57,7 @@ export function LogsManagement({
         'Basic Logs queries incur cost based on the amount of data scanned.'
       );
 
-  const commitTier = (tier: 'Basic' | 'Auxiliary') => {
+  const commitTier = (tier: LogTier) => {
     let updated = setLogTier(query, tier);
     updated = setDashboardTime(updated, 'dashboard');
     onChange(setKustoQuery(updated, ''));

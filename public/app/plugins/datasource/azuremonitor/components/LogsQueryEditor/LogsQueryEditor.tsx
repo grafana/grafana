@@ -139,6 +139,22 @@ const LogsQueryEditor = ({
     const tier = query.azureLogAnalytics?.logTier;
     const tierStillEnabled =
       (tier === 'Basic' && basicLogsEnabled) || (tier === 'Auxiliary' && auxiliaryLogsEnabled);
+    
+    // Handle legacy queries: basicLogsQuery: true with no logTier should resolve to an enabled tier
+    if (query.azureLogAnalytics?.basicLogsQuery && tier === undefined) {
+      // Resolve to first available enabled tier
+      const resolvedTier = basicLogsEnabled ? 'Basic' : auxiliaryLogsEnabled ? 'Auxiliary' : undefined;
+      if (resolvedTier) {
+        const updated = setLogTier(query, resolvedTier);
+        onChange(setKustoQuery(updated, ''));
+      } else {
+        // No tier is enabled, clear it
+        const cleared = setLogTier(query, undefined);
+        onChange(setKustoQuery(cleared, ''));
+      }
+      return;
+    }
+    
     const shouldClear =
       (!searchLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery
         ? true

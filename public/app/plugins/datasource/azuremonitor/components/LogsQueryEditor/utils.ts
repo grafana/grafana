@@ -4,6 +4,7 @@ import { type AzureMonitorQuery } from '../../types/query';
 import { parseResourceURI } from '../ResourcePicker/utils';
 
 export type SelectedLogTier = 'Analytics' | 'Basic' | 'Auxiliary';
+export type LogTier = 'Basic' | 'Auxiliary';
 
 export function shouldShowBasicLogsToggle(resources: string[], basicLogsEnabled: boolean) {
   const searchLogsEnabled = basicLogsEnabled;
