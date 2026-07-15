@@ -108,9 +108,12 @@ export function getFieldOverrideCategories(
     const overrideId = `panel-options-override-${idx}`;
     const matcherUi = fieldMatchersUI.getIfExists(override.matcher.id);
 
-    // Unknown matcher id (e.g. hand-edited or generated dashboard JSON). Render the override
-    // in an error state so it can still be removed instead of crashing the options pane.
+    // No options-pane editor for this matcher id. Either the matcher exists in the runtime
+    // registry but has no UI (e.g. numeric, byTypes - the override still applies), or the id is
+    // truly unknown (hand-edited or generated dashboard JSON - the override has no effect).
+    // Render a non-crashing state for both so the override can still be removed.
     if (!matcherUi) {
+      const runtimeMatcher = fieldMatchers.getIfExists(override.matcher.id);
       const category = new OptionsPaneCategoryDescriptor({
         title: overrideName,
         id: overrideId,
@@ -133,6 +136,23 @@ export function getFieldOverrideCategories(
           skipField: true,
           id: `${overrideId}-unknown-matcher`,
           render: function renderUnknownMatcher() {
+            if (runtimeMatcher) {
+              return (
+                <Alert
+                  severity="info"
+                  title={t(
+                    'dashboard.get-field-override-categories.title-matcher-no-editor',
+                    'Matcher "{{matcherName}}" has no visual editor',
+                    { matcherName: runtimeMatcher.name }
+                  )}
+                >
+                  {t(
+                    'dashboard.get-field-override-categories.body-matcher-no-editor',
+                    'This override is active, but this matcher type can only be edited in the dashboard JSON.'
+                  )}
+                </Alert>
+              );
+            }
             return (
               <Alert
                 severity="error"

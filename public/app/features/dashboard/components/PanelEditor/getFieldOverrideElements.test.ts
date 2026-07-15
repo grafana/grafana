@@ -178,4 +178,40 @@ describe('getFieldOverrideCategories', () => {
       expect(onFieldConfigsChange).toHaveBeenCalledWith({ defaults: {}, overrides: [] });
     });
   });
+
+  describe('matcher without visual editor', () => {
+    // 'numeric' exists in the runtime fieldMatchers registry but has no options-pane UI
+    const fieldConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [{ matcher: { id: 'numeric', options: {} }, properties: [{ id: 'links', value: [] }] }],
+    };
+
+    it('renders an info state saying the override is active, not an error', () => {
+      const registry = makeRegistry([makeItem('links')]);
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn());
+
+      const overrideCategory = categories[0];
+      expect(overrideCategory.items).toHaveLength(1);
+
+      const element = overrideCategory.items[0].props.render(overrideCategory.items[0]) as React.ReactElement<{
+        severity: string;
+        title: string;
+      }>;
+      expect(element.props.severity).toBe('info');
+      expect(element.props.title).toContain('no visual editor');
+    });
+
+    it('keeps the remove override action working', () => {
+      const registry = makeRegistry([makeItem('links')]);
+      const onFieldConfigsChange = jest.fn();
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+
+      const titleElement = categories[0].props.renderTitle?.(true) as React.ReactElement<{
+        onOverrideRemove: () => void;
+      }>;
+      titleElement.props.onOverrideRemove();
+
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({ defaults: {}, overrides: [] });
+    });
+  });
 });
