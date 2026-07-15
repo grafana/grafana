@@ -1,9 +1,9 @@
 SELECT id
 FROM {{ .Ident .QuotaTable }}
-WHERE target = {{ .Arg .Quota.Target }}
-{{ if .Quota.UserId }}
-  AND user_id = {{ .Arg .Quota.UserId }}
+WHERE target = {{ .Arg .Target }}
+{{ if .UserID }}
+  AND user_id = {{ .Arg .UserID }}
 {{ end }}
-{{ if .Quota.OrgId }}
-  AND org_id = {{ .Arg .Quota.OrgId }}
+{{ if .OrgID }}
+  AND org_id = {{ .Arg .OrgID }}
 {{ end }}

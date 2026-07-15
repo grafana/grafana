@@ -1,4 +1,4 @@
 UPDATE {{ .Ident .QuotaTable }}
-SET {{ .Ident "limit" }} = {{ .Arg .Quota.Limit }},
-    updated = {{ .Arg .Quota.Updated }}
-WHERE id = {{ .Arg .Quota.Id }}
+SET {{ .Ident "limit" }} = {{ .Arg .Limit }},
+    updated = {{ .Arg .Updated }}
+WHERE id = {{ .Arg .QuotaID }}

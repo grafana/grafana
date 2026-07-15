@@ -7,10 +7,10 @@ INSERT INTO {{ .Ident .QuotaTable }} (
   updated
 )
 VALUES (
-  {{ .Arg .Quota.OrgId }},
-  {{ .Arg .Quota.UserId }},
-  {{ .Arg .Quota.Target }},
-  {{ .Arg .Quota.Limit }},
-  {{ .Arg .Quota.Created }},
-  {{ .Arg .Quota.Updated }}
+  {{ .Arg .OrgID }},
+  {{ .Arg .UserID }},
+  {{ .Arg .Target }},
+  {{ .Arg .Limit }},
+  {{ .Arg .Created }},
+  {{ .Arg .Updated }}
 )
