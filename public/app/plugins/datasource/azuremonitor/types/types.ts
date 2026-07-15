@@ -265,6 +265,7 @@ export interface AzureAPIResponse<T> {
   };
   status?: number;
   statusText?: string;
+  nextLink?: string;
 }
 
 export interface AzureLogAnalyticsTable {
