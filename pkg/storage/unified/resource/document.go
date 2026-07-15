@@ -42,15 +42,6 @@ type DocumentBuilderInfo struct {
 	// Complicated builders (eg dashboards!) will be declared dynamically and managed by the ResourceServer
 	Namespaced NamespacedDocumentSupplier
 
-	// SearchFieldsHash is a stable hex hash over the SearchFieldDefinition
-	// slices registered for GroupResource across every version. The hash is
-	// stored in IndexBuildInfo when an index is built and re-checked
-	// whenever a rebuild is considered, so the index is rebuilt
-	// automatically when index-affecting search-field metadata changes.
-	//
-	// Empty when the builder does not use a SearchFieldsProvider.
-	SearchFieldsHash string
-
 	// SearchFieldsProvider is the manifest-driven source of truth for this
 	// builder's search fields. When non-nil, the bleve mapping for
 	// GroupResource is built from the provider's SearchFieldDefinition
@@ -74,21 +65,6 @@ func SearchableFieldsFromProvider(p SearchFieldsProvider, group, resource string
 		Resource: resource,
 	})
 	return NewSearchableDocumentFields(SearchFieldDefinitionsToTableColumns(sfds))
-}
-
-// SearchFieldsHashesForBuilders returns a (group, resource) map of
-// SearchFieldsHash values collected from the given DocumentBuilderInfo
-// entries. Empty hashes are skipped so consumers can use len(...) == 0 as a
-// shorthand for "no expected hash".
-func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[LowerGroupResource]string {
-	out := map[LowerGroupResource]string{}
-	for _, b := range builders {
-		if b.SearchFieldsHash == "" {
-			continue
-		}
-		out[NewLowerGroupResource(b.GroupResource.Group, b.GroupResource.Resource)] = b.SearchFieldsHash
-	}
-	return out
 }
 
 type DocumentBuilderSupplier interface {

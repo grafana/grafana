@@ -140,3 +140,17 @@ func SearchFieldProviders(manifests []app.Manifest) (map[LowerGroupResource]Sear
 	}
 	return out, nil
 }
+
+// SearchFieldsHashesForProviders returns the per-kind index-affecting hash for
+// each provider in the map. Deriving the change-detection hashes from the same
+// providers that drive the mappings keeps the two in step, so an index rebuild
+// is triggered exactly when the fields that shape the mapping change.
+func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchFieldsProvider) map[LowerGroupResource]string {
+	out := make(map[LowerGroupResource]string, len(providers))
+	for key, p := range providers {
+		if h := p.IndexAffectingHash(key.Group, key.Resource); h != "" {
+			out[key] = h
+		}
+	}
+	return out
+}
