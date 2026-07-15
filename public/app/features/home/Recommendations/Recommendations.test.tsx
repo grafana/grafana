@@ -247,6 +247,18 @@ describe('Recommendations', () => {
     expect(screen.queryByText(/only user here/)).not.toBeInTheDocument();
   });
 
+  it('renders the section with a count skeleton while the org-user lookup is pending', async () => {
+    mockAllAppsEnabled();
+    mockFetchOrgUserCount.mockImplementation(() => new Promise(() => {}));
+
+    render(<Recommendations />);
+
+    expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Invite teammates/ })).toBeInTheDocument();
+    expect(screen.getByTestId('recommendation-context-skeleton')).toBeInTheDocument();
+    expect(screen.queryByText(/users in this organization/)).not.toBeInTheDocument();
+  });
+
   it('hides the section when nothing is recommendable and the user cannot invite', async () => {
     mockAllAppsEnabled();
     jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action !== AccessControlAction.OrgUsersAdd);
@@ -320,6 +332,26 @@ describe('Recommendations', () => {
     expect(mockInventory).toHaveBeenCalledTimes(1);
     expect(mockHealth).toHaveBeenCalledTimes(1);
     expect(mockCpu).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not run Kubernetes queries while collapsed from a stored preference, mounts once on Show', async () => {
+    window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
+    const mockResolve = jest.mocked(resolveKubernetesDatasource);
+    mockResolve.mockClear();
+
+    const { user } = render(<Recommendations />);
+
+    await screen.findByText('Recommendations for your stack');
+    expect(mockResolve).not.toHaveBeenCalled();
+
+    await user.click(await screen.findByRole('button', { name: 'Show' }));
+    await waitFor(() => expect(mockResolve).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    await screen.findByRole('button', { name: 'Show' });
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+    expect(mockResolve).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
   });
 
   it('loads the collapsed state from local storage', async () => {
