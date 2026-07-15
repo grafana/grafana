@@ -53,16 +53,19 @@ function deepInterpolate(sceneObj: SceneObject, value: unknown): unknown {
 }
 
 function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefined {
-  // A plugin that failed to load (unknown viz type, library-panel load failure,
-  // plugin crash) is a hard error independent of any query, and can occur on
-  // panels that have no data provider at all, so surface it before anything else.
-  const pluginLoadError = vizPanel.state._pluginLoadError;
-  if (pluginLoadError) {
+  // A missing/unknown plugin throws on import and sets `_pluginLoadError`; a module
+  // that fails to compile resolves to an error plugin (`loadError`) without throwing.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- loadError is set ad-hoc by getPanelPluginError, not on the PanelPlugin type
+  const pluginCompileFailed = (vizPanel.getPlugin() as { loadError?: boolean } | undefined)?.loadError;
+  const pluginError =
+    vizPanel.state._pluginLoadError ??
+    (pluginCompileFailed ? `Panel plugin failed to load: ${vizPanel.state.pluginId}` : undefined);
+  if (pluginError) {
     return {
       loadingState: LoadingState.Error,
       hasError: true,
       hasNoData: false,
-      errors: [{ source: 'plugin', message: pluginLoadError }],
+      errors: [{ source: 'plugin', message: pluginError }],
     };
   }
 
@@ -86,12 +89,8 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
     return { loadingState: state, hasError: false, hasNoData: false };
   }
 
-  // Consolidate every error source into a single structured `errors` array
-  // (mirrors the query-errors-plus-error-notices model of the standard
-  // StandardErrorsAndNoticesInspector). Query errors come from DataQueryError
-  // (falling back to the deprecated single `error`); `data.message` holds the
-  // text for HTTP/backend errors. Entries with no usable field are dropped so
-  // hasError never flips true on an empty `{}`.
+  // `data.message` holds the text for HTTP/backend errors; entries with no usable
+  // field are dropped so hasError never flips true on an empty `{}`.
   const sourceErrors: DataQueryError[] = errors?.length ? errors : error ? [error] : [];
   const errorList: PanelRuntimeError[] = sourceErrors
     .map((e): PanelRuntimeError => {
@@ -105,8 +104,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
     })
     .filter((d) => d.message !== undefined || d.refId !== undefined || d.type !== undefined);
 
-  // Data-frame notices, deduped across frames. Error-severity notices are a real
-  // error channel, so fold them into `errors`; info/warning stay as notices.
+  // Error-severity notices are a real error channel, so fold them into `errors`.
   const notices: PanelRuntimeNotice[] = [];
   const seen = new Set<string>();
   if (Array.isArray(series)) {

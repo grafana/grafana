@@ -679,7 +679,7 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 
 - `loadingState` — the raw scene loading state (`NotStarted`, `Loading`, `Streaming`, `Done`, `Error`). Whether a panel is loading is derivable from this, so no separate `isLoading` is returned.
 - `hasError` / `hasNoData` — reported explicitly because `loadingState` does not imply them: a `Done` panel can still carry errors (a query error or an error-severity notice) or return no data.
-- `errors` — every panel error in one structured array. `source` (`query` / `plugin` / `notice`) says where the error came from; `message` plus `refId`/`type` (query errors only) are a curated subset of `@grafana/data`'s `DataQueryError`. Consolidates all channels: query/datasource errors, error-severity data-frame notices, and plugin load failures (unknown viz type, library-panel load failure).
+- `errors` — every panel error in one structured array. `source` (`query` / `plugin` / `notice`) says where the error came from; `message` plus `refId`/`type` (query errors only) are a curated subset of `@grafana/data`'s `DataQueryError`. Consolidates all channels: query/datasource errors, error-severity data-frame notices, and plugin failures (unknown/missing viz type, library-panel load failure, or a module that fails to compile).
 - `notices` — non-error (`info` / `warning`) data-frame notices, deduped across frames. Error-severity notices are folded into `errors` instead.
 
 `dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.

@@ -4,6 +4,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
+  type PanelPlugin,
   toDataFrame,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -414,6 +415,26 @@ describe('Panel mutation commands', () => {
         hasNoData: false,
         errors: [{ source: 'plugin', message: 'Failed to load panel plugin' }],
       });
+    });
+
+    it('includeStatus surfaces a plugin compile error (loadError) even without _pluginLoadError', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Compile Error Panel');
+      attachPanelData(scene, 'Compile Error Panel', makePanelData({ state: LoadingState.Done }));
+      const panel = scene.state.body.getVizPanels().find((p) => p.state.title === 'Compile Error Panel')!;
+      // Compile failure: error plugin with loadError, no _pluginLoadError set.
+      jest.spyOn(panel, 'getPlugin').mockReturnValue({ loadError: true } as unknown as PanelPlugin);
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(true);
+      expect(status?.loadingState).toBe(LoadingState.Error);
+      expect(status?.errors?.[0].source).toBe('plugin');
     });
 
     it('includeStatus reports hasNoData for a done panel with no series', async () => {
