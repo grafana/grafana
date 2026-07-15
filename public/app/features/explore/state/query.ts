@@ -13,6 +13,7 @@ import {
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
+  isLoadingStateRunning,
   LoadingState,
   LogsVolumeType,
   type QueryFixAction,
@@ -75,11 +76,7 @@ export const selectIsWaitingForData = (exploreId: string) => {
     if (!panelState) {
       return false;
     }
-    return panelState.queryResponse
-      ? panelState.queryResponse.state === LoadingState.Loading ||
-          panelState.queryResponse.state === LoadingState.Streaming ||
-          panelState.queryResponse.state === LoadingState.PartialResult
-      : false;
+    return panelState.queryResponse ? isLoadingStateRunning(panelState.queryResponse.state) : false;
   };
 };
 

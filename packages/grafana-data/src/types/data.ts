@@ -28,12 +28,22 @@ export enum LoadingState {
 }
 
 /**
- * Helper to check if a loading state represents an in-progress query.
- * Returns true for Loading, Streaming, or PartialResult states.
+ * Returns true when a {@link LoadingState} indicates the query is still running.
  * @alpha
  */
-export function isLoadingStateInProgress(state: LoadingState): boolean {
+export function isLoadingStateRunning(state: LoadingState): boolean {
   return state === LoadingState.Loading || state === LoadingState.Streaming || state === LoadingState.PartialResult;
+}
+
+/**
+ * Returns true when a {@link LoadingState} indicates more data updates may arrive before Done.
+ * Unlike {@link isLoadingStateRunning}, this excludes Loading — the initial
+ * loading state does not use incremental update semantics (dedup bypass, relative
+ * time range re-evaluation, etc.).
+ * @alpha
+ */
+export function isLoadingStateIncremental(state: LoadingState): boolean {
+  return state === LoadingState.Streaming || state === LoadingState.PartialResult;
 }
 
 /**

@@ -13,7 +13,7 @@
 
 import { type z } from 'zod';
 
-import { type DataFrame, LoadingState } from '@grafana/data';
+import { type DataFrame, isLoadingStateRunning, LoadingState } from '@grafana/data';
 import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
@@ -77,11 +77,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
 
   const { state, errors, error, series } = panelData;
 
-  const isLoading =
-    state === LoadingState.Loading ||
-    state === LoadingState.Streaming ||
-    state === LoadingState.PartialResult ||
-    state === LoadingState.NotStarted;
+  const isLoading = state === LoadingState.NotStarted || isLoadingStateRunning(state);
   if (isLoading) {
     return { isLoading: true, hasError: false, hasNoData: false };
   }
