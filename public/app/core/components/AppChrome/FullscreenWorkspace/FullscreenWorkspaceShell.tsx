@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { type RefCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { usePluginComponent } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, ErrorBoundary, PageLoader, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 const FULLSCREEN_WORKSPACE_COMPONENT_ID = 'grafana-assistant-app/fullscreen-workspace/v1';
@@ -25,16 +26,63 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
     FULLSCREEN_WORKSPACE_COMPONENT_ID
   );
 
-  if (!PluginWorkspace || isLoading) {
-    return null;
+  if (isLoading) {
+    return (
+      <div className={styles.root}>
+        <PageLoader />
+      </div>
+    );
+  }
+
+  // No component once loading has finished means the plugin isn't available (not installed,
+  // disabled, or failed to load). Show a minimal error rather than a blank page.
+  if (!PluginWorkspace) {
+    return (
+      <div className={styles.root}>
+        <WorkspaceError />
+      </div>
+    );
   }
 
   return (
     <div className={styles.root}>
-      <PluginWorkspace
-        workspaceHostRef={workspaceHostRef}
-        onExitFullscreenWorkspace={() => chrome.setFullscreenWorkspace(false)}
-      />
+      <ErrorBoundary boundaryName="fullscreen-workspace">
+        {({ error }) =>
+          // A crash inside the plugin workspace is contained here so it can't take down the
+          // whole app; fall back to the same minimal error message.
+          error ? (
+            <WorkspaceError />
+          ) : (
+            <PluginWorkspace
+              workspaceHostRef={workspaceHostRef}
+              onExitFullscreenWorkspace={() => chrome.setFullscreenWorkspace(false)}
+            />
+          )
+        }
+      </ErrorBoundary>
+    </div>
+  );
+}
+
+function WorkspaceError() {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.message}>
+      <EmptyState
+        variant="not-found"
+        role="alert"
+        message={t('navigation.fullscreen-workspace.error-title', 'Workspace unavailable')}
+        button={
+          <Button variant="secondary" onClick={() => window.location.reload()}>
+            {t('navigation.fullscreen-workspace.error-reload', 'Reload page')}
+          </Button>
+        }
+      >
+        {t(
+          'navigation.fullscreen-workspace.error-message',
+          'The Grafana Assistant workspace could not be loaded.'
+        )}
+      </EmptyState>
     </div>
   );
 }
@@ -45,5 +93,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     height: '100vh',
     background: theme.colors.background.canvas,
+  }),
+  message: css({
+    display: 'flex',
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing(2),
   }),
 });

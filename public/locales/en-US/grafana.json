@@ -12260,7 +12260,10 @@
       }
     },
     "fullscreen-workspace": {
-      "enter": "Enter Workspace"
+      "enter": "Enter Workspace",
+      "error-message": "The Grafana Assistant workspace could not be loaded.",
+      "error-reload": "Reload page",
+      "error-title": "Workspace unavailable"
     },
     "help": {
       "aria-label": "Help",

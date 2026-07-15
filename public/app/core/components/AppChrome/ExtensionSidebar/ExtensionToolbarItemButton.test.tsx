@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react';
+import { render, screen, fireEvent } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { render, screen, fireEvent } from 'test/test-utils';
 
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 

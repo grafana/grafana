@@ -1,8 +1,8 @@
 import { type RefCallback } from 'react';
+import { getWrapper, render, screen } from 'test/test-utils';
 
 import { usePluginComponent } from '@grafana/runtime';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
-import { getWrapper, render, screen } from 'test/test-utils';
 
 import { FullscreenWorkspaceShell } from './FullscreenWorkspaceShell';
 
@@ -29,26 +29,28 @@ describe('FullscreenWorkspaceShell', () => {
     jest.clearAllMocks();
   });
 
-  it('renders nothing while the plugin component is loading', () => {
+  it('renders a loading indicator while the plugin component is loading', () => {
     usePluginComponentMock.mockReturnValue({
       component: null,
       isLoading: true,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    const { container } = renderShell();
+    renderShell();
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
   });
 
-  it('renders nothing when no plugin component is available', () => {
+  it('renders an error when no plugin component is available', () => {
     usePluginComponentMock.mockReturnValue({
       component: undefined,
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    const { container } = renderShell();
+    renderShell();
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('Workspace unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload page' })).toBeInTheDocument();
   });
 
   it('renders the plugin workspace and wires the platform host and exit callback', () => {
@@ -75,5 +77,24 @@ describe('FullscreenWorkspaceShell', () => {
 
     screen.getByTestId('plugin-workspace').click();
     expect(chrome.state.getValue().fullscreenWorkspace).toBe(false);
+  });
+
+  it('renders an error when the plugin workspace throws', () => {
+    const PluginWorkspace = () => {
+      throw new Error('workspace boom');
+    };
+    usePluginComponentMock.mockReturnValue({
+      component: PluginWorkspace,
+      isLoading: false,
+    } as unknown as ReturnType<typeof usePluginComponent>);
+    // React logs caught errors via console.error; silence it so jest-fail-on-console passes.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderShell();
+
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('Workspace unavailable')).toBeInTheDocument();
+
+    consoleError.mockRestore();
   });
 });

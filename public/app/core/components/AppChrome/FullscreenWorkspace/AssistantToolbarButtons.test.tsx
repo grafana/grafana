@@ -1,7 +1,7 @@
 import { createRef } from 'react';
+import { getWrapper, render, screen, fireEvent } from 'test/test-utils';
 
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
-import { getWrapper, render, screen, fireEvent } from 'test/test-utils';
 
 import { AssistantToolbarButtons } from './AssistantToolbarButtons';
 

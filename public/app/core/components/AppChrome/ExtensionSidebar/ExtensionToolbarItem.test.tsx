@@ -1,9 +1,9 @@
 import userEvent from '@testing-library/user-event';
 import { useAsync } from 'react-use';
+import { render, screen } from 'test/test-utils';
 
 import { EventBusSrv, store } from '@grafana/data';
 import { setAppEvents, usePluginLinks } from '@grafana/runtime';
-import { render, screen } from 'test/test-utils';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { ExtensionToolbarItem } from './ExtensionToolbarItem';
