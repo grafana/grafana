@@ -39,10 +39,19 @@ const destroy = jest.fn();
 // Mirrors the k8s app's persisted-choice key (grafana-k8s-app src/constants.ts K8S_STORAGE_KEY).
 const K8S_APP_STORAGE_KEY = 'grafana.k8s-app.navigation.storage';
 
+function createPrometheusListItem(ds: { uid: string; name: string; isDefault?: boolean }): DataSourceInstanceListItem {
+  return {
+    uid: ds.uid,
+    name: ds.name,
+    type: 'prometheus',
+    meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
+    readOnly: false,
+    isDefault: ds.isDefault ?? false,
+  };
+}
+
 function setDataSources(list: Array<{ uid: string; name: string; isDefault?: boolean }>) {
-  mockGetDataSourceInstanceList.mockResolvedValue(
-    list.map((ds) => ({ ...ds, type: 'prometheus' }) as DataSourceInstanceListItem)
-  );
+  mockGetDataSourceInstanceList.mockResolvedValue(list.map(createPrometheusListItem));
 }
 
 // uid -> namespace/cluster count the datasource reports; absent uid = no Kubernetes data there.
@@ -297,13 +306,14 @@ describe('Kubernetes Prometheus resolution', () => {
     expect(filters?.type).toBe('prometheus');
     const filter = filters?.filter;
     expect(filter).toBeDefined();
-    const item = (partial: { name: string; type: string; metaId: string }) =>
-      ({
-        uid: partial.name,
-        name: partial.name,
-        type: partial.type,
-        meta: { id: partial.metaId },
-      }) as unknown as DataSourceInstanceListItem;
+    const item = (partial: { name: string; type: string; metaId: string }): DataSourceInstanceListItem => ({
+      uid: partial.name,
+      name: partial.name,
+      type: partial.type,
+      meta: { id: partial.metaId } as DataSourceInstanceListItem['meta'],
+      readOnly: false,
+      isDefault: false,
+    });
     // Builtin rejected by meta.id; real and alias prometheus datasources pass.
     expect(filter!(item({ name: '-- Grafana --', type: 'datasource', metaId: 'grafana' }))).toBe(false);
     expect(filter!(item({ name: 'team-prom', type: 'prometheus', metaId: 'prometheus' }))).toBe(true);

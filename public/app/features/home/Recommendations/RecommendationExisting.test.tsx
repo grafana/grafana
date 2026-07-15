@@ -36,7 +36,14 @@ const mockFetchCpuSeries = jest.mocked(fetchClusterCpuSeries);
 const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
 const settings = { id: 'grafana-k8s-app' } as PluginMeta<{}>;
-const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as DataSourceInstanceListItem;
+const datasource: DataSourceInstanceListItem = {
+  uid: 'k8s-uid',
+  name: 'k8s-prom',
+  type: 'prometheus',
+  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
+  readOnly: false,
+  isDefault: false,
+};
 
 const healthyInventory: KubernetesInventory = { clusters: 3, pods: 247 };
 const healthyHealth: KubernetesHealth = {
