@@ -21,6 +21,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // storageWrapper wraps a rest.Storage and hides the not supported interfaces
@@ -34,6 +35,7 @@ import (
 type storageWrapper struct {
 	inner   rest.Storage
 	options dashv0.SnapshotSharingOptions
+	index   resourcepb.ResourceIndexClient
 }
 
 var (
@@ -46,9 +48,8 @@ var (
 	_ rest.TableConvertor       = (*storageWrapper)(nil)
 )
 
-// NewStorageWrapper wraps a storage to hide the rest.Creater interface.
-func NewStorageWrapper(s rest.Storage, options dashv0.SnapshotSharingOptions) rest.Storage {
-	return &storageWrapper{inner: s, options: options}
+func NewStorageWrapper(s rest.Storage, options dashv0.SnapshotSharingOptions, index resourcepb.ResourceIndexClient) rest.Storage {
+	return &storageWrapper{inner: s, options: options, index: index}
 }
 
 func (n *storageWrapper) New() runtime.Object   { return n.inner.New() }
@@ -69,11 +70,18 @@ func (n *storageWrapper) Get(ctx context.Context, name string, options *metav1.G
 	return stripSensitiveFields(obj), nil
 }
 func (n *storageWrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	obj, err := n.inner.(rest.Lister).List(ctx, options)
-	if err != nil {
-		return nil, err
+	// Field-selector lookups (e.g. spec.deleteKey) resolve to a single object;
+	// keep them on the wrapped storage. Only the plain, potentially large LIST
+	// is served from the search index.
+	fieldSelectorSet := options != nil && options.FieldSelector != nil && !options.FieldSelector.Empty()
+	if n.index == nil || fieldSelectorSet {
+		obj, err := n.inner.(rest.Lister).List(ctx, options)
+		if err != nil {
+			return nil, err
+		}
+		return stripSensitiveFieldsFromList(obj), nil
 	}
-	return stripSensitiveFieldsFromList(obj), nil
+	return n.listFromSearch(ctx, options)
 }
 func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	// GET the snapshot from inner storage (retains deleteKey, same as the deletekey subresource)
