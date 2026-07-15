@@ -16,6 +16,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/
+  assistant:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/assistant/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/machine-learning/assistant/
 ---
 
 # SQL expressions
@@ -35,7 +40,7 @@ For information about the new panel query editor experience, currently in public
 
 ## Before you begin
 
-- SQL expressions are enabled by default. You don't need to set a feature toggle or change your configuration to use them.
+- Grafana enables SQL expressions by default. You don't need to set a feature toggle or change your configuration to use them.
 - You must query a backend data source. SQL expressions don't work with frontend-only data sources.
 
 ## Transform data with SQL expressions
@@ -337,18 +342,15 @@ This approach ensures that a schema exists even when one query returns no data.
 
    ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
 
-## LLM integration
+## Grafana Assistant integration
 
-The Grafana LLM plugin seamlessly integrates AI-powered assistance into your SQL expressions workflow.
+[Grafana Assistant](ref:assistant) brings AI-powered assistance to your SQL expressions workflow. Assistant knows SQL expressions, so it can explain a query, fix syntax errors, and suggest improvements using the correct MySQL-dialect syntax, table references, and column conventions.
 
 {{< admonition type="note" >}}
-The Grafana LLM plugin is currently in public preview, meaning Grafana offers limited support, and breaking changes might occur prior to the feature being made generally available.
+Grafana Assistant is generally available on Grafana Cloud and in public preview for Grafana OSS and Grafana Enterprise. To use it with Grafana OSS or Grafana Enterprise, you must install the Assistant app and connect it to a Grafana Cloud stack. For more information, refer to the [Grafana Assistant documentation](ref:assistant).
 {{< /admonition >}}
 
-To use this integration, first [install and configure the LLM plugin](https://grafana.com/grafana/plugins/grafana-llm-app/). After installation, open your dashboard and select **Edit** to open the panel editor. Navigate to the **Queries** tab and scroll to the bottom where you'll find two new buttons positioned to the right of the **Run query** button in your SQL Expressions query.
+When Grafana Assistant is available on your instance, the SQL expression editor shows Assistant buttons to the right of the **Run query** button. When you use a button, Assistant opens in the sidebar with your SQL query, any query errors, and your schema column metadata already included as context, so it can reference the actual field names and types in your data. From there you get the full Assistant experience, including follow-up questions, conversation history, and access to the Assistant's built-in tools.
 
-{{< figure src="/media/docs/sql-expressions/sqlexpressions-LLM-integration-v12.2.png" caption="LLM integration" >}}
-
-Click **Explain query** to open a drawer that displays a detailed explanation of your query, including its interpreted business meaning and performance statistics. Once the explanation is generated, the button changes to **View explanation**.
-
-Click **Improve query** to open a suggestions drawer that contains performance and reliability enhancements, column naming best practices, and guidance on panel optimization. Click **Apply** to implement a suggestion. After you’ve interacted with the interface, you'll see a **Suggestions** button for quick access. Newer suggestions appear at the top, with older ones listed below, creating a history of improvements. If your SQL query has a parsing error, such as a syntax issue, the LLM will attempt to provide a corrected version. The LLM automatically identifies errors and helps you rewrite the query correctly.
+- **Explain query**: Describes what your query does, including its interpreted meaning.
+- **Improve query**: Suggests performance, reliability, and readability enhancements, and fixes syntax errors. If you haven't written a query yet, this appears as **Generate suggestion** and proposes a starting query, such as a join, aggregation, filter, percentile, or time-based window function, using your available queries.
