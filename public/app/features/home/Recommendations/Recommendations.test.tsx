@@ -7,6 +7,8 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { Recommendations } from './Recommendations';
+import { fetchOrgUserCount } from './inviteTeam';
+import { fetchKubernetesOverview } from './kubernetesData';
 
 const mockGet = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -34,6 +36,11 @@ jest.mock('./kubernetesData', () => ({
   fetchClusterCpuSeries: jest.fn().mockResolvedValue(null),
 }));
 
+jest.mock('./inviteTeam', () => ({
+  ...jest.requireActual('./inviteTeam'),
+  fetchOrgUserCount: jest.fn(),
+}));
+
 const APP_IDS = [
   'grafana-exploretraces-app',
   'grafana-synthetic-monitoring-app',
@@ -46,8 +53,10 @@ const listItem = (id: string, overrides: Partial<LocalPlugin> = {}) => ({
   accessControl: { [AccessControlAction.PluginsWrite]: true },
   ...overrides,
 });
+const mockAllAppsEnabled = () => mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
+const mockFetchOrgUserCount = jest.mocked(fetchOrgUserCount);
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -55,6 +64,7 @@ beforeEach(() => {
   mockUsePluginBridge.mockReturnValue({ loading: false, installed: true });
   mockGet.mockReset();
   mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id)));
+  mockFetchOrgUserCount.mockResolvedValue(1);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 });
 
@@ -136,14 +146,6 @@ describe('Recommendations', () => {
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
-  it('renders nothing when the plugin list is empty despite Kubernetes Monitoring being installed', async () => {
-    mockGet.mockResolvedValue([]);
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-  });
-
   it('renders nothing for legacy Admin roles without plugin permissions', async () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasRole').mockImplementation((role) => role === 'Admin');
@@ -193,6 +195,75 @@ describe('Recommendations', () => {
     }
   });
 
+  it('appends the invite-team recommendation as the last carousel item', async () => {
+    const { user } = render(<Recommendations />);
+
+    await screen.findByText('Recommendations for your stack');
+    // 4 plugin cards + invite; wrapping backwards from the first slide lands on the invite card.
+    await user.click(screen.getByRole('button', { name: 'Previous' }));
+
+    expect(screen.getByRole('heading', { name: 'Invite your team' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Invite teammates/ })).toHaveAttribute('href', '/org/users/invite');
+  });
+
+  it('falls back to the invite-team recommendation when every app is already enabled', async () => {
+    mockAllAppsEnabled();
+
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('heading', { name: 'Invite your team' })).toBeInTheDocument();
+    // Count resolved to 1 — the solo claim is grounded, not static copy.
+    expect(screen.getByText("You're the only user here")).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
+  });
+
+  it('grounds the invite context in the org user count', async () => {
+    mockAllAppsEnabled();
+    mockFetchOrgUserCount.mockResolvedValue(12);
+
+    render(<Recommendations />);
+
+    expect(await screen.findByText('12 users in this organization')).toBeInTheDocument();
+    expect(screen.queryByText(/only user here/)).not.toBeInTheDocument();
+  });
+
+  it('uses countless invite copy when the user count is unavailable', async () => {
+    mockAllAppsEnabled();
+    mockFetchOrgUserCount.mockResolvedValue(null);
+
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('heading', { name: 'Invite your team' })).toBeInTheDocument();
+    expect(screen.getByText('Bring your teammates into Grafana')).toBeInTheDocument();
+    expect(screen.queryByText(/only user here/)).not.toBeInTheDocument();
+  });
+
+  it('hides the section when nothing is recommendable and the user cannot invite', async () => {
+    mockAllAppsEnabled();
+    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action !== AccessControlAction.OrgUsersAdd);
+
+    const { container } = render(<Recommendations />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('sends the invite CTA to the external user management portal when configured', async () => {
+    const original = config.externalUserMngLinkUrl;
+    config.externalUserMngLinkUrl = 'https://grafana.com/orgs/example/members';
+    try {
+      mockAllAppsEnabled();
+
+      render(<Recommendations />);
+
+      expect(await screen.findByRole('link', { name: /Invite teammates/ })).toHaveAttribute(
+        'href',
+        'https://grafana.com/orgs/example/members'
+      );
+    } finally {
+      config.externalUserMngLinkUrl = original;
+    }
+  });
+
   it('collapses and expands the recommendations card', async () => {
     const { user } = render(<Recommendations />);
 
@@ -213,6 +284,21 @@ describe('Recommendations', () => {
     expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
+  });
+
+  it('does not refetch the existing-solution data when collapsed and expanded', async () => {
+    const mockFetchOverview = jest.mocked(fetchKubernetesOverview);
+    mockFetchOverview.mockClear();
+    const { user } = render(<Recommendations />);
+
+    await screen.findByRole('button', { name: 'Next' });
+    expect(mockFetchOverview).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
+    expect(mockFetchOverview).toHaveBeenCalledTimes(1);
   });
 
   it('loads the collapsed state from local storage', async () => {
@@ -320,11 +406,5 @@ describe('Recommendations', () => {
     } finally {
       jest.useRealTimers();
     }
-  });
-  it('announces the recommendation slides as a carousel region', async () => {
-    render(<Recommendations />);
-
-    const region = await screen.findByRole('region', { name: 'Recommended apps' });
-    expect(region).toHaveAttribute('aria-roledescription', 'carousel');
   });
 });

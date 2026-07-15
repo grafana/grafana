@@ -10894,13 +10894,34 @@
         "description": "Add distributed tracing to see how requests flow between services and where they slow down.",
         "title": "Trace requests across services"
       },
+      "invite-team": {
+        "action": "Invite teammates",
+        "context": "Bring your teammates into Grafana",
+        "description": "Observability is a team sport — share dashboards, alerts, and on-call with your teammates.",
+        "title": "Invite your team",
+        "user-count_one": "You're the only user here",
+        "user-count_other": "{{count}} users in this organization"
+      },
+      "kubernetes": {
+        "action": "Open K8s app",
+        "alerts-firing_one": "{{count}} alert firing",
+        "alerts-firing_other": "{{count}} alerts firing",
+        "cluster-cpu": "Cluster CPU · last 24h",
+        "clusters_one": "{{count}} cluster",
+        "clusters_other": "{{count}} clusters",
+        "pods_one": "{{count}} pod",
+        "pods_other": "{{count}} pods",
+        "title": "Kubernetes Monitoring",
+        "view": "View"
+      },
       "next": "Next",
       "pause": "Pause",
       "previous": "Previous",
       "recommended": "Recommended",
       "resume": "Resume",
       "show": "Show",
-      "switch": "Switch to another app you run",
+      "switch": "Recommendations follow the selected solution",
+      "switchSolution": "Switch solution",
       "synthetic-monitoring": {
         "action": "Add Synthetic Monitoring",
         "context": "Catch outages before your users do",
