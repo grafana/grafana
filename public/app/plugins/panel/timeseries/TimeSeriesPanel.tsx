@@ -20,6 +20,7 @@ import {
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
@@ -221,13 +222,7 @@ export const TimeSeriesPanel = ({
                       }
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
-                      assistantContext={{
-                        panelId: id,
-                        panelTitle: title,
-                        timeRange,
-                        dataSeries: data.series,
-                        annotations: data.annotations,
-                      }}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data })}
                     />
                   );
                 }}

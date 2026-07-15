@@ -3954,6 +3954,9 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": "Add to Assistant"
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
@@ -15722,9 +15725,6 @@
       "cluster-header": "annotations",
       "tooltip-delete": "Delete",
       "tooltip-edit": "Edit"
-    },
-    "assistant-tooltip-button": {
-      "add-to-assistant": "Add to Assistant"
     },
     "category-axis": "Axis",
     "config": {

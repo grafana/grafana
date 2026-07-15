@@ -6,6 +6,7 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   type InterpolateFunction,
+  type PanelProps,
   reduceField,
   ReducerID,
   type TimeRange,
@@ -15,7 +16,7 @@ const EXEMPLAR_FRAME_NAME = 'exemplar';
 const XYMARK_FRAME_NAME = 'xymark';
 const EXEMPLAR_TIME_FIELD = 'Time';
 const EXEMPLAR_VALUE_FIELD = 'Value';
-// Cap how many annotations/exemplars we attach so the context payload stays bounded.
+// Bound the context payload size.
 const MAX_MATCHES = 5;
 
 const SERIES_REDUCERS = [
@@ -30,19 +31,32 @@ const SERIES_REDUCERS = [
   ReducerID.stdDev,
 ];
 
-/** Panel-level inputs assembled in TimeSeriesPanel and threaded down to the tooltip button. */
+/** Panel-level context for the tooltip's assistant button. */
 export interface AssistantTooltipContext {
   panelId: number;
   panelTitle: string;
   timeRange: TimeRange;
-  /** Pre-alignment frames; used to resolve the hovered series' refId/query. */
+  /** Pre-alignment frames; resolves the series' refId/query. */
   dataSeries: DataFrame[];
   /** Annotation + exemplar frames (PanelData.annotations). */
   annotations?: DataFrame[];
 }
 
+/** Builds the tooltip's assistant context from standard panel props. */
+export function getAssistantTooltipContext(
+  props: Pick<PanelProps, 'id' | 'title' | 'timeRange' | 'data'>
+): AssistantTooltipContext {
+  return {
+    panelId: props.id,
+    panelTitle: props.title,
+    timeRange: props.timeRange,
+    dataSeries: props.data.series,
+    annotations: props.data.annotations,
+  };
+}
+
 interface BuildArgs extends AssistantTooltipContext {
-  /** uPlot-aligned frame (field 0 is the x/time field). */
+  /** uPlot-aligned frame (field 0 is x). */
   alignedFrame: DataFrame;
   seriesIdx: number;
   dataIdxs: Array<number | null>;
@@ -63,7 +77,7 @@ function resolveMacro(replaceVariables: InterpolateFunction, macro: string): str
   return out && !out.includes('${') ? out : undefined;
 }
 
-/** Sampling interval around the hovered index, used as the annotation/exemplar match window. */
+/** Match window: the sampling interval around the hovered index. */
 function getStepMs(xValues: number[], idx: number): number {
   const cur = xValues[idx];
   const next = xValues[idx + 1];
@@ -125,7 +139,7 @@ function matchExemplars(frames: DataFrame[], xVal: number, windowMs: number) {
     if (!timeF) {
       continue;
     }
-    // String fields carry exemplar identity (traceID, spanID, etc.).
+    // String fields carry exemplar identity
     const stringFields = frame.fields.filter((f) => f.type === FieldType.string);
 
     for (let i = 0; i < frame.length; i++) {
@@ -145,7 +159,7 @@ function matchExemplars(frames: DataFrame[], xVal: number, windowMs: number) {
   return matches;
 }
 
-/** Builds a single context pill for a hovered data point (point + its series and panel). */
+/** Builds a single context pill for a hovered data point. */
 export function buildDatapointAssistantContext({
   alignedFrame,
   seriesIdx,
@@ -170,14 +184,13 @@ export function buildDatapointAssistantContext({
   const xVal = xField.values[xIdx];
   const value = field.values[dataIdx];
   const isTime = xField.type === FieldType.time;
-  // Formatted x (respects the panel's time format/zone), used for the pill label.
   const xDisp = formattedValueToString(xField.display!(xVal));
   const timestamp = isTime ? toIso(xVal) : xDisp;
   const displayValue = formattedValueToString(field.display!(value));
   const unit = field.config?.unit;
   const labels = field.labels ?? {};
 
-  // The aligned field's origin points back to the source frame and its query.
+  // Origin maps the aligned field back to its source frame.
   const origin = field.state?.origin;
   const sourceFrame = origin ? dataSeries[origin.frameIndex] : undefined;
   const refId = sourceFrame?.refId ?? alignedFrame.refId;
@@ -207,7 +220,7 @@ export function buildDatapointAssistantContext({
     title: `${displayValue} @ ${xDisp} › ${seriesName} › ${panelTitle}`,
     icon: 'crosshair',
     data: {
-      kind: 'timeseries-datapoint',
+      kind: 'viz-datapoint',
       point: {
         timestamp,
         value,

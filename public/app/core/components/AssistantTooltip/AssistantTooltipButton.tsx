@@ -19,21 +19,18 @@ function getActiveAssistantChatId(): string | undefined {
 }
 
 interface AssistantTooltipButtonProps {
-  /** uPlot-aligned frame (field 0 is the x/time field). */
+  /** uPlot-aligned frame (field 0 is x). */
   series: DataFrame;
   /** Index of the hovered series field within `series.fields`. */
   seriesIdx: number;
   /** Per-field hovered row indices (field 0 holds the x index). */
   dataIdxs: Array<number | null>;
   replaceVariables: InterpolateFunction;
-  /** Panel-level context assembled by TimeSeriesPanel. */
+  /** Panel-level context assembled by the viz panel. */
   context: AssistantTooltipContext;
 }
 
-/**
- * "Add to Assistant" button for a hovered data point.
- * Opens the assistant with the point, series and panel as a single context pill.
- */
+/** "Add to Assistant" button that sends a hovered data point to the assistant as a context pill. */
 export function AssistantTooltipButton({
   series,
   seriesIdx,
@@ -78,7 +75,7 @@ export function AssistantTooltipButton({
   return (
     <div className={styles.footerSection}>
       <Button icon="ai-sparkle" variant="secondary" size="sm" onClick={handleClick}>
-        {t('timeseries.assistant-tooltip-button.add-to-assistant', 'Add to Assistant')}
+        {t('assistant-tooltip.add-to-assistant', 'Add to Assistant')}
       </Button>
     </div>
   );

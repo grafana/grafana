@@ -130,7 +130,7 @@ describe('AssistantTooltipButton', () => {
       'structured',
       expect.objectContaining({
         data: expect.objectContaining({
-          kind: 'timeseries-datapoint',
+          kind: 'viz-datapoint',
           point: expect.objectContaining({ value: 42 }),
           series: expect.objectContaining({
             name: 'cpu host-a',

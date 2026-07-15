@@ -21,11 +21,10 @@ import {
   getFieldDisplayItems,
   isTooltipScrollable,
 } from '@grafana/ui';
+import { AssistantTooltipButton } from 'app/core/components/AssistantTooltip/AssistantTooltipButton';
+import { type AssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 
 import { getFieldActions } from '../status-history/utils';
-
-import { AssistantTooltipButton } from './AssistantTooltipButton';
-import { type AssistantTooltipContext } from './buildAssistantContext';
 
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
@@ -56,7 +55,7 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
-  /** When provided, renders an "Ask Assistant" button in the pinned tooltip footer. */
+  /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
 
