@@ -119,6 +119,7 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 		return fmt.Errorf("get legacy DB: %w", err)
 	}
 
+	// Check if quota is already defined in the DB
 	findQuery := findQuotaQuery{
 		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 		QuotaTable:  dbHelper.Table("quota"),
