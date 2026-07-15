@@ -65,28 +65,84 @@ Refer to [Role-based access control (RBAC)](https://grafana.com/docs/grafana/<GR
 
 Explore consists of a toolbar, outline, query editor, the ability to add multiple queries, a query history and a query inspector.
 
-- **Outline** - Keeps track of the queries and visualization panels created in Explore. Refer to [Content outline](#content-outline) for more detail.
+### Content outline
 
-- **Toolbar** - Provides quick access to frequently used tools and settings.
-  - **Data source picker** - Select a data source from the dropdown menu, or use absolute time.
-  - **Split** - Click to compare visualizations side by side. Refer to [Split and compare](#split-and-compare) for additional detail.
-  - **Add** - Click to add your exploration to a dashboard. You can also use this to declare an incident,create a forecast, detect outliers and to run an investigation.
-  - **Time picker** - Select a time range form the time picker. You can also enter an absolute time range. Refer to [Time picker](#time-picker) for more information.
-  - **Run query** - Click to run your query.
+The content outline is a side navigation bar that keeps track of the queries and visualizations you create in Explore.
+The outline helps you quickly navigate between queries and visualizations.
+It works in a split view, with a separate outline generated for each pane.
 
-- **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
+To open the content outline, click the Outline button in the top left corner of the Explore screen.
+
+You can then click on any panel icon in the content outline to navigate to that panel.
+
+### Toolbar
+
+The toolbar provides quick access to frequently used tools and settings.
+  
+- **Data source picker** - Select a data source from the dropdown menu, or use absolute time.
+- **Split** - Click to compare visualizations side by side. Refer to [Split and compare](#split-and-compare) for additional detail.
+- **Add** - Click to add your exploration to a dashboard. You can also use this to declare an incident,create a forecast, detect outliers and to run an investigation.
+- **Time picker** - Select a time range form the time picker. You can also enter an absolute time range. Refer to [Time picker](#time-picker) for more information.
+- **Run query** - Click to run your query.
+
+#### Time picker
+
+Use the time picker to select a time range for your query. The default is **last hour**. You can select a different option from the dropdown or use an absolute time range. You can also change the timezone associated with the query, or use a fiscal year.
+
+1. Click **Change time settings** to change the timezone or apply a fiscal year.
+
+Refer to [Set dashboard time range](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#set-dashboard-time-range) for more information on absolute and relative time ranges. You can also [control the time range using a URL](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#control-the-time-range-using-a-url).
+
+#### Split and compare
+
+The split view enables easy side-by-side comparison of visualizations or simultaneous viewing of related data on a single page.
+
+To open the split view:
+
+1. Click the split button to duplicate the current query and split the page into two side-by-side queries.
+1. Run and re-run queries as often as needed.
+
+You can select a different data source, or different metrics and label filters for the new query, allowing you to compare the same query across two different servers or compare the staging environment with the production environment.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-explore-split-10.1.png" max-width= "950px" caption="Screenshot of Explore screen split" >}}
+
+You can also link the time pickers for both panels by clicking on one of the time-sync buttons attached to the time pickers. When linked, changing the time in one panel automatically updates the other, keeping the start and end times synchronized. This ensures that both split panels display data for the same time interval.
+
+Click **Close** to quit split view.
+
+### Query editor
+
+The query editor is the interface where you construct the query for a specific data source.
+Query editor elements differ based on data source.
+To run queries across multiple data sources you need to select **Mixed** from the data source picker.
+When you select Mixed, you can select a different data source for each new query that you add.
+
+You can also reuse previously created queries with the saved queries feature.
+
+#### Saved queries
+
+{{< admonition type="note" >}}
+[Saved queries](ref:saved-queries) is only available on Grafana Enterprise and Grafana Cloud.
+{{< /admonition >}}
+
   - **Saved queries**:
     - **Save query** - To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
     - **Replace query** - Reuse a saved query.
   - **+ Add query** - Add an additional query.
   - **+ Add from saved queries** - Add an additional query by reusing a saved query.
 
-  {{< admonition type="note" >}}
-  [Saved queries](ref:saved-queries) is only available on Grafana Enterprise and Grafana Cloud.
-  {{< /admonition >}}
+### Query history
 
-- **Query history** - Query history contains the list of queries that you created in Explore. You can also add queries from the history to your saved queries. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
-- **Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**. Refer to [Query inspector in Explore](/docs/grafana/latest/explore/explore-inspector/) for additional information.
+The query history contains the list of queries that you created in Explore.
+You can also add queries from the history to your saved queries.
+Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
+
+### Query inspector
+
+The query inspector provides detailed statistics regarding your query.
+Inspector functions as a kind of debugging tool that "inspects" your query.
+It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
+Refer to [Query inspector in Explore](/docs/grafana/latest/explore/explore-inspector/) for additional information.
 
 ## Access Explore
 
@@ -107,47 +163,6 @@ Some query editors provide a **Kick start your query** option, which gives you a
 Based on specific data source, certain query editors allow you to select the label or labels to add to your query. Labels are fields that consist of key/value pairs representing information in the data. Some data sources allow for selecting fields.
 
 1. Click **Run query** in the upper right to run your query.
-
-## Content outline
-
-The content outline is a side navigation bar that keeps track of the queries and visualizations you created in Explore. It allows you to navigate between them quickly.
-
-The content outline works in a split view, with a separate outline generated for each pane.
-
-To open the content outline:
-
-1. Click the Outline button in the top left corner of the Explore screen.
-
-You can then click on any panel icon in the content outline to navigate to that panel.
-
-## Split and compare
-
-The split view enables easy side-by-side comparison of visualizations or simultaneous viewing of related data on a single page.
-
-To open the split view:
-
-1. Click the split button to duplicate the current query and split the page into two side-by-side queries.
-1. Run and re-run queries as often as needed.
-
-You can select a different data source, or different metrics and label filters for the new query, allowing you to compare the same query across two different servers or compare the staging environment with the production environment.
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-explore-split-10.1.png" max-width= "950px" caption="Screenshot of Explore screen split" >}}
-
-You can also link the time pickers for both panels by clicking on one of the time-sync buttons attached to the time pickers. When linked, changing the time in one panel automatically updates the other, keeping the start and end times synchronized. This ensures that both split panels display data for the same time interval.
-
-Click **Close** to quit split view.
-
-## Time picker
-
-Use the time picker to select a time range for your query. The default is **last hour**. You can select a different option from the dropdown or use an absolute time range. You can also change the timezone associated with the query, or use a fiscal year.
-
-1. Click **Change time settings** to change the timezone or apply a fiscal year.
-
-Refer to [Set dashboard time range](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#set-dashboard-time-range) for more information on absolute and relative time ranges. You can also [control the time range using a URL](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#control-the-time-range-using-a-url).
-
-## Mixed data source
-
-Select **Mixed** from the data source dropdown to run queries across multiple data sources in the same panel. When you select Mixed, you can select a different data source for each new query that you add.
 
 ## Share Explore URLs
 
