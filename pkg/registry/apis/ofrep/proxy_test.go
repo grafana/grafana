@@ -192,9 +192,9 @@ func TestProxyFlagReq_Filtering(t *testing.T) {
 			wantStatus: http.StatusOK,
 		},
 		{
-			name:       "unauthenticated request for a flag without public metadata is rejected with 401",
+			name:       "unauthenticated request for a flag without public metadata is rejected with 404, indistinguishable from a genuinely missing flag",
 			flagKey:    "secretflag",
-			wantStatus: http.StatusUnauthorized,
+			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:         "authenticated request succeeds even without public metadata",
@@ -213,6 +213,13 @@ func TestProxyFlagReq_Filtering(t *testing.T) {
 			b.proxyFlagReq(r.Context(), tt.flagKey, tt.isAuthedUser, "", w, r)
 
 			assert.Equal(t, tt.wantStatus, w.Code)
+
+			if tt.wantStatus == http.StatusNotFound {
+				var result goffmodel.OFREPEvaluateErrorResponse
+				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+				assert.Equal(t, tt.flagKey, result.Key)
+				assert.EqualValues(t, "FLAG_NOT_FOUND", result.ErrorCode)
+			}
 		})
 	}
 }

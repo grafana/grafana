@@ -147,7 +147,7 @@ func TestOneFlagHandler_Unauth(t *testing.T) {
 		wantStatus int
 	}{
 		{"public flag returns 200", map[string]any{"public": true}, http.StatusOK},
-		{"private flag returns 401", nil, http.StatusUnauthorized},
+		{"private flag returns 404, indistinguishable from a genuinely missing flag", nil, http.StatusNotFound},
 	}
 
 	for _, rt := range routes {

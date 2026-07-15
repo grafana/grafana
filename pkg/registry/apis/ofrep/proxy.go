@@ -43,6 +43,7 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 
 		var result goffmodel.OFREPBulkEvaluateSuccessResponse
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			b.logger.Error("Failed to decode bulk eval response", "error", err)
 			return err
 		}
 		_ = resp.Body.Close()
@@ -90,12 +91,14 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
+			b.logger.Error("Failed to read flag eval response", "key", flagKey, "error", err)
 			return err
 		}
 		_ = resp.Body.Close()
 
 		var result goffmodel.OFREPEvaluateSuccessResponse
 		if err := json.Unmarshal(body, &result); err != nil {
+			b.logger.Error("Failed to decode flag eval response", "key", flagKey, "error", err)
 			return err
 		}
 
@@ -104,8 +107,21 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 			return nil
 		}
 
-		// Not public -> return 401.
-		rewriteResponse(resp, http.StatusUnauthorized, []byte("unauthorized to evaluate flag"), "text/plain; charset=utf-8")
+		// Not public -> respond as if the flag doesn't exist, so an unauthed
+		// caller can't use the 404-vs-401 distinction to probe which private
+		// flags exist.
+		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "key", flagKey)
+		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
+			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
+				ErrorCode:    "FLAG_NOT_FOUND",
+				ErrorDetails: fmt.Sprintf("Flag %q was not found", flagKey),
+			},
+			Key: flagKey,
+		})
+		if err != nil {
+			return err
+		}
+		rewriteResponse(resp, http.StatusNotFound, notFoundBody, "application/json")
 		return nil
 	}
 
@@ -144,7 +160,7 @@ func namespaceUserAgent(namespace string) string {
 // forwards our content instead of the original upstream response.
 func rewriteResponse(resp *http.Response, statusCode int, body []byte, contentType string) {
 	resp.StatusCode = statusCode
-	resp.Status = http.StatusText(statusCode)
+	resp.Status = fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode))
 	resp.Body = io.NopCloser(bytes.NewReader(body))
 	resp.ContentLength = int64(len(body))
 	resp.Header.Set("Content-Length", strconv.Itoa(len(body)))
