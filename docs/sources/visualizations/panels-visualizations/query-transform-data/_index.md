@@ -200,28 +200,27 @@ The **Saved queries** dialog box gives you access to all the saved queries in yo
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v13.0.png" max-width="750px" alt="List of saved queries" caption="The **Saved queries** dialog box accessed from Dashboards" >}}
 
-From here, you can:
+You can access saved queries three ways:
 
-- Search for queries by data source name, query content, title, or description.
-- Sort queries alphabetically or by creation date.
-- Filter by data source name, author name, and tags. The tag filter uses the `OR` operator, while the others use the `AND` operator.
-
-  {{< admonition type="tip">}}
-  Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
-  {{< /admonition >}}
-
-- Star queries so that they appear in the **Starred queries** filter view.
-- Duplicate, or delete a saved query.
-- Edit a query title, description, or tags.
-- When you access the **Saved queries** dialog box from Explore, you can use the **Edit in Explore** option to edit the body of a query.
-
-You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
-
-To access your saved queries, click the blue plus sign in the sidebar and select **Add saved query** or click **Replace** in the editor pane:
+- Press `Ctrl + K` or `Cmd + K` to open the command palette and search "Saved queries".
+- Click **Replace** in the query editor pane.
+- Click the blue plus sign in the query editor sidebar and select **Add saved query**.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-add-save-reuse-query-v13.1.png" max-width="750px" alt="Access saved queries" >}}
 
 Clicking **Add saved query** adds an additional query, while clicking **Replace** updates your configured query.
+
+From the **Saved queries** dialog box, you can:
+
+- Search for queries by data source name, query content, title, or description.
+- Sort queries alphabetically or by creation date.
+- Filter by data source name, author name, and tags. The tag filter uses the `OR` operator, while the others use the `AND` operator. Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
+- Star queries so that they appear in the **Starred queries** filter view.
+- Duplicate or delete a saved query.
+- Edit a query title, description, or tags.
+- When you access the **Saved queries** dialog box from Explore, you can use the **Edit in Explore** option to edit the body of a query.
+
+You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
 
 {{< admonition type="tip">}}
 When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** dialog box displays a **Drilldown** button.
