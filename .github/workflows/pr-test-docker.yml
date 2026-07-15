@@ -53,7 +53,7 @@ jobs:
         run: docker buildx create --use
       - name: Login to DockerHub
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-        uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
+        uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v2.0.0
       - name: Build alpine (full source)
         run: make build-docker-full DOCKER_BUILD_ARGS=--load
 
