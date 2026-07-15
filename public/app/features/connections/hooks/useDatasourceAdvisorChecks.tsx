@@ -7,7 +7,7 @@ import {
   useGetCheckTypeQuery,
 } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { PluginExtensionPoints } from '@grafana/data';
-import { config, usePluginFunctions } from '@grafana/runtime';
+import { usePluginFunctions } from '@grafana/runtime';
 
 export type FailureSeverity = 'high' | 'low';
 
@@ -36,10 +36,6 @@ type CreateChecksFn = () => {
   };
 };
 
-export function isAdvisorEnabled(): boolean {
-  return Boolean(config.featureToggles.grafanaAdvisor);
-}
-
 interface AdvisorCheckContextValue {
   check?: Check;
   isLoading: boolean;
@@ -56,7 +52,6 @@ const AdvisorCheckContext = createContext<AdvisorCheckContextValue>({ isLoading:
  * only after they are loaded, avoiding React hook ordering violations.
  */
 export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
-  const enabled = isAdvisorEnabled();
   const [advisorData, setAdvisorData] = useState<AdvisorCheckContextValue | null>(null);
 
   const { functions: completedChecksFns, isLoading: isLoadingCompletedChecks } = usePluginFunctions<CompletedChecksFn>({
@@ -73,7 +68,6 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
   const retryCheckFn = retryCheckFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const createChecksFn = createChecksFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const isPluginReady =
-    enabled &&
     !isLoadingCompletedChecks &&
     !isLoadingRetryChecks &&
     !isLoadingCreateChecks &&
@@ -81,14 +75,11 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
     !!retryCheckFn;
 
   const contextValue = useMemo<AdvisorCheckContextValue>(() => {
-    if (!enabled) {
-      return { isLoading: false };
-    }
     if (!isPluginReady || !advisorData) {
       return { isLoading: true };
     }
     return advisorData;
-  }, [enabled, isPluginReady, advisorData]);
+  }, [isPluginReady, advisorData]);
 
   return (
     <AdvisorCheckContext.Provider value={contextValue}>
@@ -163,12 +154,8 @@ export type DatasourceFailuresResult = {
  * advisor check, to the highest severity among their failures.
  */
 export function useDatasourceFailureByUID(): DatasourceFailuresResult {
-  const enabled = isAdvisorEnabled();
   const { check, isLoading } = useLatestDatasourceCheck();
-  const { data: checkType, isLoading: isCheckTypeLoading } = useGetCheckTypeQuery(
-    { name: 'datasource' },
-    { skip: !enabled }
-  );
+  const { data: checkType, isLoading: isCheckTypeLoading } = useGetCheckTypeQuery({ name: 'datasource' });
 
   const datasourceFailureByUID = useMemo(() => {
     const failures = check?.status?.report?.failures;
@@ -228,7 +215,7 @@ export function useRetryDatasourceAdvisorCheck(): (datasourceUID: string) => Pro
   return useCallback(
     async (datasourceUID: string) => {
       const checkName = check?.metadata.name;
-      if (!isAdvisorEnabled() || !checkName || !retryCheck) {
+      if (!checkName || !retryCheck) {
         return;
       }
 
@@ -248,7 +235,7 @@ export function useCreateDatasourceAdvisorChecks(): {
   isAvailable: boolean;
 } {
   const { createChecks, isCreatingChecks } = useContext(AdvisorCheckContext);
-  const isAvailable = isAdvisorEnabled() && Boolean(createChecks);
+  const isAvailable = Boolean(createChecks);
 
   const runCreateChecks = useCallback(() => {
     if (!isAvailable || !createChecks) {

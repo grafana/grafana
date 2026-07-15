@@ -406,10 +406,10 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `grafana.newPreferencesPage`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPreferencesPage", false, options).value;
+  return useFlag("grafana.newPreferencesPage", true, options).value;
 };
 
 /**

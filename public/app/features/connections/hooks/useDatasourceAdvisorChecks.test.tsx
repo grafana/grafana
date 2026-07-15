@@ -158,29 +158,9 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe('useLatestDatasourceCheck', () => {
-  const originalFeatureToggles = config.featureToggles;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles = {
-      ...originalFeatureToggles,
-      grafanaAdvisor: true,
-    };
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
-  });
-
-  afterEach(() => {
-    config.featureToggles = originalFeatureToggles;
-  });
-
-  it('returns isLoading false when grafanaAdvisor feature toggle is off', () => {
-    config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
-    mockPluginFunctions({});
-
-    const { result } = renderHook(() => useLatestDatasourceCheck(), { wrapper });
-
-    expect(result.current.check).toBeUndefined();
-    expect(result.current.isLoading).toBe(false);
   });
 
   it('returns undefined when there is no check', () => {
@@ -238,10 +218,6 @@ describe('useDatasourceFailureByUID', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles = {
-      ...originalFeatureToggles,
-      grafanaAdvisor: true,
-    };
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
 
@@ -321,16 +297,6 @@ describe('useDatasourceFailureByUID', () => {
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
 
-  it('returns empty map when advisor is disabled', () => {
-    config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
-    mockPluginFunctions({});
-
-    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
-
-    expect(result.current.datasourceFailureByUID.size).toBe(0);
-    expect(result.current.isLoading).toBe(false);
-  });
-
   it('returns empty map when latest check has no report', () => {
     const latestWithoutReport = makeCheck({ name: 'newest', creationTimestamp: '2026-04-01T00:00:00Z' });
 
@@ -379,19 +345,9 @@ describe('useDatasourceFailureByUID', () => {
 });
 
 describe('useRetryDatasourceAdvisorCheck', () => {
-  const originalFeatureToggles = config.featureToggles;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles = {
-      ...originalFeatureToggles,
-      grafanaAdvisor: true,
-    };
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
-  });
-
-  afterEach(() => {
-    config.featureToggles = originalFeatureToggles;
   });
 
   it('calls retryCheck with the correct check name and datasource UID', async () => {
@@ -406,22 +362,6 @@ describe('useRetryDatasourceAdvisorCheck', () => {
     });
 
     expect(retryCheckFn).toHaveBeenCalledWith('check-sk5fn', 'P7DC3E4760CFAC4AF');
-  });
-
-  it('does not call retryCheck when advisor is disabled', async () => {
-    config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
-
-    const retryCheckFn = jest.fn();
-    const check = makeCheck({ name: 'check-sk5fn', failures: emptyReport });
-    mockPluginFunctions({ completedCheck: check, retryCheckFn });
-
-    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck(), { wrapper });
-
-    await act(async () => {
-      await result.current('some-uid');
-    });
-
-    expect(retryCheckFn).not.toHaveBeenCalled();
   });
 
   it('does not call retryCheck when no latest check exists', async () => {
@@ -439,19 +379,9 @@ describe('useRetryDatasourceAdvisorCheck', () => {
 });
 
 describe('useCreateDatasourceAdvisorChecks', () => {
-  const originalFeatureToggles = config.featureToggles;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles = {
-      ...originalFeatureToggles,
-      grafanaAdvisor: true,
-    };
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
-  });
-
-  afterEach(() => {
-    config.featureToggles = originalFeatureToggles;
   });
 
   it('calls createChecks when advisor is enabled', () => {
@@ -464,19 +394,6 @@ describe('useCreateDatasourceAdvisorChecks', () => {
     });
 
     expect(createChecksFn).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not call createChecks when advisor is disabled', () => {
-    config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
-    const createChecksFn = jest.fn();
-    mockPluginFunctions({ createChecksFn });
-
-    const { result } = renderHook(() => useCreateDatasourceAdvisorChecks(), { wrapper });
-    act(() => {
-      result.current.createChecks();
-    });
-
-    expect(createChecksFn).not.toHaveBeenCalled();
   });
 
   it('returns running state while create checks are running', () => {

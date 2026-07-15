@@ -94,7 +94,8 @@ func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.
 }
 
 func TestSearchFieldProviders_MapsDeclaredKinds(t *testing.T) {
-	got := SearchFieldProviders([]app.Manifest{manifestWithSearchFields()})
+	got, err := SearchFieldProviders([]app.Manifest{manifestWithSearchFields()})
+	require.NoError(t, err)
 
 	// The one kind that declares search fields is present and provider-backed.
 	require.Len(t, got, 1)
@@ -116,6 +117,29 @@ func TestSearchFieldProviders_NoManifestDeclarationsIsEmpty(t *testing.T) {
 		}},
 	}}
 
-	got := SearchFieldProviders([]app.Manifest{manifestNoFields})
+	got, err := SearchFieldProviders([]app.Manifest{manifestNoFields})
+	require.NoError(t, err)
 	assert.Empty(t, got)
+}
+
+func TestSearchFieldProviders_InvalidManifestReturnsError(t *testing.T) {
+	// A runtime manifest source can carry an invalid declaration; the path must
+	// surface it as an error rather than panicking.
+	invalid := app.Manifest{ManifestData: &app.ManifestData{
+		Group: "widgets.example.test",
+		Versions: []app.ManifestVersion{{
+			Name: "v1",
+			Kinds: []app.ManifestVersionKind{{
+				Kind:   "Widget",
+				Plural: "widgets",
+				SearchFields: []app.ManifestVersionKindSearchField{
+					{Name: "size", Path: "spec.size", Type: "int64", Capabilities: []string{"text"}},
+				},
+			}},
+		}},
+	}}
+
+	got, err := SearchFieldProviders([]app.Manifest{invalid})
+	require.Error(t, err)
+	assert.Nil(t, got)
 }
