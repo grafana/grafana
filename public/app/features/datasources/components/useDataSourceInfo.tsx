@@ -12,6 +12,10 @@ type DataSourceInfo = {
   // while true, alertingSupported is not known yet and the badge is not rendered
   alertingLoading?: boolean;
   failure?: DatasourceFailureDetails;
+  // whether the advisor plugin is available to evaluate this datasource; the
+  // Advisor badge is only rendered when true, so pages that don't wire advisor
+  // data (e.g. feature-highlight pages) don't show a misleading "Success".
+  advisorAvailable?: boolean;
 };
 
 export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[] => {
@@ -44,14 +48,16 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
     });
   }
 
-  info.push({
-    label: t('datasources.use-data-source-info.label.advisor', 'Advisor'),
-    value: failureSeverity ? (
-      <DataSourceFailureBadge severity={failureSeverity} message={dataSourceInfo.failure?.message} />
-    ) : (
-      <Badge color="green" text={t('datasources.use-data-source-info.badge-text-success', 'Success')} />
-    ),
-  });
+  if (dataSourceInfo.advisorAvailable) {
+    info.push({
+      label: t('datasources.use-data-source-info.label.advisor', 'Advisor'),
+      value: failureSeverity ? (
+        <DataSourceFailureBadge severity={failureSeverity} message={dataSourceInfo.failure?.message} />
+      ) : (
+        <Badge color="green" text={t('datasources.use-data-source-info.badge-text-success', 'Success')} />
+      ),
+    });
+  }
 
   return info;
 };

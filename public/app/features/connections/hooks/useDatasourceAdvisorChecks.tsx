@@ -39,12 +39,19 @@ type CreateChecksFn = () => {
 interface AdvisorCheckContextValue {
   check?: Check;
   isLoading: boolean;
+  // Whether the advisor plugin is installed and has registered its extensions.
+  // Consumers use this to decide whether to surface advisor UI or query its APIs.
+  isAvailable: boolean;
   retryCheck?: (checkName: string, itemID: string) => void;
   createChecks?: () => void;
   isCreatingChecks?: boolean;
 }
 
-const AdvisorCheckContext = createContext<AdvisorCheckContextValue>({ isLoading: false });
+// Data produced by the bridge from the plugin's hook functions; availability is
+// derived by the provider, not the bridge, so it's excluded here.
+type AdvisorCheckData = Omit<AdvisorCheckContextValue, 'isAvailable'>;
+
+const AdvisorCheckContext = createContext<AdvisorCheckContextValue>({ isLoading: false, isAvailable: false });
 
 /**
  * Provides advisor check data to descendant hooks via context.
@@ -52,7 +59,7 @@ const AdvisorCheckContext = createContext<AdvisorCheckContextValue>({ isLoading:
  * only after they are loaded, avoiding React hook ordering violations.
  */
 export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
-  const [advisorData, setAdvisorData] = useState<AdvisorCheckContextValue | null>(null);
+  const [advisorData, setAdvisorData] = useState<AdvisorCheckData | null>(null);
 
   const { functions: completedChecksFns, isLoading: isLoadingCompletedChecks } = usePluginFunctions<CompletedChecksFn>({
     extensionPointId: PluginExtensionPoints.AdvisorCompletedChecks,
@@ -67,19 +74,21 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
   const completedChecksFn = completedChecksFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const retryCheckFn = retryCheckFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const createChecksFn = createChecksFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
-  const isPluginReady =
-    !isLoadingCompletedChecks &&
-    !isLoadingRetryChecks &&
-    !isLoadingCreateChecks &&
-    !!completedChecksFn &&
-    !!retryCheckFn;
+  const isLoadingPlugins = isLoadingCompletedChecks || isLoadingRetryChecks || isLoadingCreateChecks;
+  const isPluginReady = !isLoadingPlugins && !!completedChecksFn && !!retryCheckFn;
 
   const contextValue = useMemo<AdvisorCheckContextValue>(() => {
-    if (!isPluginReady || !advisorData) {
-      return { isLoading: true };
+    if (!isPluginReady) {
+      // The advisor plugin's functions are either still loading or the plugin
+      // isn't installed. Only report loading while the lookup is in flight so
+      // consumers don't hang forever when advisor is unavailable.
+      return { isLoading: isLoadingPlugins, isAvailable: false };
     }
-    return advisorData;
-  }, [isPluginReady, advisorData]);
+    if (!advisorData) {
+      return { isLoading: true, isAvailable: true };
+    }
+    return { ...advisorData, isAvailable: true };
+  }, [isPluginReady, isLoadingPlugins, advisorData]);
 
   return (
     <AdvisorCheckContext.Provider value={contextValue}>
@@ -110,7 +119,7 @@ function AdvisorCheckBridge({
   completedChecksFn: CompletedChecksFn;
   retryCheckFn: RetryCheckFn;
   createChecksFn?: CreateChecksFn;
-  onChange: (value: AdvisorCheckContextValue) => void;
+  onChange: (value: AdvisorCheckData) => void;
 }) {
   const completedChecks = completedChecksFn({ checkType: 'datasource' });
   const retryCheckResult = retryCheckFn();
@@ -147,6 +156,8 @@ export type DatasourceFailuresResult = {
   /** Map of datasource UID to the highest severity among its failures. Only datasources with at least one failure are included. */
   datasourceFailureByUID: Map<string, DatasourceFailureDetails>;
   isLoading: boolean;
+  /** Whether the advisor plugin is available to evaluate datasources. */
+  isAvailable: boolean;
 };
 
 /**
@@ -154,8 +165,11 @@ export type DatasourceFailuresResult = {
  * advisor check, to the highest severity among their failures.
  */
 export function useDatasourceFailureByUID(): DatasourceFailuresResult {
-  const { check, isLoading } = useLatestDatasourceCheck();
-  const { data: checkType, isLoading: isCheckTypeLoading } = useGetCheckTypeQuery({ name: 'datasource' });
+  const { check, isLoading, isAvailable } = useContext(AdvisorCheckContext);
+  const { data: checkType, isLoading: isCheckTypeLoading } = useGetCheckTypeQuery(
+    { name: 'datasource' },
+    { skip: !isAvailable }
+  );
 
   const datasourceFailureByUID = useMemo(() => {
     const failures = check?.status?.report?.failures;
@@ -178,7 +192,7 @@ export function useDatasourceFailureByUID(): DatasourceFailuresResult {
     return byUID;
   }, [check, checkType]);
 
-  return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading };
+  return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading, isAvailable };
 }
 
 /**

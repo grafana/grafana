@@ -233,6 +233,17 @@ describe('useDatasourceFailureByUID', () => {
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
 
+  it('reports advisor unavailable without hanging when the plugin is not installed', () => {
+    // Plugin extensions never register (advisor app not installed) and loading has settled.
+    usePluginFunctionsMock.mockReturnValue({ isLoading: false, functions: [] });
+
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
+
+    expect(result.current.isAvailable).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.datasourceFailureByUID.size).toBe(0);
+  });
+
   it('returns all datasources with any failure and their highest severity', () => {
     const check = makeCheck({
       failures: {

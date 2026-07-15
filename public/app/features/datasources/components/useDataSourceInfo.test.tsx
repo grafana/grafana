@@ -54,4 +54,30 @@ describe('useDataSourceInfo', () => {
 
     expect(screen.getByText('Not supported')).toBeInTheDocument();
   });
+
+  it('should omit the Advisor badge when advisor is not available', () => {
+    const { result } = renderHook(() =>
+      useDataSourceInfo({
+        dataSourcePluginName: 'Prometheus',
+        alertingSupported: true,
+      })
+    );
+
+    expect(result.current.map((item) => item.label)).not.toContain('Advisor');
+  });
+
+  it('should show a "Success" Advisor badge when advisor is available and there is no failure', () => {
+    const { result } = renderHook(() =>
+      useDataSourceInfo({
+        dataSourcePluginName: 'Prometheus',
+        alertingSupported: true,
+        advisorAvailable: true,
+      })
+    );
+
+    const advisorItem = result.current.find((item) => item.label === 'Advisor');
+    render(<>{advisorItem?.value}</>);
+
+    expect(screen.getByText('Success')).toBeInTheDocument();
+  });
 });
