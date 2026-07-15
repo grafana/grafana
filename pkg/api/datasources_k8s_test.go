@@ -13,16 +13,21 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -65,6 +70,33 @@ func (m *mockConnectionClient) GetConnectionByUID(_ context.Context, _ int64, _ 
 }
 
 var _ datasource.ConnectionClient = (*mockConnectionClient)(nil)
+
+// firstCallCacheService is a test-only CacheService that returns ds on the first
+// GetDatasourceByUID call and ErrDataSourceNotFound on every subsequent call.
+// This lets datasourceRequiresSTPaths detect a feature (e.g. oauthPassThru) while
+// the legacy fallback handler (CheckDatasourceHealthWithUID / CallDatasourceResourceWithUID)
+// returns a graceful 500 on its own lookup, avoiding the need for pluginContextProvider
+// or other heavy dependencies in unit tests.
+type firstCallCacheService struct {
+	ds   *datasources.DataSource
+	seen bool
+}
+
+func (f *firstCallCacheService) GetDatasourceByUID(_ context.Context, uid string, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	if !f.seen {
+		f.seen = true
+		if f.ds != nil && f.ds.UID == uid {
+			return f.ds, nil
+		}
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+func (f *firstCallCacheService) GetDatasource(_ context.Context, _ int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+var _ datasources.CacheService = (*firstCallCacheService)(nil)
 
 // implements grafanaapiserver.DirectRestConfigProvider
 type mockDirectRestConfigProvider struct {
@@ -391,6 +423,12 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
+				// Required so datasourceRequiresSTPaths does not fall back to legacy on cache-miss
+				// for valid single-connection cases. Error cases return before the cache is reached.
+				DataSourceCache: &fakeDatasources.FakeCacheService{
+					DataSources: []*datasources.DataSource{{UID: "test-uid"}},
+				},
+				log: log.NewNopLogger(),
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
@@ -450,6 +488,10 @@ func TestCallK8sDataSourceResourceHandler_PreservesHTTPMethod(t *testing.T) {
 				}},
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
+				DataSourceCache: &fakeDatasources.FakeCacheService{
+					DataSources: []*datasources.DataSource{{UID: "test-uid"}},
+				},
+				log: log.NewNopLogger(),
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
@@ -560,6 +602,10 @@ func TestCallK8sDataSourceResourceHandler_Headers(t *testing.T) {
 				}},
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
+				DataSourceCache: &fakeDatasources.FakeCacheService{
+					DataSources: []*datasources.DataSource{{UID: "test-uid"}},
+				},
+				log: log.NewNopLogger(),
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
@@ -587,6 +633,369 @@ func TestCallK8sDataSourceResourceHandler_Headers(t *testing.T) {
 			}
 		})
 	}
+}
+
+// ── datasourceRequiresSTPaths ────────────────────────────────────────────────
+
+// countMetric reads a counter value from a test registry by label combination.
+func countMetric(t *testing.T, reg *prometheus.Registry, name, route, pluginType, target string) float64 {
+	t.Helper()
+	mfs, err := reg.Gather()
+	require.NoError(t, err)
+	for _, mf := range mfs {
+		if mf.GetName() != name {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			labels := map[string]string{}
+			for _, l := range m.GetLabel() {
+				labels[l.GetName()] = l.GetValue()
+			}
+			if labels["route"] == route && labels["plugin_type"] == pluginType && labels["target"] == target {
+				return m.GetCounter().GetValue()
+			}
+		}
+	}
+	return 0
+}
+
+func TestDatasourceRequiresSTPaths(t *testing.T) {
+	const dsUID = "test-uid"
+
+	newDS := func(jsonData map[string]any) *datasources.DataSource {
+		if jsonData == nil {
+			return &datasources.DataSource{UID: dsUID}
+		}
+		j := simplejson.NewFromAny(jsonData)
+		return &datasources.DataSource{UID: dsUID, JsonData: j}
+	}
+
+	tests := []struct {
+		name       string
+		cfg        *setting.Cfg
+		dataSource *datasources.DataSource
+		wantForce  bool
+		wantReason string
+	}{
+		{
+			name:       "IP range AC enabled → force legacy",
+			cfg:        &setting.Cfg{IPRangeACEnabled: true},
+			dataSource: newDS(nil),
+			wantForce:  true,
+			wantReason: "ip-range-access-control",
+		},
+		{
+			name:       "oauthPassThru enabled → force legacy",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(map[string]any{"oauthPassThru": true}),
+			wantForce:  true,
+			wantReason: "oauth-passthru",
+		},
+		{
+			name:       "oauthPassThru false → do not force legacy",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(map[string]any{"oauthPassThru": false}),
+			wantForce:  false,
+		},
+		{
+			name:       "teamHttpHeaders present → force legacy (LBAC)",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(map[string]any{"teamHttpHeaders": map[string]any{}}),
+			wantForce:  true,
+			wantReason: "lbac",
+		},
+		{
+			name:       "no special flags → do not force legacy",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(map[string]any{"httpMethod": "GET"}),
+			wantForce:  false,
+		},
+		{
+			name:       "nil jsonData → do not force legacy",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(nil),
+			wantForce:  false,
+		},
+		{
+			name:       "datasource not found → force legacy (safety fallback)",
+			cfg:        setting.NewCfg(),
+			dataSource: nil, // nil means the cache will return ErrDataSourceNotFound
+			wantForce:  true,
+			wantReason: "datasource-lookup-failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cache := &fakeDatasources.FakeCacheService{}
+			if tt.dataSource != nil {
+				cache.DataSources = []*datasources.DataSource{tt.dataSource}
+			}
+
+			hs := &HTTPServer{
+				Cfg:             tt.cfg,
+				DataSourceCache: cache,
+				log:             log.NewNopLogger(),
+			}
+
+			gotForce, gotReason := hs.datasourceRequiresSTPaths(
+				context.Background(), dsUID, &user.SignedInUser{},
+			)
+
+			assert.Equal(t, tt.wantForce, gotForce)
+			if tt.wantForce {
+				assert.Equal(t, tt.wantReason, gotReason)
+			}
+		})
+	}
+}
+
+// TestCallK8sDataSourceResourceHandler_ForcesLegacyOnSTConditions verifies that
+// when datasourceRequiresSTPaths returns true the resource handler falls back to
+// the legacy plugin-client path and records target="legacy" in metrics.
+// Uses IPRangeACEnabled (no DS lookup needed) so the legacy handler fails
+// gracefully with 500 rather than panicking on a nil pluginContextProvider.
+func TestCallK8sDataSourceResourceHandler_ForcesLegacyOnSTConditions(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect, true)
+
+	conn := &queryV0.DataSourceConnectionList{
+		Items: []queryV0.DataSourceConnection{
+			{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.IPRangeACEnabled = true // triggers ST fallback without needing a DS cache hit
+
+	configProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+	promReg := prometheus.NewRegistry()
+	hs := &HTTPServer{
+		Cfg:                  cfg,
+		Features:             featuremgmt.WithFeatures(),
+		dsConnectionClient:   &mockConnectionClient{result: conn},
+		clientConfigProvider: configProvider,
+		namespacer:           func(int64) string { return "default" },
+		DataSourceCache:      &fakeDatasources.FakeCacheService{}, // empty: legacy handler returns 500, no panic
+		log:                  log.NewNopLogger(),
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+	hs.promRegister = promReg
+	promReg.MustRegister(hs.dsEndpointRedirects)
+
+	ctx, _ := newTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/resources/api/v1/labels",
+		map[string]string{":uid": "test-uid", "*": "api/v1/labels"})
+	hs.callK8sDataSourceResourceHandler().(func(*contextmodel.ReqContext))(ctx)
+
+	// DirectlyServeHTTP must NOT have been called
+	assert.Empty(t, configProvider.lastServedPath,
+		"DirectlyServeHTTP must not be called when IPRangeACEnabled")
+	// legacy metric must be incremented with plugin type from connection
+	assert.Equal(t, float64(1), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "resources", "prometheus", "legacy"))
+	assert.Equal(t, float64(0), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "resources", "prometheus", "remote"))
+}
+
+// TestCallK8sDataSourceHealthHandler_ForcesLegacyOnSTConditions mirrors the
+// resource handler test for the health endpoint.
+func TestCallK8sDataSourceHealthHandler_ForcesLegacyOnSTConditions(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, true)
+
+	conn := &queryV0.DataSourceConnectionList{
+		Items: []queryV0.DataSourceConnection{
+			{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.IPRangeACEnabled = true
+
+	configProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+	promReg := prometheus.NewRegistry()
+	hs := &HTTPServer{
+		Cfg:                  cfg,
+		Features:             featuremgmt.WithFeatures(),
+		dsConnectionClient:   &mockConnectionClient{result: conn},
+		clientConfigProvider: configProvider,
+		namespacer:           func(int64) string { return "default" },
+		DataSourceCache:      &fakeDatasources.FakeCacheService{},
+		log:                  log.NewNopLogger(),
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+	hs.promRegister = promReg
+	promReg.MustRegister(hs.dsEndpointRedirects)
+
+	ctx, _ := newTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/health",
+		map[string]string{":uid": "test-uid"})
+	hs.callK8sDataSourceHealthHandler().(func(*contextmodel.ReqContext))(ctx)
+
+	// DirectlyServeHTTP must NOT have been called
+	assert.Empty(t, configProvider.lastServedPath,
+		"DirectlyServeHTTP must not be called when datasource has LBAC")
+	// legacy metric with plugin type from connection
+	assert.Equal(t, float64(1), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "health", "prometheus", "legacy"))
+	assert.Equal(t, float64(0), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "health", "prometheus", "remote"))
+}
+
+// TestCallK8sDataSourceResourceHandler_ForcesLegacyForOAuthPassThru verifies that a
+// datasource with oauthPassThru=true is kept on the legacy plugin-client path.
+func TestCallK8sDataSourceResourceHandler_ForcesLegacyForOAuthPassThru(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect, true)
+
+	conn := &queryV0.DataSourceConnectionList{
+		Items: []queryV0.DataSourceConnection{
+			{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+		},
+	}
+	dsWithOAuth := &datasources.DataSource{
+		UID:      "test-uid",
+		JsonData: simplejson.NewFromAny(map[string]any{"oauthPassThru": true}),
+	}
+
+	configProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+	promReg := prometheus.NewRegistry()
+	hs := &HTTPServer{
+		Cfg:                  setting.NewCfg(),
+		Features:             featuremgmt.WithFeatures(),
+		dsConnectionClient:   &mockConnectionClient{result: conn},
+		clientConfigProvider: configProvider,
+		namespacer:           func(int64) string { return "default" },
+		DataSourceCache:      &fakeDatasources.FakeCacheService{DataSources: []*datasources.DataSource{dsWithOAuth}},
+		// pluginStore with no plugins: CallDatasourceResourceWithUID returns 500 gracefully (no panic)
+		pluginStore: &pluginstore.FakePluginStore{},
+		log:         log.NewNopLogger(),
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+	hs.promRegister = promReg
+	promReg.MustRegister(hs.dsEndpointRedirects)
+
+	ctx, _ := newTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/resources/api/v1/labels",
+		map[string]string{":uid": "test-uid", "*": "api/v1/labels"})
+	hs.callK8sDataSourceResourceHandler().(func(*contextmodel.ReqContext))(ctx)
+
+	assert.Empty(t, configProvider.lastServedPath, "DirectlyServeHTTP must not be called for oauthPassThru datasources")
+	assert.Equal(t, float64(1), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "resources", "prometheus", "legacy"))
+	assert.Equal(t, float64(0), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "resources", "prometheus", "remote"))
+}
+
+// TestCallK8sDataSourceResourceHandler_ForcesLegacyForLBAC verifies that a datasource
+// with LBAC team HTTP headers configured is kept on the legacy plugin-client path.
+func TestCallK8sDataSourceResourceHandler_ForcesLegacyForLBAC(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect, true)
+
+	conn := &queryV0.DataSourceConnectionList{
+		Items: []queryV0.DataSourceConnection{
+			{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+		},
+	}
+	dsWithLBAC := &datasources.DataSource{
+		UID:      "test-uid",
+		JsonData: simplejson.NewFromAny(map[string]any{"teamHttpHeaders": map[string]any{"team1": []any{"X-Custom: value"}}}),
+	}
+
+	configProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+	promReg := prometheus.NewRegistry()
+	hs := &HTTPServer{
+		Cfg:                  setting.NewCfg(),
+		Features:             featuremgmt.WithFeatures(),
+		dsConnectionClient:   &mockConnectionClient{result: conn},
+		clientConfigProvider: configProvider,
+		namespacer:           func(int64) string { return "default" },
+		DataSourceCache:      &fakeDatasources.FakeCacheService{DataSources: []*datasources.DataSource{dsWithLBAC}},
+		// pluginStore with no plugins: CallDatasourceResourceWithUID returns 500 gracefully (no panic)
+		pluginStore: &pluginstore.FakePluginStore{},
+		log:         log.NewNopLogger(),
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+	hs.promRegister = promReg
+	promReg.MustRegister(hs.dsEndpointRedirects)
+
+	ctx, _ := newTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/resources/api/v1/labels",
+		map[string]string{":uid": "test-uid", "*": "api/v1/labels"})
+	hs.callK8sDataSourceResourceHandler().(func(*contextmodel.ReqContext))(ctx)
+
+	assert.Empty(t, configProvider.lastServedPath, "DirectlyServeHTTP must not be called for LBAC datasources")
+	assert.Equal(t, float64(1), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "resources", "prometheus", "legacy"))
+	assert.Equal(t, float64(0), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "resources", "prometheus", "remote"))
+}
+
+// TestCallK8sDataSourceHealthHandler_ForcesLegacyForOAuthPassThru mirrors the resource
+// handler test for oauthPassThru on the health endpoint.
+func TestCallK8sDataSourceHealthHandler_ForcesLegacyForOAuthPassThru(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, true)
+
+	conn := &queryV0.DataSourceConnectionList{
+		Items: []queryV0.DataSourceConnection{
+			{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+		},
+	}
+	dsWithOAuth := &datasources.DataSource{
+		UID:      "test-uid",
+		JsonData: simplejson.NewFromAny(map[string]any{"oauthPassThru": true}),
+	}
+
+	configProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+	promReg := prometheus.NewRegistry()
+	hs := &HTTPServer{
+		Cfg:                  setting.NewCfg(),
+		Features:             featuremgmt.WithFeatures(),
+		dsConnectionClient:   &mockConnectionClient{result: conn},
+		clientConfigProvider: configProvider,
+		namespacer:           func(int64) string { return "default" },
+		// firstCallCacheService: datasourceRequiresSTPaths sees oauthPassThru on the first
+		// lookup; CheckDatasourceHealthWithUID's second lookup returns not-found so it exits
+		// with a graceful 500 before reaching the nil pluginContextProvider.
+		DataSourceCache: &firstCallCacheService{ds: dsWithOAuth},
+		log:             log.NewNopLogger(),
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+	hs.promRegister = promReg
+	promReg.MustRegister(hs.dsEndpointRedirects)
+
+	ctx, _ := newTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/health",
+		map[string]string{":uid": "test-uid"})
+	hs.callK8sDataSourceHealthHandler().(func(*contextmodel.ReqContext))(ctx)
+
+	assert.Empty(t, configProvider.lastServedPath, "DirectlyServeHTTP must not be called for oauthPassThru datasources")
+	assert.Equal(t, float64(1), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "health", "prometheus", "legacy"))
+	assert.Equal(t, float64(0), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "health", "prometheus", "remote"))
+}
+
+// TestCallK8sDataSourceHealthHandler_ForcesLegacyForLBAC mirrors the resource handler
+// test for LBAC on the health endpoint.
+func TestCallK8sDataSourceHealthHandler_ForcesLegacyForLBAC(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, true)
+
+	conn := &queryV0.DataSourceConnectionList{
+		Items: []queryV0.DataSourceConnection{
+			{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+		},
+	}
+	dsWithLBAC := &datasources.DataSource{
+		UID:      "test-uid",
+		JsonData: simplejson.NewFromAny(map[string]any{"teamHttpHeaders": map[string]any{"team1": []any{"X-Custom: value"}}}),
+	}
+
+	configProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+	promReg := prometheus.NewRegistry()
+	hs := &HTTPServer{
+		Cfg:                  setting.NewCfg(),
+		Features:             featuremgmt.WithFeatures(),
+		dsConnectionClient:   &mockConnectionClient{result: conn},
+		clientConfigProvider: configProvider,
+		namespacer:           func(int64) string { return "default" },
+		DataSourceCache:      &firstCallCacheService{ds: dsWithLBAC},
+		log:                  log.NewNopLogger(),
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+	hs.promRegister = promReg
+	promReg.MustRegister(hs.dsEndpointRedirects)
+
+	ctx, _ := newTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/health",
+		map[string]string{":uid": "test-uid"})
+	hs.callK8sDataSourceHealthHandler().(func(*contextmodel.ReqContext))(ctx)
+
+	assert.Empty(t, configProvider.lastServedPath, "DirectlyServeHTTP must not be called for LBAC datasources")
+	assert.Equal(t, float64(1), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "health", "prometheus", "legacy"))
+	assert.Equal(t, float64(0), countMetric(t, promReg, "grafana_ds_endpoint_redirects_total", "health", "prometheus", "remote"))
 }
 
 func TestPluginTypeFromConnection(t *testing.T) {
@@ -635,6 +1044,15 @@ func TestCallK8sDataSourceHealthHandler(t *testing.T) {
 			expectedMessage: "duplicate datasource connections found with this name",
 		},
 		{
+			name:  "empty connections returns 404",
+			dsUID: "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{},
+			},
+			expectedCode:    http.StatusNotFound,
+			expectedMessage: "Data source not found",
+		},
+		{
 			name:  "valid connection forwards to k8s health path",
 			dsUID: "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
@@ -658,6 +1076,10 @@ func TestCallK8sDataSourceHealthHandler(t *testing.T) {
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
+				DataSourceCache: &fakeDatasources.FakeCacheService{
+					DataSources: []*datasources.DataSource{{UID: "test-uid"}},
+				},
+				log: log.NewNopLogger(),
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 			ctx, recorder := newTestContext(t, http.MethodGet, "/api/datasources/uid/"+tt.dsUID+"/health", map[string]string{":uid": tt.dsUID})
