@@ -13,7 +13,11 @@ import { type RecommendationItem } from './types';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
 
-export function RecommendationsView({ recommendations }: { recommendations: RecommendationItem[] }) {
+interface RecommendationsViewProps {
+  recommendations: RecommendationItem[];
+}
+
+export function RecommendationsView({ recommendations }: RecommendationsViewProps) {
   const styles = useStyles2(getStyles);
   const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
 

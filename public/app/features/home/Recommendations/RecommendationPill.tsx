@@ -7,7 +7,11 @@ import { recommendationEnableClicked } from '../analytics/main';
 
 import type { RecommendationItem } from './types';
 
-export function RecommendationPill({ recommendation }: { recommendation: RecommendationItem }) {
+interface RecommendationPillProps {
+  recommendation: RecommendationItem;
+}
+
+export function RecommendationPill({ recommendation }: RecommendationPillProps) {
   const styles = useStyles2(getStyles, recommendation.color);
 
   return (

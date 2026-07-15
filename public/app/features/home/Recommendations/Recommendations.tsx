@@ -18,7 +18,11 @@ export function Recommendations() {
   return <GatedRecommendations canInstall={canInstall} />;
 }
 
-function GatedRecommendations({ canInstall }: { canInstall: boolean }) {
+interface GatedRecommendationsProps {
+  canInstall: boolean;
+}
+
+function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   const { value: installedPlugins, loading: pluginsLoading } = useAsync(fetchInstalledPlugins, []);
   const { value: orgUserCount, loading: countLoading } = useAsync(fetchOrgUserCount, []);
 

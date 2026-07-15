@@ -8,15 +8,13 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } fro
 import { SolutionSparkline } from './SolutionSparkline';
 import { type ExistingItem } from './types';
 
-export function ExistingSolutionCard({
-  existing,
-  selected,
-  onSelect,
-}: {
+interface ExistingSolutionCardProps {
   existing: ExistingItem[];
   selected: ExistingItem;
   onSelect: (title: string) => void;
-}) {
+}
+
+export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingSolutionCardProps) {
   const styles = useStyles2(getStyles);
 
   const showStatsSparklineRow =
@@ -43,7 +41,7 @@ export function ExistingSolutionCard({
           }
         >
           <Button variant="secondary" fill="outline" size="sm" className={styles.dropdown}>
-            <Stack direction="row" gap={1} alignItems="center">
+            <Stack direction="row" alignItems="center">
               <Text variant="bodySmall" color="secondary">
                 <span className={styles.subtitle}>
                   <Trans i18nKey="home.recommendations.existing">Enabled solution</Trans>

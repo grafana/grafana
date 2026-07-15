@@ -14,27 +14,24 @@ import { type ExistingItem } from './types';
 // Browser locale is the deliberate choice: the homepage number format follows the user's environment.
 const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
+export interface KubernetesItemParts {
+  inventory: KubernetesInventory | undefined;
+  inventoryLoading: boolean;
+  health: KubernetesHealth | undefined;
+  cpuSeries: FieldSparkline | null | undefined;
+  cpuLoading: boolean;
+  datasourceName: string;
+}
+
 /** Build the Kubernetes Monitoring entry from live Prometheus data. */
-export function buildKubernetesItem(
-  parts: {
-    inventory: KubernetesInventory | undefined;
-    inventoryLoading: boolean;
-    health: KubernetesHealth | undefined;
-    cpuSeries: FieldSparkline | null | undefined;
-    cpuLoading: boolean;
-    datasourceName: string;
-  },
-  settings: PluginMeta<{}>
-): ExistingItem {
+export function buildKubernetesItem(parts: KubernetesItemParts, settings: PluginMeta<{}>): ExistingItem {
   const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
   const href = locationUtil.assureBaseUrl(bridgePath);
   const alertsBridgePath = createBridgeURL(KUBERNETES_APP_ID, '/alerts');
   const alertsHref = canAccessPluginPage(settings, alertsBridgePath)
     ? locationUtil.assureBaseUrl(alertsBridgePath)
     : href;
-
   const { inventory, inventoryLoading, health, cpuSeries, cpuLoading } = parts;
-
   const healthRows: string[] = [];
   if (health) {
     if (health.unhealthyPods !== null && health.unhealthyPods > 0) {

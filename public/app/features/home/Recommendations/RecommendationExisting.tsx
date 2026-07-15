@@ -64,15 +64,13 @@ export function RecommendationExisting() {
   return <LiveSolutionsCard settings={settings} selectedTitle={selectedTitle} onSelect={setSelectedTitle} />;
 }
 
-function LiveSolutionsCard({
-  settings,
-  selectedTitle,
-  onSelect,
-}: {
+interface LiveSolutionsCardProps {
   settings: PluginMeta<{}>;
   selectedTitle: string | undefined;
   onSelect: (title: string) => void;
-}) {
+}
+
+function LiveSolutionsCard({ settings, selectedTitle, onSelect }: LiveSolutionsCardProps) {
   const { datasource, resolving, resolutionError, inventory, inventoryLoading, health, cpuSeries, cpuLoading } =
     useKubernetesCardData();
 
