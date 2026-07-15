@@ -350,6 +350,7 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 		s.metrics.KVSecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
+	// TODO: versions could be reused
 	latestVersion, createdBy, createdAt, err := s.getLatestVersion(ctx, sv.Namespace, sv.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest version: %w", err)
@@ -389,6 +390,7 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 		return nil, fmt.Errorf("json marshaling secure value: %w", err)
 	}
 
+	// Use Batch with BatchOpCreate to make the operation fail if the key already exists
 	if err := s.kv.Batch(ctx, kvSectionSecureValues, []kv.BatchOp{
 		{
 			Mode:  kv.BatchOpCreate,
@@ -436,6 +438,7 @@ func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contract
 		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
 	}
 
+	// TODO: batch max ops
 	if err := s.kv.BatchDelete(ctx, kvSectionSecureValues, keys); err != nil {
 		return fmt.Errorf("batch deleting secure values from kv store: %+v", err)
 	}
@@ -481,10 +484,22 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 
 	keys := make([]string, 0)
 
+	// TODO: unbounded number of entries. OOM
 	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{}) {
 		if err != nil {
 			return nil, fmt.Errorf("listing keys in the kv store: %w", err)
 		}
+
+		lease, err := s.leaseManager.Acquire(ctx, key)
+		if err != nil {
+			return nil, fmt.Errorf("acquiring kv store lease: %w", err)
+		}
+		defer func() {
+			if err := s.leaseManager.Release(ctx, lease); err != nil {
+				logging.FromContext(ctx).Error("releasing kv store lease", "err", err.Error())
+			}
+		}()
+
 		keys = append(keys, key)
 	}
 
@@ -531,16 +546,6 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 
 	for i := 0; i < len(eligible) && i < int(maxBatchSize); i++ {
 		item := eligible[i]
-
-		lease, err := s.leaseManager.Acquire(ctx, item.key)
-		if err != nil {
-			return nil, fmt.Errorf("acquiring kv store lease: %w", err)
-		}
-		defer func() {
-			if err := s.leaseManager.Release(ctx, lease); err != nil {
-				logging.FromContext(ctx).Error("releasing kv store lease", "err", err.Error())
-			}
-		}()
 
 		item.value.LeaseToken = leaseToken
 		item.value.LeaseCreated = now
