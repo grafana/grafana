@@ -401,7 +401,7 @@ func TestExampleBased(t *testing.T) {
 			t.Run("should be able to use secrets that were created with a keeper that's inactive", func(t *testing.T) {
 				t.Parallel()
 
-				sut := testutils.Setup(t)
+				sut := testutils.Setup(t, tc.opts...)
 
 				// - Create a secret with k1
 				k1, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
