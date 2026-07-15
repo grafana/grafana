@@ -7326,6 +7326,8 @@
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
       "tooltip": "Added by the {{pluginName}} plugin",
+      "tooltip-folder": "Folder variable, inherited from this dashboard's folder",
+      "tooltip-global": "Global variable, shared across all dashboards",
       "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {
@@ -7654,6 +7656,9 @@
           "variables": "Variables"
         }
       }
+    },
+    "validate-variable-name": {
+      "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
