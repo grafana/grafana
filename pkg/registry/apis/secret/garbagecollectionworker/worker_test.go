@@ -177,6 +177,9 @@ func TestExampleBased(t *testing.T) {
 				sv1, err := sut.CreateSv(t.Context())
 				require.NoError(t, err)
 
+				// Advance time to wait for grace period
+				sut.Clock.AdvanceBy(15 * time.Minute)
+
 				// Create from metadata storage directly to insert v2 as *inactive*
 				// Here we do not call SetVersionToActive explicitly to simulate the in-flight window
 				sv2, err := sut.SecureValueMetadataStorage.Create(t.Context(), sv1.Status.Keeper, &secretv1beta1.SecureValue{
@@ -206,9 +209,6 @@ func TestExampleBased(t *testing.T) {
 				read, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name)
 				require.NoError(t, err)
 				require.Equal(t, sv2.Status.Version, read.Status.Version)
-
-				// Advance time to get past the minimum age before a secure value can be deleted
-				sut.Clock.AdvanceBy(15 * time.Minute)
 
 				// Force the GC again, this time we expect v1 to be cleaned since v2 was activated
 				cleaned, err = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
