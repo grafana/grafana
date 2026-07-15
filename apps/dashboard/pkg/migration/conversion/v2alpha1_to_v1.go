@@ -2299,6 +2299,9 @@ func convertThresholdsToV1(thresholds *dashv2alpha1.DashboardThresholdsConfig) m
 		} else {
 			stepMap["value"] = nil
 		}
+		if step.ValueExpr != nil {
+			stepMap["valueExpr"] = *step.ValueExpr
+		}
 		thresholdsMap["steps"] = append(thresholdsMap["steps"].([]map[string]interface{}), stepMap)
 	}
 
