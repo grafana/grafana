@@ -80,19 +80,16 @@ const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
     [field.values, singleValue, styles.value, styles.valueContainer, prettifyJSON]
   );
 
-  const reportLinkClick = useCallback(
-    () => {
-      if (noInteractions) {
-        return;
-      }
-      reportInteraction('logs_log_line_details_derived_link_clicked', {
-        app,
-        fieldKey: field.keys[0],
-        datasourceType: log.datasourceType,
-      });
-    },
-    [app, field.keys, log.datasourceType, noInteractions]
-  );
+  const reportLinkClick = useCallback(() => {
+    if (noInteractions) {
+      return;
+    }
+    reportInteraction('logs_log_line_details_derived_link_clicked', {
+      app,
+      fieldKey: field.keys[0],
+      datasourceType: log.datasourceType,
+    });
+  }, [app, field.keys, log.datasourceType, noInteractions]);
 
   return (
     <>
