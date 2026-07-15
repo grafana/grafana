@@ -610,18 +610,27 @@ func (s *kvSecureValueMetadataStorage) List(ctx context.Context, namespace xkube
 
 	seen := make(map[string]struct{}, 0)
 
+	keys := make([]string, 0)
+
 	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
 		Sort:     resource.SortOrderDesc,
 	}) {
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("listing keys in the kv store: %w", err)
 		}
 
-		value, err := s.readValue(ctx, key)
+		keys = append(keys, key)
+	}
+
+	for kv, err := range s.kv.BatchGet(ctx, kvSectionSecureValues, keys) {
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("BatchGet returned error: %w", err)
+		}
+		value, err := parseSecureValue(kv.Value)
+		if err != nil {
+			return nil, fmt.Errorf("parsing secure value: %w", err)
 		}
 
 		resourceKey := makePrefix(value.Namespace, value.Name)
