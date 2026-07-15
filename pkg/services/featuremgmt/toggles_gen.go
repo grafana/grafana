@@ -527,10 +527,6 @@ const (
 	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
 	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
 
-	// FlagGrafanaAdvisor
-	// Enables Advisor app
-	FlagGrafanaAdvisor = "grafanaAdvisor"
-
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"

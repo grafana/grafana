@@ -1531,14 +1531,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafanaAdvisor",
-			Description: "Enables Advisor app",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
