@@ -547,8 +547,12 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 // All fields are optional and will be applied as filters if provided.
 type FilterOptions struct {
 	HasPrometheusRuleDefinition *bool
-	RuleGroups                  []string
-	NamespaceUIDs               []string
+	// SourceIdentifier, when non-nil, filters to converted rules whose
+	// PrometheusStyleRule.SourceIdentifier matches exactly (the external ruler
+	// sync source datasource UID).
+	SourceIdentifier *string
+	RuleGroups       []string
+	NamespaceUIDs    []string
 }
 
 func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertRulesQuery {
@@ -558,6 +562,10 @@ func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertR
 
 	if opts.HasPrometheusRuleDefinition != nil {
 		q.HasPrometheusRuleDefinition = opts.HasPrometheusRuleDefinition
+	}
+
+	if opts.SourceIdentifier != nil {
+		q.SourceIdentifier = opts.SourceIdentifier
 	}
 
 	if len(opts.NamespaceUIDs) > 0 {
