@@ -73,6 +73,24 @@ describe('createGrafanaLinkResolver', () => {
     expect(resolve('')).toBeUndefined();
   });
 
+  it('returns undefined when the matched resource has no name', () => {
+    // A nameless entry would otherwise build a broken route like `/d/`.
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'dashboards', name: '', path: 'team-a/cpu.json' })],
+      undefined
+    );
+
+    expect(resolve('team-a/cpu.json')).toBeUndefined();
+  });
+
+  it('does not match a non-metadata file against a root-keyed entry', () => {
+    // A resource keyed at the repo root ("/") must not be returned for an
+    // unrelated file whose folder-metadata fallback resolves to an empty dir.
+    const resolve = createGrafanaLinkResolver([resource({ resource: 'folders', name: 'root', path: '/' })], undefined);
+
+    expect(resolve('team-a/cpu.json')).toBeUndefined();
+  });
+
   it('joins the repository configured path when matching resource paths', () => {
     // Resource paths from the API are relative to the configured root; the paths
     // passed to the resolver are full repo-root paths that include that prefix.

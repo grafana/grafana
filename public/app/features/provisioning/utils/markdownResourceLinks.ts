@@ -38,8 +38,12 @@ export function createGrafanaLinkResolver(
 
     // A link may point straight at a folder's _folder.json, but the folder
     // resource is keyed by its directory — fall back to the containing directory.
-    const resource = byPath.get(normalized) ?? byPath.get(folderDirOf(normalized));
-    if (!resource) {
+    // Guard the empty dir so a non-metadata path can't match a root-keyed entry.
+    const folderDir = folderDirOf(normalized);
+    const resource = byPath.get(normalized) ?? (folderDir ? byPath.get(folderDir) : undefined);
+    // Without a resource name there's no per-item route to build; fall back to the
+    // host link rather than pushing a broken route (e.g. `/d/`, which 404s home).
+    if (!resource?.name) {
       return undefined;
     }
 
