@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 
 import {
   createDataFrame,
@@ -58,6 +58,7 @@ function setDataSources(list: Array<{ uid: string; name: string; isDefault?: boo
 let dataByUid: Record<string, number>;
 // Probe queries against these uids emit LoadingState.Error (unreachable/erroring datasource).
 let probeErrorUids: Set<string>;
+let probeHangUids: Set<string>;
 // Probe queries against these uids emit LoadingState.Error for the first N attempts.
 let probeFailuresByUid: Record<string, number>;
 let probeAttempts: Record<string, number>;
@@ -83,6 +84,7 @@ beforeEach(() => {
   resetKubernetesPrometheusResolution();
   dataByUid = {};
   probeErrorUids = new Set();
+  probeHangUids = new Set();
   probeFailuresByUid = {};
   probeAttempts = {};
   queryFailuresByRefId = {};
@@ -102,6 +104,9 @@ beforeEach(() => {
         const isProbe = captured?.queries.some((q) => q.refId === 'namespaces') ?? false;
         if (isProbe) {
           probeAttempts[uid] = (probeAttempts[uid] ?? 0) + 1;
+          if (probeHangUids.has(uid)) {
+            return NEVER;
+          }
           if (probeErrorUids.has(uid) || probeAttempts[uid] <= (probeFailuresByUid[uid] ?? 0)) {
             return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
           }
@@ -702,6 +707,27 @@ describe('Kubernetes Prometheus resolution', () => {
       config.unifiedAlerting.stateHistory = original;
     }
   });
+
+  it('falls through to a sibling when the leader probe hangs', async () => {
+    setDataSources([
+      { uid: 'default-uid', name: 'default-prom', isDefault: true },
+      { uid: 'team-uid', name: 'team-prom' },
+    ]);
+    dataByUid = { 'team-uid': 1 };
+    probeHangUids = new Set(['default-uid']);
+
+    jest.useFakeTimers();
+    try {
+      const promise = fetchKubernetesInventory();
+      await jest.advanceTimersByTimeAsync(60_000);
+      const inventory = await promise;
+      expect(inventory.clusters).toBe(1);
+      expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('rejects from fetchClusterCpuSeries when no datasource has Kubernetes data', async () => {
     setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
 

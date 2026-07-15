@@ -98,6 +98,11 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
 // (connection queuing, gateway blips) can outlast an immediate retry; a short backoff covers
 // them while the region shows its skeleton. 3 attempts total.
 const RETRY_DELAYS_MS = [500, 1500];
+
+// Probes gate the whole card: 3 attempts × 30s meant fallback could wait 92s+. 10s per attempt
+// bounds the leader to ~32s worst case while still outlasting a slow-but-alive datasource.
+const PROBE_TIMEOUT_MS = 10_000;
+
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
@@ -117,7 +122,7 @@ async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
 // as no data — an unusable datasource must not win the probe.
 async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
   try {
-    const frames = await withRetry(() => runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds));
+    const frames = await withRetry(() => runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS));
     return (readScalar(frames, 'namespaces') ?? 0) > 0;
   } catch {
     return false;
