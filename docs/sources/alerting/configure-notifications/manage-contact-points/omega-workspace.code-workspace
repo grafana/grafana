@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "../../../../.."
+		},
+		{
+			"path": "../../../../../../docs-ai"
+		},
+		{
+			"path": "../../../../../../interactive-tutorials"
+		},
+		{
+			"path": "../../../../../../website"
+		}
+	],
+	"settings": {}
+}

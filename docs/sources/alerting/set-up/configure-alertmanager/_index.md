@@ -154,7 +154,7 @@ On the Settings page, you can also manage your Alertmanager configurations.
 
 Grafana stores up to the last 100 configuration versions for the built-in Grafana Alertmanager, per organization, including the current one. Each time the Alertmanager configuration changes, Grafana saves a new version and permanently deletes the oldest version once the limit is exceeded.
 
-To avoid losing a working configuration, be sure to:
+To avoid losing a working configuration:
 
 - **Back up your configuration**: [Export and store](ref:export-alerting-resources) your Alertmanager configuration outside of Grafana before you automate changes or run large-scale updates. 
 - **Test changes in a low-impact environment**: Run automations and configuration experiments against a development or staging Grafana instance before applying them to production.
