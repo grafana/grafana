@@ -124,7 +124,10 @@ export function AppChrome({ children }: Props) {
           <>
             {/* A slim bar (hamburger + breadcrumbs) sits above the live page inside the Platform tab */}
             <FullscreenWorkspacePlatformBar />
-            <div ref={portalHostRef} />
+            {/* `display: contents` keeps this ref wrapper out of the box tree, so the portaled page
+                stays a direct flex child of the workspace host (like it is of <main> in normal mode)
+                and full-height pages (e.g. Explore) can fill the Platform tab instead of collapsing. */}
+            <div ref={portalHostRef} className={styles.portalHost} />
           </>,
           workspaceHost
         )}
@@ -374,6 +377,9 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       left: 0,
       right: 0,
       zIndex: theme.zIndex.navbarFixed + 1,
+    }),
+    portalHost: css({
+      display: 'contents',
     }),
   };
 };

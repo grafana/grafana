@@ -78,10 +78,7 @@ function WorkspaceError() {
           </Button>
         }
       >
-        {t(
-          'navigation.fullscreen-workspace.error-message',
-          'The Grafana Assistant workspace could not be loaded.'
-        )}
+        {t('navigation.fullscreen-workspace.error-message', 'The Grafana Assistant workspace could not be loaded.')}
       </EmptyState>
     </div>
   );
