@@ -19,7 +19,6 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -69,33 +68,6 @@ func (m *mockConnectionClient) GetConnectionByUID(_ context.Context, _ int64, _ 
 }
 
 var _ datasource.ConnectionClient = (*mockConnectionClient)(nil)
-
-// firstCallCacheService is a test-only CacheService that returns ds on the first
-// GetDatasourceByUID call and ErrDataSourceNotFound on every subsequent call.
-// This lets datasourceRequiresSTPaths detect a feature (e.g. oauthPassThru) while
-// the legacy fallback handler (CheckDatasourceHealthWithUID / CallDatasourceResourceWithUID)
-// returns a graceful 500 on its own lookup, avoiding the need for pluginContextProvider
-// or other heavy dependencies in unit tests.
-type firstCallCacheService struct {
-	ds   *datasources.DataSource
-	seen bool
-}
-
-func (f *firstCallCacheService) GetDatasourceByUID(_ context.Context, uid string, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
-	if !f.seen {
-		f.seen = true
-		if f.ds != nil && f.ds.UID == uid {
-			return f.ds, nil
-		}
-	}
-	return nil, datasources.ErrDataSourceNotFound
-}
-
-func (f *firstCallCacheService) GetDatasource(_ context.Context, _ int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
-	return nil, datasources.ErrDataSourceNotFound
-}
-
-var _ datasources.CacheService = (*firstCallCacheService)(nil)
 
 // implements grafanaapiserver.DirectRestConfigProvider
 type mockDirectRestConfigProvider struct {
