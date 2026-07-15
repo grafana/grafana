@@ -2117,11 +2117,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/admin/helpers.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 2
-    }
-  },
   "public/app/features/plugins/admin/hooks/usePluginConfig.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
