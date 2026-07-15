@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { type PluginMeta } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -47,44 +48,56 @@ const stubbedExisting: ExistingItem[] = [
 ];
 
 export function RecommendationExisting() {
-  const { settings, loading: settingsLoading } = usePluginBridge(KUBERNETES_APP_ID);
-  const { datasource, resolving, resolutionError, inventory, inventoryLoading, health, cpuSeries, cpuLoading } =
-    useKubernetesCardData();
-
+  const { settings, installed, loading: settingsLoading } = usePluginBridge(KUBERNETES_APP_ID);
   const [selectedTitle, setSelectedTitle] = useState<string>();
 
-  const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
-  const canAccessK8s = settings && canAccessPluginPage(settings, bridgePath);
-
-  if (!settingsLoading && !canAccessK8s) {
-    const existing = stubbedExisting;
-    const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
-    return <ExistingSolutionCard existing={existing} selected={selected} onSelect={setSelectedTitle} />;
-  }
-
-  if (settingsLoading || resolving) {
+  if (settingsLoading) {
     return <RecommendationExistingSkeleton />;
   }
 
-  let kubernetesItem: ExistingItem | null = null;
-  if (!resolutionError && datasource && settings) {
-    kubernetesItem = buildKubernetesItem(
-      {
-        inventory,
-        inventoryLoading,
-        health,
-        cpuSeries: cpuSeries ?? null,
-        cpuLoading,
-        datasourceName: datasource.name,
-      },
-      settings
-    );
+  const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
+  if (!installed || !settings || !canAccessPluginPage(settings, bridgePath)) {
+    const selected = stubbedExisting.find((item) => item.title === selectedTitle) ?? stubbedExisting[0];
+    return <ExistingSolutionCard existing={stubbedExisting} selected={selected} onSelect={setSelectedTitle} />;
   }
+
+  return <LiveSolutionsCard settings={settings} selectedTitle={selectedTitle} onSelect={setSelectedTitle} />;
+}
+
+function LiveSolutionsCard({
+  settings,
+  selectedTitle,
+  onSelect,
+}: {
+  settings: PluginMeta<{}>;
+  selectedTitle: string | undefined;
+  onSelect: (title: string) => void;
+}) {
+  const { datasource, resolving, resolutionError, inventory, inventoryLoading, health, cpuSeries, cpuLoading } =
+    useKubernetesCardData();
+
+  if (resolving) {
+    return <RecommendationExistingSkeleton />;
+  }
+
+  const kubernetesItem: ExistingItem | null =
+    !resolutionError && datasource
+      ? buildKubernetesItem(
+          {
+            inventory,
+            inventoryLoading,
+            health,
+            cpuSeries: cpuSeries ?? null,
+            cpuLoading,
+            datasourceName: datasource.name,
+          },
+          settings
+        )
+      : null;
 
   const existing = kubernetesItem ? [kubernetesItem, ...stubbedExisting] : stubbedExisting;
   const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
-
-  return <ExistingSolutionCard existing={existing} selected={selected} onSelect={setSelectedTitle} />;
+  return <ExistingSolutionCard existing={existing} selected={selected} onSelect={onSelect} />;
 }
 
 // Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the Kubernetes lookups

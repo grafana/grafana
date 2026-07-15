@@ -66,6 +66,10 @@ function mockResolvedKubernetes(
 beforeEach(() => {
   mockUsePluginBridge.mockReturnValue({ loading: false, installed: true, settings });
   mockResolvedKubernetes();
+  mockResolveDatasource.mockClear();
+  mockFetchInventory.mockClear();
+  mockFetchHealth.mockClear();
+  mockFetchCpuSeries.mockClear();
 });
 
 afterEach(() => jest.restoreAllMocks());
@@ -102,6 +106,18 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
     expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
+    expect(mockResolveDatasource).not.toHaveBeenCalled();
+  });
+
+  it('shows stubs and never queries Kubernetes when the app is installed but disabled', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+    expect(mockResolveDatasource).not.toHaveBeenCalled();
+    expect(mockFetchInventory).not.toHaveBeenCalled();
   });
 
   it('shows stubs when resolution returns null', async () => {
