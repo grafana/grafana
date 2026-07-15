@@ -206,7 +206,7 @@
       "tooltip-order-by": "Sort results based on one or more columns in ascending or descending order."
     },
     "pagination": {
-      "results-truncated-message": "Stopped loading after {{maxPages}} pages; some results may be omitted.",
+      "results-truncated-message": "Some results may be omitted because there were too many to load.",
       "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {

@@ -1,8 +1,15 @@
 import { map } from 'lodash';
+import { lastValueFrom } from 'rxjs';
 
 import { AppEvents, type ScopedVars, type SelectableValue, type VariableWithMultiSupport } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getAppEvents, logWarning, type TemplateSrv, type VariableInterpolation } from '@grafana/runtime';
+import {
+  getAppEvents,
+  getBackendSrv,
+  logWarning,
+  type TemplateSrv,
+  type VariableInterpolation,
+} from '@grafana/runtime';
 
 import { type AzureAPIResponse, type AzureMonitorOption, type VariableOptionGroup } from '../types/types';
 
@@ -46,47 +53,68 @@ export const routeNames = {
   resourceGraph: 'resourcegraph',
 };
 
-export const MAX_ARM_PAGES = 50;
+export const paginatedRoutes = {
+  subscriptions: 'subscriptions',
+  workspaces: 'workspaces',
+} as const;
 
-export function nextLinkToPath(prefix: string, nextLink: string): string {
-  const { pathname, search } = new URL(nextLink);
-  return `${prefix}${pathname}${search}`;
+export interface ArmResourcePage<T> {
+  value: T[];
+  nextToken?: string;
+  truncated: boolean;
 }
 
-export async function fetchAllArmPages<T>(
-  prefix: string,
-  initialPath: string,
-  fetchPage: (path: string) => Promise<AzureAPIResponse<T> | undefined>,
-  maxPages: number = MAX_ARM_PAGES
+export function parseNextLinkToken(linkHeader: string): string | undefined {
+  const match = /<\?([^>]*)>;\s*rel="next"/.exec(linkHeader);
+  if (!match) {
+    return undefined;
+  }
+  return new URLSearchParams(match[1]).get('nextToken') ?? undefined;
+}
+
+export async function fetchArmResourcePage<T>(
+  datasourceUid: string,
+  subtype: string,
+  params: Record<string, string> = {}
+): Promise<ArmResourcePage<T>> {
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<AzureAPIResponse<T>>({
+      url: `/api/datasources/uid/${datasourceUid}/resources/${subtype}`,
+      params,
+      method: 'GET',
+    })
+  );
+  const value = response.data?.value ?? [];
+  const linkHeader = response.headers.get('Link');
+  const nextToken = linkHeader ? parseNextLinkToken(linkHeader) : undefined;
+  const truncated = response.headers.get('X-Results-Truncated') === 'true';
+  return { value, nextToken, truncated };
+}
+
+export async function fetchAllArmResources<T>(
+  datasourceUid: string,
+  subtype: string,
+  params: Record<string, string> = {}
 ): Promise<T[]> {
-  const results: T[] = [];
-  let path: string | undefined = initialPath;
-  let pages = 0;
-  for (; path && pages < maxPages; pages++) {
-    const page = await fetchPage(path);
-    if (!page) {
-      logWarning('[azuremonitor] ARM page request returned no result; stopping pagination.');
-      path = undefined;
-      break;
-    }
-    results.push(...(page.value ?? []));
-    path = page.nextLink ? nextLinkToPath(prefix, page.nextLink) : undefined;
+  const { value, truncated } = await fetchArmResourcePage<T>(datasourceUid, subtype, { ...params, listAll: 'true' });
+  if (truncated) {
+    warnResultsTruncated();
   }
-  if (path) {
-    logWarning(`[azuremonitor] ARM listing stopped after ${maxPages} pages; some results may be omitted.`);
-    getAppEvents().publish({
-      type: AppEvents.alertWarning.name,
-      payload: [
-        t('components.pagination.results-truncated-title', 'Azure Monitor'),
-        t(
-          'components.pagination.results-truncated-message',
-          'Stopped loading after {{maxPages}} pages; some results may be omitted.',
-          { maxPages }
-        ),
-      ],
-    });
-  }
-  return results;
+  return value;
+}
+
+export function warnResultsTruncated(): void {
+  logWarning('[azuremonitor] ARM listing truncated by the backend; some results may be omitted.');
+  getAppEvents().publish({
+    type: AppEvents.alertWarning.name,
+    payload: [
+      t('components.pagination.results-truncated-title', 'Azure Monitor'),
+      t(
+        'components.pagination.results-truncated-message',
+        'Some results may be omitted because there were too many to load.'
+      ),
+    ],
+  });
 }
 
 export function interpolateVariable(

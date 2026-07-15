@@ -1,4 +1,6 @@
-import { type CustomVariableModel } from '@grafana/data';
+import { of } from 'rxjs';
+
+import { AppEvents, type CustomVariableModel } from '@grafana/data';
 
 import { type AzureLogsQuery, AzureQueryType, type AzureTracesQuery } from '../dataquery.gen';
 import { type Context, createContext } from '../mocks/datasource';
@@ -11,6 +13,8 @@ import FakeSchemaData from './mocks/schema';
 
 let getTempVars = () => [] as CustomVariableModel[];
 let replace = () => '';
+const backendFetch = jest.fn();
+const publishAppEvent = jest.fn();
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -22,15 +26,25 @@ jest.mock('@grafana/runtime', () => {
       updateTimeRange: jest.fn(),
       containsTemplate: jest.fn(),
     }),
+    getBackendSrv: () => ({ fetch: backendFetch }),
+    getAppEvents: () => ({ publish: publishAppEvent }),
+    logWarning: jest.fn(),
   };
 });
+
+function mockArmPage<T>(value: T[], headers: Record<string, string> = {}) {
+  return of({
+    data: { value },
+    headers: { get: (key: string) => headers[key] ?? null },
+  });
+}
 
 describe('AzureLogAnalyticsDatasource', () => {
   let ctx: Context;
 
   beforeEach(() => {
     ctx = createContext({
-      instanceSettings: { jsonData: { subscriptionId: 'xxx' }, url: 'http://azureloganalyticsapi' },
+      instanceSettings: { uid: 'la-uid', jsonData: { subscriptionId: 'xxx' }, url: 'http://azureloganalyticsapi' },
     });
   });
 
@@ -118,9 +132,9 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   describe('When performing getWorkspaces', () => {
     beforeEach(() => {
-      ctx.datasource.azureLogAnalyticsDatasource.getResource = jest
-        .fn()
-        .mockResolvedValue({ value: [{ name: 'foobar', id: 'foo', properties: { customerId: 'bar' } }] });
+      backendFetch.mockClear();
+      publishAppEvent.mockClear();
+      backendFetch.mockReturnValue(mockArmPage([{ name: 'foobar', id: 'foo', properties: { customerId: 'bar' } }]));
     });
 
     it('should return the workspace id', async () => {
@@ -128,27 +142,40 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(workspaces).toEqual([{ text: 'foobar', value: 'foo' }]);
     });
 
-    it('follows nextLink and aggregates workspaces across pages', async () => {
-      const getResource = jest
-        .fn()
-        .mockResolvedValueOnce({
-          value: [{ name: 'ws-1', id: 'id-1', properties: { customerId: 'c1' } }],
-          nextLink:
-            'https://management.azure.com/subscriptions/sub/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview&$skiptoken=TOKEN',
-        })
-        .mockResolvedValueOnce({ value: [{ name: 'ws-2', id: 'id-2', properties: { customerId: 'c2' } }] });
-      ctx.datasource.azureLogAnalyticsDatasource.getResource = getResource;
+    it('requests the backend workspaces endpoint once in eager mode', async () => {
+      backendFetch.mockReturnValue(
+        mockArmPage([
+          { name: 'ws-1', id: 'id-1', properties: { customerId: 'c1' } },
+          { name: 'ws-2', id: 'id-2', properties: { customerId: 'c2' } },
+        ])
+      );
 
       const workspaces = await ctx.datasource.azureLogAnalyticsDatasource.getWorkspaces('sub');
 
-      expect(getResource).toHaveBeenCalledTimes(2);
-      expect(getResource.mock.calls[1][0]).toBe(
-        'azuremonitor/subscriptions/sub/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview&$skiptoken=TOKEN'
+      expect(backendFetch).toHaveBeenCalledTimes(1);
+      expect(backendFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/api/datasources/uid/la-uid/resources/workspaces',
+          method: 'GET',
+          params: expect.objectContaining({ listAll: 'true' }),
+        })
       );
       expect(workspaces).toEqual([
         { text: 'ws-1', value: 'id-1' },
         { text: 'ws-2', value: 'id-2' },
       ]);
+    });
+
+    it('warns when the backend reports the listing was truncated', async () => {
+      backendFetch.mockReturnValue(
+        mockArmPage([{ name: 'ws-1', id: 'id-1', properties: { customerId: 'c1' } }], {
+          'X-Results-Truncated': 'true',
+        })
+      );
+
+      await ctx.datasource.azureLogAnalyticsDatasource.getWorkspaces('sub');
+
+      expect(publishAppEvent).toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertWarning.name }));
     });
   });
 

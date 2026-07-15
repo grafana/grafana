@@ -1,6 +1,7 @@
 import { get, set } from 'lodash';
+import { of } from 'rxjs';
 
-import { type ScopedVars } from '@grafana/data';
+import { AppEvents, type ScopedVars } from '@grafana/data';
 import { type VariableInterpolation } from '@grafana/runtime';
 
 import AzureMonitorDatasource from '../datasource';
@@ -19,6 +20,8 @@ import {
 // We declare this as a function so that we can overwrite it in each test
 // without affecting the rest of the @grafana/runtime module.
 let replace = (val: string) => val;
+const backendFetch = jest.fn();
+const publishAppEvent = jest.fn();
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -30,8 +33,18 @@ jest.mock('@grafana/runtime', () => {
       updateTimeRange: jest.fn(),
       containsTemplate: jest.fn(),
     }),
+    getBackendSrv: () => ({ fetch: backendFetch }),
+    getAppEvents: () => ({ publish: publishAppEvent }),
+    logWarning: jest.fn(),
   };
 });
+
+function mockArmPage<T>(value: T[], headers: Record<string, string> = {}) {
+  return of({
+    data: { value },
+    headers: { get: (key: string) => headers[key] ?? null },
+  });
+}
 
 interface TestContext {
   instanceSettings: AzureMonitorDataSourceInstanceSettings;
@@ -902,8 +915,9 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.instanceSettings.jsonData.azureAuthType = 'msi';
+        ctx.instanceSettings.uid = 'azuremonitor-uid';
         ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
+        backendFetch.mockReturnValue(mockArmPage(response.value));
       });
 
       it('should return list of subscriptions', () => {
@@ -914,38 +928,33 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should follow nextLink and aggregate all pages of subscriptions', async () => {
-        const firstPage = {
-          value: [
+      it('requests the backend subscriptions endpoint once in eager mode', async () => {
+        backendFetch.mockReturnValue(
+          mockArmPage([
             { subscriptionId: 'sub-1', displayName: 'Subscription 1' },
             { subscriptionId: 'sub-2', displayName: 'Subscription 2' },
-          ],
-          nextLink: 'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN123',
-        };
-        const secondPage = {
-          value: [{ subscriptionId: 'sub-3', displayName: 'Subscription 3' }],
-        };
-        const getResource = jest.fn().mockResolvedValueOnce(firstPage).mockResolvedValueOnce(secondPage);
-        ctx.ds.azureMonitorDatasource.getResource = getResource;
+          ])
+        );
 
         const results = await ctx.ds.getSubscriptions();
 
-        expect(results.map((r: { value: string }) => r.value)).toEqual(['sub-1', 'sub-2', 'sub-3']);
-        expect(getResource).toHaveBeenCalledTimes(2);
-        expect(getResource).toHaveBeenNthCalledWith(
-          2,
-          'azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN123'
-        );
+        expect(results.map((r: { value: string }) => r.value)).toEqual(['sub-1', 'sub-2']);
+        expect(backendFetch).toHaveBeenCalledTimes(1);
+        expect(backendFetch).toHaveBeenCalledWith({
+          url: '/api/datasources/uid/azuremonitor-uid/resources/subscriptions',
+          params: { listAll: 'true' },
+          method: 'GET',
+        });
       });
 
-      it('should stop paginating once nextLink is absent', async () => {
-        const getResource = jest.fn().mockResolvedValue({ value: [{ subscriptionId: 'only', displayName: 'Only' }] });
-        ctx.ds.azureMonitorDatasource.getResource = getResource;
+      it('warns when the backend reports the listing was truncated', async () => {
+        backendFetch.mockReturnValue(
+          mockArmPage([{ subscriptionId: 'sub-1', displayName: 'Subscription 1' }], { 'X-Results-Truncated': 'true' })
+        );
 
-        const results = await ctx.ds.getSubscriptions();
+        await ctx.ds.getSubscriptions();
 
-        expect(results.length).toEqual(1);
-        expect(getResource).toHaveBeenCalledTimes(1);
+        expect(publishAppEvent).toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertWarning.name }));
       });
     });
 
