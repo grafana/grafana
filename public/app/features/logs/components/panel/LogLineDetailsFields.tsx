@@ -395,7 +395,11 @@ const LogLineDetailsField = ({
           originalOnClick?.(e, origin);
 
           reportInteractionWrapper('logs_log_line_details_link_clicked', {
-            app: resolveAppFromLink(link.href),
+            app,
+            linkApp: resolveAppFromLink(link.href),
+            fieldKey: keys[0],
+            fieldType: isLabel ? 'label' : 'field',
+            logLevel: log.logLevel,
           });
         };
         return (
