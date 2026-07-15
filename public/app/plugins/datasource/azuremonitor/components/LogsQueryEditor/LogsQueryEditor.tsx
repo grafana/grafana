@@ -146,11 +146,11 @@ const LogsQueryEditor = ({
       const resolvedTier = basicLogsEnabled ? 'Basic' : auxiliaryLogsEnabled ? 'Auxiliary' : undefined;
       if (resolvedTier) {
         const updated = setLogTier(query, resolvedTier);
-        onChange(setKustoQuery(updated, ''));
+        onChange(updated);
       } else {
         // No tier is enabled, clear it
         const cleared = setLogTier(query, undefined);
-        onChange(setKustoQuery(cleared, ''));
+        onChange(cleared);
       }
       return;
     }
@@ -292,10 +292,19 @@ const LogsQueryEditor = ({
               selectionNotice={(selected) => {
                 if (selected.length === 1 && isBasicLogsQuery) {
                   return selectedTier === 'Auxiliary'
-                    ? 'When using Auxiliary Logs, you may only select one resource at a time.'
-                    : 'When using Basic Logs, you may only select one resource at a time.';
+                    ? t(
+                        'components.logs-query-editor.notice-auxiliary-single-resource',
+                        'When using Auxiliary Logs, you may only select one resource at a time.'
+                      )
+                    : t(
+                        'components.logs-query-editor.notice-basic-single-resource',
+                        'When using Basic Logs, you may only select one resource at a time.'
+                      );
                 }
-                return 'You may only choose items of the same resource type.';
+                return t(
+                  'components.logs-query-editor.notice-same-resource-type',
+                  'You may only choose items of the same resource type.'
+                );
               }}
             />
             {showBasicLogsToggle && (
@@ -388,7 +397,24 @@ const LogsQueryEditor = ({
                   onClick={() => {
                     const { fromTier } = tierAutoSwitchNotice;
                     const tierValue = fromTier === 'Analytics' ? undefined : fromTier;
-                    onChange(setLogTier(query, tierValue));
+                    let updated = setLogTier(query, tierValue);
+                    // When reverting to Analytics, clear the builder table selection to avoid tier mismatch
+                    if (fromTier === 'Analytics' && updated.azureLogAnalytics?.builderQuery) {
+                      updated = {
+                        ...updated,
+                        azureLogAnalytics: {
+                          ...updated.azureLogAnalytics,
+                          builderQuery: {
+                            ...updated.azureLogAnalytics.builderQuery,
+                            from: {
+                              type: BuilderQueryEditorExpressionType.Property,
+                              property: { type: BuilderQueryEditorPropertyType.String, name: '' },
+                            },
+                          },
+                        },
+                      };
+                    }
+                    onChange(updated);
                     setTierAutoSwitchNotice(null);
                   }}
                 >
