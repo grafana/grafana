@@ -646,8 +646,7 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
           "isLoading": false,
           "hasError": true,
           "hasNoData": false,
-          "errors": ["parse error: unexpected } in query"],
-          "errorDetails": [{ "message": "parse error: unexpected } in query", "refId": "A", "type": "unknown" }],
+          "errors": [{ "message": "parse error: unexpected } in query", "refId": "A", "type": "unknown" }],
           "notices": [{ "severity": "warning", "text": "Query returned partial data" }]
         },
         "dataSchema": [
@@ -679,9 +678,8 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 
 - `loadingState` — the raw scene loading state (`NotStarted`, `Loading`, `Streaming`, `Done`, `Error`).
 - `isLoading` / `hasError` / `hasNoData` — convenience booleans derived from `loadingState` and the query result.
-- `errors` — plain error message strings (kept for backward compatibility).
-- `errorDetails` — structured errors with `message`, `refId`, and `type`, present only when the panel has query errors.
-- `notices` — data-frame notices (`info` / `warning` / `error`), deduped across frames.
+- `errors` — every panel error in one structured array. Each entry is a curated subset of `@grafana/data`'s `DataQueryError` (`message`, and `refId`/`type` for query errors). This consolidates all error channels: query/datasource errors, error-severity data-frame notices, and plugin load failures (unknown viz type, library-panel load failure).
+- `notices` — non-error (`info` / `warning`) data-frame notices, deduped across frames. Error-severity notices are folded into `errors` instead.
 
 `dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.
 

@@ -41,14 +41,22 @@ type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;
  * It is intentionally NOT part of the v2 DashboardSpec: these are transient
  * runtime values (query health, loaded frames), not saved dashboard state.
  */
+
+/**
+ * A single panel error. A curated subset of `@grafana/data`'s `DataQueryError`
+ * (the standard backend/query error shape): `refId`/`type` are set for query
+ * errors, while plugin-load failures and error-severity data-frame notices
+ * carry only `message`.
+ */
 export interface PanelRuntimeError {
   message?: string;
   refId?: string;
   type?: string;
 }
 
+/** A non-error data-frame notice (`QueryResultMetaNotice`); error-severity notices are folded into `errors`. */
 export interface PanelRuntimeNotice {
-  severity: 'info' | 'warning' | 'error';
+  severity: 'info' | 'warning';
   text: string;
 }
 
@@ -57,8 +65,9 @@ export interface PanelRuntimeStatus {
   isLoading: boolean;
   hasError: boolean;
   hasNoData: boolean;
-  errors?: string[];
-  errorDetails?: PanelRuntimeError[];
+  // Every panel error in one place: query errors (DataQueryError), error-severity
+  // data-frame notices, and plugin-load failures.
+  errors?: PanelRuntimeError[];
   notices?: PanelRuntimeNotice[];
 }
 

@@ -346,8 +346,7 @@ describe('Panel mutation commands', () => {
 
       expect(status?.hasError).toBe(true);
       expect(status?.loadingState).toBe(LoadingState.Error);
-      expect(status?.errors).toEqual(['boom']);
-      expect(status?.errorDetails).toEqual([{ message: 'boom', refId: 'A', type: DataQueryErrorType.Unknown }]);
+      expect(status?.errors).toEqual([{ message: 'boom', refId: 'A', type: DataQueryErrorType.Unknown }]);
     });
 
     it('includeStatus reads the error message from data.message when the top-level message is absent', async () => {
@@ -370,8 +369,7 @@ describe('Panel mutation commands', () => {
       const status = (result.data as PanelElementsData).elements[0].status;
 
       expect(status?.hasError).toBe(true);
-      expect(status?.errors).toEqual(['backend boom']);
-      expect(status?.errorDetails).toEqual([{ message: 'backend boom', refId: 'A' }]);
+      expect(status?.errors).toEqual([{ message: 'backend boom', refId: 'A' }]);
     });
 
     it('includeStatus does not flag hasError for an error object with no usable message (Done state)', async () => {
@@ -392,7 +390,30 @@ describe('Panel mutation commands', () => {
 
       expect(status?.hasError).toBe(false);
       expect(status?.errors).toBeUndefined();
-      expect(status?.errorDetails).toBeUndefined();
+    });
+
+    it('includeStatus surfaces a plugin load error as a hard error, even with a data provider present', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Broken Plugin Panel');
+      // Healthy data underneath, but the panel plugin failed to load.
+      attachPanelData(scene, 'Broken Plugin Panel', makePanelData({ state: LoadingState.Done }));
+      const panel = scene.state.body.getVizPanels().find((p) => p.state.title === 'Broken Plugin Panel');
+      panel?.setState({ _pluginLoadError: 'Failed to load panel plugin' });
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status).toEqual({
+        loadingState: LoadingState.Error,
+        isLoading: false,
+        hasError: true,
+        hasNoData: false,
+        errors: [{ message: 'Failed to load panel plugin' }],
+      });
     });
 
     it('includeStatus reports hasNoData for a done panel with no series', async () => {
@@ -434,6 +455,32 @@ describe('Panel mutation commands', () => {
       expect(entry.status?.notices).toEqual([{ severity: 'warning', text: 'slow query' }]);
       expect(entry.status?.hasNoData).toBe(false);
       expect(entry.dataSchema?.[0].fields.map((f) => f.name)).toEqual(['time', 'value']);
+    });
+
+    it('includeStatus folds an error-severity notice into errors, not notices', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Error Notice Panel');
+      const frame = toDataFrame({
+        fields: [{ name: 'time', type: FieldType.time, values: [1] }],
+        meta: {
+          notices: [
+            { severity: 'error', text: 'datasource rejected the query' },
+            { severity: 'info', text: 'sampled' },
+          ],
+        },
+      });
+      attachPanelData(scene, 'Error Notice Panel', makePanelData({ state: LoadingState.Done, series: [frame] }));
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(true);
+      expect(status?.errors).toEqual([{ message: 'datasource rejected the query' }]);
+      expect(status?.notices).toEqual([{ severity: 'info', text: 'sampled' }]);
     });
 
     it('does not attach status when includeStatus is not set', async () => {
