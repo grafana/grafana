@@ -36,6 +36,15 @@ export function isLoadingStateRunning(state: LoadingState): boolean {
 }
 
 /**
+ * Returns true when a {@link LoadingState} indicates the result is not ready to treat as final.
+ * Includes NotStarted (query not yet executed) and all {@link isLoadingStateRunning running} states.
+ * @alpha
+ */
+export function isLoadingStatePending(state: LoadingState): boolean {
+  return state === LoadingState.NotStarted || isLoadingStateRunning(state);
+}
+
+/**
  * Returns true when a {@link LoadingState} indicates more data updates may arrive before Done.
  * Unlike {@link isLoadingStateRunning}, this excludes Loading — the initial
  * loading state does not use incremental update semantics (dedup bypass, relative

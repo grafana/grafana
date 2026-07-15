@@ -924,6 +924,7 @@ export {
   type KeyValue,
   LoadingState,
   isLoadingStateRunning,
+  isLoadingStatePending,
   isLoadingStateComplete,
   isLoadingStateIncremental,
   preferredVisualizationTypes,
