@@ -113,7 +113,6 @@ If you want to contribute to any of the plugins listed below (that are found wit
 - azuremonitor
 - grafana-postgresql-datasource
 - grafana-testdata-datasource
-- jaeger
 - mysql
 - loki
 
@@ -123,7 +122,8 @@ To build and watch all these plugins you can run the following command. Note thi
 yarn plugin:build:dev
 ```
 
-If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/jaeger`.
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` 
+with the plugins name field found in its package.json. e.g. `@grafana-plugins/<plugin-name>`.
 
 ```
 yarn workspace <name_of_plugin> dev

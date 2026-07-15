@@ -1,18 +1,8 @@
 import saveAs from 'file-saver';
 
-import {
-  type CSVConfig,
-  type DataFrame,
-  DataTransformerID,
-  dateTime,
-  dateTimeFormat,
-  type LogsModel,
-  MutableDataFrame,
-  toCSV,
-} from '@grafana/data';
+import { type CSVConfig, type DataFrame, DataTransformerID, dateTime, dateTimeFormat, type LogsModel, MutableDataFrame, toCSV, } from '@grafana/data';
 
-import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
-
+import { transformToJaeger } from './transformToJaeger';
 import { transformToOTLP } from './transformToOTLP';
 import { transformToZipkin } from './transformToZipkin';
 
