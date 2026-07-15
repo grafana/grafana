@@ -13,7 +13,6 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
@@ -607,29 +606,6 @@ func TestCallK8sDataSourceResourceHandler_Headers(t *testing.T) {
 }
 
 // ── datasourceRequiresSTPaths ────────────────────────────────────────────────
-
-// countMetric reads a counter value from a test registry by label combination.
-func countMetric(t *testing.T, reg *prometheus.Registry, name, route, pluginType, target string) float64 {
-	t.Helper()
-	mfs, err := reg.Gather()
-	require.NoError(t, err)
-	for _, mf := range mfs {
-		if mf.GetName() != name {
-			continue
-		}
-		for _, m := range mf.GetMetric() {
-			labels := map[string]string{}
-			for _, l := range m.GetLabel() {
-				labels[l.GetName()] = l.GetValue()
-			}
-			if labels["route"] == route && labels["plugin_type"] == pluginType && labels["target"] == target {
-				return m.GetCounter().GetValue()
-			}
-		}
-	}
-	return 0
-}
-
 func TestDatasourceRequiresSTPaths(t *testing.T) {
 	const dsUID = "test-uid"
 
