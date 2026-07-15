@@ -14,6 +14,7 @@ declare module "@openfeature/core" {
     | "faroSessionReplay"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
+    | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "provisioning.gitConventions"
