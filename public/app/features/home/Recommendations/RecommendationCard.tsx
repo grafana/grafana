@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -23,9 +24,13 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
 
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name={recommendation.icon} className={styles.icon} />
-          <Text variant="body" color="secondary">
-            {recommendation.context}
-          </Text>
+          {recommendation.contextLoading ? (
+            <Skeleton width={180} containerTestId="recommendation-context-skeleton" />
+          ) : (
+            <Text variant="body" color="secondary">
+              {recommendation.context}
+            </Text>
+          )}
         </Stack>
 
         <Text variant="body">{recommendation.description}</Text>

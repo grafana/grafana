@@ -28,7 +28,7 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
 
   // An unavailable plugin list fails closed. /api/plugins always lists at least the core plugins,
   // so an empty response means the list is unreliable and also fails closed.
-  if (pluginsLoading || countLoading || !installedPlugins || installedPlugins.length === 0) {
+  if (pluginsLoading || !installedPlugins || installedPlugins.length === 0) {
     return null;
   }
 
@@ -46,7 +46,7 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
     return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
   });
 
-  const inviteItem = buildInviteTeamItem(orgUserCount ?? null);
+  const inviteItem = buildInviteTeamItem(orgUserCount ?? null, countLoading);
   const recommendations = inviteItem ? [...pluginRecommendations, inviteItem] : pluginRecommendations;
   if (recommendations.length === 0) {
     return null;

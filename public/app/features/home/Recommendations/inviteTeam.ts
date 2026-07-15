@@ -50,7 +50,7 @@ function getInviteTeamHref(): string | null {
  * keeps the section rendered when every curated app is enabled. Null when the user cannot invite.
  * The context line only states a user count that was actually resolved — never a static claim.
  */
-export function buildInviteTeamItem(userCount: number | null): RecommendationItem | null {
+export function buildInviteTeamItem(userCount: number | null, countLoading = false): RecommendationItem | null {
   const href = getInviteTeamHref();
   if (!href) {
     return null;
@@ -60,6 +60,7 @@ export function buildInviteTeamItem(userCount: number | null): RecommendationIte
     icon: 'users-alt',
     color: (theme) => theme.visualization.getColorByName('yellow'),
     title: t('home.recommendations.invite-team.title', 'Invite your team'),
+    contextLoading: countLoading,
     context:
       userCount !== null && userCount >= 1
         ? t('home.recommendations.invite-team.user-count', '', {
