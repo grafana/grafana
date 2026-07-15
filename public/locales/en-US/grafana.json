@@ -15695,7 +15695,6 @@
       "from-input": "From",
       "open-input-calendar": "Open calendar",
       "range-error": "\"From\" date must be before \"To\" date",
-      "required-error": "This field is required",
       "to-input": "To"
     },
     "range-picker": {
