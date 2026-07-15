@@ -193,7 +193,12 @@ function RenderedMarkdown({
   const repositoryName = repository.name;
   const repositoryPath = repository.path;
 
-  const html = renderMarkdown(markdown);
+  // renderMarkdown's default sanitizer strips the href of bare relative links
+  // (e.g. `dashboard.json`, `subfolder/`), leaving `<a href>` that resolves to
+  // the app root — so folder/dashboard links can't be rewritten or resolved.
+  // Render without it and rely on textUtil.sanitize below (the XSS boundary),
+  // which preserves relative links.
+  const html = renderMarkdown(markdown, { noSanitize: true });
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
   const safe = textUtil.sanitize(rewritten);
   const containerRef = useRef<HTMLDivElement>(null);

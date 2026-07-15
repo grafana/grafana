@@ -133,6 +133,22 @@ describe('FolderReadmePanel', () => {
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
     });
 
+    it('resolves a bare relative link (no ./) that renderMarkdown would otherwise strip', async () => {
+      mockResourcesUnwrap.mockResolvedValue({
+        items: [{ path: 'dashboards/team-a/cpu.json', resource: 'dashboards', name: 'abc', group: '', hash: '' }],
+      });
+      setReadmeResult({ markdownContent: 'See [CPU](cpu.json)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      const link = screen.getByRole('link', { name: 'CPU' });
+      // The href must survive rendering (not be emptied to the app root).
+      expect(link).toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json');
+      await user.click(link);
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+    });
+
     it('opens the host URL in a new tab when a JSON link has no synced resource', async () => {
       const openSpy = jest.spyOn(window, 'open').mockReturnValue({} as Window);
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
