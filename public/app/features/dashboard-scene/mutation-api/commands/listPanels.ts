@@ -77,6 +77,8 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
 
   const { state, errors, error, series } = panelData;
 
+  // NotStarted is included because a panel that has not yet executed its query
+  // has no final data — treat it as loading for runtime status checks (e.g. reporting).
   const isLoading = state === LoadingState.NotStarted || isLoadingStateRunning(state);
   if (isLoading) {
     return { isLoading: true, hasError: false, hasNoData: false };
