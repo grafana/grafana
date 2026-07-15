@@ -1,9 +1,9 @@
-import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAsync } from 'react-use';
 
 import { EventBusSrv, store } from '@grafana/data';
 import { setAppEvents, usePluginLinks } from '@grafana/runtime';
+import { render, screen } from 'test/test-utils';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { ExtensionToolbarItem } from './ExtensionToolbarItem';
@@ -35,11 +35,6 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
   useAsync: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagAssistantFullscreenWorkspace: jest.fn().mockReturnValue(false),
 }));
 
 const mockComponent = {
