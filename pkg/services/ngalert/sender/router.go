@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // AlertsRouter handles alerts generated during alert rule evaluation.
@@ -53,6 +54,7 @@ type AlertsRouter struct {
 	featureManager    featuremgmt.FeatureToggles
 	broadcastAlerts   bool
 	senderMetrics     *metrics.Sender
+	uaSettings        setting.UnifiedAlertingSettings
 }
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
@@ -61,6 +63,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	featureManager featuremgmt.FeatureToggles,
 	broadcastAlerts bool, senderMetrics *metrics.Sender,
+	uaSettings setting.UnifiedAlertingSettings,
 ) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
@@ -83,6 +86,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		featureManager:    featureManager,
 		broadcastAlerts:   broadcastAlerts,
 		senderMetrics:     senderMetrics,
+		uaSettings:        uaSettings,
 	}
 	return d
 }
@@ -181,7 +185,14 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 		// No sender and have Alertmanager(s) to send to - start a new one.
 		d.logger.Info("Creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 		senderLogger := log.New("ngalert.sender.external-alertmanager")
-		s, err := NewExternalAlertmanagerSender(senderLogger, d.senderMetrics.GetOrCreateOrgRegistry(cfg.OrgID))
+		s, err := NewExternalAlertmanagerSender(
+			senderLogger, 
+			d.senderMetrics.GetOrCreateOrgRegistry(cfg.OrgID),
+			WithMaxQueueCapacity(d.uaSettings.SenderQueueCapacity),
+			WithMaxBatchSize(d.uaSettings.SenderBatchSize),
+			WithTimeout(d.uaSettings.SenderTimeout),
+			WithDispatcherWorkers(d.uaSettings.SenderDispatcherWorkers),
+		)
 		if err != nil {
 			d.adminConfigMtx.Unlock()
 			return err

@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -62,7 +63,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 		}),
 	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()))
+		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()), setting.UnifiedAlertingSettings{})
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
@@ -132,7 +133,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	}
 	fakeDs := &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		fakeDs, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()))
+		fakeDs, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()), setting.UnifiedAlertingSettings{})
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey1.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
@@ -291,7 +292,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		}),
 	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
-		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()))
+		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()), setting.UnifiedAlertingSettings{})
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
@@ -393,7 +394,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
 		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}},
-		fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()))
+		fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()), setting.UnifiedAlertingSettings{})
 
 	// Test that we only send to the internal Alertmanager even though the configuration specifies AllAlertmanagers.
 

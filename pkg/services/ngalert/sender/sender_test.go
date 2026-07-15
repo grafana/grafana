@@ -203,6 +203,42 @@ func TestWithMaxBatchSize(t *testing.T) {
 	})
 }
 
+func TestWithTimeout(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	t.Run("WithTimeout sets custom timeout", func(t *testing.T) {
+		customTimeout := 42 * time.Second
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithTimeout(customTimeout))
+		require.NoError(t, err)
+		require.Equal(t, customTimeout, am.options.Timeout)
+	})
+
+	t.Run("default timeout when option is not used", func(t *testing.T) {
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
+		require.Equal(t, defaultTimeout, am.options.Timeout)
+	})
+}
+
+func TestWithDispatcherWorkers(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	t.Run("WithDispatcherWorkers sets custom workers count", func(t *testing.T) {
+		customWorkers := 8
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithDispatcherWorkers(customWorkers))
+		require.NoError(t, err)
+		require.Equal(t, customWorkers, am.options.DispatcherWorkers)
+		require.Equal(t, customWorkers, am.manager.opts.DispatcherWorkers)
+	})
+
+	t.Run("default workers when option is not used", func(t *testing.T) {
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
+		require.Equal(t, defaultDispatcherWorkers, am.options.DispatcherWorkers)
+		require.Equal(t, defaultDispatcherWorkers, am.manager.opts.DispatcherWorkers)
+	})
+}
+
 func TestWithUTF8Labels(t *testing.T) {
 	logger := log.NewNopLogger()
 
