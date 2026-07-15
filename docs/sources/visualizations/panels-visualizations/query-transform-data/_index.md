@@ -202,7 +202,7 @@ Learn more about saved queries:
 
 The **Saved queries** dialog box gives you access to all the saved queries in your organization:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v13.0.png" max-width="750px" alt="List of saved queries" caption="The **Saved queries** dialog box accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v13.0.png" max-width="750px" alt="List of saved queries" >}}
 
 You can access saved queries three ways:
 
@@ -222,7 +222,6 @@ From the **Saved queries** dialog box, you can:
 - Star queries so that they appear in the **Starred queries** filter view.
 - Duplicate or delete a saved query.
 - Edit a query title, description, or tags.
-- When you access the **Saved queries** dialog box from Explore, you can use the **Edit in Explore** option to edit the body of a query.
 
 You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
 
@@ -250,7 +249,7 @@ If you used saved queries prior to the addition of RBAC support in Grafana v12.4
 
 To save a query you've created:
 
-1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
+1. From the query editor, click the **Save**:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-v13.1.png" max-width="750px" alt="Save a query" >}}
 
@@ -280,7 +279,6 @@ In Explore, you can map variables to custom values.
 ### Known limitations
 
 - No validation is performed when you save a query, so it's possible to save an invalid query. You should confirm the query is working properly before you save it.
-- Saved queries are currently accessible from the query editors in Dashboards and Explore.
 - You can save a maximum of 1000 queries.
 - If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** dialog box, the edited query replaces your open queries in Explore.
 
