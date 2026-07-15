@@ -10,11 +10,11 @@ import (
 // position to watch every namespace's notifications for a resource.
 const allNamespaces = "*"
 
-// SubjectAllResources matches every Subject(...) for a single-prefix grafana.app
-// group ({prefix}.grafana.app.{namespace}.{resource}). Single-token "*" wildcards
-// keep out non-resource bus traffic (e.g. $SYS.*) that a ">" firehose would
-// deliver and fail to unmarshal. Groups with >1 token before .grafana.app are not
-// matched.
+// SubjectAllResources matches every Subject(...) whose group is a single-token
+// grafana.app group ({group}.grafana.app.{namespace}.{resource}). Single-token
+// "*" wildcards keep out non-resource bus traffic (e.g. $SYS.*) that a ">"
+// firehose would deliver and fail to unmarshal. Groups with >1 token before
+// .grafana.app are not matched.
 const SubjectAllResources = "*.grafana.app.*.*"
 
 // Subject returns the NATS subject that carries change notifications for a
