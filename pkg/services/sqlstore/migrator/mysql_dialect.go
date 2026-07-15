@@ -405,7 +405,7 @@ func (s *MySQLDialect) executeStatements(ctx context.Context, engine *xorm.Engin
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection for snapshot restore: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	for _, statement := range statements {
 		if _, err := conn.ExecContext(ctx, statement); err != nil {
