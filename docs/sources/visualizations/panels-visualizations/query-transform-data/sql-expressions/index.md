@@ -21,6 +21,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/assistant/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/machine-learning/assistant/
+  configure-expressions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#expressions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#expressions
 ---
 
 # SQL expressions
@@ -58,7 +63,7 @@ SQL expressions allow you to:
   - **Subqueries** are nested queries used for filtering, calculations, or transformations.
   - **CTEs** are temporary named result sets that help make complex queries more readable and reusable.
 
-A key capability of SQL expressions is the ability to JOIN data from multiple tables. This allows users to combine and transform data in a predictable, user-friendly way—even for complex use cases. You can JOIN data from an unlimited number of data source queries.
+A key capability of SQL expressions is the ability to JOIN data from multiple tables. This allows users to combine and transform data in a predictable, user-friendly way—even for complex use cases. You can JOIN data from many data source queries, subject to the [input cell limit](#known-limitations).
 
 To work with SQL expressions, you must use data from a backend data source. In Grafana, a backend data source refers to a data source plugin or integration that communicates with a database, service, or API through the Grafana server, rather than directly from the browser (frontend).
 
@@ -141,6 +146,31 @@ The SQL expression workflow in Grafana is designed with the following behaviors:
 
 - **Non-tabular or incorrectly shaped data will not render in certain panels.** Visualizations such as graphs or gauges require properly structured data. Mismatched formats will result in rendering issues or missing data.
 
+## The SQL expression editor
+
+The SQL expression editor provides several tools to help you write and run queries.
+
+- **Run query**: Runs your SQL expression and refreshes the result. You can also press Ctrl+Enter, or Cmd+Enter on macOS, while the editor is focused.
+- **Format query**: Formats your SQL for readability while preserving template variables.
+- **Copy query**: Copies the current SQL to your clipboard.
+
+The editor autocompletes SQL keywords, [supported functions](#supported-functions), and the RefIDs of your other queries as table names. Column autocomplete is experimental and requires the `sqlExpressionsColumnAutoComplete` feature toggle. When enabled, the editor suggests column names by querying your data sources for their fields.
+
+{{< admonition type="note" >}}
+An enhanced editor built on CodeMirror is available on an experimental basis behind the `sqlExpressionsCodeMirror` feature toggle. It adds function signature help and context-aware column suggestions, such as resolving table aliases.
+{{< /admonition >}}
+
+### Schema inspector
+
+When the query service API is enabled on your instance, the editor includes a **Schema inspector** side panel. Click the eye icon next to the editor to show or hide it.
+
+The Schema inspector has a tab for each source query and lists the following details for every column, so you can reference the correct field names and types as you write your SQL:
+
+- **Field**: The column name.
+- **Type**: The MySQL data type.
+- **Nullable**: Whether the column can contain null values.
+- **Sample values**: Example values from the query result.
+
 ## SQL conversion rules
 
 When you reference a RefID within a SQL statement (e.g., `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
@@ -162,7 +192,7 @@ SQL expressions integrates alerting and recording rules, allowing you to define 
 
 For SQL Expressions to work properly with alerting and recording rules, your query must return:
 
-- One numeric column - **_required_**. This contains the value that triggers alerts or gets recorded.
+- Exactly one numeric column - **_required_**. This contains the value that triggers alerts or gets recorded. The query fails if it returns no numeric column or more than one.
 - Unique string column combinations - **_required_**. Each row must have a unique combination of string column values.
 - One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Examples: `service`, `region`.
 
@@ -237,9 +267,22 @@ During conversion:
 
 ## Known limitations
 
-- Currently, only one SQL expression is supported per panel or alert.
 - Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
+- A SQL expression can only reference data source queries. It can't reference other expressions, and you can't use the output of a SQL expression as the input to another expression.
+- Each SQL expression query must include a time range.
+- SQL expressions aren't supported on 32-bit ARM builds of Grafana.
 - Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+
+### Query limits
+
+Grafana enforces the following limits on SQL expressions. Administrators can configure them in the `[expressions]` section of the Grafana configuration. For more information, refer to [Configure Grafana](ref:configure-expressions).
+
+- **Input cells**: The total number of cells, that is rows multiplied by columns, across all referenced queries can't exceed `sql_expression_cell_limit`. The default is `100000`. If the input exceeds this limit, the query fails.
+- **Output cells**: The number of cells returned can't exceed `sql_expression_output_cell_limit`. The default is `100000`. If the output exceeds this limit, Grafana truncates the result and returns a warning.
+- **Query length**: The SQL text can't exceed `sql_expression_query_length_limit` characters. The default is `10000`.
+- **Timeout**: Grafana cancels a SQL expression that runs longer than `sql_expression_timeout`. The default is `10s`.
+
+For each limit, a value of `0` means no limit.
 
 ### Regular expression limitations in SQL expressions
 
