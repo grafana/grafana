@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -170,6 +171,85 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 	}
 }
 
+type armListEndpoint struct {
+	service   string
+	buildPath func(query url.Values) (path string, linkParams url.Values, err error)
+}
+
+var armListEndpoints = map[string]armListEndpoint{
+	"/subscriptions": {
+		service: azureMonitor,
+		buildPath: func(url.Values) (string, url.Values, error) {
+			return "/subscriptions?api-version=2019-03-01", nil, nil
+		},
+	},
+	"/workspaces": {
+		service: azureMonitor,
+		buildPath: func(query url.Values) (string, url.Values, error) {
+			subscriptionID := query.Get("subscriptionId")
+			if subscriptionID == "" {
+				return "", nil, errors.New("subscriptionId is required")
+			}
+			path := fmt.Sprintf(
+				"/subscriptions/%s/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview",
+				url.PathEscape(subscriptionID),
+			)
+			return path, url.Values{"subscriptionId": {subscriptionID}}, nil
+		},
+	},
+}
+
+func (s *Service) armListHandler(ep armListEndpoint) func(rw http.ResponseWriter, req *http.Request) {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		path, linkParams, err := ep.buildPath(req.URL.Query())
+		if err != nil {
+			writeErrorResponse(rw, http.StatusBadRequest, err.Error())
+			return
+		}
+		s.listArmResource(rw, req, ep.service, path, linkParams)
+	}
+}
+
+func (s *Service) listArmResource(rw http.ResponseWriter, req *http.Request, serviceName, armPath string, linkParams url.Values) {
+	dsInfo, err := s.getDataSourceFromHTTPReq(req)
+	if err != nil {
+		writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+		return
+	}
+
+	service, ok := dsInfo.Services[serviceName]
+	if !ok {
+		writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("%s service not configured", serviceName))
+		return
+	}
+
+	query := req.URL.Query()
+	listAll := query.Get("listAll") != "false"
+
+	requestURL := service.URL + armPath
+	if token := query.Get("nextToken"); token != "" {
+		requestURL = appendSkipToken(requestURL, token)
+	}
+
+	value, nextToken, truncated, err := fetchArmPages(req.Context(), service.HTTPClient, requestURL, listAll, MaxArmPages)
+	if err != nil {
+		status := http.StatusInternalServerError
+		var armErr *armHTTPError
+		if errors.As(err, &armErr) {
+			status = armErr.status
+		}
+		writeErrorResponse(rw, status, err.Error())
+		return
+	}
+	if truncated {
+		s.logger.Warn("Azure Monitor ARM listing stopped at page cap; some results may be omitted", "maxPages", MaxArmPages, "path", armPath)
+	}
+
+	if err := writePaginatedResponse(rw, value, nextToken, truncated, linkParams); err != nil {
+		s.logger.Error("failed to write paginated response", "error", err)
+	}
+}
+
 // newResourceMux provides route definitions shared with the frontend.
 // Check: /public/app/plugins/datasource/azuremonitor/utils/common.ts <routeNames>
 func (s *Service) newResourceMux() *http.ServeMux {
@@ -177,5 +257,8 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/azuremonitor/", s.handleResourceReq(azureMonitor))
 	mux.HandleFunc("/loganalytics/", s.handleResourceReq(azureLogAnalytics))
 	mux.HandleFunc("/resourcegraph/", s.handleResourceReq(azureResourceGraph))
+	for route, ep := range armListEndpoints {
+		mux.HandleFunc(route, s.armListHandler(ep))
+	}
 	return mux
 }
