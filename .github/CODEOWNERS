@@ -813,6 +813,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.prettierignore @grafana/grafana-frontend-platform
 /.yarn @grafana/grafana-frontend-platform
 /.yarnrc.yml @grafana/grafana-frontend-platform
+/yarn.config.cjs @grafana/grafana-frontend-platform
 /yarn.lock @grafana/grafana-frontend-platform
 /lerna.json @grafana/grafana-frontend-platform
 /.prettierrc.js @grafana/grafana-frontend-platform
