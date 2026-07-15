@@ -4,7 +4,7 @@
 
 ## Add a language
 
-The examples below add Python support. Replace `python` and `@codemirror/lang-python` with the language you are adding.
+The examples below add Python support. Replace all Python references with the language you are adding.
 
 1. Add the CodeMirror language package to `@grafana/ui` from the repository root:
 
