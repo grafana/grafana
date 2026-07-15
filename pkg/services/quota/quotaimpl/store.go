@@ -139,6 +139,7 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 		}
 
 		if !has {
+			// No quota in the DB for this target, so create a new one.
 			now := time.Now()
 			insertQuery := insertQuotaQuery{
 				SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
