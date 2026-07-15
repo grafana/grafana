@@ -1541,14 +1541,18 @@ func (n IntegrationMutators) WithName(name string) Mutator[Integration] {
 }
 
 func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
+	return n.WithValidConfigVersion(integrationType, schema.V1)
+}
+
+// WithValidConfigVersion sets a valid configuration for the given integration type and schema version.
+func (n IntegrationMutators) WithValidConfigVersion(integrationType schema.IntegrationType, version schema.Version) Mutator[Integration] {
 	return func(c *Integration) {
-		// TODO add support for v0 integrations
-		ncfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
+		ncfg, ok := notifytest.AllKnownConfigsForTesting[notifytest.IntegrationVersionKey{Type: integrationType, Version: version}]
 		if !ok {
-			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
+			panic(fmt.Sprintf("unknown integration type/version: %s/%s", integrationType, version))
 		}
 		config := ncfg.GetRawNotifierConfig(c.Name)
-		c.Config, _ = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+		c.Config, _ = alertingNotify.GetSchemaVersionForIntegration(integrationType, version)
 
 		var settings map[string]any
 		_ = json.Unmarshal(config.Settings, &settings)
