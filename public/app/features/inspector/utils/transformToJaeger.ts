@@ -3,7 +3,7 @@
 // converting DataFrames to Jaeger format for existing traces tagged with traceFormat: 'jaeger'.
 import { type MutableDataFrame, type TraceKeyValuePair, type TraceLog } from '@grafana/data';
 
-export type TraceProcess = {
+type TraceProcess = {
   serviceName: string;
   tags: TraceKeyValuePair[];
 };
@@ -14,7 +14,7 @@ type TraceSpanReference = {
   traceID: string;
 };
 
-export type Span = {
+type Span = {
   spanID: string;
   traceID: string;
   processID: string;
@@ -30,14 +30,14 @@ export type Span = {
   flags: number;
 };
 
-export type TraceResponse = {
+type TraceResponse = {
   processes: Record<string, TraceProcess>;
   traceID: string;
   warnings?: string[] | null;
   spans: Span[];
 };
 
-export type JaegerResponse = {
+type JaegerResponse = {
   data: TraceResponse[];
   total: number;
   limit: number;
