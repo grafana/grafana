@@ -2,7 +2,6 @@ package testutils
 
 import "time"
 
-// A mock implementation of contracts.Clock
 type FakeClock struct {
 	Current time.Time
 }
