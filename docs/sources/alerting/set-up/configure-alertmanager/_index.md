@@ -156,6 +156,6 @@ Grafana stores up to the last 100 configuration versions for the built-in Grafan
 
 To avoid losing a working configuration:
 
-- **Back up your configuration**: [Export and store](ref:export-alerting-resources) your Alertmanager configuration outside of Grafana before you automate changes or run large-scale updates. 
+- **Back up your configuration**: [Export and store](ref:export-alerting-resources) your Alertmanager configuration outside of Grafana before you automate changes or run large-scale updates.
 - **Test changes in a low-impact environment**: Run automations and configuration experiments against a development or staging Grafana instance before applying them to production.
 - **Limit the frequency of automated changes**: Frequent automated updates consume the available configuration history. Batch changes where possible so that a single mistake doesn't overwrite every recoverable version.
