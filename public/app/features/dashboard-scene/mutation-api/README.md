@@ -682,7 +682,7 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 - `errors` — every panel error in one structured array. `source` (`query` / `plugin` / `notice`) says where the error came from; `message` plus `refId`/`type` (query errors only) are a curated subset of `@grafana/data`'s `DataQueryError`. Consolidates all channels: query/datasource errors, error-severity data-frame notices, and plugin failures (unknown/missing viz type, library-panel load failure, or a module that fails to compile).
 - `notices` — non-error (`info` / `warning`) data-frame notices, deduped across frames. Error-severity notices are folded into `errors` instead.
 
-`dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.
+`dataSchema` contains the fields each result frame produced (`name`, `type`, `labels`) — metadata, not values. Use it to get the real field (column) names before referencing a field by name in a transformation (`organize`, `calculateField`, `filterFieldsByName`, `sortBy`) or a `byName` field override, so you target names that actually exist.
 
 ````
 
