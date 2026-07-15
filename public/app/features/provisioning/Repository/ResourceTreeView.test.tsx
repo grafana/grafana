@@ -88,5 +88,8 @@ describe('ResourceTreeView', () => {
 
     // Search bypasses the folded state, so the deeply nested match is visible without expanding.
     expect(await screen.findByText('other.json')).toBeInTheDocument();
+    // Fold toggles are disabled while searching, since search already forces everything open
+    // and toggling would silently desync the stored fold state.
+    expect(screen.getByRole('button', { name: 'dashboards' })).toBeDisabled();
   });
 });

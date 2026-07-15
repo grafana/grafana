@@ -84,6 +84,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     });
   }, []);
 
+  const isSearching = !!searchQuery;
+
   const columns: Array<Column<FlatTreeItem>> = useMemo(
     () => [
       {
@@ -95,7 +97,9 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           const link = getGrafanaLink(item);
           // Label the fold toggle by the item's own title so screen readers announce which
           // folder is being expanded/collapsed without needing a separate translated string.
-          const titleId = `resource-tree-item-${item.path}`;
+          // Encode the path so ids stay whitespace-free — aria-labelledby is a space-separated
+          // list, and folder paths may contain spaces.
+          const titleId = `resource-tree-item-${encodeURIComponent(item.path)}`;
 
           return (
             <div className={styles.titleCell} style={{ paddingLeft: level * 24 }}>
@@ -104,6 +108,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
                   name={isExpanded ? 'angle-down' : 'angle-right'}
                   size="sm"
                   onClick={() => handleToggleExpand(item.path)}
+                  // Search forces every folder open, so the toggle can't change what's shown.
+                  disabled={isSearching}
                   aria-expanded={isExpanded}
                   aria-labelledby={titleId}
                 />
@@ -226,7 +232,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [handleToggleExpand, provisioningFolderMetadataEnabled, repo.spec, styles]
+    [handleToggleExpand, isSearching, provisioningFolderMetadataEnabled, repo.spec, styles]
   );
 
   if (isLoading) {
