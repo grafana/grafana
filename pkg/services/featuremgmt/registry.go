@@ -2766,10 +2766,10 @@ var (
 		{
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "datasource.useNewCRUDAPIs",
@@ -2864,10 +2864,10 @@ var (
 		{
 			Name:        "preferences.rerouteLegacyAPIs",
 			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:            "plugins.marketplaceLicensing",
