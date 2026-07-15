@@ -133,7 +133,7 @@ Use the following workflow to create a SQL expression:
    SELECT * FROM <B, C, D, etc> LIMIT 10
    ```
 
-1. **Construct the SQL expression.** Once you understand your data, you can write your SQL expression to join, filter, or otherwise transform the data.
+1. **Construct the SQL expression.** After you understand your data, you can write your SQL expression to join, filter, or otherwise transform the data.
 1. **Validate and iterate**. Click **Refresh** every time you update your SQL query to re-evaluate and see the updated result.
 
 When selecting a visualization type, **ensure your SQL expression returns data in the required shape**. For example, time series panels require a column with a time field (such as a timestamp) and a numeric value column (such as `__value__`). If the output is not shaped correctly, your visualization may appear empty or fail to render.
