@@ -153,7 +153,7 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 			_, err = sess.Exec(append([]any{insertSQL}, insertQuery.GetArgs()...)...)
 			return err
 		} else {
-			// Update existing quota entry in the DB.
+			// update existing quota entry in the DB.
 			updateQuery := updateQuotaQuery{
 				SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 				QuotaTable:  dbHelper.Table("quota"),
