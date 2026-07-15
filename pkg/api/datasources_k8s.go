@@ -269,6 +269,12 @@ func (hs *HTTPServer) datasourceRequiresSTPaths(ctx context.Context, dsUID strin
 		return true, "ip-range-access-control"
 	}
 
+	// The built-in "-- Grafana --" datasource (UID "grafana") has no row in the
+	// datasource table and is not yet supported in the MT path.
+	if dsUID == "grafana" {
+		return true, "builtin-grafana-datasource"
+	}
+
 	ds, err := hs.DataSourceCache.GetDatasourceByUID(ctx, dsUID, user, false)
 	if err != nil {
 		// If we can't look up the datasource we can't confirm it's safe to redirect,

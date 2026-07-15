@@ -619,6 +619,7 @@ func TestDatasourceRequiresSTPaths(t *testing.T) {
 
 	tests := []struct {
 		name       string
+		uid        string // defaults to dsUID ("test-uid") if empty
 		cfg        *setting.Cfg
 		dataSource *datasources.DataSource
 		wantForce  bool
@@ -670,6 +671,16 @@ func TestDatasourceRequiresSTPaths(t *testing.T) {
 			wantForce:  true,
 			wantReason: "datasource-lookup-failed",
 		},
+		{
+			// The built-in "-- Grafana --" datasource has no SQL row and is not yet
+			// supported in the MT path, so it must always take the legacy route.
+			name:       "built-in grafana datasource → force legacy",
+			uid:        "grafana",
+			cfg:        setting.NewCfg(),
+			dataSource: nil, // no SQL row — cache must not even be consulted
+			wantForce:  true,
+			wantReason: "builtin-grafana-datasource",
+		},
 	}
 
 	for _, tt := range tests {
@@ -685,8 +696,12 @@ func TestDatasourceRequiresSTPaths(t *testing.T) {
 				log:             log.NewNopLogger(),
 			}
 
+			uid := dsUID
+			if tt.uid != "" {
+				uid = tt.uid
+			}
 			gotForce, gotReason := hs.datasourceRequiresSTPaths(
-				context.Background(), dsUID, &user.SignedInUser{},
+				context.Background(), uid, &user.SignedInUser{},
 			)
 
 			assert.Equal(t, tt.wantForce, gotForce)
