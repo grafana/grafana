@@ -1120,7 +1120,9 @@ describe('flattenTree', () => {
             title: 'Subfolder',
             type: 'Folder',
             level: 0,
-            children: [{ path: 'folder/subfolder/file.json', title: 'file.json', type: 'File', level: 0, children: [] }],
+            children: [
+              { path: 'folder/subfolder/file.json', title: 'file.json', type: 'File', level: 0, children: [] },
+            ],
           },
         ],
       },
@@ -1151,7 +1153,9 @@ describe('getAllFolderPaths', () => {
             title: 'Subfolder',
             type: 'Folder',
             level: 0,
-            children: [{ path: 'folder/subfolder/file.json', title: 'file.json', type: 'File', level: 0, children: [] }],
+            children: [
+              { path: 'folder/subfolder/file.json', title: 'file.json', type: 'File', level: 0, children: [] },
+            ],
           },
         ],
       },
