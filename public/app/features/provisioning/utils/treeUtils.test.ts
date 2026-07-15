@@ -4,6 +4,7 @@ import { type TreeItem } from '../types';
 
 import {
   buildTree,
+  filterOutOfSync,
   filterTree,
   flattenTree,
   getIconName,
@@ -1154,5 +1155,106 @@ describe('filterTree', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('config.json');
+  });
+});
+
+describe('filterOutOfSync', () => {
+  const sampleTree: TreeItem[] = [
+    {
+      path: 'dashboards',
+      title: 'Dashboards',
+      type: 'Folder',
+      level: 0,
+      status: 'pending',
+      children: [
+        {
+          path: 'dashboards/monitoring.json',
+          title: 'System Monitoring',
+          type: 'Dashboard',
+          level: 0,
+          status: 'synced',
+          children: [],
+        },
+        {
+          path: 'dashboards/sales.json',
+          title: 'Sales Report',
+          type: 'Dashboard',
+          level: 0,
+          status: 'pending',
+          children: [],
+        },
+      ],
+    },
+    {
+      path: 'reports',
+      title: 'Reports',
+      type: 'Folder',
+      level: 0,
+      status: 'synced',
+      children: [
+        {
+          path: 'reports/weekly.json',
+          title: 'Weekly',
+          type: 'Dashboard',
+          level: 0,
+          status: 'synced',
+          children: [],
+        },
+      ],
+    },
+  ];
+
+  it('should keep only pending items and their ancestor folders', () => {
+    const result = filterOutOfSync(sampleTree);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('dashboards');
+    expect(result[0].children).toHaveLength(1);
+    expect(result[0].children[0].path).toBe('dashboards/sales.json');
+  });
+
+  it('should return empty array when everything is synced', () => {
+    const syncedTree: TreeItem[] = [
+      { path: 'a.json', title: 'a', type: 'Dashboard', level: 0, status: 'synced', children: [] },
+    ];
+
+    expect(filterOutOfSync(syncedTree)).toHaveLength(0);
+  });
+
+  it('should keep a pending folder that has no out-of-sync children', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        status: 'pending',
+        missingFolderMetadata: true,
+        children: [{ path: 'folder/a.json', title: 'a', type: 'Dashboard', level: 0, status: 'synced', children: [] }],
+      },
+    ];
+
+    const result = filterOutOfSync(tree);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('folder');
+    expect(result[0].children).toHaveLength(0);
+  });
+
+  it('should keep items missing folder metadata only when includeMissingMetadata is set', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        status: 'synced',
+        missingFolderMetadata: true,
+        children: [],
+      },
+    ];
+
+    expect(filterOutOfSync(tree, false)).toHaveLength(0);
+    expect(filterOutOfSync(tree, true)).toHaveLength(1);
   });
 });

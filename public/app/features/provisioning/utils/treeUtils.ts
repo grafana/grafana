@@ -243,3 +243,28 @@ export function filterTree(items: TreeItem[], searchQuery: string): TreeItem[] {
 
   return items.map(filterNode).filter((n): n is TreeItem => n !== null);
 }
+
+/**
+ * Filter tree to only items that are not in sync, keeping ancestor folders so the
+ * hierarchy stays intact. An item is "not in sync" when its status is pending or,
+ * when `includeMissingMetadata` is set, when it is missing its folder metadata file.
+ */
+export function filterOutOfSync(items: TreeItem[], includeMissingMetadata = false): TreeItem[] {
+  const isOutOfSync = (node: TreeItem): boolean =>
+    node.status === 'pending' || (includeMissingMetadata && !!node.missingFolderMetadata);
+
+  const filterNode = (node: TreeItem): TreeItem | null => {
+    if (node.type === 'Folder' && node.children.length > 0) {
+      const filteredChildren = node.children.map(filterNode).filter((n): n is TreeItem => n !== null);
+      if (filteredChildren.length > 0) {
+        return { ...node, children: filteredChildren };
+      }
+      // No out-of-sync descendants — keep the folder only if it is itself out of sync.
+      return isOutOfSync(node) ? { ...node, children: [] } : null;
+    }
+
+    return isOutOfSync(node) ? node : null;
+  };
+
+  return items.map(filterNode).filter((n): n is TreeItem => n !== null);
+}

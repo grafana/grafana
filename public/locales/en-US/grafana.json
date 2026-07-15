@@ -13869,6 +13869,7 @@
       "playlists": "Playlists"
     },
     "resource-tree": {
+      "filter-out-of-sync": "Show only resources that are not in sync",
       "header-hash": "Hash",
       "header-status": "Status",
       "header-title": "Title",

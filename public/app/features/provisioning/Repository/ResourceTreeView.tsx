@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import {
   type CellProps,
   type Column,
+  Checkbox,
   FilterInput,
   Icon,
   InteractiveTable,
@@ -26,7 +27,14 @@ import {
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
 import { getKindInfoByItemType } from '../utils/resourceKinds';
-import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
+import {
+  buildTree,
+  filterOutOfSync,
+  filterTree,
+  flattenTree,
+  getIconName,
+  mergeFilesAndResources,
+} from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
   repo: Repository;
@@ -49,6 +57,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourcesQuery = useGetRepositoryResourcesQuery({ name });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [showOnlyOutOfSync, setShowOnlyOutOfSync] = useState(false);
   const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
@@ -64,8 +73,18 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
       tree = filterTree(tree, searchQuery);
     }
 
+    if (showOnlyOutOfSync) {
+      tree = filterOutOfSync(tree, provisioningFolderMetadataEnabled);
+    }
+
     return flattenTree(tree);
-  }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery]);
+  }, [
+    filesQuery.data?.items,
+    resourcesQuery.data?.items,
+    searchQuery,
+    showOnlyOutOfSync,
+    provisioningFolderMetadataEnabled,
+  ]);
 
   const columns: Array<Column<FlatTreeItem>> = useMemo(
     () => [
@@ -207,6 +226,11 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         autoFocus={true}
         value={searchQuery}
         onChange={setSearchQuery}
+      />
+      <Checkbox
+        label={t('provisioning.resource-tree.filter-out-of-sync', 'Show only resources that are not in sync')}
+        value={showOnlyOutOfSync}
+        onChange={(e) => setShowOnlyOutOfSync(e.currentTarget.checked)}
       />
       <InteractiveTable
         columns={columns}
