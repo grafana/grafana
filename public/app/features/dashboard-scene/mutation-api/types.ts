@@ -43,12 +43,14 @@ type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;
  */
 
 /**
- * A single panel error. A curated subset of `@grafana/data`'s `DataQueryError`
- * (the standard backend/query error shape): `refId`/`type` are set for query
- * errors, while plugin-load failures and error-severity data-frame notices
- * carry only `message`.
+ * A single panel error. `message`/`refId`/`type` are a curated subset of
+ * `@grafana/data`'s `DataQueryError` (the standard backend/query error shape);
+ * `refId`/`type` are only set for query errors. `source` says where the error
+ * came from, so callers can tell a failed query from a broken plugin without
+ * parsing the message.
  */
 export interface PanelRuntimeError {
+  source: 'query' | 'plugin' | 'notice';
   message?: string;
   refId?: string;
   type?: string;
@@ -61,8 +63,10 @@ export interface PanelRuntimeNotice {
 }
 
 export interface PanelRuntimeStatus {
+  // Raw scene loading state. `isLoading` is a pure function of this, so it is not duplicated here.
   loadingState: LoadingState;
-  isLoading: boolean;
+  // Not implied by loadingState: a Done panel can still carry errors (a query error or an
+  // error-severity notice) or return no data, so these are reported explicitly.
   hasError: boolean;
   hasNoData: boolean;
   // Every panel error in one place: query errors (DataQueryError), error-severity

@@ -60,10 +60,9 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   if (pluginLoadError) {
     return {
       loadingState: LoadingState.Error,
-      isLoading: false,
       hasError: true,
       hasNoData: false,
-      errors: [{ message: pluginLoadError }],
+      errors: [{ source: 'plugin', message: pluginLoadError }],
     };
   }
 
@@ -76,7 +75,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   const panelData = (innerProvider ?? dataProvider)?.state?.data;
 
   if (!panelData) {
-    return { loadingState: LoadingState.Loading, isLoading: true, hasError: false, hasNoData: false };
+    return { loadingState: LoadingState.Loading, hasError: false, hasNoData: false };
   }
 
   const { state, errors, error, series } = panelData;
@@ -84,7 +83,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   const isLoading =
     state === LoadingState.Loading || state === LoadingState.Streaming || state === LoadingState.NotStarted;
   if (isLoading) {
-    return { loadingState: state, isLoading: true, hasError: false, hasNoData: false };
+    return { loadingState: state, hasError: false, hasNoData: false };
   }
 
   // Consolidate every error source into a single structured `errors` array
@@ -95,15 +94,16 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   // hasError never flips true on an empty `{}`.
   const sourceErrors: DataQueryError[] = errors?.length ? errors : error ? [error] : [];
   const errorList: PanelRuntimeError[] = sourceErrors
-    .map((e) => {
+    .map((e): PanelRuntimeError => {
       const message = e.message ?? e.data?.message;
       return {
+        source: 'query',
         ...(message !== undefined && { message }),
         ...(e.refId !== undefined && { refId: e.refId }),
         ...(e.type !== undefined && { type: e.type }),
       };
     })
-    .filter((d) => Object.keys(d).length > 0);
+    .filter((d) => d.message !== undefined || d.refId !== undefined || d.type !== undefined);
 
   // Data-frame notices, deduped across frames. Error-severity notices are a real
   // error channel, so fold them into `errors`; info/warning stay as notices.
@@ -118,7 +118,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
         }
         seen.add(key);
         if (notice.severity === 'error') {
-          errorList.push({ message: notice.text });
+          errorList.push({ source: 'notice', message: notice.text });
         } else {
           notices.push({ severity: notice.severity, text: notice.text });
         }
@@ -130,7 +130,6 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
 
   return {
     loadingState: state,
-    isLoading: false,
     hasError: errorList.length > 0 || state === LoadingState.Error,
     hasNoData: !hasData,
     ...(errorList.length > 0 && { errors: errorList }),

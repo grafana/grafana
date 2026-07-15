@@ -304,7 +304,7 @@ describe('Panel mutation commands', () => {
       expect(data.elements).toHaveLength(0);
     });
 
-    it('includeStatus attaches loadingState and isLoading for a loading panel', async () => {
+    it('includeStatus reports the loading state for a loading panel', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);
       const name = await addPanel(client, 'Loading Panel');
@@ -318,7 +318,6 @@ describe('Panel mutation commands', () => {
 
       expect(entry.status).toEqual({
         loadingState: LoadingState.Loading,
-        isLoading: true,
         hasError: false,
         hasNoData: false,
       });
@@ -346,7 +345,9 @@ describe('Panel mutation commands', () => {
 
       expect(status?.hasError).toBe(true);
       expect(status?.loadingState).toBe(LoadingState.Error);
-      expect(status?.errors).toEqual([{ message: 'boom', refId: 'A', type: DataQueryErrorType.Unknown }]);
+      expect(status?.errors).toEqual([
+        { source: 'query', message: 'boom', refId: 'A', type: DataQueryErrorType.Unknown },
+      ]);
     });
 
     it('includeStatus reads the error message from data.message when the top-level message is absent', async () => {
@@ -369,7 +370,7 @@ describe('Panel mutation commands', () => {
       const status = (result.data as PanelElementsData).elements[0].status;
 
       expect(status?.hasError).toBe(true);
-      expect(status?.errors).toEqual([{ message: 'backend boom', refId: 'A' }]);
+      expect(status?.errors).toEqual([{ source: 'query', message: 'backend boom', refId: 'A' }]);
     });
 
     it('includeStatus does not flag hasError for an error object with no usable message (Done state)', async () => {
@@ -409,10 +410,9 @@ describe('Panel mutation commands', () => {
 
       expect(status).toEqual({
         loadingState: LoadingState.Error,
-        isLoading: false,
         hasError: true,
         hasNoData: false,
-        errors: [{ message: 'Failed to load panel plugin' }],
+        errors: [{ source: 'plugin', message: 'Failed to load panel plugin' }],
       });
     });
 
@@ -430,7 +430,7 @@ describe('Panel mutation commands', () => {
 
       expect(status?.hasNoData).toBe(true);
       expect(status?.hasError).toBe(false);
-      expect(status?.isLoading).toBe(false);
+      expect(status?.loadingState).toBe(LoadingState.Done);
     });
 
     it('includeStatus surfaces deduped data-frame notices and the frame schema', async () => {
@@ -479,7 +479,7 @@ describe('Panel mutation commands', () => {
       const status = (result.data as PanelElementsData).elements[0].status;
 
       expect(status?.hasError).toBe(true);
-      expect(status?.errors).toEqual([{ message: 'datasource rejected the query' }]);
+      expect(status?.errors).toEqual([{ source: 'notice', message: 'datasource rejected the query' }]);
       expect(status?.notices).toEqual([{ severity: 'info', text: 'sampled' }]);
     });
 
@@ -507,7 +507,8 @@ describe('Panel mutation commands', () => {
       });
       const status = (result.data as PanelElementsData).elements[0].status;
 
-      expect(status?.isLoading).toBe(true);
+      expect(status?.loadingState).toBe(LoadingState.Loading);
+      expect(status?.hasError).toBe(false);
     });
 
     it('omits status for a panel without a data provider', async () => {
