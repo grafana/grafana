@@ -34,11 +34,13 @@ To set up Microsoft Teams for integration with Grafana Alerting, create a new wo
 
 ### Create a workflow in Microsoft Teams
 
-1. To create a new workflow, follow the steps in [Create flows in Microsoft Teams](https://learn.microsoft.com/en-us/power-automate/teams/teams-app-create).
-1. Microsoft provides a template library. You can use the template **Post to a channel when a webhook request is received**.
+1. To create a new workflow, follow the steps in [Add or run a workflow in chats, chat messages, channels, and channel posts in Microsoft Teams]([https://learn.microsoft.com/en-us/power-automate/teams/teams-app-create](https://support.microsoft.com/en-us/teams/apps-service/add-or-run-a-workflow-in-chats-chat-messages-channels-and-channel-posts-in-microsoft-teams)).
+1. Microsoft provides a template library. You can use the template **Send webhook alerts to a channel**.
 1. At the end of workflow creation wizard, copy the URL that is provided.
 
 **Note**
+If you don't see the workflows button in the dropdown of the channel or chat. You are probably missing the correct authorisations for the channel.
+
 If you chose a private channel for the target of the workflow, you need to edit workflow before using it. Expand the step "Send each adaptive card", and then expand action "Post your own adaptive card as the Flow bot to a channel". Change "Post as" to User, and save the workflow.
 
 ## Procedure
