@@ -5,13 +5,19 @@ import (
 	"slices"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/ssosettings/strategies")
 
 // SettingsLister is the subset of the MT-Settings client the MT-Settings
 // strategies need to load provider settings.
@@ -44,8 +50,12 @@ func (s *mtSettingsStrategy) IsMatch(ctx context.Context, provider string) bool 
 // rather than a fully-defaulted key set — the MT-Settings source layering is
 // expected to materialize defaults server-side.
 func (s *mtSettingsStrategy) GetProviderConfig(ctx context.Context, provider string) (map[string]any, error) {
+	ctx, span := tracer.Start(ctx, "mtSettingsStrategy.GetProviderConfig",
+		trace.WithAttributes(attribute.String("provider", provider)))
+	defer span.End()
+
 	if s.settings == nil {
-		return nil, ssosettings.ErrMTSettingsClientNotConfigured
+		return nil, tracing.Error(span, ssosettings.ErrMTSettingsClientNotConfigured)
 	}
 
 	selector := metav1.LabelSelector{MatchLabels: map[string]string{
@@ -53,13 +63,14 @@ func (s *mtSettingsStrategy) GetProviderConfig(ctx context.Context, provider str
 	}}
 	settings, err := s.settings.List(ctx, selector)
 	if err != nil {
-		return nil, err
+		return nil, tracing.Error(span, err)
 	}
 
 	result := make(map[string]any, len(settings))
 	for _, st := range settings {
 		result[st.Key] = st.Value
 	}
+	span.SetAttributes(attribute.Int("settings_count", len(result)))
 	return result, nil
 }
 

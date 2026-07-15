@@ -11,11 +11,15 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -31,6 +35,8 @@ import (
 )
 
 var _ ssosettings.Service = (*Service)(nil)
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl")
 
 type Service struct {
 	logger           log.Logger
@@ -395,14 +401,19 @@ func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssoset
 }
 
 func (s *Service) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	ctx, span := tracer.Start(ctx, "ssosettings.Service.loadSettingsUsingFallbackStrategy",
+		trace.WithAttributes(attribute.String("provider", provider)))
+	defer span.End()
+
 	loadStrategy, ok := s.getFallbackStrategyFor(ctx, provider)
 	if !ok {
-		return nil, errors.New("no fallback strategy found for provider: " + provider)
+		return nil, tracing.Errorf(span, "no fallback strategy found for provider: %s", provider)
 	}
+	span.SetAttributes(attribute.String("strategy", fmt.Sprintf("%T", loadStrategy)))
 
 	settingsFromSystem, err := loadStrategy.GetProviderConfig(ctx, provider)
 	if err != nil {
-		return nil, err
+		return nil, tracing.Error(span, err)
 	}
 
 	return &models.SSOSettings{
