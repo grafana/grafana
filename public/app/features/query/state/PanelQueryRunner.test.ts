@@ -5,7 +5,14 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
-import { type DataSourceApi, DataTransformerID, dateTime, type TypedVariableModel } from '@grafana/data';
+import {
+  type DataSourceApi,
+  DataTransformerID,
+  dateTime,
+  getDefaultTimeRange,
+  LoadingState,
+  type TypedVariableModel,
+} from '@grafana/data';
 import { convertFrameTypeTransformer, FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
 import { type DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
@@ -530,4 +537,54 @@ describe('PanelQueryRunner', () => {
       ...defaultPanelConfig,
     }
   );
+});
+
+describe('PanelQueryRunner cancelQuery', () => {
+  it.each([LoadingState.Loading, LoadingState.Streaming, LoadingState.PartialResult])(
+    'emits Done when cancelling an in-progress query (%s)',
+    (state) => {
+      const runner = new PanelQueryRunner(defaultPanelConfig);
+      const events: grafanaData.PanelData[] = [];
+
+      const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
+        events.push(data);
+      });
+
+      runner['subscription'] = { unsubscribe: jest.fn() };
+      runner['lastResult'] = {
+        state,
+        series: [],
+        timeRange: getDefaultTimeRange(),
+      };
+
+      runner.cancelQuery();
+
+      expect(events[events.length - 1].state).toBe(LoadingState.Done);
+
+      subscription.unsubscribe();
+    }
+  );
+
+  it('does not emit when cancelling a query that is already Done', () => {
+    const runner = new PanelQueryRunner(defaultPanelConfig);
+    const events: grafanaData.PanelData[] = [];
+
+    const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
+      events.push(data);
+    });
+
+    runner['subscription'] = { unsubscribe: jest.fn() };
+    runner['lastResult'] = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: getDefaultTimeRange(),
+    };
+
+    const eventsBefore = events.length;
+    runner.cancelQuery();
+
+    expect(events.length).toBe(eventsBefore);
+
+    subscription.unsubscribe();
+  });
 });

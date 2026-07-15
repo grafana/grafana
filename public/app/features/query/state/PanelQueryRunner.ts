@@ -17,6 +17,8 @@ import {
   type DataTransformContext,
   type DataTransformerConfig,
   getDefaultTimeRange,
+  isLoadingStateIncremental,
+  isLoadingStateRunning,
   LoadingState,
   type PanelData,
   rangeUtil,
@@ -389,7 +391,7 @@ export class PanelQueryRunner {
         const last = this.lastResult;
         const next = skipPreProcess ? data : preProcessPanelData(data, last);
 
-        if (last != null && next.state !== LoadingState.Streaming) {
+        if (last != null && !isLoadingStateIncremental(next.state)) {
           let sameSeries = compareArrayValues(last.series ?? [], next.series ?? [], (a, b) => a === b);
           let sameAnnotations = compareArrayValues(last.annotations ?? [], next.annotations ?? [], (a, b) => a === b);
           let sameState = last.state === next.state;
@@ -434,11 +436,8 @@ export class PanelQueryRunner {
 
     this.subscription.unsubscribe();
 
-    // If we have an old result with loading or streaming state, send it with done state
-    if (
-      this.lastResult &&
-      (this.lastResult.state === LoadingState.Loading || this.lastResult.state === LoadingState.Streaming)
-    ) {
+    // If we have an old result with in-progress state, send it with done state
+    if (this.lastResult && isLoadingStateRunning(this.lastResult.state)) {
       this.subject.next({
         ...this.lastResult,
         state: LoadingState.Done,

@@ -15,8 +15,53 @@ export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
   Streaming = 'Streaming',
+  /**
+   * @alpha
+   * Indicates partial results are being loaded.
+   * Unlike Streaming, PartialResult expects LoadingState.Done when all data is loaded.
+   * Use this for query splitting or partial data loading scenarios where you need
+   * to signal completion explicitly (e.g., lokiQuerySplitting).
+   */
+  PartialResult = 'PartialResult',
   Done = 'Done',
   Error = 'Error',
+}
+
+/**
+ * Returns true when a {@link LoadingState} indicates the query is still running.
+ * @alpha
+ */
+export function isLoadingStateRunning(state: LoadingState): boolean {
+  return state === LoadingState.Loading || state === LoadingState.Streaming || state === LoadingState.PartialResult;
+}
+
+/**
+ * Returns true when a {@link LoadingState} indicates the result is not ready to treat as final.
+ * Includes NotStarted (query not yet executed) and all {@link isLoadingStateRunning running} states.
+ * @alpha
+ */
+export function isLoadingStatePending(state: LoadingState): boolean {
+  return state === LoadingState.NotStarted || isLoadingStateRunning(state);
+}
+
+/**
+ * Returns true when a {@link LoadingState} indicates more data updates may arrive before Done.
+ * Unlike {@link isLoadingStateRunning}, this excludes Loading — the initial
+ * loading state does not use incremental update semantics (dedup bypass, relative
+ * time range re-evaluation, etc.).
+ * @alpha
+ */
+export function isLoadingStateIncremental(state: LoadingState): boolean {
+  return state === LoadingState.Streaming || state === LoadingState.PartialResult;
+}
+
+/**
+ * Helper to check if a loading state represents a completed query.
+ * Returns true for Done or Error states.
+ * @alpha
+ */
+export function isLoadingStateComplete(state: LoadingState): boolean {
+  return state === LoadingState.Done || state === LoadingState.Error;
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
