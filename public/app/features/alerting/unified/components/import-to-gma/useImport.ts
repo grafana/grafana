@@ -1,6 +1,7 @@
 import { load } from 'js-yaml';
 import { useCallback, useMemo, useState } from 'react';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
@@ -102,10 +103,12 @@ interface MigrateRulesBaseParams {
 type MigrateRulesParams = MigrateRulesBaseParams & { notificationSettings?: string };
 
 export function buildRoutingParams(
-  selectedRoutingTree: string | undefined
+  selectedRoutingTreeName: string | undefined
 ): Pick<MigrateRulesParams, 'notificationSettings'> {
   return {
-    notificationSettings: selectedRoutingTree ? JSON.stringify({ policy: selectedRoutingTree }) : undefined,
+    notificationSettings: isDefaultRoutingTreeName(selectedRoutingTreeName)
+      ? undefined
+      : JSON.stringify({ policy: selectedRoutingTreeName }),
   };
 }
 

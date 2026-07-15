@@ -1,7 +1,10 @@
 import { HttpResponse, http } from 'msw';
 import { act, getWrapper, renderHook } from 'test/test-utils';
 
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS } from '@grafana/alerting';
+
 import { setupMswServer } from '../../mockApi';
+import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 import {
   buildRoutingParams,
@@ -50,6 +53,18 @@ describe('buildRoutingParams', () => {
 
   it('should return notificationSettings=undefined for empty string routing tree', () => {
     const result = buildRoutingParams('');
+
+    expect(result).toEqual({ notificationSettings: undefined });
+  });
+
+  it('should return notificationSettings=undefined for the default routing tree', () => {
+    const result = buildRoutingParams(ROOT_ROUTE_NAME);
+
+    expect(result).toEqual({ notificationSettings: undefined });
+  });
+
+  it('should return notificationSettings=undefined for the default routing tree alias', () => {
+    const result = buildRoutingParams(DEFAULT_ROUTING_TREE_NAME_ALIAS);
 
     expect(result).toEqual({ notificationSettings: undefined });
   });
