@@ -141,16 +141,27 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       .filter((f) => f.dimension && f.dimension !== 'None')
       .map((f) => {
         const filters = (f.filters ?? []).flatMap((filter) => {
+          const rawValue = filter ?? '';
           const interpolated: VariableInterpolation[] = [];
-          const replaced = this.templateSrv.replace(filter ?? '', scopedVars, 'raw', interpolated);
-          // A multi-value template variable interpolates to a
-          // comma-separated list. Spread it into separate filter values so
-          // each becomes its own clause in the metrics API $filter, rather
-          // than a single literal that matches no dimension value.
-          if (interpolated.some((v) => v.found !== false && v.value?.includes(','))) {
-            return replaced.split(',');
+          const replaced = this.templateSrv.replace(rawValue, scopedVars, 'raw', interpolated);
+          const foundVariables = interpolated.filter((v) => v.found !== false);
+          if (!foundVariables.some((v) => v.value?.includes(','))) {
+            return [replaced];
           }
-          return [replaced];
+          // A multi-value template variable interpolates to a
+          // comma-separated list. Substitute each selected value back into
+          // the original expression so every combination becomes its own
+          // filter value (preserving any literal text around the variable),
+          // rather than a single glob literal that matches no dimension
+          // value.
+          let expanded = [rawValue];
+          for (const variable of foundVariables) {
+            const values = variable.value.split(',');
+            expanded = expanded.flatMap((expression) =>
+              values.map((value) => expression.replaceAll(variable.match, value))
+            );
+          }
+          return expanded;
         });
         return {
           dimension: this.templateSrv.replace(f.dimension, scopedVars),
