@@ -27,6 +27,7 @@ const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact',
 interface ExistingItem {
   title: string;
   icon: IconName;
+  subtitle?: string;
   stats?: { primary: string; secondary: string };
   statsLoading?: boolean;
   sparkline?: SolutionSparklineData;
@@ -106,6 +107,7 @@ function buildKubernetesItem(
     health: KubernetesHealth | undefined;
     cpuSeries: FieldSparkline | null | undefined;
     cpuLoading: boolean;
+    datasourceName: string;
   },
   settings: PluginMeta<{}>
 ): ExistingItem {
@@ -159,6 +161,7 @@ function buildKubernetesItem(
   return {
     title: t('home.recommendations.kubernetes.title', 'Kubernetes Monitoring'),
     icon: 'kubernetes',
+    subtitle: t('home.recommendations.kubernetes.datasource', 'via {{name}}', { name: parts.datasourceName }),
     stats: hasInventoryStats
       ? {
           primary: t('home.recommendations.kubernetes.clusters', '', {
@@ -249,6 +252,7 @@ export function RecommendationExisting() {
           health,
           cpuSeries: cpuSeries ?? null,
           cpuLoading,
+          datasourceName: datasource.name,
         },
         settings
       );
@@ -312,9 +316,16 @@ function renderExistingCard(
             <Icon name={selected.icon} size="lg" />
           </div>
 
-          <Text variant="h3" color="primary" role="heading" aria-level={3}>
-            {selected.title}
-          </Text>
+          <Stack direction="column" gap={0}>
+            <Text variant="h3" color="primary" role="heading" aria-level={3}>
+              {selected.title}
+            </Text>
+            {selected.subtitle && (
+              <Text variant="bodySmall" color="secondary">
+                {selected.subtitle}
+              </Text>
+            )}
+          </Stack>
         </Stack>
       </Stack>
 

@@ -128,17 +128,38 @@ function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): { get()
   };
 }
 
-// Probe all candidates in parallel, settle on the highest-priority one with data; null = "not enabled".
+// Probe the top-priority candidate alone first: in the common case (the default has Kubernetes
+// data) this issues 1 query instead of 10, and a transient sibling race can never outrank it.
+// Only when the leader has no data (or errors through its retry) fan out to the rest in parallel.
 async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
   const candidates = (await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES);
-  const probes = candidates.map((ds) => hasKubernetesNamespaces(ds));
-  for (let i = 0; i < candidates.length; i++) {
-    // Await in priority order: a slow high-priority probe delays — never changes — the outcome.
+  if (candidates.length === 0) {
+    return null;
+  }
+  if (await hasKubernetesNamespaces(candidates[0])) {
+    return candidates[0];
+  }
+  const rest = candidates.slice(1);
+  const probes = rest.map((ds) => hasKubernetesNamespaces(ds));
+  for (let i = 0; i < rest.length; i++) {
+    // Await in priority order: a slow probe delays — never changes — the outcome.
     if (await probes[i]) {
-      return candidates[i];
+      return rest[i];
     }
   }
   return null;
+}
+
+// One immediate retry, mirroring hasKubernetesNamespaces: transient in-browser failures
+// (connection queuing, gateway blips) are common on a burst-loaded homepage; a second attempt
+// is cheap and keeps a region from blanking for the whole page view. No delay — the failure
+// modes observed are per-request, not sustained.
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch {
+    return fn();
+  }
 }
 
 const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, RESOLUTION_TTL_MS);
@@ -162,7 +183,7 @@ export async function fetchKubernetesInventory(): Promise<KubernetesInventory> {
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
-  const frames = await runInstantQueries(INVENTORY_QUERIES, ds);
+  const frames = await withRetry(() => runInstantQueries(INVENTORY_QUERIES, ds));
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
     pods: readScalar(frames, 'pods') ?? 0,
@@ -175,7 +196,7 @@ export async function fetchKubernetesHealth(): Promise<KubernetesHealth> {
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
-  const frames = await runInstantQueries(HEALTH_QUERIES, ds);
+  const frames = await withRetry(() => runInstantQueries(HEALTH_QUERIES, ds));
   return {
     alertsFiring: readScalar(frames, 'alertsFiring'),
     unhealthyPods: readScalar(frames, 'unhealthyPods'),
@@ -190,6 +211,8 @@ export async function fetchClusterCpuSeries(): Promise<FieldSparkline | null> {
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
-  const frames = await runRangeQuery('cpu', 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))', 24, ds);
+  const frames = await withRetry(() =>
+    runRangeQuery('cpu', 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))', 24, ds)
+  );
   return readSeries(frames, 'cpu');
 }

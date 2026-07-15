@@ -266,4 +266,20 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByText('3 alerts firing')).toBeInTheDocument();
   });
+
+  it('shows the resolved datasource name under the title', async () => {
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByText('via k8s-prom')).toBeInTheDocument();
+  });
+
+  it('omits the datasource subtitle on stub solutions', async () => {
+    const { user } = render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+
+    expect(screen.queryByText(/^via /)).not.toBeInTheDocument();
+  });
 });

@@ -10915,6 +10915,7 @@
         "cluster-cpu": "Cluster CPU · last 24h",
         "clusters_one": "{{value}} cluster",
         "clusters_other": "{{value}} clusters",
+        "datasource": "via {{name}}",
         "pods_one": "{{value}} pod",
         "pods_other": "{{value}} pods",
         "title": "Kubernetes Monitoring",

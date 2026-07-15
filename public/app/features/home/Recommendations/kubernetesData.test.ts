@@ -61,6 +61,11 @@ let probeErrorUids: Set<string>;
 // Probe queries against these uids emit LoadingState.Error on the FIRST attempt only.
 let probeErrorOnceUids: Set<string>;
 let probeAttempts: Record<string, number>;
+// Non-probe query batches: emit LoadingState.Error on the FIRST attempt only (keyed by first refId).
+let queryErrorOnceRefIds: Set<string>;
+// Non-probe query batches: always emit LoadingState.Error.
+let queryErrorRefIds: Set<string>;
+let queryAttempts: Record<string, number>;
 
 type CapturedRun = { datasource: { uid: string }; queries: Array<{ refId: string; expr: string }> };
 
@@ -79,6 +84,9 @@ beforeEach(() => {
   probeErrorUids = new Set();
   probeErrorOnceUids = new Set();
   probeAttempts = {};
+  queryErrorOnceRefIds = new Set();
+  queryErrorRefIds = new Set();
+  queryAttempts = {};
   mockCreateQueryRunner.mockImplementation(() => {
     // Per-runner capture: parallel probes each get their own runner, so a shared variable would race.
     let captured: CapturedRun | undefined;
@@ -93,6 +101,16 @@ beforeEach(() => {
         if (isProbe) {
           probeAttempts[uid] = (probeAttempts[uid] ?? 0) + 1;
           if (probeErrorUids.has(uid) || (probeErrorOnceUids.has(uid) && probeAttempts[uid] === 1)) {
+            return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
+          }
+        }
+        if (!isProbe && captured) {
+          const batchKey = captured.queries[0]?.refId ?? '';
+          queryAttempts[batchKey] = (queryAttempts[batchKey] ?? 0) + 1;
+          const errorOnce =
+            captured.queries.some((q) => queryErrorOnceRefIds.has(q.refId)) && queryAttempts[batchKey] === 1;
+          const errorAlways = captured.queries.some((q) => queryErrorRefIds.has(q.refId));
+          if (errorAlways || errorOnce) {
             return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
           }
         }
@@ -439,6 +457,49 @@ describe('Kubernetes Prometheus resolution', () => {
 
     await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
     expect(inventoryCalls()).toHaveLength(0);
+  });
+
+  it('probes only the leader when the top-priority datasource has data', async () => {
+    setDataSources([
+      { uid: 'default-uid', name: 'default-prom', isDefault: true },
+      { uid: 'team-uid', name: 'team-prom' },
+    ]);
+    dataByUid = { 'default-uid': 3, 'team-uid': 2 };
+
+    await fetchKubernetesInventory();
+
+    expect(probeCalls()).toHaveLength(1);
+    expect(probeCalls()[0][0].datasource.uid).toBe('default-uid');
+  });
+
+  it('retries a transient inventory query error instead of blanking the region', async () => {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    queryErrorOnceRefIds = new Set(['clusters']);
+
+    const inventory = await fetchKubernetesInventory();
+
+    expect(inventory.clusters).toBe(2);
+    expect(inventoryCalls()).toHaveLength(2);
+  });
+
+  it('retries a transient cpu query error', async () => {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    queryErrorOnceRefIds = new Set(['cpu']);
+
+    await fetchClusterCpuSeries();
+
+    expect(cpuCalls()).toHaveLength(2);
+  });
+
+  it('rejects after two failed inventory attempts', async () => {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    queryErrorRefIds = new Set(['clusters']);
+
+    await expect(fetchKubernetesInventory()).rejects.toThrow();
+    expect(inventoryCalls()).toHaveLength(2);
   });
 
   it('rejects from fetchClusterCpuSeries when no datasource has Kubernetes data', async () => {
