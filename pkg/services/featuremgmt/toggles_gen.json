@@ -2843,6 +2843,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.savedQueriesPage",
+        "resourceVersion": "1784068714544",
+        "creationTimestamp": "2026-07-14T22:38:34Z"
+      },
+      "spec": {
+        "description": "Enables the dedicated Saved queries page and its navigation entry",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
