@@ -1,0 +1,344 @@
+package rulesync
+
+import (
+	"context"
+	"strconv"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+// --- fakes ---
+
+type fakeConfigStore struct {
+	uid             string
+	targetUID       string
+	promote         bool
+	lastAppliedHash string
+	uidErr          error
+	lastOutcome     *syncOutcome
+}
+
+func (f *fakeConfigStore) GetSyncSpec(context.Context, int64) (syncSpec, error) {
+	return syncSpec{DatasourceUID: f.uid, TargetDatasourceUID: f.targetUID, Promote: f.promote, LastAppliedHash: f.lastAppliedHash}, f.uidErr
+}
+func (f *fakeConfigStore) WriteStatus(_ context.Context, _ int64, out syncOutcome) error {
+	f.lastOutcome = &out
+	return nil
+}
+
+type fakeFetcher struct {
+	cfg   RulerConfig
+	hash  uint64
+	err   error
+	calls int
+}
+
+func (f *fakeFetcher) Fetch(context.Context, *datasources.DataSource) (RulerConfig, uint64, error) {
+	f.calls++
+	return f.cfg, f.hash, f.err
+}
+
+type fakeRuleService struct {
+	replaced           []*models.AlertRuleGroup
+	replacedProvenance models.Provenance
+	existing           []models.AlertRuleGroupWithFolderFullpath
+	deleted            []provisioning.FilterOptions
+}
+
+func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, provenance models.Provenance, _ string) error {
+	f.replaced = groups
+	f.replacedProvenance = provenance
+	return nil
+}
+func (f *fakeRuleService) DeleteRuleGroups(_ context.Context, _ identity.Requester, _ models.Provenance, filterOpts *provisioning.FilterOptions) error {
+	f.deleted = append(f.deleted, *filterOpts)
+	return nil
+}
+func (f *fakeRuleService) GetAlertGroupsWithFolderFullpath(_ context.Context, _ identity.Requester, filterOpts *provisioning.FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error) {
+	// Emulate the store's SourceIdentifier filter so the fake is faithful to the
+	// real query the syncer now relies on for prune scoping.
+	if filterOpts == nil || filterOpts.SourceIdentifier == nil {
+		return f.existing, nil
+	}
+	var out []models.AlertRuleGroupWithFolderFullpath
+	for _, g := range f.existing {
+		if len(g.Rules) > 0 && g.Rules[0].PrometheusRuleSourceIdentifier() == *filterOpts.SourceIdentifier {
+			out = append(out, g)
+		}
+	}
+	return out, nil
+}
+
+// fakeNamespaceStore returns a folder whose UID is the title prefixed, so root
+// and namespace folders get distinct, deterministic UIDs.
+type fakeNamespaceStore struct{}
+
+func (fakeNamespaceStore) GetOrCreateNamespaceByTitle(_ context.Context, title string, _ int64, _ identity.Requester, _ string) (*folder.FolderReference, bool, error) {
+	return &folder.FolderReference{UID: "folder-" + title, Title: title}, false, nil
+}
+
+type fakeDatasourceGetter struct {
+	ds        *datasources.DataSource
+	requested *[]string
+}
+
+func (f fakeDatasourceGetter) GetDataSource(_ context.Context, q *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	if f.requested != nil {
+		*f.requested = append(*f.requested, q.UID)
+	}
+	// Return a datasource carrying the requested UID so callers that resolve a
+	// distinct target datasource see the right UID.
+	return &datasources.DataSource{UID: q.UID, OrgID: q.OrgID, Type: f.ds.Type, URL: f.ds.URL}, nil
+}
+
+func newTestSyncer(t *testing.T, cs *fakeConfigStore, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
+	t.Helper()
+	return &ExternalRulerSyncer{
+		settings:       &setting.UnifiedAlertingSettings{DefaultRuleEvaluationInterval: time.Minute},
+		logger:         log.NewNopLogger(),
+		metrics:        NewMetrics(nil),
+		datasources:    fakeDatasourceGetter{ds: &datasources.DataSource{UID: "ds1", OrgID: 1, Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}},
+		fetcher:        fetch,
+		ruleService:    rs,
+		namespaceStore: fakeNamespaceStore{},
+		configStore:    cs,
+		featureEnabled: func(context.Context) bool { return true },
+		lastSyncHash:   make(map[int64]uint64),
+	}
+}
+
+func upstreamGroup(name, alert string) RulerConfig {
+	return RulerConfig{
+		"ns1": {{Name: name, Rules: []apimodels.PrometheusRule{{Alert: alert, Expr: "up == 0"}}}},
+	}
+}
+
+// ownedGroup builds an existing converted rule group owned by sourceID.
+func ownedGroup(folderUID, group, sourceID string) models.AlertRuleGroupWithFolderFullpath {
+	return models.AlertRuleGroupWithFolderFullpath{
+		AlertRuleGroup: &models.AlertRuleGroup{
+			Title:     group,
+			FolderUID: folderUID,
+			Rules: []models.AlertRule{{
+				Title:    "r",
+				Metadata: models.AlertRuleMetadata{PrometheusStyleRule: &models.PrometheusStyleRule{SourceIdentifier: sourceID}},
+			}},
+		},
+	}
+}
+
+func TestSyncOrg_HappyPath(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1"}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 111}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1, "one group replaced")
+	require.Len(t, rs.replaced[0].Rules, 1)
+	// SourceIdentifier stamped on the converted rule.
+	require.NotNil(t, rs.replaced[0].Rules[0].Metadata.PrometheusStyleRule)
+	assert.Equal(t, "ds1", rs.replaced[0].Rules[0].Metadata.PrometheusStyleRule.SourceIdentifier)
+	// Success outcome recorded, with the applied hash for cross-restart dedup.
+	require.NotNil(t, cs.lastOutcome)
+	assert.Equal(t, outcomeSuccess, cs.lastOutcome.state)
+	assert.Equal(t, "111", cs.lastOutcome.appliedHash)
+}
+
+func TestSyncOrg_DedupViaPersistedHash(t *testing.T) {
+	// A fresh syncer (empty in-memory cache) must still skip when the persisted
+	// hash matches the upstream — this is what stops restarts/replicas from
+	// re-applying and churning every rule's version.
+	cs := &fakeConfigStore{uid: "ds1", lastAppliedHash: strconv.FormatUint(111, 10)}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 111}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "skipped via persisted hash without re-applying")
+}
+
+func TestSyncOrg_DedupViaPersistedHash_IniRoute(t *testing.T) {
+	// The ini route must dedup identically to the api route via the persisted
+	// hash (read best-effort from the store), not just the in-memory cache.
+	cs := &fakeConfigStore{uid: "from-config", lastAppliedHash: strconv.FormatUint(111, 10)}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 111}, rs)
+	s.settings.ExternalRulerUID = "from-ini"
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "ini route also skips via persisted hash")
+}
+
+func TestSyncOrg_NotConfigured(t *testing.T) {
+	cs := &fakeConfigStore{uid: ""}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+	assert.Nil(t, rs.replaced, "nothing synced when not configured")
+	require.NotNil(t, cs.lastOutcome, "outcome recorded even when not configured")
+	assert.Equal(t, outcomeNotConfigured, cs.lastOutcome.state)
+}
+
+func TestSyncOrg_Dedup(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1"}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1)
+
+	// Second tick, same hash → skipped (replaced reset to confirm not called again).
+	rs.replaced = nil
+	s.SyncOrg(context.Background(), 1)
+	assert.Nil(t, rs.replaced, "unchanged hash is deduped")
+}
+
+func TestSyncOrg_NotARuler(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1"}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{err: ErrNotARuler}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced)
+	require.NotNil(t, cs.lastOutcome)
+	assert.Equal(t, outcomeFailure, cs.lastOutcome.state)
+	assert.Equal(t, ReasonNotARuler, cs.lastOutcome.reason)
+}
+
+func TestSyncOrg_PruneScopedBySourceIdentifier(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1"}
+	rs := &fakeRuleService{
+		existing: []models.AlertRuleGroupWithFolderFullpath{
+			// Owned by ds1 but NOT in upstream (ns1/g1 is upstream) → must be pruned.
+			ownedGroup("folder-ns1", "stale-group", "ds1"),
+			// Owned by a different datasource → must NOT be pruned.
+			ownedGroup("folder-other", "other-group", "ds2"),
+			// Manually imported (no SourceIdentifier) → must NOT be pruned.
+			ownedGroup("folder-manual", "manual-group", ""),
+			// Still present upstream (ns1/g1) → must NOT be pruned.
+			ownedGroup("folder-ns1", "g1", "ds1"),
+		},
+	}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 7}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.deleted, 1, "exactly one stale, owned group pruned")
+	assert.Equal(t, []string{"folder-ns1"}, rs.deleted[0].NamespaceUIDs)
+	assert.Equal(t, []string{"stale-group"}, rs.deleted[0].RuleGroups)
+	// Delete is scoped to our source identifier so it can't touch other owners.
+	require.NotNil(t, rs.deleted[0].SourceIdentifier)
+	assert.Equal(t, "ds1", *rs.deleted[0].SourceIdentifier)
+}
+
+func TestSyncOrg_TargetDatasourceResolved(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1", targetUID: "tds1"}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 9}, rs)
+	var requested []string
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	// Both the query and the distinct target datasource are resolved.
+	assert.Contains(t, requested, "ds1")
+	assert.Contains(t, requested, "tds1")
+}
+
+func TestSyncOrg_TargetDatasourceDefaultsToQuery(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1"} // no targetUID
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 9}, rs)
+	var requested []string
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	// Target defaults to the query datasource: only ds1 is resolved (no 2nd lookup).
+	assert.Equal(t, []string{"ds1"}, requested)
+}
+
+func TestSyncOrg_IniOverrideWins(t *testing.T) {
+	cs := &fakeConfigStore{uid: "from-config"}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.settings.ExternalRulerUID = "from-ini"
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.NotNil(t, cs.lastOutcome)
+	assert.Equal(t, "from-ini", cs.lastOutcome.datasourceUID)
+	assert.Equal(t, originIni, cs.lastOutcome.origin)
+}
+
+func TestSyncOrg_Promote(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1", promote: true}
+	rs := &fakeRuleService{
+		existing: []models.AlertRuleGroupWithFolderFullpath{
+			ownedGroup("folder-ns1", "g1", "ds1"),
+		},
+	}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncer(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	// Promotion rewrites the owned group with provenance=none and a cleared
+	// SourceIdentifier, and does NOT fetch upstream or prune.
+	assert.Equal(t, 0, fetch.calls, "promotion skips the upstream fetch")
+	assert.Empty(t, rs.deleted, "promotion does not prune")
+	require.Len(t, rs.replaced, 1)
+	assert.Equal(t, models.ProvenanceNone, rs.replacedProvenance)
+	require.Len(t, rs.replaced[0].Rules, 1)
+	if psr := rs.replaced[0].Rules[0].Metadata.PrometheusStyleRule; psr != nil {
+		assert.Empty(t, psr.SourceIdentifier, "SourceIdentifier cleared on promotion")
+	}
+
+	// Terminal promoted outcome recorded.
+	require.NotNil(t, cs.lastOutcome)
+	assert.Equal(t, outcomePromoted, cs.lastOutcome.state)
+}
+
+func TestSyncOrg_PromoteIdempotentWhenNothingOwned(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1", promote: true}
+	rs := &fakeRuleService{} // no owned rules (already promoted)
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncer(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "nothing to promote")
+	assert.Equal(t, 0, fetch.calls, "still no fetch once promote is set")
+	// Terminal outcome is still (re-)asserted each tick.
+	require.NotNil(t, cs.lastOutcome)
+	assert.Equal(t, outcomePromoted, cs.lastOutcome.state)
+}
+
+func TestSyncOrg_FeatureDisabled(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1"}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.featureEnabled = func(context.Context) bool { return false }
+
+	s.SyncOrg(context.Background(), 1)
+	assert.Nil(t, rs.replaced)
+	assert.Nil(t, cs.lastOutcome)
+}
