@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -363,16 +364,17 @@ func newSQLite3DB(tb TestingTB) (*testDB, error) {
 	}
 	tb.Cleanup(func() {
 		// Do best efforts at cleaning up after ourselves.
-		_ = tmp.Close()
 		_ = os.Remove(tmp.Name())
 	})
+	if err := tmp.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close temporary database file: %w", err)
+	}
 
-	// For tests, set sync=OFF for faster commits. Reference: https://www.sqlite.org/pragma.html#pragma_synchronous
-	// Sync is used in more production-y environments to avoid the database becoming corrupted. Test databases are fine to break.
+	// WAL avoids reader/writer lock contention when tests use multiple connections.
 	return &testDB{
 		Driver: "sqlite3",
 		Path:   tmp.Name(),
-		Conn:   fmt.Sprintf("file:%s?cache=private&mode=rwc&_journal_mode=WAL&_synchronous=OFF", tmp.Name()),
+		Conn:   sqlutil.SQLiteTestConnectionString(tmp.Name()),
 	}, nil
 }
 

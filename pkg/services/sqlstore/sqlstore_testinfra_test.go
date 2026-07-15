@@ -2,6 +2,7 @@ package sqlstore_test
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -27,6 +29,66 @@ func TestIntegrationTempDatabaseConnect(t *testing.T) {
 		return err
 	})
 	require.NoError(t, err, "failed to execute a SELECT 1")
+}
+
+func TestIntegrationTempDatabaseSQLiteSettings(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Setenv("GRAFANA_TEST_DB", "sqlite3")
+	t.Setenv("SQLITE_INMEMORY", "false")
+	t.Setenv("SQLITE_TEST_DB", "")
+
+	t.Run("isolated test store", func(t *testing.T) {
+		store := sqlstore.NewTestStore(t, sqlstore.WithoutMigrator())
+		assertSQLiteTestSettings(t, store.GetEngine().DB().DB)
+	})
+
+	t.Run("legacy test store", func(t *testing.T) {
+		testDB, err := sqlutil.GetTestDB("sqlite3")
+		require.NoError(t, err)
+		t.Cleanup(testDB.Cleanup)
+
+		db, err := sql.Open(testDB.DriverName, testDB.ConnStr)
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+		assertSQLiteTestSettings(t, db)
+	})
+}
+
+func assertSQLiteTestSettings(t *testing.T, db *sql.DB) {
+	t.Helper()
+
+	db.SetMaxOpenConns(2)
+	db.SetMaxIdleConns(2)
+
+	connections := make([]*sql.Conn, 2)
+	for i := range connections {
+		conn, err := db.Conn(t.Context())
+		require.NoError(t, err)
+		connections[i] = conn
+		t.Cleanup(func() { _ = conn.Close() })
+	}
+
+	settings := []struct {
+		pragma string
+		want   any
+	}{
+		{pragma: "busy_timeout", want: int64(7500)},
+		{pragma: "cache_size", want: int64(134217728)},
+		{pragma: "journal_mode", want: "wal"},
+		{pragma: "mmap_size", want: int64(134217728)},
+		{pragma: "synchronous", want: int64(0)},
+		{pragma: "temp_store", want: int64(2)},
+	}
+	for i, conn := range connections {
+		for _, setting := range settings {
+			var got any
+			require.NoError(t, conn.QueryRowContext(t.Context(), "PRAGMA "+setting.pragma).Scan(&got))
+			require.Equal(t, setting.want, got, "unexpected PRAGMA %s on connection %d", setting.pragma, i)
+		}
+		require.NoError(t, conn.Close())
+	}
 }
 
 // Ensure that migrations work on the database.

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 )
 
 // ITestDB is an interface of arguments for testing db
@@ -69,31 +68,15 @@ func sqLite3TestDB() (*TestDB, error) {
 
 	sqliteDb := os.Getenv("SQLITE_TEST_DB")
 	if sqliteDb == "" {
-		// try to create a database file in the user's cache directory
-		dir, err := os.UserCacheDir()
-		if err != nil {
-			return nil, err
-		}
-
-		// if cache dir doesn't exist, fall back to temp dir
-		if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
-			dir = os.TempDir()
-			if _, err := os.Stat(dir); err != nil {
-				return nil, err
-			}
-		}
-
-		err = os.Mkdir(filepath.Join(dir, "grafana-test"), 0750)
-		if err != nil && !errors.Is(err, fs.ErrExist) {
-			return nil, err
-		}
-
-		f, err := os.CreateTemp(filepath.Join(dir, "grafana-test"), "grafana-test-*.db")
+		f, err := os.CreateTemp("", "grafana-test-*.db")
 		if err != nil {
 			return nil, err
 		}
 
 		sqliteDb = f.Name()
+		if err := f.Close(); err != nil {
+			return nil, err
+		}
 
 		ret.Cleanup = func() {
 			// remove db file if it exists
@@ -114,14 +97,18 @@ func sqLite3TestDB() (*TestDB, error) {
 		}
 	}
 
-	ret.ConnStr = "file:" + sqliteDb + "?cache=private&mode=rwc"
-	if os.Getenv("SQLITE_JOURNAL_MODE") != "false" {
-		// For tests, set sync=OFF for faster commits. Reference: https://www.sqlite.org/pragma.html#pragma_synchronous.
-		ret.ConnStr += "&_journal_mode=WAL&_synchronous=OFF"
-	}
+	ret.ConnStr = SQLiteTestConnectionString(sqliteDb)
 	ret.Path = sqliteDb
 
 	return ret, nil
+}
+
+// SQLiteTestConnectionString returns the shared SQLite configuration for file-backed integration test databases.
+// It favors concurrency and speed over durability and must only be used with temporary test data.
+func SQLiteTestConnectionString(path string) string {
+	const sqliteTestConnectionOptions = "cache=private&mode=rwc&_cache_size=134217728&_mmap_size=134217728&_temp_store=MEMORY&_journal_mode=WAL&_synchronous=OFF"
+
+	return "file:" + path + "?" + sqliteTestConnectionOptions
 }
 
 func mySQLTestDB() (*TestDB, error) {

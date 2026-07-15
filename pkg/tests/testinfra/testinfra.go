@@ -137,6 +137,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	dbCfg.Key("name").SetValue(testDB.Database)
 	if testDB.Path != "" {
 		dbCfg.Key("path").SetValue(testDB.Path)
+		dbCfg.Key("connection_string").SetValue(testDB.ConnStr)
 	}
 
 	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)

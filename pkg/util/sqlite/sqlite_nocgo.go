@@ -45,6 +45,7 @@ var dsnMapping = map[string]string{
 	"_foreign_keys":        "_pragma",
 	"_auto_vacuum":         "_pragma",
 	"_cache_size":          "_pragma",
+	"_mmap_size":           "_pragma",
 	"_case_sensitive_like": "_pragma",
 	"_defer_foreign_keys":  "_pragma",
 	"_temp_store":          "_pragma",
@@ -78,8 +79,8 @@ func convertSQLite3URL(dsn string) (string, error) {
 		value := values[0]
 		switch mapped {
 		case "_pragma":
-			value = strings.TrimPrefix(value, "_")
-			q.Add("_pragma", fmt.Sprintf("%s(%s)", key, value))
+			pragma := strings.TrimPrefix(key, "_")
+			q.Add("_pragma", fmt.Sprintf("%s(%s)", pragma, value))
 		case "_txlock":
 			q.Set("_txlock", value)
 		case "_time_format":
