@@ -1,4 +1,5 @@
 import { of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 import {
   type DataQueryError,
@@ -11,6 +12,7 @@ import { config } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { type LokiDatasource } from './datasource';
+import { getIncrementalSplitQueryLoadingState } from './incrementalQueryLoadingState';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
 import { runSplitQuery } from './querySplitting';
@@ -78,6 +80,22 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       // 3 sub-requests + complete
       expect(emitted).toHaveLength(4);
+    });
+  });
+
+  test('Emits incremental loading state for intermediate responses and Done for the final response', async () => {
+    const incrementalState = getIncrementalSplitQueryLoadingState();
+    const capturedStates: Array<LoadingState | undefined> = [];
+    await expect(
+      runSplitQuery(datasource, globalRequest).pipe(tap((r) => capturedStates.push(r.state)))
+    ).toEmitValuesWith(() => {
+      expect(capturedStates).toHaveLength(4);
+      const intermediateStates = capturedStates.slice(0, -1);
+      const finalState = capturedStates[capturedStates.length - 1];
+      for (const state of intermediateStates) {
+        expect(state).toBe(incrementalState);
+      }
+      expect(finalState).toBe(LoadingState.Done);
     });
   });
 

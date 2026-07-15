@@ -11,6 +11,7 @@ import {
 import { config } from '@grafana/runtime';
 
 import { type LokiDatasource } from './datasource';
+import { getIncrementalSplitQueryLoadingState } from './incrementalQueryLoadingState';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
 import {
@@ -83,7 +84,11 @@ function splitQueriesByStreamShard(
   splittingTargets: LokiQuery[]
 ) {
   let shouldStop = false;
-  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: generateUUID() };
+  let mergedResponse: DataQueryResponse = {
+    data: [],
+    state: getIncrementalSplitQueryLoadingState(),
+    key: generateUUID(),
+  };
   let subquerySubscription: Subscription | null = null;
   let retriesMap = new Map<string, number>();
   let retryTimer: ReturnType<typeof setTimeout> | null = null;

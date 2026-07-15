@@ -17,6 +17,7 @@ import { config } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { type LokiDatasource } from './datasource';
+import { getIncrementalSplitQueryLoadingState } from './incrementalQueryLoadingState';
 import {
   splitTimeRange as splitLogsTimeRange,
   splitTimeRangeAligned as splitLogsTimeRangeAligned,
@@ -131,7 +132,11 @@ function runSplitGroupedQueries(
   options: QuerySplittingOptions = {}
 ) {
   const responseKey = requests.length ? requests[0].request.queryGroupId : generateUUID();
-  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
+  let mergedResponse: DataQueryResponse = {
+    data: [],
+    state: getIncrementalSplitQueryLoadingState(),
+    key: responseKey,
+  };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
   const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
 
