@@ -138,6 +138,7 @@ export function LegacyTableNG(props: TableNGProps) {
     noValue,
     onCellFilterAdded,
     onColumnResize,
+    onFilteredRowsChange,
     onSortByChange,
     protoParserEnabled,
     showTypeIcons,
@@ -239,6 +240,19 @@ export function LegacyTableNG(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, nestedFields, { hasNestedFrames, initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+
+  // Consumers (e.g. PanelContext.onInstanceStateChange) may hand back an unstable callback identity on every
+  // call, so this is read through a ref rather than being a dependency - otherwise the effect below could
+  // retrigger itself indefinitely without sortedRows ever actually changing.
+  const onFilteredRowsChangeRef = useRef(onFilteredRowsChange);
+  onFilteredRowsChangeRef.current = onFilteredRowsChange;
+
+  // sortedRows reflects the currently filtered/sorted set of top-level rows (pre-pagination), so this fires
+  // whenever a column filter or sort changes which rows are shown, not just when the underlying data changes.
+  // Nested child rows (__depth > 0) are excluded since CSV export only operates on the top-level DataFrame.
+  useEffect(() => {
+    onFilteredRowsChangeRef.current?.(sortedRows.filter((row) => row.__depth === 0).map((row) => row.__index));
+  }, [sortedRows]);
 
   const nestedRows = useNestedRows(
     rows,

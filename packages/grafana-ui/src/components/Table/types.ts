@@ -42,6 +42,9 @@ export type TableColumnResizeActionCallback = (
 ) => void;
 type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type TableInspectCellCallback = (state: InspectCell) => void;
+/** Called whenever the set of rows shown by the table changes, e.g. due to a column filter or sort being applied.
+ * `rowIndexes` are indexes into the original `DataFrame` passed to the table, in the order they are displayed. */
+export type TableFilteredRowsChangeCallback = (rowIndexes: number[]) => void;
 
 export interface TableSortByFieldState {
   displayName: string;
@@ -110,6 +113,7 @@ export interface TableRTProps {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  onFilteredRowsChange?: TableFilteredRowsChangeCallback;
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;

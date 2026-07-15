@@ -53,6 +53,7 @@ export const Table = memo((props: Props) => {
     height,
     onCellFilterAdded,
     onColumnResize,
+    onFilteredRowsChange,
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
@@ -204,6 +205,12 @@ export const Table = memo((props: Props) => {
 
   const extendedState = state as GrafanaTableState;
   toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
+
+  // rows reflects the currently filtered/sorted set of rows (pre-pagination), so this fires whenever a
+  // column filter or sort changes which rows are shown, not just when the underlying data changes.
+  useEffect(() => {
+    onFilteredRowsChange?.(rows.map((row) => row.index));
+  }, [rows, onFilteredRowsChange]);
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.

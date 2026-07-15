@@ -24,6 +24,7 @@ import { dataFrameToLogsModel } from '../logs/logsModel';
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
 import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt, downloadTraceAsJson } from './utils/download';
+import { filterDataFrameByRowIndexes } from './utils/utils';
 
 interface Props {
   isLoading: boolean;
@@ -38,6 +39,11 @@ interface Props {
   hasTransformations?: boolean;
   formattedDataDescription?: string;
   onOptionsChange?: (options: GetDataOptions) => void;
+  /** Row indexes reflecting the column filter/sort currently applied on the panel's own visualization (not this
+   * tab's preview table), when the panel type supports reporting it (e.g. the table panel). Indexes are only
+   * meaningful for the frame at `panelFilteredRowIndexesFrameIndex`. */
+  panelFilteredRowIndexes?: number[];
+  panelFilteredRowIndexesFrameIndex?: number;
 }
 
 interface State {
@@ -51,6 +57,11 @@ interface State {
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
+  /** Row indexes into the currently previewed DataFrame, reflecting any column filter/sort applied in the preview
+   * table. Kept as an instance field rather than state since it updates on every keystroke in a filter popup and
+   * shouldn't trigger a re-render of this component. */
+  filteredRowIndexes?: number[];
+
   constructor(props: Props) {
     super(props);
 
@@ -96,10 +107,34 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   }
 
+  /**
+   * Applies the panel's own live column filter (if any) to `dataFrame`, so the preview table - and CSV export
+   * derived from it - reflects the same rows the user filtered down to on the dashboard panel itself. It's only
+   * valid when it corresponds to the exact frame passed in and no transform has reshaped the data (which can
+   * add/remove/reorder rows).
+   */
+  getPanelFilteredFrame(dataFrame: DataFrame): DataFrame {
+    const { panelFilteredRowIndexes, panelFilteredRowIndexesFrameIndex } = this.props;
+    const { transformId, dataFrameIndex } = this.state;
+
+    const panelFilterApplies =
+      panelFilteredRowIndexes !== undefined &&
+      transformId === DataTransformerID.noop &&
+      panelFilteredRowIndexesFrameIndex === dataFrameIndex;
+
+    return panelFilterApplies ? filterDataFrameByRowIndexes(dataFrame, panelFilteredRowIndexes) : dataFrame;
+  }
+
   exportCsv(dataFrames: DataFrame[], hasLogs: boolean) {
     const { dataName } = this.props;
-    const { transformId } = this.state;
-    const dataFrame = dataFrames[this.state.dataFrameIndex];
+    const { transformId, dataFrameIndex } = this.state;
+
+    // this.filteredRowIndexes are indexes into whatever frame the preview table was actually showing, i.e.
+    // the panel-filtered frame below - applying it on top keeps both layers of filtering consistent.
+    const dataFrame = filterDataFrameByRowIndexes(
+      this.getPanelFilteredFrame(dataFrames[dataFrameIndex]),
+      this.filteredRowIndexes
+    );
 
     if (hasLogs) {
       reportInteraction('grafana_logs_download_clicked', { app: this.props.app, format: 'csv' });
@@ -162,6 +197,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
+    this.filteredRowIndexes = undefined;
     this.setState({
       transformId:
         item.value === DataTransformerID.joinByField ? DataTransformerID.joinByField : DataTransformerID.noop,
@@ -174,6 +210,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
     this.setState((prevState) => ({
       excelCompatibilityMode: !prevState.excelCompatibilityMode,
     }));
+  };
+
+  onFilteredRowsChange = (rowIndexes: number[]) => {
+    this.filteredRowIndexes = rowIndexes;
   };
 
   getProcessedData(): DataFrame[] {
@@ -300,7 +340,15 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 return null;
               }
 
-              return <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />;
+              return (
+                <Table
+                  width={width}
+                  height={height}
+                  data={this.getPanelFilteredFrame(dataFrame)}
+                  showTypeIcons={true}
+                  onFilteredRowsChange={this.onFilteredRowsChange}
+                />
+              );
             }}
           </AutoSizer>
         </div>
