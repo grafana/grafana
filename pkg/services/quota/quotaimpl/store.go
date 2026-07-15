@@ -22,6 +22,14 @@ type sqlStore struct {
 	logger log.Logger
 }
 
+type deleteByUserQuery struct {
+	sqltemplate.SQLTemplate
+	QuotaTable string
+	UserID     int64
+}
+
+func (q deleteByUserQuery) Validate() error { return nil }
+
 func (ss *sqlStore) DeleteByUser(ctx quota.Context, userID int64) error {
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
@@ -76,6 +84,36 @@ func (ss *sqlStore) Get(ctx quota.Context, scopeParams *quota.ScopeParameters) (
 
 	return &limits, nil
 }
+
+type findQuotaQuery struct {
+	sqltemplate.SQLTemplate
+	QuotaTable string
+	Cmd        *quota.UpdateQuotaCmd
+}
+
+func (q findQuotaQuery) Validate() error { return nil }
+
+type insertQuotaQuery struct {
+	sqltemplate.SQLTemplate
+	QuotaTable  string
+	LimitColumn string
+	Cmd         *quota.UpdateQuotaCmd
+	Created     time.Time
+	Updated     time.Time
+}
+
+func (q insertQuotaQuery) Validate() error { return nil }
+
+type updateQuotaQuery struct {
+	sqltemplate.SQLTemplate
+	QuotaTable  string
+	LimitColumn string
+	QuotaID     int64
+	Limit       int64
+	Updated     time.Time
+}
+
+func (q updateQuotaQuery) Validate() error { return nil }
 
 func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 	dbHelper, err := ss.sql(ctx)
@@ -135,6 +173,16 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 	})
 }
 
+type userScopeQuotaQuery struct {
+	sqltemplate.SQLTemplate
+	QuotaTable  string
+	LimitColumn string
+	UserID      int64
+	OrgID       int64
+}
+
+func (q userScopeQuotaQuery) Validate() error { return nil }
+
 func (ss *sqlStore) getUserScopeQuota(ctx quota.Context, dbHelper *legacysql.LegacyDatabaseHelper, userID int64) (*quota.Map, error) {
 	r := quota.Map{}
 	query := userScopeQuotaQuery{
@@ -170,6 +218,16 @@ func (ss *sqlStore) getUserScopeQuota(ctx quota.Context, dbHelper *legacysql.Leg
 	})
 	return &r, err
 }
+
+type orgScopeQuotaQuery struct {
+	sqltemplate.SQLTemplate
+	QuotaTable  string
+	LimitColumn string
+	UserID      int64
+	OrgID       int64
+}
+
+func (q orgScopeQuotaQuery) Validate() error { return nil }
 
 func (ss *sqlStore) getOrgScopeQuota(ctx quota.Context, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64) (*quota.Map, error) {
 	r := quota.Map{}
