@@ -26,6 +26,8 @@ export interface DashboardGenerationRequest {
   origin: string;
   /** 'new' builds a fresh dashboard; 'current' improves the one that is open. */
   target: 'new' | 'current';
+  /** How many automatic post-build repair passes have run (0/undefined for the original build). */
+  repairAttempt?: number;
 }
 
 export interface DashboardGenerationOutcome {

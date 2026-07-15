@@ -3,9 +3,19 @@ import { useCallback, useMemo, useRef } from 'react';
 import { useInlineAssistant } from '@grafana/assistant';
 import { getDataSourceSrv } from '@grafana/runtime';
 
-import { buildRefinementPrompt, WIZARD_ORIGIN } from './prompts';
-import { buildWizardTools, lookupLabelValues } from './tools';
-import { type WizardDatasource, type WizardFinding, type WizardQuestion, type WizardRefinement } from './types';
+import { buildRefinementPrompt, WIZARD_ORIGIN, type WizardRevision } from './prompts';
+import { buildWizardTools, fetchMetricLabels, fetchMetricNames, lookupLabelValues } from './tools';
+import {
+  type WizardDatasource,
+  type WizardFinding,
+  type WizardMetricRef,
+  type WizardQuestion,
+  type WizardRefinement,
+  type WizardSummary,
+  type WizardSummaryPanel,
+  type WizardSummarySection,
+  type WizardVerifiedMetric,
+} from './types';
 
 /** Datasources the wizard grounds its suggestions and queries in. */
 export function getWizardDatasources(): WizardDatasource[] {
@@ -64,6 +74,132 @@ function normalizeQuestions(raw: unknown): WizardQuestion[] {
   return questions;
 }
 
+function normalizeSummarySections(raw: unknown): WizardSummarySection[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const sections: WizardSummarySection[] = [];
+  for (const entry of raw) {
+    if (!isRecord(entry) || typeof entry.title !== 'string' || entry.title.trim() === '') {
+      continue;
+    }
+    const panels: WizardSummaryPanel[] = [];
+    if (Array.isArray(entry.panels)) {
+      for (const panel of entry.panels) {
+        if (!isRecord(panel) || typeof panel.title !== 'string' || panel.title.trim() === '') {
+          continue;
+        }
+        panels.push({
+          title: panel.title.trim(),
+          visualization: typeof panel.visualization === 'string' ? panel.visualization.trim() : '',
+        });
+      }
+    }
+    sections.push({ title: entry.title.trim(), panels });
+  }
+  return sections;
+}
+
+function normalizeMetrics(raw: unknown): WizardMetricRef[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const refs: WizardMetricRef[] = [];
+  for (const entry of raw) {
+    if (!isRecord(entry) || typeof entry.datasourceUid !== 'string' || entry.datasourceUid.trim() === '') {
+      continue;
+    }
+    const names = Array.isArray(entry.names)
+      ? entry.names
+          .filter((name): name is string => typeof name === 'string' && name.trim() !== '')
+          .map((n) => n.trim())
+      : [];
+    if (names.length === 0) {
+      continue;
+    }
+    refs.push({ datasourceUid: entry.datasourceUid.trim(), names });
+  }
+  return refs;
+}
+
+/**
+ * Checks the metrics a plan relies on against the datasources they belong to,
+ * returning the ones that do not exist. Datasources we can't verify (wrong
+ * type, lookup failed) are skipped — we only block on confirmed-missing
+ * metrics, never on an inability to check.
+ */
+async function findMissingMetrics(metrics: WizardMetricRef[], datasources: WizardDatasource[]): Promise<string[]> {
+  const byUid = new Map(datasources.map((ds) => [ds.uid, ds]));
+  const missing: string[] = [];
+  for (const ref of metrics) {
+    const ds = byUid.get(ref.datasourceUid);
+    if (!ds) {
+      continue;
+    }
+    const available = await fetchMetricNames(ds);
+    if (!available) {
+      continue;
+    }
+    for (const name of ref.names) {
+      if (!available.has(name)) {
+        missing.push(name);
+      }
+    }
+  }
+  return Array.from(new Set(missing));
+}
+
+/** Bounds the per-metric label lookups so a large plan can't fan out unboundedly. */
+const MAX_LABEL_LOOKUPS = 24;
+
+/**
+ * For each confirmed metric, looks up the labels it actually carries so the
+ * build only filters and builds variables from labels that exist on that
+ * metric — datasource-wide labels (e.g. cluster) do not imply a metric has
+ * them. `labels` is left undefined when the lookup can't run.
+ */
+async function verifyMetricLabels(
+  metrics: WizardMetricRef[],
+  datasources: WizardDatasource[]
+): Promise<WizardVerifiedMetric[]> {
+  const byUid = new Map(datasources.map((ds) => [ds.uid, ds]));
+  const verified: WizardVerifiedMetric[] = [];
+  let lookups = 0;
+  for (const ref of metrics) {
+    const ds = byUid.get(ref.datasourceUid);
+    for (const name of ref.names) {
+      let labels: string[] | undefined;
+      if (ds && lookups < MAX_LABEL_LOOKUPS) {
+        lookups++;
+        labels = (await fetchMetricLabels(ds, name)) ?? undefined;
+      }
+      verified.push({ datasourceUid: ref.datasourceUid, name, labels });
+    }
+  }
+  return verified;
+}
+
+/**
+ * Validates the assistant's plain-language plan. Returns undefined when the
+ * model omitted it or returned something unusable, so the summary step can
+ * fall back to the raw build prompt rather than render an empty card.
+ */
+function normalizeSummary(raw: unknown): WizardSummary | undefined {
+  if (!isRecord(raw)) {
+    return undefined;
+  }
+  const { title, description, layout, sections } = raw;
+  if (typeof title !== 'string' || title.trim() === '') {
+    return undefined;
+  }
+  return {
+    title: title.trim(),
+    description: typeof description === 'string' ? description.trim() : '',
+    layout: typeof layout === 'string' && layout.trim() !== '' ? layout.trim() : undefined,
+    sections: normalizeSummarySections(sections),
+  };
+}
+
 export interface WizardAssistant {
   /**
    * Reorganizes the user's free-form request into a precise build request,
@@ -71,7 +207,13 @@ export interface WizardAssistant {
    * needed. `contextNotes` carries the serialized context items the user
    * attached through the context picker.
    */
-  refine: (request: string, datasources: WizardDatasource[], contextNotes?: string) => Promise<WizardRefinement>;
+  refine: (
+    request: string,
+    datasources: WizardDatasource[],
+    contextNotes?: string,
+    /** Present when the user asked to change the plan on the review step. */
+    revision?: WizardRevision
+  ) => Promise<WizardRefinement>;
   /** Everything the wizard verified to exist so far (deduped, latest wins). */
   getFindings: () => WizardFinding[];
   /**
@@ -143,21 +285,68 @@ export function useWizardAssistant(): WizardAssistant {
     [generate, recordFinding]
   );
 
-  return useMemo(
-    () => ({
-      refine: async (request, datasources, contextNotes) => {
-        const { systemPrompt, prompt } = buildRefinementPrompt(request, datasources, contextNotes);
-        const parsed = parseWizardJson(await run('wizard-refine', systemPrompt, prompt, datasources));
-        const refined = typeof parsed.prompt === 'string' && parsed.prompt.trim() !== '' ? parsed.prompt : request;
-        const dataNotes =
-          typeof parsed.dataNotes === 'string' && parsed.dataNotes !== '' ? parsed.dataNotes : undefined;
-        return { prompt: refined, dataNotes, questions: normalizeQuestions(parsed.questions) };
+  return useMemo(() => {
+    const runRefine = async (
+      request: string,
+      datasources: WizardDatasource[],
+      contextNotes: string | undefined,
+      revision: WizardRevision | undefined,
+      unavailableMetrics: string[] | undefined
+    ): Promise<WizardRefinement> => {
+      const { systemPrompt, prompt } = buildRefinementPrompt(
+        request,
+        datasources,
+        contextNotes,
+        revision,
+        unavailableMetrics
+      );
+      const parsed = parseWizardJson(await run('wizard-refine', systemPrompt, prompt, datasources));
+      const refined = typeof parsed.prompt === 'string' && parsed.prompt.trim() !== '' ? parsed.prompt : request;
+      const dataNotes = typeof parsed.dataNotes === 'string' && parsed.dataNotes !== '' ? parsed.dataNotes : undefined;
+      return {
+        prompt: refined,
+        summary: normalizeSummary(parsed.summary),
+        dataNotes,
+        metrics: normalizeMetrics(parsed.metrics),
+        questions: normalizeQuestions(parsed.questions),
+      };
+    };
+
+    return {
+      refine: async (request, datasources, contextNotes, revision) => {
+        // Verify the metrics the plan relies on actually exist before the user
+        // sees it; hallucinated metrics are the main cause of empty panels. If
+        // any are missing, run one corrective round with the confirmed-missing
+        // list so the model rebuilds around real data.
+        let result = await runRefine(request, datasources, contextNotes, revision, undefined);
+        let missing = await findMissingMetrics(result.metrics ?? [], datasources);
+        if (missing.length > 0) {
+          result = await runRefine(request, datasources, contextNotes, revision, missing);
+          missing = await findMissingMetrics(result.metrics ?? [], datasources);
+        }
+
+        // Whatever is still unconfirmed must never reach the builder as a
+        // "verified metric" — drop it so the build prompt only asserts metrics
+        // we actually checked.
+        if (missing.length > 0 && result.metrics) {
+          const unavailable = new Set(missing);
+          result = {
+            ...result,
+            metrics: result.metrics
+              .map((ref) => ({ ...ref, names: ref.names.filter((name) => !unavailable.has(name)) }))
+              .filter((ref) => ref.names.length > 0),
+          };
+        }
+
+        // Resolve the real label set of each confirmed metric so the build only
+        // filters and builds variables from labels that metric actually has.
+        result = { ...result, verifiedMetrics: await verifyMetricLabels(result.metrics ?? [], datasources) };
+        return result;
       },
 
       getFindings: () => Array.from(findings.current.values()),
 
       prefetchLabelValues,
-    }),
-    [run, prefetchLabelValues]
-  );
+    };
+  }, [run, prefetchLabelValues]);
 }
