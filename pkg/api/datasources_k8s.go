@@ -183,7 +183,7 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 		conn := conns.Items[0]
 		pluginType := pluginTypeFromConnection(conn)
 
-		if forceLocal, reason := hs.datasourceRequiresSTPaths(ctx, dsUID, c.SignedInUser); forceLocal {
+		if forceLocal, reason := hs.datasourceRequiresSTPaths(ctx, dsUID, c.SignedInUser, c.SkipDSCache); forceLocal {
 			c.Logger.Debug("forcing legacy path for resource request", "reason", reason, "uid", dsUID)
 			hs.dsEndpointRedirects.WithLabelValues("resources", pluginType, "legacy").Inc()
 			hs.CallDatasourceResourceWithUID(c)
@@ -245,7 +245,7 @@ func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 
 		conn := conns.Items[0]
 
-		if forceLocal, reason := hs.datasourceRequiresSTPaths(ctx, dsUID, c.SignedInUser); forceLocal {
+		if forceLocal, reason := hs.datasourceRequiresSTPaths(ctx, dsUID, c.SignedInUser, c.SkipDSCache); forceLocal {
 			c.Logger.Debug("forcing legacy path for health request", "reason", reason, "uid", dsUID)
 			hs.dsEndpointRedirects.WithLabelValues("health", pluginTypeFromConnection(conn), "legacy").Inc()
 			hs.CheckDatasourceHealthWithUID(c).WriteTo(c)
@@ -264,7 +264,7 @@ func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 //   - IP-range access control is enabled globally
 //   - datasource has oauthPassThru enabled
 //   - datasource has LBAC team HTTP headers configured
-func (hs *HTTPServer) datasourceRequiresSTPaths(ctx context.Context, dsUID string, user identity.Requester) (bool, string) {
+func (hs *HTTPServer) datasourceRequiresSTPaths(ctx context.Context, dsUID string, user identity.Requester, skipCache bool) (bool, string) {
 	if hs.Cfg.IPRangeACEnabled {
 		return true, "ip-range-access-control"
 	}
@@ -275,7 +275,7 @@ func (hs *HTTPServer) datasourceRequiresSTPaths(ctx context.Context, dsUID strin
 		return true, "builtin-grafana-datasource"
 	}
 
-	ds, err := hs.DataSourceCache.GetDatasourceByUID(ctx, dsUID, user, false)
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(ctx, dsUID, user, skipCache)
 	if err != nil {
 		// If we can't look up the datasource we can't confirm it's safe to redirect,
 		// so stay on the legacy path.

@@ -701,7 +701,7 @@ func TestDatasourceRequiresSTPaths(t *testing.T) {
 				uid = tt.uid
 			}
 			gotForce, gotReason := hs.datasourceRequiresSTPaths(
-				context.Background(), uid, &user.SignedInUser{},
+				context.Background(), uid, &user.SignedInUser{}, false,
 			)
 
 			assert.Equal(t, tt.wantForce, gotForce)
