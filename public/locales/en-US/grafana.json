@@ -10877,6 +10877,8 @@
         "description": "Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.",
         "title": "Explore your service map"
       },
+      "carousel-label": "Recommended apps",
+      "carousel-roledescription": "carousel",
       "existing": "Enabled solution",
       "frontend-observability": {
         "action": "Enable Frontend Observability",
