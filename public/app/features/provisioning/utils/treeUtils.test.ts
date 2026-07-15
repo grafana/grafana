@@ -6,7 +6,6 @@ import {
   buildTree,
   filterTree,
   flattenTree,
-  getAllFolderPaths,
   getIconName,
   getItemType,
   getStatus,
@@ -1136,39 +1135,6 @@ describe('flattenTree', () => {
     expect(result[0].isExpanded).toBe(true);
     expect(result[1].item.path).toBe('folder/subfolder');
     expect(result[1].isExpanded).toBe(false);
-  });
-});
-
-describe('getAllFolderPaths', () => {
-  it('should collect paths of every folder with children', () => {
-    const tree: TreeItem[] = [
-      {
-        path: 'folder',
-        title: 'Folder',
-        type: 'Folder',
-        level: 0,
-        children: [
-          {
-            path: 'folder/subfolder',
-            title: 'Subfolder',
-            type: 'Folder',
-            level: 0,
-            children: [
-              { path: 'folder/subfolder/file.json', title: 'file.json', type: 'File', level: 0, children: [] },
-            ],
-          },
-        ],
-      },
-      { path: 'root-file.json', title: 'root-file.json', type: 'File', level: 0, children: [] },
-    ];
-
-    expect(getAllFolderPaths(tree)).toEqual(['folder', 'folder/subfolder']);
-  });
-
-  it('should return an empty array when there are no folders with children', () => {
-    const tree: TreeItem[] = [{ path: 'file.json', title: 'file.json', type: 'File', level: 0, children: [] }];
-
-    expect(getAllFolderPaths(tree)).toEqual([]);
   });
 });
 

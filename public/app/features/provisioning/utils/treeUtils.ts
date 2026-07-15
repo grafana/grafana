@@ -225,23 +225,6 @@ export function flattenTree(items: TreeItem[], expandedPaths?: Set<string>, leve
   return result;
 }
 
-/** Collect the paths of every folder that has children, so the UI can expand them all at once. */
-export function getAllFolderPaths(items: TreeItem[]): string[] {
-  const paths: string[] = [];
-
-  const walk = (nodes: TreeItem[]) => {
-    for (const node of nodes) {
-      if (node.children.length > 0) {
-        paths.push(node.path);
-        walk(node.children);
-      }
-    }
-  };
-
-  walk(items);
-  return paths;
-}
-
 /**
  * Filter tree by search query (searches path and title).
  * Returns filtered tree including ancestor folders for matching items.

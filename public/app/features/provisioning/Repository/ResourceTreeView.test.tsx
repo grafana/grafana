@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import {
   type Repository,
@@ -76,22 +76,6 @@ describe('ResourceTreeView', () => {
     expect(screen.queryByText('my-dashboard.json')).not.toBeInTheDocument();
   });
 
-  it('expands and collapses the whole tree with the toolbar buttons', async () => {
-    render(<ResourceTreeView repo={repo} />);
-
-    await userEvent.click(screen.getByRole('button', { name: /expand all/i }));
-
-    expect(await screen.findByText('my-dashboard.json')).toBeInTheDocument();
-    expect(screen.getByText('other.json')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: /collapse all/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByText('my-dashboard.json')).not.toBeInTheDocument();
-    });
-    expect(screen.queryByText('other.json')).not.toBeInTheDocument();
-  });
-
   it('shows matching nested items regardless of fold state while searching', async () => {
     render(<ResourceTreeView repo={repo} />);
 
@@ -99,8 +83,5 @@ describe('ResourceTreeView', () => {
 
     // Search bypasses the folded state, so the deeply nested match is visible without expanding.
     expect(await screen.findByText('other.json')).toBeInTheDocument();
-    // Expand/collapse controls are disabled while a search is active.
-    expect(screen.getByRole('button', { name: /expand all/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /collapse all/i })).toBeDisabled();
   });
 });

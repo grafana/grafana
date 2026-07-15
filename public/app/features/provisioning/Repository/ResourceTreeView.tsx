@@ -7,7 +7,6 @@ import { Trans, t } from '@grafana/i18n';
 import {
   type CellProps,
   type Column,
-  Button,
   FilterInput,
   Icon,
   IconButton,
@@ -28,14 +27,7 @@ import {
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
 import { getKindInfoByItemType } from '../utils/resourceKinds';
-import {
-  buildTree,
-  filterTree,
-  flattenTree,
-  getAllFolderPaths,
-  getIconName,
-  mergeFilesAndResources,
-} from '../utils/treeUtils';
+import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
   repo: Repository;
@@ -90,14 +82,6 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
       }
       return next;
     });
-  }, []);
-
-  const handleExpandAll = useCallback(() => {
-    setExpandedPaths(new Set(getAllFolderPaths(tree)));
-  }, [tree]);
-
-  const handleCollapseAll = useCallback(() => {
-    setExpandedPaths(new Set());
   }, []);
 
   const columns: Array<Column<FlatTreeItem>> = useMemo(
@@ -249,34 +233,12 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      <Stack direction="row" gap={2} alignItems="center">
-        <div className={styles.filter}>
-          <FilterInput
-            placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
-            autoFocus={true}
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-        </div>
-        <Button
-          variant="secondary"
-          fill="text"
-          icon="angle-double-down"
-          onClick={handleExpandAll}
-          disabled={!!searchQuery}
-        >
-          <Trans i18nKey="provisioning.resource-tree.expand-all">Expand all</Trans>
-        </Button>
-        <Button
-          variant="secondary"
-          fill="text"
-          icon="angle-double-up"
-          onClick={handleCollapseAll}
-          disabled={!!searchQuery}
-        >
-          <Trans i18nKey="provisioning.resource-tree.collapse-all">Collapse all</Trans>
-        </Button>
-      </Stack>
+      <FilterInput
+        placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
+        autoFocus={true}
+        value={searchQuery}
+        onChange={setSearchQuery}
+      />
       <InteractiveTable
         columns={columns}
         data={flatItems}
@@ -288,9 +250,6 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  filter: css({
-    flexGrow: 1,
-  }),
   titleCell: css({
     display: 'flex',
     alignItems: 'center',
