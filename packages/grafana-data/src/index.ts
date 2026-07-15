@@ -923,6 +923,8 @@ export {
 export {
   type KeyValue,
   LoadingState,
+  isLoadingStateInProgress,
+  isLoadingStateComplete,
   preferredVisualizationTypes,
   type PreferredVisualisationType,
   type QueryResultMeta,

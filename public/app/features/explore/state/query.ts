@@ -77,7 +77,8 @@ export const selectIsWaitingForData = (exploreId: string) => {
     }
     return panelState.queryResponse
       ? panelState.queryResponse.state === LoadingState.Loading ||
-          panelState.queryResponse.state === LoadingState.Streaming
+          panelState.queryResponse.state === LoadingState.Streaming ||
+          panelState.queryResponse.state === LoadingState.PartialResult
       : false;
   };
 };

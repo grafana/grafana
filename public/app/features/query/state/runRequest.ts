@@ -100,7 +100,10 @@ function processResponsePacket(packet: DataQueryResponse, state: RunningQuerySta
 function getRequestTimeRange(request: DataQueryRequest, loadingState: LoadingState): TimeRange {
   const range = request.range;
 
-  if (!isString(range.raw.from) || loadingState !== LoadingState.Streaming) {
+  if (
+    !isString(range.raw.from) ||
+    (loadingState !== LoadingState.Streaming && loadingState !== LoadingState.PartialResult)
+  ) {
     return range;
   }
 

@@ -5,7 +5,14 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
-import { type DataSourceApi, DataTransformerID, dateTime, type TypedVariableModel } from '@grafana/data';
+import {
+  type DataSourceApi,
+  DataTransformerID,
+  dateTime,
+  getDefaultTimeRange,
+  LoadingState,
+  type TypedVariableModel,
+} from '@grafana/data';
 import { convertFrameTypeTransformer, FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
 import { type DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
@@ -532,95 +539,50 @@ describe('PanelQueryRunner', () => {
   );
 });
 
-describe('PanelQueryRunner cancelQuery with LoadingState.PartialResult', () => {
-  it('should set state to Done when cancelling a query with PartialResult state', () => {
-    const runner = new PanelQueryRunner();
-    const events: grafanaData.PanelData[] = [];
+describe('PanelQueryRunner cancelQuery', () => {
+  it.each([LoadingState.Loading, LoadingState.Streaming, LoadingState.PartialResult])(
+    'emits Done when cancelling an in-progress query (%s)',
+    (state) => {
+      const runner = new PanelQueryRunner(defaultPanelConfig);
+      const events: grafanaData.PanelData[] = [];
 
-    // Subscribe to results
-    const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
-      events.push(data);
-    });
+      const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
+        events.push(data);
+      });
 
-    // Simulate a query response with PartialResult state
-    runner['lastResult'] = {
-      state: grafanaData.LoadingState.PartialResult,
-      series: [],
-      timeRange: {} as any,
-    };
+      runner['subscription'] = { unsubscribe: jest.fn() };
+      runner['lastResult'] = {
+        state,
+        series: [],
+        timeRange: getDefaultTimeRange(),
+      };
 
-    // Cancel the query
-    runner.cancelQuery();
+      runner.cancelQuery();
 
-    // Should emit Done state
-    expect(events.length).toBeGreaterThan(0);
-    expect(events[events.length - 1].state).toBe(grafanaData.LoadingState.Done);
+      expect(events[events.length - 1].state).toBe(LoadingState.Done);
 
-    subscription.unsubscribe();
-  });
+      subscription.unsubscribe();
+    }
+  );
 
-  it('should set state to Done when cancelling a query with Loading state', () => {
-    const runner = new PanelQueryRunner();
-    const events: grafanaData.PanelData[] = [];
-
-    const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
-      events.push(data);
-    });
-
-    runner['lastResult'] = {
-      state: grafanaData.LoadingState.Loading,
-      series: [],
-      timeRange: {} as any,
-    };
-
-    runner.cancelQuery();
-
-    expect(events.length).toBeGreaterThan(0);
-    expect(events[events.length - 1].state).toBe(grafanaData.LoadingState.Done);
-
-    subscription.unsubscribe();
-  });
-
-  it('should set state to Done when cancelling a query with Streaming state', () => {
-    const runner = new PanelQueryRunner();
+  it('does not emit when cancelling a query that is already Done', () => {
+    const runner = new PanelQueryRunner(defaultPanelConfig);
     const events: grafanaData.PanelData[] = [];
 
     const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
       events.push(data);
     });
 
+    runner['subscription'] = { unsubscribe: jest.fn() };
     runner['lastResult'] = {
-      state: grafanaData.LoadingState.Streaming,
+      state: LoadingState.Done,
       series: [],
-      timeRange: {} as any,
-    };
-
-    runner.cancelQuery();
-
-    expect(events.length).toBeGreaterThan(0);
-    expect(events[events.length - 1].state).toBe(grafanaData.LoadingState.Done);
-
-    subscription.unsubscribe();
-  });
-
-  it('should not emit when cancelling a query that is already Done', () => {
-    const runner = new PanelQueryRunner();
-    const events: grafanaData.PanelData[] = [];
-
-    const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
-      events.push(data);
-    });
-
-    runner['lastResult'] = {
-      state: grafanaData.LoadingState.Done,
-      series: [],
-      timeRange: {} as any,
+      timeRange: getDefaultTimeRange(),
     };
 
     const eventsBefore = events.length;
     runner.cancelQuery();
 
-    // Should not emit new event since already Done
     expect(events.length).toBe(eventsBefore);
 
     subscription.unsubscribe();

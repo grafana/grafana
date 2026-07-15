@@ -78,7 +78,10 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
   const { state, errors, error, series } = panelData;
 
   const isLoading =
-    state === LoadingState.Loading || state === LoadingState.Streaming || state === LoadingState.NotStarted;
+    state === LoadingState.Loading ||
+    state === LoadingState.Streaming ||
+    state === LoadingState.PartialResult ||
+    state === LoadingState.NotStarted;
   if (isLoading) {
     return { isLoading: true, hasError: false, hasNoData: false };
   }
