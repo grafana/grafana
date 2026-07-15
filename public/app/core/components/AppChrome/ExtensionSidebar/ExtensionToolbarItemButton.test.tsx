@@ -1,21 +1,19 @@
-import { screen, fireEvent } from '@testing-library/react';
+import { act } from '@testing-library/react';
 
-import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
-import { render } from 'test/test-utils';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { render, screen, fireEvent } from 'test/test-utils';
 
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagAssistantFullscreenWorkspace: jest.fn(),
-}));
-
-const useFlagAssistantFullscreenWorkspaceMock = jest.mocked(useFlagAssistantFullscreenWorkspace);
+const FULLSCREEN_WORKSPACE_FLAG = 'assistant.fullscreenWorkspace';
 
 describe('ExtensionToolbarItemButton', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    useFlagAssistantFullscreenWorkspaceMock.mockReturnValue(false);
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update React state; wrap in act() since the
+    // component may still be mounted when this runs (RTL cleanup is a separate afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('renders open button with default tooltip when no title is provided', () => {
@@ -55,18 +53,18 @@ describe('ExtensionToolbarItemButton', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the assistant Chat pill and Enter Workspace button when fullscreen workspace is enabled for the assistant plugin', () => {
-    useFlagAssistantFullscreenWorkspaceMock.mockReturnValue(true);
+  it('renders the assistant Chat pill and Enter Workspace button when fullscreen workspace is enabled for the assistant plugin', async () => {
+    setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
     render(<ExtensionToolbarItemButton isOpen={false} pluginId="grafana-assistant-app" />);
 
+    expect(await screen.findByRole('button', { name: 'Enter Workspace' })).toBeInTheDocument();
     const pill = screen.getByTestId('extension-toolbar-button-open');
     expect(pill).toHaveAttribute('aria-label', 'Open Grafana Assistant');
     expect(screen.getByText('Chat')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Enter Workspace' })).toBeInTheDocument();
   });
 
   it('renders the default button for the assistant plugin when fullscreen workspace is disabled', () => {
-    useFlagAssistantFullscreenWorkspaceMock.mockReturnValue(false);
+    setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: false });
     render(<ExtensionToolbarItemButton isOpen={false} pluginId="grafana-assistant-app" />);
 
     const button = screen.getByTestId('extension-toolbar-button-open');
