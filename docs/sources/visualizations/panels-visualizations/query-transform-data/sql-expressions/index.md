@@ -346,6 +346,8 @@ This approach ensures that a schema exists even when one query returns no data.
 
 [Grafana Assistant](ref:assistant) brings AI-powered assistance to your SQL expressions workflow. Assistant knows SQL expressions, so it can explain a query, fix syntax errors, and suggest improvements using the correct MySQL-dialect syntax, table references, and column conventions.
 
+You can also ask Assistant to build a panel using natural language. When you ask it to combine or correlate data across multiple queries, it prefers SQL expressions over join transformations and writes the SQL expression directly into your panel.
+
 {{< admonition type="note" >}}
 Grafana Assistant is generally available on Grafana Cloud and in public preview for Grafana OSS and Grafana Enterprise. To use it with Grafana OSS or Grafana Enterprise, you must install the Assistant app and connect it to a Grafana Cloud stack. For more information, refer to the [Grafana Assistant documentation](ref:assistant).
 {{< /admonition >}}
