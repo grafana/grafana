@@ -76,7 +76,7 @@ Requires `$GIT_SYNC_TEST_APP_REPO_URL`, `$GIT_SYNC_TEST_GITHUB_APP_ID`, `$GIT_SY
      ta.dispatchEvent(new Event('change', { bubbles: true }));
    };
    ```
-   Pass the PEM string as an argument. If the env value contains literal \n sequences instead of real newlines, expand them first: `pem=$(printf '%b' "$GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY")`.
+   Pass the PEM string as an argument. Cloud secret stores often flatten the multiline PEM to a single line — literal `\n` escapes, newlines replaced by spaces, or base64 of the whole PEM file. Normalize before injecting: `pem=$(bash .claude/skills/git-sync/shared/scripts/normalize-pem.sh)` — prints a parseable multiline PEM to stdout, or exits non-zero with a diagnostic that never echoes key material. Treat `$pem` as a secret: never `echo` it, write it to a file, paste it into snapshots or the final report, or quote it when a step fails — refer to it by variable name only.
 9. `click` "Create connection"
 10. **Wait:** The connection status shows "Pending" after creation. **Known bug: the UI does not auto-update the connection status** (no WebSocket push, no polling). The connection becomes ready within ~10s on the backend. **Workaround:** `navigate_page` to reload the wizard page, then switch to "Choose an existing app" and select the connection from the dropdown. It will show "Connected".
 
