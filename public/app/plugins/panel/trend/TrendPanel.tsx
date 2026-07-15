@@ -106,7 +106,7 @@ export const TrendPanel = ({
                       dataLinks={dataLinks}
                       hideZeros={options.tooltip.hideZeros}
                       canExecuteActions={userCanExecuteActions}
-                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data })}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, info.frames)}
                     />
                   );
                 }}

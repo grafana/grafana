@@ -211,7 +211,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     adHocFilters={adHocFilters}
                     hideZeros={options.tooltip.hideZeros}
                     canExecuteActions={userCanExecuteActions}
-                    assistantContext={getAssistantTooltipContext(props)}
+                    assistantContext={getAssistantTooltipContext(props, info.series)}
                   />
                 );
               }}

@@ -34,7 +34,7 @@ export interface AssistantTooltipContext {
   panelId: number;
   panelTitle: string;
   timeRange: TimeRange;
-  /** Pre-alignment frames; resolves the series' refId/query. */
+  /** Graphable frames the viz was aligned from; `origin.frameIndex` indexes into this. */
   dataSeries: DataFrame[];
   /** Annotation + exemplar frames (PanelData.annotations). */
   annotations?: DataFrame[];
@@ -42,13 +42,14 @@ export interface AssistantTooltipContext {
 
 /** Builds the tooltip's assistant context from standard panel props. */
 export function getAssistantTooltipContext(
-  props: Pick<PanelProps, 'id' | 'title' | 'timeRange' | 'data'>
+  props: Pick<PanelProps, 'id' | 'title' | 'timeRange' | 'data'>,
+  dataSeries: DataFrame[] = props.data.series
 ): AssistantTooltipContext {
   return {
     panelId: props.id,
     panelTitle: props.title,
     timeRange: props.timeRange,
-    dataSeries: props.data.series,
+    dataSeries,
     annotations: props.data.annotations,
   };
 }

@@ -309,7 +309,7 @@ export const CandlestickPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       canExecuteActions={userCanExecuteActions}
-                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data })}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, [info.frame])}
                     />
                   );
                 }}

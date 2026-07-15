@@ -222,7 +222,7 @@ export const TimeSeriesPanel = ({
                       }
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
-                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data })}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
                 }}
