@@ -5,10 +5,15 @@ aliases:
   - ../../../panels/visualizations/annotations/ # /docs/grafana/next/panels/visualizations/annotations/
   - ../../../reference/annotations/ # /docs/grafana/latest/reference/annotations/
 keywords:
-  - grafana
+keywords:
   - annotations
-  - documentation
-  - guide
+  - annotation query
+  - built-in query
+  - region annotation
+  - time regions
+  - tags
+  - dashboard
+  - saved queries
 labels:
   products:
     - cloud

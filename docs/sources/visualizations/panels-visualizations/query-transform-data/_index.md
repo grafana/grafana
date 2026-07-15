@@ -23,10 +23,14 @@ title: Query and transform data
 description: Query and transform your data
 weight: 40
 keywords:
+  - query
+  - query editor
+  - query options
   - saved queries
   - reuse queries
-  - saved query
-  - reuse query
+  - data source
+  - transformations
+  - expressions
 image_maps:
   - key: query-editor
     src: /media/docs/grafana/panels-visualizations/screenshot-query-editor-imagemap-v13.1.png

@@ -3,8 +3,12 @@ aliases:
   - ../../explore/get-started-with-explore/ # /docs/grafana/next/explore/get-started-with-explore/
 keywords:
   - explore
-  - loki
-  - logs
+  - query editor
+  - split view
+  - time picker
+  - mixed data source
+  - saved queries
+  - share
 labels:
   products:
     - cloud

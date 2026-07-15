@@ -5,10 +5,14 @@ aliases:
   - ../../../dashboards/build-dashboards/create-dynamic-dashboard/ # /docs/grafana/latest/dashboards/build-dashboards/create-dynamic-dashboard/
   - ./create-dynamic-dashboard/ # /docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dynamic-dashboard/
 keywords:
-  - panel
   - dashboard
-  - create
-  - dynamic dashboard
+  - panel
+  - edit mode
+  - sidebar
+  - content outline
+  - layout
+  - repeat
+  - show/hide rules
 labels:
   products:
     - cloud
