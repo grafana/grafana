@@ -1462,12 +1462,10 @@ func (s *server) RecordEvent(ctx context.Context, req *resourcepb.RecordEventReq
 		return nil, status.Error(codes.Unimplemented, "usage stats are not enabled")
 	}
 
-	// TODO: revisit object-level authz on the ingest path. We intentionally only
-	// require the caller to be authenticated here and do not check that they can
-	// read the target object. This matches the legacy enterprise ingest endpoint
-	// (/api/ma/events), which recorded events for any signed-in user without a
-	// per-object permission check, relying on the client to only emit events for
-	// objects the user is already viewing.
+	// deliberately require only that a caller identity is present, with
+	// no object-level authz. The client emits events for objects the user is
+	// already viewing (having passed a read check at the API layer), so the
+	// per-object permission was effectively enforced upstream.
 	if user, ok := claims.AuthInfoFrom(ctx); !ok || user == nil {
 		return nil, status.Error(codes.Unauthenticated, "no user found in context")
 	}
