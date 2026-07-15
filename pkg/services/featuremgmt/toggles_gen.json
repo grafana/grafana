@@ -1087,19 +1087,6 @@
     },
     {
       "metadata": {
-        "name": "awsAssumeRolePerDatasourceExternalId",
-        "resourceVersion": "1784056946678",
-        "creationTimestamp": "2026-07-14T19:22:26Z"
-      },
-      "spec": {
-        "description": "Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.",
-        "stage": "experimental",
-        "codeowner": "@grafana/data-sources-plugins",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "authz.listFoldersViaSearch",
         "resourceVersion": "1782267268333",
         "creationTimestamp": "2026-06-24T02:14:28Z"
@@ -1109,6 +1096,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "awsAssumeRolePerDatasourceExternalId",
+        "resourceVersion": "1784056946678",
+        "creationTimestamp": "2026-07-14T19:22:26Z"
+      },
+      "spec": {
+        "description": "Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },

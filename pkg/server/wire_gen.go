@@ -502,7 +502,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider)
+	eventualClient := resource.ProvideEventualClient()
+	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider, eventualClient)
 	if err != nil {
 		return nil, err
 	}
@@ -907,7 +908,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v8, eventualRestConfigProvider, registerer, aggregatorRunner, v9, builderMetrics, backend, policyRuleProvider)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v8, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, v9, builderMetrics, backend, policyRuleProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1243,7 +1244,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider)
+	eventualClient := resource.ProvideEventualClient()
+	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider, eventualClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1658,7 +1660,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v8, eventualRestConfigProvider, registerer, aggregatorRunner, v9, builderMetrics, backend, policyRuleProvider)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v8, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, v9, builderMetrics, backend, policyRuleProvider)
 	if err != nil {
 		return nil, err
 	}
