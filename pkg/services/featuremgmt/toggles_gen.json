@@ -3008,7 +3008,8 @@
       "metadata": {
         "name": "grafanaAdvisor",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-01-20T10:08:00Z"
+        "creationTimestamp": "2025-01-20T10:08:00Z",
+        "deletionTimestamp": "2026-07-15T09:55:36Z"
       },
       "spec": {
         "description": "Enables Advisor app",
