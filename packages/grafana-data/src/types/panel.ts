@@ -111,8 +111,12 @@ export interface PanelProps<T = any> {
   /** Handler for options change. Invoke it to update the panel custom options. */
   onOptionsChange: (options: T) => void;
 
-  /** Field config change handler. Invoke it to update the panel field config. */
-  onFieldConfigChange: (config: FieldConfigSource) => void;
+  /**
+   * Field config change handler. Invoke it to update the panel field config.
+   * By default, the given config is deep-merged into the current field config;
+   * Pass `replace: true` to replace the field config entirely.
+   */
+  onFieldConfigChange: (config: FieldConfigSource, replace?: boolean) => void;
 
   /** Template variables interpolation function. Given a string containing template variables, it returns the string with interpolated values. */
   replaceVariables: InterpolateFunction;
