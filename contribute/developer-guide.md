@@ -122,7 +122,7 @@ To build and watch all these plugins you can run the following command. Note thi
 yarn plugin:build:dev
 ```
 
-If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` 
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>`
 with the plugins name field found in its package.json. e.g. `@grafana-plugins/<plugin-name>`.
 
 ```
