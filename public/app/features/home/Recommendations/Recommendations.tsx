@@ -9,7 +9,6 @@ import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui'
 import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
 import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -17,7 +16,6 @@ import { RecommendationCard } from './RecommendationCard';
 import { RecommendationExisting } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
 import { buildInviteTeamItem, fetchOrgUserCount } from './inviteTeam';
-import { KUBERNETES_APP_ID } from './kubernetesData';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
 
@@ -44,7 +42,7 @@ function getRecommendations(): PluginRecommendationItem[] {
       icon: 'gf-traces',
       color: (theme) => theme.visualization.getColorByName('orange'),
       title: t('home.recommendations.hosted-traces.title', 'Trace requests across services'),
-      context: t('home.recommendations.hosted-traces.context', 'Because you set up Kubernetes Monitoring'),
+      context: t('home.recommendations.hosted-traces.context', 'Complete the picture with distributed tracing'),
       description: t(
         'home.recommendations.hosted-traces.description',
         'Add distributed tracing to see how requests flow between services and where they slow down.'
@@ -114,23 +112,12 @@ export function Recommendations() {
 }
 
 function GatedRecommendations({ canInstall }: { canInstall: boolean }) {
-  const { installed, loading: bridgeLoading } = usePluginBridge(KUBERNETES_APP_ID);
-  const { value: installedPlugins, loading: pluginsLoading } = useAsync(
-    async () => (installed ? fetchInstalledPlugins() : undefined),
-    [installed]
-  );
+  const { value: installedPlugins, loading: pluginsLoading } = useAsync(fetchInstalledPlugins, []);
   const { value: orgUserCount, loading: countLoading } = useAsync(fetchOrgUserCount, []);
 
-  // An unavailable plugin list fails closed. An empty list contradicts the bridge
-  // reporting Kubernetes Monitoring installed, so it is treated as unavailable too.
-  if (
-    bridgeLoading ||
-    pluginsLoading ||
-    countLoading ||
-    !installed ||
-    !installedPlugins ||
-    installedPlugins.length === 0
-  ) {
+  // An unavailable plugin list fails closed. /api/plugins always lists at least the core plugins,
+  // so an empty response means the list is unreliable and also fails closed.
+  if (pluginsLoading || countLoading || !installedPlugins || installedPlugins.length === 0) {
     return null;
   }
 

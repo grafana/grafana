@@ -10877,8 +10877,6 @@
         "description": "Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.",
         "title": "Explore your service map"
       },
-      "carousel-label": "Recommended apps",
-      "carousel-roledescription": "carousel",
       "existing": "Enabled solution",
       "frontend-observability": {
         "action": "Enable Frontend Observability",
@@ -10887,10 +10885,18 @@
         "title": "Measure real user experience"
       },
       "go-to": "Go to recommendation {{index}}",
+      "health": {
+        "nodes_one": "{{count}} node not ready",
+        "nodes_other": "{{count}} nodes not ready",
+        "pods_one": "{{count}} pod pending or failed",
+        "pods_other": "{{count}} pods pending or failed",
+        "restarts_one": "{{count}} restart in the last hour",
+        "restarts_other": "{{count}} restarts in the last hour"
+      },
       "hide": "Hide",
       "hosted-traces": {
         "action": "Enable Hosted Traces",
-        "context": "Because you set up Kubernetes Monitoring",
+        "context": "Complete the picture with distributed tracing",
         "description": "Add distributed tracing to see how requests flow between services and where they slow down.",
         "title": "Trace requests across services"
       },

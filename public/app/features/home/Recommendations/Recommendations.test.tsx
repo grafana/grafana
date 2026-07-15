@@ -79,13 +79,12 @@ describe('Recommendations', () => {
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
-  it('renders nothing when Kubernetes Monitoring is not installed', async () => {
+  it('renders the section even when Kubernetes Monitoring is not installed', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false });
 
-    const { container } = render(<Recommendations />);
+    render(<Recommendations />);
 
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-    expect(mockGet).not.toHaveBeenCalled();
+    expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
   });
 
   it('renders nothing when the user cannot manage plugins', async () => {
@@ -140,6 +139,14 @@ describe('Recommendations', () => {
 
   it('hides the section when the plugin list cannot be fetched', async () => {
     mockGet.mockRejectedValue(new Error('boom'));
+
+    const { container } = render(<Recommendations />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('renders nothing when the plugin list is empty', async () => {
+    mockGet.mockResolvedValue([]);
 
     const { container } = render(<Recommendations />);
 
