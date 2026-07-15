@@ -489,6 +489,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._changeTracker.stopTrackingChanges();
 
     // The restored state swaps in a cloned edit pane, so release the one we activated programmatically.
+    const hadProgrammaticEditPane = this._editPaneActivation !== undefined;
     this.deactivateEditPane();
 
     const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
@@ -505,6 +506,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       editview: undefined,
       overlay: undefined,
     });
+
+    // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
+    if (hadProgrammaticEditPane) {
+      this.activateEditPane();
+    }
 
     this._changeTracker.startTrackingChanges();
   }

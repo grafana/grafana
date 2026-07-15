@@ -255,16 +255,19 @@ describe('DashboardScene', () => {
         expect(activateSpy).toHaveBeenCalledTimes(1);
       });
 
-      it('releases the programmatically activated edit pane when discarding and keeping edit', () => {
+      it('re-activates the swapped-in edit pane when discarding and keeping edit', () => {
         const editPane = scene.state.editPane;
         scene.activateEditPane();
         expect(editPane.isActive).toBe(true);
 
         scene.discardChangesAndKeepEditing();
 
-        // The swapped-in cloned pane is a different object, so the original must be deactivated.
+        // The original pane is released, but a fresh clone is swapped in and re-activated so
+        // programmatic mutations keep working while we stay in edit mode.
         expect(editPane.isActive).toBe(false);
-        expect(scene.state.editPane).not.toBe(editPane);
+        const newEditPane = scene.state.editPane;
+        expect(newEditPane).not.toBe(editPane);
+        expect(newEditPane.isActive).toBe(true);
       });
 
       it('Exiting already saved dashboard should not restore initial state', () => {
