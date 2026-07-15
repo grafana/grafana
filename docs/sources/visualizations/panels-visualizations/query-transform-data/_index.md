@@ -181,13 +181,13 @@ Saved queries is only available on Grafana Enterprise and Grafana Cloud.
 {{< /admonition >}}
 
 You can save queries that you've created so they can be reused by you and others in your organization.
-This helps users across your organization create dashboards or find insights in Explore without having to create their own queries or know a query language.
+This helps users across your organization create dashboards without having to create their own queries or know a query language.
 It also helps you avoid having several users build the same queries for the same data sources multiple times.
 
 Saved queries are available in:
 
 - [Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#create-a-dashboard)
-- [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/get-started-with-explore/#explore-elements)
+- [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/query-editor/)
 - [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries)
 
 Learn more about saved queries:
@@ -272,15 +272,10 @@ You can map the original variables to either:
 Grafana applies your selections to the query before inserting it into the dashboard.
 However, the substitutions only apply to the query when it's reused, and the original saved query remains unchanged.
 
-{{< admonition type="note">}}
-In Explore, you can map variables to custom values.
-{{< /admonition >}}
-
 ### Known limitations
 
 - No validation is performed when you save a query, so it's possible to save an invalid query. You should confirm the query is working properly before you save it.
 - You can save a maximum of 1000 queries.
-- If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** dialog box, the edited query replaces your open queries in Explore.
 
 ## Navigate the query editor
 
