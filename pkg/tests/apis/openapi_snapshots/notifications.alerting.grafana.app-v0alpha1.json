@@ -4926,6 +4926,22 @@
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigSpec": {
         "type": "object",
         "properties": {
+          "autogenRouteTimings": {
+            "type": "object",
+            "properties": {
+              "group_interval": {
+                "type": "string"
+              },
+              "group_wait": {
+                "description": "Prometheus duration strings (e.g. \"30s\", \"5m\", \"4h\").",
+                "type": "string"
+              },
+              "repeat_interval": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
           "externalAlertmanagerSync": {
             "type": "object",
             "properties": {

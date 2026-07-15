@@ -5,6 +5,7 @@ go 1.26.5
 require (
 	github.com/grafana/grafana-app-sdk v0.56.4
 	github.com/grafana/grafana-app-sdk/logging v0.56.2
+	github.com/prometheus/common v0.69.0
 	k8s.io/apimachinery v0.36.1
 	k8s.io/apiserver v0.36.0
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
@@ -67,7 +68,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.69.0 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect

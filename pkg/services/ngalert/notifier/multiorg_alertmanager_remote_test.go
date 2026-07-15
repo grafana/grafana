@@ -96,6 +96,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		false,
 		// Sync deps are nil — this test does not enable the sync feature flag.
 		notifier.NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), nopLogger, nil, nil, nil),
+		nil, // no autogen timings reader
 		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)
