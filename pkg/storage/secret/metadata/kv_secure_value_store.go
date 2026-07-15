@@ -371,11 +371,6 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 		return nil, err
 	}
 
-	// Generate UUID if not set
-	if value.GUID == "" {
-		value.GUID = uuid.New().String()
-	}
-
 	if createdBy != "" {
 		value.CreatedBy = createdBy
 	}
@@ -617,6 +612,7 @@ func (s *kvSecureValueMetadataStorage) List(ctx context.Context, namespace xkube
 
 	keys := make([]string, 0)
 
+	// TODO: unbounded number of entries
 	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
@@ -773,29 +769,60 @@ func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, n
 	prefix := makePrefix(namespace.String(), name)
 	targetKey := makeKey(namespace.String(), name, version)
 
+	keys := make([]string, 0)
+
 	// First, deactivate all versions, this mimics the SQL behavior which happens in a single update query
+	// TODO: unbounded
 	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
 	}) {
 		if err != nil {
-			return err
+			return fmt.Errorf("listing keys in the kv store: %w", err)
 		}
 
-		value, err := s.readValue(ctx, key)
+		keys = append(keys, key)
+	}
+
+	ops := make([]kv.BatchOp, 0)
+	// TODO: race condition
+	for keyValue, err := range s.kv.BatchGet(ctx, kvSectionSecureValues, keys) {
 		if err != nil {
-			return err
+			return fmt.Errorf("BatchGet returned error: %w", err)
 		}
 
-		newActiveValue := key == targetKey
+		value, err := parseSecureValue(keyValue.Value)
+		if err != nil {
+			return fmt.Errorf("parsing secure value: %w", err)
+		}
 
-		if value.Active != newActiveValue {
-			value.Active = newActiveValue
-
-			if err := s.writeValue(ctx, key, value); err != nil {
-				return fmt.Errorf("failed to toggle version to %v: %w", newActiveValue, err)
+		if keyValue.Key == targetKey {
+			value.Active = true
+			buffer, err := json.Marshal(value)
+			if err != nil {
+				return fmt.Errorf("json marshaling secure value: %w", err)
 			}
+			ops = append(ops, kv.BatchOp{
+				Mode:  kv.BatchOpUpdate,
+				Key:   keyValue.Key,
+				Value: buffer,
+			})
+		} else if value.Active {
+			value.Active = false
+			buffer, err := json.Marshal(value)
+			if err != nil {
+				return fmt.Errorf("json marshaling secure value: %w", err)
+			}
+			ops = append(ops, kv.BatchOp{
+				Mode:  kv.BatchOpUpdate,
+				Key:   keyValue.Key,
+				Value: buffer,
+			})
 		}
+	}
+
+	if err := s.kv.Batch(ctx, kvSectionSecureValues, ops); err != nil {
+		return fmt.Errorf("executing batch: %w", err)
 	}
 
 	return nil
@@ -811,6 +838,7 @@ func (s *kvSecureValueMetadataStorage) SetVersionToInactive(ctx context.Context,
 
 	key := makeKey(namespace.String(), name, version)
 
+	// TODO: Race condition
 	value, err := s.readValue(ctx, key)
 	if err != nil {
 		return err
