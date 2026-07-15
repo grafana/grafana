@@ -997,6 +997,10 @@ describe('ruleUsesDefaultPolicy', () => {
     expect(ruleUsesDefaultPolicy({ policy: USER_DEFINED_TREE_NAME })).toBe(true);
   });
 
+  it('should return true when policy is set to the default alias', () => {
+    expect(ruleUsesDefaultPolicy({ policy: DEFAULT_ROUTING_TREE_NAME_ALIAS })).toBe(true);
+  });
+
   it('should return false when a receiver is set', () => {
     expect(ruleUsesDefaultPolicy({ receiver: 'slack' })).toBe(false);
   });
