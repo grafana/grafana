@@ -72,7 +72,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.saveOptions();
 
     const query = `?api-version=2019-03-01`;
-    const resourcesPrefix = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}`;
+    const resourcesPrefix = `/api/datasources/uid/${this.props.options.uid}/resources/${routeNames.azureMonitor}`;
     try {
       const value = await fetchAllArmPages<Subscription>(resourcesPrefix, this.baseURL + query, async (url) => {
         const response = await getBackendSrv()
