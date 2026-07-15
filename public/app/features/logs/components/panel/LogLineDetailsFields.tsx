@@ -399,6 +399,7 @@ const LogLineDetailsField = ({
             linkApp: resolveAppFromLink(link.href),
             fieldKey: keys[0],
             fieldType: isLabel ? 'label' : 'field',
+            datasourceType: log.datasourceType,
             logLevel: log.logLevel,
           });
         };
