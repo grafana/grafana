@@ -2,12 +2,7 @@ import { find } from 'lodash';
 
 import { type AzureCredentials } from '@grafana/azure-sdk';
 import { type ScopedVars } from '@grafana/data';
-import {
-  DataSourceWithBackend,
-  getTemplateSrv,
-  type TemplateSrv,
-  type VariableInterpolation,
-} from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv, type VariableInterpolation } from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
 import { type AzureMetricQuery, AzureQueryType } from '../dataquery.gen';
