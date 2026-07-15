@@ -138,37 +138,37 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 			return err
 		}
 
-		if has {
-			updateQuery := updateQuotaQuery{
+		if !has {
+			now := time.Now()
+			insertQuery := insertQuotaQuery{
 				SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 				QuotaTable:  dbHelper.Table("quota"),
 				LimitColumn: "limit",
-				QuotaID:     quotaID,
-				Limit:       cmd.Limit,
-				Updated:     time.Now(),
+				Cmd:         cmd,
+				Created:     now,
+				Updated:     now,
 			}
-			updateSQL, err := sqltemplate.Execute(updateQuotaTemplate, updateQuery)
+			insertSQL, err := sqltemplate.Execute(insertQuotaTemplate, insertQuery)
 			if err != nil {
 				return err
 			}
-			_, err = sess.Exec(append([]any{updateSQL}, updateQuery.GetArgs()...)...)
+			_, err = sess.Exec(append([]any{insertSQL}, insertQuery.GetArgs()...)...)
 			return err
 		}
 
-		now := time.Now()
-		insertQuery := insertQuotaQuery{
+		updateQuery := updateQuotaQuery{
 			SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 			QuotaTable:  dbHelper.Table("quota"),
 			LimitColumn: "limit",
-			Cmd:         cmd,
-			Created:     now,
-			Updated:     now,
+			QuotaID:     quotaID,
+			Limit:       cmd.Limit,
+			Updated:     time.Now(),
 		}
-		insertSQL, err := sqltemplate.Execute(insertQuotaTemplate, insertQuery)
+		updateSQL, err := sqltemplate.Execute(updateQuotaTemplate, updateQuery)
 		if err != nil {
 			return err
 		}
-		_, err = sess.Exec(append([]any{insertSQL}, insertQuery.GetArgs()...)...)
+		_, err = sess.Exec(append([]any{updateSQL}, updateQuery.GetArgs()...)...)
 		return err
 	})
 }
