@@ -1,19 +1,14 @@
 package api
 
 import (
-	"context"
 	"encoding/base64"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
 	alertingmodels "github.com/grafana/alerting/models"
-	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
-	"github.com/grafana/alerting/receivers/line"
-	receiversTesting "github.com/grafana/alerting/receivers/testing"
 
 	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -66,49 +61,18 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 				},
 			}
 
-			expected, err := notify.BuildReceiverConfiguration(context.Background(), *recCfg, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-				value, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
-				return value
-			})
+			expected, err := ContactPointFromContactPointExport(getContactPointExport(t, recCfg))
 			require.NoError(t, err)
 
-			result, err := ContactPointFromContactPointExport(getContactPointExport(t, recCfg))
+			back, err := ContactPointToContactPointExport(expected)
 			require.NoError(t, err)
 
-			back, err := ContactPointToContactPointExport(result)
+			// Run the export/import conversion a second time on the round-tripped config. If the first
+			// conversion lost or altered any data, re-importing it will no longer match `expected`.
+			actual, err := ContactPointFromContactPointExport(getContactPointExport(t, &back))
 			require.NoError(t, err)
 
-			actual, err := notify.BuildReceiverConfiguration(context.Background(), back, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-				value, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
-				return value
-			})
-			require.NoError(t, err)
-
-			pathFilters := []string{
-				"Metadata.UID",
-				"Metadata.Name",
-				"WecomConfigs.Settings.EndpointURL", // This field is not exposed to user
-			}
-			if integrationType != "webhook" {
-				// Many notifiers now support HTTPClientConfig but only Webhook currently has it enabled in schema.
-				// TODO: Remove this once HTTPClientConfig is added to other schemas.
-				pathFilters = append(pathFilters, "HTTPClientConfig")
-			}
-			if integrationType == line.Type {
-				for _, l := range actual.LineConfigs {
-					l.Type = line.Type
-				}
-			}
-			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {
-				for _, filter := range pathFilters {
-					if strings.Contains(path.String(), filter) {
-						return true
-					}
-				}
-				return false
-			}, cmp.Ignore())
-
-			diff := cmp.Diff(expected, actual, pathFilter)
+			diff := cmp.Diff(expected, actual)
 			if len(diff) != 0 {
 				require.Failf(t, "The re-marshalled configuration does not match the expected one", diff)
 			}
