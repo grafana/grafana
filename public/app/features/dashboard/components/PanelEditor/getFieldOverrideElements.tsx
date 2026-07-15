@@ -16,6 +16,7 @@ import {
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 import {
+  Alert,
   fieldMatchersUI,
   getUniqueMatcherScopes,
   MatcherScopeSelector,
@@ -74,7 +75,7 @@ export function getFieldOverrideCategories(
   };
 
   const onOverrideAdd = (value: SelectableValue<string>) => {
-    const info = fieldMatchers.get(value.value!);
+    const info = fieldMatchers.getIfExists(value.value!);
     if (!info) {
       return;
     }
@@ -105,7 +106,56 @@ export function getFieldOverrideCategories(
       overrideNum: idx + 1,
     });
     const overrideId = `panel-options-override-${idx}`;
-    const matcherUi = fieldMatchersUI.get(override.matcher.id);
+    const matcherUi = fieldMatchersUI.getIfExists(override.matcher.id);
+
+    // Unknown matcher id (e.g. hand-edited or generated dashboard JSON). Render the override
+    // in an error state so it can still be removed instead of crashing the options pane.
+    if (!matcherUi) {
+      const category = new OptionsPaneCategoryDescriptor({
+        title: overrideName,
+        id: overrideId,
+        forceOpen: true,
+        renderTitle: function renderOverrideTitle(isExpanded: boolean) {
+          return (
+            <OverrideCategoryTitle
+              override={override}
+              isExpanded={isExpanded}
+              registry={registry}
+              overrideName={overrideName}
+              onOverrideRemove={() => onOverrideRemove(idx)}
+            />
+          );
+        },
+      });
+
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          skipField: true,
+          id: `${overrideId}-unknown-matcher`,
+          render: function renderUnknownMatcher() {
+            return (
+              <Alert
+                severity="error"
+                title={t(
+                  'dashboard.get-field-override-categories.title-unknown-matcher',
+                  'Unknown matcher type "{{matcherId}}"',
+                  { matcherId: override.matcher.id }
+                )}
+              >
+                {t(
+                  'dashboard.get-field-override-categories.body-unknown-matcher',
+                  'This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.'
+                )}
+              </Alert>
+            );
+          },
+        })
+      );
+
+      categories.push(category);
+      continue;
+    }
+
     const configPropertiesOptions = registry.selectOptions(
       undefined,
       (item) => !item.hideFromOverrides,

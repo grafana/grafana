@@ -13,17 +13,22 @@ jest.mock('app/features/panel/panellinks/link_srv', () => ({
   getDataLinksVariableSuggestions: () => [],
 }));
 
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  fieldMatchersUI: {
-    get: jest.fn().mockReturnValue({
-      name: 'By Name',
-      matcher: {},
-      component: () => null,
-    }),
-    selectOptions: jest.fn().mockReturnValue({ options: [] }),
-  },
-}));
+jest.mock('@grafana/ui', () => {
+  const byNameMatcherUi = {
+    name: 'By Name',
+    matcher: {},
+    component: () => null,
+  };
+
+  return {
+    ...jest.requireActual('@grafana/ui'),
+    fieldMatchersUI: {
+      get: jest.fn().mockReturnValue(byNameMatcherUi),
+      getIfExists: jest.fn().mockImplementation((id?: string) => (id === 'byName' ? byNameMatcherUi : undefined)),
+      selectOptions: jest.fn().mockReturnValue({ options: [] }),
+    },
+  };
+});
 
 function makeRegistry(items: FieldConfigPropertyItem[]): FieldConfigOptionsRegistry {
   return new Registry<FieldConfigPropertyItem>(() => items);
@@ -132,6 +137,45 @@ describe('getFieldOverrideCategories', () => {
       }>;
 
       expect(element.props.options).toHaveLength(3);
+    });
+  });
+
+  describe('unknown matcher id', () => {
+    const fieldConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [{ matcher: { id: 'byNamePattern', options: 'foo.*' }, properties: [{ id: 'links', value: [] }] }],
+    };
+
+    it('renders an error state for the override instead of throwing', () => {
+      const registry = makeRegistry([makeItem('links')]);
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn());
+
+      // the broken override category + the "add button" category
+      expect(categories).toHaveLength(2);
+
+      const overrideCategory = categories[0];
+      expect(overrideCategory.items).toHaveLength(1);
+      expect(overrideCategory.items[0].props.id).toBe('panel-options-override-0-unknown-matcher');
+
+      const element = overrideCategory.items[0].props.render(overrideCategory.items[0]) as React.ReactElement<{
+        severity: string;
+        title: string;
+      }>;
+      expect(element.props.severity).toBe('error');
+      expect(element.props.title).toContain('byNamePattern');
+    });
+
+    it('keeps the remove override action working', () => {
+      const registry = makeRegistry([makeItem('links')]);
+      const onFieldConfigsChange = jest.fn();
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+
+      const titleElement = categories[0].props.renderTitle?.(true) as React.ReactElement<{
+        onOverrideRemove: () => void;
+      }>;
+      titleElement.props.onOverrideRemove();
+
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({ defaults: {}, overrides: [] });
     });
   });
 });

@@ -5813,12 +5813,14 @@
       }
     },
     "get-field-override-categories": {
+      "body-unknown-matcher": "This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.",
       "label-add-field-override": "Add field override",
       "label-add-override-property": "Add override property",
       "override-name": "Override {{overrideNum}}",
       "title": {
         "add-button": "add button"
-      }
+      },
+      "title-unknown-matcher": "Unknown matcher type \"{{matcherId}}\""
     },
     "get-library-panel-options-category": {
       "descriptor": {
