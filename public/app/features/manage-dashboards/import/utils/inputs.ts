@@ -6,6 +6,10 @@ import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import {
+  mapDashboardLayoutSections,
+  visitDashboardLayoutSections,
+} from 'app/features/dashboard/utils/visitDashboardLayoutSections';
 import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
@@ -200,19 +204,32 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     return inputs;
   }
 
+  const seenConstantNames = new Set<string>();
+
+  const recordConstant = (variable: DashboardV2Spec['variables'][number]) => {
+    if (variable.kind !== 'ConstantVariable' || seenConstantNames.has(variable.spec.name)) {
+      return;
+    }
+    seenConstantNames.add(variable.spec.name);
+    inputs.constants.push({
+      name: variable.spec.name,
+      label: variable.spec.label || variable.spec.name,
+      info: variable.spec.description || 'Specify a string constant',
+      value: variable.spec.query,
+      type: InputType.Constant,
+    });
+  };
+
   if (dashboard.variables) {
     for (const variable of dashboard.variables) {
-      if (variable.kind === 'ConstantVariable') {
-        inputs.constants.push({
-          name: variable.spec.name,
-          label: variable.spec.label || variable.spec.name,
-          info: variable.spec.description || 'Specify a string constant',
-          value: variable.spec.query,
-          type: InputType.Constant,
-        });
-      }
+      recordConstant(variable);
     }
   }
+  visitDashboardLayoutSections(dashboard.layout, (variables) => {
+    for (const variable of variables) {
+      recordConstant(variable);
+    }
+  });
 
   const dsTypes: { [label: string]: string } = {};
   const dsNames: { [label: string]: string } = {};
@@ -231,8 +248,8 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     }
   };
 
-  if (dashboard.variables) {
-    for (const variable of dashboard.variables) {
+  const recordVariableDatasources = (variables: DashboardV2Spec['variables']) => {
+    for (const variable of variables) {
       if (variable.kind === 'QueryVariable') {
         recordDatasource(
           getExportLabel(variable.spec.query.labels),
@@ -243,7 +260,14 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
         recordDatasource(getExportLabel(variable.labels), variable.group, getExportDatasourceName(variable.labels));
       }
     }
+  };
+
+  if (dashboard.variables) {
+    recordVariableDatasources(dashboard.variables);
   }
+  visitDashboardLayoutSections(dashboard.layout, (variables) => {
+    recordVariableDatasources(variables);
+  });
 
   if (dashboard.annotations) {
     for (const annotation of dashboard.annotations) {
@@ -484,6 +508,30 @@ export function applyV1Inputs(
  * Apply user's datasource selections to a v2 dashboard.
  * Builds mappings from the form and delegates to replaceDatasourcesInDashboard.
  */
+function applyConstantFormValue(
+  variable: DashboardV2Spec['variables'][number],
+  form: ImportFormDataV2
+): DashboardV2Spec['variables'][number] {
+  if (variable.kind !== 'ConstantVariable') {
+    return variable;
+  }
+
+  const formKey = `constant-${variable.spec.name}`;
+  const userValue = form[formKey];
+  if (typeof userValue !== 'string') {
+    return variable;
+  }
+
+  return {
+    ...variable,
+    spec: {
+      ...variable.spec,
+      query: userValue,
+      current: { text: userValue, value: userValue },
+    },
+  };
+}
+
 export function applyV2Inputs(dashboard: DashboardV2Spec, form: ImportFormDataV2): DashboardV2Spec {
   const mappings: DatasourceMappings = {};
   for (const key of Object.keys(form)) {
@@ -497,28 +545,16 @@ export function applyV2Inputs(dashboard: DashboardV2Spec, form: ImportFormDataV2
     }
   }
 
-  const variables = dashboard.variables?.map((variable) => {
-    if (variable.kind !== 'ConstantVariable') {
-      return variable;
-    }
+  const variables = dashboard.variables?.map((variable) => applyConstantFormValue(variable, form));
+  const layout =
+    mapDashboardLayoutSections(dashboard.layout, (sectionVariables) => {
+      if (!sectionVariables) {
+        return sectionVariables;
+      }
+      return sectionVariables.map((variable) => applyConstantFormValue(variable, form));
+    }) ?? dashboard.layout;
 
-    const formKey = `constant-${variable.spec.name}`;
-    const userValue = form[formKey];
-    if (typeof userValue !== 'string') {
-      return variable;
-    }
-
-    return {
-      ...variable,
-      spec: {
-        ...variable.spec,
-        query: userValue,
-        current: { text: userValue, value: userValue },
-      },
-    };
-  });
-
-  return replaceDatasourcesInDashboard({ ...dashboard, variables }, mappings);
+  return replaceDatasourcesInDashboard({ ...dashboard, variables, layout }, mappings);
 }
 
 export function isVariableRef(dsName: string | undefined): boolean {
@@ -534,6 +570,10 @@ export function replaceDatasourcesInDashboard(
     annotations: replaceAnnotationDatasources(dashboard.annotations, mappings),
     variables: replaceVariableDatasources(dashboard.variables, mappings),
     elements: replaceElementDatasources(dashboard.elements, mappings),
+    layout:
+      mapDashboardLayoutSections(dashboard.layout, (sectionVariables) =>
+        sectionVariables ? replaceVariableDatasources(sectionVariables, mappings) : sectionVariables
+      ) ?? dashboard.layout,
   };
 }
 

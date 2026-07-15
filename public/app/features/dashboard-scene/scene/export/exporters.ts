@@ -19,6 +19,7 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel, type GridPos } from 'app/features/dashboard/state/PanelModel';
+import { visitDashboardLayoutSections } from 'app/features/dashboard/utils/visitDashboardLayoutSections';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegexExec } from 'app/features/variables/utils';
 import { dispatch } from 'app/store/store';
@@ -425,8 +426,21 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
 export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExternally = false) {
   const dataQueryLabels: { [key: string]: Map<string, number> } = {};
 
-  // get all datasource variables
-  const datasourceVariables = dashboard.variables.filter((v) => v.kind === 'DatasourceVariable');
+  // Collect datasource variable names from dashboard-level and section (row/tab) scopes
+  // so panel/query refs to section DS vars are not incorrectly templateized.
+  const datasourceVariableNames = new Set<string>();
+  for (const variable of dashboard.variables) {
+    if (variable.kind === 'DatasourceVariable') {
+      datasourceVariableNames.add(variable.spec.name);
+    }
+  }
+  visitDashboardLayoutSections(dashboard.layout, (variables) => {
+    for (const variable of variables) {
+      if (variable.kind === 'DatasourceVariable') {
+        datasourceVariableNames.add(variable.spec.name);
+      }
+    }
+  });
 
   const processDataQueryKind = (dataQueryKind: DataQueryKind) => {
     if (!dataQueryKind.datasource?.name) {
@@ -478,7 +492,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
           ? datasourceUid.slice(2, -1)
           : datasourceUid.slice(1);
 
-      return !!datasourceVariables.find((v) => v.spec.name === varName);
+      return datasourceVariableNames.has(varName);
     }
 
     return false;
@@ -516,6 +530,24 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     }
   };
 
+  const processVariable = (variable: DashboardV2Spec['variables'][number]) => {
+    if (variable.kind === 'QueryVariable') {
+      processDataQueryKind(variable.spec.query);
+      variable.spec.options = [];
+      variable.spec.current = {
+        text: '',
+        value: '',
+      };
+    } else if (variable.kind === 'DatasourceVariable') {
+      variable.spec.current = {
+        text: '',
+        value: '',
+      };
+    } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
+      processAdHocAndGroupByVariables(variable);
+    }
+  };
+
   try {
     const elements = dashboard.elements;
 
@@ -536,24 +568,15 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       }
     }
 
-    // process template variables
+    // process dashboard-level and section (row/tab) template variables
     for (const variable of dashboard.variables) {
-      if (variable.kind === 'QueryVariable') {
-        processDataQueryKind(variable.spec.query);
-        variable.spec.options = [];
-        variable.spec.current = {
-          text: '',
-          value: '',
-        };
-      } else if (variable.kind === 'DatasourceVariable') {
-        variable.spec.current = {
-          text: '',
-          value: '',
-        };
-      } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
-        processAdHocAndGroupByVariables(variable);
-      }
+      processVariable(variable);
     }
+    visitDashboardLayoutSections(dashboard.layout, (variables) => {
+      for (const variable of variables) {
+        processVariable(variable);
+      }
+    });
 
     // process annotations vars
     for (const annotation of dashboard.annotations) {
