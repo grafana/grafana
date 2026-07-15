@@ -147,6 +147,17 @@ func SearchFieldDefinitionsToTableColumns(sfds []SearchFieldDefinition) []*resou
 	return out
 }
 
+// TableColumnsByName keys the table columns by field name, so the IAM legacy
+// SQL search backends can look one up by a requested field name.
+func TableColumnsByName(sfds []SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
+	cols := SearchFieldDefinitionsToTableColumns(sfds)
+	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
+	for _, c := range cols {
+		out[c.Name] = c
+	}
+	return out
+}
+
 // protoTypeFromSearchFieldType maps a SearchFieldType back to its proto
 // counterpart. SearchFieldType does not preserve INT32 / FLOAT / DATE_TIME
 // distinctions, so this returns the wider variant (INT64, DOUBLE, DATE)
