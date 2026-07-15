@@ -6,16 +6,17 @@ interface RewriteOptions {
   repository: RepositoryView;
   /** Repo-relative directory containing the README (e.g. "ops/resources/RnD"). */
   baseDirInRepo: string;
-  /**
-   * Resolves a resolved repo path to an in-app Grafana URL when it maps to a
-   * synced resource (dashboard, folder, ...); returns undefined to fall back to
-   * the host repository link. Injected by the caller so this module stays free
-   * of the resource registry. Applies to links only, not images.
-   */
-  resolveGrafanaHref?: (repoPath: string) => string | undefined;
 }
 
 const SCHEME_RE = /^[a-z][a-z0-9+\-.]*:/i;
+
+/**
+ * Attribute stamped on links whose target could be a Grafana resource (JSON/YAML
+ * files or folder directories), carrying the resolved repo path. The README click
+ * handler reads it to lazily resolve the link to the in-app page — untagged links
+ * (docs, images, external) always open the host URL.
+ */
+export const RESOURCE_PATH_ATTR = 'data-provisioning-repo-path';
 
 /**
  * Walk the rendered Markdown HTML and rewrite relative URLs (`<a href>` and
@@ -48,15 +49,6 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       return;
     }
 
-    // Prefer an in-app Grafana link when the target maps to a synced resource,
-    // so the link opens the dashboard/folder page in Grafana. Kept same-tab (no
-    // target=_blank) since it navigates within the app.
-    const grafanaHref = options.resolveGrafanaHref?.(result.path);
-    if (grafanaHref) {
-      anchor.setAttribute('href', grafanaHref);
-      return;
-    }
-
     const absolute = getRepoFileUrl({
       repoType: options.repository.type,
       url: options.repository.url,
@@ -68,6 +60,11 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       anchor.setAttribute('href', absolute + result.suffix);
       anchor.setAttribute('target', '_blank');
       anchor.setAttribute('rel', 'noopener noreferrer');
+      // Tag JSON/YAML/folder links so the README click handler can lazily upgrade
+      // them to the in-app Grafana page; other links stay plain host links.
+      if (isResourceLinkCandidate(result.path)) {
+        anchor.setAttribute(RESOURCE_PATH_ATTR, result.path);
+      }
     } else {
       // No host link pattern (e.g. local repo) — strip the broken relative
       // href so it doesn't render as a clickable but non-functional link.
@@ -157,4 +154,22 @@ function resolveRepoRelativePath(baseDir: string, relPath: string): { path: stri
 }
 function stripLeadingSlashes(s: string): string {
   return s.replace(/^\/+/, '');
+}
+
+/**
+ * Whether a resolved repo path could map to a Grafana resource: a JSON/YAML file
+ * (dashboard, playlist, folder metadata, ...) or a folder directory. Links that
+ * fail this (docs, images, arbitrary files) never trigger a resource lookup.
+ */
+export function isResourceLinkCandidate(path: string): boolean {
+  const trimmed = path.replace(/\/+$/, '');
+  if (!trimmed) {
+    return false;
+  }
+  const lastSegment = trimmed.slice(trimmed.lastIndexOf('/') + 1);
+  if (/\.(json|ya?ml)$/i.test(lastSegment)) {
+    return true;
+  }
+  // A trailing slash, or a final segment with no extension, denotes a folder.
+  return path.endsWith('/') || !lastSegment.includes('.');
 }

@@ -1,6 +1,8 @@
-import { act, render, screen } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
 
@@ -8,6 +10,14 @@ import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel'
 import { FolderReadmeEvents } from './analytics/main';
 
 jest.mock('../../hooks/useFolderReadme');
+
+// The resource listing is fetched lazily on link click; drive its result per test.
+const mockResourcesUnwrap = jest.fn();
+jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
+  __esModule: true,
+  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
+  useLazyGetRepositoryResourcesQuery: () => [() => ({ unwrap: mockResourcesUnwrap })],
+}));
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
@@ -102,6 +112,57 @@ describe('FolderReadmePanel', () => {
     await user.click(screen.getByRole('link', { name: /Edit README/i }));
 
     expect(editClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
+  });
+
+  describe('resource links', () => {
+    beforeEach(() => {
+      mockResourcesUnwrap.mockResolvedValue({ items: [] as ResourceListItem[] });
+    });
+
+    it('navigates in-app when a JSON link maps to a synced dashboard', async () => {
+      mockResourcesUnwrap.mockResolvedValue({
+        items: [{ path: 'dashboards/team-a/cpu.json', resource: 'dashboards', name: 'abc', group: '', hash: '' }],
+      });
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+
+      const { user } = setup();
+      // Spy after render: test-utils swaps the locationService the component uses.
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+    });
+
+    it('opens the host URL when a JSON link has no synced resource', async () => {
+      const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+
+      await waitFor(() =>
+        expect(openSpy).toHaveBeenCalledWith(
+          'https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json',
+          '_blank',
+          'noopener,noreferrer'
+        )
+      );
+      expect(pushSpy).not.toHaveBeenCalled();
+    });
+
+    it('leaves a non-resource link (markdown doc) to the host without a resource lookup', async () => {
+      setReadmeResult({ markdownContent: 'See [notes](./notes.md)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      const link = screen.getByRole('link', { name: 'notes' });
+      expect(link).toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/dashboards/team-a/notes.md');
+      await user.click(link);
+
+      expect(pushSpy).not.toHaveBeenCalled();
+      expect(mockResourcesUnwrap).not.toHaveBeenCalled();
+    });
   });
 
   describe('Add README empty state (status: missing)', () => {

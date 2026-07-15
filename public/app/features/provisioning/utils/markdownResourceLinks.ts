@@ -1,4 +1,3 @@
-import { locationUtil } from '@grafana/data';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { FOLDER_METADATA_FILE } from '../constants';
@@ -7,11 +6,12 @@ import { getKindInfoByResource } from './resourceKinds';
 
 /**
  * Builds a resolver that maps a repo file/directory path to the in-app Grafana
- * URL of the resource synced from it (dashboard, folder, playlist, ...), or
+ * route of the resource synced from it (dashboard, folder, playlist, ...), or
  * `undefined` when the path has no synced resource or the kind has no per-item
  * view route (e.g. library panels). Callers fall back to the host repository
  * link in that case, so a README reads as file links on GitHub and as Grafana
- * pages when browsed in Grafana.
+ * pages when browsed in Grafana. The route is app-relative (e.g. `/d/uid`) for
+ * SPA navigation via `locationService`.
  *
  * `repositoryPath` is the repository's configured root. Resource paths from the
  * API are relative to it, whereas the paths passed to the resolver are full
@@ -43,8 +43,7 @@ export function createGrafanaLinkResolver(
       return undefined;
     }
 
-    const route = getKindInfoByResource(resource.resource)?.getRoute?.(resource.name);
-    return route ? locationUtil.assureBaseUrl(route) : undefined;
+    return getKindInfoByResource(resource.resource)?.getRoute?.(resource.name);
   };
 }
 

@@ -1,6 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { rewriteRelativeMarkdownLinks } from './markdownLinks';
+import { isResourceLinkCandidate, RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from './markdownLinks';
 
 const githubRepo: RepositoryView = {
   name: 'manifests',
@@ -150,66 +150,58 @@ describe('rewriteRelativeMarkdownLinks', () => {
     );
   });
 
-  describe('Grafana in-app links', () => {
-    it('rewrites a link to a Grafana page when the resolver returns a URL', () => {
+  describe('resource link tagging', () => {
+    it('tags a JSON link with the resolved repo path and keeps the host href', () => {
       const html = `<p><a href="./cpu.json">CPU</a></p>`;
-      const out = rewriteRelativeMarkdownLinks(html, {
-        repository: githubRepo,
-        baseDirInRepo: baseDir,
-        resolveGrafanaHref: (path) => (path === `${baseDir}/cpu.json` ? '/d/abc' : undefined),
-      });
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
 
-      expect(out).toContain('href="/d/abc"');
-    });
-
-    it('keeps Grafana links same-tab (no target=_blank)', () => {
-      const html = `<p><a href="./cpu.json">CPU</a></p>`;
-      const out = rewriteRelativeMarkdownLinks(html, {
-        repository: githubRepo,
-        baseDirInRepo: baseDir,
-        resolveGrafanaHref: () => '/d/abc',
-      });
-
-      expect(out).not.toMatch(/target="_blank"/);
-    });
-
-    it('passes the resolved directory path (trailing slash) to the resolver', () => {
-      const html = `<p><a href="../GTM/">GTM</a></p>`;
-      const seen: string[] = [];
-      rewriteRelativeMarkdownLinks(html, {
-        repository: githubRepo,
-        baseDirInRepo: baseDir,
-        resolveGrafanaHref: (path) => {
-          seen.push(path);
-          return undefined;
-        },
-      });
-
-      expect(seen).toContain('ops/resources/GTM/');
-    });
-
-    it('falls back to the host link when the resolver returns undefined', () => {
-      const html = `<p><a href="./cpu.json">CPU</a></p>`;
-      const out = rewriteRelativeMarkdownLinks(html, {
-        repository: githubRepo,
-        baseDirInRepo: baseDir,
-        resolveGrafanaHref: () => undefined,
-      });
-
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/RnD/cpu.json"`);
       expect(out).toContain('href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/cpu.json"');
     });
 
-    it('does not apply the resolver to images', () => {
-      const html = `<p><img src="./diagram.png"></p>`;
-      const out = rewriteRelativeMarkdownLinks(html, {
-        repository: githubRepo,
-        baseDirInRepo: baseDir,
-        resolveGrafanaHref: () => '/d/abc',
-      });
+    it('tags a YAML link', () => {
+      const html = `<p><a href="./playlist.yaml">PL</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
 
-      expect(out).toContain(
-        'src="https://github.com/grafana/grafana-manifests/raw/main/ops/resources/RnD/diagram.png"'
-      );
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/RnD/playlist.yaml"`);
+    });
+
+    it('tags a folder directory link with its trailing slash', () => {
+      const html = `<p><a href="../GTM/">GTM</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/GTM/"`);
+    });
+
+    it('does not tag a markdown link', () => {
+      const html = `<p><a href="./notes.md">notes</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).not.toContain(RESOURCE_PATH_ATTR);
+    });
+
+    it('does not tag images', () => {
+      const html = `<p><img src="./diagram.png"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).not.toContain(RESOURCE_PATH_ATTR);
+    });
+
+    it('does not tag external links', () => {
+      const html = `<p><a href="https://example.com/x.json">x</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).not.toContain(RESOURCE_PATH_ATTR);
+    });
+  });
+
+  describe('isResourceLinkCandidate', () => {
+    it.each(['a/dash.json', 'a/pl.yaml', 'a/pl.yml', 'a/DASH.JSON', 'a/sub/', 'a/sub', 'sub'])('accepts %s', (path) => {
+      expect(isResourceLinkCandidate(path)).toBe(true);
+    });
+
+    it.each(['a/notes.md', 'a/logo.png', 'a/archive.tar.gz', ''])('rejects %s', (path) => {
+      expect(isResourceLinkCandidate(path)).toBe(false);
     });
   });
 

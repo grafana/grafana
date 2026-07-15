@@ -1,16 +1,21 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { type RepositoryView, useGetRepositoryResourcesQuery } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type RepositoryView,
+  type ResourceListItem,
+  useLazyGetRepositoryResourcesQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
-import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
+import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
 
 import { FolderReadmeEvents } from './analytics/main';
@@ -182,16 +187,14 @@ function RenderedMarkdown({
   baseDirInRepo: string;
   repositoryType: RepositoryView['type'];
 }) {
-  // Resource listing for this repo powers the path → Grafana page rewrite; while
-  // it loads, links fall back to the host repository URL and update on arrival.
-  const { data: resourcesData } = useGetRepositoryResourcesQuery({ name: repository.name });
-  const resolveGrafanaHref = useMemo(
-    () => createGrafanaLinkResolver(resourcesData?.items ?? [], repository.path),
-    [resourcesData?.items, repository.path]
-  );
+  // Links to JSON/YAML files or folders are tagged during rewrite; the resource
+  // listing is fetched lazily only when the user actually clicks one of them.
+  const [fetchResources] = useLazyGetRepositoryResourcesQuery();
+  const repositoryName = repository.name;
+  const repositoryPath = repository.path;
 
   const html = renderMarkdown(markdown);
-  const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo, resolveGrafanaHref });
+  const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
   const safe = textUtil.sanitize(rewritten);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -200,14 +203,51 @@ function RenderedMarkdown({
     if (!el) {
       return;
     }
-    const handleClick = (e: MouseEvent) => {
-      if (e.target instanceof HTMLElement && e.target.closest('a')) {
-        FolderReadmeEvents.linkClicked({ repositoryType });
+
+    // Resolve a tagged link to its in-app Grafana page, falling back to the host
+    // URL on the anchor when it has no matching resource or the lookup fails.
+    const resolveAndNavigate = async (anchor: HTMLAnchorElement, repoPath: string) => {
+      let items: ResourceListItem[] = [];
+      try {
+        const result = await fetchResources({ name: repositoryName }, true).unwrap();
+        items = result.items ?? [];
+      } catch {
+        // Ignore — fall back to the host link below.
+      }
+      const route = createGrafanaLinkResolver(items, repositoryPath)(repoPath);
+      if (route) {
+        locationService.push(route);
+        return;
+      }
+      const href = anchor.getAttribute('href');
+      if (href) {
+        window.open(href, '_blank', 'noopener,noreferrer');
       }
     };
+
+    const handleClick = (e: MouseEvent) => {
+      if (!(e.target instanceof HTMLElement)) {
+        return;
+      }
+      const anchor = e.target.closest('a');
+      if (!anchor) {
+        return;
+      }
+      FolderReadmeEvents.linkClicked({ repositoryType });
+
+      const repoPath = anchor.getAttribute(RESOURCE_PATH_ATTR);
+      // Only JSON/YAML/folder links carry the attribute. Leave modified/middle
+      // clicks to the browser so "open in new tab" keeps hitting the host URL.
+      if (!repoPath || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+        return;
+      }
+      e.preventDefault();
+      void resolveAndNavigate(anchor, repoPath);
+    };
+
     el.addEventListener('click', handleClick);
     return () => el.removeEventListener('click', handleClick);
-  }, [repositoryType]);
+  }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
 
   return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: safe }} />;
 }
