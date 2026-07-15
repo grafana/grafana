@@ -272,6 +272,11 @@ require (
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // @grafana/grafana-backend-group
 )
 
+// Replace grafana-app-sdk to my own copy for v1alpha3
+replace (
+  github.com/grafana/grafana-app-sdk => ../grafana-app-sdk
+)
+
 // Replace references to internal workspaces
 replace (
 	github.com/grafana/grafana/apps/advisor => ./apps/advisor
