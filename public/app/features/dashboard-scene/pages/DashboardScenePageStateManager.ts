@@ -39,6 +39,7 @@ import { getDashboardSceneProfiler } from 'app/features/dashboard/services/Dashb
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
@@ -443,13 +444,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
-      const isRenderTarget =
-        options.route === DashboardRoutes.Report ||
-        options.route === DashboardRoutes.Embedded ||
-        (options.route === DashboardRoutes.Normal && contextSrv.user?.authenticatedBy === 'render');
+      const renderTarget = isRenderTarget(options.route);
       const enableProfiling =
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1 ||
-        isRenderTarget;
+        renderTarget;
 
       if (enableProfiling) {
         // Initialize both performance services before starting profiling to ensure observers are registered
@@ -462,7 +460,7 @@ abstract class DashboardScenePageStateManagerBase<T>
         }
       }
 
-      if (isRenderTarget) {
+      if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
         // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
         initializeReportRenderReadinessObserver();

@@ -32,6 +32,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   // Disable scope redirects while in edit mode so users aren't navigated away mid-edit.
   // Also close the scopes dashboards drawer while editing and restore it on exit.
+  // (Render-target suppression is handled synchronously inside redirectAfterApply.)
   useEffect(() => {
     scopesServices?.scopesSelectorService.setRedirectEnabled(!isEditing);
 
