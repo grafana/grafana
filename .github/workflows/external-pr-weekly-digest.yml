@@ -184,7 +184,7 @@ jobs:
             -v "/tmp/oz-context:/context:ro" \
             -v "/tmp/oz-output:/output" \
             -e WARP_API_KEY="${WARP_API_KEY}" \
-            -e OZ_MODEL="claude-4-6-opus-high" \
+            -e OZ_MODEL="claude-4-8-opus-high" \
             -e OZ_SKILL="digest-pr-analysis" \
             -e OZ_PROMPT="Analyze the open external pull requests in prs.json. Use the repository source at /repo to understand code relationships. Output analysis.json with insights." \
             oz-review
