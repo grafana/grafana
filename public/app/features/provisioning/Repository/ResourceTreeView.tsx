@@ -7,12 +7,13 @@ import { Trans, t } from '@grafana/i18n';
 import {
   type CellProps,
   type Column,
-  Checkbox,
+  type ComboboxOption,
   FilterInput,
   Icon,
   InteractiveTable,
   Link,
   LinkButton,
+  MultiCombobox,
   Spinner,
   Stack,
   Tooltip,
@@ -29,10 +30,12 @@ import { getRepoFileUrl } from '../utils/git';
 import { getKindInfoByItemType } from '../utils/resourceKinds';
 import {
   buildTree,
-  filterOutOfSync,
+  filterByStatusCategories,
   filterTree,
   flattenTree,
   getIconName,
+  getStatusCategory,
+  type StatusCategory,
   mergeFilesAndResources,
 } from '../utils/treeUtils';
 
@@ -57,10 +60,21 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourcesQuery = useGetRepositoryResourcesQuery({ name });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [showOnlyOutOfSync, setShowOnlyOutOfSync] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusCategory[]>([]);
   const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
+
+  const statusFilterOptions: Array<ComboboxOption<StatusCategory>> = useMemo(() => {
+    const options: Array<ComboboxOption<StatusCategory>> = [
+      { label: t('provisioning.resource-tree.status-filter-synced', 'Synced'), value: 'synced' },
+      { label: t('provisioning.resource-tree.status-filter-pending', 'Not in sync'), value: 'pending' },
+    ];
+    if (provisioningFolderMetadataEnabled) {
+      options.push({ label: t('provisioning.resource-tree.status-filter-warning', 'Warnings'), value: 'warning' });
+    }
+    return options;
+  }, [provisioningFolderMetadataEnabled]);
 
   const flatItems = useMemo(() => {
     const files = filesQuery.data?.items ?? [];
@@ -73,8 +87,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
       tree = filterTree(tree, searchQuery);
     }
 
-    if (showOnlyOutOfSync) {
-      tree = filterOutOfSync(tree, provisioningFolderMetadataEnabled);
+    if (statusFilter.length > 0) {
+      tree = filterByStatusCategories(tree, statusFilter, provisioningFolderMetadataEnabled);
     }
 
     return flattenTree(tree);
@@ -82,7 +96,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     filesQuery.data?.items,
     resourcesQuery.data?.items,
     searchQuery,
-    showOnlyOutOfSync,
+    statusFilter,
     provisioningFolderMetadataEnabled,
   ]);
 
@@ -115,8 +129,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'status',
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
-          const { status, missingFolderMetadata } = original.item;
-          if (provisioningFolderMetadataEnabled && missingFolderMetadata) {
+          const category = getStatusCategory(original.item, provisioningFolderMetadataEnabled);
+          if (category === 'warning') {
             return (
               <Tooltip
                 content={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
@@ -129,15 +143,15 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
               </Tooltip>
             );
           }
-          if (!status) {
+          if (!category) {
             return null;
           }
           return (
             <Icon
-              name={status === 'synced' ? 'check-circle' : 'sync'}
-              className={status === 'synced' ? styles.syncedIcon : undefined}
+              name={category === 'synced' ? 'check-circle' : 'sync'}
+              className={category === 'synced' ? styles.syncedIcon : undefined}
               title={
-                status === 'synced'
+                category === 'synced'
                   ? t('provisioning.resource-tree.status-synced', 'Synced')
                   : t('provisioning.resource-tree.status-pending', 'Pending')
               }
@@ -221,17 +235,26 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      <FilterInput
-        placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
-        autoFocus={true}
-        value={searchQuery}
-        onChange={setSearchQuery}
-      />
-      <Checkbox
-        label={t('provisioning.resource-tree.filter-out-of-sync', 'Show only resources that are not in sync')}
-        value={showOnlyOutOfSync}
-        onChange={(e) => setShowOnlyOutOfSync(e.currentTarget.checked)}
-      />
+      <Stack direction="row" gap={2} alignItems="flex-start">
+        <div className={styles.searchInput}>
+          <FilterInput
+            placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
+            autoFocus={true}
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+        </div>
+        <MultiCombobox
+          prefixIcon="filter"
+          options={statusFilterOptions}
+          value={statusFilter}
+          onChange={(options) => setStatusFilter(options.map((option) => option.value))}
+          isClearable
+          width={30}
+          placeholder={t('provisioning.resource-tree.status-filter-placeholder', 'Filter by status')}
+          aria-label={t('provisioning.resource-tree.status-filter-aria-label', 'Filter by status')}
+        />
+      </Stack>
       <InteractiveTable
         columns={columns}
         data={flatItems}
@@ -243,6 +266,9 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  searchInput: css({
+    flexGrow: 1,
+  }),
   titleCell: css({
     display: 'flex',
     alignItems: 'center',
