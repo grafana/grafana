@@ -50,7 +50,9 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isLoadingTabs;
+  const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
+  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs;
+
   // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
   // what actually renders below.
   const extraContent = renderLimitedComponents({
@@ -105,7 +107,8 @@ export default function HomePage() {
                   <Recommendations />
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                    <DashboardTabs extensionComponents={tabComponents} />
+                    {/* Skip the HomepageTabs extension point for the redesign UI */}
+                    <DashboardTabs extensionComponents={[]} />
                     {/* TODO: Alerts and incidents will combine into one card */}
                     <FiringAlertsCard />
                   </Grid>
