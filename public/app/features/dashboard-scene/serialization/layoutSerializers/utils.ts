@@ -65,7 +65,8 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   }
 
   const queryOptions = panel.spec.data.spec.queryOptions;
-  const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
+  const timeOverrideShown =
+    (queryOptions.timeFrom || queryOptions.timeShift || queryOptions.timeCompare) && !queryOptions.hideTimeOverride;
 
   // Extract __angularMigration data if present
   // This data is used to run Angular panel migrations in v2 (e.g., singlestat -> stat)

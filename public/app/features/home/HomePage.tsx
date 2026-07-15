@@ -17,7 +17,7 @@ import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
-import Recommendations from './Recommendations/Recommendations';
+import { Recommendations } from './Recommendations/Recommendations';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {
@@ -57,11 +57,14 @@ export default function HomePage() {
     props: {},
     components: extraComponents,
     pluginId: SETUPGUIDE_PLUGIN_ID,
-    wrapper: ({ children }) => (
-      <div className={styles.extra}>
-        <HomeSection>{children}</HomeSection>
-      </div>
-    ),
+    wrapper: ({ children }) =>
+      redesignEnabled ? (
+        children
+      ) : (
+        <div className={styles.extra}>
+          <HomeSection>{children}</HomeSection>
+        </div>
+      ),
   });
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();

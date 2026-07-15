@@ -134,6 +134,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleQuality",
+        "resourceVersion": "1784023221456",
+        "creationTimestamp": "2026-07-14T10:00:21Z"
+      },
+      "spec": {
+        "description": "Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.rulesAPIV2",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -477,6 +491,7 @@
         "name": "alertingMultiplePolicies",
         "resourceVersion": "1781102456776",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-10T18:32:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-10 14:40:56.776063699 +0000 UTC"
         }
@@ -681,6 +696,36 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleQuality",
+        "resourceVersion": "1783689595044",
+        "creationTimestamp": "2026-07-10T13:19:55Z",
+        "deletionTimestamp": "2026-07-14T10:00:21Z"
+      },
+      "spec": {
+        "description": "Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleQualityAssist",
+        "resourceVersion": "1783521061373",
+        "creationTimestamp": "2026-07-08T14:31:01Z",
+        "deletionTimestamp": "2026-07-10T13:19:55Z"
+      },
+      "spec": {
+        "description": "Enable assisted generation and review of alert rule annotations.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -1376,6 +1421,20 @@
     },
     {
       "metadata": {
+        "name": "connectionsFilterSidebar",
+        "resourceVersion": "1779358850014",
+        "creationTimestamp": "2026-05-21T10:20:50Z"
+      },
+      "spec": {
+        "description": "Enables the new sidebar filter panel in the Add new connection page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "crashDetection",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-11-12T15:07:27Z"
@@ -1924,6 +1983,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "deletedFolderResourceCleanup",
+        "resourceVersion": "1783997108632",
+        "creationTimestamp": "2026-07-14T02:45:08Z"
+      },
+      "spec": {
+        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2480,13 +2553,16 @@
     {
       "metadata": {
         "name": "grafana.assetSriChecks",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1782832293915",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-30 15:11:33.915164 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SRI checks for Grafana JavaScript assets",
         "stage": "experimental",
-        "codeowner": "@grafana/frontend-ops",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "false"
       }
     },
@@ -2749,6 +2825,20 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.queryVarEditorRedesign",
+        "resourceVersion": "1781718345897",
+        "creationTimestamp": "2026-06-17T17:45:45Z"
+      },
+      "spec": {
+        "description": "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -5821,7 +5911,8 @@
       "metadata": {
         "name": "yAxisTickControl",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-13T19:47:55Z"
       },
       "spec": {
         "description": "Enables fine-grained Y-axis tick options beyond the auto-ticks",
