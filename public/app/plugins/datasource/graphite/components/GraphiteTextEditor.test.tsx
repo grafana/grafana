@@ -82,4 +82,36 @@ describe('GraphiteTextEditor', () => {
     expect(mockDispatch).toHaveBeenCalledWith(actions.updateQuery({ query: 'abc' }));
     expect(mockDispatch).toHaveBeenCalledWith(actions.runQuery());
   });
+
+  it('drops a pending edit when unmounted without a blur', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<GraphiteTextEditor rawQuery="" />);
+
+    await user.click(await screen.findByRole('textbox'));
+    await user.keyboard('abc');
+    mockDispatch.mockClear();
+
+    // An externally driven unmount removes the focused editor without a blur;
+    // the pending edit must not fire afterwards over the external change.
+    unmount();
+
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  it('drops a pending edit when the query is replaced externally', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<GraphiteTextEditor rawQuery="" />);
+
+    await user.click(await screen.findByRole('textbox'));
+    await user.keyboard('abc');
+
+    // The query is replaced from outside (e.g. query history) before the
+    // debounce fires; the stale local edit must not overwrite it.
+    rerender(<GraphiteTextEditor rawQuery="external.query" />);
+    expect(await screen.findByText('external.query')).toBeInTheDocument();
+
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(mockDispatch).not.toHaveBeenCalledWith(actions.updateQuery({ query: 'abc' }));
+  });
 });

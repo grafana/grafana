@@ -39,25 +39,42 @@ function TraceIdEditor({ query, onChange, onRunQuery }: Pick<Props, 'query' | 'o
   // something actually changed.
   const textRef = useRef(query.query ?? '');
   const lastExecutedRef = useRef(query.query ?? '');
+  // The last value we propagated upstream, used to tell our own change echoing
+  // back through `query.query` apart from a genuinely external replacement.
+  const lastPropagatedRef = useRef(query.query ?? '');
 
   // Debounce change propagation for perf, like the Slate query field did.
   const updateQuery = useMemo(
     () =>
       debounce((value: string) => {
+        lastPropagatedRef.current = value;
         onChangeRef.current({ ...queryRef.current, query: value });
       }, 500),
     []
   );
 
-  // Flush any pending edit on unmount (e.g. switching to the Search query
-  // type) so the last keystrokes are not lost.
-  useEffect(() => () => updateQuery.flush(), [updateQuery]);
+  // Drop any pending edit on unmount. User-driven unmounts (e.g. clicking the
+  // Search query type) blur the editor first, which flushes the edit while the
+  // query prop is still current — so a pending edit here means the unmount was
+  // externally driven, and flushing would spread a stale query object over the
+  // external change.
+  useEffect(() => () => updateQuery.cancel(), [updateQuery]);
 
-  // Adopt external query changes so the run-on-blur comparison tracks what is
-  // actually shown in the editor.
+  // Reconcile genuinely external query changes (query history, correlations,
+  // variable/URL updates) — but ignore the echo of our own debounced change.
   useEffect(() => {
-    textRef.current = query.query ?? '';
-  }, [query.query]);
+    const incoming = query.query ?? '';
+    if (incoming === lastPropagatedRef.current) {
+      return;
+    }
+    textRef.current = incoming;
+    // An external change is not a local edit: reset the run baseline so a blur
+    // without edits doesn't re-run, and drop any pending edit that would
+    // otherwise overwrite the new value.
+    lastExecutedRef.current = incoming;
+    lastPropagatedRef.current = incoming;
+    updateQuery.cancel();
+  }, [query.query, updateQuery]);
 
   const handleChange = useCallback(
     (value: string) => {
