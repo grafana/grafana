@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import SolutionSparkline from './SolutionSparkline';
+import { SolutionSparkline } from './SolutionSparkline';
 import { type ExistingItem } from './types';
 
 export function ExistingSolutionCard({

@@ -24,7 +24,7 @@ export interface SolutionSparklineData {
 }
 
 /** Captioned trend chart for an enabled-solution card, e.g. cluster CPU over the last day. */
-export default function SolutionSparkline({ sparkline }: { sparkline: SolutionSparklineData }) {
+export function SolutionSparkline({ sparkline }: { sparkline: SolutionSparklineData }) {
   const theme = useTheme2();
   // Measure the container directly (ResizeObserver); a bare flex child gives AutoSizer width 0.
   const [measureRef, { width }] = useMeasure<HTMLDivElement>();

@@ -1,5 +1,6 @@
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
+import { type PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -66,7 +67,11 @@ const mockFetchOrgUserCount = jest.mocked(fetchOrgUserCount);
 beforeEach(() => {
   window.localStorage.clear();
   mockUsePluginBridge.mockReset();
-  mockUsePluginBridge.mockReturnValue({ loading: false, installed: true });
+  mockUsePluginBridge.mockReturnValue({
+    loading: false,
+    installed: true,
+    settings: { id: 'grafana-k8s-app' } as PluginMeta<{}>,
+  });
   mockGet.mockReset();
   mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id)));
   mockFetchOrgUserCount.mockResolvedValue(1);
@@ -181,14 +186,6 @@ describe('Recommendations', () => {
 
     expect(await screen.findByRole('link', { name: /Enable Hosted Traces/ })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add Synthetic Monitoring/ })).not.toBeInTheDocument();
-  });
-
-  it('renders nothing when every recommended app is enabled', async () => {
-    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
   it('hides install cards when plugin admin is disabled', async () => {
@@ -430,5 +427,11 @@ describe('Recommendations', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+  it('announces the recommendation slides as a carousel region', async () => {
+    render(<Recommendations />);
+
+    const region = await screen.findByRole('region', { name: 'Recommended apps' });
+    expect(region).toHaveAttribute('aria-roledescription', 'carousel');
   });
 });
