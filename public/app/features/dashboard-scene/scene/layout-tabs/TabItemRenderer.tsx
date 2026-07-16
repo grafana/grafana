@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useLocation } from 'react-router';
 
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService, config } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
@@ -150,12 +149,6 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     tab.state.conditionalRendering
   );
-  // OpenFeature is not initialized for anonymous users, so fall back to
-  // the static feature toggle to ensure section variables work without auth.
-  const sectionVariablesEnabled = useBooleanFlagValue(
-    'dashboardSectionVariables',
-    Boolean(config.featureToggles.dashboardSectionVariables)
-  );
   const tabVariablesSet = tab.state.$variables;
 
   return (
@@ -163,7 +156,7 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
-      {sectionVariablesEnabled && tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+      {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

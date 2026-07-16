@@ -3,7 +3,6 @@ import React from 'react';
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, logWarning } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -116,16 +115,7 @@ export class RowItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
-    if (
-      isEditing &&
-      // OpenFeature is not initialized for anonymous users, so fall back to
-      // the static feature toggle to ensure section variables work without auth.
-      getFeatureFlagClient().getBooleanValue(
-        FlagKeys.DashboardSectionVariables,
-        Boolean(config.featureToggles.dashboardSectionVariables)
-      ) &&
-      this.state.$variables
-    ) {
+    if (isEditing && this.state.$variables) {
       return [
         ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
         this.state.$variables,

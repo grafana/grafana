@@ -11,8 +11,6 @@ import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './typ
 import {
   buildVariableChangePath,
   findSectionPathsContainingVariable,
-  getEffectiveVariableParentPath,
-  isSectionVariablesFeatureEnabled,
   resolveVariableScope,
 } from './variableScope';
 import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
@@ -32,17 +30,13 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     const { name, parentPath } = payload;
-    const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
-    const sectionVariablesEnabled = isSectionVariablesFeatureEnabled();
+    const effectiveParentPath = parentPath ?? '/';
     enterEditModeIfNeeded(scene);
 
     try {
       let scope;
       if (effectiveParentPath === '/') {
         if (!dashboardHasVariableNamed(scene, name)) {
-          if (!sectionVariablesEnabled) {
-            throw new Error(`Variable '${name}' not found`);
-          }
           const sectionPaths = findSectionPathsContainingVariable(scene, name);
           if (sectionPaths.length === 0) {
             throw new Error(`Variable '${name}' not found`);
