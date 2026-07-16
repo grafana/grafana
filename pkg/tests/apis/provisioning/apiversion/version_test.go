@@ -208,6 +208,7 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 // when using the typed dynamic client (schema.GroupVersionResource with v1beta1).
 func TestIntegrationDynamicClientVersionConsistency(t *testing.T) {
 	helper := sharedHelper(t)
+
 	repoClient := common.GetRepositoryClientV1Beta1(helper.K8sTestHelper)
 
 	t.Run("create and get", func(t *testing.T) {

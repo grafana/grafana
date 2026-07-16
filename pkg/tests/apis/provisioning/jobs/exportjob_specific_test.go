@@ -29,35 +29,38 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	// named in Resources and expected to land in the repo, v2alpha1 is left
 	// out to prove non-selected dashboards stay excluded.
 	v0Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
-	_, err := helper.DashboardsV0.Resource.Create(t.Context(), v0Dash, metav1.CreateOptions{})
+	createdV0, err := helper.DashboardsV0.Resource.Create(t.Context(), v0Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v0 dashboard")
 
 	v1Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err = helper.DashboardsV1.Resource.Create(t.Context(), v1Dash, metav1.CreateOptions{})
+	createdV1, err := helper.DashboardsV1.Resource.Create(t.Context(), v1Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
 	v2Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2.yaml")
-	_, err = helper.DashboardsV2.Resource.Create(t.Context(), v2Dash, metav1.CreateOptions{})
+	createdV2, err := helper.DashboardsV2.Resource.Create(t.Context(), v2Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2 dashboard")
 
 	v2alphaDash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
-	_, err = helper.DashboardsV2alpha1.Resource.Create(t.Context(), v2alphaDash, metav1.CreateOptions{})
+	createdV2alpha, err := helper.DashboardsV2alpha1.Resource.Create(t.Context(), v2alphaDash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
 
 	v2betaDash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	_, err = helper.DashboardsV2beta1.Resource.Create(t.Context(), v2betaDash, metav1.CreateOptions{})
+	createdV2beta, err := helper.DashboardsV2beta1.Resource.Create(t.Context(), v2betaDash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2beta1 dashboard")
 
 	const repo = "selective-export-repo"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{},
-		ExpectedDashboards: 5,
-		ExpectedFolders:    0,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireDashboards(t,
+		createdV0.GetName(), createdV1.GetName(), createdV2.GetName(), createdV2alpha.GetName(), createdV2beta.GetName(),
+	)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	helper.DebugState(t, repo, "BEFORE SELECTIVE EXPORT")
 
@@ -148,13 +151,14 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 
 	const repo = "selective-migrate-nested-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    3,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	})
+
+	helper.RequireDashboards(t, dashName)
+	helper.RequireFolders(t, grandparentUID, parentUID, childUID)
 
 	// Selective migrate naming only the dashboard. The folders are not named, but
 	// the export emits the folder tree so the dashboard's nested path resolves.
@@ -211,18 +215,19 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 	// partial-write behavior: present ones are still written even though the
 	// job ends in error because of the missing sibling.
 	v1Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err := helper.DashboardsV1.Resource.Create(t.Context(), v1Dash, metav1.CreateOptions{})
+	createdV1, err := helper.DashboardsV1.Resource.Create(t.Context(), v1Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
 	const repo = "selective-export-notfound-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	})
+
+	helper.RequireDashboards(t, createdV1.GetName())
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
@@ -274,17 +279,18 @@ func TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry
 	selectedDash := helper.CreateUnmanagedDashboard(t, "selecteddash", exportedChild)
 
 	unrelatedFolder := helper.CreateUnmanagedFolder(t, "unrelatedfolder", "")
-	_ = helper.CreateUnmanagedDashboard(t, "unrelateddash", unrelatedFolder)
+	unrelatedDash := helper.CreateUnmanagedDashboard(t, "unrelateddash", unrelatedFolder)
 
 	const repo = "selective-export-folders-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{},
-		ExpectedDashboards: 2,
-		ExpectedFolders:    3,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	})
+
+	helper.RequireDashboards(t, selectedDash, unrelatedDash)
+	helper.RequireFolders(t, exportedParent, exportedChild, unrelatedFolder)
 
 	helper.DebugState(t, repo, "BEFORE SELECTIVE EXPORT")
 

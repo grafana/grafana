@@ -36,10 +36,11 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 			// created in Grafana during sync.
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
-		ExpectedDashboards: 1,
 		// root folder + parent + parent/child
-		ExpectedFolders: 3,
 	})
+
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	helper.RequireRepoFolderCount(t, repoName, 3)
 
 	// Confirm the metadata files do not exist before the job runs.
 	requireFileAbsent(t, filepath.Join(repoPath, "parent", folderMetadataFileName))
@@ -72,9 +73,10 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    3,
 	})
+
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	helper.RequireRepoFolderCount(t, repoName, 3)
 
 	// First run: let the job create the metadata files.
 	runFixFolderMetadataJob(t, helper, repoName)
@@ -110,9 +112,10 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    3,
 	})
+
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	helper.RequireRepoFolderCount(t, repoName, 3)
 
 	// Plant _folder.json files with arbitrary UIDs so we can verify the job
 	// leaves them untouched.
@@ -146,9 +149,10 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *tes
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    3,
 	})
+
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	helper.RequireRepoFolderCount(t, repoName, 3)
 
 	// Write _folder.json files that are valid JSON but not Folder resources.
 	writeMalformedMetadata(t, filepath.Join(repoPath, "parent"))

@@ -16,13 +16,14 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 
 	const repo = "subresources-auth-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Copies:             map[string]string{}, // No files needed for this test
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1, // Repository creates a folder
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{}, // No files needed for this test
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("test subresource", func(t *testing.T) {
 		newRepoConfig := map[string]any{

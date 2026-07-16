@@ -29,7 +29,7 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 	}, "write", "branch")
 
 	helper.SyncAndWait(t, repoName)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, "name-change-full-001", "Dashboard One")
 
 	// Change the metadata.name (uid) in the same file path.
@@ -58,7 +58,7 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "old dashboard should be deleted after name change")
 
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationProvisioning_FullSync_ChainedNameChanges verifies that
@@ -73,7 +73,7 @@ func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
 	}, "write", "branch")
 
 	helper.SyncAndWait(t, repoName)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	// First name change: v1 -> v2
 	require.NoError(t, local.UpdateFile("dashboard.json", string(common.DashboardJSON("chained-v2", "Dashboard V2", 2))))
@@ -94,7 +94,7 @@ func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
 		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "chained-v1", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "v1 should be NotFound, got: %v", err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	// Second name change: v2 -> v3
 	require.NoError(t, local.UpdateFile("dashboard.json", string(common.DashboardJSON("chained-v3", "Dashboard V3", 3))))
@@ -115,7 +115,7 @@ func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
 		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "chained-v2", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "v2 should be NotFound, got: %v", err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationProvisioning_FullSync_MultipleFilesNameChange verifies that
@@ -131,7 +131,7 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 	}, "write", "branch")
 
 	helper.SyncAndWait(t, repoName)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 2)
+	helper.RequireRepoDashboardCount(t, repoName, 2)
 
 	// Change both names simultaneously.
 	require.NoError(t, local.UpdateFile("dash1.json", string(common.DashboardJSON("multi-c", "Dashboard C", 2))))
@@ -161,7 +161,7 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 		assert.True(c, apierrors.IsNotFound(err), "dashboard B should be NotFound, got: %v", err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
-	common.RequireDashboardCount(t, helper.DashboardsV1, 2)
+	helper.RequireRepoDashboardCount(t, repoName, 2)
 }
 
 // TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync verifies
@@ -182,7 +182,7 @@ func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testi
 	}, "write", "branch")
 
 	helper.SyncAndWait(t, repoName)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	// Inject an orphan directly into unified storage, bypassing the K8s API
 	// admission hooks that prevent creating a second managed resource at the
@@ -227,12 +227,12 @@ func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testi
 	require.Nil(t, rsp.GetError(), "resource create should not return error: %v", rsp.GetError())
 
 	// Confirm two dashboards exist before cleanup.
-	common.RequireDashboardCount(t, helper.DashboardsV1, 2)
+	helper.RequireRepoDashboardCount(t, repoName, 2)
 
 	// Full sync should detect the duplicate sourcePath and delete the orphan.
 	helper.SyncAndWait(t, repoName)
 
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "real-dash", metav1.GetOptions{})

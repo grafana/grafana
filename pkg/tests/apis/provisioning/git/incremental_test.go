@@ -23,7 +23,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.NoError(t, local.CreateFile("dashboard2.json", string(common.DashboardJSON("incr-dash-002", "Dashboard Two", 1))))
 	_, err := local.Git("add", ".")
@@ -34,7 +34,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 2)
+	helper.RequireRepoDashboardCount(t, repoName, 2)
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_Update verifies that
@@ -49,7 +49,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.NoError(t, local.UpdateFile("dashboard1.json", string(common.DashboardJSON("incr-dash-001", "Dashboard One Updated", 2))))
 	_, err := local.Git("add", ".")
@@ -60,7 +60,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, "incr-dash-001", "Dashboard One Updated")
 }
 
@@ -77,7 +77,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 2)
+	helper.RequireRepoDashboardCount(t, repoName, 2)
 
 	_, err := local.Git("rm", "dashboard2.json")
 	require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "incr-dash-002", metav1.GetOptions{})
@@ -107,10 +107,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_Rename verifies that

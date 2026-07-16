@@ -32,18 +32,16 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	// --- Step 1: create 2 repos with unlimited quota  ---------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo1Name,
-		LocalPath:              repo1Path,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo1Name,
+		LocalPath:  repo1Path,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo2Name,
-		LocalPath:              repo2Path,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo2Name,
+		LocalPath:  repo2Path,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaUnlimited)
@@ -116,6 +114,7 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningT
 // blocked due to namespace quota being exceeded.
 func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t *testing.T) {
 	helper := sharedHelper(t)
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	const (

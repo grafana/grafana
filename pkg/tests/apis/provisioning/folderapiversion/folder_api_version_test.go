@@ -45,8 +45,7 @@ func TestIntegrationProvisioning_FolderAPIVersionDiscovery(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "subfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 	helper.SyncAndWait(t, repoName, nil)
 

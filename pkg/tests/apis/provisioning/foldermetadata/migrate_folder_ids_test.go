@@ -47,10 +47,9 @@ func TestIntegrationProvisioning_MigrateJob_GenerateNewFolderIDs(t *testing.T) {
 	)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
 
 	createUnmanagedFolder(t, helper, parentUID, parentTitle)

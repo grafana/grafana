@@ -35,15 +35,12 @@ func TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope(t *testin
 			name := rk.name + "-folderscope"
 			subPath := "team-a/" + rk.name + ".json"
 			helper.CreateLocalRepo(t, common.TestRepo{
-				Name:                   repo,
-				SyncTarget:             "folder",
-				Workflows:              []string{"write"},
-				SkipResourceAssertions: true,
+				Name:       repo,
+				SyncTarget: "folder",
+				Workflows:  []string{"write"},
 			})
-			t.Cleanup(func() {
-				cleanupCtx := context.WithoutCancel(t.Context())
-				_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
-			})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 
 			// Create the resource inside a subdirectory. For org-scoped kinds this previously
 			// failed because the dual writer stamped a forbidden folder annotation. The files

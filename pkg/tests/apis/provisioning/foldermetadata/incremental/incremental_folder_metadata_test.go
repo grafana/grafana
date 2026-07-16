@@ -266,8 +266,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		}
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, "stable-uid")
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
-		common.RequireRepoDashboardCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
+		helper.RequireRepoDashboardCount(t, repoName, 1)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "myfolder/dash.json", "stable-uid")
 	})
 
@@ -293,8 +293,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireFolderState(t, helper.Folders, "empty-team-uid", "Empty Team", "empty-team", "")
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
-		common.RequireRepoDashboardCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
+		helper.RequireRepoDashboardCount(t, repoName, 1)
 	})
 
 	t.Run("new _folder.json transitions existing folder to stable uid", func(t *testing.T) {
@@ -323,8 +323,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, "stable-uid")
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
-		common.RequireRepoDashboardCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
+		helper.RequireRepoDashboardCount(t, repoName, 1)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "myfolder/dash.json", "stable-uid")
 	})
 
@@ -361,8 +361,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		childUID = common.RequireRepoFolderTitle(t, helper.Folders, repoName, "child")
 		common.RequireFolderState(t, helper.Folders, childUID, "child", "myfolder/child", "stable-uid")
 
-		common.RequireRepoFolderCount(t, helper, repoName, 2)
-		common.RequireRepoDashboardCount(t, helper, repoName, 2)
+		helper.RequireRepoFolderCount(t, repoName, 2)
+		helper.RequireRepoDashboardCount(t, repoName, 2)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "myfolder/dash.json", "stable-uid")
 	})
 
@@ -394,8 +394,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, "stable-uid")
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
-		common.RequireRepoDashboardCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
+		helper.RequireRepoDashboardCount(t, repoName, 1)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "myfolder/dash-renamed.json", "stable-uid")
 	})
 
@@ -438,8 +438,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		common.RequireFolderState(t, helper.Folders, "p-new", "Parent", "parent", "")
 		common.RequireFolderState(t, helper.Folders, "c-new", "Child", "parent/child", "p-new")
 		common.RequireRepoFolders(t, helper.Folders, repoName, []string{"parent", "parent/child"})
-		common.RequireRepoFolderCount(t, helper, repoName, 2)
-		common.RequireRepoDashboardCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 2)
+		helper.RequireRepoDashboardCount(t, repoName, 1)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "parent/child/dash.json", "c-new")
 	})
 }
@@ -1020,7 +1020,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		})
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
 
 		// v1 -> v2
 		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("uid-v2", "Team v2"))))
@@ -1037,7 +1037,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		require.NoError(t, err, "v2 folder should exist")
 		_, err = helper.Folders.Resource.Get(t.Context(), "uid-v1", metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err), "v1 folder should be deleted")
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
 
 		// v2 -> v3
 		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("uid-v3", "Team v3"))))
@@ -1056,7 +1056,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(err), "v2 folder should be deleted")
 		_, err = helper.Folders.Resource.Get(t.Context(), "uid-v1", metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err), "v1 folder should still be deleted")
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
 
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"chain-dash": {Title: "Dashboard", SourcePath: "team/dash.json", Folder: "uid-v3"},
@@ -1074,7 +1074,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		})
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
 
 		// Change UID via incremental sync
 		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("cleanup-v2", "Team v2"))))
@@ -1086,11 +1086,11 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		require.NoError(t, err)
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
 
 		// A subsequent full sync should be idempotent — still exactly 1 folder
 		helper.SyncAndWait(t, repoName)
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
 
 		_, err = helper.Folders.Resource.Get(t.Context(), "cleanup-v2", metav1.GetOptions{})
 		require.NoError(t, err, "current folder should still exist")
@@ -1504,7 +1504,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 
 		// Only one folder should exist for this repo.
 		common.RequireRepoFolders(t, helper.Folders, repoName, []string{"new-empty"})
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
 	})
 }
 

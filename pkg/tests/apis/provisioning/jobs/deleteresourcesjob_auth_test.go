@@ -69,13 +69,14 @@ func TestIntegrationProvisioning_DeleteResourcesJobAuthorization(t *testing.T) {
 	t.Run("deleteResources rejected when repository exists and is healthy", func(t *testing.T) {
 		const repo = "deleteresources-conflict-test"
 		testRepo := common.TestRepo{
-			Name:               repo,
-			SyncTarget:         "folder",
-			Copies:             map[string]string{},
-			ExpectedDashboards: 0,
-			ExpectedFolders:    1,
+			Name:       repo,
+			SyncTarget: "folder",
+			Copies:     map[string]string{},
 		}
 		helper.CreateLocalRepo(t, testRepo)
+
+		helper.RequireRepoDashboardCount(t, repo, 0)
+		helper.RequireRepoFolderCount(t, repo, 1)
 
 		existingRepoBody := common.AsJSON(provisioning.JobSpec{
 			Action:     provisioning.JobActionDeleteResources,

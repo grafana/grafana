@@ -27,7 +27,7 @@ func TestIntegrationProvisioning_MoveFile_FolderMetadataFlag(t *testing.T) {
 
 	const repo = "folder-metadata-move-test-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true,
+		Name: repo, SyncTarget: "instance", Workflows: []string{"write"},
 	})
 
 	files := helper.NewFilesClient(repo)

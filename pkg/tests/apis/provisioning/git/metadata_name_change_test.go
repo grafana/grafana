@@ -25,7 +25,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, "name-change-incr-001", "Dashboard One")
 
 	// Change the metadata.name (uid) in the same file path.
@@ -54,5 +54,5 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "old dashboard should be deleted after name change")
 
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }

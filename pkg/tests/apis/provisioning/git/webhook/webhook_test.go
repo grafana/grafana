@@ -106,6 +106,7 @@ func expectedWebhookURL(baseURL, namespace, repoName string) string {
 // waitForWebhook polls until Status.Webhook is populated with the expected ID.
 func waitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string, expectedID int64) {
 	t.Helper()
+
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(collect, err)

@@ -35,10 +35,9 @@ func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(
 	writeToProvisioningPath(t, helper, "innerA/cross-folder-dash.json", dashboardBody)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repoName,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
 
 	helper.SyncAndWait(t, repoName, nil)
@@ -101,10 +100,9 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 	)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repoName,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{

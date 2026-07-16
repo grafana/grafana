@@ -36,8 +36,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 			"../testdata/text-options.json":  "teamB/dashboard.json",
 			"../testdata/timeline-demo.json": "teamC/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -123,15 +122,14 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBefor
 	writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON(dashboardUID, "Dashboard in Duplicate Folder", 1))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
 	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repo, 1)
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"myfolder/dashboard.json": currentUID,
 	})
@@ -156,12 +154,11 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBefor
 	})
 	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"myfolder/dashboard.json"})
 	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{"myfolder/dashboard.json"})
-	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
+	helper.RequireRepoDashboardCount(t, repo, 1)
 }
 
 func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren(t *testing.T) {
 	helper := sharedHelper(t)
-
 	const (
 		repo       = "folder-dup-both-children"
 		currentUID = "dup-both-current-uid"
@@ -178,15 +175,14 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren(t *tes
 	writeToProvisioningPath(t, helper, "myfolder/dash3.json", common.DashboardJSON(dash3UID, "Dashboard 3", 1))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
 	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 3)
+	helper.RequireRepoDashboardCount(t, repo, 3)
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"myfolder/dash1.json": currentUID,
 		"myfolder/dash2.json": currentUID,
@@ -226,7 +222,7 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren(t *tes
 	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{
 		"myfolder/dash1.json", "myfolder/dash2.json", "myfolder/dash3.json",
 	})
-	common.RequireDashboardCount(t, helper.DashboardsV1, 3)
+	helper.RequireRepoDashboardCount(t, repo, 3)
 }
 
 func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren_Nested(t *testing.T) {
@@ -249,16 +245,15 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren_Nested
 	writeToProvisioningPath(t, helper, "parent/child/dash3.json", common.DashboardJSON(dash3UID, "Dashboard 3", 1))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
 	common.RequireFolderState(t, helper.Folders, parentUID, "Parent", "parent", repo)
 	common.RequireFolderState(t, helper.Folders, currentUID, "Child", "parent/child", parentUID)
-	common.RequireDashboardCount(t, helper.DashboardsV1, 3)
+	helper.RequireRepoDashboardCount(t, repo, 3)
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"parent/child/dash1.json": currentUID,
 		"parent/child/dash2.json": currentUID,
@@ -299,7 +294,7 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren_Nested
 	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{
 		"parent/child/dash1.json", "parent/child/dash2.json", "parent/child/dash3.json",
 	})
-	common.RequireDashboardCount(t, helper.DashboardsV1, 3)
+	helper.RequireRepoDashboardCount(t, repo, 3)
 }
 
 func TestIntegrationProvisioning_FullSync_DuplicateFolderWithConcurrentFolderRename(t *testing.T) {
@@ -324,8 +319,7 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderWithConcurrentFolderRen
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "teamA/panel-dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -364,7 +358,7 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderWithConcurrentFolderRen
 		"teamB/panel-dashboard.json": teamBUID,
 	})
 
-	common.RequireDashboardCount(t, helper.DashboardsV1, 2)
+	helper.RequireRepoDashboardCount(t, repo, 2)
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
@@ -384,8 +378,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 			"../testdata/text-options.json":  "root/child/dashboard.json",
 			"../testdata/timeline-demo.json": "root/child/grand/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -434,8 +427,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 			"../testdata/all-panels.json":   "metaA/dashboard.json",
 			"../testdata/text-options.json": "plainB/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -477,8 +469,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -515,8 +506,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -558,8 +548,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -602,8 +591,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 			"../testdata/all-panels.json":   "myfolder/dashboard.json",
 			"../testdata/text-options.json": "plain/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -690,8 +678,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parentA/myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -749,8 +736,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -807,8 +793,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -869,10 +854,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *te
 	writeToProvisioningPath(t, helper, "target/.keep", []byte{})
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -913,10 +897,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 	writeToProvisioningPath(t, helper, "myfolder/.keep", []byte{})
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -956,8 +939,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t 
 			"../testdata/all-panels.json":   "folderA/dashboard.json",
 			"../testdata/text-options.json": "folderB/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -1238,8 +1220,7 @@ func TestIntegrationProvisioning_FullSync_DashboardMoveInPlace(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "folderA/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)

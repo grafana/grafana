@@ -139,7 +139,6 @@ func TestIntegration_CrossNamespaceIsolation_FolderSync(t *testing.T) {
 
 	// Step 4: Verify cross-namespace access is blocked
 	t.Run("verify no cross-namespace visibility", func(t *testing.T) {
-
 		// Try to access orgB repository from orgA viewer context - should fail
 		orgAViewOfOrgBRepos := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Viewer,

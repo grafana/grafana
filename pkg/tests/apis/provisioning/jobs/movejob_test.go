@@ -15,6 +15,7 @@ import (
 
 func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	helper := sharedHelper(t)
+
 	const repo = "move-test-repo"
 	testRepo := common.TestRepo{
 		Name:       repo,
@@ -25,10 +26,11 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			"../testdata/text-options.json":  "dashboard2.json",
 			"../testdata/timeline-demo.json": "folder/dashboard3.json",
 		},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 2)
 
 	t.Run("move single file", func(t *testing.T) {
 		helper.DebugState(t, repo, "BEFORE MOVE SINGLE FILE")
@@ -232,10 +234,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		// Create a unique repository for resource reference testing to avoid contamination
 		const refRepo = "move-ref-test-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   refRepo,
-			SyncTarget:             "folder",
-			Workflows:              []string{"write"},
-			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.
+			Name:       refRepo,
+			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 		})
 
 		t.Run("move single dashboard by resource reference", func(t *testing.T) {

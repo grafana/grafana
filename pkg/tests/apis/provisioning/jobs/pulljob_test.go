@@ -32,7 +32,6 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard1.json",
 		},
-		SkipResourceAssertions: true, // will check both at the same time below
 	})
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repo2,
@@ -41,7 +40,6 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/timeline-demo.json": "dashboard2.json",
 		},
-		SkipResourceAssertions: true, // will check both at the same time below
 	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -172,11 +170,13 @@ func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 	repoPath := path.Join(helper.ProvisioningPath, "unmanaged-root-repo-data")
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repo,
-		LocalPath:       repoPath,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repo,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	rootFolder, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.NoError(t, err, "root folder should exist after initial sync")
@@ -205,11 +205,10 @@ func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 	// and inspect the pull job ourselves rather than racing the helper's
 	// initial sync.
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              repoPath,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{

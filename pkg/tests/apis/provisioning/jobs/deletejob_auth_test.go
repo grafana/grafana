@@ -22,10 +22,11 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Grant the editor user dashboard permissions (the default editor role
 	// does not include dashboards:delete which is required by the pre-flight check).

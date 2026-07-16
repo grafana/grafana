@@ -198,7 +198,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, stableUID)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/dashboard.json", stableUID)
-		common.RequireRepoFolderCount(t, helper, repoName, 1)
+		helper.RequireRepoFolderCount(t, repoName, 1)
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"team-dash": {Title: "Team Dashboard Follow-up", SourcePath: "team/dashboard.json", Folder: stableUID},
 		})

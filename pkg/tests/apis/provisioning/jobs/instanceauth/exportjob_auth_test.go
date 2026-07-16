@@ -16,14 +16,15 @@ func TestIntegrationProvisioning_ExportJobAuthorization(t *testing.T) {
 
 	const repo = "export-auth-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	t.Run("admin can create export job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{

@@ -29,6 +29,7 @@ import (
 
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	helper := sharedHelper(t)
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
@@ -184,6 +185,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 
 func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 	helper := sharedHelper(t)
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should update connection name with type prefix", func(t *testing.T) {
@@ -304,6 +306,7 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 	helper := sharedHelper(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should fail when type is empty", func(t *testing.T) {
@@ -671,6 +674,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 
 func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 	helper := sharedHelper(t)
+
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -879,6 +883,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 
 func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 	helper := sharedHelper(t)
+
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -1049,6 +1054,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 
 func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testing.T) {
 	helper := sharedHelper(t)
+
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -1288,6 +1294,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 	helper := sharedHelper(t)
+
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -1449,6 +1456,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 
 func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.T) {
 	helper := sharedHelper(t)
+
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
@@ -1623,6 +1631,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 
 func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.T) {
 	helper := sharedHelper(t)
+
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -1719,6 +1728,7 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 
 func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) {
 	helper := sharedHelper(t)
+
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -1763,6 +1773,7 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 
 func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) {
 	helper := sharedHelper(t)
+
 	namespace := "default"
 
 	// Create typed client from REST config

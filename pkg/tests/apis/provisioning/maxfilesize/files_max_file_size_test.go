@@ -25,11 +25,10 @@ func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
 
 	const repo = "max-file-size-raw-read"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	smallReadme := []byte("# small README\n")
@@ -90,11 +89,10 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 
 	const repo = "max-file-size-write"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	// A minimal but well-formed dashboard JSON, padded to exceed the cap.
@@ -136,11 +134,10 @@ func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 
 	const repo = "max-file-size-pull"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	smallDashboard := common.DashboardJSON("small-dash", "Small Dashboard", 1)

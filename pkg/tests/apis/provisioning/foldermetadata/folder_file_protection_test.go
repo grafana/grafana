@@ -13,7 +13,7 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "folder-protection-test-repo"
-	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true})
+	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}})
 
 	files := helper.NewFilesClient(repo)
 

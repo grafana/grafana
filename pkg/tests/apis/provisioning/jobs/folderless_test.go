@@ -37,9 +37,10 @@ func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 			"../testdata/all-panels.json":    "root-dashboard.json",
 			"../testdata/timeline-demo.json": "team-x/nested-dashboard.json",
 		},
-		ExpectedDashboards: 2, // both dashboards
-		ExpectedFolders:    1, // only team-x; NO wrapper folder for the repo
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 2)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	// No wrapper folder named after the repository must be created.
 	_, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
@@ -94,7 +95,6 @@ func TestIntegrationProvisioning_FolderlessCoexistence(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard1.json",
 		},
-		SkipResourceAssertions: true,
 	})
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repo2,
@@ -103,7 +103,6 @@ func TestIntegrationProvisioning_FolderlessCoexistence(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/timeline-demo.json": "dashboard2.json",
 		},
-		SkipResourceAssertions: true,
 	})
 
 	// Each repo owns its own dashboard; the unprovisioned one stays unmanaged.
@@ -162,7 +161,6 @@ func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *tes
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "folder-dashboard.json",
 		},
-		SkipResourceAssertions: true,
 	})
 
 	// 3. Folderless repository (top level, no wrapper folder).
@@ -174,7 +172,6 @@ func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *tes
 		Copies: map[string]string{
 			"../testdata/timeline-demo.json": "folderless-dashboard.json",
 		},
-		SkipResourceAssertions: true,
 	})
 
 	// Each repository owns only its own dashboard; the unprovisioned one stays unmanaged.
@@ -253,13 +250,14 @@ func TestIntegrationProvisioning_FolderlessMigrate(t *testing.T) {
 	const repo = "folderless-migrate"
 	repoPath := filepath.Join(helper.ProvisioningPath, repo)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		LocalPath:          repoPath,
-		SyncTarget:         "folderless",
-		Workflows:          []string{"write"},
-		ExpectedDashboards: 2, // the two unprovisioned dashboards (not yet managed)
-		ExpectedFolders:    0, // no wrapper folder
+		Name:       repo,
+		LocalPath:  repoPath,
+		SyncTarget: "folderless",
+		Workflows:  []string{"write"},
 	})
+
+	helper.RequireDashboards(t, name1, name2)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
@@ -299,11 +297,10 @@ func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
 
 	const repo = "folderless-create"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              path.Join(helper.ProvisioningPath, repo),
-		SyncTarget:             "folderless",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  path.Join(helper.ProvisioningPath, repo),
+		SyncTarget: "folderless",
+		Workflows:  []string{"write"},
 	})
 
 	files := helper.NewFilesClient(repo)
@@ -379,9 +376,10 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0, // top-level resource, no folders yet
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Initially top-level: no parent folder.
 	dash, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})

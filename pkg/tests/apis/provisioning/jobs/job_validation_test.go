@@ -19,13 +19,14 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 	// Create a test repository first
 	const repo = "job-validation-test-repo"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1, // folder sync creates a folder
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	// Build a resource list that exceeds the selective-export cap (100).
 	overLimitResources := make([]map[string]interface{}, 101)

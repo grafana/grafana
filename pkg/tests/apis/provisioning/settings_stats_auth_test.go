@@ -158,12 +158,13 @@ func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {
 	// Create a repository to ensure stats endpoint has data
 	const repo = "stats-auth-test"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1,
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{},
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("admin can GET stats", func(t *testing.T) {
 		var statusCode int

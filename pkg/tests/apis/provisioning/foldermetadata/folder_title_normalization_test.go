@@ -83,10 +83,9 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 
 	const repo = "folder-title-normalization-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
 
 	// Expected normalized path segments. Titles themselves are preserved in
@@ -224,11 +223,10 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 	// SkipSync so the repository exists before we seed it; the pull below is the
 	// action under test.
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		SkipSync:   true,
 	})
 
 	// Seed a repository whose directory names contain spaces, each carrying a
@@ -289,10 +287,9 @@ func TestIntegrationProvisioning_MigrateFolderTitleCollisionFails(t *testing.T) 
 
 	const repo = "folder-title-collision-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{

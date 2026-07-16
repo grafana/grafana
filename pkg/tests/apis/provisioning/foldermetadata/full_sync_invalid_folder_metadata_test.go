@@ -14,13 +14,13 @@ import (
 func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	t.Run("invalid folder metadata created on existing folder keeps unstable uid and preserves children", func(t *testing.T) {
 		helper := sharedHelper(t)
+
 		const repo = "full-sync-invalid-meta-existing"
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("existing-parent-dash", "Parent Dashboard", 1))
 		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard", 1))
@@ -56,13 +56,13 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 	t.Run("invalid folder metadata on new folder falls back to unstable uid and reconciles children", func(t *testing.T) {
 		helper := sharedHelper(t)
+
 		const repo = "full-sync-invalid-meta-new"
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "myfolder/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("new-parent-dash", "Parent Dashboard", 1))
@@ -92,10 +92,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		const repo = "fs-inv-move-existing"
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-existing-invalid", "Move Into Existing Invalid", 1))
 		writeToProvisioningPath(t, helper, "broken/existing.json", common.DashboardJSON("existing-invalid-target", "Existing Invalid Target", 1))
@@ -136,10 +135,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		const repo = "fs-inv-move-new"
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-new-invalid", "Move Into New Invalid", 1))
 
@@ -167,10 +165,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		const repo = "fs-inv-folder-move"
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 		writeToProvisioningPath(t, helper, "broken/dashboard.json", common.DashboardJSON("move-invalid-folder", "Move Invalid Folder", 1))

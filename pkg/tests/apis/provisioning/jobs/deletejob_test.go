@@ -44,11 +44,12 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			"../testdata/text-options.json":  "dashboard2.json",
 			"../testdata/timeline-demo.json": "folder/dashboard3.json",
 		},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    1,
 	}
 
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("delete single file", func(t *testing.T) {
 		// FIXME: make the tests in a way that we can simply have a spec and some expectations per scenario.

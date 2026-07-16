@@ -51,9 +51,8 @@ func TestIntegrationProvisioning_ConditionsPatch_AppendDoesNotClobber(t *testing
 
 	const repoName = "cond-patch-append"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:     repoName,
+		SkipSync: true,
 	})
 
 	// Wait for the controller to populate Ready and NamespaceQuota so we have
@@ -118,9 +117,8 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 
 	const repoName = "cond-patch-replace"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:     repoName,
+		SkipSync: true,
 	})
 
 	// Wait for the controller to populate Ready and NamespaceQuota so we have
@@ -226,9 +224,8 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 
 	const repoName = "cond-patch-concurrent"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:     repoName,
+		SkipSync: true,
 	})
 
 	// Wait for the controller to populate Ready and NamespaceQuota so we have

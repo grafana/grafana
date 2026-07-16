@@ -14,6 +14,7 @@ import (
 
 func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection for testing

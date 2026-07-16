@@ -55,7 +55,7 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 		"full sync should produce at least one warning for the folder file")
 	common.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
 
-	common.RequireRepoDashboardCount(t, helper, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning
@@ -71,7 +71,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 	})
 
 	helper.SyncAndWait(t, repoName)
-	common.RequireRepoDashboardCount(t, helper, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.NoError(t, local.CreateFile("new-folder.json", string(folderJSON("new-folder", "New Folder"))))
 	_, err := local.Git("add", ".")
@@ -96,7 +96,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 		"incremental sync should produce at least one warning for the folder file")
 	common.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
 
-	common.RequireRepoDashboardCount(t, helper, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning
@@ -119,7 +119,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
 	})
-	common.RequireRepoDashboardCount(t, helper, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	// Delete the folder file from git.
 	_, err := local.Git("rm", "my-folder.json")
@@ -145,7 +145,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 		"incremental sync should produce at least one warning for the deleted folder file")
 	common.RequireJobWarningContains(t, incrJobObj, "cannot declare folders through files")
 
-	common.RequireRepoDashboardCount(t, helper, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationGitFiles_CreateFolderFileRejected verifies that creating a

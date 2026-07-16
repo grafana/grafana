@@ -22,8 +22,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -81,8 +80,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -144,8 +142,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				// Adding 1 dashboard, well under the limit of 10
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -234,8 +231,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -290,8 +286,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)

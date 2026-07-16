@@ -15,7 +15,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 	const repo = "folder-metadata-test-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true,
+		Name: repo, SyncTarget: "instance", Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/.keep": "no-meta-existing-folder/.keep",
 		},

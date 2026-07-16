@@ -27,8 +27,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 
@@ -86,8 +85,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show within quota
@@ -144,8 +142,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show reached
@@ -202,8 +199,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 

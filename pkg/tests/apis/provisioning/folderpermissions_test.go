@@ -19,13 +19,11 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 	repoName := "nested-folder-repo"
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repoName,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repoName,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "folder/subfolder/dashboard.json",
 		},
-		SkipResourceAssertions: true,
 	})
 	t.Run("should fail to update permissions for provisioned nested folder", func(t *testing.T) {
 		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
@@ -70,10 +68,12 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repo,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repo,
+		SyncTarget: "folder",
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("should update permissions when folder is released", func(t *testing.T) {
 		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})

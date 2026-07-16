@@ -28,9 +28,8 @@ func TestIntegrationProvisioning_ResourceKinds_Sync(t *testing.T) {
 
 			repo := rk.name + "-sync-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
-				Name:                   repo,
-				SyncTarget:             "folder",
-				SkipResourceAssertions: true,
+				Name:       repo,
+				SyncTarget: "folder",
 			})
 
 			const count = 3
@@ -45,10 +44,8 @@ func TestIntegrationProvisioning_ResourceKinds_Sync(t *testing.T) {
 					filePath = rk.name + "-folder/" + filePath
 				}
 				helper.WriteToProvisioningPath(t, filePath, common.ResourceToJSON(t, rk.newResource(t, name, title)))
-				t.Cleanup(func() {
-					cleanupCtx := context.WithoutCancel(t.Context())
-					_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
-				})
+				cleanupCtx := context.WithoutCancel(t.Context())
+				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
 			helper.SyncAndWait(t, repo, nil)

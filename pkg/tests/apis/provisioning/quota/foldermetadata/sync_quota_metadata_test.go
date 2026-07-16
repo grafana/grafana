@@ -25,8 +25,8 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 
 		// Full sync: root folder + subfolder (original-uid) + dashboard = 3 resources.
 		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
-		common.RequireRepoDashboardCount(t, helper, repo, 1)
-		common.RequireRepoFolderCount(t, helper, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoFolderCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		common.RequireFolderState(t, helper.Folders, "original-uid", "My Folder", "subfolder", repo)
@@ -48,8 +48,8 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		requireFolderNotExists(t, helper, "original-uid")
 
 		// Resource counts unchanged: root folder + subfolder (new-uid) + dashboard = 3.
-		common.RequireRepoDashboardCount(t, helper, repo, 1)
-		common.RequireRepoFolderCount(t, helper, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoFolderCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
@@ -68,8 +68,8 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 
 		// Full sync without quota: root + subfolder + dashboard = 3 resources.
 		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
-		common.RequireRepoDashboardCount(t, helper, repo, 1)
-		common.RequireRepoFolderCount(t, helper, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoFolderCount(t, repo, 2)
 
 		// Lower the quota below the current count to put the repo over limit.
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
@@ -104,7 +104,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 
 		// The original folder should remain unchanged.
 		common.RequireFolderState(t, helper.Folders, "stable-uid", "My Folder", "subfolder", repo)
-		common.RequireRepoDashboardCount(t, helper, repo, 1)
+		helper.RequireRepoDashboardCount(t, repo, 1)
 	})
 
 	t.Run("full sync: invalid _folder.json falls back to hash UID under quota pressure", func(t *testing.T) {
@@ -122,8 +122,8 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 
 		// Full sync: root + subfolder (valid-uid) + dashboard = 3 resources.
 		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
-		common.RequireRepoDashboardCount(t, helper, repo, 1)
-		common.RequireRepoFolderCount(t, helper, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoFolderCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		common.RequireFolderState(t, helper.Folders, "valid-uid", "My Folder", "subfolder", repo)
@@ -154,8 +154,8 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		require.Empty(t, jobObj.Status.Errors, "invalid metadata should not cause errors")
 
 		// The dashboard should still exist regardless of folder UID changes.
-		common.RequireRepoDashboardCount(t, helper, repo, 1)
-		common.RequireRepoFolderCount(t, helper, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoFolderCount(t, repo, 2)
 	})
 
 	t.Run("incremental sync: folder UID change via _folder.json succeeds at quota limit", func(t *testing.T) {
@@ -172,8 +172,8 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 
 		// Full sync first to establish baseline.
 		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
-		common.RequireRepoDashboardCount(t, helper, repo, 1)
-		common.RequireRepoFolderCount(t, helper, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoFolderCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		common.RequireFolderState(t, helper.Folders, "incr-original-uid", "My Folder", "subfolder", repo)
@@ -195,8 +195,8 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		requireFolderNotExists(t, helper, "incr-original-uid")
 
 		// Resource counts unchanged.
-		common.RequireRepoDashboardCount(t, helper, repo, 1)
-		common.RequireRepoFolderCount(t, helper, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoFolderCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 }

@@ -16,6 +16,7 @@ import (
 // connection has spec.webhook.disabled: true but the repository does not.
 func TestIntegrationProvisioning_RepositoryWebhookConnectionValidation(t *testing.T) {
 	helper := sharedHelper(t)
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	connection := &unstructured.Unstructured{Object: map[string]any{

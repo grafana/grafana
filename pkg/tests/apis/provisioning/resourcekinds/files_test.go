@@ -37,15 +37,12 @@ func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 			filePath := rk.name + "-files.json"
 			name := rk.name + "-files"
 			helper.CreateLocalRepo(t, common.TestRepo{
-				Name:                   repo,
-				SyncTarget:             "folder",
-				Workflows:              []string{"write"},
-				SkipResourceAssertions: true,
+				Name:       repo,
+				SyncTarget: "folder",
+				Workflows:  []string{"write"},
 			})
-			t.Cleanup(func() {
-				cleanupCtx := context.WithoutCancel(t.Context())
-				_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
-			})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 
 			// Create: stores the file and provisions the resource.
 			postResourceFile(t, helper, rk, repo, filePath, name, "Files "+rk.kind)

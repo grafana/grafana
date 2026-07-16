@@ -1061,9 +1061,10 @@ func TestIntegrationProvisioning_DashboardStrictValidationExempted(t *testing.T)
 		Copies: map[string]string{
 			"../testdata/dashboard-unknown-field.json": "dashboard-unknown-field.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// The dry run through the files endpoint must succeed despite the unknown
 	// field, because dashboards are exempt from strict validation.
@@ -1103,16 +1104,17 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 	const repo = "github-create-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		Template:           common.TestdataPath("github.json.tmpl"),
-		SyncTarget:         "folder",
-		Path:               "grafana/",
-		Workflows:          []string{},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    3, // Folder sync creates an additional folder for the repository itself
+		Name:       repo,
+		Template:   common.TestdataPath("github.json.tmpl"),
+		SyncTarget: "folder",
+		Path:       "grafana/",
+		Workflows:  []string{},
 	}
 
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 3)
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
@@ -1479,10 +1481,9 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 	require.NoError(t, os.MkdirAll(repoPath, 0o750))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		LocalPath:              repoPath,
-		SyncTarget:             "folder",
-		SkipResourceAssertions: true,
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
 	})
 	helper.WaitForHealthyRepository(t, repoName)
 
@@ -1536,13 +1537,13 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 
 	// Set up the repository.
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		ExpectedDashboards:     0,
-		ExpectedFolders:        1, // folder sync creates a folder for the repo
-		SkipResourceAssertions: false,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	// Write a file -- this will create it *both* in the local file system, and in grafana
 	t.Run("write all panels", func(t *testing.T) {
@@ -1724,15 +1725,16 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	const repo = "local-tmp"
 	// Set up the repository and the file to import.
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{"../testdata/all-panels.json": "all-panels.json"},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1, // folder sync creates a folder
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{"../testdata/all-panels.json": "all-panels.json"},
 	}
 	// We create the repository
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	// Now, we import it, such that it may exist
 	// The sync may not be necessary as the sync may have happened automatically at this point
@@ -1782,15 +1784,16 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 
 	const repo = "gh-repo"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		Template:           common.TestdataPath("github.json.tmpl"),
-		SyncTarget:         "folder",
-		Path:               "grafana/",
-		Workflows:          []string{},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    3,
+		Name:       repo,
+		Template:   common.TestdataPath("github.json.tmpl"),
+		SyncTarget: "folder",
+		Path:       "grafana/",
+		Workflows:  []string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 3)
 
 	// Checking resources are there and are managed
 	foundFolders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
@@ -1845,10 +1848,9 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		require.NoError(t, os.WriteFile(filepath.Join(repoPath, "classic.json"), classicDashboard, 0o600))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			LocalPath:              repoPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 		})
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -1884,10 +1886,9 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		require.NoError(t, os.WriteFile(filepath.Join(repoPath, "classic.json"), classicDashboard, 0o600))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			LocalPath:              repoPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 		})
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -1923,14 +1924,15 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 
 	const repo = "job-permissions-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{}, // No files needed for this test
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1, // Repository creates a folder
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{}, // No files needed for this test
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	adminJobBody := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
@@ -2007,15 +2009,16 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 
 	const repo = "refs-permissions-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		Template:           common.TestdataPath("github.json.tmpl"),
-		SyncTarget:         "folder",
-		Path:               "grafana/",
-		Workflows:          []string{},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    3, // Repository creates folders
+		Name:       repo,
+		Template:   common.TestdataPath("github.json.tmpl"),
+		SyncTarget: "folder",
+		Path:       "grafana/",
+		Workflows:  []string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 3)
 
 	t.Run("editor can GET refs", func(t *testing.T) {
 		var statusCode int
@@ -2070,14 +2073,15 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
 		const repo = "empty-path-test"
 		testRepo := common.TestRepo{
-			Name:               repo,
-			Template:           common.TestdataPath("github.json.tmpl"),
-			SyncTarget:         "folder",
-			Workflows:          []string{},
-			ExpectedDashboards: 3, // Syncs 3 dashboards from grafana/ directory
-			ExpectedFolders:    6, // Creates 6 folders: repo root, assets, gifs, grafana, DemoFolder, DemoDeeperFolder
+			Name:       repo,
+			Template:   common.TestdataPath("github.json.tmpl"),
+			SyncTarget: "folder",
+			Workflows:  []string{},
 		}
 		helper.CreateLocalRepo(t, testRepo)
+
+		helper.RequireRepoDashboardCount(t, repo, 3)
+		helper.RequireRepoFolderCount(t, repo, 6)
 
 		// Verify the repository has empty path
 		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
@@ -2097,14 +2101,15 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 
 		// Step 1: Create first repository with empty path - syncs successfully
 		testRepo1 := common.TestRepo{
-			Name:               repo1,
-			Template:           common.TestdataPath("github.json.tmpl"),
-			SyncTarget:         "folder",
-			Workflows:          []string{},
-			ExpectedDashboards: 3, // Successfully syncs 3 dashboards
-			ExpectedFolders:    6, // Successfully creates 6 folders
+			Name:       repo1,
+			Template:   common.TestdataPath("github.json.tmpl"),
+			SyncTarget: "folder",
+			Workflows:  []string{},
 		}
 		helper.CreateLocalRepo(t, testRepo1)
+
+		helper.RequireRepoDashboardCount(t, repo1, 3)
+		helper.RequireRepoFolderCount(t, repo1, 6)
 
 		// Step 2: Create second repository with same URL, branch, and empty path.
 		// Empty path represents the repository root, so this is a duplicate path.
@@ -2133,6 +2138,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 
 func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	helper := sharedHelper(t)
+
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
@@ -2303,6 +2309,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 
 func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *testing.T) {
 	helper := sharedHelper(t)
+
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -2489,6 +2496,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 
 func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 	helper := sharedHelper(t)
+
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -2625,6 +2633,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 
 func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 	helper := sharedHelper(t)
+
 	namespace := "default"
 	defaultBranchName := "defaultBranchName"
 
@@ -2827,13 +2836,14 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 	const updatedTitle = "Updated Folder Title"
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repoName,
-		SyncTarget:         "folder",
-		Copies:             map[string]string{"../testdata/all-panels.json": "all-panels.json"},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
-		Title:              initialTitle,
+		Name:       repoName,
+		SyncTarget: "folder",
+		Copies:     map[string]string{"../testdata/all-panels.json": "all-panels.json"},
+		Title:      initialTitle,
 	})
+
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	helper.RequireRepoFolderCount(t, repoName, 1)
 
 	// Verify the root folder has the initial title.
 	// The root folder for a folder-sync repo has the same name as the repository.

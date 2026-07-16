@@ -24,12 +24,15 @@ import (
 
 func TestIntegrationHealth(t *testing.T) {
 	helper := sharedHelper(t)
+
 	repo := "test-repo-health"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repo,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repo,
+		SyncTarget: "folder",
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	// Verify the health status before calling the endpoint
 	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})

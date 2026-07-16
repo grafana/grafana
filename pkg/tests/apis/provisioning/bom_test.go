@@ -24,10 +24,9 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 	t.Run("dashboard JSON file with UTF-8 BOM prefix", func(t *testing.T) {
 		// Create repository first
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			LocalPath:              helper.ProvisioningPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repo,
+			LocalPath:  helper.ProvisioningPath,
+			SyncTarget: "folder",
 		})
 
 		// Create a dashboard JSON file with UTF-8 BOM prefix (EF BB BF)
@@ -109,10 +108,9 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		// Create repository
 		repoName := "bom-embedded-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repoName,
-			LocalPath:              helper.ProvisioningPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repoName,
+			LocalPath:  helper.ProvisioningPath,
+			SyncTarget: "folder",
 		})
 
 		// Trigger sync to provision the dashboard
@@ -183,10 +181,9 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		// Create repository first
 		repoName := "bom-deletion-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repoName,
-			LocalPath:              helper.ProvisioningPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repoName,
+			LocalPath:  helper.ProvisioningPath,
+			SyncTarget: "folder",
 		})
 
 		// Now create the dashboard file with BOMs
@@ -279,10 +276,9 @@ spec:
 		// Create repository first
 		repoName := "bom-yaml-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repoName,
-			LocalPath:              helper.ProvisioningPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repoName,
+			LocalPath:  helper.ProvisioningPath,
+			SyncTarget: "folder",
 		})
 
 		testFile := filepath.Join(helper.ProvisioningPath, "bom-yaml-dashboard.yaml")

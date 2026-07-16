@@ -16,14 +16,15 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 
 	const repoReadOnly = "job-validation-readonly"
 	testRepo := common.TestRepo{
-		Name:               repoReadOnly,
-		SyncTarget:         "folder",
-		Workflows:          []string{},
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1,
+		Name:       repoReadOnly,
+		SyncTarget: "folder",
+		Workflows:  []string{},
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repoReadOnly, 0)
+	helper.RequireRepoFolderCount(t, repoReadOnly, 1)
 
 	t.Run("write jobs should be rejected for read-only repositories", func(t *testing.T) {
 		writeJobs := []struct {

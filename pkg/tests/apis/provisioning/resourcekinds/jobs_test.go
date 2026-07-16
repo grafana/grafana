@@ -27,10 +27,9 @@ func TestIntegrationProvisioning_ResourceKinds_DeleteJob(t *testing.T) {
 
 			repo := rk.name + "-delete-job-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
-				Name:                   repo,
-				SyncTarget:             "folder",
-				Workflows:              []string{"write"},
-				SkipResourceAssertions: true,
+				Name:       repo,
+				SyncTarget: "folder",
+				Workflows:  []string{"write"},
 			})
 
 			const count = 2
@@ -42,10 +41,8 @@ func TestIntegrationProvisioning_ResourceKinds_DeleteJob(t *testing.T) {
 				names[i] = name
 				postResourceFile(t, helper, rk, repo, paths[i], name, title)
 				_ = common.RequireResource(t, client.Resource, name)
-				t.Cleanup(func() {
-					cleanupCtx := context.WithoutCancel(t.Context())
-					_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
-				})
+				cleanupCtx := context.WithoutCancel(t.Context())
+				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
 			// Bulk delete both files in a single job.
@@ -79,10 +76,9 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 
 			repo := rk.name + "-move-job-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
-				Name:                   repo,
-				SyncTarget:             "folder",
-				Workflows:              []string{"write"},
-				SkipResourceAssertions: true,
+				Name:       repo,
+				SyncTarget: "folder",
+				Workflows:  []string{"write"},
 			})
 
 			const count = 2
@@ -94,10 +90,8 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 				names[i] = name
 				postResourceFile(t, helper, rk, repo, paths[i], name, title)
 				_ = common.RequireResource(t, client.Resource, name)
-				t.Cleanup(func() {
-					cleanupCtx := context.WithoutCancel(t.Context())
-					_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
-				})
+				cleanupCtx := context.WithoutCancel(t.Context())
+				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
 			// Bulk move both files into a subdirectory in a single job. The move plus its

@@ -27,6 +27,7 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
+
 	namespace := "default"
 
 	connection := &provisioning.Connection{
@@ -90,6 +91,7 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
+
 	namespace := "default"
 
 	connection := &provisioning.Connection{
@@ -144,6 +146,7 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
+
 	namespace := "default"
 
 	connection := &provisioning.Connection{
@@ -197,6 +200,7 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
+
 	namespace := "default"
 
 	// Create a connection first
@@ -257,6 +261,7 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
+
 	namespace := "default"
 
 	// Create a connection first
@@ -322,6 +327,7 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
+
 	namespace := "default"
 
 	// Create a connection first
@@ -399,6 +405,7 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
+
 	namespace := "default"
 
 	// Create a connection first

@@ -16,7 +16,7 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "update-folder-metadata-repo"
-	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true})
+	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}})
 
 	files := helper.NewFilesClient(repo)
 

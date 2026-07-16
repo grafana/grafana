@@ -29,11 +29,9 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repoName,
 		SyncTarget: "folder",
-		// The namespace-wide count assertion in CreateLocalRepo flakes when a
-		// prior test leaks resources into this shared server; scope the check
-		// to this repo's own managed folder instead.
-		SkipResourceAssertions: true,
 	})
+
+	helper.RequireRepoDashboardCount(t, repoName, 0)
 	helper.RequireRepoFolderCount(t, repoName, 1)
 
 	// Find the managed folder created by the repo sync.
@@ -554,9 +552,10 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	const dashboardUID = "n1jR8vnnz"
 	var dashboard *unstructured.Unstructured
@@ -641,9 +640,10 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	const dashboardUID = "n1jR8vnnz"
 
@@ -718,6 +718,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 
 func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 	helper := sharedHelper(t)
+
 	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 
 	// Create an unmanaged folder for testing
@@ -888,9 +889,10 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	const dashboardUID = "n1jR8vnnz"
 

@@ -16,14 +16,15 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 
 	const repo = "jobs-auth-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("admin can LIST jobs", func(t *testing.T) {
 		var statusCode int

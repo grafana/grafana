@@ -16,13 +16,14 @@ func TestIntegrationProvisioning_PullJobAuthorization(t *testing.T) {
 
 	const repo = "pull-auth-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1,
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPull,

@@ -30,12 +30,13 @@ func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 
 	const repo = "empty-files-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		LocalPath:          helper.ProvisioningPath,
-		SyncTarget:         "instance",
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	rsp := helper.AdminREST.Get().
 		Namespace("default").
@@ -66,7 +67,6 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 			"testdata/timeline-demo.json": "folder/nested/dashboard3.json",
 			"testdata/.keep":              "folder/nested/.keep",
 		},
-		SkipResourceAssertions: true, // tested below
 	})
 
 	var dashboards *unstructured.UnstructuredList
@@ -167,6 +167,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	helper := sharedHelper(t)
+
 	repo := "move-test-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repo,
@@ -176,9 +177,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Validate the dashboard metadata
 	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
@@ -414,7 +416,6 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		Copies: map[string]string{
 			"testdata/all-panels.json": "dashboard1.json",
 		},
-		SkipResourceAssertions: true, // will check both at the same time below
 	})
 
 	const repo2 = "ownership-repo-2"
@@ -426,7 +427,6 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		Copies: map[string]string{
 			"testdata/timeline-demo.json": "dashboard2.json",
 		},
-		SkipResourceAssertions: true, // will check both at the same time below
 	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -619,13 +619,14 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 	const readmeContent = "# Test Repository\n\nThis is a test README for the provisioning API."
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		LocalPath:          helper.ProvisioningPath,
-		SyncTarget:         "instance",
-		Workflows:          []string{"write"},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
 
@@ -885,13 +886,15 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 			"a user without any folder grants and no basic role should be denied")
 	})
 
-	_ = t.Context()
+	_ = t.Context(
+
+	// TestIntegrationProvisioning_ReadmeFiles_FolderTarget exercises the folder-scoped
+	// auth check on a folder-target repository, where RootFolder() resolves to the
+	// repo's name as the folder UID. This is the path that proved the new authorizer
+	// resolves the synced folder rather than always falling back to the empty root.
+	)
 }
 
-// TestIntegrationProvisioning_ReadmeFiles_FolderTarget exercises the folder-scoped
-// auth check on a folder-target repository, where RootFolder() resolves to the
-// repo's name as the folder UID. This is the path that proved the new authorizer
-// resolves the synced folder rather than always falling back to the empty root.
 func TestIntegrationProvisioning_ReadmeFiles_FolderTarget(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -899,11 +902,10 @@ func TestIntegrationProvisioning_ReadmeFiles_FolderTarget(t *testing.T) {
 	const readmeContent = "# Folder-target README"
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
 
 	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
@@ -947,9 +949,10 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		Copies: map[string]string{
 			"testdata/all-panels.json": "dashboard1.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Wait for initial sync to complete
 	var dashboardUID string
@@ -1418,13 +1421,14 @@ func TestIntegrationProvisioning_RefValidation(t *testing.T) {
 
 	const repo = "ref-validation-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		LocalPath:          helper.ProvisioningPath,
-		SyncTarget:         "instance",
-		Workflows:          []string{"write"},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	invalidRefs := []struct {
 		name string

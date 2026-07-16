@@ -19,13 +19,11 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 	repoName := "nested-folder-repo-flag"
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repoName,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repoName,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "folder/subfolder/dashboard.json",
 		},
-		SkipResourceAssertions: true,
 	})
 	t.Run("should succeed updating permissions for provisioned nested folder when flag is enabled", func(t *testing.T) {
 		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})

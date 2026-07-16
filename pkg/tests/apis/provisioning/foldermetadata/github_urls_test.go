@@ -42,6 +42,7 @@ func githubHealthCheckMockClient() *http.Client {
 // new branch creation and a later update to the same branch.
 func TestIntegrationGitHubFiles_DashboardBranchURLs(t *testing.T) {
 	helper := sharedGitHelper(t)
+
 	helper.GetEnv().GithubRepoFactory.Client = githubHealthCheckMockClient()
 
 	const repoName = "github-dashboard-urls"
@@ -82,6 +83,7 @@ func TestIntegrationGitHubFiles_DashboardBranchURLs(t *testing.T) {
 // which is the regression surface for folder rename/update operations.
 func TestIntegrationGitHubFiles_FolderMetadataBranchURLs(t *testing.T) {
 	helper := sharedGitHelper(t)
+
 	helper.GetEnv().GithubRepoFactory.Client = githubHealthCheckMockClient()
 
 	const repoName = "github-folder-urls"

@@ -32,11 +32,10 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderExported(t *testi
 
 	const repo = "selective-export-folderref-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		Copies:                 map[string]string{},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	})
 
 	spec := provisioning.JobSpec{

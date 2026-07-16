@@ -27,7 +27,6 @@ func TestIntegrationProvisioning_OrgScopedResourceGetsNoFolderAnnotation(t *test
 		Copies: map[string]string{
 			"../testdata/all-panels.json": sourcePath,
 		},
-		SkipResourceAssertions: true,
 	})
 
 	// An empty expected folder UID asserts the dashboard carries no folder annotation.

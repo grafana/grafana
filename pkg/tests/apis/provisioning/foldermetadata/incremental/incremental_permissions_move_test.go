@@ -25,6 +25,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := sharedGitHelper(t)
+
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
 	// FolderMovePreservesPermissions verifies that custom permissions set on a

@@ -784,7 +784,8 @@ func (h *ProvisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 // If folder is nested, folder annotations should not be empty.
 // Also checks that the managerId property exists.
 func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *testing.T,
-	repoName string, dashboards []unstructured.Unstructured) {
+	repoName string, dashboards []unstructured.Unstructured,
+) {
 	t.Helper()
 
 	// Check if folder is nested or not.
@@ -838,13 +839,10 @@ type TestRepo struct {
 	GenerateDashboardPreviews bool
 
 	// Test control fields (not used by templates)
-	LocalPath              string
-	Copies                 map[string]string
-	ExpectedDashboards     int
-	ExpectedFolders        int
-	SkipSync               bool
-	SkipResourceAssertions bool
-	Template               string
+	LocalPath string
+	Copies    map[string]string
+	SkipSync  bool
+	Template  string
 }
 
 type LocalRepositorySpec struct {
@@ -980,82 +978,54 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	} else {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
 	}
-
-	// Verify initial state. ExpectedDashboards/ExpectedFolders count this
-	// repo's synced resources plus any unmanaged resources a test pre-seeds
-	// (e.g. the selective export/migrate tests). It deliberately does NOT
-	// count dangling orphans — resources still annotated as managed by a
-	// repository that no longer exists. Those can leak from a prior test: the
-	// per-test cleanup deletes a repo whose RemoveOrphanResources finalizer
-	// then enumerates its managed resources through the eventually-consistent
-	// search index; if that index lags and reports none, the finalizer deletes
-	// nothing and the folder survives as a managed orphan that surfaces later
-	// and would otherwise inflate this count.
-	if !repo.SkipResourceAssertions {
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			existingRepos, err := h.repoNameSet(t.Context())
-			if err != nil {
-				collect.Errorf("could not list repositories: error: %s", err.Error())
-				return
-			}
-
-			dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			if err != nil {
-				collect.Errorf("could not list dashboards error: %s", err.Error())
-				return
-			}
-			dashboardCount := countNonOrphanedResources(dashboards.Items, existingRepos)
-			if dashboardCount != repo.ExpectedDashboards {
-				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", dashboardCount, repo.ExpectedDashboards)
-				return
-			}
-			folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-			if err != nil {
-				collect.Errorf("could not list folders: error: %s", err.Error())
-				return
-			}
-			folderCount := countNonOrphanedResources(folders.Items, existingRepos)
-			if folderCount != repo.ExpectedFolders {
-				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", folderCount, repo.ExpectedFolders)
-				return
-			}
-		}, WaitTimeoutDefault, WaitIntervalDefault, "should have the expected dashboards and folders after sync")
-	}
 }
 
-// repoNameSet returns the set of repository names that currently exist.
-func (h *ProvisioningTestHelper) repoNameSet(ctx context.Context) (map[string]struct{}, error) {
-	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	names := make(map[string]struct{}, len(repos.Items))
-	for i := range repos.Items {
-		names[repos.Items[i].GetName()] = struct{}{}
-	}
-	return names, nil
-}
-
-// countNonOrphanedResources counts resources except dangling repo orphans:
-// resources annotated as managed by a repository (managedBy=repo) whose
-// repository no longer exists. Those leak from a prior test and would inflate
-// the count. Unmanaged resources and resources managed by other kinds
-// (kubectl, terraform, ...) are always counted, as are repo-managed resources
-// whose repository still exists.
-func countNonOrphanedResources(items []unstructured.Unstructured, existingRepos map[string]struct{}) int {
+// countManagedResources counts resources managed by repoName.
+func countManagedResources(items []unstructured.Unstructured, repoName string) int {
 	var count int
 	for i := range items {
 		annotations := items[i].GetAnnotations()
-		managerKind := annotations["grafana.app/managedBy"]
-		managerID := annotations["grafana.app/managerId"]
-		if managerKind == "repo" {
-			if _, ok := existingRepos[managerID]; !ok {
-				continue
-			}
+		if annotations["grafana.app/managedBy"] == "repo" && annotations["grafana.app/managerId"] == repoName {
+			count++
 		}
-		count++
 	}
 	return count
+}
+
+// RequireDashboards polls until every named dashboard exists, regardless of manager.
+func (h *ProvisioningTestHelper) RequireDashboards(t *testing.T, names ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		var found []string
+		for _, d := range dashboards.Items {
+			found = append(found, d.GetName())
+		}
+		for _, name := range names {
+			assert.Contains(c, found, name, "expected dashboard %q to exist", name)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected dashboards %v to exist", names)
+}
+
+// RequireFolders polls until every named folder exists, regardless of manager.
+func (h *ProvisioningTestHelper) RequireFolders(t *testing.T, names ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		var found []string
+		for _, f := range folders.Items {
+			found = append(found, f.GetName())
+		}
+		for _, name := range names {
+			assert.Contains(c, found, name, "expected folder %q to exist", name)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected folders %v to exist", names)
 }
 
 // WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
@@ -1126,13 +1096,7 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 			return
 		}
 
-		var count int
-		for _, d := range dashboards.Items {
-			managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
-			if managerID == repoName {
-				count++
-			}
-		}
+		count := countManagedResources(dashboards.Items, repoName)
 		assert.Equal(c, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected %d dashboard(s) managed by repo %s", expectedCount, repoName)
@@ -1151,13 +1115,7 @@ func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName s
 			return
 		}
 
-		var count int
-		for _, f := range folders.Items {
-			managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
-			if managerID == repoName {
-				count++
-			}
-		}
+		count := countManagedResources(folders.Items, repoName)
 		assert.Equal(c, expectedCount, count, "unexpected number of folders managed by repo %s", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
@@ -2417,18 +2375,6 @@ type ExpectedDashboard struct {
 	Folder     string // grafana.app/folder annotation; only checked when non-empty
 }
 
-// RequireDashboardCount asserts the total number of dashboards in the instance.
-func RequireDashboardCount(t *testing.T, dashboardClient *apis.K8sResourceClient, expected int) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := dashboardClient.Resource.List(t.Context(), metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list dashboards") {
-			return
-		}
-		assert.Len(c, list.Items, expected, "unexpected dashboard count")
-	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %d dashboard(s)", expected)
-}
-
 // RequireRepoManagedDashboard waits until the dashboard with the given uid is
 // available in unified storage and is annotated as managed by the named repo
 // at the given source path. Polls until the assertions hold or the default
@@ -3090,6 +3036,7 @@ func runGrafanaWithGitServerShared(t *testing.T, options ...GrafanaOption) (*Git
 
 func startGitServer(t *testing.T) *gittest.Server {
 	t.Helper()
+
 	gitServer, err := gittest.NewServer(t.Context(), gittest.WithLogger(gittest.NewTestLogger(t)))
 	require.NoError(t, err, "failed to start git server")
 	t.Cleanup(func() {
@@ -3438,46 +3385,6 @@ func (h *GitTestHelper) waitForNoActiveJobs(t *testing.T) {
 		}
 		assert.Empty(collect, jobs.Items, "jobs still active from previous test")
 	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs should complete before cleanup")
-}
-
-// RequireRepoDashboardCount asserts the number of dashboards whose
-// grafana.app/managerId annotation matches repoName.
-func RequireRepoDashboardCount(t *testing.T, h *GitTestHelper, repoName string, expected int) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list dashboards") {
-			return
-		}
-		var count int
-		for _, d := range list.Items {
-			if mgr, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId"); mgr == repoName {
-				count++
-			}
-		}
-		assert.Equal(c, expected, count, "unexpected dashboard count for repo %q", repoName)
-	}, WaitTimeoutDefault, WaitIntervalDefault,
-		"expected %d dashboard(s) for repo %q", expected, repoName)
-}
-
-// RequireRepoFolderCount asserts the number of folders whose
-// grafana.app/managerId annotation matches repoName.
-func RequireRepoFolderCount(t *testing.T, h *GitTestHelper, repoName string, expected int) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list folders") {
-			return
-		}
-		var count int
-		for _, f := range list.Items {
-			if mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId"); mgr == repoName {
-				count++
-			}
-		}
-		assert.Equal(c, expected, count, "unexpected folder count for repo %q", repoName)
-	}, WaitTimeoutDefault, WaitIntervalDefault,
-		"expected %d folder(s) for repo %q", expected, repoName)
 }
 
 // RequireJobWarningContains asserts that at least one warning in the job status

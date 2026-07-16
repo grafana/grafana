@@ -78,6 +78,7 @@ func TestIntegrationGit_ManagedDashboardUpdate_CommitMessage(t *testing.T) {
 
 func TestIntegrationGit_ManagedDashboardCreate_CommitMessage(t *testing.T) {
 	helper := sharedGitHelper(t)
+
 	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 
 	const repoName = "managed-msg-create"

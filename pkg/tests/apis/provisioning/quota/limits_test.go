@@ -20,13 +20,14 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 
 	originalName := "original-repo"
 	originalRepo := common.TestRepo{
-		Name:               originalName,
-		SyncTarget:         "instance",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:       originalName,
+		SyncTarget: "instance",
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, originalRepo)
+
+	helper.RequireRepoDashboardCount(t, originalName, 0)
+	helper.RequireRepoFolderCount(t, originalName, 0)
 
 	t.Run("folder sync is rejected when instance sync exists", func(t *testing.T) {
 		folderRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
@@ -110,13 +111,14 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 		for i := 2; i <= 10; i++ {
 			repoName := fmt.Sprintf("limit-test-repo-%d", i)
 			limitTestRepo := common.TestRepo{
-				Name:               repoName,
-				SyncTarget:         "folder",
-				Copies:             map[string]string{},
-				ExpectedDashboards: 0,
-				ExpectedFolders:    i,
+				Name:       repoName,
+				SyncTarget: "folder",
+				Copies:     map[string]string{},
 			}
 			helper.CreateLocalRepo(t, limitTestRepo)
+
+			helper.RequireRepoDashboardCount(t, repoName, 0)
+			helper.RequireRepoFolderCount(t, repoName, 1)
 		}
 
 		eleventhRepoName := "limit-test-repo-11"

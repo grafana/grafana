@@ -16,6 +16,7 @@ import (
 
 func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 	helper := sharedHelper(t)
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 	connectionName := "connection-repositories-test"
 
@@ -128,6 +129,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 
 func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T) {
 	helper := sharedHelper(t)
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection for testing
