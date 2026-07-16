@@ -8,6 +8,7 @@ import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '@
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
+import { dispatch } from 'app/store/store';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
@@ -84,6 +85,16 @@ describe('NotebookScenePageStateManager', () => {
       expect(rsp?.kind).toBe('DashboardWithAccessInfo');
       expect(rsp?.spec.title).toBe('My notebook');
       expect(rsp?.spec.layout).toEqual(notebook.spec.layout);
+    });
+
+    it('propagates the error when the notebook is not found', async () => {
+      // RTK resolves with { error } on a failed fetch (e.g. 404), so fetchDashboard should reject with it.
+      const error = { status: 404, data: { message: 'notebook not found' } };
+      jest.mocked(dispatch).mockReturnValueOnce(Promise.resolve({ error }) as unknown as UnknownAction);
+
+      await expect(
+        getNotebookScenePageStateManager().fetchDashboard({ uid: 'nb-1', route: DashboardRoutes.Notebook })
+      ).rejects.toBe(error);
     });
 
     it('returns null when no uid is provided', async () => {

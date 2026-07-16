@@ -36,6 +36,11 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
       throw result.error;
     }
 
+    // No data means show an error, not crash on notebook.spec below.
+    if (!result.data) {
+      throw new Error('Notebook not found');
+    }
+
     // The generated Notebook mirrors the apiserver Resource<NotebookSpec> at runtime (both
     // come from the same OpenAPI source); cast at this seam so the envelope and render layer
     // stay on the @grafana/schema notebook types.
