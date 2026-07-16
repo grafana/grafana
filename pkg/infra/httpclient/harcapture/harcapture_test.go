@@ -269,7 +269,7 @@ func TestBuffer_perRequestTotalCap(t *testing.T) {
 
 func TestBuffer_headerBytesCountTowardTotalCap(t *testing.T) {
 	buf := &Buffer{}
-	resp := respWithBody(200, nil)
+	resp := respWithBody(200, nil) //nolint:bodyclose
 	resp.Header.Set("X-Huge", string(bytes.Repeat([]byte("a"), maxHARTotalBytes)))
 	buf.AddEntry(newGetReq(t, "http://example.com"), resp, nil, time.Now(), time.Millisecond) //nolint:bodyclose
 	require.True(t, buf.Truncated(), "an oversized header value alone should trip the per-request byte cap")
