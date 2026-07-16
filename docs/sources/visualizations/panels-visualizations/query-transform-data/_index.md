@@ -204,15 +204,19 @@ The **Saved queries** dialog box gives you access to all the saved queries in yo
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v13.0.png" max-width="750px" alt="List of saved queries" >}}
 
-You can access saved queries three ways:
+To access saved queries:
 
-- Press `Ctrl + K` or `Cmd + K` to open the command palette and search "Saved queries".
 - Click **Replace** in the query editor pane.
 - Click the blue plus sign in the query editor sidebar and select **Add saved query**.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-add-save-reuse-query-v13.1.png" max-width="750px" alt="Access saved queries" >}}
 
 Clicking **Add saved query** adds an additional query, while clicking **Replace** updates your configured query.
+
+{{< admonition type="note" >}}
+To review your saved queries, press `Ctrl + K` or `Cmd + K` to open the command palette and search "Saved queries".
+From this view, you can also select a query to open in Explore.
+{{< /admonition >}}
 
 From the **Saved queries** dialog box, you can:
 

@@ -85,7 +85,7 @@ The **Saved queries** dialog box gives you access to all the saved queries in yo
 
 You can access saved queries three ways:
 
-- Press `Ctrl + K` or `Cmd + K` to open the command palette and search "Saved queries".
+- Press `Ctrl + K` or `Cmd + K` to open the command palette and search "Saved queries". The **Shared queries** dialog box opens, where you can select a query and then click **Open in Explore**.
 - Click **Saved queries > Replace query** in the query editor.
 - At the bottom of the query editor, click **Add from saved queries**.
 

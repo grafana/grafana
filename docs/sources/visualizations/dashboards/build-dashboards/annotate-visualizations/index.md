@@ -183,6 +183,11 @@ To access saved queries, click **Use saved query** in the annotations configurat
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-saved-query-v13.2.png" max-width="450px" alt="Access saved queries" >}}
 
+{{< admonition type="note" >}}
+To review your saved queries, press `Ctrl + K` or `Cmd + K` to open the command palette and search "Saved queries".
+From this view, you can also select a query to open in Explore.
+{{< /admonition >}}
+
 From the **Saved queries** dialog box, you can:
 
 - Search for queries by data source name, query content, title, or description.
