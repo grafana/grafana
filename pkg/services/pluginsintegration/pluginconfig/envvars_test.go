@@ -41,7 +41,7 @@ func (e *fakeMarketplaceEnvironment) AppURL() string {
 	return e.appURL
 }
 
-func (e *fakeMarketplaceEnvironment) Prepare(_ context.Context, pluginID string) (string, error) {
+func (e *fakeMarketplaceEnvironment) LicenseToken(_ context.Context, pluginID string) (string, error) {
 	e.prepareCalls++
 	e.preparedWith = pluginID
 	return e.token, e.prepareErr
