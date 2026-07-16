@@ -23,6 +23,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardDataDTO, type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -188,6 +189,12 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         const allowsEdits = annotations[AnnoKeyManagerAllowsEdits] === 'true';
         result.meta.provisioned = !allowsEdits && managerKind !== ManagerKind.Repo;
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
+      }
+
+      // Strip runtime-injected source links that older Grafana versions committed to the
+      // dashboard JSON. Source links now live in the managed badge and are never persisted.
+      if (managerKind === ManagerKind.Repo && result.dashboard.links?.length) {
+        result.dashboard.links = removeExistingSourceLinks(result.dashboard.links);
       }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {

@@ -33,13 +33,14 @@ function mockRepositories(repositories: RepositoryView[]) {
   server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ items: repositories })));
 }
 
+// Spy created once per test in beforeEach; setPermissions only swaps its implementation.
+let hasPermissionSpy: jest.SpyInstance;
+
 function setPermissions({ isEditor = false, canManageRepositories = false } = {}) {
   contextSrv.isEditor = isEditor;
-  jest
-    .spyOn(contextSrv, 'hasPermission')
-    .mockImplementation(
-      (action: string) => canManageRepositories && action === AccessControlAction.ProvisioningRepositoriesWrite
-    );
+  hasPermissionSpy.mockImplementation(
+    (action: string) => canManageRepositories && action === AccessControlAction.ProvisioningRepositoriesWrite
+  );
 }
 
 describe('ManagedBadge', () => {
@@ -50,6 +51,7 @@ describe('ManagedBadge', () => {
     originalProvisioning = config.featureToggles.provisioning;
     originalIsEditor = contextSrv.isEditor;
     config.featureToggles.provisioning = true;
+    hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission');
     setPermissions();
   });
 

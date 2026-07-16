@@ -156,8 +156,8 @@ function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadge
         </Menu>
       }
     >
-      <button type="button" className={styles.trigger} aria-label={tooltip}>
-        <Badge color={color} icon={icon} text={<Icon name="angle-down" size="sm" />} />
+      <button type="button" className={styles.trigger} aria-label={tooltip} aria-haspopup="menu">
+        <Badge color={color} icon={icon} text={<Icon name="angle-down" size="sm" />} tooltip={tooltip} />
       </button>
     </Dropdown>
   );

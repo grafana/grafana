@@ -20,6 +20,14 @@ import {
 // `provisioning.repositories:read` is granted to the Viewer basic role (git-sync flows need it).
 const adminRoles = () => contextSrv.evaluatePermission([AccessControlAction.ProvisioningRepositoriesWrite]);
 
+// Connection pages have their own RBAC actions; custom roles may grant connection management
+// without repository write access.
+const connectionRoles = () =>
+  contextSrv.evaluatePermission([
+    AccessControlAction.ProvisioningConnectionsCreate,
+    AccessControlAction.ProvisioningConnectionsWrite,
+  ]);
+
 export function getProvisioningRoutes(): RouteDescriptor[] {
   const featureToggles = config.featureToggles || {};
   if (!featureToggles.provisioning) {
@@ -61,7 +69,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     },
     {
       path: `${CONNECTIONS_URL}/:name/edit`,
-      roles: adminRoles,
+      roles: connectionRoles,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
@@ -69,7 +77,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     },
     {
       path: `${CONNECTIONS_URL}/new`,
-      roles: adminRoles,
+      roles: connectionRoles,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
