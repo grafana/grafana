@@ -9,7 +9,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -59,9 +58,9 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
-			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
-		},
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): dashInfo.SearchFieldsProvider,
+		}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -81,9 +80,9 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5,
-		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
-			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
-		},
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): dashInfo.SearchFieldsProvider,
+		}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1114,15 +1113,9 @@ func withIndexMinUpdateInterval(d time.Duration) setupOption {
 	}
 }
 
-func withSearchFieldsHashesForKinds(m map[string]string) setupOption {
+func withSearchFields(reg *resource.SearchFieldsRegistry) setupOption {
 	return func(options *BleveOptions) {
-		options.SearchFieldsHashesForKinds = m
-	}
-}
-
-func withSearchFieldsProvidersForKinds(m map[string]resource.SearchFieldsProvider) setupOption {
-	return func(options *BleveOptions) {
-		options.SearchFieldsProvidersForKinds = m
+		options.SearchFields = reg
 	}
 }
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
@@ -2212,11 +2205,11 @@ func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
 		Resource:  "resource",
 	}
 	hash := "deadbeefcafef00d"
-	hashes := map[string]string{
-		strings.ToLower(ns.Group + "/" + ns.Resource): hash,
+	hashes := map[resource.LowerGroupResource]string{
+		resource.NewLowerGroupResource(ns.Group, ns.Resource): hash,
 	}
 
-	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFieldsHashesForKinds(hashes))
+	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFields(resource.NewSearchFieldsRegistry(nil, hashes, nil)))
 	index, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 

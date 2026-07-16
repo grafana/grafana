@@ -16,7 +16,7 @@ const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtensi
     standardSql: StandardSQL,
     mySql: MySQL,
   };
-  return [sql({ dialect: dialects[dialect] }), foldByIndentation];
+  return [sql({ dialect: dialects[dialect], upperCaseKeywords: true }), foldByIndentation];
 };
 
 interface LoadLanguageOptions {
