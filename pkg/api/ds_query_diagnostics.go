@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -76,10 +77,11 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle. An
 	// externalized plugin whose top-level QueryData error was swallowed to survive the gRPC boundary
 	// carries it in the __har__ frame instead; fold that in as well.
-	respErr := diagnostics.ResponseError(resp)
-	if respErr == nil {
-		respErr = diagnostics.PluginCaptureError(resp)
-	}
+	// Combine both: a mixed multi-datasource panel can carry a per-refId failure (ResponseError) AND
+	// an external plugin's swallowed error (PluginCaptureError, from the __har__ frame) at the same
+	// time, so folding in only one would drop the other from query-error.txt. errors.Join is nil-safe
+	// (returns nil when both are nil).
+	respErr := errors.Join(diagnostics.ResponseError(resp), diagnostics.PluginCaptureError(resp))
 
 	// If the query failed before any traffic was captured (e.g. pre-flight access-denied or
 	// datasource-not-found, which never reach the datasource), there's nothing to diagnose, so
