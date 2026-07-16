@@ -76,7 +76,7 @@ func TestQueryDashboardDiagnostics_survivesRequestContextCancellation(t *testing
 	// no-ops, and the SkipQueryCache forcing below would never reach the detached context -- but
 	// nothing here would fail, since a fake queryDataService doesn't care what's in the context.
 	req = req.WithContext(context.WithValue(req.Context(), ctxkey.Key{}, c))
-	c.Context.Req = req
+	c.Req = req
 
 	resp := hs.QueryDashboardDiagnostics(c)
 	require.Equal(t, http.StatusAccepted, resp.Status())
