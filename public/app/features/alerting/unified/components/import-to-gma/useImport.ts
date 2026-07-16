@@ -103,9 +103,8 @@ export function mergeTemplateFiles(
   embedded: Record<string, string>,
   uploaded: Record<string, string>
 ): Record<string, string> {
-  const merged = { ...embedded };
-  for (const [name, content] of Object.entries(uploaded)) {
-    if (name in merged) {
+  for (const name of Object.keys(uploaded)) {
+    if (name in embedded) {
       throw new Error(
         t(
           'alerting.import-to-gma.templates.conflicts-with-config',
@@ -114,9 +113,8 @@ export function mergeTemplateFiles(
         )
       );
     }
-    merged[name] = content;
   }
-  return merged;
+  return { ...embedded, ...uploaded };
 }
 
 /**
