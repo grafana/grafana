@@ -314,7 +314,9 @@ SQL expressions run on an embedded SQL engine that evaluates regular expressions
 SQL expressions that use regular expression functions have limitations such as:
 
 - Lack of back-references.
+<!-- vale Grafana.Spelling = NO -->
 - No lookahead or lookbehind assertions.
+<!-- vale Grafana.Spelling = YES -->
 - Differences in handling carriage return (`\r`) characters.
 
 There may be other minor differences as well.
