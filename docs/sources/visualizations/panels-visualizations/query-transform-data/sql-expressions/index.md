@@ -291,6 +291,7 @@ Following are some best practices for alerting and recording rules:
 
 - Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
 - A SQL expression can only reference data source queries. It can't reference other expressions, and you can't use the output of a SQL expression as the input to another expression.
+- You can use only one SQL expression per panel or alert.
 - Each SQL expression query must include a time range.
 - SQL expressions aren't supported on 32-bit ARM builds of Grafana.
 - Autocomplete is available, but column and field autocomplete requires the experimental `sqlExpressionsColumnAutoComplete` feature toggle.
@@ -313,7 +314,7 @@ SQL expressions run on an embedded SQL engine that evaluates regular expressions
 SQL expressions that use regular expression functions have limitations such as:
 
 - Lack of back-references.
-- No before or after text matching.
+- No lookahead or lookbehind assertions.
 - Differences in handling carriage return (`\r`) characters.
 
 There may be other minor differences as well.
@@ -398,7 +399,7 @@ This approach ensures that a schema exists even when one query returns no data.
 You can also ask Assistant to build a panel using natural language. When you ask it to combine or correlate data across multiple queries, it prefers SQL expressions over join transformations and writes the SQL expression directly into your panel.
 
 {{< admonition type="note" >}}
-Grafana Assistant is generally available on Grafana Cloud and in public preview for Grafana OSS and Grafana Enterprise. To use it with Grafana OSS or Grafana Enterprise, you must install the Assistant app and connect it to a Grafana Cloud stack. For more information, refer to the [Grafana Assistant documentation](ref:assistant).
+Grafana Assistant is generally available on Grafana Cloud and in public preview for Grafana OSS and Grafana Enterprise. On Grafana Enterprise (version 13.1 and later), Assistant comes pre-installed, so you only need to connect your Grafana Cloud account to start using it. On Grafana OSS, install the Assistant app from the plugin catalog and connect it to a Grafana Cloud stack. For more information, refer to the [Grafana Assistant documentation](ref:assistant).
 {{< /admonition >}}
 
 When Grafana Assistant is available on your instance, the SQL expression editor shows Assistant buttons to the right of the **Run query** button. When you use a button, Assistant opens in the sidebar with your SQL query, any query errors, and your schema column metadata already included as context, so it can reference the actual field names and types in your data. From there you get the full Assistant experience, including follow-up questions, conversation history, and access to the Assistant's built-in tools.
