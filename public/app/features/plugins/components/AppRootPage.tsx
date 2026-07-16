@@ -2,7 +2,7 @@
 import { type AnyAction, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
-import { useLocation, useParams } from 'react-router-dom-v5-compat';
+import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import {
   AppEvents,
@@ -84,6 +84,13 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
     (newPluginNav: NavModel) => dispatch(stateSlice.actions.changeNav(newPluginNav)),
     []
   );
+
+  // Redirect alias URLs to the canonical plugin URL so old deep-links keep working.
+  // The aliasIDs check avoids misfiring during navigation between two different apps.
+  if (plugin && pluginId !== plugin.meta.id && plugin.meta.aliasIDs?.includes(pluginId)) {
+    const canonicalPath = location.pathname.replace(`/a/${pluginId}`, `/a/${plugin.meta.id}`);
+    return <Navigate replace to={{ pathname: canonicalPath, search: location.search, hash: location.hash }} />;
+  }
 
   if (!plugin || pluginId !== plugin.meta.id) {
     // Use current layout while loading to reduce flickering
