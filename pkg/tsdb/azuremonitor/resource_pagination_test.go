@@ -167,12 +167,34 @@ func TestHandleSubscriptions(t *testing.T) {
 		require.Equal(t, []string{"sub-3", "sub-4"}, decodeSubscriptionIDs(t, body))
 	})
 
+	t.Run("default (no listAll) returns a single page plus a Link cursor", func(t *testing.T) {
+		srv, count, _ := newArmPagingServer(t, 3, 2)
+		s := newPaginationTestService(srv.URL, srv.Client())
+
+		rw := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions", nil)
+		require.NoError(t, err)
+		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
+
+		res := rw.Result()
+		require.Equal(t, http.StatusOK, res.StatusCode)
+		require.Equal(t, 1, *count)
+
+		link := res.Header.Get("Link")
+		require.Contains(t, link, `rel="next"`)
+		require.Contains(t, link, "nextToken=page2")
+
+		body, err := readAllClose(res)
+		require.NoError(t, err)
+		require.Equal(t, []string{"sub-1", "sub-2"}, decodeSubscriptionIDs(t, body))
+	})
+
 	t.Run("eager mode stops at the page cap and flags truncation", func(t *testing.T) {
 		srv, count, _ := newArmPagingServer(t, MaxArmPages+10, 1)
 		s := newPaginationTestService(srv.URL, srv.Client())
 
 		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions", nil)
+		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=true", nil)
 		require.NoError(t, err)
 		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
 

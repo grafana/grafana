@@ -224,7 +224,7 @@ func (s *Service) listArmResource(rw http.ResponseWriter, req *http.Request, ser
 	}
 
 	query := req.URL.Query()
-	listAll := query.Get("listAll") != "false"
+	listAll := query.Get("listAll") == "true"
 
 	requestURL := service.URL + armPath
 	if token := query.Get("nextToken"); token != "" {
