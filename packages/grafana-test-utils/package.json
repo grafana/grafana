@@ -77,6 +77,6 @@
     "jest-canvas-mock": "2.5.2",
     "jest-canvas-mock-compare": "0.1.0",
     "jest-snapshot": "^30.3.0",
-    "typescript": "6.0.2"
+    "typescript": "^7.0.2"
   }
 }

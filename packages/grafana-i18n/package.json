@@ -64,7 +64,7 @@
   "devDependencies": {
     "@types/react": "18.3.18",
     "rollup": "^4.60.1",
-    "typescript": "6.0.2"
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "react": ">=18"
