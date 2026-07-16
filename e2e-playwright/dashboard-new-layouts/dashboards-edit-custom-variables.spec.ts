@@ -56,8 +56,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, {
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, {
         type: 'custom',
         name: 'foo',
         label: 'Foo',
@@ -92,8 +91,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, {
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, {
         type: 'custom',
         name: 'foo',
         label: 'Foo',

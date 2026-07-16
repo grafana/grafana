@@ -2,12 +2,10 @@ package builders
 
 import (
 	"github.com/grafana/grafana-app-sdk/app"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // iamManifests is the slice the IAM builders pass to the standard document
@@ -15,13 +13,16 @@ import (
 // populate IndexableDocument.SelectableFields for IAM kinds.
 var iamManifests = []app.Manifest{iam.LocalManifest()}
 
+// iamProvider is shared by all IAM builders and their exported field sets, so
+// the manifest is parsed once.
+var iamProvider = resource.NewManifestBackedProvider(iamManifests)
+
 const (
 	USER_EMAIL        = "email"
 	USER_LOGIN        = "login"
 	USER_LAST_SEEN_AT = "lastSeenAt"
 	USER_ROLE         = "role"
 	USER_DISABLED     = "disabled"
-	USER_CREATED      = "createdAt"
 )
 
 // UserSortableExtraFields are the additional fields that can be used for sorting user search results.
@@ -32,71 +33,21 @@ var UserSortableExtraFields = []string{
 	USER_LAST_SEEN_AT,
 }
 
-// UserTableColumnDefinitions exposes column-defs by name for wire-API
-// consumers (the IAM legacy SQL backend in user/legacy_search.go).
-// Derived from UserSearchFields via tableColumnsByName. UniqueValues was
-// set on the historical hand-written email/login entries but has no
-// production consumer and is not preserved.
-var UserTableColumnDefinitions = tableColumnsByName(UserSearchFields)
-
-// UserSearchFields declares paths and types for each user search field. The
-// standard document builder uses these to extract spec/status values from the
-// raw JSON, avoiding a custom builder.
+// UserSearchFields are read from the generated IAM manifest (declared in
+// apps/iam/kinds/user.cue).
 //
-// lastSeenAt and disabled set EmitZeroIfAbsent so every indexed user document
-// carries those fields. The user-search API sorts on lastSeenAt and missing
-// values would otherwise sort last, putting never-seen users in a different
-// position than the historical "sort by epoch 0" behaviour.
+// lastSeenAt (int64) and disabled (boolean) declare the filter capability to
+// record that they are meant to be filterable and to drive the bleve mapping
+// (numeric / boolean under dynamic mapping). End-to-end numeric and boolean
+// equality filters in ResourceSearchRequest are still a follow-up: the query
+// path treats filter values as strings, so a request against these fields
+// would not match a numeric-indexed term yet. No in-tree client filters by
+// lastSeenAt or disabled today, so this is a known gap rather than a rollout
+// concern.
 //
-// createdAt mirrors the standard IndexableDocument.Created field into the
-// per-kind fields.* sub-document because the top-level created field has no
-// bleve mapping today. See PR #126405 for context.
-//
-// lastSeenAt (int64) and disabled (boolean) declare SearchCapabilityFilter to
-// record that these fields are intended to be filterable, and to drive the
-// bleve mapping (numeric / boolean under dynamic mapping). End-to-end
-// numeric and boolean equality filters in ResourceSearchRequest are still a
-// follow-up: the query path treats filter values as strings, so a request
-// against these fields would not match a numeric-indexed term yet. No
-// in-tree client filters by lastSeenAt or disabled today, so this is a
-// known gap rather than a rollout concern.
-var UserSearchFields = []resource.SearchFieldDefinition{
-	{Name: USER_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The email address of the user"},
-	{Name: USER_LOGIN, Path: "spec.login", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The login of the user"},
-	{Name: USER_LAST_SEEN_AT, Path: "status.lastSeenAt", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true, Description: "The last seen timestamp of the user"},
-	{Name: USER_ROLE, Path: "spec.role", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The role of the user"},
-	{Name: USER_DISABLED, Path: "spec.disabled", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true, Description: "Whether the user is disabled"},
-	{Name: USER_CREATED, CopyFromStandard: resource.StandardFieldCreated, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "The creation timestamp of the user, in epoch milliseconds"},
-}
+// Exported for the IAM legacy SQL search backend; do not mutate.
+var UserSearchFields = iamProvider.Fields(iamv0.UserResourceInfo.GroupVersionResource())
 
 func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
-	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(UserTableColumnDefinitions))
-	for _, v := range UserTableColumnDefinitions {
-		values = append(values, v)
-	}
-	fields, err := resource.NewSearchableDocumentFields(values)
-	if err != nil {
-		return resource.DocumentBuilderInfo{}, err
-	}
-
-	gvr := iamv0.UserResourceInfo.GroupVersionResource()
-	provider := resource.NewMapProvider(
-		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
-			gvr: UserSearchFields,
-		},
-		// Documents stored without an explicit apiVersion fall back to the
-		// served version so extraction still happens for legacy payloads.
-		map[schema.GroupResource]string{
-			gvr.GroupResource(): gvr.Version,
-		},
-	)
-
-	gr := iamv0.UserResourceInfo.GroupResource()
-	return resource.DocumentBuilderInfo{
-		GroupResource:        gr,
-		Fields:               fields,
-		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
-		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
-		SearchFieldsProvider: provider,
-	}, nil
+	return iamBuilder(iamv0.UserResourceInfo, UserSearchFields)
 }

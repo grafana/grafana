@@ -63,6 +63,12 @@ jest.mock('./SqlQueryActions', () => ({
   SqlQueryActions: jest.fn(() => null),
 }));
 
+// The lazy signature-metadata load is covered by its own hook test; stub it here
+// so the async import doesn't schedule state updates outside act().
+jest.mock('./hooks/useFunctionSignatures', () => ({
+  useFunctionSignatures: jest.fn(() => undefined),
+}));
+
 const mockBackendSrv = {
   post: jest.fn().mockResolvedValue({
     kind: 'SQLSchemaResponse',
@@ -83,6 +89,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => mockBackendSrv,
   getDataSourceSrv: () => mockDataSourceSrv,
   reportInteraction: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref: unknown) => mockDataSourceSrv.get(ref),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
 }));
 
 describe('SqlExpr', () => {

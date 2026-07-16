@@ -14,6 +14,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
+import { setupFaroPageMeta } from './faroPageMeta';
 import { type GrafanaJavascriptAgentBackendOptions, type GrafanaJavascriptAgentEchoEvent } from './types';
 
 function isCrossOriginIframe() {
@@ -64,12 +65,10 @@ export class GrafanaJavascriptAgentBackend
         new FetchTransport({
           url: options.customEndpoint,
           apiKey: options.apiKey,
-          // faro enables fetch keepalive per request whenever the body is under ~60KB, but the
-          // browser's ~64KB keepalive budget is shared across all in-flight requests, so faro's
-          // concurrent sends can collectively exceed it — leaving requests stuck "pending" and
-          // dropping session replay segments. When replay is enabled, force keepalive off for this
-          // transport; otherwise leave faro's default untouched.
-          ...(sessionReplayEnabled ? { requestOptions: { keepalive: false } } : {}),
+          // When session replay is enabled, gzip-compress request bodies via the browser's
+          // CompressionStream — session replay produces the large payloads that benefit most.
+          // Falls back to uncompressed when CompressionStream is unavailable.
+          ...(sessionReplayEnabled ? { requestCompression: true } : {}),
         })
       );
     }
@@ -103,7 +102,8 @@ export class GrafanaJavascriptAgentBackend
         persistent: true,
       },
       batching: {
-        sendTimeout: 1000,
+        sendTimeout: 2000,
+        itemLimit: 250,
       },
       beforeSend: (item) => beforeSendHandler(options.botFilterEnabled, item),
       internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
@@ -111,8 +111,13 @@ export class GrafanaJavascriptAgentBackend
 
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
-    if (faro && sessionReplayEnabled) {
-      this.initReplayAfterDomRendered(faro);
+    if (faro) {
+      // Attach navigation context (referrer, previousUrl) to the meta of every emitted signal.
+      setupFaroPageMeta(faro);
+
+      if (sessionReplayEnabled) {
+        this.initReplayAfterDomRendered(faro);
+      }
     }
   }
 

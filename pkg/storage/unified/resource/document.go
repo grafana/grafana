@@ -36,64 +36,35 @@ type DocumentBuilderInfo struct {
 	// The target resource (empty will be used to match anything)
 	GroupResource schema.GroupResource
 
-	// Defines the searchable fields
-	// NOTE: this does not include the root/common fields, only values specific to the the builder
-	Fields SearchableDocumentFields
-
 	// simple/static builders that do not depend on the environment can be declared once
 	Builder DocumentBuilder
 
 	// Complicated builders (eg dashboards!) will be declared dynamically and managed by the ResourceServer
 	Namespaced NamespacedDocumentSupplier
 
-	// SearchFieldsHash is a stable hex hash over the SearchFieldDefinition
-	// slices registered for GroupResource across every version. The hash is
-	// stored in IndexBuildInfo when an index is built and re-checked
-	// whenever a rebuild is considered, so the index is rebuilt
-	// automatically when index-affecting search-field metadata changes.
-	//
-	// Empty when the builder does not use a SearchFieldsProvider.
-	SearchFieldsHash string
-
 	// SearchFieldsProvider is the manifest-driven source of truth for this
 	// builder's search fields. When non-nil, the bleve mapping for
 	// GroupResource is built from the provider's SearchFieldDefinition
-	// declarations rather than from the legacy Fields (column-definition)
-	// translation. Fields may still be populated alongside the provider for
-	// downstream consumers that read column metadata directly.
+	// declarations. The provider is also the source for the column-definition
+	// view of the kind's fields that the search backend uses for result
+	// metadata and sort-field prefixing (see SearchableFields).
 	SearchFieldsProvider SearchFieldsProvider
 }
 
-// SearchFieldsHashesForBuilders returns a lower-cased "group/resource" map
-// of SearchFieldsHash values collected from the given DocumentBuilderInfo
-// entries. Empty hashes are skipped so consumers can use len(...) == 0 as a
-// shorthand for "no expected hash".
-func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[string]string {
-	out := map[string]string{}
-	for _, b := range builders {
-		if b.SearchFieldsHash == "" {
-			continue
-		}
-		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
-		out[key] = b.SearchFieldsHash
+// SearchableFieldsFromProvider returns the column-definition view of a kind's
+// custom search fields for the given group and resource, derived from the
+// provider. The provider is the single source of truth; the search backend
+// uses this view for result column metadata and sort-field prefixing. Returns
+// nil when the provider is nil.
+func SearchableFieldsFromProvider(p SearchFieldsProvider, group, resource string) (SearchableDocumentFields, error) {
+	if p == nil {
+		return nil, nil
 	}
-	return out
-}
-
-// SearchFieldProvidersForBuilders returns a lower-cased "group/resource" map
-// of SearchFieldsProvider values collected from the given DocumentBuilderInfo
-// entries. Builders with a nil provider are skipped, so the map's keys list
-// the kinds whose bleve mapping is provider-driven.
-func SearchFieldProvidersForBuilders(builders []DocumentBuilderInfo) map[string]SearchFieldsProvider {
-	out := map[string]SearchFieldsProvider{}
-	for _, b := range builders {
-		if b.SearchFieldsProvider == nil {
-			continue
-		}
-		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
-		out[key] = b.SearchFieldsProvider
-	}
-	return out
+	sfds := p.Fields(schema.GroupVersionResource{
+		Group:    group,
+		Resource: resource,
+	})
+	return NewSearchableDocumentFields(SearchFieldDefinitionsToTableColumns(sfds))
 }
 
 type DocumentBuilderSupplier interface {
@@ -309,8 +280,7 @@ func StandardDocumentBuilderWithFields(manifests []app.Manifest, provider Search
 }
 
 type standardDocumentBuilder struct {
-	// Maps "group/resource" (in lowercase) to list of selectable fields.
-	selectableFields map[string][]string
+	selectableFields map[LowerGroupResource][]string
 	// provider supplies declarative search fields; may be nil.
 	provider SearchFieldsProvider
 	log      log.Logger
@@ -330,7 +300,7 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 
 	doc := NewIndexableDocument(key, rv, obj, "")
 
-	sfKey := strings.ToLower(key.GetGroup() + "/" + key.GetResource())
+	sfKey := NewLowerGroupResource(key.GetGroup(), key.GetResource())
 	doc.SelectableFields = getSelectableFieldsFromObject(tmp, s.selectableFields[sfKey])
 
 	if s.provider != nil {
@@ -357,19 +327,6 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 		return
 	}
 	for _, def := range defs {
-		if def.CopyFromStandard != StandardFieldUnknown {
-			if v, ok := standardFieldValue(doc, def.CopyFromStandard); ok {
-				if doc.Fields == nil {
-					doc.Fields = make(map[string]any)
-				}
-				doc.Fields[def.Name] = v
-			} else {
-				s.log.Warn("unknown CopyFromStandard target",
-					"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
-					"field", def.Name, "target", def.CopyFromStandard)
-			}
-			continue
-		}
 		if def.Path == "" {
 			continue
 		}
@@ -403,25 +360,6 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 		}
 		doc.Fields[def.Name] = coerced
 	}
-}
-
-// standardFieldValue returns the value of a top-level IndexableDocument field
-// referenced by CopyFromStandard. The set of supported targets is closed and
-// matches the StandardField* constants in search_field.go.
-func standardFieldValue(doc *IndexableDocument, target StandardField) (any, bool) {
-	switch target {
-	case StandardFieldCreated:
-		return doc.Created, true
-	case StandardFieldUpdated:
-		return doc.Updated, true
-	case StandardFieldCreatedBy:
-		return doc.CreatedBy, true
-	case StandardFieldUpdatedBy:
-		return doc.UpdatedBy, true
-	case StandardFieldUnknown:
-		return nil, false
-	}
-	return nil, false
 }
 
 // zeroValueForFieldDefinition returns the type-appropriate zero value for a

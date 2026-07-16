@@ -25,8 +25,7 @@ type ListRoutingTreesQueryOptions = Parameters<
  *
  * This function wraps the notificationsAPIv0alpha1.useListRoutingTreeQuery with proper typing.
  *
- * When the `alertingMultiplePolicies` feature toggle is enabled on the backend, this returns all
- * available routing trees. Otherwise, it returns only the default "user-defined" tree.
+ * The backend returns all available routing trees.
  *
  * @param queryArgs - Optional query arguments for filtering, pagination, etc.
  * @param queryOptions - Optional query options (refetchOnFocus, skip, etc.)

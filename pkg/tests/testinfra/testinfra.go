@@ -449,6 +449,22 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.AnnotationMigrationPhase != "" {
+		migrationSect, err := cfg.NewSection("annotations.app_platform")
+		require.NoError(t, err)
+		_, err = migrationSect.NewKey("api_migration_phase", opts.AnnotationMigrationPhase)
+		require.NoError(t, err)
+		_, err = migrationSect.NewKey("api_server_url", opts.AnnotationAPIServerURL)
+		require.NoError(t, err)
+	}
+
+	if opts.AnnotationProxyStaticToken != "" {
+		grpcClientSect, err := cfg.NewSection("grpc_client_authentication")
+		require.NoError(t, err)
+		_, err = grpcClientSect.NewKey("token", opts.AnnotationProxyStaticToken)
+		require.NoError(t, err)
+	}
+
 	if opts.LicensePath != "" {
 		section, err := cfg.NewSection("enterprise")
 		require.NoError(t, err)
@@ -804,6 +820,27 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
+	if opts.NATSEnabled {
+		listenAddress := opts.NATSListenAddress
+		if listenAddress == "" {
+			listenAddress = "127.0.0.1"
+		}
+		section, err := getOrCreateSection("nats")
+		require.NoError(t, err)
+		_, err = section.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = section.NewKey("mode", "embedded")
+		require.NoError(t, err)
+		_, err = section.NewKey("listen_address", listenAddress)
+		require.NoError(t, err)
+		_, err = section.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
+		require.NoError(t, err)
+		_, err = section.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
+		require.NoError(t, err)
+		// Single-node test bus: skip KV-backed peer discovery/clustering.
+		_, err = section.NewKey("discovery_enabled", "false")
+		require.NoError(t, err)
+	}
 	if opts.PermittedProvisioningPaths != "" {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
@@ -852,12 +889,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))
 		require.NoError(t, err)
 	}
-	if opts.ProvisioningFolderAPIVersion != "" {
-		provisioningSect, err := getOrCreateSection("provisioning")
-		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
-		require.NoError(t, err)
-	}
 	// nil means "use the ini default" (100). Non-nil writes the value, including
 	// 0 which disables the size check.
 	if opts.ProvisioningMaxIncrementalChanges != nil {
@@ -872,6 +903,24 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("max_file_size", fmt.Sprintf("%d", *opts.ProvisioningMaxFileSize))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningControllerResyncInterval > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resync_interval", opts.ProvisioningControllerResyncInterval.String())
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningHistoryExpiration > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("history_expiration", opts.ProvisioningHistoryExpiration.String())
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningJobPollInterval > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("job_poll_interval", opts.ProvisioningJobPollInterval.String())
 		require.NoError(t, err)
 	}
 	if opts.EnableSCIM {
@@ -969,7 +1018,11 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	maxConns := opts.DBMaxConns
 	if maxConns <= 0 {
-		maxConns = 2
+		// Keep the pool small to surface connection leaks, but not so small that
+		// startup deadlocks: while migrating, the migrator can hold one connection
+		// on the database lock while each migration's transaction needs a second,
+		// and other startup components share the same pool.
+		maxConns = 5
 	}
 
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
@@ -1045,28 +1098,54 @@ type GrafanaOpts struct {
 	ProvisioningResources                                []string
 	ProvisioningMaxResourcesPerRepository                int64
 	ProvisioningMaxRepositories                          int64
-	ProvisioningFolderAPIVersion                         string
 	ProvisioningMaxIncrementalChanges                    *int
 	ProvisioningMaxFileSize                              *int64
-	GrafanaComSSOAPIToken                                string
-	LicensePath                                          string
-	EnableRecordingRules                                 bool
-	EnableSCIM                                           bool
-	RBACSingleOrganization                               bool
-	GlobalRoleSeedingEnabled                             bool
-	APIServerRuntimeConfig                               string
-	DisableControllers                                   bool
-	DisableDBCleanup                                     bool
-	MigrationParquetBuffer                               bool
-	MigrationChunkMaxBytes                               int64
-	EnableSQLKVBackend                                   bool
-	SecretsManagerEnableDBMigrations                     bool
-	OpenFeatureAPIEnabled                                bool
-	DisableAuthZClientCache                              bool
-	ZanzanaReconciliationInterval                        time.Duration
-	ZanzanaReconcilerMode                                setting.ZanzanaReconcilerMode
-	DisableZanzanaCache                                  bool
-	DisableZanzanaServerCheckQueryCache                  bool
+	// ProvisioningControllerResyncInterval overrides [provisioning]
+	// resync_interval (repo/connection/job informer re-list). Set it
+	// high in NATS tests so a fast reconcile can only be a live notification, not
+	// the periodic re-list. Zero leaves the ini default (60s).
+	ProvisioningControllerResyncInterval time.Duration
+	// ProvisioningHistoryExpiration overrides [provisioning] history_expiration
+	// (HistoricJob retention + historic-job informer resync). Set it low to
+	// exercise the re-list-driven cleanup quickly. Zero leaves the default (10m).
+	ProvisioningHistoryExpiration time.Duration
+	// ProvisioningJobPollInterval overrides [provisioning] job_poll_interval (job
+	// driver fallback poll). Set it high in NATS tests so a job that completes
+	// quickly can only have been woken by the live notification, not the poll.
+	// Zero leaves the default (30s).
+	ProvisioningJobPollInterval time.Duration
+	GrafanaComSSOAPIToken       string
+	LicensePath                 string
+	EnableRecordingRules        bool
+	EnableSCIM                  bool
+	RBACSingleOrganization      bool
+	GlobalRoleSeedingEnabled    bool
+	APIServerRuntimeConfig      string
+	DisableControllers          bool
+	DisableDBCleanup            bool
+	MigrationParquetBuffer      bool
+	MigrationChunkMaxBytes      int64
+	EnableSQLKVBackend          bool
+	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
+	// mode=embedded). Provisioning controllers then consume resource-change
+	// notifications through the NATS-backed informer instead of the apiserver
+	// watch. Publishing requires EnableSQLKVBackend=true.
+	NATSEnabled bool
+	// NATSListenAddress is the embedded server's bind address; defaults to
+	// 127.0.0.1 when empty.
+	NATSListenAddress string
+	// NATSClientPort / NATSClusterPort are the embedded server's ports. Callers
+	// should pass free ports so parallel test binaries don't collide on the
+	// conventional 4222/6222.
+	NATSClientPort                      int
+	NATSClusterPort                     int
+	SecretsManagerEnableDBMigrations    bool
+	OpenFeatureAPIEnabled               bool
+	DisableAuthZClientCache             bool
+	ZanzanaReconciliationInterval       time.Duration
+	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode
+	DisableZanzanaCache                 bool
+	DisableZanzanaServerCheckQueryCache bool
 
 	// If set to 0, the default (2) is used.
 	DBMaxConns int
@@ -1086,7 +1165,11 @@ type GrafanaOpts struct {
 	HARedisPeerName        string
 	HASingleNodeEvaluation bool
 
+	// Annotation app platform configuration
 	EnableAnnotationAppPlatform bool
+	AnnotationMigrationPhase    string
+	AnnotationAPIServerURL      string
+	AnnotationProxyStaticToken  string
 
 	// Enables Scope Api
 	ScopesApiEnabled bool

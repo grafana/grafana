@@ -206,6 +206,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 					provisioning.GitHubRepositoryType,
 					provisioning.BitbucketRepositoryType,
 					provisioning.GitLabRepositoryType,
+					provisioning.GitHubEnterpriseRepositoryType,
 				}, settings.AvailableRepositoryTypes)
 			} else {
 				assert.ElementsMatch(collect, []provisioning.RepositoryType{
