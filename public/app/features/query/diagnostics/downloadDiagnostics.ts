@@ -60,14 +60,14 @@ export async function downloadDiagnosticsForQueries(
 }
 
 /** One panel's diagnostics input for a whole-dashboard request: its resolved queries and time range
- * (template variables applied by the caller) plus optional panel JSON for the bundle. */
+ * (template variables applied by the caller). The dashboard's own JSON, sent alongside the panel
+ * list in {@link startDashboardDiagnostics}, is what supplies the panel JSON for the bundle. */
 export interface DashboardDiagnosticsPanel {
   id: number;
   title: string;
   from: string;
   to: string;
   queries: DataQuery[];
-  panel?: unknown;
 }
 
 /** State of an async dashboard-diagnostics generation job, as reported by the status endpoint. */
