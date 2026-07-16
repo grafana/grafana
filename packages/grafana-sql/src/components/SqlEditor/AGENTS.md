@@ -1,6 +1,6 @@
 # SqlEditor Agent Notes
 
-This folder contains generic SQL editor behavior used by SQL Expressions. Keep the editor code generic unless a caller-facing API makes SQL Expressions-specific behavior explicit.
+This folder contains the generic SQL editor behavior exported by `@grafana/sql`. Keep the editor code generic unless a caller-facing API makes product-specific behavior explicit.
 
 ## Completion Context
 

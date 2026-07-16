@@ -1,4 +1,4 @@
-import { type SqlFunctionSignature } from './SqlEditor/signatureHelp';
+import { type SqlFunctionSignature } from '@grafana/sql';
 
 /**
  * Signature metadata for the SQL Expression functions.

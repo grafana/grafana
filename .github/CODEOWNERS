@@ -728,6 +728,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/sql
 /packages/grafana-sql/ @grafana/data-sources-plugins
+/packages/grafana-sql/src/components/SqlEditor/ @grafana/datapro
 
 # @grafana/ui
 /packages/grafana-ui/ @grafana/grafana-frontend-platform

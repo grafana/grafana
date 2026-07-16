@@ -9,7 +9,7 @@ import { t, Trans } from '@grafana/i18n';
 import { CompletionItemKind, type TableIdentifier } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { formatSQL } from '@grafana/sql';
+import { formatSQL, SqlEditor, type SqlCompletionProvider } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
@@ -19,8 +19,6 @@ import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider as getLegacySqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
-import { SqlEditor } from './SqlEditor/SqlEditor';
-import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useFunctionSignatures } from './hooks/useFunctionSignatures';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
