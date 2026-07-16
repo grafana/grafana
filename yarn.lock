@@ -11042,6 +11042,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript/old@npm:typescript@^6":
+  version: 6.0.3
+  resolution: "typescript@npm:6.0.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10/0ef2357a4cffd916b52b683a021cdab0f81eea4e9aa35f2d254581c9a5106da02224e3392e1b0ed42b7a48f80c966e5f52b8e1a27941fa0523c1705a9c2e0330
+  languageName: node
+  linkType: hard
+
 "@typescript/typescript-aix-ppc64@npm:7.0.2":
   version: 7.0.2
   resolution: "@typescript/typescript-aix-ppc64@npm:7.0.2"
@@ -18971,7 +18981,7 @@ __metadata:
     tslib: "npm:2.8.1"
     tween-functions: "npm:^1.2.0"
     type-fest: "npm:^4.18.2"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
     uplot: "npm:1.6.32"
     vis-data: "npm:^8.0.0"
     vis-network: "npm:10.0.2"
@@ -32135,6 +32145,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:@typescript/typescript6@^6.0.2":
+  version: 6.0.2
+  resolution: "@typescript/typescript6@npm:6.0.2"
+  dependencies:
+    "@typescript/old": "npm:typescript@^6"
+  bin:
+    tsc6: bin/tsc6
+  checksum: 10/e214aa9b2783ac924498ebbb42a4419e1d8681acc10d26daa145e938d6da0ecde46ad36690fc4e9083a4b47cf73cdc83f2c2054f32e07f10920768956c2b00a1
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@npm%3A5.6.1-rc#optional!builtin<compat/typescript>":
   version: 5.6.1-rc
   resolution: "typescript@patch:typescript@npm%3A5.6.1-rc#optional!builtin<compat/typescript>::version=5.6.1-rc&hash=8c6c40"
@@ -32162,6 +32183,17 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/e5501dfcf8c5b6b9a61f6fa53decc40187cebe3a2b7b2bd51c615007ad4cf6d58298461fef63294f6be9d5f2f33019b2a2e2bf02d9cb7d7f6ec94372bf24ffa2
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A@typescript/typescript6@^6.0.2#optional!builtin<compat/typescript>":
+  version: 6.0.2
+  resolution: "typescript@patch:@typescript/typescript6@npm%3A6.0.2#optional!builtin<compat/typescript>::version=6.0.2&hash=5786d5"
+  dependencies:
+    "@typescript/old": "npm:typescript@^6"
+  bin:
+    tsc6: bin/tsc6
+  checksum: 10/b190ec6b713b0fa95c059ff8019b740c17591ea83a3b60e6fe592d51d56d73c360b86abce48f616d25c39697cc5f4bb9efe8e2a231096f493758457cb175e11c
   languageName: node
   linkType: hard
 
