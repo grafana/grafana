@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// LicensePath returns the path to a plugin's marketplace license when its ID is safe.
 func LicensePath(directory, pluginID string) (string, bool) {
 	if pluginID == "" || pluginID == "." || pluginID == ".." || strings.Contains(pluginID, "\x00") ||
 		strings.ContainsAny(pluginID, "/\\:") || filepath.IsAbs(pluginID) || filepath.Base(pluginID) != pluginID {
