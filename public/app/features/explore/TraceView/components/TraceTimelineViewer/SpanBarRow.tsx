@@ -559,9 +559,7 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
         <Icon
           name={'exclamation-circle'}
           style={{
-            backgroundColor: span.errorIconColor
-              ? autoColor(theme, span.errorIconColor)
-              : autoColor(theme, '#db2828'),
+            backgroundColor: span.errorIconColor ? autoColor(theme, span.errorIconColor) : autoColor(theme, '#db2828'),
           }}
           className={styles.errorIcon}
         />
