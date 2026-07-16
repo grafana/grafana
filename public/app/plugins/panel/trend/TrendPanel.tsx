@@ -65,9 +65,11 @@ export const TrendPanel = ({
     );
   }
 
+  const frames = info.frames;
+
   return (
     <TimeSeries // Name change!
-      frames={info.frames}
+      frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -106,7 +108,7 @@ export const TrendPanel = ({
                       dataLinks={dataLinks}
                       hideZeros={options.tooltip.hideZeros}
                       canExecuteActions={userCanExecuteActions}
-                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, info.frames)}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
                 }}
