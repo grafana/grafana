@@ -507,10 +507,6 @@ const (
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
 	FlagAlertingRuleQuality = "alerting.ruleQuality"
 
-	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch data source
-	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
-
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"

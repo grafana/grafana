@@ -1491,14 +1491,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the Elasticsearch data source",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
 			// since users on v2.9 need it to disable the feature, as it doesn't work for them.
 			Name:        "lokiLabelNamesQueryApi",
