@@ -43,7 +43,9 @@ func TestWorker_IsSupported(t *testing.T) {
 func TestWorker_Process(t *testing.T) {
 	t.Run("sleeps for the duration then completes", func(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetTotal", mock.Anything, defaultProgressUpdates).Return()
+		// 80ms can't deliver the default count without out-pacing the throttle, so
+		// the total is clamped to 1.
+		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
 
@@ -53,14 +55,30 @@ func TestWorker_Process(t *testing.T) {
 		require.GreaterOrEqual(t, time.Since(start), 80*time.Millisecond)
 	})
 
-	t.Run("uses configured progress updates", func(t *testing.T) {
+	t.Run("caps progress updates that out-pace the throttle", func(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetTotal", mock.Anything, 3).Return()
+		// 50ms / 3 is far tighter than the throttle, so the total is clamped to 1.
+		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
 
 		err := NewWorker(true).Process(context.Background(), nil, testJob(50*time.Millisecond, 3), progress)
 		require.NoError(t, err)
+	})
+
+	t.Run("honors configured progress updates when the duration allows", func(t *testing.T) {
+		progress := jobs.NewMockJobProgressRecorder(t)
+		// 2 updates over 4× the interval are deliverable, so the count is honored.
+		// Cancel early; SetTotal is recorded before the loop starts.
+		progress.On("SetTotal", mock.Anything, 2).Return()
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+
+		duration := 4 * jobs.NotifyThrottleInterval
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+		defer cancel()
+
+		err := NewWorker(true).Process(ctx, nil, testJob(duration, 2), progress)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 
 	t.Run("missing test options", func(t *testing.T) {

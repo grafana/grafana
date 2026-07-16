@@ -55,6 +55,17 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 		progressUpdates = defaultProgressUpdates
 	}
 
+	// The recorder coalesces updates emitted closer than NotifyThrottleInterval,
+	// so cap the count to what the duration can actually persist — otherwise the
+	// advertised total exceeds the events produced. Validation rejects explicit
+	// over-requests; this also covers the default count on a short duration.
+	if maxUpdates := int(duration / jobs.NotifyThrottleInterval); maxUpdates < progressUpdates {
+		if maxUpdates < 1 {
+			maxUpdates = 1
+		}
+		progressUpdates = maxUpdates
+	}
+
 	logger := logging.FromContext(ctx).With("duration", duration, "progressUpdates", progressUpdates)
 	ctx = logging.Context(ctx, logger)
 	ctx, span := tracing.Start(ctx, "provisioning.perftest.process")

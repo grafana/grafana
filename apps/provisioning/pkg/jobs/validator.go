@@ -275,6 +275,12 @@ const MaxTestJobDuration = 15 * time.Minute
 // this keeps event volume from a single job bounded.
 const MaxTestJobProgressUpdates = 1000
 
+// MinTestJobProgressInterval is the minimum spacing between persisted progress
+// updates; tighter cadences are coalesced away by the recorder and never
+// persist. Mirrors jobs.NotifyThrottleInterval (not importable from this
+// module) — keep in sync.
+const MinTestJobProgressInterval = 500 * time.Millisecond
+
 // validateTestJobOptions validates performance-testing job options
 func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
 	list := field.ErrorList{}
@@ -293,6 +299,9 @@ func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
 		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, "progressUpdates must be non-negative"))
 	case updates > MaxTestJobProgressUpdates:
 		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, fmt.Sprintf("progressUpdates must not exceed %d", MaxTestJobProgressUpdates)))
+	case d > 0 && updates > 0 && d/time.Duration(updates) < MinTestJobProgressInterval:
+		maxUpdates := int(d / MinTestJobProgressInterval)
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, fmt.Sprintf("progressUpdates must not exceed %d for a %s duration (updates must be at least %s apart)", maxUpdates, d, MinTestJobProgressInterval)))
 	}
 
 	return list

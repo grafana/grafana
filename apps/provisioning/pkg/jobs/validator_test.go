@@ -1035,6 +1035,42 @@ func TestValidateJob(t *testing.T) {
 			},
 		},
 		{
+			name: "test action with progress updates too dense for duration",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						// 1s / 100 updates = 10ms apart, far below the throttle.
+						Duration:        metav1.Duration{Duration: time.Second},
+						ProgressUpdates: 100,
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.progressUpdates")
+				require.Contains(t, err.Error(), "at least")
+			},
+		},
+		{
+			name: "test action with progress updates exactly at the throttle floor",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						// 10s / 20 updates = 500ms apart, exactly deliverable.
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
+						ProgressUpdates: 20,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "test action over progress updates cap",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
