@@ -126,6 +126,10 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
     try {
       // Opt-in structural validation (default off to avoid breaking existing
       // callers). When enabled, reject an invalid spec before mutating anything.
+      // On success we apply the *parsed* spec: the schema normalizes Go's
+      // `null` slices to `[]`, `elements: null` to `{}`, and fills CUE `*`
+      // defaults, so the scene is rebuilt from the same shape validation saw.
+      let validatedSpec: DashboardV2Spec | undefined;
       if (payload.validate) {
         const parsed = dashboardV2SpecSchema.safeParse(payload.spec);
         if (!parsed.success) {
@@ -135,12 +139,14 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
           });
           return { success: false, error: `Validation failed: ${errorMessages.join(', ')}`, changes: [] };
         }
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- parsed output matches the v2 spec the transform expects
+        validatedSpec = parsed.data as unknown as DashboardV2Spec;
       }
 
       enterEditModeIfNeeded(scene);
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- caller-supplied spec is validated by the transform
-      const spec = payload.spec as unknown as DashboardV2Spec;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
+      const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow DashboardScene to the fields this command reads
       const dto = dtoFromScene(scene as unknown as MutationContextScene, spec);
 
