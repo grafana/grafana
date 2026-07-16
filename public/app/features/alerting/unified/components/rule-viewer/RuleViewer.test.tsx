@@ -51,7 +51,6 @@ jest.mock('@grafana/assistant', () => ({
 
 // metadata and interactive elements
 const ELEMENTS = {
-  loading: byText(/Loading rule/i),
   metadata: {
     summary: (text: string) => byText(text),
     runbook: (url: string) => byRole('link', { name: url }),
