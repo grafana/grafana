@@ -9,8 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TestOSSEnvironment verifies the OSS marketplace licensing environment.
-func TestOSSEnvironment(t *testing.T) {
+func TestOSSLicense(t *testing.T) {
 	const appURL = "https://grafana.example.com/raw"
 
 	environment := Provide(&setting.Cfg{AppURL: appURL})
