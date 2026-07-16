@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
@@ -10,7 +11,8 @@ import {
   FieldType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import { useCacheFieldDisplayNames, useCellActions, useCommonTableProps, useTableSharedCrosshair } from './hooks';
@@ -20,11 +22,6 @@ jest.mock('@grafana/data', () => {
   const actual = jest.requireActual('@grafana/data');
   return { ...actual, cacheFieldDisplayNames: jest.fn(actual.cacheFieldDisplayNames) };
 });
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagTableRefactorNested: jest.fn(() => false),
-}));
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
@@ -37,7 +34,6 @@ jest.mock('./utils', () => ({
 }));
 
 const cacheFieldDisplayNamesMock = jest.mocked(cacheFieldDisplayNames);
-const useFlagTableRefactorNestedMock = jest.mocked(useFlagTableRefactorNested);
 const getCellActionsMock = jest.mocked(getCellActions);
 
 function makeFrame(overrides: Partial<DataFrame> = {}): DataFrame {
@@ -56,13 +52,28 @@ function makeContext(overrides: Partial<PanelContext> = {}): PanelContext {
   };
 }
 
+function FeatureFlagsProvider({ children }: PropsWithChildren) {
+  return <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>;
+}
+
 function wrapperWith(context: PanelContext) {
-  return ({ children }: PropsWithChildren) => <PanelContextProvider value={context}>{children}</PanelContextProvider>;
+  return ({ children }: PropsWithChildren) => (
+    <FeatureFlagsProvider>
+      <PanelContextProvider value={context}>{children}</PanelContextProvider>
+    </FeatureFlagsProvider>
+  );
 }
 
 beforeEach(() => {
   jest.clearAllMocks();
-  useFlagTableRefactorNestedMock.mockReturnValue(false);
+});
+
+beforeAll(() => {
+  setTestFlags({ [FlagKeys.TableRefactorNested]: false });
+});
+
+afterAll(() => {
+  setTestFlags({});
 });
 
 describe('useCacheFieldDisplayNames', () => {
@@ -182,7 +193,7 @@ describe('useCommonTableProps', () => {
   };
 
   it('maps panel options and field config to the matching TableNG props', () => {
-    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig));
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
 
     expect(result.current).toEqual({
       noHeader: true,
@@ -201,14 +212,16 @@ describe('useCommonTableProps', () => {
   });
 
   it('reflects the nested-refactor feature flag', () => {
-    useFlagTableRefactorNestedMock.mockReturnValue(true);
-    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig));
+    setTestFlags({ [FlagKeys.TableRefactorNested]: true });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
 
     expect(result.current.nestedRefactorEnabled).toBe(true);
   });
 
   it('returns a stable reference when inputs do not change', () => {
-    const { result, rerender } = renderHook(() => useCommonTableProps(options, fieldConfig));
+    const { result, rerender } = renderHook(() => useCommonTableProps(options, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
     const first = result.current;
 
     rerender();
