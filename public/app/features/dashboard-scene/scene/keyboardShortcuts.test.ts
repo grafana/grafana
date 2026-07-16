@@ -2,6 +2,7 @@ import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent } from '@grafana/dat
 import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
@@ -493,7 +494,7 @@ describe('setupKeyboardShortcuts', () => {
 
       it('pastes a panel while editing', () => {
         mockScene.setState({ isEditing: true });
-        localStorageMock.setItem('panel-copy', JSON.stringify({ panelId: 'panel-1' }));
+        localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
         setupKeyboardShortcuts(mockScene);
 
         getBinding('p v')!.onTrigger();
