@@ -24,10 +24,12 @@ export function createGrafanaLinkResolver(
 ): (repoPath: string) => string | undefined {
   const byPath = new Map<string, ResourceListItem>();
   for (const resource of resources) {
-    if (!resource.path) {
-      continue;
+    // The repository's root folder has an empty path; it still gets a key once
+    // joined with a configured root, so a root `_folder.json` link can resolve.
+    const key = stripTrailingSlashes(joinRepoPath(repositoryPath, resource.path));
+    if (key) {
+      byPath.set(key, resource);
     }
-    byPath.set(stripTrailingSlashes(joinRepoPath(repositoryPath, resource.path)), resource);
   }
 
   return (repoPath) => {

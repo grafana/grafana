@@ -202,6 +202,9 @@ function RenderedMarkdown({
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
   const safe = textUtil.sanitize(rewritten);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Only the latest click navigates, so overlapping clicks can't race and push
+  // an earlier link's destination after a later one.
+  const navTokenRef = useRef(0);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -211,28 +214,37 @@ function RenderedMarkdown({
 
     // Resolve a tagged link to its in-app Grafana page, falling back to the host
     // URL on the anchor when it has no matching resource or the lookup fails.
-    const resolveAndNavigate = async (anchor: HTMLAnchorElement, repoPath: string) => {
+    const resolveAndNavigate = async (href: string | null, repoPath: string) => {
+      const token = ++navTokenRef.current;
       let items: ResourceListItem[] = [];
       try {
-        const result = await fetchResources({ name: repositoryName }, true).unwrap();
+        // No preferCacheValue: fetch fresh so resources added by a sync (which
+        // also refreshes the README) resolve instead of falling back to the host.
+        const result = await fetchResources({ name: repositoryName }).unwrap();
         items = result.items ?? [];
       } catch {
         // Ignore — fall back to the host link below.
+      }
+      if (token !== navTokenRef.current) {
+        return; // A later click superseded this one.
       }
       const route = createGrafanaLinkResolver(items, repositoryPath)(repoPath);
       if (route) {
         locationService.push(route);
         return;
       }
-      const href = anchor.getAttribute('href');
       if (!href) {
         return;
       }
-      // Default navigation was already suppressed on click; open the host link
-      // ourselves. A delayed window.open can be popup-blocked (no longer counted
-      // as user-initiated), so fall back to same-tab navigation to guarantee the
-      // click still goes somewhere.
-      if (!window.open(href, '_blank', 'noopener,noreferrer')) {
+      // No matching resource: open the host link. Default navigation was already
+      // suppressed, so do it ourselves in a new tab (severing the opener rather
+      // than using the `noopener` feature, which makes window.open return null on
+      // success and defeat the blocked-popup check). Fall back to same-tab if the
+      // popup is blocked so the click always goes somewhere.
+      const opened = window.open(href, '_blank');
+      if (opened) {
+        opened.opener = null;
+      } else {
         window.location.assign(href);
       }
     };
@@ -254,7 +266,7 @@ function RenderedMarkdown({
         return;
       }
       e.preventDefault();
-      void resolveAndNavigate(anchor, repoPath);
+      void resolveAndNavigate(anchor.getAttribute('href'), repoPath);
     };
 
     el.addEventListener('click', handleClick);

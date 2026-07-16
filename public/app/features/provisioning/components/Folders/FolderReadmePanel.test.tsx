@@ -149,8 +149,9 @@ describe('FolderReadmePanel', () => {
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
     });
 
-    it('opens the host URL in a new tab when a JSON link has no synced resource', async () => {
-      const openSpy = jest.spyOn(window, 'open').mockReturnValue({} as Window);
+    it('opens the host URL in a new tab (opener severed) when a JSON link has no synced resource', async () => {
+      const fakeWindow = { opener: {} } as unknown as Window;
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(fakeWindow);
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
       const { user } = setup();
@@ -158,12 +159,14 @@ describe('FolderReadmePanel', () => {
       await user.click(screen.getByRole('link', { name: 'CPU' }));
 
       await waitFor(() =>
+        // No `noopener` feature (so the return value reliably signals a blocked
+        // popup); the opener is severed manually instead.
         expect(openSpy).toHaveBeenCalledWith(
           'https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json',
-          '_blank',
-          'noopener,noreferrer'
+          '_blank'
         )
       );
+      expect(fakeWindow.opener).toBeNull();
       expect(pushSpy).not.toHaveBeenCalled();
     });
 
@@ -314,6 +317,22 @@ describe('FolderReadmePanel', () => {
     expect(screen.getByText('README.md')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Edit README/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
+  });
+
+  it('strips script and event-handler payloads even though markdown is rendered without its own sanitizer', () => {
+    // renderMarkdown runs with noSanitize:true; textUtil.sanitize is the XSS
+    // boundary. This locks that in so noSanitize can't be dropped unnoticed.
+    setReadmeResult({
+      markdownContent: '<script>alert(1)</script>\n\n<img src="x" onerror="alert(2)">\n\n[click](javascript:alert(3))',
+    });
+
+    const { container } = setup();
+    const markdownDiv = container.querySelector('.markdown-html');
+    expect(markdownDiv).not.toBeNull();
+    expect(markdownDiv!.querySelector('script')).toBeNull();
+    expect(markdownDiv!.innerHTML).not.toContain('onerror');
+    expect(markdownDiv!.innerHTML).not.toContain('alert(1)');
+    expect(markdownDiv!.innerHTML).not.toContain('javascript:');
   });
 
   it('sanitizes mXSS payloads in README markdown', () => {
