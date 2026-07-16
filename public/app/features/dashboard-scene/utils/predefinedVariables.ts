@@ -1,5 +1,6 @@
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type ControlSourceRef, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Variable, type VariableList } from 'app/api/clients/dashboard/v2beta1';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
@@ -78,7 +79,7 @@ export function clearPredefinedVariablesCache() {
  * with its local variables only.
  */
 export async function fetchPredefinedVariables(folderUid?: string): Promise<VariableKind[]> {
-  if (!config.featureToggles.globalDashboardVariables) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
     return [];
   }
 
