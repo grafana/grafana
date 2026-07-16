@@ -94,13 +94,17 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		}
 	}
 
-	// A selective branch migration deletes only the resources it migrated. The
-	// default (non-branch) selective flow takes those resources over via the pull
-	// above, so it must not delete anything here — only the branch flow, which
-	// cannot take them over, reaches this deletion. Folders are excluded: they are
+	// selective is true when the caller scoped the migration to an explicit
+	// resource list rather than migrating everything unmanaged.
+	selective := len(options.Resources) > 0
+
+	// deleteMigratedResources removes exactly the resources this migration
+	// exported. A branch migration can't take them over yet (they live on an
+	// unmerged branch), so deleting them lets them return as managed once the
+	// branch is merged and a regular sync runs. Folders are excluded: they are
 	// emitted purely to resolve paths and may be shared with resources that were
 	// not migrated.
-	if branchMigration && len(options.Resources) > 0 {
+	deleteMigratedResources := func() error {
 		progress.SetMessage(ctx, "delete migrated resources")
 		if err := m.namespaceCleaner.CleanResources(ctx, namespace, collector.ExportedNonFolderResources(), progress); err != nil {
 			return fmt.Errorf("delete migrated resources: %w", err)
@@ -108,23 +112,38 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		return nil
 	}
 
-	// For instance-type repositories, also clean the namespace.
-	// In selective mode (caller supplied an explicit Resources list) we skip
-	// the cleanup, because deleting every other unmanaged resource would be
-	// destructive — the user only asked to take over the named ones (handled
-	// above for branch migrations).
-	// Folderless repositories also coexist with unmanaged resources, so they
-	// must never trigger a namespace clean.
-	//
-	// For a default-branch migration this removes the unmanaged leftovers that
-	// were not taken over by the pull above. For a full branch migration the
-	// exported resources are still unmanaged (they were never taken over), so this
-	// is what removes the migrated resources from the instance.
-	target := repo.Config().Spec.Sync.Target
-	if target != provisioning.SyncTargetTypeFolder && target != provisioning.SyncTargetTypeFolderless && len(options.Resources) == 0 {
-		progress.SetMessage(ctx, "clean namespace")
-		if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
-			return fmt.Errorf("clean namespace: %w", err)
+	// What to remove from the instance depends on the sync target. A non-branch
+	// migration already adopted its resources during the pull, so nothing below
+	// runs for it.
+	switch repo.Config().Spec.Sync.Target {
+	case provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeFolderless:
+		// Folder and folderless repositories coexist with unmanaged resources, so we
+		// never wipe the namespace. A branch migration still deletes the specific
+		// resources it exported (full or selective) so they return as managed on
+		// merge.
+		if branchMigration {
+			if err := deleteMigratedResources(); err != nil {
+				return err
+			}
+		}
+	default:
+		// Instance (and an unset target, which defaults to instance): the whole
+		// instance must be managed.
+		switch {
+		case branchMigration && selective:
+			// Selective branch: delete only the migrated resources; the rest of the
+			// unmanaged resources are not ours to remove.
+			if err := deleteMigratedResources(); err != nil {
+				return err
+			}
+		case !selective:
+			// Full migration: remove every remaining unmanaged resource — the
+			// leftovers the pull did not take over (default branch), or the exports
+			// that were never taken over (branch).
+			progress.SetMessage(ctx, "clean namespace")
+			if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
+				return fmt.Errorf("clean namespace: %w", err)
+			}
 		}
 	}
 

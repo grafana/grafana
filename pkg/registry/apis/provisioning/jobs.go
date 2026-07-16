@@ -240,7 +240,13 @@ func (c *jobsConnector) validateWriteAccess(cfg *provisioning.Repository, spec p
 			targetRef = spec.FixFolderMetadata.Ref
 		}
 	case provisioning.JobActionMigrate:
-		// no ref needed
+		if spec.Migrate != nil {
+			// An empty branch, or one equal to the configured branch, is a direct
+			// write with takeover (not a pull request); a different branch is the
+			// branch workflow. IsWriteAllowed normalizes the equal-to-configured
+			// case, so pass the branch straight through.
+			targetRef = spec.Migrate.Branch
+		}
 	default:
 		return nil
 	}

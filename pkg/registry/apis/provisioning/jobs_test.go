@@ -230,6 +230,62 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 	})
 }
 
+func TestValidateWriteAccess_Migrate(t *testing.T) {
+	c := &jobsConnector{}
+
+	gitRepo := func(workflows ...provisioning.Workflow) *provisioning.Repository {
+		return &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type:      provisioning.GitHubRepositoryType,
+				Workflows: workflows,
+				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+			},
+		}
+	}
+	migrate := func(branch string) provisioning.JobSpec {
+		return provisioning.JobSpec{
+			Action:  provisioning.JobActionMigrate,
+			Migrate: &provisioning.MigrateJobOptions{Branch: branch},
+		}
+	}
+
+	t.Run("empty branch is a direct write, allowed with write workflow", func(t *testing.T) {
+		err := c.validateWriteAccess(gitRepo(provisioning.WriteWorkflow), migrate(""))
+		require.NoError(t, err)
+	})
+
+	// The configured branch is a direct write (takeover), not a pull request, so
+	// it must be allowed with the write workflow — matching the migrator and the
+	// OpenAPI description rather than being rejected as a branch migration.
+	t.Run("branch equal to configured branch is a direct write, allowed with write workflow", func(t *testing.T) {
+		err := c.validateWriteAccess(gitRepo(provisioning.WriteWorkflow), migrate("main"))
+		require.NoError(t, err)
+	})
+
+	t.Run("branch equal to configured branch is not a branch workflow, rejected with branch-only", func(t *testing.T) {
+		err := c.validateWriteAccess(gitRepo(provisioning.BranchWorkflow), migrate("main"))
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("different branch is the branch workflow, allowed with branch workflow", func(t *testing.T) {
+		err := c.validateWriteAccess(gitRepo(provisioning.BranchWorkflow), migrate("feature"))
+		require.NoError(t, err)
+	})
+
+	t.Run("different branch rejected when only write workflow is allowed", func(t *testing.T) {
+		err := c.validateWriteAccess(gitRepo(provisioning.WriteWorkflow), migrate("feature"))
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("rejected with no workflows", func(t *testing.T) {
+		err := c.validateWriteAccess(gitRepo(), migrate(""))
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+}
+
 func TestAuthorizeResourceJob(t *testing.T) {
 	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")

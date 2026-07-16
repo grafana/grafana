@@ -455,6 +455,102 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		nc.AssertNotCalled(t, "Clean", mock.Anything, mock.Anything, mock.Anything)
 	})
 
+	t.Run("full branch migration on a folder repo deletes the migrated resources without a namespace clean", func(t *testing.T) {
+		exportWorker := jobs.NewMockWorker(t)
+		syncWorker := jobs.NewMockWorker(t)
+		pr := jobs.NewMockJobProgressRecorder(t)
+		repo := repository.NewMockRepository(t)
+		nc := NewMockNamespaceCleaner(t)
+
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		})
+		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+		pr.On("StrictMaxErrors", 1).Return()
+		pr.On("Record", mock.Anything, mock.Anything).Return()
+
+		dashGVK := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1", Kind: "Dashboard"}
+		folderGVK := resources.FolderKind
+
+		// Full migration: no explicit resource list, so everything unmanaged is exported.
+		exportWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Push != nil && job.Spec.Push.Branch == "feature-x" && len(job.Spec.Push.Resources) == 0
+		}), mock.Anything).Run(func(args mock.Arguments) {
+			collector := args.Get(3).(jobs.JobProgressRecorder)
+			ctx := args.Get(0).(context.Context)
+			collector.Record(ctx, jobs.NewGVKResult("dash-1", dashGVK).WithAction(repository.FileActionCreated).Build())
+			collector.Record(ctx, jobs.NewGVKResult("folder-1", folderGVK).WithAction(repository.FileActionCreated).Build())
+		}).Return(nil)
+
+		// The exported (non-folder) resources are deleted so they return as managed
+		// on merge; the folder is excluded and the full namespace clean is not used.
+		nc.On("CleanResources", mock.Anything, "test-ns", mock.MatchedBy(func(refs []provisioning.ResourceRef) bool {
+			return len(refs) == 1 && refs[0].Name == "dash-1"
+		}), pr).Return(nil)
+
+		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
+		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
+		}}, pr)
+		require.NoError(t, err)
+
+		syncWorker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		nc.AssertNotCalled(t, "Clean", mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("full branch migration on a folderless repo deletes the migrated resources without a namespace clean", func(t *testing.T) {
+		exportWorker := jobs.NewMockWorker(t)
+		syncWorker := jobs.NewMockWorker(t)
+		pr := jobs.NewMockJobProgressRecorder(t)
+		repo := repository.NewMockRepository(t)
+		nc := NewMockNamespaceCleaner(t)
+
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+			},
+		})
+		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+		pr.On("StrictMaxErrors", 1).Return()
+		pr.On("Record", mock.Anything, mock.Anything).Return()
+
+		dashGVK := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1", Kind: "Dashboard"}
+		folderGVK := resources.FolderKind
+
+		// Full migration: no explicit resource list, so everything unmanaged is exported.
+		exportWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Push != nil && job.Spec.Push.Branch == "feature-x" && len(job.Spec.Push.Resources) == 0
+		}), mock.Anything).Run(func(args mock.Arguments) {
+			collector := args.Get(3).(jobs.JobProgressRecorder)
+			ctx := args.Get(0).(context.Context)
+			collector.Record(ctx, jobs.NewGVKResult("dash-1", dashGVK).WithAction(repository.FileActionCreated).Build())
+			collector.Record(ctx, jobs.NewGVKResult("folder-1", folderGVK).WithAction(repository.FileActionCreated).Build())
+		}).Return(nil)
+
+		// The exported (non-folder) resources are deleted so they return as managed
+		// on merge; the folder is excluded and the full namespace clean is not used.
+		nc.On("CleanResources", mock.Anything, "test-ns", mock.MatchedBy(func(refs []provisioning.ResourceRef) bool {
+			return len(refs) == 1 && refs[0].Name == "dash-1"
+		}), pr).Return(nil)
+
+		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
+		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
+		}}, pr)
+		require.NoError(t, err)
+
+		syncWorker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		nc.AssertNotCalled(t, "Clean", mock.Anything, mock.Anything, mock.Anything)
+	})
+
 	t.Run("migrating to the configured branch keeps the pull/takeover flow", func(t *testing.T) {
 		exportWorker := jobs.NewMockWorker(t)
 		syncWorker := jobs.NewMockWorker(t)
