@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type mockPluginPreinstall struct {
@@ -277,6 +278,26 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 		err := svc.checkForUpdates(context.Background())
 		require.NoError(t, err)
 		require.Empty(t, client.authHeader)
+	})
+}
+
+func TestProvidePluginsService(t *testing.T) {
+	t.Run("wires the grafana.com token and update check URL from the config", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			GrafanaComAPIURL:        "https://grafana.com/api",
+			GrafanaComProxyAPIToken: "token",
+		}
+
+		svc, err := ProvidePluginsService(cfg,
+			&pluginstore.FakePluginStore{},
+			&pluginfakes.FakePluginInstaller{},
+			tracing.InitializeTracerForTest(),
+			&featuremgmt.FeatureManager{},
+			pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+		)
+		require.NoError(t, err)
+		require.Equal(t, "token", svc.updateCheckToken)
+		require.Equal(t, "https://grafana.com/api/plugins/versioncheck", svc.updateCheckURL.String())
 	})
 }
 
