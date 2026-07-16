@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -181,15 +182,29 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 		return response.Error(http.StatusBadRequest, "at least one panel is required", nil)
 	}
 
-	job := dashboardDiagnosticsJobs.create(len(reqDTO.Panels))
+	jobTotal := len(reqDTO.Panels)
+	if jobTotal > maxDashboardDiagnosticsPanels {
+		jobTotal = maxDashboardDiagnosticsPanels // status polling only ever sees the capped run
+	}
+	job := dashboardDiagnosticsJobs.create(jobTotal)
 
 	// Snapshot the identity + cache flag; the goroutine must not touch the request or its context
 	// (both are tied to the HTTP request's lifetime, which ends when we return 202).
 	user := c.SignedInUser
 	skipDSCache := c.SkipDSCache
 
+	// detachedCtx carries its own cloned *http.Request (see contexthandler.CopyWithReqContext), so
+	// it stays safe to use after this handler returns. Force SkipQueryCache on it so a cache-hit
+	// query still goes to the wire under capture -- otherwise HAR capture runs on nothing and
+	// traffic.har is silently empty (same requirement as QueryDiagnostics in ds_query_diagnostics.go
+	// for the single-panel path, where c.SkipQueryCache is set directly on the request's ReqContext).
+	detachedCtx := contexthandler.CopyWithReqContext(c.Req.Context())
+	if reqCtx := contexthandler.FromContext(detachedCtx); reqCtx != nil {
+		reqCtx.SkipQueryCache = true
+	}
+
 	go func(uid string, user identity.Requester, skipDSCache bool, req dashboardDiagnosticsRequest) {
-		ctx, cancel := context.WithTimeout(context.Background(), dashboardDiagnosticsTimeout)
+		ctx, cancel := context.WithTimeout(detachedCtx, dashboardDiagnosticsTimeout)
 		defer cancel()
 		defer func() {
 			if r := recover(); r != nil {
