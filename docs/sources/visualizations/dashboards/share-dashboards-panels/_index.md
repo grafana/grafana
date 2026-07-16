@@ -7,8 +7,8 @@ aliases:
   - ../../sharing/playlists/ # /docs/grafana/next/sharing/playlists/
   - ../../sharing/share-dashboard/ # /docs/grafana/next/sharing/share-dashboard/
   - ../../sharing/share-panel/ # /docs/grafana/next/sharing/share-panel/
+  - ../../dashboards/share-dashboards-panels/ # /docs/grafana/next/dashboards/share-dashboards-panels/
   - ../../visualizations/dashboards/share-dashboard/ # /docs/grafana/next/visualizations/dashboards/share-dashboard/
-  - ../../visualizations/dashboards/share-dashboards-panels/ # /docs/grafana/next/visualizations/dashboards/share-dashboards-panels/
 keywords:
   - grafana
   - dashboard
