@@ -57,6 +57,7 @@ require (
 	github.com/charmbracelet/bubbles v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/charmbracelet/bubbletea v1.3.10 // @grafana/grafana-app-platform-squad
 	github.com/charmbracelet/lipgloss v1.1.0 // @grafana/grafana-app-platform-squad
+	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d // @grafana/data-sources
 	github.com/crewjam/saml v0.4.14 // @grafana/identity-access-team
 	github.com/dgraph-io/badger/v4 v4.9.2 // @grafana/grafana-search-and-storage
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
@@ -400,7 +401,6 @@ require (
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
