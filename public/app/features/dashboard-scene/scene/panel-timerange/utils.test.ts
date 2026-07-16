@@ -21,6 +21,7 @@ describe('panel-timerange/utils', () => {
       { name: 'should append -compare to a simple refId', input: 'A', expected: 'A-compare' },
       { name: 'should append -compare to an empty refId', input: '', expected: '-compare' },
       { name: 'should append -compare to a multi-character refId', input: 'Query1', expected: 'Query1-compare' },
+      { name: 'should not double-suffix an already-compare refId', input: 'A-compare', expected: 'A-compare' },
     ];
 
     testCases.forEach(({ name, input, expected }) => {
@@ -122,6 +123,15 @@ describe('panel-timerange/utils', () => {
       const result = await lastValueFrom(timeShiftAlignmentProcessor(makePanelData(primaryRange), secondary));
 
       expect(result.series.map((s) => s.refId)).toEqual(['A-compare', 'B-compare']);
+    });
+
+    it('should not double-suffix series that already have a compare refId', async () => {
+      // Compare requests now use A-compare; datasources echo that back on the response.
+      const secondary = makePanelData(secondaryRange, [toDataFrame({ refId: 'A-compare', fields: [] })]);
+
+      const result = await lastValueFrom(timeShiftAlignmentProcessor(makePanelData(primaryRange), secondary));
+
+      expect(result.series[0].refId).toBe('A-compare');
     });
 
     it('should attach timeCompare metadata with the signed diff between secondary and primary', async () => {

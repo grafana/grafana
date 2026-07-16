@@ -26,7 +26,7 @@ export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, se
   return of(secondary);
 };
 
-export const getCompareSeriesRefId = (refId: string) => `${refId}-compare`;
+export const getCompareSeriesRefId = (refId: string) => (refId.endsWith('-compare') ? refId : `${refId}-compare`);
 
 /**
  * Whether a panel should use a hover header, used when there's
@@ -70,8 +70,7 @@ export function getCompareTimeRange(timeRange: TimeRange, compareWith: string | 
   }
 
   if (rangeUtil.isRelativeTimeRange(timeRange.raw)) {
-    const rawFrom =
-      typeof timeRange.raw.from === 'string' ? `${timeRange.raw.from}${shift}` : compareFrom;
+    const rawFrom = typeof timeRange.raw.from === 'string' ? `${timeRange.raw.from}${shift}` : compareFrom;
     const rawTo = typeof timeRange.raw.to === 'string' ? `${timeRange.raw.to}${shift}` : compareTo;
 
     return {
