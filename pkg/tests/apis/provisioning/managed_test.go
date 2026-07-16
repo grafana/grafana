@@ -557,9 +557,10 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
+		SkipResourceAssertions: true,
 	})
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	const dashboardUID = "n1jR8vnnz"
 	var dashboard *unstructured.Unstructured

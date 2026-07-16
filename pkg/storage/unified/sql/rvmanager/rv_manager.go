@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -379,7 +380,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 	}
 
 	err = runBatch()
-	if err != nil && sqlite.IsBusyOrLocked(err) {
+	if isRetryableTxError(err) {
 		boff := backoff.New(ctx, backoff.Config{
 			MinBackoff: sqliteBusyMinBackoff,
 			MaxBackoff: sqliteBusyMaxBackoff,
@@ -395,7 +396,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 				break
 			}
 			err = runBatch()
-			if err == nil || !sqlite.IsBusyOrLocked(err) {
+			if !isRetryableTxError(err) {
 				break
 			}
 		}
@@ -495,4 +496,15 @@ func (m *ResourceVersionManager) SaveRV(ctx context.Context, x db.ContextExecer,
 		return fmt.Errorf("save resource version: %w", err)
 	}
 	return nil
+}
+
+func isRetryableTxError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if sqlite.IsBusyOrLocked(err) {
+		return true
+	}
+	var mysqlErr *mysql.MySQLError
+	return errors.As(err, &mysqlErr) && mysqlErr.Number == 1213
 }

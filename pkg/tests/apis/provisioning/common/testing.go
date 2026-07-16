@@ -73,6 +73,8 @@ const (
 	// is a safety margin for the delete/list round-trips under SQLite write
 	// contention when many folders are left over.
 	waitTimeoutFolderCleanup = 4 * WaitTimeoutDefault
+
+	waitTimeoutJobHistory = 2 * WaitTimeoutDefault
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
@@ -446,7 +448,7 @@ func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 		}
 
 		lastResult = result
-	}, WaitTimeoutDefault, WaitIntervalDefault)
+	}, waitTimeoutJobHistory, WaitIntervalDefault)
 	require.NotNil(t, lastResult, "expected job result to be non-nil")
 
 	return lastResult

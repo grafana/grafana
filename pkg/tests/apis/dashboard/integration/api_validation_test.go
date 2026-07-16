@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -1363,9 +1364,15 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 			// TODO: Check if viewing permission can be revoked as well.
 			// Test dashboard viewing for all roles
 			t.Run("dashboard viewing", func(t *testing.T) {
-				// Create a dashboard with admin
-				dash, err := createDashboard(t, adminClient, "Dashboard for "+identity.Name+" to view", nil, nil, ctx.Helper)
-				require.NoError(t, err)
+				// Create a dashboard with admin. Retry: under SQLite write
+				// contention the create can fail server-side with a transient
+				// "database is locked" error.
+				var dash *unstructured.Unstructured
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					var err error
+					dash, err = createDashboard(t, adminClient, "Dashboard for "+identity.Name+" to view", nil, nil, ctx.Helper)
+					assert.NoError(c, err)
+				}, 30*time.Second, 250*time.Millisecond, "admin should be able to create dashboard")
 				require.NotNil(t, dash)
 
 				// Get the dashboard with the test identity
@@ -1532,9 +1539,15 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 		// Set permissions for folder2 - give viewer edit access
 		setResourceUserPermission(t, ctx, ctx.AdminUser, false, folder2UID, addUserPermission(t, nil, ctx.ViewerUser, ResourcePermissionLevelEdit))
 
-		// Have the viewer create a dashboard in folder2
-		viewerDash, err := createDashboard(t, viewerClient, "Dashboard created by Viewer in Edit Permission Folder", &folder2UID, nil, ctx.Helper)
-		require.NoError(t, err, "Viewer should be able to create dashboard in folder with edit permissions")
+		// Have the viewer create a dashboard in folder2. Retry: Zanzana/OpenFGA
+		// permission propagation is asynchronous, so the create can transiently
+		// be denied right after setResourceUserPermission.
+		var viewerDash *unstructured.Unstructured
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			var err error
+			viewerDash, err = createDashboard(t, viewerClient, "Dashboard created by Viewer in Edit Permission Folder", &folder2UID, nil, ctx.Helper)
+			assert.NoError(c, err, "Viewer should be able to create dashboard in folder with edit permissions")
+		}, 30*time.Second, 250*time.Millisecond, "viewer create should succeed once folder permissions propagate")
 		require.NotNil(t, viewerDash)
 		dashUID := viewerDash.GetName()
 
