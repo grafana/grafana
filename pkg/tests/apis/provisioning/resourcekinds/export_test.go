@@ -18,7 +18,6 @@ import (
 // must not deny the kind's list — a successful multi-resource export is the regression guard.
 func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, rk := range resourceKinds {
 		rk := rk
@@ -29,10 +28,13 @@ func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 			wantTitles := map[string]bool{}
 			for i := 0; i < count; i++ {
 				name, title := rk.instance(i)
-				_, err := client.Resource.Create(ctx, rk.newResource(t, name, title), metav1.CreateOptions{})
+				_, err := client.Resource.Create(t.Context(), rk.newResource(t, name, title), metav1.CreateOptions{})
 				require.NoError(t, err, "should create %s", name)
 				wantTitles[title] = true
-				t.Cleanup(func() { _ = client.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+				t.Cleanup(func() {
+					cleanupCtx := context.WithoutCancel(t.Context())
+					_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+				})
 			}
 
 			repo := rk.name + "-export-repo"
@@ -67,7 +69,6 @@ func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 // exercising the generalized selective-export controller for a non-dashboard kind.
 func TestIntegrationProvisioning_ResourceKinds_SelectiveExport(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, rk := range resourceKinds {
 		rk := rk
@@ -77,9 +78,12 @@ func TestIntegrationProvisioning_ResourceKinds_SelectiveExport(t *testing.T) {
 			const count = 3
 			for i := 0; i < count; i++ {
 				name, title := rk.instance(i)
-				_, err := client.Resource.Create(ctx, rk.newResource(t, name, title), metav1.CreateOptions{})
+				_, err := client.Resource.Create(t.Context(), rk.newResource(t, name, title), metav1.CreateOptions{})
 				require.NoError(t, err, "should create %s", name)
-				t.Cleanup(func() { _ = client.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+				t.Cleanup(func() {
+					cleanupCtx := context.WithoutCancel(t.Context())
+					_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+				})
 			}
 
 			repo := rk.name + "-selective-export-repo"

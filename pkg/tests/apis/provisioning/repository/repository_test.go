@@ -69,7 +69,6 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	helper := sharedHelper(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-	ctx := context.Background()
 
 	inputFiles := []struct {
 		path   string
@@ -84,10 +83,10 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			input := helper.RenderObject(t, inputFile.path, inputFile.values)
 			name := common.MustNestedString(input.Object, "metadata", "name")
 
-			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
+			_, err := helper.Repositories.Resource.Create(t.Context(), input, createOptions)
 			require.NoError(t, err, "failed to create resource")
 
-			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+			output, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
 
 			// Move encrypted token mutation
@@ -319,7 +318,6 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 
 func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, testCase := range []struct {
 		name        string
@@ -583,7 +581,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
+			_, err := helper.Repositories.Resource.Create(t.Context(), testCase.repo, metav1.CreateOptions{})
 			if testCase.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {
@@ -641,7 +639,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 					"WorkflowsJSON": `[]`,
 				})
 
-				_, err := helper.Repositories.Resource.Create(ctx, gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+				_, err := helper.Repositories.Resource.Create(t.Context(), gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repository with path: %s", test.path)
@@ -673,7 +671,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err := helper.Repositories.Resource.Create(t.Context(), firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository should be created successfully")
 
 		// Create a second repo pointing to same URL with a child path and sync disabled.
@@ -686,7 +684,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
 
 		// Create a third repo with the same path (duplicate) and sync disabled
@@ -698,7 +696,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Create(t.Context(), thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Third repository with duplicate path should succeed when sync is disabled")
 
 		// Create a fourth repo with empty path (root) and sync disabled - wizard step 1 scenario
@@ -710,7 +708,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Create(t.Context(), fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Fourth repository with empty path should succeed when sync is disabled")
 	})
 
@@ -729,7 +727,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err := helper.Repositories.Resource.Create(t.Context(), firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository should be created successfully")
 
 		// Create second repo with conflicting child path but sync disabled (should succeed)
@@ -741,12 +739,12 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		created, err := helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		created, err := helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
 
 		// Now try to enable sync on the second repo - this should fail due to parent/child conflict
 		created.Object["spec"].(map[string]interface{})["sync"].(map[string]interface{})["enabled"] = true
-		_, err = helper.Repositories.Resource.Update(ctx, created, metav1.UpdateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Update(t.Context(), created, metav1.UpdateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "Enabling sync should fail due to parent/child path conflict")
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 	})
@@ -805,7 +803,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 					"WorkflowsJSON": `[]`,
 				})
 
-				_, err := helper.Repositories.Resource.Create(ctx, gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+				_, err := helper.Repositories.Resource.Create(t.Context(), gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repo branch=%s path=%s", test.branch, test.path)
@@ -834,7 +832,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err := helper.Repositories.Resource.Create(t.Context(), firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository with empty path should succeed")
 
 		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
@@ -846,7 +844,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 		var statusError *apierrors.StatusError
@@ -864,7 +862,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Create(t.Context(), thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Third repository with different branch and empty path should succeed")
 	})
 
@@ -880,7 +878,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err := helper.Repositories.Resource.Create(t.Context(), firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository with sync disabled should succeed")
 
 		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
@@ -892,7 +890,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Second repository with duplicate path should succeed when sync is disabled")
 
 		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
@@ -904,7 +902,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Create(t.Context(), thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Third repository with different branch should succeed when sync is disabled")
 
 		fourthRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
@@ -916,7 +914,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err = helper.Repositories.Resource.Create(t.Context(), fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Fourth repository with parent-child path should succeed when sync is disabled")
 	})
 
@@ -928,7 +926,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"Path":                helper.ProvisioningPath,
 			"WorkflowsJSON":       `[]`,
 		})
-		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
+		created, err := helper.Repositories.Resource.Create(t.Context(), r, metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
@@ -946,7 +944,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		// Verify the template doesn't have finalizers set (or set them explicitly to nil)
 		r.SetFinalizers(nil)
 
-		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
+		created, err := helper.Repositories.Resource.Create(t.Context(), r, metav1.CreateOptions{})
 		require.NoError(t, err, "repository creation should succeed")
 
 		// Verify finalizers were automatically added by the mutator
@@ -965,7 +963,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 
-		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
+		created, err := helper.Repositories.Resource.Create(t.Context(), r, metav1.CreateOptions{})
 		require.NoError(t, err, "repository creation should succeed")
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
@@ -974,12 +972,12 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			storedRepo, err := helper.Repositories.Resource.Get(ctx, "repo-update-finalizers", metav1.GetOptions{})
+			storedRepo, err := helper.Repositories.Resource.Get(t.Context(), "repo-update-finalizers", metav1.GetOptions{})
 			require.NoError(t, err, "repository retrieve should succeed")
 
 			// Update the repository and try to remove finalizers
 			storedRepo.SetFinalizers([]string{})
-			updated, err := helper.Repositories.Resource.Update(ctx, storedRepo, metav1.UpdateOptions{})
+			updated, err := helper.Repositories.Resource.Update(t.Context(), storedRepo, metav1.UpdateOptions{})
 			require.NoError(collect, err, "repository update should succeed")
 
 			// Verify finalizers were re-added by the mutator
@@ -995,7 +993,6 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	t.Skip("Reenable this test once we enforce schema validation for provisioning")
 
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "invalid-schema-tmp"
 	// Set up the repository and the file to import.
@@ -1007,16 +1004,16 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 		"Path":          helper.ProvisioningPath,
 		"WorkflowsJSON": `["write"]`,
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	_, err := helper.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// Make sure the repo can read and validate the file
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "invalid-dashboard-schema.json")
+	_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "invalid-dashboard-schema.json")
 	status := helper.RequireApiErrorStatus(err, metav1.StatusReasonBadRequest, http.StatusBadRequest)
 	require.Equal(t, status.Message, "Dry run failed: Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 
 	const invalidSchemaUid = "invalid-schema-uid"
-	_, err = helper.DashboardsV1.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
+	_, err = helper.DashboardsV1.Resource.Get(t.Context(), invalidSchemaUid, metav1.GetOptions{})
 	require.Error(t, err, "invalid dashboard shouldn't exist")
 	require.True(t, apierrors.IsNotFound(err))
 
@@ -1036,11 +1033,11 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	assert.Equal(t, job.Status.Message, "completed with errors")
 	assert.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 
-	_, err = helper.DashboardsV1.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
+	_, err = helper.DashboardsV1.Resource.Get(t.Context(), invalidSchemaUid, metav1.GetOptions{})
 	require.Error(t, err, "invalid dashboard shouldn't have been created")
 	require.True(t, apierrors.IsNotFound(err))
 
-	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}, "files", "invalid-dashboard-schema.json")
+	err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}, "files", "invalid-dashboard-schema.json")
 	require.NoError(t, err, "should delete the resource file")
 }
 
@@ -1055,7 +1052,6 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 // guard for the exemption, not just a happy-path check.
 func TestIntegrationProvisioning_DashboardStrictValidationExempted(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "dashboard-strict-exempt"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -1071,20 +1067,19 @@ func TestIntegrationProvisioning_DashboardStrictValidationExempted(t *testing.T)
 
 	// The dry run through the files endpoint must succeed despite the unknown
 	// field, because dashboards are exempt from strict validation.
-	_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard-unknown-field.json")
+	_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard-unknown-field.json")
 	require.NoError(t, err, "dry run of a dashboard with an unknown field should succeed while dashboards are exempt from strict validation")
 
 	// The dashboard must exist in Grafana after sync.
 	const dashboardUID = "dashboard-unknown-field"
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		_, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		assert.NoError(collect, err, "dashboard with an unknown field should have been created via the strict-validation exemption")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard with an unknown field should exist after sync")
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// FIXME: instead of using an existing GitHub repository, we should create a new one for the tests and a branch
 	// This was the previous structure
@@ -1121,7 +1116,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
-	found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	found, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
 
 	names := make([]string, 0, len(found.Items))
@@ -1133,11 +1128,11 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	assert.Contains(t, names, "admfz74", "should contain dashboard2.yaml's contents")
 	assert.Contains(t, names, "adn5mxb", "should contain dashboard2.yaml's contents")
 
-	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+	err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
 
-	common.WaitForResourcesDeleted(t, ctx, helper.DashboardsV1.Resource, "dashboards")
-	helper.WaitForRepositoryDeleted(t, ctx, repo)
+	common.WaitForResourcesDeleted(t, helper.DashboardsV1.Resource, "dashboards")
+	helper.WaitForRepositoryDeleted(t, repo)
 
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
@@ -1174,10 +1169,10 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 					"WorkflowsJSON": `[]`,
 				})
 
-				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+				_, err := helper.Repositories.Resource.Create(t.Context(), input, metav1.CreateOptions{})
 				require.NoError(t, err, "failed to create resource")
 
-				obj, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
+				obj, err := helper.Repositories.Resource.Get(t.Context(), test.name, metav1.GetOptions{})
 				require.NoError(t, err, "failed to read back resource")
 
 				url, _, err := unstructured.NestedString(obj.Object, "spec", "github", "url")
@@ -1190,7 +1185,6 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	t.Run("repository with no workflows should not create a webhook", func(t *testing.T) {
 		repoName := "readonly-no-webhook"
@@ -1200,12 +1194,12 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 
-		_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+		_, err := helper.Repositories.Resource.Create(t.Context(), input, metav1.CreateOptions{})
 		require.NoError(t, err, "failed to create read-only repository")
 
 		helper.WaitForHealthyRepository(t, repoName)
 
-		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err, "failed to get repository")
 
 		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
@@ -1216,7 +1210,6 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 
 func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	var webhookCreateCalls atomic.Int32
 
@@ -1262,15 +1255,16 @@ func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testin
 		"baseUrl": "https://grafana.example.com",
 	}
 
-	_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+	_, err := helper.Repositories.Resource.Create(t.Context(), input, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
 
 	t.Cleanup(func() {
-		_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		cleanupCtx := context.WithoutCancel(t.Context())
+		_ = helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
 	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "failed to get repository") {
 			return
 		}
@@ -1289,7 +1283,6 @@ func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testin
 
 func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	t.Run("create repository with HTTPS webhook base URL", func(t *testing.T) {
 		repo := &unstructured.Unstructured{Object: map[string]any{
@@ -1320,7 +1313,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 			},
 		}}
 
-		created, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		created, err := helper.Repositories.Resource.Create(t.Context(), repo, metav1.CreateOptions{})
 		require.NoError(t, err, "should create repository with webhook config")
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
@@ -1357,7 +1350,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 			},
 		}}
 
-		created, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		created, err := helper.Repositories.Resource.Create(t.Context(), repo, metav1.CreateOptions{})
 		require.NoError(t, err, "should accept HTTP webhook base URL")
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
@@ -1366,7 +1359,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 	})
 
 	t.Run("read back webhook config", func(t *testing.T) {
-		obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), "repo-with-webhook", metav1.GetOptions{})
 		require.NoError(t, err, "should read back repository")
 
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
@@ -1376,14 +1369,14 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 	t.Run("update repository to change webhook base URL", func(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
+			obj, err := helper.Repositories.Resource.Get(t.Context(), "repo-with-webhook", metav1.GetOptions{})
 			require.NoError(t, err)
 
 			repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			repo.Spec.Webhook.BaseURL = "https://new-proxy.example.com/"
 			updated := common.MustToUnstructured(t, repo)
 
-			result, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+			result, err := helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
 			require.NoError(collect, err, "should update webhook base URL")
 
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
@@ -1394,14 +1387,14 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 	t.Run("update repository to remove webhook config", func(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
+			obj, err := helper.Repositories.Resource.Get(t.Context(), "repo-with-webhook", metav1.GetOptions{})
 			require.NoError(t, err)
 
 			repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			repo.Spec.Webhook = nil
 			updated := common.MustToUnstructured(t, repo)
 
-			result, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+			result, err := helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
 			require.NoError(collect, err, "should clear webhook config")
 
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
@@ -1438,7 +1431,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 			},
 		}}
 
-		_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		_, err := helper.Repositories.Resource.Create(t.Context(), repo, metav1.CreateOptions{})
 		require.Error(t, err, "should reject unsupported scheme")
 		assert.ErrorContains(t, err, "must use HTTP or HTTPS scheme")
 	})
@@ -1472,7 +1465,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 			},
 		}}
 
-		_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		_, err := helper.Repositories.Resource.Create(t.Context(), repo, metav1.CreateOptions{})
 		require.Error(t, err, "should reject webhook URL without host")
 		assert.ErrorContains(t, err, "must include a host")
 	})
@@ -1480,7 +1473,6 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	repoName := "webhook-unhealthy-test"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
@@ -1498,11 +1490,11 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 	require.NoError(t, os.RemoveAll(repoPath))
 
 	// Trigger reconciliation so the controller detects the missing directory.
-	latestObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+	latestObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err)
 	updated := latestObj.DeepCopy()
 	updated.Object["spec"].(map[string]any)["title"] = "Webhook Unhealthy Test (updated)"
-	_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+	_, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	// Wait for the controller to mark the repository unhealthy.
@@ -1512,7 +1504,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories("default")
 
 	require.Eventually(t, func() bool {
-		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 		if err != nil {
 			return false
 		}
@@ -1529,7 +1521,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 		Name(repoName).
 		SubResource("webhook").
 		SetHeader("Content-Type", "application/json").
-		Do(ctx).StatusCode(&statusCode)
+		Do(t.Context()).StatusCode(&statusCode)
 
 	require.Error(t, result.Error(), "webhook request should be rejected for unhealthy repository")
 	require.Equal(t, http.StatusFailedDependency, statusCode, "should return 424 Failed Dependency for unhealthy repository")
@@ -1537,7 +1529,6 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const allPanels = "n1jR8vnnz"
 	const repo = "local-local-examples"
@@ -1565,7 +1556,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			SubResource("files", targetPath).
 			Body(helper.LoadFile("../testdata/all-panels-classic.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&code)
+			Do(t.Context()).StatusCode(&code)
 		require.Equal(t, http.StatusNotFound, code)
 		require.True(t, apierrors.IsNotFound(result.Error()))
 
@@ -1577,7 +1568,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			SubResource("files", targetPath).
 			Body(helper.LoadFile("../testdata/all-panels-classic.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&code)
+			Do(t.Context()).StatusCode(&code)
 		require.NoError(t, result.Error(), "expecting to be able to create file")
 		wrapper := &provisioning.ResourceWrapper{}
 		raw, err := result.Raw()
@@ -1592,7 +1583,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		require.Equal(t, allPanels, name, "save the name from the request")
 
 		// Get the file from the grafana database
-		obj, err := helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+		obj, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanels, metav1.GetOptions{})
 		require.NoError(t, err, "the value should be saved in grafana")
 		val, _, _ := unstructured.NestedString(obj.Object, "metadata", "annotations", utils.AnnoKeyManagerKind)
 		require.Equal(t, string(utils.ManagerKindRepo), val, "should have repo annotations")
@@ -1600,7 +1591,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		require.Equal(t, repo, val, "should have repo annotations")
 
 		// Read the file we wrote
-		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
+		wrapObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", targetPath)
 		require.NoError(t, err, "read value")
 
 		wrap := &unstructured.Unstructured{}
@@ -1621,7 +1612,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			SubResource("files", targetPath).
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&code)
+			Do(t.Context()).StatusCode(&code)
 		require.Equal(t, 200, code)
 		require.NoError(t, result.Error(), "update as admin value")
 		raw, err = result.Raw()
@@ -1639,7 +1630,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			SubResource("files", targetPath).
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&code)
+			Do(t.Context()).StatusCode(&code)
 		require.Equal(t, 403, code)
 		require.True(t, apierrors.IsForbidden(result.Error()), code)
 	})
@@ -1652,11 +1643,11 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			SubResource("files", "test", "..", "..", "all-panels.json"). // UNSAFE PATH
 			Body(helper.LoadFile("../testdata/all-panels.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 		require.Error(t, result.Error(), "invalid path should return error")
 
 		// Read a file with a bad path
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
+		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "../../all-panels.json")
 		require.Error(t, err, "invalid path should error")
 	})
 
@@ -1671,7 +1662,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 kind: Dashboard
 spec:
   title: Test dashboard
-`)).Do(ctx).StatusCode(&code)
+`)).Do(t.Context()).StatusCode(&code)
 		require.Error(t, result.Error(), "missing name")
 
 		result = helper.AdminREST.Post().
@@ -1685,7 +1676,7 @@ metadata:
   generateName: prefix-
 spec:
   title: Test dashboard
-`)).Do(ctx).StatusCode(&code)
+`)).Do(t.Context()).StatusCode(&code)
 		require.NoError(t, result.Error(), "should create name")
 		require.Equal(t, 200, code, "expect OK result")
 
@@ -1714,7 +1705,7 @@ metadata:
   name: someFolder
 spec:
   title: Test Folder
-`)).Do(ctx).StatusCode(&code)
+`)).Do(t.Context()).StatusCode(&code)
 		require.Error(t, result.Error(), "should return error")
 		require.Contains(t, result.Error().Error(), "cannot declare folders through files")
 		require.Equal(t, http.StatusBadRequest, code, "expect bad request result")
@@ -1723,11 +1714,10 @@ spec:
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// The dashboard shouldn't exist yet
 	const allPanels = "n1jR8vnnz"
-	_, err := helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	_, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanels, metav1.GetOptions{})
 	require.Error(t, err, "no all-panels dashboard should exist")
 	require.True(t, apierrors.IsNotFound(err))
 
@@ -1749,7 +1739,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	helper.SyncAndWait(t, repo, nil)
 
 	// Make sure the repo can read and validate the file
-	obj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
+	obj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "all-panels.json")
 	require.NoError(t, err, "valid path should be fine")
 
 	resource, _, err := unstructured.NestedMap(obj.Object, "resource")
@@ -1763,33 +1753,32 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// FIXME: there is no point in in returning action for a read / get request.
 	require.Equal(t, "update", action)
 
-	_, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	_, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
 
-	obj, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	obj, err = helper.DashboardsV1.Resource.Get(t.Context(), allPanels, metav1.GetOptions{})
 	require.NoError(t, err, "all-panels dashboard should exist")
 	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
 	// Try writing the value directly
 	err = unstructured.SetNestedField(obj.Object, []any{"aaa", "bbb"}, "spec", "tags")
 	require.NoError(t, err, "set tags")
-	obj, err = helper.DashboardsV1.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+	obj, err = helper.DashboardsV1.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
 	require.NoError(t, err)
 	v, _, _ := unstructured.NestedString(obj.Object, "metadata", "annotations", utils.AnnoKeyUpdatedBy)
 	require.Equal(t, "access-policy:provisioning", v)
 
 	// Should be able to directly delete the managed resource
-	err = helper.DashboardsV1.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
+	err = helper.DashboardsV1.Resource.Delete(t.Context(), allPanels, metav1.DeleteOptions{})
 	require.NoError(t, err, "user can delete")
 
-	_, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	_, err = helper.DashboardsV1.Resource.Get(t.Context(), allPanels, metav1.GetOptions{})
 	require.Error(t, err, "should delete the internal resource")
 	require.True(t, apierrors.IsNotFound(err))
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "gh-repo"
 	testRepo := common.TestRepo{
@@ -1804,14 +1793,14 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 	helper.CreateLocalRepo(t, testRepo)
 
 	// Checking resources are there and are managed
-	foundFolders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	foundFolders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err, "can list folders")
 	for _, v := range foundFolders.Items {
 		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
 		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
 	}
 
-	foundDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	foundDashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err, "can list dashboards")
 	for _, v := range foundDashboards.Items {
 		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
@@ -1820,7 +1809,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
 	}
 
-	_, err = helper.Repositories.Resource.Patch(ctx, repo, types.JSONPatchType, []byte(`[
+	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
 		{
 			"op": "replace",
 			"path": "/metadata/finalizers",
@@ -1829,17 +1818,16 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 	]`), metav1.PatchOptions{})
 	require.NoError(t, err, "should successfully patch finalizers")
 
-	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+	err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete repository")
 
-	helper.WaitForRepositoryDeleted(t, ctx, repo)
-	common.WaitForResourcesReleased(t, ctx, helper.DashboardsV1.Resource, "dashboards")
-	common.WaitForResourcesReleased(t, ctx, helper.Folders.Resource, "folders")
+	helper.WaitForRepositoryDeleted(t, repo)
+	common.WaitForResourcesReleased(t, helper.DashboardsV1.Resource, "dashboards")
+	common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	t.Run("remove-orphan-resources finalizer deletes classic dashboards", func(t *testing.T) {
 		const repo = "finalizer-remove-classic"
@@ -1865,17 +1853,17 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
-		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
+		dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), "finalizer-remove-classic-uid", metav1.GetOptions{})
 		require.NoError(t, err, "classic dashboard should exist after initial sync")
 		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
 		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
 
-		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 		require.NoError(t, err, "should delete repository")
 
-		helper.WaitForRepositoryDeleted(t, ctx, repo)
+		helper.WaitForRepositoryDeleted(t, repo)
 
-		_, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
+		_, err = helper.DashboardsV1.Resource.Get(t.Context(), "finalizer-remove-classic-uid", metav1.GetOptions{})
 		require.Error(t, err, "classic dashboard should be deleted by remove-orphan-resources finalizer")
 		require.True(t, apierrors.IsNotFound(err))
 	})
@@ -1904,22 +1892,22 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
-		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
+		dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), "finalizer-release-classic-uid", metav1.GetOptions{})
 		require.NoError(t, err, "classic dashboard should exist after initial sync")
 		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
 		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
 
-		_, err = helper.Repositories.Resource.Patch(ctx, repo, types.JSONPatchType, []byte(`[
+		_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
 			{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
 		]`), metav1.PatchOptions{})
 		require.NoError(t, err, "should successfully patch finalizers")
 
-		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 		require.NoError(t, err, "should delete repository")
 
-		helper.WaitForRepositoryDeleted(t, ctx, repo)
+		helper.WaitForRepositoryDeleted(t, repo)
 
-		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
+		dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "finalizer-release-classic-uid", metav1.GetOptions{})
 		require.NoError(t, err, "classic dashboard should still exist after release")
 
 		annotations := dashboard.GetAnnotations()
@@ -1932,7 +1920,6 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "job-permissions-test"
 	testRepo := common.TestRepo{
@@ -1963,7 +1950,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			SubResource("jobs").
 			Body(editorJobBody).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "editor should be able to POST jobs")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -1985,7 +1972,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			SubResource("jobs").
 			Body(editorJobBody).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to POST jobs")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -2001,7 +1988,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			SubResource("jobs").
 			Body(adminJobBody).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		// Job might already exist from previous test, which is acceptable
 		if apierrors.IsAlreadyExists(result.Error()) {
@@ -2017,7 +2004,6 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 
 func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "refs-permissions-test"
 	testRepo := common.TestRepo{
@@ -2038,7 +2024,7 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("refs").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "editor should be able to GET refs")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -2057,7 +2043,7 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("refs").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to GET refs")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -2071,7 +2057,7 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("refs").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to GET refs")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -2080,7 +2066,6 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 
 func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
 		const repo = "empty-path-test"
@@ -2095,15 +2080,15 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		helper.CreateLocalRepo(t, testRepo)
 
 		// Verify the repository has empty path
-		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		path, _, _ := unstructured.NestedString(repoObj.Object, "spec", "github", "path")
 		require.Equal(t, "", path, "repository should have empty path")
 
 		// Clean up
-		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		helper.WaitForRepositoryDeleted(t, ctx, repo)
+		helper.WaitForRepositoryDeleted(t, repo)
 	})
 
 	t.Run("multiple repositories with empty path - duplicate sync-enabled root path is rejected", func(t *testing.T) {
@@ -2129,26 +2114,25 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})
-		_, err := helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{})
+		_, err := helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{})
 		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 
 		// Verify first repository has empty path
-		repo1Obj, err := helper.Repositories.Resource.Get(ctx, repo1, metav1.GetOptions{})
+		repo1Obj, err := helper.Repositories.Resource.Get(t.Context(), repo1, metav1.GetOptions{})
 		require.NoError(t, err)
 		path1, _, _ := unstructured.NestedString(repo1Obj.Object, "spec", "github", "path")
 		require.Equal(t, "", path1, "repo1 should have empty path")
 
 		// Clean up
-		err = helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), repo1, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		helper.WaitForRepositoryDeleted(t, ctx, repo1)
+		helper.WaitForRepositoryDeleted(t, repo1)
 	})
 }
 
 func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
@@ -2178,13 +2162,13 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		},
 	}}
 
-	c, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, connection)
 	require.NoError(t, err, "failed to create connection")
 
 	connectionName := c.GetName()
 
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
-		c, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
+		c, err := helper.Connections.Resource.Get(t.Context(), connectionName, metav1.GetOptions{})
 		require.NoError(collectT, err, "can list values")
 		conn := common.MustFromUnstructured[provisioning.Connection](t, c)
 		require.NotEqual(collectT, 0, conn.Status.ObservedGeneration, "resource should be reconciled at least once")
@@ -2218,11 +2202,11 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		},
 	}}
 
-	_, err = helper.Repositories.Resource.Create(ctx, repoWithConnection, createOptions)
+	_, err = helper.Repositories.Resource.Create(t.Context(), repoWithConnection, createOptions)
 	require.NoError(t, err, "failed to create repository with connection")
 
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
-		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		repo, err := helper.Repositories.Resource.Get(t.Context(), "repo-with-connection", metav1.GetOptions{})
 		require.NoError(collectT, err, "can get repository")
 		r := common.MustFromUnstructured[provisioning.Repository](t, repo)
 		require.NotEqual(collectT, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
@@ -2233,7 +2217,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		// fieldErrors are populated from testResults and may contain warnings even when healthy
 		require.NotNil(collectT, r.Status.FieldErrors, "fieldErrors field should exist in status")
 
-		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
+		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
 		require.NoError(collectT, err, "decryption error")
 		require.Len(collectT, decrypted, 1)
 
@@ -2249,7 +2233,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	var firstReconciledRepo *provisioning.Repository
 	const maxStatusRetries = 5
 	for attempt := range maxStatusRetries {
-		repoUnstructured, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		repoUnstructured, err := helper.Repositories.Resource.Get(t.Context(), "repo-with-connection", metav1.GetOptions{})
 		require.NoError(t, err, "can get repository")
 		firstReconciledRepo = common.MustFromUnstructured[provisioning.Repository](t, repoUnstructured)
 
@@ -2283,7 +2267,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		}
 		updatedRepo := common.MustToUnstructured(t, firstReconciledRepo)
 		// This should also trigger a reconciliation loop
-		_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedRepo, metav1.UpdateOptions{})
+		_, err = helper.Repositories.Resource.UpdateStatus(t.Context(), updatedRepo, metav1.UpdateOptions{})
 		if err == nil {
 			break
 		}
@@ -2294,7 +2278,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	}
 
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
-		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		repo, err := helper.Repositories.Resource.Get(t.Context(), "repo-with-connection", metav1.GetOptions{})
 		require.NoError(collectT, err, "can get repository")
 		r := common.MustFromUnstructured[provisioning.Repository](t, repo)
 		// Token should be there
@@ -2307,7 +2291,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		)
 
 		// Just checking the token is what is going to be returned by the mock GH API
-		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
+		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
 		require.NoError(collectT, err, "decryption error")
 		require.Len(collectT, decrypted, 1)
 
@@ -2319,7 +2303,6 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 
 func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -2352,13 +2335,14 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		},
 	}}
 
-	c, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, connection)
 	require.NoError(t, err, "failed to create connection")
 
 	connectionName := c.GetName()
 
 	t.Cleanup(func() {
-		_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
+		cleanupCtx := context.WithoutCancel(t.Context())
+		_ = helper.Connections.Resource.Delete(cleanupCtx, connectionName, metav1.DeleteOptions{})
 	})
 
 	t.Run("repository with non-existent branch becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -2387,19 +2371,20 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 			},
 		}}
 
-		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		createdUnstructured, err := helper.Repositories.Resource.Create(t.Context(), repoUnstructured, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
 		repoName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
 		})
 
 		// Wait for reconciliation - repository should become unhealthy due to invalid branch
 		require.Eventually(t, func() bool {
-			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -2410,7 +2395,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
 
 		// Verify the repository is unhealthy and has fieldErrors
-		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, repo.Status.Health.Healthy, "repository should be unhealthy")
 		assert.Equal(t, repo.Generation, repo.Status.ObservedGeneration, "repository should be reconciled")
@@ -2456,19 +2441,20 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 			},
 		}}
 
-		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		createdUnstructured, err := helper.Repositories.Resource.Create(t.Context(), repoUnstructured, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
 		repoName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
 		})
 
 		// Wait for reconciliation - repository should become unhealthy due to invalid repository URL
 		require.Eventually(t, func() bool {
-			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -2479,7 +2465,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
 
 		// Verify the repository is unhealthy and has fieldErrors
-		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, repo.Status.Health.Healthy, "repository should be unhealthy")
 		assert.Equal(t, repo.Generation, repo.Status.ObservedGeneration, "repository should be reconciled")
@@ -2503,7 +2489,6 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 
 func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -2542,17 +2527,18 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 			},
 		}}
 
-		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		createdUnstructured, err := helper.Repositories.Resource.Create(t.Context(), repoUnstructured, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
 		t.Cleanup(func() {
-			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
 		})
 
 		// Wait for repository to become healthy
 		require.Eventually(t, func() bool {
-			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -2563,7 +2549,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		}, 15*time.Second, 500*time.Millisecond, "repository should be healthy")
 
 		// Verify repository is healthy with no fieldErrors
-		repoHealthy, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		repoHealthy, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.True(t, repoHealthy.Status.Health.Healthy, "repository should be healthy")
 		assert.Empty(t, repoHealthy.Status.FieldErrors, "fieldErrors should be empty when healthy")
@@ -2573,17 +2559,17 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		require.NoError(t, err)
 
 		// Trigger health check by updating the repository spec
-		latestUnstructured, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		latestUnstructured, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		updatedUnstructured := latestUnstructured.DeepCopy()
 		// Update title to trigger reconciliation
 		updatedUnstructured.Object["spec"].(map[string]any)["title"] = "Updated Title"
-		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		_, err = helper.Repositories.Resource.Update(t.Context(), updatedUnstructured, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		// Wait for repository to become unhealthy with fieldErrors
 		require.Eventually(t, func() bool {
-			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -2594,7 +2580,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		}, 15*time.Second, 500*time.Millisecond, "repository should be unhealthy with fieldErrors")
 
 		// Verify fieldErrors are present
-		repoWithErrors, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		repoWithErrors, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Greater(t, len(repoWithErrors.Status.FieldErrors), 0, "fieldErrors should be present when unhealthy")
 
@@ -2603,17 +2589,17 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		require.NoError(t, err)
 
 		// Trigger health check by updating the repository spec again
-		latestUnstructured2, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		latestUnstructured2, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		updatedUnstructured2 := latestUnstructured2.DeepCopy()
 		// Update title again to trigger reconciliation
 		updatedUnstructured2.Object["spec"].(map[string]any)["title"] = "Final Title"
-		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured2, metav1.UpdateOptions{})
+		_, err = helper.Repositories.Resource.Update(t.Context(), updatedUnstructured2, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		// Wait for reconciliation - repository should become healthy and fieldErrors should be cleared
 		require.Eventually(t, func() bool {
-			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -2630,7 +2616,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		}, 30*time.Second, 1*time.Second, "repository should be healthy with fieldErrors cleared")
 
 		// Verify fieldErrors are cleared
-		repoHealthyAgain, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		repoHealthyAgain, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.True(t, repoHealthyAgain.Status.Health.Healthy, "repository should be healthy")
 		assert.Empty(t, repoHealthyAgain.Status.FieldErrors, "fieldErrors should be cleared when repository becomes healthy")
@@ -2639,7 +2625,6 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 
 func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	namespace := "default"
 	defaultBranchName := "defaultBranchName"
 
@@ -2699,17 +2684,18 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 			},
 		}}
 
-		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		createdUnstructured, err := helper.Repositories.Resource.Create(t.Context(), repoUnstructured, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
 		t.Cleanup(func() {
-			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
 		})
 
 		// Wait for reconciliation - repository should have branch name
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 			require.NoError(collect, err, "issue getting repo")
 			require.Equal(collect, repo.Generation, repo.Status.ObservedGeneration, "repo should be reconciled")
 			require.Equal(collect, defaultBranchName, repo.Spec.GitHub.Branch, "default branch should be set")
@@ -2728,7 +2714,6 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 //	database is locked (5) (SQLITE_BUSY)
 func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Number of repositories to create concurrently
 	// This simulates what happens with 'grafanactl resources push' when pushing
@@ -2781,7 +2766,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 				},
 			}
 
-			_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+			_, err := helper.Repositories.Resource.Create(t.Context(), repo, metav1.CreateOptions{})
 			results <- result{name: repoName, err: err}
 		}(i)
 	}
@@ -2821,7 +2806,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	// Verify all repositories exist and have their secure tokens
 	for i := range numRepos {
 		repoName := fmt.Sprintf("concurrent-repo-%d", i)
-		repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		repo, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err, "Repository %s should exist", repoName)
 
 		// Verify the secure token was created
@@ -2836,7 +2821,6 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 
 func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repoName = "folder-title-update-test"
 	const initialTitle = "Initial Folder Title"
@@ -2854,7 +2838,7 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 	// Verify the root folder has the initial title.
 	// The root folder for a folder-sync repo has the same name as the repository.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		folderObj, err := helper.Folders.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		folderObj, err := helper.Folders.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "should be able to get the root folder") {
 			return
 		}
@@ -2864,14 +2848,14 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 
 	// Update the repository spec.title to a new value.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "should be able to get repository") {
 			return
 		}
 		err = unstructured.SetNestedField(repoObj.Object, updatedTitle, "spec", "title")
 		require.NoError(t, err, "should be able to set new title")
 
-		_, err = helper.Repositories.Resource.Update(ctx, repoObj, metav1.UpdateOptions{})
+		_, err = helper.Repositories.Resource.Update(t.Context(), repoObj, metav1.UpdateOptions{})
 		assert.NoError(collect, err, "should be able to update repository title")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should update repository title")
 
@@ -2880,7 +2864,7 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 
 	// Verify the root folder title was updated.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		folderObj, err := helper.Folders.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		folderObj, err := helper.Folders.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "should be able to get the root folder") {
 			return
 		}

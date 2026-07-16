@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -16,7 +15,6 @@ import (
 
 func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Create a test repository first
 	const repo = "job-validation-test-repo"
@@ -309,7 +307,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 			}
 
 			// Try to create the job - should fail with validation error
-			_, err := helper.Jobs.Resource.Create(ctx, jobObj, metav1.CreateOptions{})
+			_, err := helper.Jobs.Resource.Create(t.Context(), jobObj, metav1.CreateOptions{})
 			require.Error(t, err, "expected validation error for invalid job spec")
 
 			// Verify it's a validation error with correct status code

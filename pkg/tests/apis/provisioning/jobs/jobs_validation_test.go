@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -14,7 +13,6 @@ import (
 
 func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repoReadOnly = "job-validation-readonly"
 	testRepo := common.TestRepo{
@@ -88,7 +86,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 					SubResource("jobs").
 					Body(body).
 					SetHeader("Content-Type", "application/json").
-					Do(ctx).StatusCode(&statusCode)
+					Do(t.Context()).StatusCode(&statusCode)
 
 				require.Error(t, result.Error(), "write job should be rejected for read-only repository")
 				require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -112,7 +110,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "pull job should be allowed for read-only repository")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")

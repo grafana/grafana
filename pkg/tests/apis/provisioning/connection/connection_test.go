@@ -29,7 +29,6 @@ import (
 
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
@@ -55,13 +54,13 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 		}}
 		// CREATE
-		c, err := helper.CreateGithubConnection(t, ctx, connection)
+		c, err := helper.CreateGithubConnection(t, connection)
 		require.NoError(t, err, "failed to create resource")
 
 		connectionName := c.GetName()
 
 		// READ
-		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
+		output, err := helper.Connections.Resource.Get(t.Context(), connectionName, metav1.GetOptions{})
 		require.NoError(t, err, "failed to read back resource")
 		assert.Equal(t, connectionName, output.GetName(), "name should be equal")
 		assert.Equal(t, "default", output.GetNamespace(), "namespace should be equal")
@@ -76,7 +75,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		assert.Contains(t, output.Object["secure"], "privateKey", "secure should contain PrivateKey")
 
 		// LIST
-		list, err := helper.Connections.Resource.List(ctx, metav1.ListOptions{})
+		list, err := helper.Connections.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err, "failed to list resource")
 		assert.Equal(t, 1, len(list.Items), "should have one connection")
 		assert.Equal(t, connectionName, list.Items[0].GetName(), "name should be equal")
@@ -103,7 +102,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 				},
 			},
 		}}
-		res, err := helper.UpdateGithubConnection(t, ctx, updatedConnection)
+		res, err := helper.UpdateGithubConnection(t, updatedConnection)
 		require.NoError(t, err, "failed to update resource")
 		spec = res.Object["spec"].(map[string]any)
 		require.Contains(t, spec, "github")
@@ -113,7 +112,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		// DELETE - Retry delete to handle resource version conflicts
 		// The controller may have updated the resource after our update, changing the resource version
 		require.Eventually(t, func() bool {
-			err := helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
+			err := helper.Connections.Resource.Delete(t.Context(), connectionName, metav1.DeleteOptions{})
 			if err != nil {
 				if k8serrors.IsConflict(err) {
 					// Resource version conflict - retry
@@ -128,7 +127,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			}
 			return true
 		}, 5*time.Second, 100*time.Millisecond, "should successfully delete resource")
-		list, err = helper.Connections.Resource.List(ctx, metav1.ListOptions{})
+		list, err = helper.Connections.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err, "failed to list resources")
 		assert.Equal(t, 0, len(list.Items), "should have no connections")
 	})
@@ -185,7 +184,6 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 
 func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should update connection name with type prefix", func(t *testing.T) {
@@ -213,13 +211,14 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			},
 		}}
 
-		c, err := helper.CreateGithubConnection(t, ctx, connection)
+		c, err := helper.CreateGithubConnection(t, connection)
 		require.NoError(t, err, "failed to create resource")
 		require.Contains(t, c.GetName(), namePrefix, "name should be updated")
 
 		t.Cleanup(func() {
+			cleanupCtx := context.WithoutCancel(t.Context())
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				err := helper.Connections.Resource.Delete(cleanupCtx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
@@ -250,13 +249,14 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			},
 		}}
 
-		c, err := helper.CreateGithubConnection(t, ctx, connection)
+		c, err := helper.CreateGithubConnection(t, connection)
 		require.NoError(t, err, "failed to create resource")
 		require.Contains(t, c.GetName(), generateName, "name should be updated")
 
 		t.Cleanup(func() {
+			cleanupCtx := context.WithoutCancel(t.Context())
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				err := helper.Connections.Resource.Delete(cleanupCtx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
@@ -287,13 +287,14 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			},
 		}}
 
-		c, err := helper.CreateGithubConnection(t, ctx, connection)
+		c, err := helper.CreateGithubConnection(t, connection)
 		require.NoError(t, err, "failed to create resource")
 		require.Equal(t, name, c.GetName(), "name should be identical")
 
 		t.Cleanup(func() {
+			cleanupCtx := context.WithoutCancel(t.Context())
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				err := helper.Connections.Resource.Delete(cleanupCtx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
@@ -303,7 +304,6 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 	helper := sharedHelper(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should fail when type is empty", func(t *testing.T) {
@@ -324,7 +324,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		_, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "connection type \"\" is not supported")
 	})
@@ -347,7 +347,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		_, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "connection type \"some-invalid-type\" is not supported")
 	})
@@ -370,7 +370,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		_, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "connection type \"git\" is not supported")
 	})
@@ -393,7 +393,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		_, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "connection type \"local\" is not supported")
 	})
@@ -416,7 +416,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		_, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "github info must be specified for GitHub connection")
 	})
@@ -438,7 +438,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		_, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "privateKey must be specified for GitHub connection")
 	})
@@ -468,7 +468,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		_, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "clientSecret is forbidden in GitHub connection")
 	})
@@ -513,13 +513,14 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			},
 		}}
 		// CREATE should succeed - runtime validation happens in controller
-		created, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		created, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.NoError(t, err, "CREATE should succeed")
 		require.NotNil(t, created)
 
 		connName := created.GetName()
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for controller to process and mark connection as unhealthy
@@ -529,7 +530,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
 
 		require.Eventually(t, func() bool {
-			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -540,7 +541,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		}, 10*time.Second, 500*time.Millisecond, "connection should be marked unhealthy")
 
 		// Verify the error message contains information about API being unavailable
-		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
 		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
@@ -608,13 +609,14 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			},
 		}}
 		// CREATE should succeed - runtime validation happens in controller
-		created, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		created, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 		require.NoError(t, err, "CREATE should succeed")
 		require.NotNil(t, created)
 
 		connName := created.GetName()
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for controller to process and mark connection as unhealthy
@@ -624,7 +626,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
 
 		require.Eventually(t, func() bool {
-			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -637,7 +639,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
 		// Verify the error message contains information about app ID mismatch
-		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
 		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
@@ -669,7 +671,6 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 
 func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -706,19 +707,20 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 			},
 		}}
 
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		createdUnstructured, err := helper.CreateGithubConnection(t, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
 		connName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for initial reconciliation - controller should update status
 		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			updated, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -730,13 +732,13 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
 
 		// Verify initial health check was set
-		initial, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, initial)
 		require.False(t, initial.Secure.Token.IsZero())
 
 		// Verifying token
-		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
+		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
 		require.NoError(t, err, "decryption error")
 		require.Len(t, decrypted, 1)
 
@@ -772,19 +774,20 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 			},
 		}}
 
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		createdUnstructured, err := helper.CreateGithubConnection(t, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
 		connName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for initial reconciliation - controller should update status
 		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			updated, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -796,13 +799,13 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
 
 		// Verify initial health check was set
-		initial, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, initial)
 		require.False(t, initial.Secure.Token.IsZero())
 
 		// Verifying token
-		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
+		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
 		require.NoError(t, err, "decryption error")
 		require.Len(t, decrypted, 1)
 
@@ -836,13 +839,13 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 			},
 		}}
 
-		updatedUnstructured, err := helper.UpdateGithubConnection(t, ctx, updated)
+		updatedUnstructured, err := helper.UpdateGithubConnection(t, updated)
 		require.NoError(t, err)
 		require.NotNil(t, updatedUnstructured)
 
 		// Wait for initial reconciliation - controller should update status
 		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			updated, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -853,14 +856,14 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 				updated.Status.Health.Healthy
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled again")
 
-		c, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		c, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		// Verify secret got updated
 		require.NotEqual(t, c.Secure.Token.Name, initial.Secure.Token.Name)
 
 		// Verifying token
-		newSecretDecrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", c.Namespace, c.Secure.Token.Name)
+		newSecretDecrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", c.Namespace, c.Secure.Token.Name)
 		require.NoError(t, err, "decryption error")
 		require.Len(t, decrypted, 1)
 
@@ -876,7 +879,6 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 
 func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -910,19 +912,20 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 			},
 		}}
 
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		createdUnstructured, err := helper.CreateGithubConnection(t, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
 		connName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for initial reconciliation - controller should update status
 		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			updated, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -934,7 +937,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		}, 10*time.Second, 500*time.Millisecond, "connection should be initially reconciled with health status")
 
 		// Verify initial health check was set
-		initial, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.True(t, initial.Status.Health.Healthy, "connection should be healthy")
 		readyCondition := meta.FindStatusCondition(initial.Status.Conditions, provisioning.ConditionTypeReady)
@@ -975,20 +978,21 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 			},
 		}}
 
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		createdUnstructured, err := helper.CreateGithubConnection(t, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
 		connName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for initial reconciliation
 		var initialHealthChecked int64
 		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			updated, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -1000,25 +1004,25 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		}, 10*time.Second, 500*time.Millisecond, "connection should be initially reconciled")
 
 		// Get the latest version before updating to avoid conflicts with controller updates
-		latestUnstructured, err := helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
+		latestUnstructured, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		// Forcing the update of healthcheck - marking it as old.
 		health := latestUnstructured.Object["status"].(map[string]any)["health"].(map[string]any)
 		health["checked"] = time.UnixMilli(initialHealthChecked).Add(-5 * time.Minute).UnixMilli()
-		updated, err := helper.Connections.Resource.UpdateStatus(ctx, latestUnstructured, metav1.UpdateOptions{})
+		updated, err := helper.Connections.Resource.UpdateStatus(t.Context(), latestUnstructured, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		// Update the connection spec using the latest version
 		updatedUnstructured := updated.DeepCopy()
 		githubSpec := updatedUnstructured.Object["spec"].(map[string]any)["github"].(map[string]any)
 		githubSpec["appID"] = "99999"
-		_, err = helper.UpdateGithubConnection(t, ctx, updatedUnstructured)
+		_, err = helper.UpdateGithubConnection(t, updatedUnstructured)
 		require.NoError(t, err)
 
 		// Wait for reconciliation after spec change
 		require.Eventually(t, func() bool {
-			reconciled, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			reconciled, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -1027,7 +1031,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled after spec change")
 
 		// Verify health check was updated
-		final, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		final, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, final.Generation, final.Status.ObservedGeneration, "observed generation should match generation")
 		assert.Greater(t, final.Status.Health.Checked, initialHealthChecked, "health check should be updated after spec change")
@@ -1045,7 +1049,6 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 
 func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -1079,7 +1082,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 			},
 		}}
 
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		createdUnstructured, err := helper.CreateGithubConnection(t, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
@@ -1123,12 +1126,13 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		connName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for reconciliation - connection should become unhealthy due to invalid installation ID
 		require.Eventually(t, func() bool {
-			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -1139,7 +1143,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
 		// Verify the connection is unhealthy and has fieldErrors
-		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
 		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
@@ -1193,7 +1197,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 			},
 		}}
 
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		createdUnstructured, err := helper.CreateGithubConnection(t, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
@@ -1234,12 +1238,13 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		connName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for reconciliation - connection should become unhealthy due to invalid app ID
 		require.Eventually(t, func() bool {
-			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -1250,7 +1255,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
 		// Verify the connection is unhealthy and has fieldErrors
-		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
 		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
@@ -1283,7 +1288,6 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -1317,7 +1321,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 			},
 		}}
 
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		createdUnstructured, err := helper.CreateGithubConnection(t, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
@@ -1356,12 +1360,13 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		connName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for reconciliation - connection should become unhealthy with fieldErrors
 		require.Eventually(t, func() bool {
-			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -1372,12 +1377,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		}, 15*time.Second, 500*time.Millisecond, "connection should be unhealthy with fieldErrors")
 
 		// Verify fieldErrors are present
-		connWithErrors, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		connWithErrors, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Greater(t, len(connWithErrors.Status.FieldErrors), 0, "fieldErrors should be present when unhealthy")
 
 		// Fix the connection by updating to a valid installation ID
-		latestUnstructured, err := helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
+		latestUnstructured, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		updatedUnstructured := latestUnstructured.DeepCopy()
@@ -1413,12 +1418,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		)
 		helper.SetGithubConnectionFactory(connectionFactory)
 
-		_, err = helper.Connections.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		_, err = helper.Connections.Resource.Update(t.Context(), updatedUnstructured, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		// Wait for reconciliation - connection should become healthy and fieldErrors should be cleared
 		require.Eventually(t, func() bool {
-			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -1429,7 +1434,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		}, 15*time.Second, 500*time.Millisecond, "connection should be healthy with fieldErrors cleared")
 
 		// Verify fieldErrors are cleared
-		connHealthy, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		connHealthy, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.True(t, connHealthy.Status.Health.Healthy, "connection should be healthy")
 		assert.Empty(t, connHealthy.Status.FieldErrors, "fieldErrors should be cleared when connection becomes healthy")
@@ -1444,7 +1449,6 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 
 func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
@@ -1471,18 +1475,19 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		},
 	}}
 
-	c, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, connection)
 	require.NoError(t, err, "failed to create connection")
 
 	connectionName := c.GetName()
 
 	t.Cleanup(func() {
+		cleanupCtx := context.WithoutCancel(t.Context())
 		// Clean up repositories first
-		_ = helper.Repositories.Resource.Delete(ctx, "repo-with-connection", metav1.DeleteOptions{})
-		_ = helper.Repositories.Resource.Delete(ctx, "repo-without-connection", metav1.DeleteOptions{})
-		_ = helper.Repositories.Resource.Delete(ctx, "repo-with-different-connection", metav1.DeleteOptions{})
+		_ = helper.Repositories.Resource.Delete(cleanupCtx, "repo-with-connection", metav1.DeleteOptions{})
+		_ = helper.Repositories.Resource.Delete(cleanupCtx, "repo-without-connection", metav1.DeleteOptions{})
+		_ = helper.Repositories.Resource.Delete(cleanupCtx, "repo-with-different-connection", metav1.DeleteOptions{})
 		// Then clean up the connection
-		_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
+		_ = helper.Connections.Resource.Delete(cleanupCtx, connectionName, metav1.DeleteOptions{})
 	})
 
 	// Create a repository WITH the connection
@@ -1509,7 +1514,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		},
 	}}
 
-	_, err = helper.Repositories.Resource.Create(ctx, repoWithConnection, createOptions)
+	_, err = helper.Repositories.Resource.Create(t.Context(), repoWithConnection, createOptions)
 	require.NoError(t, err, "failed to create repository with connection")
 
 	// Create a repository WITHOUT the connection
@@ -1533,7 +1538,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		},
 	}}
 
-	_, err = helper.Repositories.Resource.Create(ctx, repoWithoutConnection, createOptions)
+	_, err = helper.Repositories.Resource.Create(t.Context(), repoWithoutConnection, createOptions)
 	require.NoError(t, err, "failed to create repository without connection")
 
 	// Create a repository with a DIFFERENT connection name (non-existent)
@@ -1560,12 +1565,12 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		},
 	}}
 
-	_, err = helper.Repositories.Resource.Create(ctx, repoWithDifferentConnection, createOptions)
+	_, err = helper.Repositories.Resource.Create(t.Context(), repoWithDifferentConnection, createOptions)
 	require.NoError(t, err, "failed to create repository with different connection")
 
 	t.Run("filter repositories by spec.connection.name", func(t *testing.T) {
 		// List repositories with field selector for the specific connection
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "spec.connection.name=" + connectionName,
 		})
 		require.NoError(t, err, "failed to list repositories with field selector")
@@ -1577,7 +1582,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 
 	t.Run("filter repositories by non-existent connection returns empty", func(t *testing.T) {
 		// List repositories with field selector for a non-existent connection
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "spec.connection.name=non-existent-connection",
 		})
 		require.NoError(t, err, "failed to list repositories with field selector")
@@ -1588,7 +1593,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 
 	t.Run("filter repositories by empty connection name", func(t *testing.T) {
 		// List repositories with field selector for empty connection (repos without connection)
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "spec.connection.name=",
 		})
 		require.NoError(t, err, "failed to list repositories with empty connection field selector")
@@ -1600,7 +1605,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 
 	t.Run("list all repositories without field selector", func(t *testing.T) {
 		// List all repositories without field selector
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		list, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err, "failed to list all repositories")
 
 		// Should return all three repositories
@@ -1618,7 +1623,6 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 
 func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -1646,7 +1650,7 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 		},
 	}}
 
-	c, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+	c, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 	require.NoError(t, err, "failed to create connection")
 
 	connectionName := c.GetName()
@@ -1675,11 +1679,11 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 		},
 	}}
 
-	_, err = helper.Repositories.Resource.Create(ctx, repo, createOptions)
+	_, err = helper.Repositories.Resource.Create(t.Context(), repo, createOptions)
 	require.NoError(t, err, "failed to create repository referencing connection")
 
 	t.Run("should block connection deletion when referenced by repository", func(t *testing.T) {
-		err := helper.Connections.Resource.Delete(ctx, connectionName, deleteOptions)
+		err := helper.Connections.Resource.Delete(t.Context(), connectionName, deleteOptions)
 		require.Error(t, err, "expected deletion to be blocked")
 
 		// Verify it's an Invalid error (containing Forbidden field error)
@@ -1690,24 +1694,24 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 
 	t.Run("should allow connection deletion after repository is deleted", func(t *testing.T) {
 		// Delete the repository first
-		err := helper.Repositories.Resource.Delete(ctx, "repo-referencing-connection", deleteOptions)
+		err := helper.Repositories.Resource.Delete(t.Context(), "repo-referencing-connection", deleteOptions)
 		require.NoError(t, err, "failed to delete repository")
 
 		// Wait for the repository to be fully deleted (might have finalizers)
 		require.Eventually(t, func() bool {
-			_, err := helper.Repositories.Resource.Get(ctx, "repo-referencing-connection", metav1.GetOptions{})
+			_, err := helper.Repositories.Resource.Get(t.Context(), "repo-referencing-connection", metav1.GetOptions{})
 			return k8serrors.IsNotFound(err)
 		}, 30*time.Second, 100*time.Millisecond, "repository should be deleted")
 
 		// Now deletion should succeed
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			err := helper.Connections.Resource.Delete(ctx, connectionName, deleteOptions)
+			err := helper.Connections.Resource.Delete(t.Context(), connectionName, deleteOptions)
 			require.NoError(collect, err, "failed to delete connection")
 		}, 10*time.Second, 100*time.Millisecond, "deletion should succeed")
 
 		// Verify connection is actually deleted
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err = helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
+			_, err = helper.Connections.Resource.Get(t.Context(), connectionName, metav1.GetOptions{})
 			require.True(collect, k8serrors.IsNotFound(err), "connection should be deleted")
 		}, 10*time.Second, 100*time.Millisecond, "connection should be deleted")
 	})
@@ -1715,7 +1719,6 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 
 func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -1743,24 +1746,23 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 		},
 	}}
 
-	c, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+	c, err := helper.Connections.Resource.Create(t.Context(), connection, createOptions)
 	require.NoError(t, err, "failed to create connection")
 
 	connectionName := c.GetName()
 
 	t.Run("should allow deletion of connection with no repository references", func(t *testing.T) {
-		err := helper.Connections.Resource.Delete(ctx, connectionName, deleteOptions)
+		err := helper.Connections.Resource.Delete(t.Context(), connectionName, deleteOptions)
 		require.NoError(t, err, "expected deletion to succeed for unreferenced connection")
 
 		// Verify connection is deleted
-		_, err = helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
+		_, err = helper.Connections.Resource.Get(t.Context(), connectionName, metav1.GetOptions{})
 		assert.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
 	})
 }
 
 func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	namespace := "default"
 
 	// Create typed client from REST config
@@ -1794,7 +1796,7 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 			},
 		}}
 
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		createdUnstructured, err := helper.CreateGithubConnection(t, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
@@ -1820,12 +1822,13 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 		connName := createdUnstructured.GetName()
 
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+			cleanupCtx := context.WithoutCancel(t.Context())
+			_ = helper.Connections.Resource.Delete(cleanupCtx, connName, metav1.DeleteOptions{})
 		})
 
 		// Wait for reconciliation - connection should become unhealthy with ServiceUnavailable reason
 		require.Eventually(t, func() bool {
-			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
@@ -1835,7 +1838,7 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
 		// Verify the connection has ServiceUnavailable reason
-		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
 		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
@@ -1946,7 +1949,6 @@ func createAppInstallationWithPermissions(id int64, permissions map[string]strin
 
 func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Base64 encoded test private key
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -2090,12 +2092,13 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 				},
 			}}
 
-			c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{})
+			c, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, c)
 			t.Cleanup(func() {
+				cleanupCtx := context.WithoutCancel(t.Context())
 				require.EventuallyWithT(t, func(collect *assert.CollectT) {
-					err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+					err := helper.Connections.Resource.Delete(cleanupCtx, c.GetName(), metav1.DeleteOptions{})
 					require.NoError(collect, err)
 				}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 			})
@@ -2109,7 +2112,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 			var conn *provisioning.Connection
 			require.Eventually(t, func() bool {
 				var err error
-				conn, err = connClient.Get(ctx, c.GetName(), metav1.GetOptions{})
+				conn, err = connClient.Get(t.Context(), c.GetName(), metav1.GetOptions{})
 				if err != nil {
 					return false
 				}
@@ -2159,7 +2162,6 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 
 func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Base64 encoded test private key
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -2307,12 +2309,13 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 				},
 			}}
 
-			c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{})
+			c, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, c)
 			t.Cleanup(func() {
+				cleanupCtx := context.WithoutCancel(t.Context())
 				require.EventuallyWithT(t, func(collect *assert.CollectT) {
-					err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+					err := helper.Connections.Resource.Delete(cleanupCtx, c.GetName(), metav1.DeleteOptions{})
 					require.NoError(collect, err)
 				}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 			})
@@ -2326,7 +2329,7 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 			var conn *provisioning.Connection
 			require.Eventually(t, func() bool {
 				var err error
-				conn, err = connClient.Get(ctx, c.GetName(), metav1.GetOptions{})
+				conn, err = connClient.Get(t.Context(), c.GetName(), metav1.GetOptions{})
 				if err != nil {
 					return false
 				}

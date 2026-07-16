@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -19,7 +18,6 @@ import (
 // TestIntegrationProvisioning_BOMs tests that BOMs in provisioned files are handled correctly
 func TestIntegrationProvisioning_BOMs(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "bom-test-repo"
 
@@ -53,7 +51,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "bom-prefix-test", metav1.GetOptions{})
+			dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "bom-prefix-test", metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("could not get dashboard: %s", err.Error())
 				return
@@ -76,7 +74,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		require.NotContains(t, string(dashboardJSON), "\ufeff", "stored dashboard should not contain any BOMs")
 
 		// Cleanup - delete repository
-		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
@@ -123,7 +121,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "bom-embedded-test", metav1.GetOptions{})
+			dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "bom-embedded-test", metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("could not get dashboard: %s", err.Error())
 				return
@@ -159,7 +157,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		require.NotContains(t, panel2Title, "\ufeff")
 
 		// Cleanup
-		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), repoName, metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
@@ -203,7 +201,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "bom-deletion-test", metav1.GetOptions{})
+			dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "bom-deletion-test", metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("could not get dashboard: %s", err.Error())
 				return
@@ -227,17 +225,17 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		patchData := []byte(`[
 			{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
 		]`)
-		_, err = helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, patchData, metav1.PatchOptions{})
+		_, err = helper.Repositories.Resource.Patch(t.Context(), repoName, types.JSONPatchType, patchData, metav1.PatchOptions{})
 		require.NoError(t, err, "should successfully patch finalizers")
 
 		// Delete the repository - finalizer will patch dashboard to remove annotations
 		// The key test: PATCH should succeed even though dashboard has BOMs in spec
-		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), repoName, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
 		// Wait for repository to be deleted (finalizer has completed)
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err = helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+			_, err = helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err == nil {
 				collect.Errorf("repository should be deleted")
 				return
@@ -246,7 +244,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted")
 
 		// Verify dashboard STILL EXISTS (released, not deleted)
-		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "bom-deletion-test", metav1.GetOptions{})
+		dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "bom-deletion-test", metav1.GetOptions{})
 		require.NoError(t, err, "dashboard should still exist after repository deletion")
 
 		// Verify ownership annotations were REMOVED by the finalizer
@@ -298,7 +296,7 @@ spec:
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "bom-yaml-test", metav1.GetOptions{})
+			dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "bom-yaml-test", metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("could not get dashboard: %s", err.Error())
 				return
@@ -313,7 +311,7 @@ spec:
 		require.NotContains(t, title, "\ufeff")
 
 		// Cleanup
-		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), repoName, metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 }

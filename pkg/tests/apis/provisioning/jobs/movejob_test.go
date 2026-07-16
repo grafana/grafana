@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +15,6 @@ import (
 
 func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	const repo = "move-test-repo"
 	testRepo := common.TestRepo{
 		Name:       repo,
@@ -50,22 +48,22 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 		// FIXME: use the helpers for assertions
 		// Verify file is moved in repository
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "dashboard1.json")
+		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "moved", "dashboard1.json")
 		require.NoError(t, err, "file should exist at new location in repository")
 
 		// Verify original file is gone from repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
+		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard1.json")
 		require.Error(t, err, "original file should be gone from repository")
 		require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
 		// Verify other files still exist at original locations
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
+		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard2.json")
 		require.NoError(t, err, "other files should still exist")
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
+		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
 		require.NoError(t, err, "nested files should still exist")
 
 		// Verify dashboard still exists in Grafana after sync
-		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
 		// Verify that dashboards have the correct source paths
@@ -98,24 +96,24 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify files are moved in repository
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "dashboard2.json")
+		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "archived", "dashboard2.json")
 		require.NoError(t, err, "dashboard2.json should exist at new location")
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "folder", "dashboard3.json")
+		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "archived", "folder", "dashboard3.json")
 		require.NoError(t, err, "folder/dashboard3.json should exist at new nested location")
 
 		// Verify original files are gone from repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
+		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard2.json")
 		require.Error(t, err, "dashboard2.json should be gone from original location")
 		require.True(t, apierrors.IsNotFound(err))
 
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
+		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
 		require.Error(t, err, "folder should be gone from original location")
 		require.True(t, apierrors.IsNotFound(err), err.Error())
 
 		// Verify dashboards still exist in Grafana after sync
 		// Note: Since dashboard1.json was moved in the previous test, we now expect all 3 dashboards
 		// to be accessible from their moved locations (dashboard1 from moved/, dashboard2 and dashboard3 from archived/)
-		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
 
@@ -147,7 +145,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.Error(t, result.Error(), "move job for non-existent file should be rejected at creation")
 	})
@@ -191,7 +189,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.Error(t, result.Error(), "move job without target path should fail validation")
 		statusError := helper.RequireApiErrorStatus(result.Error(), metav1.StatusReasonInvalid, 422)
@@ -200,11 +198,11 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 	t.Run("move by resource reference", func(t *testing.T) {
 		// Delete the existing repository to avoid conflicts with validation rules
-		err := helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		err := helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
 		// Wait for repository to be fully deleted
-		helper.WaitForRepositoryDeleted(t, ctx, repo)
+		helper.WaitForRepositoryDeleted(t, repo)
 
 		// Create modified test files with unique UIDs for ResourceRef testing
 		allPanelsContent := helper.LoadFile("../testdata/all-panels.json")
@@ -257,21 +255,21 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 			// Verify corresponding file is moved in repository
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "moved-by-ref", "move-source-1.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "moved-by-ref", "move-source-1.json")
 			require.NoError(t, err, "file should be moved to new location in repository")
 
 			// Verify original file is deleted from repository
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "move-source-1.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "move-source-1.json")
 			require.Error(t, err, "original file should be deleted from repository")
 			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
 			// Verify dashboard still exists in Grafana (should be updated after sync)
 			helper.SyncAndWait(t, refRepo, nil)
-			_, err = helper.DashboardsV1.Resource.Get(ctx, "moveref1", metav1.GetOptions{})
+			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "moveref1", metav1.GetOptions{})
 			require.NoError(t, err, "dashboard should still exist in Grafana after move")
 
 			// Verify other resource still exists in original location
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "move-source-2.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "move-source-2.json")
 			require.NoError(t, err, "other files should still exist in original location")
 		})
 
@@ -292,17 +290,17 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 
 			// Verify file is moved in repository
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "archived-by-ref", "move-source-2.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "archived-by-ref", "move-source-2.json")
 			require.NoError(t, err, "file should be moved to new location")
 
 			// Verify original file is deleted from repository
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "move-source-2.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "move-source-2.json")
 			require.Error(t, err, "original file should be deleted from repository")
 			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
 			// Verify dashboard still exists in Grafana after sync
 			helper.SyncAndWait(t, refRepo, nil)
-			_, err = helper.DashboardsV1.Resource.Get(ctx, "moveref2", metav1.GetOptions{})
+			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "moveref2", metav1.GetOptions{})
 			require.NoError(t, err, "dashboard should still exist in Grafana after move")
 		})
 
@@ -318,9 +316,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			helper.SyncAndWait(t, refRepo, nil)
 
 			// Verify dashboard exists before the move
-			_, err = helper.DashboardsV1.Resource.Get(ctx, "movetoroot1", metav1.GetOptions{})
+			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "movetoroot1", metav1.GetOptions{})
 			require.NoError(t, err, "dashboard should exist before move")
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "inner-folder", "move-to-root.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "inner-folder", "move-to-root.json")
 			require.NoError(t, err, "file should exist in nested folder before move")
 
 			spec := provisioning.JobSpec{
@@ -341,15 +339,15 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			helper.SyncAndWait(t, refRepo, nil)
 
 			// The dashboard must NOT be deleted — it should still exist in Grafana
-			_, err = helper.DashboardsV1.Resource.Get(ctx, "movetoroot1", metav1.GetOptions{})
+			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "movetoroot1", metav1.GetOptions{})
 			require.NoError(t, err, "dashboard should NOT be deleted when moving to root path '/'")
 
 			// The file should now live at the repository root
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "move-to-root.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "move-to-root.json")
 			require.NoError(t, err, "file should exist at root level after move to '/'")
 
 			// The file should be gone from the nested folder
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "inner-folder", "move-to-root.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "inner-folder", "move-to-root.json")
 			require.Error(t, err, "file should be gone from nested folder after move")
 			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 		})
@@ -388,25 +386,25 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 
 			// Verify both targeted resources are moved in repository
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-target", "mixed-move-1.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "mixed-target", "mixed-move-1.json")
 			require.NoError(t, err, "file moved by path should exist at new location")
 
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-target", "mixed-move-2.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "mixed-target", "mixed-move-2.json")
 			require.NoError(t, err, "file moved by resource ref should exist at new location")
 
 			// Verify files are deleted from original locations
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-move-1.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "mixed-move-1.json")
 			require.Error(t, err, "file moved by path should be deleted from original location")
 
-			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-move-2.json")
+			_, err = helper.Repositories.Resource.Get(t.Context(), refRepo, metav1.GetOptions{}, "files", "mixed-move-2.json")
 			require.Error(t, err, "file moved by resource ref should be deleted from original location")
 
 			// Verify dashboards still exist in Grafana after sync
 			helper.SyncAndWait(t, refRepo, nil)
-			_, err = helper.DashboardsV1.Resource.Get(ctx, "mixedmove1", metav1.GetOptions{})
+			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "mixedmove1", metav1.GetOptions{})
 			require.NoError(t, err, "dashboard moved by path should still exist in Grafana")
 
-			_, err = helper.DashboardsV1.Resource.Get(ctx, "mixedmove2", metav1.GetOptions{})
+			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "mixedmove2", metav1.GetOptions{})
 			require.NoError(t, err, "dashboard moved by resource ref should still exist in Grafana")
 		})
 	})

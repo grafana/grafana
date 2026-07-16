@@ -25,7 +25,6 @@ import (
 // for org-scoped kinds and the harness deliberately kept its writes at the repository root.
 func TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, rk := range resourceKinds {
 		rk := rk
@@ -41,7 +40,10 @@ func TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope(t *testin
 				Workflows:              []string{"write"},
 				SkipResourceAssertions: true,
 			})
-			t.Cleanup(func() { _ = client.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+			t.Cleanup(func() {
+				cleanupCtx := context.WithoutCancel(t.Context())
+				_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+			})
 
 			// Create the resource inside a subdirectory. For org-scoped kinds this previously
 			// failed because the dual writer stamped a forbidden folder annotation. The files
@@ -55,10 +57,10 @@ func TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope(t *testin
 			createBody, _ := io.ReadAll(createResp.Body)
 			require.NoError(t, createResp.Body.Close())
 			require.Equalf(t, 200, createResp.StatusCode, "%s create in a subdirectory should succeed; body: %s", rk.name, createBody)
-			require.Contains(t, repositoryFilePaths(t, ctx, helper, repo), subPath, "the file should exist in the repository subdirectory")
+			require.Contains(t, repositoryFilePaths(t, helper, repo), subPath, "the file should exist in the repository subdirectory")
 
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+				got, err := client.Resource.Get(t.Context(), name, metav1.GetOptions{})
 				if !assert.NoError(collect, err) {
 					return
 				}
@@ -81,7 +83,7 @@ func TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope(t *testin
 			require.Equalf(t, 200, moveResp.StatusCode, "%s move within a subdirectory should succeed", rk.name)
 
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+				got, err := client.Resource.Get(t.Context(), name, metav1.GetOptions{})
 				if !assert.NoError(collect, err) {
 					return
 				}

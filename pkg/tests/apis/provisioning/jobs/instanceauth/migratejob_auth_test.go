@@ -1,7 +1,6 @@
 package instanceauth
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -14,7 +13,6 @@ import (
 
 func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "migrate-auth-test"
 	testRepo := common.TestRepo{
@@ -41,7 +39,7 @@ func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to create migrate job")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -63,7 +61,7 @@ func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "editor should not be able to migrate on instance-scoped repo")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -84,7 +82,7 @@ func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to create migrate job")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")

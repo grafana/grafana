@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -14,7 +13,6 @@ import (
 
 func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "jobs-auth-test"
 	testRepo := common.TestRepo{
@@ -32,7 +30,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 		result := helper.AdminREST.Get().
 			Namespace("default").
 			Resource("jobs").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to LIST jobs")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -43,7 +41,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 		result := helper.EditorREST.Get().
 			Namespace("default").
 			Resource("jobs").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "editor should be able to LIST jobs")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -54,7 +52,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 		result := helper.ViewerREST.Get().
 			Namespace("default").
 			Resource("jobs").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to LIST jobs")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -75,7 +73,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to create job")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -96,7 +94,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "editor should be able to create job")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -117,7 +115,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to create job")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")

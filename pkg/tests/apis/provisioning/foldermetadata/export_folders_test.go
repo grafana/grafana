@@ -465,7 +465,7 @@ func TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata(t *t
 	createUnmanagedFolder(t, helper, unrelatedUID, unrelatedTitle)
 
 	// The dashboard lives in the child folder; only it is named in the export.
-	selectedDash := helper.CreateUnmanagedDashboard(t, t.Context(), "selective-meta-dash", childUID)
+	selectedDash := helper.CreateUnmanagedDashboard(t, "selective-meta-dash", childUID)
 
 	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPush,

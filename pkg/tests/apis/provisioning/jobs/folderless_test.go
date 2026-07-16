@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"path"
 	"path/filepath"
@@ -28,7 +27,6 @@ const (
 // after the repository) and turns subdirectories into top-level folders.
 func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "folderless-placement"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -44,12 +42,12 @@ func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 	})
 
 	// No wrapper folder named after the repository must be created.
-	_, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	_, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err),
 		"folderless must not create a wrapper folder named after the repository")
 
 	// The single folder is the top-level folder derived from the subdirectory.
-	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, folders.Items, 1, "only the subdirectory should become a folder")
 	subFolder := folders.Items[0]
@@ -60,14 +58,14 @@ func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 		"the folder must be managed by the folderless repo")
 
 	// Root-level dashboard must be top-level (no parent folder).
-	rootDash, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	rootDash, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 	require.NoError(t, err, "root dashboard should exist")
 	require.Empty(t, rootDash.GetAnnotations()[utils.AnnoKeyFolder],
 		"root-level dashboard must have no parent folder")
 	require.Equal(t, repo, rootDash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
 	// Nested dashboard must live inside the top-level folder.
-	nestedDash, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+	nestedDash, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
 	require.NoError(t, err, "nested dashboard should exist")
 	require.Equal(t, subFolder.GetName(), nestedDash.GetAnnotations()[utils.AnnoKeyFolder],
 		"nested dashboard must be parented to the top-level folder")
@@ -80,11 +78,10 @@ func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 // This is the deletion-safety invariant for the per-repo ownership scope.
 func TestIntegrationProvisioning_FolderlessCoexistence(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// An unprovisioned dashboard created directly in Grafana.
 	unmanaged := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	createdUnmanaged, err := helper.DashboardsV1.Resource.Create(ctx, unmanaged, metav1.CreateOptions{})
+	createdUnmanaged, err := helper.DashboardsV1.Resource.Create(t.Context(), unmanaged, metav1.CreateOptions{})
 	require.NoError(t, err, "should create an unprovisioned dashboard")
 	unmanagedName := createdUnmanaged.GetName()
 
@@ -111,13 +108,13 @@ func TestIntegrationProvisioning_FolderlessCoexistence(t *testing.T) {
 
 	// Each repo owns its own dashboard; the unprovisioned one stays unmanaged.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		d1, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		d1, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
 		assert.Equal(collect, repo1, d1.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
-		d2, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		d2, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -125,18 +122,18 @@ func TestIntegrationProvisioning_FolderlessCoexistence(t *testing.T) {
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "both folderless repos should own their dashboards")
 
 	// Sync repo1; repo2's dashboard and the unprovisioned dashboard must survive.
-	repo2Before, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+	repo2Before, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
 	require.NoError(t, err)
 
 	helper.SyncAndWait(t, repo1, nil)
 
-	repo2After, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+	repo2After, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
 	require.NoError(t, err, "repo2's dashboard must survive a repo1 sync")
 	require.Equal(t, repo2, repo2After.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	require.Equal(t, repo2Before.GetGeneration(), repo2After.GetGeneration(),
 		"repo2's dashboard must not be modified by a repo1 sync")
 
-	survivor, err := helper.DashboardsV1.Resource.Get(ctx, unmanagedName, metav1.GetOptions{})
+	survivor, err := helper.DashboardsV1.Resource.Get(t.Context(), unmanagedName, metav1.GetOptions{})
 	require.NoError(t, err, "unprovisioned dashboard must survive a folderless sync")
 	require.Empty(t, survivor.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"unprovisioned dashboard must remain unmanaged")
@@ -149,11 +146,10 @@ func TestIntegrationProvisioning_FolderlessCoexistence(t *testing.T) {
 // folderless repo leaves the others untouched.
 func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// 1. Unprovisioned dashboard created directly in Grafana.
 	unmanaged := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	createdUnmanaged, err := helper.DashboardsV1.Resource.Create(ctx, unmanaged, metav1.CreateOptions{})
+	createdUnmanaged, err := helper.DashboardsV1.Resource.Create(t.Context(), unmanaged, metav1.CreateOptions{})
 	require.NoError(t, err, "should create an unprovisioned dashboard")
 	unmanagedName := createdUnmanaged.GetName()
 
@@ -183,7 +179,7 @@ func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *tes
 
 	// Each repository owns only its own dashboard; the unprovisioned one stays unmanaged.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		fd, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		fd, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -191,7 +187,7 @@ func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *tes
 		// A folder-sync root file lives inside the repo's wrapper folder.
 		assert.Equal(collect, folderRepo, fd.GetAnnotations()[utils.AnnoKeyFolder])
 
-		fld, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		fld, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -199,7 +195,7 @@ func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *tes
 		// A folderless root file is at the top level.
 		assert.Empty(collect, fld.GetAnnotations()[utils.AnnoKeyFolder])
 
-		um, err := helper.DashboardsV1.Resource.Get(ctx, unmanagedName, metav1.GetOptions{})
+		um, err := helper.DashboardsV1.Resource.Get(t.Context(), unmanagedName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -207,28 +203,28 @@ func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *tes
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "all three should coexist with correct ownership")
 
 	// The folder repo has a wrapper folder; the folderless repo has none.
-	_, err = helper.Folders.Resource.Get(ctx, folderRepo, metav1.GetOptions{})
+	_, err = helper.Folders.Resource.Get(t.Context(), folderRepo, metav1.GetOptions{})
 	require.NoError(t, err, "folder-sync repo should have a wrapper folder")
-	_, err = helper.Folders.Resource.Get(ctx, folderlessRepo, metav1.GetOptions{})
+	_, err = helper.Folders.Resource.Get(t.Context(), folderlessRepo, metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err), "folderless repo must not create a wrapper folder")
 
 	// Capture state before syncing the folderless repo.
-	folderDashBefore, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	folderDashBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 	require.NoError(t, err)
-	unmanagedBefore, err := helper.DashboardsV1.Resource.Get(ctx, unmanagedName, metav1.GetOptions{})
+	unmanagedBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), unmanagedName, metav1.GetOptions{})
 	require.NoError(t, err)
 
 	// Syncing the folderless repo must not touch the folder repo's or unprovisioned resources.
 	helper.SyncAndWait(t, folderlessRepo, nil)
 
-	folderDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	folderDashAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 	require.NoError(t, err, "folder repo's dashboard must survive a folderless sync")
 	require.Equal(t, folderRepo, folderDashAfter.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"folder repo's dashboard must keep its owner")
 	require.Equal(t, folderDashBefore.GetGeneration(), folderDashAfter.GetGeneration(),
 		"folder repo's dashboard must not be modified by a folderless sync")
 
-	unmanagedAfter, err := helper.DashboardsV1.Resource.Get(ctx, unmanagedName, metav1.GetOptions{})
+	unmanagedAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), unmanagedName, metav1.GetOptions{})
 	require.NoError(t, err, "unprovisioned dashboard must survive a folderless sync")
 	require.Empty(t, unmanagedAfter.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"unprovisioned dashboard must remain unmanaged")
@@ -242,16 +238,15 @@ func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *tes
 // cleaning the namespace.
 func TestIntegrationProvisioning_FolderlessMigrate(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Two unprovisioned dashboards to migrate.
 	dash1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	created1, err := helper.DashboardsV1.Resource.Create(ctx, dash1, metav1.CreateOptions{})
+	created1, err := helper.DashboardsV1.Resource.Create(t.Context(), dash1, metav1.CreateOptions{})
 	require.NoError(t, err)
 	name1 := created1.GetName()
 
 	dash2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	created2, err := helper.DashboardsV2beta1.Resource.Create(ctx, dash2, metav1.CreateOptions{})
+	created2, err := helper.DashboardsV2beta1.Resource.Create(t.Context(), dash2, metav1.CreateOptions{})
 	require.NoError(t, err)
 	name2 := created2.GetName()
 
@@ -274,7 +269,7 @@ func TestIntegrationProvisioning_FolderlessMigrate(t *testing.T) {
 	// Both dashboards are now managed by the repo and remain at the top level.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		for _, name := range []string{name1, name2} {
-			d, err := helper.DashboardsV1.Resource.Get(ctx, name, metav1.GetOptions{})
+			d, err := helper.DashboardsV1.Resource.Get(t.Context(), name, metav1.GetOptions{})
 			if !assert.NoError(collect, err) {
 				return
 			}
@@ -286,7 +281,7 @@ func TestIntegrationProvisioning_FolderlessMigrate(t *testing.T) {
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboards should be managed at the top level")
 
 	// No wrapper folder must be created by the migration.
-	_, err = helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	_, err = helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err), "folderless migrate must not create a wrapper folder")
 
 	// The export phase wrote the managed dashboards into the repository.
@@ -301,7 +296,6 @@ func TestIntegrationProvisioning_FolderlessMigrate(t *testing.T) {
 // wrapper folder for the repository.
 func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "folderless-create"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -337,11 +331,11 @@ func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode, "creating a file in a subdirectory should succeed: %s", resp.BodyString())
 
 	// No wrapper folder named after the repository.
-	_, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	_, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err), "folderless must not create a wrapper folder")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		root, err := helper.DashboardsV1.Resource.Get(ctx, "fldless-root", metav1.GetOptions{})
+		root, err := helper.DashboardsV1.Resource.Get(t.Context(), "fldless-root", metav1.GetOptions{})
 		if !assert.NoError(collect, err, "root dashboard should exist") {
 			return
 		}
@@ -349,7 +343,7 @@ func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
 		assert.Empty(collect, root.GetAnnotations()[utils.AnnoKeyFolder],
 			"root file must map to a top-level resource")
 
-		sub, err := helper.DashboardsV1.Resource.Get(ctx, "fldless-sub", metav1.GetOptions{})
+		sub, err := helper.DashboardsV1.Resource.Get(t.Context(), "fldless-sub", metav1.GetOptions{})
 		if !assert.NoError(collect, err, "subdirectory dashboard should exist") {
 			return
 		}
@@ -361,7 +355,7 @@ func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
 		assert.NotEqual(collect, repo, parent, "the parent folder must not be a repo wrapper folder")
 
 		// The parent folder must itself be top-level (no grandparent).
-		parentFolder, err := helper.Folders.Resource.Get(ctx, parent, metav1.GetOptions{})
+		parentFolder, err := helper.Folders.Resource.Get(t.Context(), parent, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "parent folder should exist") {
 			return
 		}
@@ -375,7 +369,6 @@ func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
 // from the top level for a folderless repository.
 func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "folderless-files"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -391,7 +384,7 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 	})
 
 	// Initially top-level: no parent folder.
-	dash, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	dash, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Empty(t, dash.GetAnnotations()[utils.AnnoKeyFolder], "dashboard should start at the top level")
 
@@ -404,14 +397,14 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 	_ = resp.Body.Close()
 	require.Equal(t, 200, resp.StatusCode, "move into subfolder should succeed")
 
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "team-y", "dashboard.json")
+	_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "team-y", "dashboard.json")
 	require.NoError(t, err, "file should exist at the new subdirectory path")
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard.json")
+	_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard.json")
 	require.Error(t, err, "file should no longer exist at the repo root")
 
 	// The dashboard is reparented into the (now top-level) subfolder.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		moved, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		moved, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -429,11 +422,11 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 	_ = resp.Body.Close()
 	require.Equal(t, 200, resp.StatusCode, "move back to root should succeed")
 
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard.json")
+	_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard.json")
 	require.NoError(t, err, "file should exist back at the repo root")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		back, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		back, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}

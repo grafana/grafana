@@ -1,7 +1,6 @@
 package incremental
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -26,7 +25,6 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
 	// FolderMovePreservesPermissions verifies that custom permissions set on a
@@ -42,8 +40,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
-		requireGitFolderState(t, helper, ctx, "team-a-uid", "Team A", "teamA", repoName)
-		requireGitFolderState(t, helper, ctx, "team-b-uid", "Team B", "teamB", repoName)
+		requireGitFolderState(t, helper, "team-a-uid", "Team A", "teamA", repoName)
+		requireGitFolderState(t, helper, "team-b-uid", "Team B", "teamB", repoName)
 
 		// Set a known ACL on teamA (check 4) so we can assert it is not touched when
 		// a child folder is moved into it.
@@ -91,7 +89,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// teamB should now live under teamA with the same stable UID.
-		requireGitFolderState(t, helper, ctx, "team-b-uid", "Team B", "teamA/teamB", "team-a-uid")
+		requireGitFolderState(t, helper, "team-b-uid", "Team B", "teamA/teamB", "team-a-uid")
 
 		teamBPermsAfter := snapshotFolderPermissions(t, addr, "team-b-uid")
 
@@ -129,8 +127,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
-		requireGitFolderState(t, helper, ctx, "parent-uid", "Parent", "parent", repoName)
-		plainUID := findGitFolderUIDBySourcePath(t, helper, ctx, repoName, "plain")
+		requireGitFolderState(t, helper, "parent-uid", "Parent", "parent", repoName)
+		plainUID := findGitFolderUIDBySourcePath(t, helper, repoName, "plain")
 		require.NotEmpty(t, plainUID)
 
 		// Set a Viewer permission on the legacy (no-metadata) folder.
@@ -162,10 +160,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		// The old folder object must be gone — without metadata the path change
 		// causes a delete-and-recreate rather than an in-place update.
-		assertGitFolderAbsent(t, helper, ctx, plainUID)
+		assertGitFolderAbsent(t, helper, plainUID)
 
 		// The new folder at the moved path must exist with a different (hash-based) UID.
-		newPlainUID := findGitFolderUIDBySourcePath(t, helper, ctx, repoName, "parent/plain")
+		newPlainUID := findGitFolderUIDBySourcePath(t, helper, repoName, "parent/plain")
 		require.NotEmpty(t, newPlainUID)
 		require.NotEqual(t, plainUID, newPlainUID,
 			"legacy folder must get a new UID when its path changes")
@@ -201,10 +199,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
-		requireGitFolderState(t, helper, ctx, "root-uid", "Root", "root", repoName)
-		requireGitFolderState(t, helper, ctx, "child-uid", "Child", "root/child", "root-uid")
-		requireGitFolderState(t, helper, ctx, "grandchild-uid", "Grandchild", "root/child/grandchild", "child-uid")
-		requireGitFolderState(t, helper, ctx, "destination-uid", "Destination", "destination", repoName)
+		requireGitFolderState(t, helper, "root-uid", "Root", "root", repoName)
+		requireGitFolderState(t, helper, "child-uid", "Child", "root/child", "root-uid")
+		requireGitFolderState(t, helper, "grandchild-uid", "Grandchild", "root/child/grandchild", "child-uid")
+		requireGitFolderState(t, helper, "destination-uid", "Destination", "destination", repoName)
 
 		// Grant Editor permission on the deepest (grandchild) folder.
 		_, code, err := common.PostHelper(t, *helper.K8sTestHelper,
@@ -231,9 +229,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
-		requireGitFolderState(t, helper, ctx, "destination-uid", "Destination", "destination", repoName)
-		requireGitFolderState(t, helper, ctx, "child-uid", "Child", "destination/child", "destination-uid")
-		requireGitFolderState(t, helper, ctx, "grandchild-uid", "Grandchild", "destination/child/grandchild", "child-uid")
+		requireGitFolderState(t, helper, "destination-uid", "Destination", "destination", repoName)
+		requireGitFolderState(t, helper, "child-uid", "Child", "destination/child", "destination-uid")
+		requireGitFolderState(t, helper, "grandchild-uid", "Grandchild", "destination/child/grandchild", "child-uid")
 
 		grandchildPermsAfter := snapshotFolderPermissions(t, addr, "grandchild-uid")
 		require.Equal(t, len(grandchildPermsBefore), len(grandchildPermsAfter),
@@ -255,9 +253,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
-		requireGitFolderState(t, helper, ctx, "top-uid", "Top", "top", repoName)
-		requireGitFolderState(t, helper, ctx, "container-uid", "Container", "container", repoName)
-		requireGitFolderState(t, helper, ctx, "inner-uid", "Inner", "container/inner", "container-uid")
+		requireGitFolderState(t, helper, "top-uid", "Top", "top", repoName)
+		requireGitFolderState(t, helper, "container-uid", "Container", "container", repoName)
+		requireGitFolderState(t, helper, "inner-uid", "Inner", "container/inner", "container-uid")
 
 		// Grant Viewer permission on the root-level "top" folder before the move.
 		_, code, err := common.PostHelper(t, *helper.K8sTestHelper,
@@ -284,7 +282,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
-		requireGitFolderState(t, helper, ctx, "top-uid", "Top", "container/inner/top", "inner-uid")
+		requireGitFolderState(t, helper, "top-uid", "Top", "container/inner/top", "inner-uid")
 
 		topPermsAfter := snapshotFolderPermissions(t, addr, "top-uid")
 		require.Equal(t, len(topPermsBefore), len(topPermsAfter),
@@ -311,9 +309,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
-		requireGitFolderState(t, helper, ctx, "ltroot-parent-uid", "Parent", "parent", repoName)
-		requireGitFolderState(t, helper, ctx, "ltroot-deep-uid", "Deep", "parent/deep", "ltroot-parent-uid")
-		requireGitFolderState(t, helper, ctx, "ltroot-leaf-uid", "Leaf", "parent/deep/leaf", "ltroot-deep-uid")
+		requireGitFolderState(t, helper, "ltroot-parent-uid", "Parent", "parent", repoName)
+		requireGitFolderState(t, helper, "ltroot-deep-uid", "Deep", "parent/deep", "ltroot-parent-uid")
+		requireGitFolderState(t, helper, "ltroot-leaf-uid", "Leaf", "parent/deep/leaf", "ltroot-deep-uid")
 
 		// Grant Editor permission on the deeply nested leaf folder.
 		_, code, err := common.PostHelper(t, *helper.K8sTestHelper,
@@ -340,7 +338,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
-		requireGitFolderState(t, helper, ctx, "ltroot-leaf-uid", "Leaf", "leaf", repoName)
+		requireGitFolderState(t, helper, "ltroot-leaf-uid", "Leaf", "leaf", repoName)
 
 		leafPermsAfter := snapshotFolderPermissions(t, addr, "ltroot-leaf-uid")
 		require.Equal(t, len(leafPermsBefore), len(leafPermsAfter),
@@ -363,8 +361,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		// legacy-parent has no _folder.json, so the sync correctly warns about missing metadata.
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
-		requireGitFolderState(t, helper, ctx, "child-meta-uid", "Child With Meta", "child-with-meta", repoName)
-		legacyParentUID := findGitFolderUIDBySourcePath(t, helper, ctx, repoName, "legacy-parent")
+		requireGitFolderState(t, helper, "child-meta-uid", "Child With Meta", "child-with-meta", repoName)
+		legacyParentUID := findGitFolderUIDBySourcePath(t, helper, repoName, "legacy-parent")
 		require.NotEmpty(t, legacyParentUID)
 
 		// Set Viewer permission on the metadata-backed child folder.
@@ -395,10 +393,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// The legacy parent keeps its original hash-based UID (its path did not change).
-		requireGitFolderState(t, helper, ctx, legacyParentUID, "legacy-parent", "legacy-parent", repoName)
+		requireGitFolderState(t, helper, legacyParentUID, "legacy-parent", "legacy-parent", repoName)
 
 		// The metadata child retains its stable UID and is now under the legacy parent.
-		requireGitFolderState(t, helper, ctx, "child-meta-uid", "Child With Meta", "legacy-parent/child-with-meta", legacyParentUID)
+		requireGitFolderState(t, helper, "child-meta-uid", "Child With Meta", "legacy-parent/child-with-meta", legacyParentUID)
 
 		childPermsAfter := snapshotFolderPermissions(t, addr, "child-meta-uid")
 		require.Equal(t, len(childPermsBefore), len(childPermsAfter),
@@ -412,10 +410,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 // requireGitFolderState asserts that a folder tracked by the gitTestHelper has the expected
 // title, sourcePath annotation, and parent annotation. It polls until the state matches or the
 // timeout expires, so it is safe to call immediately after triggering an incremental sync.
-func requireGitFolderState(t *testing.T, h *common.GitTestHelper, ctx context.Context, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
+func requireGitFolderState(t *testing.T, h *common.GitTestHelper, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		obj, err := h.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+		obj, err := h.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
 		if !assert.NoError(c, err, "failed to get folder %s", folderUID) {
 			return
 		}
@@ -435,11 +433,11 @@ func requireGitFolderState(t *testing.T, h *common.GitTestHelper, ctx context.Co
 
 // findGitFolderUIDBySourcePath returns the UID of the folder managed by repoName at sourcePath.
 // It polls until the folder appears or the timeout expires.
-func findGitFolderUIDBySourcePath(t *testing.T, h *common.GitTestHelper, ctx context.Context, repoName, sourcePath string) string {
+func findGitFolderUIDBySourcePath(t *testing.T, h *common.GitTestHelper, repoName, sourcePath string) string {
 	t.Helper()
 	var uid string
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.Folders.Resource.List(ctx, metav1.ListOptions{})
+		list, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
@@ -460,10 +458,10 @@ func findGitFolderUIDBySourcePath(t *testing.T, h *common.GitTestHelper, ctx con
 }
 
 // assertGitFolderAbsent asserts that the folder with the given UID no longer exists.
-func assertGitFolderAbsent(t *testing.T, h *common.GitTestHelper, ctx context.Context, folderUID string) {
+func assertGitFolderAbsent(t *testing.T, h *common.GitTestHelper, folderUID string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		_, err := h.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+		_, err := h.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
 		if err == nil {
 			c.Errorf("folder %q still exists, expected NotFound", folderUID)
 			return

@@ -37,7 +37,6 @@ func TestIntegrationProvisioning_MigrateJob_GenerateNewFolderIDs(t *testing.T) {
 	}
 
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const (
 		repo        = "migrate-newids-repo"
@@ -83,14 +82,14 @@ func TestIntegrationProvisioning_MigrateJob_GenerateNewFolderIDs(t *testing.T) {
 	// After the sync phase the new UIDs exist as managed folders, and the nested
 	// parent/child relationship is preserved through the new UIDs.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		newParent, err := helper.Folders.Resource.Get(ctx, newParentUID, metav1.GetOptions{})
+		newParent, err := helper.Folders.Resource.Get(t.Context(), newParentUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "new parent folder %q should exist after migrate", newParentUID) {
 			return
 		}
 		assert.Equal(collect, repo, newParent.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 			"new parent folder should be managed by the repository")
 
-		newChild, err := helper.Folders.Resource.Get(ctx, newChildUID, metav1.GetOptions{})
+		newChild, err := helper.Folders.Resource.Get(t.Context(), newChildUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "new child folder %q should exist after migrate", newChildUID) {
 			return
 		}

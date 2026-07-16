@@ -36,12 +36,10 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	})
 	helper.RequireRepoFolderCount(t, repoName, 1)
 
-	ctx := t.Context()
-
 	// Find the managed folder created by the repo sync.
 	var managedFolderName string
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -76,7 +74,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 			},
 		}
 
-		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		_, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.Error(t, err, "should reject unmanaged dashboard in a managed folder")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
 		require.Contains(t, err.Error(), "folder is managed by repo:"+repoName)
@@ -103,7 +101,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 			},
 		}
 
-		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		_, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.Error(t, err, "should reject dashboard managed by a different manager")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
 		require.Contains(t, err.Error(), "resource manager (kubectl:some-other-manager) does not match folder manager (repo:"+repoName+")")
@@ -122,7 +120,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+		createdFolder, err := helper.Folders.Resource.Create(t.Context(), unmanagedFolder, metav1.CreateOptions{})
 		require.NoError(t, err, "should create unmanaged folder")
 		unmanagedFolderName := createdFolder.GetName()
 
@@ -145,7 +143,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 			},
 		}
 
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err, "should allow managed dashboard in unmanaged folder")
 		require.NotNil(t, created)
 	})
@@ -163,7 +161,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+		createdFolder, err := helper.Folders.Resource.Create(t.Context(), unmanagedFolder, metav1.CreateOptions{})
 		require.NoError(t, err, "should create plain folder")
 
 		dashboard := &unstructured.Unstructured{
@@ -183,7 +181,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 			},
 		}
 
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err, "should allow unmanaged dashboard in unmanaged folder")
 		require.NotNil(t, created)
 	})
@@ -203,7 +201,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+		createdFolder, err := helper.Folders.Resource.Create(t.Context(), unmanagedFolder, metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		dashboard := &unstructured.Unstructured{
@@ -222,17 +220,17 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
 		annotations["grafana.app/folder"] = managedFolderName
 		fresh.SetAnnotations(annotations)
 
-		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.Error(t, err, "should reject moving unmanaged dashboard to managed folder")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
 		require.Contains(t, err.Error(), "folder is managed by repo:"+repoName)
@@ -252,7 +250,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdA, err := helper.Folders.Resource.Create(ctx, folderA, metav1.CreateOptions{})
+		createdA, err := helper.Folders.Resource.Create(t.Context(), folderA, metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		folderB := &unstructured.Unstructured{
@@ -267,7 +265,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdB, err := helper.Folders.Resource.Create(ctx, folderB, metav1.CreateOptions{})
+		createdB, err := helper.Folders.Resource.Create(t.Context(), folderB, metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		dashboard := &unstructured.Unstructured{
@@ -286,17 +284,17 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
 		annotations["grafana.app/folder"] = createdB.GetName()
 		fresh.SetAnnotations(annotations)
 
-		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		updated, err := helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.NoError(t, err, "should allow moving dashboard to unmanaged folder")
 		require.Equal(t, createdB.GetName(), updated.GetAnnotations()["grafana.app/folder"])
 	})
@@ -318,7 +316,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+		createdFolder, err := helper.Folders.Resource.Create(t.Context(), unmanagedFolder, metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		dashboard := &unstructured.Unstructured{
@@ -339,10 +337,10 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
@@ -350,7 +348,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		delete(annotations, utils.AnnoKeyManagerIdentity)
 		fresh.SetAnnotations(annotations)
 
-		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		updated, err := helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.NoError(t, err, "removing manager in unmanaged folder should be allowed")
 		require.Empty(t, updated.GetAnnotations()[utils.AnnoKeyManagerKind])
 	})
@@ -368,7 +366,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+		createdFolder, err := helper.Folders.Resource.Create(t.Context(), unmanagedFolder, metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		dashboard := &unstructured.Unstructured{
@@ -389,10 +387,10 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		// Remove manager first (required — cannot change manager directly)
@@ -401,11 +399,11 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		delete(annotations, utils.AnnoKeyManagerIdentity)
 		fresh.SetAnnotations(annotations)
 
-		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		updated, err := helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.NoError(t, err, "removing terraform manager in unmanaged folder should be allowed")
 
 		// Now re-add with different identity
-		fresh2, err := helper.DashboardsV1.Resource.Get(ctx, updated.GetName(), metav1.GetOptions{})
+		fresh2, err := helper.DashboardsV1.Resource.Get(t.Context(), updated.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations2 := fresh2.GetAnnotations()
@@ -413,7 +411,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		annotations2[utils.AnnoKeyManagerIdentity] = "tf-workspace-2"
 		fresh2.SetAnnotations(annotations2)
 
-		updated2, err := helper.DashboardsV1.Resource.Update(ctx, fresh2, metav1.UpdateOptions{})
+		updated2, err := helper.DashboardsV1.Resource.Update(t.Context(), fresh2, metav1.UpdateOptions{})
 		require.NoError(t, err, "adding new terraform manager in unmanaged folder should be allowed")
 		require.Equal(t, "tf-workspace-2", updated2.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
@@ -437,7 +435,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 			},
 		}
 
-		_, err := helper.Folders.Resource.Create(ctx, folder, metav1.CreateOptions{})
+		_, err := helper.Folders.Resource.Create(t.Context(), folder, metav1.CreateOptions{})
 		require.Error(t, err, "should reject unmanaged sub-folder in a managed folder")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
 		require.Contains(t, err.Error(), "folder is managed by repo:"+repoName)
@@ -463,7 +461,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 			},
 		}
 
-		_, err := helper.Folders.Resource.Create(ctx, folder, metav1.CreateOptions{})
+		_, err := helper.Folders.Resource.Create(t.Context(), folder, metav1.CreateOptions{})
 		require.Error(t, err, "should reject sub-folder managed by a different manager")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
 		require.Contains(t, err.Error(), "resource manager (kubectl:some-other-manager) does not match folder manager (repo:"+repoName+")")
@@ -482,7 +480,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdParent, err := helper.Folders.Resource.Create(ctx, parent, metav1.CreateOptions{})
+		createdParent, err := helper.Folders.Resource.Create(t.Context(), parent, metav1.CreateOptions{})
 		require.NoError(t, err, "should create unmanaged parent folder")
 
 		child := &unstructured.Unstructured{
@@ -503,7 +501,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 			},
 		}
 
-		created, err := helper.Folders.Resource.Create(ctx, child, metav1.CreateOptions{})
+		created, err := helper.Folders.Resource.Create(t.Context(), child, metav1.CreateOptions{})
 		require.NoError(t, err, "should allow managed sub-folder in unmanaged folder")
 		require.NotNil(t, created)
 	})
@@ -521,7 +519,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				},
 			},
 		}
-		createdParent, err := helper.Folders.Resource.Create(ctx, parent, metav1.CreateOptions{})
+		createdParent, err := helper.Folders.Resource.Create(t.Context(), parent, metav1.CreateOptions{})
 		require.NoError(t, err, "should create plain parent folder")
 
 		child := &unstructured.Unstructured{
@@ -540,7 +538,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 			},
 		}
 
-		created, err := helper.Folders.Resource.Create(ctx, child, metav1.CreateOptions{})
+		created, err := helper.Folders.Resource.Create(t.Context(), child, metav1.CreateOptions{})
 		require.NoError(t, err, "should allow unmanaged sub-folder in unmanaged folder")
 		require.NotNil(t, created)
 	})
@@ -548,7 +546,6 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "managed-change-test"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -566,7 +563,7 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 	var err error
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		if err != nil {
 			collect.Errorf("dashboard not found yet: %s", err.Error())
 			return
@@ -577,7 +574,7 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be provisioned with repo manager")
 
 	t.Run("changing manager from repo to kubectl is blocked", func(t *testing.T) {
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
@@ -585,18 +582,18 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 		annotations[utils.AnnoKeyManagerIdentity] = "some-kubectl-manager"
 		fresh.SetAnnotations(annotations)
 
-		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.Error(t, err, "should not be able to change manager from repo to kubectl")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 
-		unchanged, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		unchanged, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, string(utils.ManagerKindRepo), unchanged.GetAnnotations()[utils.AnnoKeyManagerKind])
 		require.Equal(t, repo, unchanged.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
 
 	t.Run("changing manager from repo to terraform is blocked", func(t *testing.T) {
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
@@ -604,18 +601,18 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 		annotations[utils.AnnoKeyManagerIdentity] = "some-terraform-manager"
 		fresh.SetAnnotations(annotations)
 
-		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.Error(t, err, "should not be able to change manager from repo to terraform")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 
-		unchanged, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		unchanged, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, string(utils.ManagerKindRepo), unchanged.GetAnnotations()[utils.AnnoKeyManagerKind])
 		require.Equal(t, repo, unchanged.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
 
 	t.Run("removing manager from repo-managed dashboard is blocked", func(t *testing.T) {
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
@@ -623,11 +620,11 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 		delete(annotations, utils.AnnoKeyManagerIdentity)
 		fresh.SetAnnotations(annotations)
 
-		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.Error(t, err, "should not be able to remove manager from repo-managed dashboard")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 
-		unchanged, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		unchanged, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, string(utils.ManagerKindRepo), unchanged.GetAnnotations()[utils.AnnoKeyManagerKind])
 		require.Equal(t, repo, unchanged.GetAnnotations()[utils.AnnoKeyManagerIdentity])
@@ -636,7 +633,6 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 
 func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "admin-release-test"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -652,7 +648,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 	const dashboardUID = "n1jR8vnnz"
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		if err != nil {
 			collect.Errorf("dashboard not found yet: %s", err.Error())
 			return
@@ -669,7 +665,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 		})
 
-		fresh, err := editorDashboards.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		fresh, err := editorDashboards.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
@@ -679,7 +675,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 		delete(annotations, utils.AnnoKeySourceChecksum)
 		fresh.SetAnnotations(annotations)
 
-		_, err = editorDashboards.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = editorDashboards.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.Error(t, err, "editor should not be able to release managed dashboard")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 	})
@@ -688,7 +684,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 		// Release top-down: the folder must be released before the dashboard,
 		// otherwise the folder-manager consistency check rejects an unmanaged
 		// resource inside a managed folder.
-		folder, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+		folder, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		fa := folder.GetAnnotations()
@@ -698,10 +694,10 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 		delete(fa, utils.AnnoKeySourceChecksum)
 		folder.SetAnnotations(fa)
 
-		_, err = helper.Folders.Resource.Update(ctx, folder, metav1.UpdateOptions{})
+		_, err = helper.Folders.Resource.Update(t.Context(), folder, metav1.UpdateOptions{})
 		require.NoError(t, err, "admin should be able to release the folder first")
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
@@ -711,7 +707,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 		delete(annotations, utils.AnnoKeySourceChecksum)
 		fresh.SetAnnotations(annotations)
 
-		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		updated, err := helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.NoError(t, err, "admin should be able to release managed dashboard")
 
 		releasedAnnotations := updated.GetAnnotations()
@@ -722,7 +718,6 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 
 func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 
 	// Create an unmanaged folder for testing
@@ -738,7 +733,7 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 			},
 		},
 	}
-	createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+	createdFolder, err := helper.Folders.Resource.Create(t.Context(), unmanagedFolder, metav1.CreateOptions{})
 	require.NoError(t, err)
 	folderName := createdFolder.GetName()
 
@@ -761,17 +756,17 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 				},
 			},
 		}
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
 		annotations[utils.AnnoKeyManagerIdentity] = "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0"
 		fresh.SetAnnotations(annotations)
 
-		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		updated, err := helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.NoError(t, err, "should allow User-Agent to User-Agent transition")
 		require.Equal(t, "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0",
 			updated.GetAnnotations()[utils.AnnoKeyManagerIdentity])
@@ -796,17 +791,17 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 				},
 			},
 		}
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
 		annotations[utils.AnnoKeyManagerIdentity] = "my-terraform-provider"
 		fresh.SetAnnotations(annotations)
 
-		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		updated, err := helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.NoError(t, err, "should allow User-Agent to simple ID transition (migration)")
 		require.Equal(t, "my-terraform-provider", updated.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
@@ -830,17 +825,17 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 				},
 			},
 		}
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
 		annotations[utils.AnnoKeyManagerIdentity] = "my-terraform-provider-v2"
 		fresh.SetAnnotations(annotations)
 
-		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.Error(t, err, "should block simple ID to simple ID transition")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 		require.Contains(t, err.Error(), "Cannot change Terraform manager ID")
@@ -866,17 +861,17 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 				},
 			},
 		}
-		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		created, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
 		annotations[utils.AnnoKeyManagerIdentity] = "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0"
 		fresh.SetAnnotations(annotations)
 
-		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.Error(t, err, "should block simple ID to User-Agent transition")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 		require.Contains(t, err.Error(), "Cannot change Terraform manager ID back to User-Agent format")
@@ -885,7 +880,6 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 
 func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "admin-release-patch-test"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -932,7 +926,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		if err != nil {
 			collect.Errorf("dashboard not found yet: %s", err.Error())
 			return
@@ -974,7 +968,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 		})
 
-		_, err := editorDashboards.Resource.Patch(ctx, dashboardUID, types.MergePatchType, mergePatch, metav1.PatchOptions{})
+		_, err := editorDashboards.Resource.Patch(t.Context(), dashboardUID, types.MergePatchType, mergePatch, metav1.PatchOptions{})
 		require.Error(t, err, "editor should not be able to release via merge patch")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 	})
@@ -986,7 +980,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 		})
 
-		_, err := editorDashboards.Resource.Patch(ctx, dashboardUID, types.JSONPatchType, jsonPatch, metav1.PatchOptions{})
+		_, err := editorDashboards.Resource.Patch(t.Context(), dashboardUID, types.JSONPatchType, jsonPatch, metav1.PatchOptions{})
 		require.Error(t, err, "editor should not be able to release via JSON patch")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 	})
@@ -994,10 +988,10 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 	t.Run("admin can release via merge patch", func(t *testing.T) {
 		// Release the folder first (top-down) so the dashboard can become
 		// unmanaged without violating folder-manager consistency.
-		_, err := helper.Folders.Resource.Patch(ctx, repo, types.MergePatchType, mergePatch, metav1.PatchOptions{})
+		_, err := helper.Folders.Resource.Patch(t.Context(), repo, types.MergePatchType, mergePatch, metav1.PatchOptions{})
 		require.NoError(t, err, "admin should be able to release the folder first")
 
-		updated, err := helper.DashboardsV1.Resource.Patch(ctx, dashboardUID, types.MergePatchType, mergePatch, metav1.PatchOptions{})
+		updated, err := helper.DashboardsV1.Resource.Patch(t.Context(), dashboardUID, types.MergePatchType, mergePatch, metav1.PatchOptions{})
 		require.NoError(t, err, "admin should be able to release via merge patch")
 
 		releasedAnnotations := updated.GetAnnotations()

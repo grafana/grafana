@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -14,7 +13,6 @@ import (
 
 func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "fixfoldermeta-flag-disabled"
 	testRepo := common.TestRepo{
@@ -40,7 +38,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) 
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "should fail when flag is disabled")
 		require.Equal(t, http.StatusBadRequest, statusCode, "should return 400 Bad Request")

@@ -88,7 +88,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"teamA/teamC/dashboard.json":       newTeamCUID,
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "teamA/dashboard.json"},
 		"WZ7AhQiVz": {Title: "Text options", SourcePath: "teamA/teamC/teamB/dashboard.json"},
 		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "teamA/teamC/dashboard.json"},
@@ -111,7 +111,6 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 
 func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBeforeCleanup(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const (
 		repo         = "folder-duplicate-path-cleanup"
@@ -132,7 +131,7 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBefor
 
 	helper.SyncAndWait(t, repo, nil)
 	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"myfolder/dashboard.json": currentUID,
 	})
@@ -157,12 +156,11 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBefor
 	})
 	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"myfolder/dashboard.json"})
 	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{"myfolder/dashboard.json"})
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	common.RequireDashboardCount(t, helper.DashboardsV1, 1)
 }
 
 func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const (
 		repo       = "folder-dup-both-children"
@@ -188,7 +186,7 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren(t *tes
 
 	helper.SyncAndWait(t, repo, nil)
 	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 3)
+	common.RequireDashboardCount(t, helper.DashboardsV1, 3)
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"myfolder/dash1.json": currentUID,
 		"myfolder/dash2.json": currentUID,
@@ -228,12 +226,11 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren(t *tes
 	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{
 		"myfolder/dash1.json", "myfolder/dash2.json", "myfolder/dash3.json",
 	})
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 3)
+	common.RequireDashboardCount(t, helper.DashboardsV1, 3)
 }
 
 func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren_Nested(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const (
 		repo       = "folder-dup-nested-children"
@@ -261,7 +258,7 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren_Nested
 	helper.SyncAndWait(t, repo, nil)
 	common.RequireFolderState(t, helper.Folders, parentUID, "Parent", "parent", repo)
 	common.RequireFolderState(t, helper.Folders, currentUID, "Child", "parent/child", parentUID)
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 3)
+	common.RequireDashboardCount(t, helper.DashboardsV1, 3)
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"parent/child/dash1.json": currentUID,
 		"parent/child/dash2.json": currentUID,
@@ -302,12 +299,11 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren_Nested
 	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{
 		"parent/child/dash1.json", "parent/child/dash2.json", "parent/child/dash3.json",
 	})
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 3)
+	common.RequireDashboardCount(t, helper.DashboardsV1, 3)
 }
 
 func TestIntegrationProvisioning_FullSync_DuplicateFolderWithConcurrentFolderRename(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const (
 		repo         = "folder-dup-plus-rename"
@@ -368,7 +364,7 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderWithConcurrentFolderRen
 		"teamB/panel-dashboard.json": teamBUID,
 	})
 
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
+	common.RequireDashboardCount(t, helper.DashboardsV1, 2)
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
@@ -417,7 +413,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 		"other/child/grand/dashboard.json": newGrandUID,
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "root/dashboard.json"},
 		"WZ7AhQiVz": {Title: "Text options", SourcePath: "other/child/dashboard.json"},
 		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "other/child/grand/dashboard.json"},
@@ -462,7 +458,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 		"metaA/plainB/dashboard.json": newPlainBUID,
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "metaA/dashboard.json"},
 		"WZ7AhQiVz": {Title: "Text options", SourcePath: "metaA/plainB/dashboard.json"},
 	})
@@ -500,7 +496,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 		"child/dashboard.json": "child-uid",
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
@@ -543,7 +539,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 		"parent/myfolder/dashboard.json": "my-uid",
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "parent/myfolder/dashboard.json"},
 	})
 }
@@ -586,7 +582,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 		"child/dashboard.json": "child-uid",
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }

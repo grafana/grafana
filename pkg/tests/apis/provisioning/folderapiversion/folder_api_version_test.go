@@ -31,7 +31,6 @@ func TestIntegrationProvisioning_FolderAPIVersionDiscovery(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t)
-	ctx := t.Context()
 
 	// Resolve the server's preferred folder version via discovery — this is the
 	// same version provisioning is expected to use for the folders it writes.
@@ -63,7 +62,7 @@ func TestIntegrationProvisioning_FolderAPIVersionDiscovery(t *testing.T) {
 	expectedAPIVersion := folderv1.APIGroup + "/" + preferredVersion
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		folders, err := folderClient.Resource.List(ctx, metav1.ListOptions{})
+		folders, err := folderClient.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}

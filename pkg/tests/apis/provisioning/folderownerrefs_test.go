@@ -94,8 +94,8 @@ func TestIntegrationFolderOwnerRefs_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err, "should successfully patch finalizers")
 
 		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		helper.WaitForRepositoryDeleted(t, t.Context(), repo)
-		common.WaitForResourcesReleased(t, t.Context(), helper.Folders.Resource, "folders")
+		helper.WaitForRepositoryDeleted(t, repo)
+		common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
 		_, err = helper.Folders.Resource.Patch(t.Context(), managedFolderName, types.JSONPatchType, ownerRefsPatch, metav1.PatchOptions{})
 		require.NoError(t, err, "should set ownerReferences on released folder")

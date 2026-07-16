@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -15,7 +14,6 @@ import (
 func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	t.Run("invalid folder metadata created on existing folder keeps unstable uid and preserves children", func(t *testing.T) {
 		helper := sharedHelper(t)
-		ctx := context.Background()
 		const repo = "full-sync-invalid-meta-existing"
 
 		helper.CreateLocalRepo(t, common.TestRepo{
@@ -31,7 +29,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		parentUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder")
 		childUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder/child")
-		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "existing-child-dash", "Child Dashboard")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, "existing-child-dash", "Child Dashboard")
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"myfolder/dashboard.json":             parentUID,
 			"myfolder/child/child-dashboard.json": childUID,
@@ -49,7 +47,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		require.Equal(t, parentUID, findFolderUIDBySourcePath(t, helper, repo, "myfolder"))
 		require.Equal(t, childUID, findFolderUIDBySourcePath(t, helper, repo, "myfolder/child"))
-		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "existing-child-dash", "Child Dashboard Updated")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, "existing-child-dash", "Child Dashboard Updated")
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"myfolder/dashboard.json":             parentUID,
 			"myfolder/child/child-dashboard.json": childUID,
@@ -58,7 +56,6 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 	t.Run("invalid folder metadata on new folder falls back to unstable uid and reconciles children", func(t *testing.T) {
 		helper := sharedHelper(t)
-		ctx := context.Background()
 		const repo = "full-sync-invalid-meta-new"
 
 		helper.CreateLocalRepo(t, common.TestRepo{
@@ -82,8 +79,8 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		childUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder/child")
 		require.NotEmpty(t, parentUID)
 		require.NotEmpty(t, childUID)
-		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "new-parent-dash", "Parent Dashboard")
-		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "new-child-dash", "Child Dashboard")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, "new-parent-dash", "Parent Dashboard")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, "new-child-dash", "Child Dashboard")
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"myfolder/dashboard.json":             parentUID,
 			"myfolder/child/child-dashboard.json": childUID,

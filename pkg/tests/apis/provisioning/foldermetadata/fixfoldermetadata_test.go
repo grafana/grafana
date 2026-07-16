@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -23,7 +22,6 @@ const folderMetadataFileName = "_folder.json"
 // have them yet.
 func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repoName = "fix-meta-no-metadata"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
@@ -50,8 +48,8 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 	runFixFolderMetadataJob(t, helper, repoName)
 
 	// After the job both folders must have a well-formed metadata file.
-	parentUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent")
-	childUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child")
+	parentUID, _ := requireValidFolderMetadata(t, helper, repoName, "parent")
+	childUID, _ := requireValidFolderMetadata(t, helper, repoName, "parent/child")
 
 	// The two folders should carry distinct UIDs.
 	require.NotEqual(t, parentUID, childUID,
@@ -62,7 +60,6 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 // fix-folder-metadata job leaves already-correct _folder.json files unchanged.
 func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repoName = "fix-meta-valid-metadata"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
@@ -82,16 +79,16 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 	// First run: let the job create the metadata files.
 	runFixFolderMetadataJob(t, helper, repoName)
 
-	firstParentUID, firstParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent")
-	firstChildUID, firstChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child")
+	firstParentUID, firstParentTitle := requireValidFolderMetadata(t, helper, repoName, "parent")
+	firstChildUID, firstChildTitle := requireValidFolderMetadata(t, helper, repoName, "parent/child")
 
 	// Second run: the metadata files are already correct, nothing should change.
 	runFixFolderMetadataJob(t, helper, repoName)
 
-	afterParentUID, afterParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent")
+	afterParentUID, afterParentTitle := requireValidFolderMetadata(t, helper, repoName, "parent")
 	require.Equal(t, firstParentUID, afterParentUID, "parent folder UID must not change when the metadata file is already valid")
 	require.Equal(t, firstParentTitle, afterParentTitle, "parent folder title must not change when the metadata file is already valid")
-	afterChildUID, afterChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child")
+	afterChildUID, afterChildTitle := requireValidFolderMetadata(t, helper, repoName, "parent/child")
 	require.Equal(t, firstChildUID, afterChildUID, "child folder UID must not change when the metadata file is already valid")
 	require.Equal(t, firstChildTitle, afterChildTitle, "child folder title must not change when the metadata file is already valid")
 }
@@ -186,11 +183,11 @@ func requireFileAbsent(t *testing.T, path string) {
 // requireValidFolderMetadata reads a _folder.json via the repository files API
 // and asserts it is a valid Folder resource (correct apiVersion/kind, non-empty
 // UID and title).
-func requireValidFolderMetadata(t *testing.T, ctx context.Context, h *common.ProvisioningTestHelper, repoName, folderPath string) (string, string) {
+func requireValidFolderMetadata(t *testing.T, h *common.ProvisioningTestHelper, repoName, folderPath string) (string, string) {
 	t.Helper()
 
 	filePath := filepath.Join(folderPath, folderMetadataFileName)
-	wrapObj, err := h.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", filePath)
+	wrapObj, err := h.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files", filePath)
 	require.NoError(t, err, "%s: _folder.json should be readable via the files endpoint", filePath)
 
 	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")

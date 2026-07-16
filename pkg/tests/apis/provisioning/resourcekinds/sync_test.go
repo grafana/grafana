@@ -20,7 +20,6 @@ import (
 // deleting the repository removes all of them.
 func TestIntegrationProvisioning_ResourceKinds_Sync(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, rk := range resourceKinds {
 		rk := rk
@@ -46,14 +45,17 @@ func TestIntegrationProvisioning_ResourceKinds_Sync(t *testing.T) {
 					filePath = rk.name + "-folder/" + filePath
 				}
 				helper.WriteToProvisioningPath(t, filePath, common.ResourceToJSON(t, rk.newResource(t, name, title)))
-				t.Cleanup(func() { _ = client.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+				t.Cleanup(func() {
+					cleanupCtx := context.WithoutCancel(t.Context())
+					_ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+				})
 			}
 
 			helper.SyncAndWait(t, repo, nil)
 
 			for i, name := range names {
 				_, wantTitle := rk.instance(i)
-				got := common.RequireResource(t, ctx, client.Resource, name)
+				got := common.RequireResource(t, client.Resource, name)
 
 				title, _, _ := unstructured.NestedString(got.Object, "spec", "title")
 				require.Equal(t, wantTitle, title)
@@ -69,11 +71,11 @@ func TestIntegrationProvisioning_ResourceKinds_Sync(t *testing.T) {
 			}
 
 			// Deleting the repository must sweep away every resource it provisioned.
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}))
-			helper.WaitForRepositoryDeleted(t, ctx, repo)
+			require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+			helper.WaitForRepositoryDeleted(t, repo)
 			for _, name := range names {
 				require.EventuallyWithT(t, func(collect *assert.CollectT) {
-					_, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+					_, err := client.Resource.Get(t.Context(), name, metav1.GetOptions{})
 					assert.True(collect, apierrors.IsNotFound(err), "%s should be removed after repo delete, got: %v", name, err)
 				}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "%s should be deleted with the repository", name)
 			}

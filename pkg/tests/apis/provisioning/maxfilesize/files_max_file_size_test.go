@@ -2,7 +2,6 @@ package maxfilesize
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -88,7 +87,6 @@ func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
 // rejected before the resource is parsed or persisted.
 func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "max-file-size-write"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -119,7 +117,7 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 		SubResource("files", "huge.json").
 		Body(oversized).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx).StatusCode(&statusCode)
+		Do(t.Context()).StatusCode(&statusCode)
 
 	require.Error(t, result.Error(), "oversized POST should be rejected")
 	require.Equal(t, http.StatusRequestEntityTooLarge, statusCode,

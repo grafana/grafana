@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -14,7 +13,6 @@ import (
 
 func TestIntegrationProvisioning_PullJobAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "pull-auth-test"
 	testRepo := common.TestRepo{
@@ -40,7 +38,7 @@ func TestIntegrationProvisioning_PullJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to create pull job")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -57,7 +55,7 @@ func TestIntegrationProvisioning_PullJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "editor should not be able to create pull job")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -73,7 +71,7 @@ func TestIntegrationProvisioning_PullJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to create pull job")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")

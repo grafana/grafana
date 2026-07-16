@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -25,29 +24,28 @@ import (
 // of the exported tree.
 func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Five dashboards across every supported version; v0, v1, v2, v2beta1 are
 	// named in Resources and expected to land in the repo, v2alpha1 is left
 	// out to prove non-selected dashboards stay excluded.
 	v0Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
-	_, err := helper.DashboardsV0.Resource.Create(ctx, v0Dash, metav1.CreateOptions{})
+	_, err := helper.DashboardsV0.Resource.Create(t.Context(), v0Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v0 dashboard")
 
 	v1Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err = helper.DashboardsV1.Resource.Create(ctx, v1Dash, metav1.CreateOptions{})
+	_, err = helper.DashboardsV1.Resource.Create(t.Context(), v1Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
 	v2Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2.yaml")
-	_, err = helper.DashboardsV2.Resource.Create(ctx, v2Dash, metav1.CreateOptions{})
+	_, err = helper.DashboardsV2.Resource.Create(t.Context(), v2Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2 dashboard")
 
 	v2alphaDash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
-	_, err = helper.DashboardsV2alpha1.Resource.Create(ctx, v2alphaDash, metav1.CreateOptions{})
+	_, err = helper.DashboardsV2alpha1.Resource.Create(t.Context(), v2alphaDash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
 
 	v2betaDash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, v2betaDash, metav1.CreateOptions{})
+	_, err = helper.DashboardsV2beta1.Resource.Create(t.Context(), v2betaDash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2beta1 dashboard")
 
 	const repo = "selective-export-repo"
@@ -140,14 +138,13 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 // (TestEnsureFolderExists_TakeoverAllowlist).
 func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Pre-existing unmanaged folder hierarchy: grandparent > parent > child, with
 	// an unmanaged dashboard in the deepest (child) folder.
-	grandparentUID := helper.CreateUnmanagedFolder(t, ctx, "Selective Migrate Grandparent", "")
-	parentUID := helper.CreateUnmanagedFolder(t, ctx, "Selective Migrate Parent", grandparentUID)
-	childUID := helper.CreateUnmanagedFolder(t, ctx, "Selective Migrate Child", parentUID)
-	dashName := helper.CreateUnmanagedDashboard(t, ctx, "Dashboard in nested unmanaged folder", childUID)
+	grandparentUID := helper.CreateUnmanagedFolder(t, "Selective Migrate Grandparent", "")
+	parentUID := helper.CreateUnmanagedFolder(t, "Selective Migrate Parent", grandparentUID)
+	childUID := helper.CreateUnmanagedFolder(t, "Selective Migrate Child", parentUID)
+	dashName := helper.CreateUnmanagedDashboard(t, "Dashboard in nested unmanaged folder", childUID)
 
 	const repo = "selective-migrate-nested-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -176,7 +173,7 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 	// The dashboard is now managed by the repo, and every folder in its ancestry
 	// (child > parent > grandparent) is managed by the repo too.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		d, err := helper.DashboardsV1.Resource.Get(ctx, dashName, metav1.GetOptions{})
+		d, err := helper.DashboardsV1.Resource.Get(t.Context(), dashName, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "dashboard should still exist") {
 			return
 		}
@@ -189,7 +186,7 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 		depth := 0
 		folderUID := d.GetAnnotations()[utils.AnnoKeyFolder]
 		for folderUID != "" {
-			f, err := helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+			f, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
 			if !assert.NoError(collect, err, "ancestor folder %q should exist", folderUID) {
 				return
 			}
@@ -209,13 +206,12 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 // rather than silently dropping the reference.
 func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// A real dashboard exists alongside the missing ref so we can assert the
 	// partial-write behavior: present ones are still written even though the
 	// job ends in error because of the missing sibling.
 	v1Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err := helper.DashboardsV1.Resource.Create(ctx, v1Dash, metav1.CreateOptions{})
+	_, err := helper.DashboardsV1.Resource.Create(t.Context(), v1Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
 	const repo = "selective-export-notfound-repo"
@@ -269,17 +265,16 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 // unrelated, non-exported dashboards stay out of the repository entirely.
 func TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Two independent folder hierarchies, each holding one dashboard. Only the
 	// dashboard in the "exported" hierarchy is named in the export; the
 	// "unrelated" hierarchy must not be touched.
-	exportedParent := helper.CreateUnmanagedFolder(t, ctx, "exportedparent", "")
-	exportedChild := helper.CreateUnmanagedFolder(t, ctx, "exportedchild", exportedParent)
-	selectedDash := helper.CreateUnmanagedDashboard(t, ctx, "selecteddash", exportedChild)
+	exportedParent := helper.CreateUnmanagedFolder(t, "exportedparent", "")
+	exportedChild := helper.CreateUnmanagedFolder(t, "exportedchild", exportedParent)
+	selectedDash := helper.CreateUnmanagedDashboard(t, "selecteddash", exportedChild)
 
-	unrelatedFolder := helper.CreateUnmanagedFolder(t, ctx, "unrelatedfolder", "")
-	_ = helper.CreateUnmanagedDashboard(t, ctx, "unrelateddash", unrelatedFolder)
+	unrelatedFolder := helper.CreateUnmanagedFolder(t, "unrelatedfolder", "")
+	_ = helper.CreateUnmanagedDashboard(t, "unrelateddash", unrelatedFolder)
 
 	const repo = "selective-export-folders-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -314,7 +309,7 @@ func TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry
 
 	// The unrelated hierarchy must not have been exported: neither its folder
 	// directory nor its dashboard file may appear in the repository.
-	files := helper.ListRepositoryFiles(t, ctx, repo)
+	files := helper.ListRepositoryFiles(t, repo)
 	for _, f := range files {
 		require.NotContains(t, f.Path, "unrelated",
 			"unrelated folder/dashboard must not be exported during selective export; got file %q", f.Path)
