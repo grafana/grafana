@@ -7326,6 +7326,8 @@
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
       "tooltip": "Added by the {{pluginName}} plugin",
+      "tooltip-folder": "Folder variable, inherited from this dashboard's folder",
+      "tooltip-global": "Global variable, shared across all dashboards",
       "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {
@@ -7654,6 +7656,9 @@
           "variables": "Variables"
         }
       }
+    },
+    "validate-variable-name": {
+      "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
@@ -10817,6 +10822,10 @@
       "starred": "Starred",
       "starred-active": "Starred dashboards"
     },
+    "dashboards": {
+      "title": "Dashboards",
+      "view-all": "View all"
+    },
     "firing-alerts-card": {
       "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
@@ -10868,7 +10877,8 @@
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards..."
+      "loading": "Loading recently viewed dashboards...",
+      "reset": "Reset recent dashboards"
     },
     "recommendations": {
       "application-observability": {
@@ -15717,7 +15727,6 @@
       "from-input": "From",
       "open-input-calendar": "Open calendar",
       "range-error": "\"From\" date must be before \"To\" date",
-      "required-error": "This field is required",
       "to-input": "To"
     },
     "range-picker": {

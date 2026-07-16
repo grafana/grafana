@@ -13,9 +13,6 @@ import (
 // same map-backed provider NewMapProvider produces, so the per-field and
 // cross-version consistency checks apply here too.
 //
-// CopyFromStandard has no manifest counterpart and is never set from a
-// manifest. A kind that needs it keeps a builder-side provider instead.
-//
 // Panics on an invalid declaration, like NewMapProvider. Runtime callers use
 // newManifestBackedProvider instead.
 func NewManifestBackedProvider(manifests []app.Manifest) SearchFieldsProvider {
@@ -139,4 +136,18 @@ func SearchFieldProviders(manifests []app.Manifest) (map[LowerGroupResource]Sear
 		out[key] = manifestProvider
 	}
 	return out, nil
+}
+
+// SearchFieldsHashesForProviders returns the per-kind index-affecting hash for
+// each provider in the map. Deriving the change-detection hashes from the same
+// providers that drive the mappings keeps the two in step, so an index rebuild
+// is triggered exactly when the fields that shape the mapping change.
+func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchFieldsProvider) map[LowerGroupResource]string {
+	out := make(map[LowerGroupResource]string, len(providers))
+	for key, p := range providers {
+		if h := p.IndexAffectingHash(key.Group, key.Resource); h != "" {
+			out[key] = h
+		}
+	}
+	return out
 }
