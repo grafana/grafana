@@ -76,6 +76,17 @@ type diagnosticsJob struct {
 	PanelsDone  int
 	Err         string
 	archive     []byte
+
+	// createdByOrgID/createdByUID scope status/download to the identity that started the run. Jobs
+	// may hold verbatim captured HTTP traffic (see the harcapture package doc), so this is enforced
+	// even though the routes themselves are already gated admin-only.
+	createdByOrgID int64
+	createdByUID   string
+}
+
+// jobOwnedBy reports whether requester is the identity that created j.
+func jobOwnedBy(j *diagnosticsJob, requester identity.Requester) bool {
+	return j.createdByOrgID == requester.GetOrgID() && j.createdByUID == requester.GetUID()
 }
 
 type diagnosticsJobSnapshot struct {
@@ -97,24 +108,34 @@ type diagnosticsJobStore struct {
 // *HTTPServer can share it without new wire/DI wiring for this experimental feature.
 var dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 
-func (s *diagnosticsJobStore) create(total int) *diagnosticsJob {
+func (s *diagnosticsJobStore) create(total int, creator identity.Requester) *diagnosticsJob {
 	now := time.Now()
 	j := &diagnosticsJob{
-		UID:         util.GenerateShortUID(),
-		State:       jobPending,
-		CreatedAt:   now,
-		ExpiresAt:   now.Add(dashboardDiagnosticsTTL),
-		PanelsTotal: total,
+		UID:            util.GenerateShortUID(),
+		State:          jobPending,
+		CreatedAt:      now,
+		ExpiresAt:      now.Add(dashboardDiagnosticsTTL),
+		PanelsTotal:    total,
+		createdByOrgID: creator.GetOrgID(),
+		createdByUID:   creator.GetUID(),
 	}
 	s.mu.Lock()
-	for uid, existing := range s.jobs { // prune expired
+	s.pruneExpiredLocked(now)
+	s.jobs[j.UID] = j
+	s.mu.Unlock()
+	return j
+}
+
+// pruneExpiredLocked removes expired jobs (and their in-memory archives). Callers must hold s.mu
+// for writing. Called from every store access, not just create, so an idle feature (no new jobs,
+// but the odd status poll) still reclaims memory instead of holding onto expired archives until
+// the next generation run.
+func (s *diagnosticsJobStore) pruneExpiredLocked(now time.Time) {
+	for uid, existing := range s.jobs {
 		if now.After(existing.ExpiresAt) {
 			delete(s.jobs, uid)
 		}
 	}
-	s.jobs[j.UID] = j
-	s.mu.Unlock()
-	return j
 }
 
 func (s *diagnosticsJobStore) setProgress(uid string, done int) {
@@ -143,21 +164,27 @@ func (s *diagnosticsJobStore) fail(uid string, err error) {
 	s.mu.Unlock()
 }
 
-func (s *diagnosticsJobStore) snapshot(uid string) (diagnosticsJobSnapshot, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// snapshot returns uid's status, scoped to requester: a job that exists but belongs to a different
+// identity is reported exactly like an unknown UID, so this can't be used to probe for other users'
+// job IDs.
+func (s *diagnosticsJobStore) snapshot(uid string, requester identity.Requester) (diagnosticsJobSnapshot, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.pruneExpiredLocked(time.Now())
 	j := s.jobs[uid]
-	if j == nil {
+	if j == nil || !jobOwnedBy(j, requester) {
 		return diagnosticsJobSnapshot{}, false
 	}
 	return diagnosticsJobSnapshot{j.UID, j.State, j.PanelsTotal, j.PanelsDone, j.Err, j.CreatedAt, j.ExpiresAt}, true
 }
 
-func (s *diagnosticsJobStore) archiveOf(uid string) (archive []byte, state diagnosticsJobState, found bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// archiveOf returns uid's archive, scoped to requester the same way snapshot is.
+func (s *diagnosticsJobStore) archiveOf(uid string, requester identity.Requester) (archive []byte, state diagnosticsJobState, found bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.pruneExpiredLocked(time.Now())
 	j := s.jobs[uid]
-	if j == nil {
+	if j == nil || !jobOwnedBy(j, requester) {
 		return nil, "", false
 	}
 	return j.archive, j.State, true
@@ -186,7 +213,7 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 	if jobTotal > maxDashboardDiagnosticsPanels {
 		jobTotal = maxDashboardDiagnosticsPanels // status polling only ever sees the capped run
 	}
-	job := dashboardDiagnosticsJobs.create(jobTotal)
+	job := dashboardDiagnosticsJobs.create(jobTotal, c.SignedInUser)
 
 	// Snapshot the identity + cache flag; the goroutine must not touch the request or its context
 	// (both are tied to the HTTP request's lifetime, which ends when we return 202).
@@ -229,7 +256,7 @@ func (hs *HTTPServer) GetDashboardDiagnosticsStatus(c *contextmodel.ReqContext) 
 		return response.Error(http.StatusNotFound, "on-demand diagnostics is not enabled", nil)
 	}
 	uid := web.Params(c.Req)[":uid"]
-	snap, ok := dashboardDiagnosticsJobs.snapshot(uid)
+	snap, ok := dashboardDiagnosticsJobs.snapshot(uid, c.SignedInUser)
 	if !ok {
 		return response.Error(http.StatusNotFound, "diagnostics job not found (it may have expired)", nil)
 	}
@@ -250,7 +277,7 @@ func (hs *HTTPServer) DownloadDashboardDiagnostics(c *contextmodel.ReqContext) r
 		return response.Error(http.StatusNotFound, "on-demand diagnostics is not enabled", nil)
 	}
 	uid := web.Params(c.Req)[":uid"]
-	archive, state, ok := dashboardDiagnosticsJobs.archiveOf(uid)
+	archive, state, ok := dashboardDiagnosticsJobs.archiveOf(uid, c.SignedInUser)
 	if !ok {
 		return response.Error(http.StatusNotFound, "diagnostics job not found (it may have expired)", nil)
 	}
