@@ -93,6 +93,17 @@ describe('createGrafanaLinkResolver', () => {
     expect(resolve('_folder.json')).toBe('/dashboards/f/root-folder');
   });
 
+  it('matches an absolute (local repo) configured path against the leading-slash-stripped link', () => {
+    // A `local` repo's configured root is an absolute filesystem path; the
+    // rewriter strips the leading slash, so the resolver must too.
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+      '/data/repo'
+    );
+
+    expect(resolve('data/repo/team-a/cpu.json')).toBe('/d/abc');
+  });
+
   it('returns undefined when the matched resource has no name', () => {
     // A nameless entry would otherwise build a broken route like `/d/`.
     const resolve = createGrafanaLinkResolver(

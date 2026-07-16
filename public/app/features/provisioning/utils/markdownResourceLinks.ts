@@ -26,12 +26,14 @@ export function createGrafanaLinkResolver(
   for (const resource of resources) {
     // The repository's root folder has an empty path; it's stored under the empty
     // key (or the configured root once joined) so a root `_folder.json` link can
-    // resolve to it.
-    byPath.set(stripTrailingSlashes(joinRepoPath(repositoryPath, resource.path)), resource);
+    // resolve to it. Leading slashes are trimmed so an absolute configured root
+    // (e.g. a `local` repo's filesystem path `/data/repo`) matches the rewriter's
+    // resolved paths, which have their leading slash stripped.
+    byPath.set(trimSlashes(joinRepoPath(repositoryPath, resource.path)), resource);
   }
 
   return (repoPath) => {
-    const normalized = stripTrailingSlashes(repoPath);
+    const normalized = trimSlashes(repoPath);
 
     // A link may point straight at a folder's _folder.json, but the folder
     // resource is keyed by its directory (empty for the repo root) — fall back to
@@ -56,8 +58,8 @@ function joinRepoPath(prefix: string | undefined, path: string): string {
     .replace(/\/{2,}/g, '/');
 }
 
-function stripTrailingSlashes(s: string): string {
-  return s.replace(/\/+$/, '');
+function trimSlashes(s: string): string {
+  return s.replace(/^\/+/, '').replace(/\/+$/, '');
 }
 
 /**

@@ -249,18 +249,11 @@ function RenderedMarkdown({
       if (!href) {
         return;
       }
-      // No matching resource: open the host link in a new tab. Default navigation
-      // was already suppressed, so do it ourselves — open about:blank first and
-      // sever the opener before navigating, so the external page can't reach back
-      // into Grafana (tabnabbing). The return value still signals a blocked
-      // popup; fall back to same-tab so the click always goes somewhere.
-      const opened = window.open('about:blank', '_blank');
-      if (opened) {
-        opened.opener = null;
-        opened.location.href = href;
-      } else {
-        window.location.assign(href);
-      }
+      // No matching resource: follow the host link. Default navigation was already
+      // suppressed, and a window.open here (after the await) would be treated as
+      // non-user-initiated and blocked by most browsers — so navigate the current
+      // tab, which is deterministic and carries no opener/tabnabbing risk.
+      window.location.assign(href);
     };
 
     const handleClick = (e: MouseEvent) => {

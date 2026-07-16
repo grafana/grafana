@@ -149,30 +149,12 @@ describe('FolderReadmePanel', () => {
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
     });
 
-    it('opens the host URL in a new tab (opener severed) when a JSON link has no synced resource', async () => {
-      const fakeWindow = { opener: {}, location: { href: '' } } as unknown as Window;
-      const openSpy = jest.spyOn(window, 'open').mockReturnValue(fakeWindow);
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
-
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      await user.click(screen.getByRole('link', { name: 'CPU' }));
-
-      // Opens about:blank first, severs the opener, then navigates — so the host
-      // page never gets a live window.opener (tabnabbing) and a blocked popup is
-      // still detectable from the return value.
-      await waitFor(() => expect(openSpy).toHaveBeenCalledWith('about:blank', '_blank'));
-      expect(fakeWindow.opener).toBeNull();
-      expect(fakeWindow.location.href).toBe('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json');
-      expect(pushSpy).not.toHaveBeenCalled();
-    });
-
-    it('falls back to same-tab navigation when the host popup is blocked', async () => {
-      const openSpy = jest.spyOn(window, 'open').mockReturnValue(null);
+    it('navigates the current tab to the host URL when a JSON link has no synced resource', async () => {
       const assignMock = jest.fn();
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
       const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
       // window.location.assign is read-only in jsdom; replace it after render.
       const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
       Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
@@ -182,7 +164,7 @@ describe('FolderReadmePanel', () => {
         await waitFor(() =>
           expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json')
         );
-        expect(openSpy).toHaveBeenCalled();
+        expect(pushSpy).not.toHaveBeenCalled();
       } finally {
         if (originalLocation) {
           Object.defineProperty(window, 'location', originalLocation);

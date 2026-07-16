@@ -194,16 +194,18 @@ describe('rewriteRelativeMarkdownLinks', () => {
       expect(out).not.toContain(RESOURCE_PATH_ATTR);
     });
 
-    it('tags a resource link even for a repo with no host URL (local)', () => {
+    it('tags a resource link even for a repo with no host URL (local), stripping the leading slash', () => {
       const html = `<p><a href="./cpu.json">CPU</a></p>`;
       const out = rewriteRelativeMarkdownLinks(html, {
         repository: { ...githubRepo, type: 'local', url: '/data/repo' },
-        baseDirInRepo: baseDir,
+        // A local repo's base dir is an absolute filesystem path.
+        baseDirInRepo: '/data/repo/team-a',
       });
 
       // No host href to fall back to, but still tagged so the click handler can
-      // resolve it to the in-app page via the resource listing.
-      expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/RnD/cpu.json"`);
+      // resolve it to the in-app page. The leading slash is stripped so it matches
+      // the resolver's key (createGrafanaLinkResolver trims it too).
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="data/repo/team-a/cpu.json"`);
       expect(out).not.toMatch(/href="\.\/cpu\.json"/);
     });
   });
