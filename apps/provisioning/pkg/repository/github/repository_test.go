@@ -36,6 +36,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -51,6 +52,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "invalid-url",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -64,6 +66,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -79,6 +82,7 @@ func TestNewGitHub(t *testing.T) {
 			factory.Client = http.DefaultClient
 
 			gitRepo := git.NewMockGitRepository(t)
+			gitRepo.EXPECT().URL().Return(tt.config.Spec.GitHub.URL).Maybe()
 
 			// Call the function under test
 			repo, err := NewRepository(
@@ -176,6 +180,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 				Secure: provisioning.SecureValues{
 					Token: common.InlineSecureValue{
@@ -202,6 +207,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 						URL:    "invalid-url",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 				Secure: provisioning.SecureValues{
 					Token: common.InlineSecureValue{
@@ -283,6 +289,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -305,7 +312,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 					},
 				}
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(commits, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{
@@ -331,12 +338,13 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "nonexistent.json",
 			ref:  "main",
 			mockSetup: func(m *MockClient) {
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/nonexistent.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/nonexistent.json", "main").
 					Return(nil, repo.ErrFileNotFound)
 			},
 			expectedError: repo.ErrFileNotFound,
@@ -349,6 +357,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -366,7 +375,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 					},
 				}
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(commits, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{
@@ -392,6 +401,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -414,7 +424,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 					},
 				}
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(commits, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{
@@ -445,6 +455,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -459,7 +470,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 					},
 				}
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(commits, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{
@@ -479,12 +490,13 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
 			ref:  "main",
 			mockSetup: func(m *MockClient) {
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(nil, errors.New("API error"))
 			},
 			expectedError: errors.New("get commits: API error"),
@@ -497,12 +509,13 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
 			ref:  "feature/my-branch",
 			mockSetup: func(m *MockClient) {
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "feature/my-branch").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "feature/my-branch").
 					Return([]Commit{}, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{},
@@ -515,12 +528,13 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
 			ref:  "abc1234",
 			mockSetup: func(m *MockClient) {
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "abc1234").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "abc1234").
 					Return([]Commit{}, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{},
@@ -533,12 +547,13 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
 			ref:  "abcdef0123456789abcdef0123456789abcdef01",
 			mockSetup: func(m *MockClient) {
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "abcdef0123456789abcdef0123456789abcdef01").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "abcdef0123456789abcdef0123456789abcdef01").
 					Return([]Commit{}, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{},
@@ -551,12 +566,13 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
 			ref:  "abcdef",
 			mockSetup: func(m *MockClient) {
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "abcdef").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "abcdef").
 					Return([]Commit{}, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{},
@@ -629,6 +645,49 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 		},
 		{
+			name: "scoped repo includes configured path",
+			file: &repo.FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/grafana/dashboards/test.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
+			name: "path with URL-reserved characters is encoded",
+			file: &repo.FileInfo{
+				Path: "dashboards/a #b?.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/a%20%23b%3F.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
 			name: "file without ref uses default branch",
 			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
@@ -680,6 +739,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.config.Spec.Type = provisioning.GitHubRepositoryType
 			repo := &githubRepository{
 				config: tt.config,
 				owner:  "grafana",
@@ -766,6 +826,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.config.Spec.Type = provisioning.GitHubRepositoryType
 			repo := &githubRepository{
 				config: tt.config,
 				owner:  "grafana",
@@ -795,6 +856,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
 			},
+			Type: provisioning.GitHubRepositoryType,
 		},
 		Secure: provisioning.SecureValues{
 			Token: common.InlineSecureValue{
@@ -1016,6 +1078,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
 			},
+			Type: provisioning.GitHubRepositoryType,
 		},
 	}
 
@@ -1073,6 +1136,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 					URL:    "https://github.com/grafana/grafana",
 					Branch: "",
 				},
+				Type: provisioning.GitHubRepositoryType,
 			},
 		}
 
@@ -1114,7 +1178,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "successfully gets default branch",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{DefaultBranch: "main"}, nil)
 			},
 			expectedBranch: "main",
@@ -1122,7 +1186,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "gets default branch as develop",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{DefaultBranch: "develop"}, nil)
 			},
 			expectedBranch: "develop",
@@ -1130,7 +1194,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "gets default branch as master",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{DefaultBranch: "master"}, nil)
 			},
 			expectedBranch: "master",
@@ -1138,7 +1202,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "handles API error",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{}, errors.New("API rate limit exceeded"))
 			},
 			expectedError: "failed to get repository metadata: API rate limit exceeded",
@@ -1146,7 +1210,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "handles not found error",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{}, repo.ErrFileNotFound)
 			},
 			expectedError: "failed to get repository metadata:",
@@ -1394,6 +1458,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
@@ -1404,14 +1469,14 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 
 			if tt.expectBPCall {
 				mockClient.EXPECT().
-					GetBranchProtection(mock.Anything, "grafana", "grafana", tt.branch).
+					GetBranchProtection(mock.Anything, tt.branch).
 					Return(tt.bpResult, tt.bpError).
 					Once()
 
 				// If branch protection check succeeded, also expect rulesets check
 				if tt.bpError == nil {
 					mockClient.EXPECT().
-						GetRulesets(mock.Anything, "grafana", "grafana", tt.branch).
+						GetRulesets(mock.Anything, tt.branch).
 						Return(nil, nil).
 						Once()
 				}
@@ -1613,6 +1678,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
@@ -1623,13 +1689,13 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 
 			// Branch protection check always happens first
 			mockClient.EXPECT().
-				GetBranchProtection(mock.Anything, "grafana", "grafana", tt.branch).
+				GetBranchProtection(mock.Anything, tt.branch).
 				Return(nil, nil).
 				Maybe()
 
 			if tt.expectRulesetsCall {
 				mockClient.EXPECT().
-					GetRulesets(mock.Anything, "grafana", "grafana", tt.branch).
+					GetRulesets(mock.Anything, tt.branch).
 					Return(tt.rulesetsResult, tt.rulesetsError).
 					Once()
 			}
@@ -1768,6 +1834,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
@@ -1777,14 +1844,14 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 				Once()
 
 			mockClient.EXPECT().
-				GetBranchProtection(mock.Anything, "grafana", "grafana", tt.branch).
+				GetBranchProtection(mock.Anything, tt.branch).
 				Return(tt.bpResult, tt.bpError).
 				Once()
 
 			// Only call GetRulesets if branch protection didn't error
 			if tt.bpError == nil {
 				mockClient.EXPECT().
-					GetRulesets(mock.Anything, "grafana", "grafana", tt.branch).
+					GetRulesets(mock.Anything, tt.branch).
 					Return(tt.rulesetsResult, tt.rulesetsError).
 					Once()
 			}
@@ -1954,6 +2021,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 						Branch: tt.initialBranch,
 						Path:   "grafana/",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
@@ -1969,12 +2037,12 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			if tt.expectGetRepo {
 				if tt.getRepoError != nil {
 					mockClient.EXPECT().
-						GetRepository(mock.Anything, "grafana", "grafana").
+						GetRepository(mock.Anything).
 						Return(Repository{}, tt.getRepoError).
 						Once()
 				} else {
 					mockClient.EXPECT().
-						GetRepository(mock.Anything, "grafana", "grafana").
+						GetRepository(mock.Anything).
 						Return(Repository{DefaultBranch: tt.defaultBranch}, nil).
 						Once()
 

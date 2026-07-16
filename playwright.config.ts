@@ -43,11 +43,6 @@ export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
-    // Preserve legacy dashboard layout behavior in E2E unless a test overrides this (shallow merge on
-    // `featureToggles` would otherwise drop toggles when a spec sets only a subset).
-    featureToggles: {
-      dashboardNewLayouts: false,
-    },
   },
 };
 
@@ -101,10 +96,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/mysql'),
     }),
     withAuth({
-      name: 'mssql',
-      testDir: path.join(pluginDirRoot, '/mssql'),
-    }),
-    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
     }),
@@ -121,20 +112,12 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
     }),
     withAuth({
-      name: 'cloudmonitoring',
-      testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
-    }),
-    withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
     }),
     withAuth({
       name: 'influxdb',
       testDir: path.join(pluginDirRoot, '/influxdb'),
-    }),
-    withAuth({
-      name: 'opentsdb',
-      testDir: path.join(pluginDirRoot, '/opentsdb'),
     }),
     withAuth({
       name: 'jaeger',

@@ -2,6 +2,7 @@ import { type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -425,7 +426,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       let newNodesState = { ...this.state.nodes };
       let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
-      if (!scopeNode && config.featureToggles.useScopeSingleNodeEndpoint && scopes[0]?.scopeNodeId) {
+      if (!scopeNode && scopes[0]?.scopeNodeId) {
         scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
         if (scopeNode) {
           newNodesState[scopeNode.metadata.name] = scopeNode;
@@ -488,6 +489,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       return;
     }
 
+    // Never redirect during image/PDF capture — the renderer must stay on the requested dashboard
+    // so its panels can render. Checked synchronously here (not via setRedirectEnabled) because
+    // applyScopes runs during ScopesService boot, before any React effect can toggle the flag.
+    if (isRenderTarget()) {
+      return;
+    }
+
     // Check if we are currently on an active scope navigation
     const location = locationService.getLocation();
     const currentPath = location.pathname;
@@ -547,11 +555,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     // If the scopeNode isn't avilable, fetch it and add it to the nodes cache
-    if (
-      config.featureToggles.useScopeSingleNodeEndpoint &&
-      this.state.selectedScopes[0]?.scopeNodeId &&
-      !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]
-    ) {
+    if (this.state.selectedScopes[0]?.scopeNodeId && !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]) {
       const scopeNode = await this.apiClient.fetchScopeNode(this.state.selectedScopes[0].scopeNodeId);
       if (scopeNode) {
         this.updateState({ nodes: { ...this.state.nodes, [scopeNode.metadata.name]: scopeNode } });

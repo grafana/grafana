@@ -75,16 +75,16 @@ describe('useSelectionState', () => {
       expect(result.current.selectedQueryRefIds).toEqual(['C']);
     });
 
-    it('keeps the last selection when Cmd+clicking the only selected query', () => {
-      // Once a single item is in the bulk set, Cmd+clicking it should keep it so we never
-      // reach a "selection mode but nothing selected" state.
+    it('empties the selection when Cmd+clicking the only selected query', () => {
+      // Unchecking the last card is allowed: multi-select stays active with an empty set so the
+      // user can start a fresh selection without leaving the mode.
       const { result } = setup();
       act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['A']);
 
       act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
 
-      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      expect(result.current.selectedQueryRefIds).toEqual([]);
     });
 
     it('does NOT call onClearSideEffects', () => {
@@ -249,14 +249,14 @@ describe('useSelectionState', () => {
       expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
     });
 
-    it('keeps the last selection when Cmd+clicking the only selected transformation', () => {
+    it('empties the selection when Cmd+clicking the only selected transformation', () => {
       const { result } = setup();
       act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
       expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
 
       act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
 
-      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
+      expect(result.current.selectedTransformationIds).toEqual([]);
     });
   });
 

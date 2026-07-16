@@ -19,7 +19,6 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
       <Grid
         columns={{ xs: 1, sm: 2 }}
         gap={3}
-        tabIndex={0}
         aria-label={t('help-modal.shortcuts-aria-label', 'List of keyboard shortcuts')}
       >
         {Object.values(shortcuts).map(({ category, shortcuts }) => (

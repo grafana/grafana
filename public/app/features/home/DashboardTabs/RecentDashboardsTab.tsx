@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
-import impressionSrv from 'app/core/services/impression_srv';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { clearHistoryClicked, emptyCtaClicked } from '../analytics/main';
+import { emptyCtaClicked } from '../analytics/main';
+
+import { DashboardTabError } from './DashboardTabError';
+import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
 
 interface Props {
   dashboards: DashboardQueryResult[];
@@ -19,9 +20,10 @@ interface Props {
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
   onStarChange?: () => void;
+  density?: 'default' | 'compact';
 }
 
-export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange }: Props) {
+export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange, density }: Props) {
   const styles = useStyles2(getStyles);
 
   if (loading) {
@@ -30,20 +32,10 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
 
   if (error) {
     return (
-      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
-        {/* Extra div as Alert will flex-grow by default, but we want it centered */}
-        <div>
-          <Alert
-            severity="warning"
-            title={t('home.recent-dashboards-tab.error-title', 'Could not load recently viewed dashboards')}
-            action={
-              <Button onClick={retry} variant="secondary" size="sm">
-                <Trans i18nKey="home.recent-dashboards-tab.retry">Retry</Trans>
-              </Button>
-            }
-          />
-        </div>
-      </Stack>
+      <DashboardTabError
+        title={t('home.recent-dashboards-tab.error-title', 'Could not load recently viewed dashboards')}
+        retry={retry}
+      />
     );
   }
 
@@ -86,12 +78,6 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
     );
   }
 
-  const handleClearHistory = () => {
-    clearHistoryClicked({ dashboard_count: dashboards.length });
-    impressionSrv.clearImpressions();
-    retry();
-  };
-
   return (
     <Stack grow={1} direction="column">
       <ul className={styles.list}>
@@ -105,34 +91,21 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
               layoutMode="list"
               source="homepage_recentTab"
               onStarChange={onStarChange}
+              density={density}
             />
           </li>
         ))}
       </ul>
-      <div className={styles.clearButton}>
-        <Button icon="times" size="sm" variant="secondary" fill="text" onClick={handleClearHistory}>
-          <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
-        </Button>
-      </div>
+      {/* In the redesign the clear button is pinned outside the scroll area by DashboardTabs. */}
+      {density !== 'compact' && <RecentDashboardsClearButton dashboards={dashboards} retry={retry} />}
     </Stack>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   list: css({
     listStyle: 'none',
     padding: 0,
     margin: 0,
-  }),
-  clearButton: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
-    padding: theme.spacing(1),
-    marginTop: 'auto',
-
-    svg: {
-      position: 'relative',
-      top: 0.5,
-    },
   }),
 });

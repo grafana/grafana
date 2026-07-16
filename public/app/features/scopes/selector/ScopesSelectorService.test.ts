@@ -18,10 +18,6 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     buildInfo: { version: 'test-version' },
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').config.featureToggles,
-      useScopeSingleNodeEndpoint: true,
-    },
   },
 }));
 
@@ -1001,6 +997,34 @@ describe('ScopesSelectorService', () => {
       await service.changeScopes(['test-scope']);
 
       expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should NOT redirect when the image renderer binding is present', async () => {
+      (window as { __grafanaImageRendererMessageChannel?: unknown }).__grafanaImageRendererMessageChannel = jest.fn();
+
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+            url: '/d/dashboard1',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      try {
+        await service.changeScopes(['test-scope']);
+        expect(locationService.push).not.toHaveBeenCalled();
+      } finally {
+        delete (window as { __grafanaImageRendererMessageChannel?: unknown }).__grafanaImageRendererMessageChannel;
+      }
     });
 
     it('should redirect again after re-enabling redirects', async () => {

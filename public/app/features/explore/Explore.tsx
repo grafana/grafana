@@ -20,7 +20,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import {
   type AdHocFilterItem,
@@ -31,7 +32,6 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type StoreState } from 'app/types/store';
 
@@ -203,7 +203,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     if (!query) {
       return false;
     }
-    const ds = await getDataSourceSrv().get(query.datasource);
+    const ds = await getDataSourceInstance(query.datasource);
     if (hasToggleableQueryFiltersSupport(ds) && ds.queryHasFilter(query, { key, value: value.toString() })) {
       return true;
     }
@@ -271,7 +271,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       if (datasource == null) {
         return query;
       }
-      const ds = await getDataSourceSrv().get(datasource);
+      const ds = await getDataSourceInstance(datasource);
       const toggleableFilters = ['ADD_FILTER', 'ADD_FILTER_OUT'];
       if (hasToggleableQueryFiltersSupport(ds) && toggleableFilters.includes(modification.type)) {
         return ds.toggleQueryFilter(query, {
@@ -323,14 +323,14 @@ export class Explore extends PureComponent<Props, ExploreState> {
        * More data source may struggle with this setting: https://github.com/grafana/grafana/issues/112075
        * We're making it enabled for tempo only and will try to make it optional for other data sources in the future.
        */
-      const dsType = getDataSourceSrv().getInstanceSettings({ uid: options?.datasourceUid })?.type;
+      const dsType = (await getDataSourceInstanceSettings({ uid: options?.datasourceUid }))?.type;
       if (dsType === 'tempo' || options?.queries?.every((q) => q.datasource?.type === 'tempo')) {
         compact = true;
       }
 
       this.props.splitOpen(options ? { ...options, compact } : options);
       if (options && this.props.datasourceInstance) {
-        const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
+        const target = (await getDataSourceInstanceSettings(options.datasourceUid))?.type;
         const source =
           this.props.datasourceInstance.uid === MIXED_DATASOURCE_NAME
             ? get(this.props.queries, '0.datasource.type')
@@ -600,7 +600,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-    const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
       [
@@ -620,6 +619,55 @@ export class Explore extends PureComponent<Props, ExploreState> {
     if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
+
+    const selectQueriesFromLibrary = async (selectedQueries: DataQuery[]) => {
+      const { changeDatasource, queries, setQueries } = this.props;
+      if (selectedQueries.length === 0) {
+        return;
+      }
+      // Append each selected query with a fresh refId, computed against the
+      // growing array so queries added in the same batch don't collide.
+      const newQueries = [...queries];
+      for (const selectedQuery of selectedQueries) {
+        newQueries.push({
+          ...selectedQuery,
+          refId: getNextRefId(newQueries),
+        });
+      }
+      setQueries(exploreId, newQueries);
+      const selectedDatasourceUid = selectedQueries.find((q) => q.datasource?.uid)?.datasource?.uid;
+      if (selectedDatasourceUid) {
+        const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+        const isMixed = uniqueDatasources.size > 1;
+        const newDatasourceRef = {
+          uid: isMixed ? MIXED_DATASOURCE_NAME : selectedDatasourceUid,
+        };
+        const shouldChangeDatasource = datasourceInstance?.uid !== newDatasourceRef.uid;
+        if (shouldChangeDatasource) {
+          await changeDatasource({ exploreId, datasource: newDatasourceRef });
+        }
+      }
+    };
+
+    // Replace the current queries with the selected ones, matching Query history's behavior:
+    // switch to the entry's datasource (Mixed when the queries span several) and run that set.
+    const replaceQueriesFromLibrary = async (selectedQueries: DataQuery[]) => {
+      const { changeDatasource, setQueries } = this.props;
+      if (selectedQueries.length === 0) {
+        return;
+      }
+      const uniqueDatasources = new Set(
+        selectedQueries.map((q) => q.datasource?.uid).filter((uid): uid is string => !!uid)
+      );
+      const targetDatasourceUid =
+        uniqueDatasources.size > 1
+          ? MIXED_DATASOURCE_NAME
+          : selectedQueries.find((q) => q.datasource?.uid)?.datasource?.uid;
+      if (targetDatasourceUid && datasourceInstance?.uid !== targetDatasourceUid) {
+        await changeDatasource({ exploreId, datasource: { uid: targetDatasourceUid } });
+      }
+      setQueries(exploreId, selectedQueries);
+    };
 
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
@@ -676,32 +724,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           // We cannot show multiple traces at the same time right now so we do not show add query button.
                           //TODO:unification
                           addQueryRowButtonHidden={false}
-                          richHistoryRowButtonHidden={richHistoryRowButtonHidden}
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
-                          onSelectQueryFromLibrary={async (query) => {
-                            const { changeDatasource, queries, setQueries } = this.props;
-                            const newQueries = [
-                              ...queries,
-                              {
-                                ...query,
-                                refId: getNextRefId(queries),
-                              },
-                            ];
-                            setQueries(exploreId, newQueries);
-                            if (query.datasource?.uid) {
-                              const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
-                              const isMixed = uniqueDatasources.size > 1;
-                              const newDatasourceRef = {
-                                uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
-                              };
-                              const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
-                              if (shouldChangeDatasource) {
-                                await changeDatasource({ exploreId, datasource: newDatasourceRef });
-                              }
-                            }
-                          }}
+                          onSelectQueryFromLibrary={(query) => selectQueriesFromLibrary([query])}
+                          onSelectQueriesFromLibrary={selectQueriesFromLibrary}
+                          onReplaceQueriesFromLibrary={replaceQueriesFromLibrary}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>

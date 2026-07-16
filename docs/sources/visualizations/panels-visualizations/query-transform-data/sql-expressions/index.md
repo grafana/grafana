@@ -28,6 +28,11 @@ In Grafana, a server-side expression is a way to transform or calculate data aft
 
 For general information on Grafana expressions, refer to [Write expression queries](ref:expressions).
 
+{{< admonition type="note" >}}
+The screenshots and steps on this page reflect the classic, generally available panel query editor.
+For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
+{{< /admonition >}}
+
 ![Example of a SQL expression](/media/docs/sql-expressions/sql-expressions-example-1.png)
 
 ## Before you begin
@@ -60,6 +65,8 @@ SQL expressions allow you to:
 A key capability of SQL expressions is the ability to JOIN data from multiple tables. This allows users to combine and transform data in a predictable, user-friendly way—even for complex use cases. You can JOIN data from an unlimited number of data source queries.
 
 To work with SQL expressions, you must use data from a backend data source. In Grafana, a backend data source refers to a data source plugin or integration that communicates with a database, service, or API through the Grafana server, rather than directly from the browser (frontend).
+
+Frontend-only data sources, such as the **[Dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#dashboard)** data source, aren't supported. Use one of the compatible data sources listed below for queries that you want to reference in a SQL expression.
 
 ## Compatible data sources
 

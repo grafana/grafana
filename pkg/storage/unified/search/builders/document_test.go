@@ -79,9 +79,10 @@ func TestTeamSearchBuilder(t *testing.T) {
 	doSnapshotTests(t, info.Builder, "team", &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "iam.grafana.app",
-		Resource:  "searchTeams",
+		Resource:  "teams",
 	}, []string{
 		"with-email-and-external-uid",
+		"with-members-and-groups",
 	})
 }
 
@@ -215,6 +216,8 @@ func TestUserDocumentBuilder_Created(t *testing.T) {
 	require.NoError(t, err)
 
 	value := []byte(`{
+		"apiVersion": "iam.grafana.app/v0alpha1",
+		"kind": "User",
 		"metadata": {
 			"name": "uid-1",
 			"creationTimestamp": "2024-01-02T03:04:05Z"
@@ -227,5 +230,6 @@ func TestUserDocumentBuilder_Created(t *testing.T) {
 		1, value)
 	require.NoError(t, err)
 
-	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli(), doc.Fields[USER_CREATED])
+	// The creation timestamp is carried on the standard created field.
+	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli(), doc.Created)
 }

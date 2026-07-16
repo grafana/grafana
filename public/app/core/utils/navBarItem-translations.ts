@@ -41,6 +41,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.snapshots.title', 'Snapshots');
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
+    case 'dashboards/variables':
+      return t('nav.global-variables.title', 'Variables');
     case 'reports':
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
@@ -223,6 +225,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.shared-dashboard.subtitle', "Manage your organization's externally shared dashboards");
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
+    case 'dashboards/variables':
+      return t('nav.global-variables.subtitle', 'Template variables shared across dashboards, globally or per folder');
     case 'dashboards/recently-deleted':
       return t(
         'nav.recently-deleted.subtitle',
@@ -273,8 +277,6 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.org-settings.subtitle', 'Manage preferences across an organization');
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
-    case 'groupsync':
-      return t('nav.groupsync.subtitle', 'Manage mappings of Identity Provider groups to Grafana Roles');
     case 'global-users':
       return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':

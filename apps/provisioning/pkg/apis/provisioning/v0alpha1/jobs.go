@@ -77,6 +77,13 @@ const (
 	// This action has inverted validation: it is only allowed when the repository
 	// does not exist or has a DeletionTimestamp set.
 	JobActionDeleteResources JobAction = "deleteResources"
+
+	// JobActionTest is a synthetic job that does no real work: it simply sleeps
+	// for a configurable duration and then completes successfully. It exists only
+	// to generate controlled load on the job queue and controllers for
+	// performance testing, and is gated behind the provisioning.performance
+	// feature flag.
+	JobActionTest JobAction = "test"
 )
 
 // +enum
@@ -137,6 +144,9 @@ type JobSpec struct {
 
 	// Options when the action is `fix-folder-metadata`
 	FixFolderMetadata *FixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
+
+	// Required when the action is `test`
+	Test *TestJobOptions `json:"test,omitempty"`
 }
 
 func (JobSpec) OpenAPIModelName() string {
@@ -192,6 +202,13 @@ type ExportJobOptions struct {
 	// are exported — the folder hierarchy is still emitted so parent paths resolve.
 	// Currently only unmanaged Dashboards are supported.
 	Resources []ResourceRef `json:"resources,omitempty"`
+
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. Use this to produce a portable export that creates
+	// new folders on a subsequent sync rather than taking over the originals.
+	// Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (ExportJobOptions) OpenAPIModelName() string {
@@ -211,6 +228,12 @@ type MigrateJobOptions struct {
 	// of those resources.
 	// Currently only unmanaged Dashboards are supported.
 	Resources []ResourceRef `json:"resources,omitempty"`
+
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. The subsequent pull creates new folders rather than
+	// taking over the originals. Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {
@@ -284,6 +307,24 @@ type FixFolderMetadataJobOptions struct {
 
 func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
+}
+
+// TestJobOptions configures a synthetic performance-testing job. The job does
+// no real work; it sleeps for Duration and then completes. It is only usable
+// when the provisioning.performance feature flag is enabled.
+type TestJobOptions struct {
+	// Duration is how long the job should sleep before completing, expressed as
+	// a Go duration string (for example "10s" or "2m"). It must be positive and
+	// is capped by the server to keep a single job's runtime predictable.
+	Duration metav1.Duration `json:"duration,omitempty"`
+
+	// ProgressUpdates controls how many progress notifications the job emits
+	// while running. A value of 0 uses the server default.
+	ProgressUpdates int `json:"progressUpdates,omitempty"`
+}
+
+func (TestJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "TestJobOptions"
 }
 
 // The job status

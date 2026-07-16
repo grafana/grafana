@@ -51,7 +51,6 @@ jest.mock('@grafana/assistant', () => ({
 
 // metadata and interactive elements
 const ELEMENTS = {
-  loading: byText(/Loading rule/i),
   metadata: {
     summary: (text: string) => byText(text),
     runbook: (url: string) => byRole('link', { name: url }),
@@ -176,6 +175,7 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleUpdate,
         AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.FoldersRead,
         AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstanceCreate,
         AccessControlAction.AlertingInstanceRead,
@@ -495,8 +495,8 @@ describe('RuleViewer', () => {
       ]);
     });
 
-    it('should render a data source managed alert rule', () => {
-      renderRuleViewer(mockRule, mockRuleIdentifier);
+    it('should render a data source managed alert rule', async () => {
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
 
       // assert on basic info to be vissible
       expect(screen.getByText('cloud test alert')).toBeInTheDocument();
@@ -518,7 +518,7 @@ describe('RuleViewer', () => {
 
       const user = userEvent.setup();
 
-      renderRuleViewer(sloRule, sloRuleIdentifier);
+      await renderRuleViewer(sloRule, sloRuleIdentifier);
 
       expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
@@ -537,7 +537,7 @@ describe('RuleViewer', () => {
       );
       const assertsRuleIdentifier = ruleId.fromCombinedRule(mimir.name, assertsRule);
 
-      renderRuleViewer(assertsRule, assertsRuleIdentifier);
+      await renderRuleViewer(assertsRule, assertsRuleIdentifier);
 
       expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
@@ -574,7 +574,7 @@ describe('RuleViewer', () => {
     const mockRuleIdentifier = ruleId.fromCombinedRule(prometheus.name, mockRule);
 
     it('should render metadata for vanilla Prometheus alert rule', async () => {
-      renderRuleViewer(mockRule, mockRuleIdentifier);
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
 
       expect(screen.getByText('prom test alert')).toBeInTheDocument();
 
@@ -702,7 +702,7 @@ const renderRuleViewer = async (
     { historyOptions: { initialEntries: [path] }, store }
   );
 
-  await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
+  await screen.findByRole('heading', { name: rule.name });
 
   return view;
 };

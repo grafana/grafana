@@ -155,7 +155,9 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how should we handle this?
-	if manager.Identity == r.repo.Config().GetName() {
+	// Only treat it as already-in-repository when a repository manager owns it;
+	// matching on identity alone would misclassify other manager kinds.
+	if manager.Kind == utils.ManagerKindRepo && manager.Identity == r.repo.Config().GetName() {
 		// If it's already in the repository, we don't need to write it
 		return "", ErrAlreadyInRepository
 	}

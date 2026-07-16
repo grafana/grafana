@@ -100,6 +100,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+    - run: yarn run typecheck:smoke
   lint-frontend-typecheck-enterprise:
     needs: detect-changes
     permissions:
@@ -129,6 +130,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+    - run: yarn run typecheck:smoke
   lint-frontend-typecheck-tsgo-enterprise:
     needs: detect-changes
     permissions:
@@ -270,7 +272,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true'
     name: Verify packed frontend packages
     runs-on: ubuntu-x64
     steps:
@@ -412,4 +414,13 @@ jobs:
       if: failure() && steps.yarn-dedupe.outcome == 'failure'
       run: |
         echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
+        exit 1
+
+    - name: Check yarn constraints
+      id: yarn-constraints
+      run: yarn constraints
+    - name: Report yarn constraints failure
+      if: failure() && steps.yarn-constraints.outcome == 'failure'
+      run: |
+        echo "::error::Yarn constraints check failed. Run 'yarn constraints --fix' locally, commit the changes, and push again."
         exit 1

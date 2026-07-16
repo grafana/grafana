@@ -971,8 +971,8 @@
             "description": "Panel IDs that should be included or excluded",
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64",
+              "type": "number",
+              "format": "double",
               "default": 0
             }
           }
@@ -1831,6 +1831,10 @@
         "properties": {
           "fixedColor": {
             "description": "The fixed color value for fixed or shades color modes.",
+            "type": "string"
+          },
+          "gradientColorTo": {
+            "description": "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
             "type": "string"
           },
           "mode": {

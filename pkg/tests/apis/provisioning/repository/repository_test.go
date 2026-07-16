@@ -206,6 +206,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 					provisioning.GitHubRepositoryType,
 					provisioning.BitbucketRepositoryType,
 					provisioning.GitLabRepositoryType,
+					provisioning.GitHubEnterpriseRepositoryType,
 				}, settings.AvailableRepositoryTypes)
 			} else {
 				assert.ElementsMatch(collect, []provisioning.RepositoryType{
@@ -1562,7 +1563,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", targetPath).
-			Body(helper.LoadFile("../testdata/all-panels.json")).
+			Body(helper.LoadFile("../testdata/all-panels-classic.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&code)
 		require.Equal(t, http.StatusNotFound, code)
@@ -1574,7 +1575,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", targetPath).
-			Body(helper.LoadFile("../testdata/all-panels.json")).
+			Body(helper.LoadFile("../testdata/all-panels-classic.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&code)
 		require.NoError(t, result.Error(), "expecting to be able to create file")

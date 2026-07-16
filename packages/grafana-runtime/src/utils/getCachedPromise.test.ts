@@ -1,5 +1,6 @@
 import { getLogger, setLogger } from '../services/logging/registry';
 
+import { TracedError } from './TracedError';
 import {
   getCacheKeyFromPromise,
   getCachedPromise,
@@ -221,15 +222,11 @@ describe('cached promises', () => {
 
         const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
         expect(logErrorMock).toHaveBeenCalledTimes(1);
-        expect(logErrorMock).toHaveBeenCalledWith(
-          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
-          {
-            stack: expect.any(String),
-            message: 'Network Error',
-            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
-          }
-        );
-        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+        const [loggedError, context] = logErrorMock.mock.calls[0];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+        expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+        expect(context).toEqual({ key: expect.stringMatching(/^mockConstructor:-?\d+$/) });
       });
 
       test('should log non-Error thrown values', async () => {
@@ -239,11 +236,11 @@ describe('cached promises', () => {
 
         const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
         expect(logErrorMock).toHaveBeenCalledTimes(1);
-        expect(logErrorMock).toHaveBeenCalledWith(
-          expect.any(Error),
-          expect.objectContaining({ message: 'string error', key: expect.stringMatching(/^mockConstructor:-?\d+$/) })
-        );
-        expect(logErrorMock.mock.calls[0][0].cause).toBe('string error');
+        const [loggedError, context] = logErrorMock.mock.calls[0];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+        expect(loggedError.cause).toBe('string error');
+        expect(context).toEqual({ key: expect.stringMatching(/^mockConstructor:-?\d+$/) });
       });
     });
 
@@ -289,15 +286,11 @@ describe('cached promises', () => {
         expect(promise).toHaveBeenCalledTimes(1);
         const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
         expect(logErrorMock).toHaveBeenCalledTimes(1);
-        expect(logErrorMock).toHaveBeenCalledWith(
-          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
-          {
-            stack: expect.any(String),
-            message: 'Network Error',
-            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
-          }
-        );
-        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+        const [loggedError, context] = logErrorMock.mock.calls[0];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+        expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+        expect(context).toEqual({ key: expect.stringMatching(/^mockConstructor:-?\d+$/) });
       });
 
       test('should invalidate cache when something errors', async () => {
@@ -388,15 +381,11 @@ describe('cached promises', () => {
 
         const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
         expect(logErrorMock).toHaveBeenCalledTimes(1);
-        expect(logErrorMock).toHaveBeenCalledWith(
-          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
-          {
-            stack: expect.any(String),
-            message: 'Network Error',
-            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
-          }
-        );
-        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+        const [loggedError, context] = logErrorMock.mock.calls[0];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+        expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+        expect(context).toEqual({ key: expect.stringMatching(/^mockConstructor:-?\d+$/) });
       });
 
       test('should propagate error when onError callback throws', async () => {
@@ -820,11 +809,13 @@ describe('cached promises', () => {
       expect(keyA).toMatch(/^uncacheable:/);
       expect(keyB).toMatch(/^uncacheable:/);
       expect(keyA).not.toBe(keyB);
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(2);
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'getCachedPromiseWithArgs: serializeArg failed' }),
-        expect.objectContaining({ baseKey: 'test' })
-      );
+      const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+      expect(logErrorMock).toHaveBeenCalledTimes(2);
+      const [loggedError, context] = logErrorMock.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toBe('getCachedPromiseWithArgs: serializeArg failed');
+      expect(loggedError.cause).toBeInstanceOf(Error);
+      expect(context).toEqual({ baseKey: 'test', key: expect.stringMatching(/^uncacheable:/) });
     });
   });
 

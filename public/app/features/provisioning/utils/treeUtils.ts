@@ -4,6 +4,7 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
+import { getKindInfoByItemType, getKindInfoByResource } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -57,11 +58,9 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 }
 
 export function getItemType(path: string, resource?: ResourceListItem): ItemType {
-  if (resource?.resource === 'dashboards') {
-    return 'Dashboard';
-  }
-  if (resource?.resource === 'folders') {
-    return 'Folder';
+  const kindInfo = getKindInfoByResource(resource?.resource);
+  if (kindInfo) {
+    return kindInfo.itemType;
   }
   // Inferred folder (no extension means it's a folder from file paths)
   if (!resource && !path.includes('.')) {
@@ -79,15 +78,7 @@ function getDisplayTitle(path: string, resource?: ResourceListItem): string {
 }
 
 export function getIconName(type: ItemType): IconName {
-  switch (type) {
-    case 'Folder':
-      return 'folder';
-    case 'Dashboard':
-      return 'apps';
-    case 'File':
-    default:
-      return 'file-alt';
-  }
+  return getKindInfoByItemType(type)?.icon ?? 'file-alt';
 }
 
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
@@ -124,7 +115,10 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   for (const item of mergedItems) {
     const type = getItemType(item.path, item.resource);
     const isFolderMetadata = isFolderMetadataPath(item.path);
-    const showStatus = type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json');
+    // Show sync status for any provisioned resource kind (Folder, Dashboard, Playlist, ...) or for
+    // unsynced .json files that haven't been turned into a resource yet. `type` is only 'File' for
+    // paths that don't map to a kind in the resource registry.
+    const showStatus = type !== 'File' || item.path.endsWith('.json');
     const resourceHash = isFolderMetadata
       ? getParentFolderResourceHash(item.path, lookupResourceHash)
       : item.resource?.hash;
@@ -204,17 +198,27 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   return roots;
 }
 
-export function flattenTree(items: TreeItem[], level = 0): FlatTreeItem[] {
+/**
+ * Flatten a tree into the ordered list the table renders. A folder's descendants are only
+ * included when it is expanded. `expandedPaths` holds the set of folder paths currently expanded;
+ * pass `undefined` to expand everything (e.g. while searching, so all matches stay visible).
+ */
+export function flattenTree(items: TreeItem[], expandedPaths?: Set<string>, level = 0): FlatTreeItem[] {
   const result: FlatTreeItem[] = [];
 
   for (const item of items) {
+    const isExpandable = item.children.length > 0;
+    const isExpanded = isExpandable && (!expandedPaths || expandedPaths.has(item.path));
+
     result.push({
       item: { ...item, level },
       level,
+      isExpandable,
+      isExpanded,
     });
 
-    if (item.children.length > 0) {
-      result.push(...flattenTree(item.children, level + 1));
+    if (isExpanded) {
+      result.push(...flattenTree(item.children, expandedPaths, level + 1));
     }
   }
 
@@ -245,6 +249,56 @@ export function filterTree(items: TreeItem[], searchQuery: string): TreeItem[] {
     }
 
     return null;
+  };
+
+  return items.map(filterNode).filter((n): n is TreeItem => n !== null);
+}
+
+/**
+ * A tree item's status as shown in the Resources tab. `warning` mirrors the folder
+ * metadata warning icon, which takes precedence over the sync icons. This is the single
+ * source of truth shared by the status cell and the status filter so they never drift.
+ */
+export type StatusCategory = 'warning' | 'pending' | 'synced';
+
+export function getStatusCategory(node: TreeItem, includeWarnings: boolean): StatusCategory | undefined {
+  if (includeWarnings && node.missingFolderMetadata) {
+    return 'warning';
+  }
+  return node.status;
+}
+
+/**
+ * Filter tree to items whose status is in `categories`, keeping ancestor folders so the
+ * hierarchy stays intact. An empty `categories` list disables the filter (returns everything).
+ * `includeWarnings` controls whether the folder-metadata warning is treated as its own category.
+ */
+export function filterByStatusCategories(
+  items: TreeItem[],
+  categories: StatusCategory[],
+  includeWarnings = false
+): TreeItem[] {
+  if (categories.length === 0) {
+    return items;
+  }
+
+  const selected = new Set(categories);
+  const matches = (node: TreeItem): boolean => {
+    const category = getStatusCategory(node, includeWarnings);
+    return category !== undefined && selected.has(category);
+  };
+
+  const filterNode = (node: TreeItem): TreeItem | null => {
+    if (node.type === 'Folder' && node.children.length > 0) {
+      const filteredChildren = node.children.map(filterNode).filter((n): n is TreeItem => n !== null);
+      if (filteredChildren.length > 0) {
+        return { ...node, children: filteredChildren };
+      }
+      // No matching descendants — keep the folder only if it matches itself.
+      return matches(node) ? { ...node, children: [] } : null;
+    }
+
+    return matches(node) ? node : null;
   };
 
   return items.map(filterNode).filter((n): n is TreeItem => n !== null);

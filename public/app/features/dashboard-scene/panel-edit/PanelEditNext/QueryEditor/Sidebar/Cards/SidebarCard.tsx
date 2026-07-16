@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { useCallback, useRef, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
@@ -15,9 +15,28 @@ import {
   SIDEBAR_CARD_SPACING,
 } from '../../../constants';
 import { type SelectionModifiers, useQueryEditorTypeConfig, useQueryEditorUIContext } from '../../QueryEditorContext';
-import { getEditorBorderColor } from '../../utils';
+import { getEditorBorderColor, getHiddenMaskStyles } from '../../utils';
 import { AddCardButton } from '../AddCardButton';
 import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
+
+const checkboxPop = keyframes({
+  '0%': { transform: 'scale(1)' },
+  '45%': { transform: 'scale(0.9)' },
+  '100%': { transform: 'scale(1)' },
+});
+
+const checkboxTickIn = keyframes({
+  '0%': { transform: 'rotate(45deg) scale(0.6)', opacity: 0 },
+  '100%': { transform: 'rotate(45deg) scale(1)', opacity: 1 },
+});
+
+// The visible checkbox box is 16px (theme.spacing(2)), matching the @grafana/ui
+// Checkbox. We extend the click target by CHECKBOX_HIT_PADDING on every side; the
+// open slot must therefore be the box plus that padding on both horizontal sides,
+// and the slot's negative margins absorb the same padding so nothing visually moves.
+const CHECKBOX_BOX_SIZE = 2;
+const CHECKBOX_HIT_PADDING = 0.75;
+const CHECKBOX_SLOT_OPEN_WIDTH = CHECKBOX_BOX_SIZE + CHECKBOX_HIT_PADDING * 2;
 
 interface SidebarCardProps {
   children: React.ReactNode;
@@ -137,8 +156,9 @@ export const SidebarCard = ({
           {...(!multiSelectMode && { inert: '' })}
         >
           {onToggleMultiSelect && (
-            <div onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
+            <div className={styles.checkboxClickArea} onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
               <Checkbox
+                className={styles.checkboxHitArea}
                 value={isMultiSelected}
                 onChange={handleCheckboxChange}
                 aria-label={t('query-editor-next.sidebar.card-multi-select', 'Include card {{id}} in bulk selection', {
@@ -333,8 +353,7 @@ function getStyles(
       },
 
       ...(item.isHidden && {
-        opacity: theme.isDark ? 0.6 : 0.7,
-        filter: 'grayscale(0.8)',
+        ...getHiddenMaskStyles(theme),
         boxShadow: 'none',
       }),
 
@@ -384,27 +403,64 @@ function getStyles(
       gap: theme.spacing(1.25),
     }),
 
-    // Slot for the always-rendered checkbox: width animates open/closed to slide
-    // the card and reveal/clip it. Negative margin cancels `cardRow`'s gap when closed.
+    // Animated slot: width opens/closes to slide the card aside. overflow:hidden
+    // clips the box when closed; alignSelf:stretch lets the hit area fill card height.
     checkboxWrapper: css({
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'stretch',
+      alignSelf: 'stretch',
       overflow: 'hidden',
       width: 0,
       flexShrink: 0,
       lineHeight: 0,
       marginRight: `-${theme.spacing(1.25)}`,
       [theme.transitions.handleMotion('no-preference')]: {
-        transition: theme.transitions.create(['width', 'margin-right'], {
+        transition: theme.transitions.create(['width', 'margin-left', 'margin-right'], {
           duration: theme.transitions.duration.short,
           easing: theme.transitions.easing.easeOut,
         }),
       },
     }),
     checkboxWrapperOpen: css({
-      width: theme.spacing(2),
-      marginRight: 0,
+      width: theme.spacing(CHECKBOX_SLOT_OPEN_WIDTH),
+      marginLeft: `-${theme.spacing(CHECKBOX_HIT_PADDING)}`,
+      marginRight: `-${theme.spacing(CHECKBOX_HIT_PADDING)}`,
     }),
+
+    checkboxClickArea: css({
+      display: 'flex',
+      alignItems: 'stretch',
+    }),
+
+    // Enlarges the click target (the Checkbox <label>) to the full card height and a
+    // few px beyond the box on each side, with hover + press/check feedback.
+    checkboxHitArea: css({
+      height: '100%',
+      alignContent: 'center',
+      paddingInline: theme.spacing(CHECKBOX_HIT_PADDING),
+      cursor: 'pointer',
+
+      '& input': {
+        cursor: 'pointer',
+      },
+
+      '&:hover input:not(:checked) + span': {
+        borderColor: theme.components.input.borderHover,
+      },
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        '&:active input + span': {
+          transform: 'scale(0.94)',
+        },
+        '& input:checked + span': {
+          animation: `${checkboxPop} 180ms ${theme.transitions.easing.easeOut}`,
+        },
+        '& input:checked + span::after': {
+          animation: `${checkboxTickIn} 180ms ${theme.transitions.easing.easeOut}`,
+        },
+      },
+    }),
+
     ghostCard: css({
       border: `1px solid ${ghostBorderColor}`,
       background: ghostBackgroundColor,

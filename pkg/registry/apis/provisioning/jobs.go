@@ -36,6 +36,7 @@ type jobsConnector struct {
 	access                auth.AccessChecker
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
+	perfTestingEnabled    bool
 }
 
 func NewJobsConnector(
@@ -46,6 +47,7 @@ func NewJobsConnector(
 	access auth.AccessChecker,
 	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
+	perfTestingEnabled bool,
 ) *jobsConnector {
 	return &jobsConnector{
 		repoGetter:            repoGetter,
@@ -55,6 +57,7 @@ func NewJobsConnector(
 		access:                access,
 		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
+		perfTestingEnabled:    perfTestingEnabled,
 	}
 }
 
@@ -170,7 +173,7 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 		return
 	}
 
-	if spec.Action == provisioning.JobActionPull {
+	if spec.Action == provisioning.JobActionPull || spec.Action == provisioning.JobActionTest {
 		if err := c.authorizeAdminJob(ctx, cfg); err != nil {
 			responder.Error(err)
 			return
@@ -299,6 +302,9 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	if spec.Action == provisioning.JobActionFixFolderMetadata && !c.folderMetadataEnabled {
 		return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
 	}
+	if spec.Action == provisioning.JobActionTest && !c.perfTestingEnabled {
+		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
+	}
 
 	switch spec.Action {
 	case provisioning.JobActionPush, provisioning.JobActionMigrate:
@@ -311,9 +317,9 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		if spec.Move != nil {
 			return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
 		}
-	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata:
-		// Read-only operations don't require pre-flight resource authorization.
-		// Pull is authorized inline in Connect.
+	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata, provisioning.JobActionTest:
+		// Read-only / no-op operations don't require pre-flight resource authorization.
+		// Pull and test are authorized inline in handleCreateJob (admin-only).
 	case provisioning.JobActionReleaseResources, provisioning.JobActionDeleteResources:
 		// Orphan cleanup actions are handled separately via handleOrphanCleanupJob
 		// and never reach authorizeJob.
@@ -382,11 +388,16 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 
 // authorizeAdminJob checks that the requesting user has admin privileges.
 // Used for job types that are restricted to administrators.
+//
+// We check repositories:write (an admin-only RBAC action) rather than
+// jobs:create, because jobs:create is granted to Editor and would let editors
+// trigger admin-restricted jobs (pull, releaseResources, deleteResources).
+// The fallback role still allows admins whose RBAC isn't explicitly set up.
 func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning.Repository) error {
 	return c.access.WithFallbackRole(identity.RoleAdmin).Check(ctx, authlib.CheckRequest{
-		Verb:      "create",
+		Verb:      utils.VerbUpdate,
 		Group:     provisioning.GROUP,
-		Resource:  provisioning.JobResourceInfo.GetName(),
+		Resource:  provisioning.RepositoryResourceInfo.GetName(),
 		Namespace: cfg.Namespace,
 	}, "")
 }

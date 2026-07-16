@@ -103,15 +103,9 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.get", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("query_name", name),
-		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
 		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
-
-	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
-	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
-		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
-	}
 
 	if err := nps.routeAccess.AuthorizeReadByUID(ctx, user, name); err != nil {
 		return legacy_storage.ManagedRoute{}, err
@@ -153,7 +147,6 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (legacy_storage.ManagedRoutes, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.getMany", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
-		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
 		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
@@ -168,8 +161,7 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 		return nil, err
 	}
 
-	// Backwards compatibility when managed routes FF is disabled. Don't include any custom managed routes.
-	managedRoutes := rev.GetManagedRoutes(nps.managedRoutesEnabled())
+	managedRoutes := rev.GetManagedRoutes()
 	for _, mr := range managedRoutes {
 		provenance, ok := provenances[mr.ResourceID()]
 		if !ok {
@@ -178,7 +170,7 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 		mr.Provenance = provenance
 	}
 
-	if nps.managedRoutesEnabled() && nps.includeImported() {
+	if nps.includeImported() {
 		importedRoute := nps.getImportedRoute(ctx, span, rev)
 		if importedRoute != nil {
 			// This shouldn't happen under normal circumstances as we guard during create. However, if it happens, we error for now.
@@ -213,13 +205,8 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
 		attribute.String("route_version", version),
-		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
 		attribute.Bool("include_imported", nps.includeImported()),
 	))
-	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
-	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
-		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
-	}
 
 	if err := nps.routeAccess.AuthorizeUpdateByUID(ctx, user, name); err != nil {
 		return nil, err
@@ -293,15 +280,9 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
 		attribute.String("route_version", version),
-		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
 		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
-
-	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
-	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
-		return models.ErrRouteNotFound.Errorf("route %q not found", name)
-	}
 
 	if err := nps.routeAccess.AuthorizeDeleteByUID(ctx, user, name); err != nil {
 		return err
@@ -342,7 +323,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	}
 
 	action := "Deleted"
-	if name == legacy_storage.UserDefinedRoutingTreeName {
+	if models.IsDefaultRoutingTreeName(name) {
 		defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 		if err != nil {
 			return fmt.Errorf("failed to parse default alertmanager config: %w", err)
@@ -361,7 +342,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		if name != legacy_storage.UserDefinedRoutingTreeName { // do not delete permissions on reset of default route
+		if !models.IsDefaultRoutingTreeName(name) { // do not delete permissions on reset of default route
 			if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
 				return err
 			}
@@ -382,14 +363,9 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.create", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
-		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
 		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
-	// Backwards compatibility when managed routes FF is disabled. This is not allowed.
-	if !nps.managedRoutesEnabled() {
-		return nil, models.ErrMultipleRoutesNotSupported.Errorf("")
-	}
 
 	if err := nps.routeAccess.AuthorizeCreate(ctx, user); err != nil {
 		return nil, err
@@ -450,19 +426,19 @@ func (nps *Service) checkOptimisticConcurrency(current *legacy_storage.ManagedRo
 }
 
 func (nps *Service) ReceiverUseByName(_ context.Context, rev *legacy_storage.ConfigRevision) map[string]int {
-	return rev.ReceiverUseByName(nps.managedRoutesEnabled())
+	return rev.ReceiverUseByName()
 }
 
 func (nps *Service) ReceiverNameUsedByRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, name string) bool {
-	return rev.ReceiverNameUsedByRoutes(name, nps.managedRoutesEnabled())
+	return rev.ReceiverNameUsedByRoutes(name)
 }
 
 func (nps *Service) RenameReceiverInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*v1.Route]int {
-	return rev.RenameReceiverInRoutes(oldName, newName, nps.managedRoutesEnabled())
+	return rev.RenameReceiverInRoutes(oldName, newName)
 }
 
 func (nps *Service) RenameTimeIntervalInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName string, newName string) map[*v1.Route]int {
-	return rev.RenameTimeIntervalInRoutes(oldName, newName, nps.managedRoutesEnabled())
+	return rev.RenameTimeIntervalInRoutes(oldName, newName)
 }
 
 func (nps *Service) getImportedRoute(ctx context.Context, span trace.Span, revision *legacy_storage.ConfigRevision) *legacy_storage.ManagedRoute {
@@ -486,19 +462,10 @@ func (nps *Service) getImportedRoute(ctx context.Context, span trace.Span, revis
 	return result
 }
 
-func (nps *Service) managedRoutesEnabled() bool {
-	if nps.FeatureToggles == nil {
-		return false
-	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies)
-}
-
 func (nps *Service) includeImported() bool {
 	if nps.FeatureToggles == nil {
 		return false
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) &&
-		nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 }

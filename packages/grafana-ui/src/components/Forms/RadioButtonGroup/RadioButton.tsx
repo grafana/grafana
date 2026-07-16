@@ -88,6 +88,7 @@ RadioButton.displayName = 'RadioButton';
 
 const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   const textColor = theme.colors.text.secondary;
   const textColorHover = theme.colors.text.primary;
@@ -103,56 +104,73 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       minWidth: 0,
       textAlign: 'center',
     }),
-    radio: css({
-      position: 'absolute',
-      opacity: 0,
-      zIndex: 2,
-      width: '100% !important',
-      height: '100%',
-      cursor: 'pointer',
+    radio: css(
+      {
+        position: 'absolute',
+        opacity: 0,
+        zIndex: 2,
+        width: '100% !important',
+        height: '100%',
+        cursor: 'pointer',
 
-      '&:checked + label': {
-        color: theme.colors.text.primary,
-        fontWeight: theme.typography.fontWeightMedium,
-        background: theme.colors.action.selected,
-        zIndex: 1,
-        // this ensures the selected radio button is shown when forced colors are active
-        '@media (forced-colors: active)': {
-          outline: '1px solid transparent',
+        '&:checked + label': {
+          color: theme.colors.text.primary,
+          fontWeight: theme.typography.fontWeightMedium,
+          background: theme.colors.action.selected,
+          zIndex: 1,
+          // this ensures the selected radio button is shown when forced colors are active
+          '@media (forced-colors: active)': {
+            outline: '1px solid transparent',
+          },
+        },
+
+        '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
+
+        '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
+
+        '&:disabled + label': {
+          color: theme.colors.text.disabled,
+          cursor: 'not-allowed',
         },
       },
+      visualRefreshEnabled && {
+        '&:checked + label': {
+          border: `1px solid ${theme.colors.border.medium}`,
+          color: theme.colors.accent.text,
+          fontWeight: 'unset',
+        },
+      }
+    ),
+    radioLabel: css(
+      {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize,
+        height: `${labelHeight}px`,
+        // Deduct border from line-height for perfect vertical centering on windows and linux
+        lineHeight: `${labelHeight}px`,
+        color: textColor,
+        padding: theme.spacing(0, padding),
+        borderRadius: getInternalRadius(theme, RADIO_GROUP_PADDING),
+        cursor: 'pointer',
+        userSelect: 'none',
+        whiteSpace: 'nowrap',
+        flexGrow: 1,
+        minWidth: 0,
+        overflow: 'hidden',
 
-      '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
-
-      '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
-
-      '&:disabled + label': {
-        color: theme.colors.text.disabled,
-        cursor: 'not-allowed',
+        '&:hover': {
+          color: textColorHover,
+        },
       },
-    }),
-    radioLabel: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize,
-      height: `${labelHeight}px`,
-      // Deduct border from line-height for perfect vertical centering on windows and linux
-      lineHeight: `${labelHeight}px`,
-      color: textColor,
-      padding: theme.spacing(0, padding),
-      borderRadius: getInternalRadius(theme, RADIO_GROUP_PADDING),
-      background: theme.colors.background.primary,
-      cursor: 'pointer',
-      userSelect: 'none',
-      whiteSpace: 'nowrap',
-      flexGrow: 1,
-      minWidth: 0,
-      overflow: 'hidden',
+      visualRefreshEnabled && {
+        border: '1px solid transparent',
 
-      '&:hover': {
-        color: textColorHover,
-      },
-    }),
+        '@media (forced-colors: active)': {
+          border: 'none',
+        },
+      }
+    ),
   };
 };

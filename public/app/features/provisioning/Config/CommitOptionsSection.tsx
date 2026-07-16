@@ -41,6 +41,7 @@ interface Props<T extends FieldValues> {
   smimeCertificateName: Path<T>;
   signerNameName: Path<T>;
   signerEmailName: Path<T>;
+  signerIsAuthorName: Path<T>;
   defaultSigningKeyConfigured?: boolean;
 }
 
@@ -62,6 +63,7 @@ export function CommitOptionsSection<T extends FieldValues>({
   smimeCertificateName,
   signerNameName,
   signerEmailName,
+  signerIsAuthorName,
   defaultSigningKeyConfigured,
 }: Props<T>) {
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
@@ -79,6 +81,8 @@ export function CommitOptionsSection<T extends FieldValues>({
     setValue(smimeCertificateName, empty);
     setValue(signerNameName, empty);
     setValue(signerEmailName, empty);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    setValue(signerIsAuthorName, false as PathValue<T, Path<T>>);
     setSigningKeyConfigured(false);
   };
 
@@ -93,7 +97,7 @@ export function CommitOptionsSection<T extends FieldValues>({
           label={t('provisioning.config-form.label-commit-message-template', 'Commit message template')}
           description={t(
             'provisioning.config-form.description-commit-message-template',
-            'Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.',
+            'The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.',
             {
               actionVar: '{{action}}',
               kindVar: '{{resourceKind}}',
@@ -105,7 +109,7 @@ export function CommitOptionsSection<T extends FieldValues>({
             }
           )}
         >
-          <Input
+          <TextArea
             id="commit-message-template"
             {...register(messageTemplateName)}
             placeholder={t(
@@ -113,6 +117,7 @@ export function CommitOptionsSection<T extends FieldValues>({
               'feat(dashboards): {{actionVar}} {{titleVar}}',
               { actionVar: '{{action}}', titleVar: '{{title}}' }
             )}
+            rows={3}
           />
         </Field>
 
@@ -267,6 +272,15 @@ export function CommitOptionsSection<T extends FieldValues>({
                   </Field>
                 )}
               />
+            )}
+            {gitFields.signerIsAuthorConfig && (
+              <Field noMargin>
+                <Checkbox
+                  {...register(signerIsAuthorName)}
+                  label={gitFields.signerIsAuthorConfig.label}
+                  description={gitFields.signerIsAuthorConfig.description}
+                />
+              </Field>
             )}
           </>
         )}

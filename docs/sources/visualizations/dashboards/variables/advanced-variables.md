@@ -79,18 +79,21 @@ For configuration information on all other data source plugins, refer to the [Pl
 
 ## Chained variables
 
-_Chained variables_, also called _linked variables_ or _nested variables_, are query variables with one or more other variables in their variable query. This section explains how chained variables work and provides links to example dashboards that use chained variables.
+_Chained variables_, also called _linked variables_ or _nested variables_, are query variables with one or more other variables in their variable query.
 
-Chained variable queries are different for every data source, but the premise is the same for all. You can use chained variable queries in any data source that allows them.
+Chained variables create dependent relationships where the options available in one variable depend on the selections made in another.
+This pattern enables cascading filters that help users drill down through hierarchical data structures.
 
-Extremely complex linked templated dashboards are possible, 5 or 10 levels deep. Technically, there is no limit to how deep or complex you can go, but the more links you have, the greater the query load.
+Cascading filter patterns are common in multi-tier filtering scenarios such as region > cluster > namespace > pod.
+Each level narrows the available options based on the previous selection, creating an intuitive navigation experience through your infrastructure or data hierarchy.
+
+Technically, there is no limit to how many variables you can chain together, but the more links you have, the greater the query load.
 
 ### Grafana Play dashboard examples
 
 <!-- If you update or replace the Play dashboards linked in this section, you must also update the text examples to match them -->
 
-The following Grafana Play dashboards contain basic chained variables, only two layers deep.
-To view the variables and their settings, click **Edit** and then **Settings**; then go to the **Variables** tab. Both examples are expanded in the following section.
+The following Grafana Play dashboards contain basic chained variables, only two layers deep. To view the variables and their settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. Both examples are expanded in the following section.
 
 - [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h)
 - [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m)

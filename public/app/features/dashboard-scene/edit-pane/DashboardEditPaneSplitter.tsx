@@ -4,7 +4,9 @@ import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
@@ -14,6 +16,7 @@ import {
   Sidebar,
   type SidebarContextValue,
 } from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -51,8 +54,9 @@ export function DashboardEditPaneSplitter(props: Props) {
 }
 
 function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
 
   return (
     <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
@@ -67,8 +71,9 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
 
 function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { editPane } = dashboard.state;
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -202,12 +207,17 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+          // The dashboard scrolls inside this element rather than the document body, so make it
+          // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          aria-label={t('dashboard.layout.scroll-content', 'Dashboard content')}
         >
           {body}
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+          <DashboardEditPaneRenderer dashboard={dashboard} />
         </Sidebar>
       </div>
     );
@@ -258,11 +268,12 @@ function useUpdateAppChromeActions(dashboard: DashboardScene) {
   useLayoutEffect(() => {
     const hasUid = Boolean(dashboard.state.uid);
     const canStar = Boolean(dashboard.state.meta.canStar);
+    const isSnapshot = Boolean(dashboard.state.meta.isSnapshot);
 
     const breadcrumbActions = (
       <>
         {hasUid && canStar && <StarButton dashboard={dashboard} />}
-        {hasUid && canStar && <PublicDashboardBadge dashboard={dashboard} />}
+        {hasUid && canStar && !isSnapshot && <PublicDashboardBadge dashboard={dashboard} />}
         {renderDynamicNavActions()}
       </>
     );
@@ -288,7 +299,7 @@ function renderDynamicNavActions() {
   });
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -332,6 +343,8 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       overflow: 'auto',
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
+      // the tabIndex is only here to allow keyboard scrolling, so suppress the focus outline.
+      outline: 'none',
       // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
     }),
@@ -360,14 +373,24 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
-    controlsWrapperSticky: css({
-      [theme.breakpoints.up('md')]: {
-        position: 'sticky',
-        // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
-        zIndex: theme.zIndex.sidemenu,
-        background: theme.colors.background.canvas,
-        top: headerHeight,
+    controlsWrapperSticky: css(
+      {
+        [theme.breakpoints.up('md')]: {
+          position: 'sticky',
+          // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
+          zIndex: theme.zIndex.sidemenu,
+          background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+          top: headerHeight,
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        borderTopLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+        borderTopRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+      }
+    ),
   };
 }

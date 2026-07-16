@@ -7,8 +7,10 @@
   },
   "name": "with-login-only",
   "rv": 1234,
+  "title": "with-login-only",
+  "title_ngram": "with-login-only",
+  "title_phrase": "with-login-only",
   "fields": {
-    "createdAt": 0,
     "disabled": false,
     "lastSeenAt": 0,
     "login": "user.two",

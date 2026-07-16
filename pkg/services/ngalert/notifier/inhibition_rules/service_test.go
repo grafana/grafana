@@ -2,6 +2,8 @@ package inhibition_rules
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -33,6 +35,9 @@ var (
 		models.ProvenanceNone,
 	)
 
+	// testImportedRule is used as input when building the Mimir config fixture.
+	// Its UID is not reflected in the merge output; use buildExpectedImportedRule
+	// to obtain the post-merge rule with a hash-based UID.
 	testImportedRule = v1.NewInhibitionRule(
 		"test-mimir-imported-inhibition-rule-00000",
 		[]v1.Matcher{
@@ -51,7 +56,7 @@ var (
 func TestService_GetInhibitionRules(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
-	grafanaRules, importedRules := getTestRules()
+	grafanaRules, importedRules := getTestRules(t)
 
 	tt := []struct {
 		name           string
@@ -67,7 +72,7 @@ func TestService_GetInhibitionRules(t *testing.T) {
 			grafanaRules:   grafanaRules,
 			importedRules:  importedRules,
 			expErr:         nil,
-			expRules:       append(grafanaRules, importedRules...),
+			expRules:       sortedByUID(append(grafanaRules, importedRules...)),
 		},
 		{
 			name:           "returns only Grafana rules when no imported config",
@@ -111,7 +116,7 @@ func TestService_GetInhibitionRules(t *testing.T) {
 func TestService_GetInhibitionRule(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
-	grafanaRules, importedRules := getTestRules()
+	grafanaRules, importedRules := getTestRules(t)
 
 	tt := []struct {
 		name          string
@@ -130,8 +135,8 @@ func TestService_GetInhibitionRule(t *testing.T) {
 		{
 			name:          "can fetch imported rule by UID",
 			importedRules: importedRules,
-			ruleUID:       testImportedRule.UID,
-			expRule:       testImportedRule,
+			ruleUID:       importedRules[0].UID,
+			expRule:       importedRules[0],
 		},
 		{
 			name:   "returns not found for non-existent UID",
@@ -157,7 +162,7 @@ func TestService_GetInhibitionRule(t *testing.T) {
 func TestService_UpdateInhibitionRule(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
-	grafanaRules, importedRules := getTestRules()
+	grafanaRules, importedRules := getTestRules(t)
 
 	tt := []struct {
 		name          string
@@ -194,8 +199,8 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 		{
 			name:          "can't update imported rule",
 			importedRules: importedRules,
-			updatedRule:   testImportedRule,
-			expErr:        models.MakeErrInhibitionRuleOrigin(string(testImportedRule.UID), "update"),
+			updatedRule:   importedRules[0],
+			expErr:        models.MakeErrInhibitionRuleOrigin(string(importedRules[0].UID), "update"),
 		},
 	}
 
@@ -225,7 +230,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 func TestService_DeleteInhibitionRule(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
-	grafanaRules, importedRules := getTestRules()
+	grafanaRules, importedRules := getTestRules(t)
 
 	tt := []struct {
 		name          string
@@ -242,8 +247,8 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 		{
 			name:          "can't delete imported rule",
 			importedRules: importedRules,
-			ruleUID:       testImportedRule.UID,
-			expErr:        models.MakeErrInhibitionRuleOrigin(string(testImportedRule.UID), "delete"),
+			ruleUID:       importedRules[0].UID,
+			expErr:        models.MakeErrInhibitionRuleOrigin(string(importedRules[0].UID), "delete"),
 		},
 	}
 
@@ -281,10 +286,7 @@ func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.
 	logger := log.NewNopLogger()
 	var ff featuremgmt.FeatureToggles
 	if enableImported {
-		ff = featuremgmt.WithFeatures(
-			featuremgmt.FlagAlertingMultiplePolicies,
-			featuremgmt.FlagAlertingImportAlertmanagerAPI,
-		)
+		ff = featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	}
 	return NewService(store, logger, ff, validation.ValidateProvenanceRelaxed), store
 }
@@ -371,6 +373,49 @@ func buildMimirAMConfigWithInhibitRules(t *testing.T, rules []v1.InhibitionRule)
 	return string(d)
 }
 
-func getTestRules() (grafanaRules, importedRules []v1.InhibitionRule) {
-	return []v1.InhibitionRule{testGrafanaRule}, []v1.InhibitionRule{testImportedRule}
+// buildExpectedImportedRule returns the inhibition rule as it appears after
+// MergeInhibitionRules processes the Mimir config built from testImportedRule.
+// MergeInhibitionRules assigns a hash-based UID and appends the scope matcher last,
+// so the result differs from testImportedRule in both UID and matcher order.
+func buildExpectedImportedRule(t *testing.T) v1.InhibitionRule {
+	t.Helper()
+
+	mimirConfig := buildMimirAMConfigWithInhibitRules(t, []v1.InhibitionRule{testImportedRule})
+	cfg := &v1.AMConfigV1{
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Route: &v1.Route{Receiver: "default"},
+			},
+		},
+		ManagedRoutes: map[string]*v1.Route{},
+		ExtraConfigs: []v1.ExtraConfiguration{
+			{
+				Identifier:         "test-mimir",
+				AlertmanagerConfig: mimirConfig,
+			},
+		},
+	}
+	rev := &legacy_storage.ConfigRevision{Config: cfg}
+	imported, err := rev.Imported()
+	require.NoError(t, err)
+	rules, err := imported.GetInhibitRules()
+	require.NoError(t, err)
+	require.Len(t, rules, 1)
+	for _, r := range rules {
+		return r
+	}
+	panic("unreachable")
+}
+
+func getTestRules(t *testing.T) (grafanaRules, importedRules []v1.InhibitionRule) {
+	return []v1.InhibitionRule{testGrafanaRule}, []v1.InhibitionRule{buildExpectedImportedRule(t)}
+}
+
+// sortedByUID returns a copy of rules sorted by UID, matching the order returned by GetInhibitionRules.
+func sortedByUID(rules []v1.InhibitionRule) []v1.InhibitionRule {
+	sorted := slices.Clone(rules)
+	slices.SortFunc(sorted, func(a, b v1.InhibitionRule) int {
+		return strings.Compare(string(a.UID), string(b.UID))
+	})
+	return sorted
 }

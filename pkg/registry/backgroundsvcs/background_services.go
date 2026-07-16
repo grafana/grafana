@@ -3,6 +3,7 @@ package backgroundsvcs
 import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/folderreconcile"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -78,10 +80,13 @@ func ProvideBackgroundServiceRegistry(
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
 	noopIAMRolesSyncer *accesscontrol.NoopIAMRolesSyncer,
 	noopGlobalRoleSeeder *accesscontrol.NoopGlobalRoleSeeder,
-	noopBasicRoleAggregator *accesscontrol.NoopBasicRoleAggregator,
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
+	natsServer *infranats.Server,
+	natsPublisher *infranats.PublisherService,
+	natsSubscriber *infranats.SubscriberService,
 	sqlStore *sqlstore.SQLStore,
+	folderReconciler *folderreconcile.Reconciler,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -106,6 +111,9 @@ func ProvideBackgroundServiceRegistry(
 		statsCollector,
 		tracing,
 		remoteCache,
+		natsServer,
+		natsPublisher,
+		natsSubscriber,
 		secretsService,
 		StorageService,
 		grpcServerProvider,
@@ -130,10 +138,10 @@ func ProvideBackgroundServiceRegistry(
 		fixedRolesLoader,
 		noopIAMRolesSyncer,
 		noopGlobalRoleSeeder,
-		noopBasicRoleAggregator,
 		installSync,
 		zanzanaService,
 		sqlStore,
+		folderReconciler,
 	)
 }
 

@@ -36,6 +36,7 @@ const (
 	TestList                      = "list"
 	TestBlobSupport               = "blob support"
 	TestGetResourceStats          = "get resource stats"
+	TestListStoredResources       = "list stored resources"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
 	TestListModifiedSince         = "list events since rv"
@@ -45,6 +46,7 @@ const (
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
 	TestClusterScopedResources    = "cluster scoped resources"
 	TestErrorResponses            = "error responses"
+	TestReadAtRVBeforeDelete      = "read at RV edge cases"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -86,6 +88,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestList, runTestIntegrationBackendList},
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
+		{TestListStoredResources, runTestIntegrationBackendListStoredResources},
 		{TestListHistory, runTestIntegrationBackendListHistory},
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestListTrash, runTestIntegrationBackendTrash},
@@ -95,6 +98,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
+		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVEdgeCases},
 	}
 
 	for _, tc := range cases {
@@ -103,7 +107,14 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 				t.Skip()
 			}
 
-			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
+			backend := newBackend(context.Background())
+			// Stop background goroutines when the case ends so they don't keep
+			// writing to the (SQLite) DB and contend with later cases.
+			if s, ok := backend.(resource.ResourceServerStopper); ok {
+				t.Cleanup(func() { _ = s.Stop(context.Background()) })
+			}
+
+			tc.fn(t, backend, opts.NSPrefix)
 		})
 	}
 }
@@ -334,6 +345,73 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 }
 
+func runTestIntegrationBackendListStoredResources(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+
+	sortFunc := func(a, b resource.NamespacedResource) int {
+		if a.Namespace != b.Namespace {
+			return strings.Compare(a.Namespace, b.Namespace)
+		}
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	}
+
+	ns1 := nsPrefix + "-stored-ns1"
+	ns2 := nsPrefix + "-stored-ns2"
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	_, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item3", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource2"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item4", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns2), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+
+	t.Run("discover resources in ns1", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns1})
+		require.NoError(t, err)
+		slices.SortFunc(got, sortFunc)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns1, Group: "group", Resource: "resource1"},
+			{Namespace: ns1, Group: "group", Resource: "resource2"},
+		}, got)
+	})
+
+	t.Run("discover resources in ns2", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns2})
+		require.NoError(t, err)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns2, Group: "group", Resource: "resource1"},
+		}, got)
+	})
+
+	t.Run("resource filter", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns1, Resource: "resource2"})
+		require.NoError(t, err)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns1, Group: "group", Resource: "resource2"},
+		}, got)
+	})
+
+	t.Run("non-existent namespace is empty", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: nsPrefix + "-stored-missing"})
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+
+	t.Run("empty namespace is rejected", func(t *testing.T) {
+		_, err := backend.ListStoredResources(ctx, resource.NamespacedResource{})
+		require.Error(t, err)
+	})
+}
 func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
@@ -537,8 +615,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 
 func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-history-ns"
-	rvCreated, _ := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	ns := nsPrefix + "-ms-ns"
+	rvCreated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
 	require.Greater(t, rvCreated, int64(0))
 	rvUpdated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvCreated))
 	require.NoError(t, err)
@@ -1124,7 +1203,10 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 }
 
 func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	// The deadline must comfortably cover writing the fixture events below on a
+	// loaded CI runner. The List call under test uses its own 1µs timeout, so
+	// this budget only guards setup, not the assertion.
+	ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 	server := newServer(t, backend)
 
 	ns := nsPrefix + "-short"
@@ -1929,6 +2011,94 @@ func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resou
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(404), resp.Error.Code)
 	})
+}
+
+// runTestIntegrationBackendReadAtRVEdgeCases pins down ReadResource behavior
+// at exact revision boundaries for create, update, delete, and recreate events.
+// This includes the trash contract the restore flow depends on: trash listings
+// surface each item's delete-event RV, and reading at deleteRV-1 must return the
+// live pre-delete state while reads at and after deleteRV must return not found
+// until the resource is recreated.
+func runTestIntegrationBackendReadAtRVEdgeCases(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: "testuser"},
+		Rest:   authn.AccessTokenClaims{},
+	}))
+	ns := nsPrefix + "-read-rv"
+	key := &resourcepb.ResourceKey{
+		Name:      "target",
+		Namespace: ns,
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	rvCreate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("target-create"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-a", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvUpdate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED,
+		WithNamespaceAndRV(ns, rvCreate), WithValue("target-update"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-b", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvDelete, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_DELETED,
+		WithNamespaceAndRV(ns, rvUpdate), WithValue("target-delete"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-c", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvRecreate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("target-recreate"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-d", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	type readAtRVCase struct {
+		name              string
+		requestRV         int64
+		expectedStatus    int32
+		expectedRV        int64
+		expectedSubstring string
+	}
+
+	cases := []readAtRVCase{
+		{name: "create rv-1", requestRV: rvCreate - 1, expectedStatus: http.StatusNotFound},
+		{name: "create rv", requestRV: rvCreate, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "create rv+1", requestRV: rvCreate + 1, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "update rv-1", requestRV: rvUpdate - 1, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "update rv", requestRV: rvUpdate, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "update rv+1", requestRV: rvUpdate + 1, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "delete rv-1", requestRV: rvDelete - 1, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "delete rv", requestRV: rvDelete, expectedStatus: http.StatusNotFound},
+		{name: "delete rv+1", requestRV: rvDelete + 1, expectedStatus: http.StatusNotFound},
+		{name: "recreate rv-1", requestRV: rvRecreate - 1, expectedStatus: http.StatusNotFound},
+		{name: "recreate rv", requestRV: rvRecreate, expectedRV: rvRecreate, expectedSubstring: "target-recreate"},
+		{name: "recreate rv+1", requestRV: rvRecreate + 1, expectedRV: rvRecreate, expectedSubstring: "target-recreate"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+				Key:             key,
+				ResourceVersion: tc.requestRV,
+			})
+			if tc.expectedStatus != 0 {
+				require.NotNil(t, resp.Error)
+				require.Equal(t, tc.expectedStatus, resp.Error.Code)
+				return
+			}
+			require.Nil(t, resp.Error, "ReadResource error: %v", resp.Error)
+			require.Equal(t, tc.expectedRV, resp.ResourceVersion)
+			require.Contains(t, string(resp.Value), tc.expectedSubstring)
+		})
+	}
 }
 
 // runTestIntegrationBackendErrorResponses tests that the server API returns

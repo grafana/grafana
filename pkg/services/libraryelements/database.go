@@ -125,16 +125,23 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 	}
 
 	if cmd.FolderUID != nil && l.folderService != nil {
-		f, err := l.folderService.Get(c, &folder.GetFolderQuery{
-			OrgID:        signedInUser.GetOrgID(),
-			UID:          cmd.FolderUID,
-			SignedInUser: signedInUser,
-		})
-		if err != nil {
-			return model.LibraryElementDTO{}, err
-		}
-		if f.ManagedBy == utils.ManagerKindRepo {
-			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
+		if *cmd.FolderUID == "" {
+			cmd.FolderID = 0 // nolint:staticcheck // general/root folder
+		} else {
+			f, err := l.folderService.Get(c, &folder.GetFolderQuery{
+				OrgID:        signedInUser.GetOrgID(),
+				UID:          cmd.FolderUID,
+				SignedInUser: signedInUser,
+			})
+			if err != nil {
+				return model.LibraryElementDTO{}, err
+			}
+			if f.ManagedBy == utils.ManagerKindRepo && !identity.IsProvisioningServiceIdentity(signedInUser) {
+				return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
+			}
+			// The k8s write path supplies only folder_uid. Align the legacy folder_id so
+			// folder_id-based reads don't misplace the panel in the general folder.
+			cmd.FolderID = f.ID // nolint:staticcheck
 		}
 	}
 
@@ -613,8 +620,15 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 		if err != nil {
 			return model.LibraryElementDTO{}, err
 		}
-		if f.ManagedBy == utils.ManagerKindRepo {
+		if f.ManagedBy == utils.ManagerKindRepo && !identity.IsProvisioningServiceIdentity(signedInUser) {
 			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
+		}
+		// The k8s write path supplies only folder_uid. Align the legacy folder_id so
+		// handleFolderIDPatches doesn't treat the panel as moving to the general folder.
+		if *cmd.FolderUID == "" {
+			cmd.FolderID = 0 // nolint:staticcheck
+		} else {
+			cmd.FolderID = f.ID // nolint:staticcheck
 		}
 
 		// The destination folder must allow the caller to create library
@@ -700,14 +714,18 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 		if err := l.handleFolderIDPatches(c, &libraryElement, elementInDB.FolderID, cmd.FolderID, signedInUser); err != nil {
 			return err
 		}
-		// Keep folder_uid in sync with folder_id: getAllLibraryElements reads folder_uid
-		// directly from the table, so leaving it stale causes the list view to diverge.
-		// FolderID is authoritative here (set by handleFolderIDPatches); derive FolderUID
-		// from it so PATCHes that don't touch the folder still heal any prior drift.
+		// Keep folder_uid in sync: getAllLibraryElements reads folder_uid directly from
+		// the table, so leaving it stale causes the list view to diverge. folder_uid is
+		// the durable identifier (folder_id may be 0 when folders live in unified
+		// storage), so when the caller provided a folder_uid treat it as authoritative;
+		// otherwise derive it from the resolved folder_id to heal any prior drift.
 		folderID := libraryElement.FolderID // nolint:staticcheck
-		if folderID == 0 {
+		switch {
+		case cmd.FolderUID != nil:
+			libraryElement.FolderUID = *cmd.FolderUID
+		case folderID == 0:
 			libraryElement.FolderUID = ""
-		} else {
+		default:
 			f, err := l.folderService.Get(c, &folder.GetFolderQuery{
 				OrgID:        signedInUser.GetOrgID(),
 				ID:           &folderID,
@@ -785,20 +803,26 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 		return err
 	}
+	return l.deleteLibraryElementsInFolderUIDUnchecked(c, signedInUser.GetOrgID(), folderUID)
+}
 
+// deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without
+// checking folder permissions; callers must have already confirmed the folder is gone. Elements
+// still connected to a dashboard are kept and block the delete (as in the permission-checked path).
+func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
 	var elements []struct {
 		UID string `xorm:"uid"`
 	}
 	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		return session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).Find(&elements)
+		return session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID).Find(&elements)
 	})
 	if err != nil {
 		return err
 	}
 
-	serviceCtx, _ := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
+	serviceCtx, _ := identity.WithServiceIdentity(c, orgID)
 	for _, elem := range elements {
-		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, signedInUser.GetOrgID())
+		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
 		if err != nil {
 			return err
 		}
@@ -808,12 +832,18 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 	}
 
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		if _, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID)
+		return err
 	})
+}
+
+// folderUIDsInUse returns the distinct folder UIDs that contain library elements in the org.
+func (l *LibraryElementService) folderUIDsInUse(c context.Context, orgID int64) ([]string, error) {
+	var uids []string
+	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
+		return session.SQL("SELECT DISTINCT folder_uid FROM library_element WHERE org_id=?", orgID).Find(&uids)
+	})
+	return uids, err
 }
 
 func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) ([]string, error) {

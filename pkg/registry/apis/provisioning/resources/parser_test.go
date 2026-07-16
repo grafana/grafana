@@ -116,6 +116,40 @@ spec:
 		require.Equal(t, "v0alpha1", dash.GVR.Version)
 	})
 
+	t.Run("strips storage-owned dashboard fields including the deprecated internal ID", func(t *testing.T) {
+		// spec uid/version/id and the deprecatedInternalID label are owned by the
+		// storage layer, not the repository. Leaving the ID label on a create would
+		// bypass the eventually-consistent uniqueness guard and can reintroduce
+		// duplicate IDs when several dashboards sync together.
+		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-strip
+  labels:
+    grafana.app/deprecatedInternalID: "42"
+    keep-me: "yes"
+spec:
+  uid: should-be-removed
+  version: 7
+  id: 42
+  title: Test dashboard
+`),
+		})
+		require.NoError(t, err)
+
+		_, hasUID, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "uid")
+		require.False(t, hasUID, "spec.uid should be stripped")
+		_, hasVersion, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "version")
+		require.False(t, hasVersion, "spec.version should be stripped")
+		_, hasID, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "id")
+		require.False(t, hasID, "spec.id should be stripped")
+
+		require.Zero(t, dash.Meta.GetDeprecatedInternalID(), "deprecatedInternalID label should be cleared") // nolint:staticcheck
+		require.NotContains(t, dash.Obj.GetLabels(), utils.LabelKeyDeprecatedInternalID, "internal ID label should be removed")
+		require.Equal(t, "yes", dash.Obj.GetLabels()["keep-me"], "other labels should be preserved")
+	})
+
 	t.Run("validate proper folder metadata is set", func(t *testing.T) {
 		testCases := []struct {
 			name           string
@@ -202,6 +236,7 @@ spec:
 `),
 		})
 		require.NoError(t, err)
+		require.True(t, parsed.FolderScoped, "folder-capable kinds must be marked folder-scoped")
 		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Meta.GetFolder(),
 			"dashboards must continue to get a folder annotation")
 		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder])
@@ -219,6 +254,8 @@ spec:
 `),
 		})
 		require.NoError(t, err)
+		require.False(t, parsed.FolderScoped,
+			"org-scoped kinds must be marked not folder-scoped so the dual writer skips folder stamping")
 		require.Empty(t, parsed.Meta.GetFolder(),
 			"org-scoped resources must not have a folder annotation stamped on them")
 		_, hasFolder := parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder]
@@ -656,6 +693,36 @@ func TestParsedResource_DryRun_FieldValidation(t *testing.T) {
 	}
 }
 
+func TestParsedResource_DryRun_CarriesResourceVersion(t *testing.T) {
+	existing := managedGrafanaObj("my-resource", "default", nil)
+	existing.SetResourceVersion("42")
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+
+	mockClient := &MockDynamicResourceInterface{}
+	mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).
+		Return(existing, nil)
+	mockClient.On("Update", mock.Anything, mock.MatchedBy(func(o *unstructured.Unstructured) bool {
+		return o.GetResourceVersion() == "42"
+	}), mock.Anything, mock.Anything).Return(obj, nil)
+
+	parsed := &ParsedResource{
+		Obj:    obj,
+		Meta:   meta,
+		GVR:    FolderResource,
+		Client: mockClient,
+		Repo:   testRepoInfo(),
+	}
+
+	require.NoError(t, parsed.DryRun(context.Background()))
+	require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+	mockClient.AssertExpectations(t)
+}
+
 func newParsedResource(client *MockDynamicResourceInterface, opts ...func(*ParsedResource)) *ParsedResource {
 	obj := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "dashboard.grafana.app/v1",
@@ -764,8 +831,12 @@ func TestParsedResource_Run(t *testing.T) {
 	})
 
 	t.Run("create AlreadyExists falls through to update", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
 		mc := &MockDynamicResourceInterface{}
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, alreadyExistsErr)
+		// The fall-through fetches the existing resource to carry its
+		// resourceVersion into the update.
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
 		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
 
 		parsed := newParsedResource(mc, withDryRun())
@@ -775,6 +846,20 @@ func TestParsedResource_Run(t *testing.T) {
 		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
 		mc.AssertNumberOfCalls(t, "Create", 1)
 		mc.AssertNumberOfCalls(t, "Update", 1)
+	})
+
+	t.Run("create AlreadyExists then existing fetch fails returns error without update", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, alreadyExistsErr)
+		// The fall-through fetch fails with a non-NotFound error, which must surface
+		// instead of masquerading as a resourceVersion error on a blind update.
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil, internalErr)
+
+		parsed := newParsedResource(mc, withDryRun())
+		err := parsed.Run(t.Context())
+
+		require.ErrorContains(t, err, "get existing resource to carry resourceVersion into update")
+		mc.AssertNotCalled(t, "Update")
 	})
 
 	// --- Update path (no DryRun, fetches existing) ---
@@ -791,6 +876,23 @@ func TestParsedResource_Run(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
 		mc.AssertNotCalled(t, "Create")
+	})
+
+	t.Run("update carries the existing resourceVersion", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		existing.SetResourceVersion("42")
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Update", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			return obj.GetResourceVersion() == "42"
+		}), mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+		mc.AssertNumberOfCalls(t, "Update", 1)
 	})
 
 	t.Run("update validation error returns immediately without create fallback", func(t *testing.T) {
@@ -818,6 +920,24 @@ func TestParsedResource_Run(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
 		mc.AssertNumberOfCalls(t, "Update", 1)
+		mc.AssertNumberOfCalls(t, "Create", 1)
+	})
+
+	t.Run("update NotFound clears carried resourceVersion before create fallback", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		existing.SetResourceVersion("42")
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, notFoundErr)
+		mc.On("Create", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			return obj.GetResourceVersion() == ""
+		}), mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
 		mc.AssertNumberOfCalls(t, "Create", 1)
 	})
 

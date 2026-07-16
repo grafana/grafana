@@ -575,7 +575,6 @@ type AlertRuleNotificationSettings struct {
 
 	// Name of the notification policy to route alerts through.
 	// Mutually exclusive with all other fields, cannot be used with contact point routing via the "receiver" field.
-	// Requires experimental feature flag: alertingMultiplePolicies
 	// example: "Alerting Team"
 	Policy *string `json:"policy,omitempty"`
 }

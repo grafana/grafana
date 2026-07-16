@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -49,12 +48,15 @@ type accessControlCheck struct {
 	name     string // user UID of the resource being checked
 }
 
+// Only verbs whose relation is defined on the authz model's "user" type may be
+// checked here. A check for a relation the type lacks fails the whole batch
+// (e.g. "relation 'user#create' not found"), blanking out all access control
+// metadata. The "user" type defines only get/update/delete, so VerbCreate
+// (org.users:add) and VerbGetPermissions (users.permissions:read) are omitted.
 var userAccessControlChecks = []accessControlCheck{
 	{action: "org.users:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbList},
-	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate},
 	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
 	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
-	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions},
 	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
 
@@ -62,17 +64,15 @@ type SearchHandler struct {
 	log          log.Logger
 	client       resourcepb.ResourceIndexClient
 	tracer       trace.Tracer
-	features     featuremgmt.FeatureToggles
 	cfg          *setting.Cfg
 	accessClient authlib.AccessClient
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
 	return &SearchHandler{
 		client:       searchClient,
 		log:          log.New("grafana-apiserver.users.search"),
 		tracer:       tracer,
-		features:     features,
 		cfg:          cfg,
 		accessClient: accessClient,
 	}
@@ -296,7 +296,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Query:  searchQuery,
-		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_LEGACY_ID},
+		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, resource.SEARCH_FIELD_CREATED, legacyIDField},
 		// The query is a wildcard (*...*), so only Name is used from each
 		// QueryField to specify which fields to search in (Type and Boost
 		// are ignored for wildcard queries).
@@ -351,6 +351,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			}
 			request.SortBy = append(request.SortBy, s)
 		}
+	} else {
+		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{
+			Field: resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+		})
 	}
 
 	resp, err := s.client.Search(ctx, request)
@@ -475,13 +479,16 @@ func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0
 	}
 
 	hit := iamv0.GetSearchUsersUserHit{
-		Name:       row.Key.Name,
-		Title:      string(cell(resource.SEARCH_FIELD_TITLE)),
-		Email:      string(cell(builders.USER_EMAIL)),
-		Login:      string(cell(builders.USER_LOGIN)),
-		Role:       string(cell(builders.USER_ROLE)),
-		Created:    asInt64(resource.SEARCH_FIELD_CREATED),
-		InternalId: asInt64(resource.SEARCH_FIELD_LEGACY_ID),
+		Name:    row.Key.Name,
+		Title:   string(cell(resource.SEARCH_FIELD_TITLE)),
+		Email:   string(cell(builders.USER_EMAIL)),
+		Login:   string(cell(builders.USER_LOGIN)),
+		Role:    string(cell(builders.USER_ROLE)),
+		Created: asInt64(resource.SEARCH_FIELD_CREATED),
+	}
+
+	if id, err := strconv.ParseInt(string(cell(legacyIDField)), 10, 64); err == nil {
+		hit.InternalId = id
 	}
 
 	if b := cell(builders.USER_DISABLED); len(b) > 0 {
