@@ -403,6 +403,14 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getColors: (theme: GrafanaTheme2) => ['panel-bg', 'dark-purple'],
       group: otherGroup,
     }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.ContinuousOranges,
+      name: 'Oranges',
+      isContinuous: true,
+      isByValue: true,
+      getColors: (theme: GrafanaTheme2) => ['panel-bg', 'dark-orange'],
+      group: otherGroup,
+    }),
   ];
 });
 
