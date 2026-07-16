@@ -123,5 +123,21 @@ describe('NotebookScenePageStateManager', () => {
       expect((body as NotebookLayoutManager).state.title).toBe('My notebook');
       expect((body as NotebookLayoutManager).state.tags).toEqual(['incident']);
     });
+
+    it('hides the time controls when the notebook hides the time picker', () => {
+      const notebook = notebookResource();
+      notebook.spec.timeSettings = { ...notebook.spec.timeSettings, hideTimepicker: true };
+      // Distinct uid: transformResponseToScene caches the scene by uid on the shared manager, so
+      // reusing another test's uid would return its cached (hideTimeControls: false) scene.
+      notebook.metadata.name = 'nb-hidden-timepicker';
+
+      const scene = getNotebookScenePageStateManager().transformResponseToScene(buildNotebookEnvelope(notebook), {
+        uid: 'nb-hidden-timepicker',
+        route: DashboardRoutes.Notebook,
+      });
+
+      // The page keys the picker + URL sync off this, so the notebook's hideTimepicker must reach it.
+      expect(scene?.state.controls?.state.hideTimeControls).toBe(true);
+    });
   });
 });

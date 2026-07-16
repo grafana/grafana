@@ -17,7 +17,9 @@ export function buildNotebookEnvelope(notebook: Resource<NotebookSpec>): Dashboa
   const spec = {
     ...defaultDashboardV2Spec(),
     title: notebook.spec.title,
-    description: notebook.spec.description,
+    // description is optional on a notebook but a required string on the dashboard spec; keep the
+    // default '' rather than writing undefined over it.
+    description: notebook.spec.description ?? '',
     tags: notebook.spec.tags,
     timeSettings: notebook.spec.timeSettings,
     elements: notebook.spec.elements,

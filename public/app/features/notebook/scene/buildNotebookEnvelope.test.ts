@@ -31,6 +31,17 @@ describe('buildNotebookEnvelope', () => {
     expect(envelope.spec.layout).toBe(notebook.spec.layout);
   });
 
+  it("defaults description to '' when the notebook has none", () => {
+    const notebook = notebookResource();
+    delete notebook.spec.description;
+
+    const envelope = buildNotebookEnvelope(notebook);
+
+    // description is required on the dashboard spec, so an absent notebook description must not
+    // leave it undefined.
+    expect(envelope.spec.description).toBe('');
+  });
+
   it('fills dashboard-only fields the transformer reads directly', () => {
     const envelope = buildNotebookEnvelope(notebookResource());
 

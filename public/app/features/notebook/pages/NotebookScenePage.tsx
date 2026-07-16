@@ -57,6 +57,12 @@ export function NotebookScenePage() {
     );
   }
 
+  // A notebook with the time picker hidden has no time state to reflect in the URL, so skip URL
+  // sync entirely (same as the public dashboard page).
+  if (notebookScene.state.controls?.state.hideTimeControls) {
+    return <NotebookDocument scene={notebookScene} />;
+  }
+
   return (
     <UrlSyncContextProvider scene={notebookScene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <NotebookDocument scene={notebookScene} />
@@ -108,7 +114,11 @@ function renderHiddenVariables(scene: DashboardScene) {
 // pickers, not the full dashboard controls bar (which carries edit/variable actions).
 function NotebookControls({ controls }: { controls: DashboardControls }) {
   const styles = useStyles2(getControlsStyles);
-  const { timePicker, refreshPicker } = controls.useState();
+  const { timePicker, refreshPicker, hideTimeControls } = controls.useState();
+
+  if (hideTimeControls) {
+    return null;
+  }
 
   return (
     <div className={styles.controls}>
