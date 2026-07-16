@@ -12195,6 +12195,10 @@
     "reporting": {
       "title": "Reporting"
     },
+    "saved-queries": {
+      "subtitle": "Reusable queries that can be referenced from any panel",
+      "title": "Saved queries"
+    },
     "scenes": {
       "title": "Scenes"
     },
