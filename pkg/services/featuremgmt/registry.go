@@ -209,6 +209,15 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name: "awsAssumeRolePerDatasourceExternalId",
+			Description: "Generate a per-datasource external ID for Grafana Assume Role " +
+				"(jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.",
+			Stage:      FeatureStageExperimental,
+			Expression: "false",
+			Owner:      grafanaDataSourcesPlugins,
+			Generate:   Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+		},
+		{
 			Name:        "mlExpressions",
 			Description: "Enable support for Machine Learning in server-side expressions",
 			Stage:       FeatureStageExperimental,
@@ -992,6 +1001,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.savedQueriesPage",
+			Description: "Enables the dedicated Saved queries page and its navigation entry",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "playlistsRBAC",
 			Description: "Enables RBAC for playlists",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1521,14 +1538,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
-		},
-		{
-			Name:        "grafanaAdvisor",
-			Description: "Enables Advisor app",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "elasticsearchImprovedParsing",
@@ -2630,14 +2639,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "advisorDatasourceIntegration",
-			Description: "Enables the advisor report integration with datasource pages",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "inlineLogDetailsNoScrolls",
 			Description: "Enables an inline version of Log Details that creates no new scrolls",
 			Stage:       FeatureStageExperimental,
@@ -2774,10 +2775,10 @@ var (
 		{
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "datasource.useNewCRUDAPIs",
@@ -2872,10 +2873,10 @@ var (
 		{
 			Name:        "preferences.rerouteLegacyAPIs",
 			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:            "plugins.marketplaceLicensing",
@@ -2971,6 +2972,14 @@ var (
 			Description: "Enables semantic (vector) dashboard search in the command palette",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.fullscreenWorkspace",
+			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
 		},
@@ -3085,6 +3094,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.multiTenantNavTree",
+			Description:  "Builds the navigation tree client-side instead of reading it from /bootdata",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
