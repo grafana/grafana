@@ -1,75 +1,170 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
+import { useAsync } from 'react-use';
 
-import { type GrafanaTheme2, type IconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, locationUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
+import { contextSrv } from 'app/core/services/context_srv';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { type LocalPlugin } from 'app/features/plugins/admin/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import RecommendationCard from './RecommendationCard';
-import RecommendationExisting from './RecommendationExisting';
-import RecommendationPill from './RecommendationPill';
+import { RecommendationCard } from './RecommendationCard';
+import { RecommendationExisting } from './RecommendationExisting';
+import { RecommendationPill } from './RecommendationPill';
+import { KUBERNETES_APP_ID } from './kubernetesData';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
 
 export interface RecommendationItem {
+  id: string; // stable telemetry id (recommendation_id)
+  pluginId: string; // app plugin id — drives the CTA href AND the enabled-filter
   title: string;
   icon: IconName;
   color: string | ((theme: GrafanaTheme2) => string);
-  context: string;
+  context: string; // short "why you are seeing this" line under the title
   description: string;
-  action: string;
+  action: string; // CTA label, e.g. "Enable Hosted Traces"
   href: string;
 }
 
-// Stubbed data for initial development
-const recommendations: RecommendationItem[] = [
-  {
-    title: 'Explore your service map',
-    icon: 'shield',
-    color: (theme) => theme.visualization.getColorByName('green'),
-    context: '34 services mapped automatically',
-    description: 'Grafana built a live map of your services from their telemetry — dive in.',
-    action: 'Open the map',
-    href: '#',
-  },
-  {
-    title: 'Watch your cluster from outside',
-    icon: 'plus',
-    color: (theme) => theme.visualization.getColorByName('purple'),
-    context: 'Because you set up Kubernetes Monitoring',
-    description: 'Probe your endpoints from 20+ global locations before your users notice.',
-    action: 'Add Synthetic Monitoring',
-    href: '#',
-  },
-  {
-    title: 'Define an SLO on checkout',
-    icon: 'crosshair',
-    color: (theme) => theme.visualization.getColorByName('blue'),
-    context: 'You have the metrics — set a target',
-    description: 'Turn your telemetry into a reliability target and track the error budget.',
-    action: 'Open SLOs',
-    href: '#',
-  },
-];
+function getRecommendations(): RecommendationItem[] {
+  const recommendationDefinitions: Array<Omit<RecommendationItem, 'href'>> = [
+    {
+      id: 'hosted-traces',
+      pluginId: 'grafana-exploretraces-app',
+      icon: 'gf-traces',
+      color: (theme) => theme.visualization.getColorByName('orange'),
+      title: t('home.recommendations.hosted-traces.title', 'Trace requests across services'),
+      context: t('home.recommendations.hosted-traces.context', 'Because you set up Kubernetes Monitoring'),
+      description: t(
+        'home.recommendations.hosted-traces.description',
+        'Add distributed tracing to see how requests flow between services and where they slow down.'
+      ),
+      action: t('home.recommendations.hosted-traces.action', 'Enable Hosted Traces'),
+    },
+    {
+      id: 'synthetic-monitoring',
+      pluginId: 'grafana-synthetic-monitoring-app',
+      icon: 'globe',
+      color: (theme) => theme.visualization.getColorByName('purple'),
+      title: t('home.recommendations.synthetic-monitoring.title', 'Watch your cluster from outside'),
+      context: t('home.recommendations.synthetic-monitoring.context', 'Catch outages before your users do'),
+      description: t(
+        'home.recommendations.synthetic-monitoring.description',
+        'Probe your endpoints from 20+ global locations before your users notice.'
+      ),
+      action: t('home.recommendations.synthetic-monitoring.action', 'Add Synthetic Monitoring'),
+    },
+    {
+      id: 'application-observability',
+      pluginId: 'grafana-app-observability-app',
+      icon: 'application-observability',
+      color: (theme) => theme.visualization.getColorByName('green'),
+      title: t('home.recommendations.application-observability.title', 'Explore your service map'),
+      context: t('home.recommendations.application-observability.context', 'Built automatically from your telemetry'),
+      description: t(
+        'home.recommendations.application-observability.description',
+        'Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.'
+      ),
+      action: t('home.recommendations.application-observability.action', 'Enable Application Observability'),
+    },
+    {
+      id: 'frontend-observability',
+      pluginId: 'grafana-kowalski-app',
+      icon: 'frontend-observability',
+      color: (theme) => theme.visualization.getColorByName('blue'),
+      title: t('home.recommendations.frontend-observability.title', 'Measure real user experience'),
+      context: t('home.recommendations.frontend-observability.context', 'Connect the browser to your backend traces'),
+      description: t(
+        'home.recommendations.frontend-observability.description',
+        'Capture Core Web Vitals and errors from the browser and tie them back to backend traces.'
+      ),
+      action: t('home.recommendations.frontend-observability.action', 'Enable Frontend Observability'),
+    },
+  ];
 
-export default function Recommendations() {
+  return recommendationDefinitions.map((recommendation) => ({
+    ...recommendation,
+    href: locationUtil.assureBaseUrl(`/plugins/${recommendation.pluginId}/`),
+  }));
+}
+
+// Bypass getLocalPlugins(): it drops hidden plugins, which must still be classified here.
+async function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
+  return getBackendSrv().get('/api/plugins', accessControlQueryParam({ embedded: 0 }));
+}
+
+export function Recommendations() {
+  const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) && config.pluginAdminEnabled;
+  // Unscoped pre-gate only; each disabled card re-checks plugins:write scoped to its own plugin.
+  const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
+  if (!canInstall && !canWriteSome) {
+    return null;
+  }
+  return <GatedRecommendations canInstall={canInstall} />;
+}
+
+function GatedRecommendations({ canInstall }: { canInstall: boolean }) {
+  const { installed, loading: bridgeLoading } = usePluginBridge(KUBERNETES_APP_ID);
+  const { value: installedPlugins, loading: pluginsLoading } = useAsync(
+    async () => (installed ? fetchInstalledPlugins() : undefined),
+    [installed]
+  );
+
+  // An unavailable plugin list fails closed. An empty list contradicts the bridge
+  // reporting Kubernetes Monitoring installed, so it is treated as unavailable too.
+  if (bridgeLoading || pluginsLoading || !installed || !installedPlugins || installedPlugins.length === 0) {
+    return null;
+  }
+
+  const pluginsById = new Map(installedPlugins.map((plugin) => [plugin.id, plugin]));
+  const recommendations = getRecommendations().filter((recommendation) => {
+    const plugin = pluginsById.get(recommendation.pluginId);
+    if (!plugin) {
+      // Unlistable plugins take the install-only path.
+      return canInstall;
+    }
+    if (plugin.enabled) {
+      return false;
+    }
+    // plugins:write is scoped to this plugin.
+    return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
+  });
+
+  if (recommendations.length === 0) {
+    return null;
+  }
+
+  return <RecommendationsView recommendations={recommendations} />;
+}
+
+function RecommendationsView({ recommendations }: { recommendations: RecommendationItem[] }) {
   const styles = useStyles2(getStyles);
   const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  // Clamp on the render itself, not via useEffect: if the list shrinks (an app gets enabled) while
+  // `index` is past the new end, reading recommendations[index] would be undefined before an effect fires.
+  const safeIndex = Math.min(index, recommendations.length - 1);
+
   useEffect(() => {
     if (collapsed || paused) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      setIndex((index + 1) % recommendations.length);
+      setIndex((safeIndex + 1) % recommendations.length);
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [collapsed, paused, index]);
+  }, [collapsed, paused, safeIndex, recommendations.length]);
 
   return (
     <div>
@@ -82,7 +177,7 @@ export default function Recommendations() {
           <div className={styles.pills}>
             <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
               {recommendations.map((recommendation) => (
-                <RecommendationPill key={recommendation.title} recommendation={recommendation} />
+                <RecommendationPill key={recommendation.id} recommendation={recommendation} />
               ))}
             </Stack>
           </div>
@@ -120,7 +215,12 @@ export default function Recommendations() {
               </div>
             </div>
 
-            <div className={cx(styles.card, styles.recommended)}>
+            <div
+              className={cx(styles.card, styles.recommended)}
+              role="region"
+              aria-roledescription={t('home.recommendations.carousel-roledescription', 'carousel')}
+              aria-label={t('home.recommendations.carousel-label', 'Recommended apps')}
+            >
               <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
                 <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
 
@@ -130,12 +230,12 @@ export default function Recommendations() {
                     size="sm"
                     fill="text"
                     icon="angle-left"
-                    onClick={() => setIndex((index - 1 + recommendations.length) % recommendations.length)}
+                    onClick={() => setIndex((safeIndex - 1 + recommendations.length) % recommendations.length)}
                     aria-label={t('home.recommendations.previous', 'Previous')}
                   />
 
                   {recommendations.map((_, i) =>
-                    i === index ? (
+                    i === safeIndex ? (
                       <Button
                         key={i}
                         variant="secondary"
@@ -167,16 +267,21 @@ export default function Recommendations() {
                     size="sm"
                     fill="text"
                     icon="angle-right"
-                    onClick={() => setIndex((index + 1) % recommendations.length)}
+                    onClick={() => setIndex((safeIndex + 1) % recommendations.length)}
                     aria-label={t('home.recommendations.next', 'Next')}
                   />
                 </Stack>
               </Stack>
 
               <div className={styles.outer}>
-                <div className={styles.inner} style={{ transform: `translateX(-${index * 100}%)` }}>
+                <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
                   {recommendations.map((recommendation, i) => (
-                    <div key={recommendation.title} className={styles.item} aria-hidden={i !== index}>
+                    <div
+                      key={recommendation.id}
+                      className={styles.item}
+                      aria-hidden={i !== safeIndex}
+                      {...(i !== safeIndex && { inert: '' })}
+                    >
                       <RecommendationCard recommendation={recommendation} />
                     </div>
                   ))}
@@ -308,6 +413,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   inner: css({
     display: 'flex',
+    // Fill .outer so each slide stretches to the card cell and the card's
+    // space-between can pin its CTA to the bottom, matching the Existing card.
+    height: '100%',
 
     [theme.transitions.handleMotion('no-preference')]: {
       transition: theme.transitions.create(['transform']),

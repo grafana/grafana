@@ -230,5 +230,6 @@ func TestUserDocumentBuilder_Created(t *testing.T) {
 		1, value)
 	require.NoError(t, err)
 
-	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli(), doc.Fields[USER_CREATED])
+	// The creation timestamp is carried on the standard created field.
+	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli(), doc.Created)
 }

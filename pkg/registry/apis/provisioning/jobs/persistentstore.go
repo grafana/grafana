@@ -587,6 +587,11 @@ func generateJobName(job *provisioning.Job) {
 		}
 		// There may be multiple pull requests at the same time. They need different names.
 		job.Name = fmt.Sprintf("%s-pr-%d", job.Spec.Repository, pr)
+	case provisioning.JobActionTest:
+		// Test jobs exist to generate concurrent load, so many must be queued
+		// against the same repository at once. A unique suffix avoids the
+		// already-exists collision a deterministic name would cause.
+		job.Name = fmt.Sprintf("%s-test-%s", job.Spec.Repository, util.GenerateShortUID())
 	default:
 		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
 	}

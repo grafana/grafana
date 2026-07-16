@@ -244,6 +244,21 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
+// swagger:route POST /convert/api/v1/alerts/{Identifier}/promote convert_prometheus RouteConvertPrometheusPromoteAlertmanagerConfig
+//
+// Promote an extra Alertmanager configuration into the main Grafana Alertmanager configuration.
+// The staged import is permanently merged: receivers, routes, time intervals, templates, and
+// inhibition rules are folded into the main config and become editable via regular APIs.
+// After promotion the ExtraConfiguration entry is removed.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertAlertmanagerResponse
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:parameters RouteConvertPrometheusPostRuleGroup RouteConvertPrometheusCortexPostRuleGroup
 type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: path
@@ -376,6 +391,13 @@ type RouteConvertPrometheusDeleteAlertmanagerConfigParams struct {
 	// Unique identifier for the Alertmanager configuration to delete.
 	// in: header
 	Identifier string `json:"x-grafana-alerting-config-identifier"`
+}
+
+// swagger:parameters RouteConvertPrometheusPromoteAlertmanagerConfig
+type RouteConvertPrometheusPromoteAlertmanagerConfigParams struct {
+	// Unique identifier for the Alertmanager configuration to promote.
+	// in: path
+	Identifier string
 }
 
 // swagger:model
