@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
 
+import { useImportEntrypointState } from '../../hooks/useImportEntrypointState';
 import { getAlertManagerDataSources } from '../../utils/datasource';
 
 import { useCanImportToGMA } from './useCanImportToGMA';
@@ -14,6 +15,13 @@ import { useCanImportToGMA } from './useCanImportToGMA';
 export function useShowImportToGMARulesBanner(): boolean {
   const { canImportRules } = useCanImportToGMA();
   const hasExternalAlertmanagers = useMemo(() => getAlertManagerDataSources().length > 0, []);
+  // Suppress the promo while the import wizard is blocked
+  const { disabled: importDisabled } = useImportEntrypointState();
 
-  return Boolean(config.featureToggles.alertingMigrationWizardUI) && canImportRules && hasExternalAlertmanagers;
+  return (
+    Boolean(config.featureToggles.alertingMigrationWizardUI) &&
+    canImportRules &&
+    hasExternalAlertmanagers &&
+    !importDisabled
+  );
 }

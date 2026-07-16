@@ -1,12 +1,13 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { type NavModelItem } from '@grafana/data';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { type NavModelItem, OrgRole } from '@grafana/data';
+import { type AlertManagerDataSourceJsonData, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
-import { grantUserPermissions, mockDataSource } from '../mocks';
+import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
+import { setupAdminConfigGet } from '../mocks/server/configure/admin_config';
 import { setupDataSources } from '../testSetup/datasources';
 import { ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -19,7 +20,7 @@ const testPageNav: NavModelItem = {
   url: '/alerting',
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 describe('AlertmanagerPageWrapper', () => {
   afterEach(() => {
@@ -232,6 +233,33 @@ describe('AlertmanagerPageWrapper', () => {
 
       expect(await screen.findByText('Test content')).toBeInTheDocument();
       expect(importBanner.query()).not.toBeInTheDocument();
+    });
+
+    describe('while Mimir Alertmanager auto-sync is active', () => {
+      testWithFeatureToggles({ enable: ['alertingMigrationWizardUI', 'alerting.syncExternalAlertmanager'] });
+
+      it('does not show the import banner', async () => {
+        const externalAm = setupExternalAlertmanager();
+        grantUserRole(OrgRole.Admin);
+        grantUserPermissions([
+          AccessControlAction.AlertingNotificationsRead,
+          AccessControlAction.AlertingNotificationsExternalRead,
+          AccessControlAction.AlertingNotificationsWrite,
+        ]);
+        setupAdminConfigGet(server, {
+          alertmanagersChoice: AlertmanagerChoice.Internal,
+          external_alertmanager_uid: 'mimir-uid',
+        });
+
+        renderWithSelectedAlertmanager(externalAm.name);
+
+        expect(await screen.findByText('Test content')).toBeInTheDocument();
+        // The banner renders before the admin_config query resolves, then hides once auto-sync
+        // is known to be active, so wait for it to be removed.
+        await waitFor(() => {
+          expect(importBanner.query()).not.toBeInTheDocument();
+        });
+      });
     });
   });
 

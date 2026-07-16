@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { type PageProps } from 'app/core/components/Page/types';
 
+import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
 import { getAlertManagerDataSourcesByPermission } from '../utils/datasource';
 
@@ -96,12 +97,14 @@ function ImportToGMABannerForAlertmanager() {
   const { isGrafanaAlertmanager } = useAlertmanager();
   const { canImportNotifications } = useCanImportToGMA();
   const isEditOrNewForm = useIsDisabledAlertmanagerSelection();
+  const { disabled: importDisabled } = useImportEntrypointState();
 
   const showBanner =
     Boolean(config.featureToggles.alertingMigrationWizardUI) &&
     !isGrafanaAlertmanager &&
     canImportNotifications &&
-    !isEditOrNewForm;
+    !isEditOrNewForm &&
+    !importDisabled;
 
   return showBanner ? <ImportToGMABanner /> : null;
 }

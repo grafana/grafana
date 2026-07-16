@@ -1,8 +1,12 @@
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
+
 import { ImportToGMABanner } from './ImportToGMABanner';
-import { IMPORT_TO_GMA_BANNER_DISMISSED_KEY } from './useImportToGMABannerPrefs';
+import { getImportToGMABannerDismissedKey } from './useImportToGMABannerPrefs';
+
+const dismissedKey = getImportToGMABannerDismissedKey(config.bootData.user.orgId);
 
 const ui = {
   banner: byRole('status'),
@@ -12,7 +16,7 @@ const ui = {
 
 describe('ImportToGMABanner', () => {
   beforeEach(() => {
-    localStorage.clear();
+    localStorage.removeItem(dismissedKey);
   });
 
   it('renders the banner with a CTA to the import wizard', () => {
@@ -28,14 +32,22 @@ describe('ImportToGMABanner', () => {
     await user.click(ui.closeButton.get());
 
     expect(ui.banner.query()).not.toBeInTheDocument();
-    expect(localStorage.getItem(IMPORT_TO_GMA_BANNER_DISMISSED_KEY)).toBeTruthy();
+    expect(localStorage.getItem(dismissedKey)).toBeTruthy();
   });
 
   it('does not render when it was previously dismissed', () => {
-    localStorage.setItem(IMPORT_TO_GMA_BANNER_DISMISSED_KEY, 'true');
+    localStorage.setItem(dismissedKey, 'true');
 
     render(<ImportToGMABanner />);
 
     expect(ui.banner.query()).not.toBeInTheDocument();
+  });
+
+  it('still renders when only another org dismissed the banner', () => {
+    localStorage.setItem(getImportToGMABannerDismissedKey(config.bootData.user.orgId + 1), 'true');
+
+    render(<ImportToGMABanner />);
+
+    expect(ui.banner.get()).toBeInTheDocument();
   });
 });
