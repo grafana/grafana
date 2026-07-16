@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -21,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -32,12 +35,19 @@ import (
 // where the background generation goroutine was derived from the initiating HTTP request's own
 // context. net/http cancels that context as soon as the handler returns (see Request.Context
 // docs), which happens almost immediately after this handler kicks off the goroutine and responds
-// 202 -- so the generation must not inherit that cancellation.
+// 202 -- so the generation must not inherit that cancellation. It also guards the SkipQueryCache
+// forcing on the detached context: without it, HAR capture would run on a cache hit and
+// traffic.har would be silently empty (see QueryDashboardDiagnostics).
 func TestQueryDashboardDiagnostics_survivesRequestContextCancellation(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 
+	var capturedCtx atomic.Pointer[context.Context]
 	fakeQuery := query.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			ctxArg := args.Get(0).(context.Context)
+			capturedCtx.Store(&ctxArg)
+		}).
 		Return(backend.NewQueryDataResponse(), nil)
 	hs := &HTTPServer{queryDataService: fakeQuery}
 
@@ -48,8 +58,8 @@ func TestQueryDashboardDiagnostics_survivesRequestContextCancellation(t *testing
 
 	// A cancelable context stands in for the real *http.Request context, which net/http cancels
 	// as soon as ServeHTTP returns.
-	reqCtx, cancelReq := context.WithCancel(req.Context())
-	req = req.WithContext(reqCtx)
+	cancelableCtx, cancelReq := context.WithCancel(req.Context())
+	req = req.WithContext(cancelableCtx)
 
 	c := &contextmodel.ReqContext{
 		Context: &web.Context{
@@ -59,6 +69,14 @@ func TestQueryDashboardDiagnostics_survivesRequestContextCancellation(t *testing
 		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
 		Logger:       log.New("test"),
 	}
+
+	// Wire c into its own request's context via ctxkey.Key{}, the same key the real
+	// ContextHandler middleware uses for every request (see contexthandler.FromContext). Without
+	// this, contexthandler.FromContext(c.Req.Context()) finds nothing, CopyWithReqContext silently
+	// no-ops, and the SkipQueryCache forcing below would never reach the detached context -- but
+	// nothing here would fail, since a fake queryDataService doesn't care what's in the context.
+	req = req.WithContext(context.WithValue(req.Context(), ctxkey.Key{}, c))
+	c.Context.Req = req
 
 	resp := hs.QueryDashboardDiagnostics(c)
 	require.Equal(t, http.StatusAccepted, resp.Status())
@@ -82,6 +100,15 @@ func TestQueryDashboardDiagnostics_survivesRequestContextCancellation(t *testing
 	require.Equal(t, jobComplete, snap.State,
 		"job must complete even though the initiating request's context was canceled after the handler returned")
 	require.Empty(t, snap.Err)
+
+	queryCtxPtr := capturedCtx.Load()
+	require.NotNil(t, queryCtxPtr, "queryDataService.QueryData was never called")
+	queryReqCtx := contexthandler.FromContext(*queryCtxPtr)
+	require.NotNil(t, queryReqCtx, "the detached context passed to QueryData must carry a ReqContext")
+	require.True(t, queryReqCtx.SkipQueryCache,
+		"SkipQueryCache must be forced on the detached context, or a cache hit would skip the wire and traffic.har would be silently empty")
+	require.False(t, c.SkipQueryCache,
+		"the original request's ReqContext must not be mutated -- QueryDashboardDiagnostics forces the flag on a clone")
 }
 
 // TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError guards against a regression where
