@@ -102,6 +102,11 @@ func NewSearchOptions(
 			searchFieldsHashes = resource.SearchFieldsHashesForProviders(searchFieldsProviders)
 		}
 
+		// One registry holds selectable fields, hashes, and providers, shared by the
+		// index backend and the search server so a future live-manifest source can
+		// swap them consistently.
+		searchFields := resource.NewSearchFieldsRegistry(resource.SelectableFields(), searchFieldsHashes, searchFieldsProviders)
+
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                           root,
 			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
@@ -109,9 +114,7 @@ func NewSearchOptions(
 			BuildVersion:                   cfg.BuildVersion,
 			OwnsIndex:                      ownsIndexFn,
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
-			SelectableFieldsForKinds:       resource.SelectableFields(),
-			SearchFieldsHashesForKinds:     searchFieldsHashes,
-			SearchFieldsProvidersForKinds:  searchFieldsProviders,
+			SearchFields:                   searchFields,
 			Snapshot:                       snapshot,
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
@@ -151,7 +154,7 @@ func NewSearchOptions(
 			IndexSnapshotLockTTL:            DefaultSnapshotLockTTL,
 			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
 			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
-			SearchFieldsHashesForKinds:      searchFieldsHashes,
+			SearchFields:                    searchFields,
 		}, nil
 	}
 	return resource.SearchOptions{

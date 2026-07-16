@@ -9,8 +9,9 @@
  * 2. PAYLOAD SCHEMAS & `payloads` RECORD -- one Zod schema per mutation
  *    command, accessible via DashboardMutationAPI.getPayloadSchema().
  *
- * This file only depends on Zod, keeping it safe for import from any
- * internal module without pulling in the DashboardScene dependency tree.
+ * This file only depends on Zod and enum constants from @grafana/data,
+ * keeping it safe for import from any internal module without pulling in
+ * the DashboardScene dependency tree.
  *
  * DEFAULTS: Literal `kind` and `version` fields use .optional().default()
  * so consumers (e.g. LLM tools) can omit boilerplate. After parsing, these
@@ -22,6 +23,7 @@
 
 import { z } from 'zod';
 
+import { FieldMatcherID } from '@grafana/data';
 import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { annotationQueryKindSchema, variableKindSchema } from '../../v2schema/dashboardV2Schema';
@@ -459,7 +461,9 @@ const fieldConfigSchema = z
       .array(
         z.object({
           matcher: z.object({
-            id: z.string().describe('Matcher ID'),
+            id: z
+              .enum(FieldMatcherID)
+              .describe('Field matcher ID (e.g., "byName", "byRegexp", "byType", "byFrameRefID", "byValue")'),
             options: z.unknown().optional().describe('Matcher options'),
           }),
           properties: z.array(

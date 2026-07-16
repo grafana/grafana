@@ -23,7 +23,8 @@
       "metadata": {
         "name": "advisorDatasourceIntegration",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-15T11:02:00Z"
       },
       "spec": {
         "description": "Enables the advisor report integration with datasource pages",
@@ -1020,6 +1021,20 @@
         "description": "Enables the template dashboard assistant",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assistant.fullscreenWorkspace",
+        "resourceVersion": "1782120503827",
+        "creationTimestamp": "2026-06-22T09:28:23Z"
+      },
+      "spec": {
+        "description": "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "expression": "false"
       }

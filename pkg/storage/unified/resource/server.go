@@ -280,15 +280,11 @@ type SearchOptions struct {
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
-	// Selectable fields per kind, keyed by (group, kind) and (group, plural).
-	SelectableFieldsForKinds map[LowerGroupResource][]string
-
-	// Hash of the SearchFieldDefinition slices registered for a (group,
-	// resource) across every version, keyed by (group, resource). The search
-	// server compares this against the value stored in each index's
-	// IndexBuildInfo and triggers a rebuild on mismatch. Entries with empty
-	// hash strings are ignored.
-	SearchFieldsHashesForKinds map[LowerGroupResource]string
+	// SearchFields holds the per-kind search-field wiring shared with the index
+	// backend. The search server reads the selectable fields and the definition
+	// hash from it and triggers a rebuild when either differs from the values
+	// stored in an index's IndexBuildInfo. May be nil.
+	SearchFields *SearchFieldsRegistry
 
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.

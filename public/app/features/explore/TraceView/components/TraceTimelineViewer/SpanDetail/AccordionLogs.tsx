@@ -23,41 +23,41 @@ import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { autoColor } from '../../Theme';
 import { formatDuration } from '../../utils/date';
 
-import AccordianKeyValues from './AccordianKeyValues';
+import AccordionKeyValues from './AccordionKeyValues';
 
 import { alignIcon } from '.';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    AccordianLogs: css({
-      label: 'AccordianLogs',
+    AccordionLogs: css({
+      label: 'AccordionLogs',
       position: 'relative',
     }),
-    AccordianLogsHeader: css({
-      label: 'AccordianLogsHeader',
+    AccordionLogsHeader: css({
+      label: 'AccordionLogsHeader',
       color: 'inherit',
       display: 'flex',
       alignItems: 'center',
     }),
-    AccordianLogsContent: css({
-      label: 'AccordianLogsContent',
+    AccordionLogsContent: css({
+      label: 'AccordionLogsContent',
       background: autoColor(theme, '#f0f0f0'),
       padding: '0.5rem 0.5rem 0.25rem 0.5rem',
     }),
-    AccordianLogsFooter: css({
-      label: 'AccordianLogsFooter',
-      color: autoColor(theme, '#999'),
+    AccordionLogsFooter: css({
+      label: 'AccordionLogsFooter',
+      color: theme.colors.text.secondary,
     }),
-    AccordianKeyValuesItem: css({
+    AccordionKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
     }),
     parenthesis: css({
-      color: `${autoColor(theme, '#777')}`,
+      color: theme.colors.text.secondary,
     }),
   };
 };
 
-export type AccordianLogsProps = {
+export type AccordionLogsProps = {
   interactive?: boolean;
   isOpen: boolean;
   logs: TraceLog[];
@@ -67,7 +67,7 @@ export type AccordianLogsProps = {
   timestamp: number;
 };
 
-export default function AccordianLogs({
+export default function AccordionLogs({
   interactive = true,
   isOpen,
   logs,
@@ -75,7 +75,7 @@ export default function AccordianLogs({
   onItemToggle,
   onToggle,
   timestamp,
-}: AccordianLogsProps) {
+}: AccordionLogsProps) {
   let arrow: React.ReactNode | null = null;
   let HeaderComponent: 'span' | 'a' = 'span';
   let headerProps: {} | null = null;
@@ -95,8 +95,8 @@ export default function AccordianLogs({
 
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.AccordianLogs}>
-      <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
+    <div className={styles.AccordionLogs}>
+      <HeaderComponent className={styles.AccordionLogsHeader} {...headerProps}>
         {arrow}{' '}
         <strong>
           <Trans i18nKey="explore.accordian-logs.events">Events</Trans>
@@ -104,7 +104,7 @@ export default function AccordianLogs({
         <Counter value={logs.length} variant="secondary" />
       </HeaderComponent>
       {isOpen && (
-        <div className={styles.AccordianLogsContent}>
+        <div className={styles.AccordionLogsContent}>
           {_sortBy(logs, 'timestamp').map((log, i) => {
             const formattedDuration = formatDuration(log.timestamp - timestamp);
             const truncateLogNameInSummary = log.name && log.name.length > 20;
@@ -117,10 +117,10 @@ export default function AccordianLogs({
               formattedDuration
             );
             return (
-              <AccordianKeyValues
+              <AccordionKeyValues
                 // `i` is necessary in the key because timestamps can repeat
                 key={`${log.timestamp}-${i}`}
-                className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
+                className={i < logs.length - 1 ? styles.AccordionKeyValuesItem : null}
                 data={log.fields || []}
                 logName={truncateLogNameInSummary ? log.name : undefined}
                 highContrast
@@ -131,7 +131,7 @@ export default function AccordianLogs({
               />
             );
           })}
-          <small className={styles.AccordianLogsFooter}>
+          <small className={styles.AccordionLogsFooter}>
             <Trans i18nKey="explore.accordian-logs.footer">
               Event timestamps are relative to the start time of the full trace.
             </Trans>

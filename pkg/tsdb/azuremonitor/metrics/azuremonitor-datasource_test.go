@@ -348,6 +348,33 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 	}
 }
 
+func TestAzureMonitorBuildQueriesRejectsMultiValueStartsWithFilter(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	query := backend.DataQuery{
+		RefID: "A",
+		JSON: []byte(`{
+			"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
+			"azureMonitor": {
+				"aggregation": "Total",
+				"timeGrain": "PT1M",
+				"metricName": "Transactions",
+				"metricNamespace": "Microsoft.Storage/storageAccounts",
+				"resources": [{"resourceGroup": "rg", "resourceName": "sa"}],
+				"dimensionFilters": [{"dimension": "ApiName", "operator": "sw", "filters": ["Get", "Put"]}]
+			}
+		}`),
+		TimeRange: backend.TimeRange{
+			From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+		},
+	}
+
+	_, err := datasource.buildQuery(query, types.DatasourceInfo{})
+	require.Error(t, err)
+	require.ErrorContains(t, err, "one 'starts with' filter value")
+	require.True(t, backend.IsDownstreamError(err), "a multi-value sw filter is a query configuration error, not a plugin error")
+}
+
 func TestCustomNamespace(t *testing.T) {
 	datasource := &AzureMonitorDatasource{}
 
