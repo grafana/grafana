@@ -127,7 +127,9 @@ func (b *Buffer) Truncated() bool {
 }
 
 // entryStoredSize approximates the memory an entry occupies: the stored (possibly truncated) body
-// text plus a fixed overhead for headers/URL/timings.
+// text, request/response headers, plus a fixed overhead for URL/timings/other fields. Headers are
+// counted explicitly (rather than folded into the fixed overhead) so a response with unusually
+// large or numerous headers still counts toward the per-request byte cap.
 func entryStoredSize(e *har.Entry) int64 {
 	sz := int64(harEntryOverhead)
 	if e.Response != nil && e.Response.Content != nil {
@@ -135,6 +137,23 @@ func entryStoredSize(e *har.Entry) int64 {
 	}
 	if e.Request != nil && e.Request.PostData != nil {
 		sz += int64(len(e.Request.PostData.Text))
+	}
+	if e.Request != nil {
+		sz += headerPairsSize(e.Request.Headers)
+	}
+	if e.Response != nil {
+		sz += headerPairsSize(e.Response.Headers)
+	}
+	return sz
+}
+
+// headerPairsSize sums the name+value byte length of HAR name/value pairs (headers).
+func headerPairsSize(pairs []*har.NameValuePair) int64 {
+	var sz int64
+	for _, p := range pairs {
+		if p != nil {
+			sz += int64(len(p.Name) + len(p.Value))
+		}
 	}
 	return sz
 }

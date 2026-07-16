@@ -267,6 +267,14 @@ func TestBuffer_perRequestTotalCap(t *testing.T) {
 	require.Contains(t, string(out), "capture truncated", "the HAR log records that capture was truncated")
 }
 
+func TestBuffer_headerBytesCountTowardTotalCap(t *testing.T) {
+	buf := &Buffer{}
+	resp := respWithBody(200, nil)
+	resp.Header.Set("X-Huge", string(bytes.Repeat([]byte("a"), maxHARTotalBytes)))
+	buf.AddEntry(newGetReq(t, "http://example.com"), resp, nil, time.Now(), time.Millisecond) //nolint:bodyclose
+	require.True(t, buf.Truncated(), "an oversized header value alone should trip the per-request byte cap")
+}
+
 func respWithBody(status int, body []byte) *http.Response {
 	return &http.Response{
 		StatusCode: status,
