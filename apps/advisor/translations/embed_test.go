@@ -34,8 +34,8 @@ func TestGet_InvalidLocale(t *testing.T) {
 	cases := []string{
 		"../etc/passwd",
 		"",
-		"en_US",      // underscore not allowed
-		"english",    // too long for primary subtag
+		"en_US",   // underscore not allowed
+		"english", // too long for primary subtag
 		"en-US-extra-extra-extra",
 	}
 	for _, c := range cases {
