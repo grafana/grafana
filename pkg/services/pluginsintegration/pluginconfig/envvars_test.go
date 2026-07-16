@@ -27,6 +27,7 @@ import (
 
 type fakeMarketplaceEnvironment struct {
 	appURL       string
+	token        string
 	prepareErr   error
 	prepareCalls int
 	preparedWith string
@@ -40,10 +41,10 @@ func (e *fakeMarketplaceEnvironment) AppURL() string {
 	return e.appURL
 }
 
-func (e *fakeMarketplaceEnvironment) Prepare(_ context.Context, pluginID string) error {
+func (e *fakeMarketplaceEnvironment) Prepare(_ context.Context, pluginID string) (string, error) {
 	e.prepareCalls++
 	e.preparedWith = pluginID
-	return e.prepareErr
+	return e.token, e.prepareErr
 }
 
 var _ marketplacelicensing.Environment = (*fakeMarketplaceEnvironment)(nil)
@@ -202,6 +203,30 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvironment(t *testing.T) {
 		require.Equal(t, "acme-widget", environment.preparedWith)
 		require.Equal(t, 1, environment.prepareCalls)
 		require.Equal(t, "hmac:marketplace-environment", getEnvVar(envVars, "GF_MARKETPLACE_APP_URL"))
+		_, hasText := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_TEXT")
+		require.False(t, hasText)
+	})
+
+	t.Run("passes selected token verbatim with path when available", func(t *testing.T) {
+		environment := newTestMarketplaceEnvironment("hmac:marketplace-environment")
+		environment.token = " token\n"
+		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+
+		require.Equal(t, " token\n", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
+		require.NotEmpty(t, getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_PATH"))
+		require.Equal(t, "hmac:marketplace-environment", getEnvVar(envVars, "GF_MARKETPLACE_APP_URL"))
+	})
+
+	t.Run("passes token without a configured directory", func(t *testing.T) {
+		environment := newTestMarketplaceEnvironment("hmac:marketplace-environment")
+		environment.token = "database-token"
+		provider := NewEnvVarsProvider(&PluginInstanceCfg{Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing)}, &pluginfakes.FakeLicensingService{ValidLicense: true}, &fakeSSOSettingsProvider{}, environment)
+		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+
+		require.Equal(t, "database-token", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
+		require.Equal(t, 1, environment.prepareCalls)
+		_, hasPath := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.False(t, hasPath)
 	})
 
 	t.Run("preparation failure omits marketplace variables", func(t *testing.T) {
@@ -211,8 +236,10 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvironment(t *testing.T) {
 
 		_, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
 		_, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
+		_, hasText := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_TEXT")
 		require.False(t, hasLicense)
 		require.False(t, hasAppURL)
+		require.False(t, hasText)
 	})
 
 	t.Run("does not prepare when a marketplace gate fails", func(t *testing.T) {
@@ -237,12 +264,6 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvironment(t *testing.T) {
 				pluginID:  "acme-widget",
 			},
 			{
-				name:     "empty directory",
-				features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
-				license:  &pluginfakes.FakeLicensingService{ValidLicense: true},
-				pluginID: "acme-widget",
-			},
-			{
 				name:      "missing host license",
 				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
 				directory: "marketplace-licenses",
@@ -254,19 +275,6 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvironment(t *testing.T) {
 				directory: "marketplace-licenses",
 				license:   &pluginfakes.FakeLicensingService{},
 				pluginID:  "acme-widget",
-			},
-			{
-				name:      "empty plugin ID",
-				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
-				directory: "marketplace-licenses",
-				license:   &pluginfakes.FakeLicensingService{ValidLicense: true},
-			},
-			{
-				name:      "unsafe plugin ID",
-				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
-				directory: "marketplace-licenses",
-				license:   &pluginfakes.FakeLicensingService{ValidLicense: true},
-				pluginID:  "../license",
 			},
 		} {
 			t.Run(tc.name, func(t *testing.T) {

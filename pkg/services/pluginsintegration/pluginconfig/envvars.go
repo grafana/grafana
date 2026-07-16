@@ -89,26 +89,33 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 }
 
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
-	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] || p.cfg.MarketplaceLicenseDirectory == "" {
+	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] {
 		return nil
 	}
 	if p.license == nil || !p.license.HasValidLicense() {
 		return nil
 	}
 
-	licensePath, ok := marketplacelicensing.LicensePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
-	if !ok {
-		return nil
-	}
-	if err := p.environment.Prepare(ctx, pluginID); err != nil {
+	token, err := p.environment.Prepare(ctx, pluginID)
+	if err != nil {
 		p.logger.Warn("Failed to prepare marketplace license environment", "pluginId", pluginID)
 		return nil
 	}
-
-	return []string{
-		p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath),
-		p.envVar("GF_MARKETPLACE_APP_URL", p.environment.AppURL()),
+	licensePath, hasPath := "", false
+	if p.cfg.MarketplaceLicenseDirectory != "" {
+		licensePath, hasPath = marketplacelicensing.LicensePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
 	}
+	if token == "" && !hasPath {
+		return nil
+	}
+	variables := []string{p.envVar("GF_MARKETPLACE_APP_URL", p.environment.AppURL())}
+	if token != "" {
+		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_TEXT", token))
+	}
+	if hasPath {
+		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath))
+	}
+	return variables
 }
 
 func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
