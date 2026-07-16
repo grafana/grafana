@@ -1,9 +1,13 @@
 package api
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -78,6 +82,79 @@ func TestQueryDashboardDiagnostics_survivesRequestContextCancellation(t *testing
 	require.Equal(t, jobComplete, snap.State,
 		"job must complete even though the initiating request's context was canceled after the handler returned")
 	require.Empty(t, snap.Err)
+}
+
+// TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError guards against a regression where
+// QueryData's response was discarded, so a per-refId failure (backend.DataResponse.Error, the usual
+// way a datasource query fails -- see diagnostics.ResponseError) never reached panel.QueryErr: the
+// panel was recorded in the manifest as having run successfully, with no query-error.txt.
+func TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError(t *testing.T) {
+	fakeQuery := query.NewFakeQueryService(t)
+	failing := backend.NewQueryDataResponse()
+	failing.Responses["A"] = backend.DataResponse{Error: errors.New("datasource exploded")}
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(failing, nil)
+	hs := &HTTPServer{queryDataService: fakeQuery}
+
+	reqDTO := dashboardDiagnosticsRequest{
+		Panels: []panelDiagnosticsSpec{{
+			ID:    1,
+			Title: "Panel 1",
+			MetricRequest: dtos.MetricRequest{
+				Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A"})},
+			},
+		}},
+	}
+
+	archive, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, false, reqDTO, "job-1")
+	require.NoError(t, err)
+
+	files := readTarGzFiles(t, archive)
+	require.Contains(t, files, "manifest.json", "manifest.json must be present")
+	require.Contains(t, string(files["manifest.json"]), "datasource exploded",
+		"a per-refId query failure must be recorded in the manifest, not silently dropped")
+}
+
+// TestBuildDashboardDiagnosticsArchive_queryV2Dispatch guards against a regression where the
+// dashboard-level path always called QueryData, ignoring the X-Query-V2 signal that QueryDiagnostics
+// (the single-panel path) honors -- so captured traffic wouldn't match a panel using Query V2's
+// per-query time ranges.
+func TestBuildDashboardDiagnosticsArchive_queryV2Dispatch(t *testing.T) {
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryDataNew", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(backend.NewQueryDataResponse(), nil).Once()
+	hs := &HTTPServer{queryDataService: fakeQuery}
+
+	reqDTO := dashboardDiagnosticsRequest{
+		Panels: []panelDiagnosticsSpec{{
+			ID: 1,
+			MetricRequest: dtos.MetricRequest{
+				Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A"})},
+			},
+		}},
+	}
+
+	_, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, true, reqDTO, "job-2")
+	require.NoError(t, err)
+}
+
+func readTarGzFiles(t *testing.T, data []byte) map[string][]byte {
+	t.Helper()
+	gz, err := gzip.NewReader(bytes.NewReader(data))
+	require.NoError(t, err)
+	tr := tar.NewReader(gz)
+	files := map[string][]byte{}
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		require.NoError(t, err)
+		buf, err := io.ReadAll(tr)
+		require.NoError(t, err)
+		files[hdr.Name] = buf
+	}
+	return files
 }
 
 func TestDiagnosticsJobStore_lifecycle(t *testing.T) {

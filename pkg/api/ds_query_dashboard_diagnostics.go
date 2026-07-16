@@ -185,10 +185,14 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 
 	job := dashboardDiagnosticsJobs.create(len(reqDTO.Panels), c.SignedInUser)
 
-	// Snapshot the identity + cache flag; the goroutine must not touch the request or its context
-	// (both are tied to the HTTP request's lifetime, which ends when we return 202).
+	// Snapshot the identity + cache flag + Query V2 signal; the goroutine must not touch the request
+	// or its context (both are tied to the HTTP request's lifetime, which ends when we return 202).
 	user := c.SignedInUser
 	skipDSCache := c.SkipDSCache
+	// Mirror QueryDiagnostics' dispatch (see ds_query_diagnostics.go) so each panel runs with the
+	// same per-query time range semantics the panel itself would use -- otherwise captured traffic
+	// wouldn't match a dashboard that uses Query V2, defeating the "reproduce offline" goal.
+	useQueryDataNew := c.Req.Header.Get("X-Query-V2") == "true"
 
 	// detachedCtx carries its own cloned *http.Request (see contexthandler.CopyWithReqContext), so
 	// it stays safe to use after this handler returns. CopyWithReqContext only clones the request;
@@ -204,20 +208,20 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 		reqCtx.SkipQueryCache = true
 	}
 
-	go func(uid string, user identity.Requester, skipDSCache bool, req dashboardDiagnosticsRequest) {
+	go func(uid string, user identity.Requester, skipDSCache, useQueryDataNew bool, req dashboardDiagnosticsRequest) {
 		defer func() {
 			if r := recover(); r != nil {
 				dashboardDiagnosticsJobs.fail(uid, fmt.Errorf("dashboard diagnostics panic: %v", r))
 			}
 		}()
 
-		archive, err := hs.buildDashboardDiagnosticsArchive(detachedCtx, user, skipDSCache, req, uid)
+		archive, err := hs.buildDashboardDiagnosticsArchive(detachedCtx, user, skipDSCache, useQueryDataNew, req, uid)
 		if err != nil {
 			dashboardDiagnosticsJobs.fail(uid, err)
 			return
 		}
 		dashboardDiagnosticsJobs.complete(uid, archive)
-	}(job.UID, user, skipDSCache, reqDTO)
+	}(job.UID, user, skipDSCache, useQueryDataNew, reqDTO)
 
 	return response.JSON(http.StatusAccepted, map[string]any{"uid": job.UID, "state": jobPending})
 }
@@ -268,7 +272,12 @@ func (hs *HTTPServer) DownloadDashboardDiagnostics(c *contextmodel.ReqContext) r
 // buildDashboardDiagnosticsArchive runs each panel's queries with independent HAR capture, updating
 // job progress as panels complete, then delegates archive assembly to the diagnostics service. A
 // non-data panel (no queries) is recorded as skipped rather than run.
-func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dashboardDiagnosticsRequest, jobUID string) ([]byte, error) {
+func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user identity.Requester, skipDSCache, useQueryDataNew bool, reqDTO dashboardDiagnosticsRequest, jobUID string) ([]byte, error) {
+	queryData := hs.queryDataService.QueryData
+	if useQueryDataNew {
+		queryData = hs.queryDataService.QueryDataNew
+	}
+
 	panels := make([]diagnostics.DashboardPanel, 0, len(reqDTO.Panels))
 	for i, p := range reqDTO.Panels {
 		if err := ctx.Err(); err != nil { // bail out early if the run is cancelled
@@ -290,9 +299,15 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		}
 
 		pctx, harBuffer := harcapture.WithCapture(ctx) // capture each panel independently
-		_, err := hs.queryDataService.QueryData(pctx, user, skipDSCache, p.MetricRequest)
+		resp, err := queryData(pctx, user, skipDSCache, p.MetricRequest)
 		panel.HARBuffer = harBuffer
+		// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error
+		// (see diagnostics.ResponseError doc) -- capture that too, or a failed panel would be
+		// recorded in the manifest as having run successfully with no query-error.txt.
 		panel.QueryErr = err
+		if panel.QueryErr == nil {
+			panel.QueryErr = diagnostics.ResponseError(resp)
+		}
 
 		panels = append(panels, panel)
 		dashboardDiagnosticsJobs.setProgress(jobUID, i+1)
