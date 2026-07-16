@@ -297,6 +297,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:            "provisioning.performance",
+			Description:     "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
