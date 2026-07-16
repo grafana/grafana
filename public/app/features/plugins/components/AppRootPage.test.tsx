@@ -248,7 +248,7 @@ describe('AppRootPage', () => {
   });
 
   it('should mark the plugin boundary on the page when the plugin provides its own nav', async () => {
-    getPluginSettingsMock.mockResolvedValue(pluginMeta);
+    refetchPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     const NavChangingRootComponent = ({ onNavChanged }: AppRootProps) => {
       useEffect(() => {
