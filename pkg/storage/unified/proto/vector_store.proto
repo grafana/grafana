@@ -3,8 +3,6 @@ package resource;
 
 option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
 
-import "resource.proto";
-
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
 // Reads go through the search service. Reads of external collections skip server-side
@@ -13,7 +11,7 @@ import "resource.proto";
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
 //   INVALID_ARGUMENT   bad filter, oversized batch (>500 vectors or >4 KiB metadata), empty content or title,
-//                      missing delete selector, empty metadata update (neither set nor unset)
+//                      empty inputs, missing delete selector, empty metadata update (neither set nor unset)
 //   NOT_FOUND          collection not allowlisted / never provisioned
 //   PERMISSION_DENIED  request namespace not permitted for the caller identity
 //   RESOURCE_EXHAUSTED per-cluster embed budget exhausted (retryable)
@@ -42,23 +40,28 @@ message EmbeddingInput {
 // Not transactional across inputs. Validation errors fail the whole request
 // (INVALID_ARGUMENT, nothing written); runtime embed/storage failures are in the response — see VectorUpsertResponse.
 message VectorUpsertRequest {
-  // Identifies the collection: namespace (tenant) + group + resource; name must be empty.
-  // The group identifies external resources, e.g. "investigation.assistant.external"; the
-  // resource segment must be lowercase alphanumeric/underscore (it becomes a storage
-  // partition name). Group/resource pairs are allowlisted on the server.
-  ResourceKey key = 1;
-  repeated EmbeddingInput inputs = 2;  // max 500
+  string namespace = 1; // required; tenant
+  // required; identifies external resources, e.g. "investigation.assistant.external"
+  string group = 2;
+  // required; must be lowercase alphanumeric/underscore (it becomes a storage partition
+  // name). Group/resource pairs are allowlisted on the server.
+  string resource = 3;
+  repeated EmbeddingInput inputs = 4;  // max 500
 }
 
-// Upsert subresources (chunks) for a single entity atomically.
-// All subresources must be part of the same parent entity (i.e have the same uid).
+// Upsert subresources (chunks) for the single entity named by uid, atomically.
 // New chunks will be embedded, existing ones will be re-embedded only if content has changed, and chunks that don't
 // exist in the inputs set will be deleted.
 // Title and metadata are always written for every input, even when the embedding is
 // skipped — so sync markers (e.g. an embeddedAt timestamp) stay fresh without re-embed cost.
 message VectorUpsertSubresourcesRequest {
-  ResourceKey key = 1; // required; see VectorUpsertRequest.key
-  repeated EmbeddingInput inputs = 2;  // max 500 (required)
+  string namespace = 1; // required; tenant
+  string group = 2;     // required; see VectorUpsertRequest.group
+  string resource = 3;  // required; see VectorUpsertRequest.resource
+  string uid = 4;       // required; the entity whose chunks are being synced
+  // required, non-empty; the complete desired chunk set for uid. Each input's uid must be
+  // empty or equal to uid. To remove all of an entity's rows, use Delete instead.
+  repeated EmbeddingInput inputs = 5;  // max 500
 }
 
 message VectorUpsertFailure {
@@ -94,19 +97,21 @@ message VectorUpsertSubresourcesResponse {
 // the two calls leaves stale rows behind (swept by the next run) rather than a
 // window with missing data.
 message VectorDeleteRequest {
-  ResourceKey key = 1; // required; see VectorUpsertRequest.key
+  string namespace = 1; // required; tenant
+  string group = 2;     // required; see VectorUpsertRequest.group
+  string resource = 3;  // required; see VectorUpsertRequest.resource
   // required; exactly one must be set
   oneof selector {
     // The uids are the parent/resource uids. This means you cant directly delete specific subresources by their id.
-    StringList uids = 2;  // delete whole entities (and their subresources)
+    StringList uids = 4;  // delete whole entities (and their subresources)
     // Metadata filter: a JSON expression with Mongo-style operators.
     //   logical:    $and, $or
     //   comparison: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin
     //   existence:  $exists
     // Example: {"$and":[{"kind":"incident"},{"embeddedAt":{"$lt":1750000000}}]}
     // Unknown operators are INVALID_ARGUMENT. Deletes are paged (10k/page).
-    bytes filter = 3;
-    bool delete_all = 4;  // must be true; deletes everything in tenant/collection (paged, 10k/page)
+    bytes filter = 5;
+    bool delete_all = 6;  // must be true; deletes everything in tenant/collection (paged, 10k/page)
   }
 }
 
@@ -121,12 +126,14 @@ message VectorDeleteResponse {
 }
 
 message VectorUpdateMetadataRequest {
-  ResourceKey key = 1; // required; see VectorUpsertRequest.key
-  bytes filter = 2; // required; selects the rows to update; same dialect as VectorDeleteRequest.filter
+  string namespace = 1; // required; tenant
+  string group = 2;     // required; see VectorUpsertRequest.group
+  string resource = 3;  // required; see VectorUpsertRequest.resource
+  bytes filter = 4; // required; selects the rows to update; same dialect as VectorDeleteRequest.filter
   // At least one of set/unset is required. Both may be provided in one call and are
   // applied atomically in a single update: set is merged first, then unset keys are removed.
-  bytes set = 3;             // JSON merged into metadata
-  repeated string unset = 4; // metadata keys to remove
+  bytes set = 5;             // JSON merged into metadata
+  repeated string unset = 6; // metadata keys to remove
 }
 
 message VectorUpdateMetadataResponse {
