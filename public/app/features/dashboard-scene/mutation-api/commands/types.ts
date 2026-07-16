@@ -97,4 +97,6 @@ export function enterEditModeIfNeeded(scene: DashboardScene): void {
   if (!scene.state.isEditing) {
     scene.onEnterEditMode('assistant');
   }
+  // New-layout mutations only run while the edit pane is active, and it may not be mounted here.
+  scene.activateEditPane();
 }

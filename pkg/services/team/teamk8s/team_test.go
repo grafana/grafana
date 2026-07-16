@@ -1353,15 +1353,16 @@ func userTeamsResponse(rows []iamv0alpha1.GetUserTeamsUserTeam) iamv0alpha1.GetU
 
 func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 	tests := []struct {
-		name           string
-		query          *team.GetTeamsByUserQuery
-		requesterOrgID int64
-		serverResponse func(w http.ResponseWriter, r *http.Request)
-		nilProvider    bool
-		noReqContext   bool
-		expectErr      bool
-		expectTeams    int
-		expectUID      string
+		name                   string
+		query                  *team.GetTeamsByUserQuery
+		requesterOrgID         int64
+		serverResponse         func(w http.ResponseWriter, r *http.Request)
+		nilProvider            bool
+		noReqContext           bool
+		enforceServiceIdentity bool
+		expectErr              bool
+		expectTeams            int
+		expectUID              string
 	}{
 		{
 			name:           "returns teams for user",
@@ -1370,6 +1371,15 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 			serverResponse: membershipServerHandler(t),
 			expectTeams:    1,
 			expectUID:      "team-uid-1",
+		},
+		{
+			name:                   "lists memberships under a service identity",
+			requesterOrgID:         1,
+			query:                  &team.GetTeamsByUserQuery{OrgID: 1, UserID: 42},
+			serverResponse:         membershipServerHandler(t),
+			enforceServiceIdentity: true,
+			expectTeams:            1,
+			expectUID:              "team-uid-1",
 		},
 		{
 			name:           "returns empty list when user has no bindings",
@@ -1414,7 +1424,11 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
-				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+				cfg := &clientrest.Config{Host: ts.URL}
+				if tt.enforceServiceIdentity {
+					cfg.Transport = serviceIdentityRBAC{base: http.DefaultTransport}
+				}
+				provider := &mockDirectRestConfigProvider{restConfig: cfg}
 				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
 			}
 

@@ -84,7 +84,17 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 		return nil, err
 	}
 
-	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings}, nil
+	alertRules, err := GetAlertRuleSearchBuilder()
+	if err != nil {
+		return nil, err
+	}
+
+	recordingRules, err := GetRecordingRuleSearchBuilder()
+	if err != nil {
+		return nil, err
+	}
+
+	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, alertRules, recordingRules}, nil
 }
 
 // tableColumnsByName builds a map[fieldName]*ResourceTableColumnDefinition
@@ -119,7 +129,6 @@ func iamBuilder(ri utils.ResourceInfo, searchFields []resource.SearchFieldDefini
 	return resource.DocumentBuilderInfo{
 		GroupResource:        gr,
 		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
-		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
 		SearchFieldsProvider: provider,
 	}, nil
 }

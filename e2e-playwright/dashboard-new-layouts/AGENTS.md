@@ -8,17 +8,18 @@ This suite contains Playwright E2E tests for the V2 dashboard layout system. Tes
 
 All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`. Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, and `selectors` dependencies as `protected` fields.
 
-| Class              | File                          | UI Region                                                              | Key Methods / Getters                                                                                                                                                                                               |
-| ------------------ | ----------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                                  | Shared constructor (`page`, `dashboardPage`, `selectors`)                                                                                                                                                           |
-| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...)                                          | `enterEditMode()`, `exitEditMode()`                                                                                                                                                                                 |
-| `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)                             | `.toolbar`, `.addOptions`, `.dashboardOptions`, `.panelOptions`, `.contentOutline` sub-objects; `getContainer()`, `clickGoBackButton()`, `getDockToggle()`, `clickCloseButton()`, `clickDeleteButton({ confirm? })` |
-| `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`                            | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                                                                     |
-| `AddOptions`       | `sidebar/AddOptions.ts`       | "Add" pane (default pane on new dashboards) — via `sidebar.addOptions` | `clickNewPanelButton()`                                                                                                                                                                                             |
-| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `getTree()`, `clickItem(name)`, `toggleNode(name)`                                                                                                                                                                  |
-| `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                                                                       |
-| `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `setTitle(title)`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                   |
-| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                                                                         |
+| Class              | File                          | UI Region                                                              | Key Methods / Getters                                                                                                                                                                                                                   |
+| ------------------ | ----------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                                  | Shared constructor (`page`, `dashboardPage`, `selectors`)                                                                                                                                                                               |
+| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...) and variable submenu                     | `enterEditMode()`, `exitEditMode()`, `getVariableLabel(label)`                                                                                                                                                                          |
+| `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)                             | `.toolbar`, `.addOptions`, `.dashboardOptions`, `.panelOptions`, `.variableOptions`, `.contentOutline` sub-objects; `getContainer()`, `clickGoBackButton()`, `getDockToggle()`, `clickCloseButton()`, `clickDeleteButton({ confirm? })` |
+| `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`                            | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                                                                                         |
+| `AddOptions`       | `sidebar/AddOptions.ts`       | "Add" pane (default pane on new dashboards) — via `sidebar.addOptions` | `clickNewPanelButton()`, `clickNewVariableButton()`                                                                                                                                                                                     |
+| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `getTree()`, `clickItem(name)`, `toggleNode(name)`                                                                                                                                                                                      |
+| `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                                                                                           |
+| `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `setTitle(title)`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                                       |
+| `VariableOptions`  | `sidebar/VariableOptions.ts`  | Variable edit pane — via `sidebar.variableOptions`                     | `selectVariableType(type)`, `setName(name)`, `setLabel(label)`, `selectDatasourceType(dsType)`, `setDatasourceNameFilter(filter)`                                                                                                       |
+| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                                                                                             |
 
 > The show/hide visibility toggle is a **Toolbar** control (`sidebar.toolbar.getVisibilityToggle()`), even though its selector lives under `components.Sidebar.*`. `Toolbar.getButton(name)` resolves buttons by accessible name, scoped to the sidebar container.
 
@@ -61,12 +62,6 @@ test('example', async ({ gotoDashboardPage, selectors, page }) => {
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { Controls, Sidebar } from './page-objects';
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
 
 test.describe(
   'Feature name',
@@ -136,7 +131,7 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-**9 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
+**11 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
 
 | Spec                                                  | Status      | Lines of code | Selectors usage count |
 | ----------------------------------------------------- | ----------- | ------------- | --------------------- |
@@ -164,10 +159,10 @@ await expect(titleInput).toHaveValue(newTitle);
 | `dashboards-move-panel.spec.ts`                       | Not started | 120           | 9                     |
 | `dashboard-conditional-rendering-load-change.spec.ts` | Not started | 459           | 8                     |
 | `dashboards-edit-query-variables.spec.ts`             | Not started | 83            | 6                     |
-| `dashboard-keybindings.spec.ts`                       | Not started | 60            | 6                     |
+| `dashboard-keybindings.spec.ts`                       | Migrated    | —             | —                     |
 | `dashboards-edit-adhoc-variables.spec.ts`             | Not started | 96            | 4                     |
 | `dashboards-edit-group-by-variables.spec.ts`          | Not started | 89            | 4                     |
-| `dashboards-edit-datasource-variables.spec.ts`        | Not started | 62            | 4                     |
+| `dashboards-edit-datasource-variables.spec.ts`        | Migrated    | —             | —                     |
 | `dashboard-url-syncing.spec.ts`                       | Not started | 128           | 3                     |
 | `dashboard-tabs-drag-drop.spec.ts`                    | Not started | 75            | 2                     |
 
