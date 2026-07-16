@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { act, getWrapper, renderHook } from 'test/test-utils';
+import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
 
@@ -214,6 +214,26 @@ describe('promote header wiring', () => {
     expect(headers).toHaveLength(1);
     expect(headers[0].get('X-Grafana-Alerting-Promote')).toBe('true');
     expect(headers[0].get('X-Grafana-Alerting-Dry-Run')).toBe('true');
+  });
+});
+
+describe('useDryRunNotifications reset', () => {
+  // Regression: once a dry-run succeeds, its result is cached. If the step later becomes invalid
+  // (e.g. a duplicate template name) the dry-run stops running, so reset() must clear the cached
+  // result or the review step keeps reporting the config as ready to import.
+  it('clears a previous successful result', async () => {
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
+
+    await act(async () => {
+      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
+    });
+    await waitFor(() => expect(result.current.result?.valid).toBe(true));
+
+    act(() => {
+      result.current.reset();
+    });
+    await waitFor(() => expect(result.current.result).toBeUndefined());
   });
 });
 

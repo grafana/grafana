@@ -80,6 +80,7 @@ const defaultStep1Props = {
   canImport: true,
   dryRunState: 'idle' as const,
   onTriggerDryRun: jest.fn(),
+  onResetDryRun: jest.fn(),
 };
 
 describe('Step1AlertmanagerResources', () => {

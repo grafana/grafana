@@ -91,8 +91,8 @@ export async function readTemplateFiles(files: File[] = []): Promise<Record<stri
       })
     );
   }
-  const contents = await Promise.all(files.map((file) => file.text()));
-  return Object.fromEntries(files.map((file, index) => [file.name, contents[index]]));
+  const entries = await Promise.all(files.map(async (file) => [file.name, await file.text()] as const));
+  return Object.fromEntries(entries);
 }
 
 /**
@@ -369,7 +369,7 @@ export function deriveDryRunResult(
  * Validates the config and checks for conflicts without saving.
  */
 export function useDryRunNotifications() {
-  const [dryRunAlertmanagerConfig, { isLoading, data, error: mutationError }] =
+  const [dryRunAlertmanagerConfig, { isLoading, data, error: mutationError, reset: resetMutation }] =
     convertToGMAApi.useDryRunAlertmanagerConfigMutation();
   const [preRunError, setPreRunError] = useState<string>();
 
@@ -391,8 +391,18 @@ export function useDryRunNotifications() {
     [dryRunAlertmanagerConfig]
   );
 
-  const result = useMemo(() => (data ? parseDryRunResponse(data) : undefined), [data]);
-  const error = mutationError ? stringifyErrorLike(mutationError) : preRunError;
+  // Clear the cached response and any pre-run error so `result` returns to undefined. Called when the
+  // step is no longer runnable (e.g. a duplicate template name) so a previously successful dry-run
+  // can't keep reporting the config as valid once the inputs have become invalid.
+  const reset = useCallback(() => {
+    setPreRunError(undefined);
+    resetMutation();
+  }, [resetMutation]);
 
-  return { runDryRun, isLoading, result, error };
+  const parsed = useMemo(() => (data ? parseDryRunResponse(data) : undefined), [data]);
+  const error = mutationError ? stringifyErrorLike(mutationError) : preRunError;
+  // Combine data and error here (error wins) so callers consume a single ready-to-use result.
+  const result = useMemo(() => deriveDryRunResult(parsed, error), [parsed, error]);
+
+  return { runDryRun, reset, isLoading, result, error };
 }

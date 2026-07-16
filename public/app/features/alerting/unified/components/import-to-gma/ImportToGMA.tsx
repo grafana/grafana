@@ -62,7 +62,6 @@ import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
 import {
   buildRoutingParams,
-  deriveDryRunResult,
   filterRulerRulesConfig,
   useDryRunNotifications,
   useImportNotifications,
@@ -177,13 +176,13 @@ function ImportWizardContent() {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
-  const { runDryRun, isLoading: isDryRunLoading, result: dryRunData, error: dryRunError } = useDryRunNotifications();
-
-  // Derive dry-run result from RTK Query state (success data or synthetic error result)
-  const dryRunResult: DryRunValidationResult | undefined = useMemo(
-    () => deriveDryRunResult(dryRunData, dryRunError),
-    [dryRunData, dryRunError]
-  );
+  const {
+    runDryRun,
+    reset: resetDryRun,
+    isLoading: isDryRunLoading,
+    result: dryRunResult,
+    error: dryRunError,
+  } = useDryRunNotifications();
 
   // Derive dry-run UI state from RTK Query state
   const dryRunState = useMemo((): 'idle' | 'loading' | 'success' | 'warning' | 'error' => {
@@ -476,6 +475,7 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
+              onResetDryRun={resetDryRun}
             />
           )}
 
@@ -526,6 +526,7 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
+  onResetDryRun: () => void;
 }
 
 function Step1Wrapper({
@@ -536,6 +537,7 @@ function Step1Wrapper({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
+  onResetDryRun,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
   // Can proceed if form is valid and dry-run passed (existing config will be force-replaced)
@@ -562,6 +564,7 @@ function Step1Wrapper({
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
+        onResetDryRun={onResetDryRun}
       />
     </WizardStep>
   );

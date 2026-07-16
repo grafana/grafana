@@ -37,6 +37,8 @@ interface Step1ContentProps {
   dryRunResult?: DryRunValidationResult;
   /** Callback to trigger dry-run validation */
   onTriggerDryRun: () => void;
+  /** Callback to clear a stale dry-run result when the step is no longer runnable */
+  onResetDryRun: () => void;
 }
 
 /**
@@ -44,7 +46,13 @@ interface Step1ContentProps {
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
-export function Step1Content({ canImport, dryRunState, dryRunResult, onTriggerDryRun }: Step1ContentProps) {
+export function Step1Content({
+  canImport,
+  dryRunState,
+  dryRunResult,
+  onTriggerDryRun,
+  onResetDryRun,
+}: Step1ContentProps) {
   const {
     control,
     register,
@@ -77,14 +85,19 @@ export function Step1Content({ canImport, dryRunState, dryRunResult, onTriggerDr
     !duplicateTemplateFileName &&
     hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
 
-  // Trigger dry-run when a source is selected (YAML file or datasource) or the template files change
+  // Trigger dry-run when a source is selected (YAML file or datasource) or the template files change.
+  // When the step is no longer runnable (e.g. a duplicate template name), clear any previous result so
+  // a stale success can't keep the review step reporting the config as ready to import.
   useEffect(() => {
     if (canRunDryRun) {
       onTriggerDryRun();
+    } else {
+      onResetDryRun();
     }
   }, [
     canRunDryRun,
     onTriggerDryRun,
+    onResetDryRun,
     notificationsSource,
     notificationsYamlFile,
     notificationsDatasourceUID,
