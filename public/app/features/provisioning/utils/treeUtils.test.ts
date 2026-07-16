@@ -1068,6 +1068,76 @@ describe('flattenTree', () => {
 
     expect(result).toHaveLength(0);
   });
+
+  it('should mark folders expandable and expand everything when no expanded set is given', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        children: [{ path: 'folder/file.json', title: 'file.json', type: 'File', level: 0, children: [] }],
+      },
+    ];
+
+    const result = flattenTree(tree);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].isExpandable).toBe(true);
+    expect(result[0].isExpanded).toBe(true);
+    expect(result[1].isExpandable).toBe(false);
+    expect(result[1].isExpanded).toBe(false);
+  });
+
+  it('should hide children of folders that are not in the expanded set', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        children: [{ path: 'folder/file.json', title: 'file.json', type: 'File', level: 0, children: [] }],
+      },
+    ];
+
+    const result = flattenTree(tree, new Set());
+
+    expect(result).toHaveLength(1);
+    expect(result[0].item.path).toBe('folder');
+    expect(result[0].isExpandable).toBe(true);
+    expect(result[0].isExpanded).toBe(false);
+  });
+
+  it('should show children only for expanded folders', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        children: [
+          {
+            path: 'folder/subfolder',
+            title: 'Subfolder',
+            type: 'Folder',
+            level: 0,
+            children: [
+              { path: 'folder/subfolder/file.json', title: 'file.json', type: 'File', level: 0, children: [] },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // Only the top folder is expanded, so its child folder shows but the grandchild file stays hidden.
+    const result = flattenTree(tree, new Set(['folder']));
+
+    expect(result).toHaveLength(2);
+    expect(result[0].item.path).toBe('folder');
+    expect(result[0].isExpanded).toBe(true);
+    expect(result[1].item.path).toBe('folder/subfolder');
+    expect(result[1].isExpanded).toBe(false);
+  });
 });
 
 describe('filterTree', () => {

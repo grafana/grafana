@@ -155,7 +155,6 @@ func TestMapProvider_IndexAffectingHash(t *testing.T) {
 			"Array":            func(s *SearchFieldDefinition) { s.Array = true },
 			"Capabilities":     func(s *SearchFieldDefinition) { s.Capabilities = []SearchCapability{SearchCapabilityRetrieve} },
 			"EmitZeroIfAbsent": func(s *SearchFieldDefinition) { s.EmitZeroIfAbsent = true },
-			"CopyFromStandard": func(s *SearchFieldDefinition) { s.CopyFromStandard = StandardFieldCreated },
 		}
 		for name, mutate := range cases {
 			t.Run(name, func(t *testing.T) {
@@ -225,7 +224,7 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		v0: {
 			{Name: "email", Path: "spec.email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
 			{Name: "disabled", Path: "spec.disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilityRetrieve}, EmitZeroIfAbsent: true},
-			{Name: "createdAt", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}, CopyFromStandard: StandardFieldCreated},
+			{Name: "createdAt", Path: "spec.createdAt", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
 			{Name: "members", Path: "spec.members[*].name", Type: SearchFieldTypeString, Array: true, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
 		},
 		v1: {
@@ -234,7 +233,7 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 	}, nil)
 
 	// The standard name field has sort capability so Bleve can use it as a stable pagination tie-breaker.
-	const expected = "c4587931c884566e46c37eb573565b9b0d7246aeef6d7b7e3bf95d5aac24ca01"
+	const expected = "3484142f1ce8094a4659bb0275fe91e4d68f0ce6fa1ed24a17dd81615a8a76d1"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
 }
@@ -396,14 +395,6 @@ func TestValidateCrossVersionConsistency(t *testing.T) {
 		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
 			v1: {{Name: "count", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter}, EmitZeroIfAbsent: true}},
 			v2: {{Name: "count", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
-		})
-		require.NoError(t, err)
-	})
-
-	t.Run("copyFromStandard differing across versions is allowed", func(t *testing.T) {
-		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
-			v1: {{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityRetrieve}, CopyFromStandard: StandardFieldCreated}},
-			v2: {{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityRetrieve}}},
 		})
 		require.NoError(t, err)
 	})
