@@ -8,7 +8,7 @@ import (
 
 type Environment interface {
 	AppURL() string
-	Prepare(context.Context, string) error
+	Prepare(context.Context, string) (string, error)
 }
 
 type OSSEnvironment struct {
@@ -23,6 +23,6 @@ func (e *OSSEnvironment) AppURL() string {
 	return e.appURL
 }
 
-func (e *OSSEnvironment) Prepare(context.Context, string) error {
-	return nil
+func (e *OSSEnvironment) Prepare(context.Context, string) (string, error) {
+	return "", nil
 }
