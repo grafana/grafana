@@ -190,7 +190,7 @@ function getDarkHues(): ThemeVizHue[] {
       shades: [
         { color: '#C0D8FF', name: 'super-light-blue', aliases: [] },
         { color: '#8AB8FF', name: 'light-blue', aliases: [] },
-        { color: '#5794F2', name: 'blue', aliases: [], primary: true },
+        { color: '#4a86ef', name: 'blue', aliases: [], primary: true },
         { color: '#3274D9', name: 'semi-dark-blue', aliases: [] },
         { color: '#1F60C4', name: 'dark-blue', aliases: [] },
       ],
