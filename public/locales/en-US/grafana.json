@@ -13900,6 +13900,11 @@
       "missing-folder-metadata": "Missing folder metadata file",
       "search-placeholder": "Search by path or title",
       "source": "Source",
+      "status-filter-aria-label": "Filter by status",
+      "status-filter-pending": "Not in sync",
+      "status-filter-placeholder": "Filter by status",
+      "status-filter-synced": "Synced",
+      "status-filter-warning": "Warnings",
       "status-pending": "Pending",
       "status-synced": "Synced",
       "view": "View"
