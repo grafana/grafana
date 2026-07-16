@@ -13,22 +13,25 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
-func testJob(d time.Duration) provisioning.Job {
+func testJob(d time.Duration, progressUpdates int) provisioning.Job {
 	return provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionTest,
-			Test:   &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: d}},
+			Test: &provisioning.TestJobOptions{
+				Duration:        metav1.Duration{Duration: d},
+				ProgressUpdates: progressUpdates,
+			},
 		},
 	}
 }
 
 func TestWorker_IsSupported(t *testing.T) {
 	t.Run("supported when enabled and action is test", func(t *testing.T) {
-		require.True(t, NewWorker(true).IsSupported(context.Background(), testJob(time.Second)))
+		require.True(t, NewWorker(true).IsSupported(context.Background(), testJob(time.Second, 0)))
 	})
 
 	t.Run("not supported when disabled", func(t *testing.T) {
-		require.False(t, NewWorker(false).IsSupported(context.Background(), testJob(time.Second)))
+		require.False(t, NewWorker(false).IsSupported(context.Background(), testJob(time.Second, 0)))
 	})
 
 	t.Run("not supported for other actions", func(t *testing.T) {
@@ -40,14 +43,24 @@ func TestWorker_IsSupported(t *testing.T) {
 func TestWorker_Process(t *testing.T) {
 	t.Run("sleeps for the duration then completes", func(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetTotal", mock.Anything, mock.Anything).Return()
+		progress.On("SetTotal", mock.Anything, defaultProgressUpdates).Return()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
 
 		start := time.Now()
-		err := NewWorker(true).Process(context.Background(), nil, testJob(80*time.Millisecond), progress)
+		err := NewWorker(true).Process(context.Background(), nil, testJob(80*time.Millisecond, 0), progress)
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, time.Since(start), 80*time.Millisecond)
+	})
+
+	t.Run("uses configured progress updates", func(t *testing.T) {
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetTotal", mock.Anything, 3).Return()
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
+
+		err := NewWorker(true).Process(context.Background(), nil, testJob(50*time.Millisecond, 3), progress)
+		require.NoError(t, err)
 	})
 
 	t.Run("missing test options", func(t *testing.T) {
@@ -59,19 +72,19 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("non-positive duration", func(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
-		err := NewWorker(true).Process(context.Background(), nil, testJob(0), progress)
+		err := NewWorker(true).Process(context.Background(), nil, testJob(0, 0), progress)
 		require.Error(t, err)
 	})
 
 	t.Run("honors context cancellation", func(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetTotal", mock.Anything, mock.Anything).Return()
+		progress.On("SetTotal", mock.Anything, defaultProgressUpdates).Return()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 		defer cancel()
 
-		err := NewWorker(true).Process(ctx, nil, testJob(10*time.Second), progress)
+		err := NewWorker(true).Process(ctx, nil, testJob(10*time.Second, 0), progress)
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 }

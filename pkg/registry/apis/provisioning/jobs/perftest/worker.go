@@ -18,12 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
-// progressUpdates is how many progress notifications a test job emits over its
-// lifetime. Each notification writes the job back to the store, which in a
-// watch/NATS-backed deployment fans out as an event — this is deliberate: it
-// reproduces the write/watch load of a real job without doing any repository
-// work.
-const progressUpdates = 10
+// defaultProgressUpdates is how many progress notifications a test job emits
+// over its lifetime when spec.test.progressUpdates is not set.
+const defaultProgressUpdates = 10
 
 // Worker implements the synthetic "test" job type. It does no repository work:
 // it sleeps for the configured duration, emits a handful of progress updates
@@ -53,8 +50,12 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 	if duration <= 0 {
 		return errors.New("test duration must be positive")
 	}
+	progressUpdates := job.Spec.Test.ProgressUpdates
+	if progressUpdates <= 0 {
+		progressUpdates = defaultProgressUpdates
+	}
 
-	logger := logging.FromContext(ctx).With("duration", duration)
+	logger := logging.FromContext(ctx).With("duration", duration, "progressUpdates", progressUpdates)
 	ctx = logging.Context(ctx, logger)
 	ctx, span := tracing.Start(ctx, "provisioning.perftest.process")
 	defer func() {
@@ -72,7 +73,7 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 	// store.Update / watch-notification path the way a real job would, then
 	// completes once the full duration has elapsed. A very short duration may
 	// yield a non-positive interval, so clamp it to the whole duration.
-	interval := duration / progressUpdates
+	interval := duration / time.Duration(progressUpdates)
 	if interval <= 0 {
 		interval = duration
 	}

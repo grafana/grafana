@@ -270,6 +270,11 @@ func validateDeleteJobOptions(opts *provisioning.DeleteJobOptions) field.ErrorLi
 // failure — instead of completing. The margin leaves headroom for that preamble.
 const MaxTestJobDuration = 15 * time.Minute
 
+// MaxTestJobProgressUpdates caps how many progress notifications a synthetic
+// test job may emit. Each update persists status and fans out watch events, so
+// this keeps event volume from a single job bounded.
+const MaxTestJobProgressUpdates = 1000
+
 // validateTestJobOptions validates performance-testing job options
 func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
 	list := field.ErrorList{}
@@ -280,6 +285,14 @@ func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
 		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), "duration must be positive"))
 	case d > MaxTestJobDuration:
 		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), fmt.Sprintf("duration must not exceed %s", MaxTestJobDuration)))
+	}
+
+	updates := opts.ProgressUpdates
+	switch {
+	case updates < 0:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, "progressUpdates must be non-negative"))
+	case updates > MaxTestJobProgressUpdates:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, fmt.Sprintf("progressUpdates must not exceed %d", MaxTestJobProgressUpdates)))
 	}
 
 	return list
@@ -329,12 +342,13 @@ type AdmissionValidator struct {
 	// supportedResources is the configured set of resource types provisioning can manage,
 	// used to validate export-style (push and migrate) job options.
 	supportedResources []provisioning.SupportedResource
+	perfTestingEnabled bool
 }
 
 // NewAdmissionValidator creates a new job admission validator. supportedResources is the
 // configured set of resource types provisioning can manage.
-func NewAdmissionValidator(supportedResources []provisioning.SupportedResource) *AdmissionValidator {
-	return &AdmissionValidator{supportedResources: supportedResources}
+func NewAdmissionValidator(supportedResources []provisioning.SupportedResource, perfTestingEnabled bool) *AdmissionValidator {
+	return &AdmissionValidator{supportedResources: supportedResources, perfTestingEnabled: perfTestingEnabled}
 }
 
 // Validate validates Job resources during admission
@@ -357,6 +371,14 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 
 	if err := validateAuthor(ctx, a, job); err != nil {
 		return err
+	}
+
+	if job.Spec.Action == provisioning.JobActionTest && !v.perfTestingEnabled {
+		return apierrors.NewInvalid(
+			provisioning.JobResourceInfo.GroupVersionKind().GroupKind(),
+			job.Name,
+			field.ErrorList{field.Forbidden(field.NewPath("spec", "action"), "test jobs require the provisioning.performance feature flag")},
+		)
 	}
 
 	return ValidateJob(job, v.supportedResources)

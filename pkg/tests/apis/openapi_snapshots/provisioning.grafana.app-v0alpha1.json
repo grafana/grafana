@@ -6575,6 +6575,11 @@
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Duration"
               }
             ]
+          },
+          "progressUpdates": {
+            "description": "ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default.",
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
