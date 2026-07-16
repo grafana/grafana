@@ -8,11 +8,7 @@ import { type z } from 'zod';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import {
-  buildVariableChangePath,
-  findSectionPathsContainingVariable,
-  resolveVariableScope,
-} from './variableScope';
+import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
 import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const removeVariablePayloadSchema = payloads.removeVariable;

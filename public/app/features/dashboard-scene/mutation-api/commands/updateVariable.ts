@@ -12,11 +12,7 @@ import { createSceneVariableFromVariableModel } from '../../serialization/transf
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import {
-  buildVariableChangePath,
-  findSectionPathsContainingVariable,
-  resolveVariableScope,
-} from './variableScope';
+import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
 import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const updateVariablePayloadSchema = payloads.updateVariable;
