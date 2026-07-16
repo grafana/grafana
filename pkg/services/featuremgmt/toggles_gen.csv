@@ -22,6 +22,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-21,queryHistory.localOnly,experimental,@grafana/datapro,false,false,true
 2026-05-21,queryHistory.recentQueriesUI,experimental,@grafana/datapro,false,false,true
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/data-sources-plugins,false,false,false
+2026-07-14,awsAssumeRolePerDatasourceExternalId,experimental,@grafana/data-sources-plugins,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 2024-09-19,datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
@@ -113,6 +114,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 2022-10-07,queryLibrary,preview,@grafana/sharing-squad,false,false,false
+2026-07-14,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-05-22,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-05-22,savedQueriesRBAC,preview,@grafana/sharing-squad,false,false,false
 2026-05-22,newSavedQueriesExperience,preview,@grafana/sharing-squad,false,false,true
@@ -176,7 +178,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,teamLBACApiReadFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,teamLBACApiWriteFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
-2025-01-20,grafanaAdvisor,GA,@grafana/grafana-catalog,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false
 2025-01-21,datasourceConnectionsTab,privatePreview,@grafana/grafana-catalog,false,false,true
 2026-05-21,connectionsFilterSidebar,experimental,@grafana/grafana-catalog,false,false,true
@@ -321,7 +322,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,querycaching.useInQueryService,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-05-22,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
-2026-05-22,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-05-22,grafana.newPreferencesPage,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,datasources.config.ui.useNewDatasourceCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasources.apiserver.useNewAPIsForDatasourceResources,experimental,@grafana/grafana-datasources-core-services,false,false,true
@@ -333,7 +334,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,grafana.meticulousAIMode,experimental,@grafana/dataviz-squad,false,false,false
 2026-05-22,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,grafana.unifiedHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
-2026-05-22,preferences.rerouteLegacyAPIs,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-05-22,preferences.rerouteLegacyAPIs,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
@@ -359,3 +360,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-01,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,true

@@ -211,14 +211,13 @@ export function PanelChrome({
     theme,
     headerHeight,
     collapsed,
-    subHeaderHeight,
     height,
     width
   );
 
   const headerStyles: CSSProperties = {
-    height: headerHeight,
     cursor: dragClass ? 'move' : 'auto',
+    paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
   const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
@@ -500,9 +499,7 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
 const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
     // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
-    return (
-      theme.spacing.gridSize * theme.components.panel.headerHeight - (subHeaderHeight > 0 ? theme.spacing.gridSize : 0)
-    );
+    return theme.spacing.gridSize * theme.components.panel.headerHeight + subHeaderHeight;
   }
 
   return 0;
@@ -513,7 +510,6 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   headerHeight: number,
   collapsed: boolean,
-  subHeaderHeight: number,
   height?: number,
   width?: number
 ) => {
@@ -529,7 +525,12 @@ const getContentStyle = (
 
   let innerHeight = 0;
   if (height) {
-    innerHeight = height - headerHeight - panelPadding - panelBorder - subHeaderHeight;
+    innerHeight = height - headerHeight - panelPadding - panelBorder + chromePadding;
+
+    // When there is no header the content has topPadding
+    if (headerHeight === 0) {
+      innerHeight -= chromePadding;
+    }
   }
 
   if (collapsed) {
@@ -538,6 +539,7 @@ const getContentStyle = (
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
+    paddingTop: headerHeight > 0 ? 0 : chromePadding,
   };
 
   return { contentStyle, innerWidth, innerHeight };
@@ -627,7 +629,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(0, 1, 0, 1),
+      padding: theme.spacing(1, 1, 0, 1),
       gap: theme.spacing(1),
     }),
     subHeader: css({
@@ -635,7 +637,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-      padding: theme.spacing(0, 1, 0, 1.5),
+      padding: theme.spacing(0, 1, 1, 1.5),
       overflow: 'hidden',
       gap: theme.spacing(1),
     }),
