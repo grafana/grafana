@@ -559,6 +559,92 @@ func TestSimpleServer(t *testing.T) {
 	})
 }
 
+func TestListStoredResources(t *testing.T) {
+	testUser := &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), testUser)
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+
+	server, err := NewResourceServer(ResourceServerOptions{Backend: store})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = server.Stop(stopCtx)
+	})
+
+	create := func(namespace, name string) {
+		raw := []byte(fmt.Sprintf(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {"name": %q, "namespace": %q},
+			"spec": {"title": "hello", "interval": "5m"}
+		}`, name, namespace))
+		resp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key: &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: namespace,
+				Name:      name,
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+	}
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	create("ns1", "item1")
+	create("ns1", "item2")
+	create("ns2", "item3")
+
+	t.Run("discovers resources for a namespace", func(t *testing.T) {
+		resp, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "ns1"})
+		require.NoError(t, err)
+		require.Equal(t, []*resourcepb.ListStoredResourcesResponse_StoredResource{
+			{Namespace: "ns1", Group: "playlist.grafana.app", Resource: "playlists"},
+		}, resp.Items)
+	})
+
+	t.Run("non-existent namespace returns no items", func(t *testing.T) {
+		resp, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "missing"})
+		require.NoError(t, err)
+		require.Empty(t, resp.Items)
+	})
+
+	t.Run("empty namespace is rejected with InvalidArgument", func(t *testing.T) {
+		_, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{})
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("backend errors are returned as codes.Internal", func(t *testing.T) {
+		errServer, err := NewResourceServer(ResourceServerOptions{
+			Backend: &mockStorageBackend{listStoredErr: errors.New("boom")},
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = errServer.Stop(stopCtx)
+		})
+
+		_, err = errServer.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "ns1"})
+		require.Equal(t, codes.Internal, status.Code(err))
+	})
+}
+
 func TestRunInQueue(t *testing.T) {
 	const testTenantID = "test-tenant"
 	t.Run("should execute successfully when queue has capacity", func(t *testing.T) {

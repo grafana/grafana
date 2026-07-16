@@ -35,7 +35,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                                                     | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
-| `annotationsClustering`                      | Enables annotation clustering and switches to refactored annotation code                                                                                      | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
@@ -59,22 +58,20 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `elasticsearchCrossClusterSearch`            | Enables cross cluster search in the Elasticsearch data source                                                                                                 |                    |
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML`        | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
-| `grafanaAdvisor`                             | Enables Advisor app                                                                                                                                           | Yes                |
 | `alertingMigrationUI`                        | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
-| `panelStyleActions`                          | Enable style actions (copy/paste) in the panel editor                                                                                                         | Yes                |
-| `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
-| `vizLegendFacetedFilter`                     | Enable faceted labels filter for series visibility in the legend                                                                                              | Yes                |
-| `heatmapRowsAxisOptions`                     | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                                                                        | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
-| `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
+| `grafana.newPreferencesPage`                 | Whether to use the new SharedPreferences functional component                                                                                                 | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `preferences.rerouteLegacyAPIs`              | Use K8s client implementation for legacy preferences API                                                                                                      | Yes                |
+| `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                                              | Yes                |
+| `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                                                    | Yes                |
 
 ## Public preview feature toggles
 
@@ -85,8 +82,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTitleSearch`                | Search for dashboards using panel title                                                        |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability |
 | `provisioning.readmes`            | Render the README.md of a Git Sync provisioned folder inline below its dashboards list         |
+| `provisioning.userAttribution`    | Author Git Sync commits as the acting Grafana user                                             |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                          |
-| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                    |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                      |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                              |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                             |
@@ -97,13 +94,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                         |
 | `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                 |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                             |
-| `groupToNestedTableV2`            | Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                               |
-| `teamFolders`                     | Enables team folders functionality                                                             |
 | `interactiveLearning`             | Enables the interactive learning app                                                           |
-| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)               |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                           |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                             |

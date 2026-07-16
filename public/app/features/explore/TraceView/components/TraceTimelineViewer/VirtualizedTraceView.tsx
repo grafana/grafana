@@ -35,7 +35,7 @@ import { getColorByKey } from '../utils/color-generator';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
 import ListView from './ListView';
-import SpanBarRow from './SpanBarRow';
+import { SpanBarRow } from './SpanBarRow';
 import { type TraceFlameGraphs } from './SpanDetail';
 import type DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';

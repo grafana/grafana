@@ -107,33 +107,6 @@ datasources:
     secureJsonData:
       password: password
 
-  - name: gdev-mssql
-    type: mssql
-    url: mssql:1433
-    database: grafana
-    user: grafana
-    secureJsonData:
-      password: Password!
-
-  - name: gdev-mssql-tls
-    type: mssql
-    url: localhost:1434
-    database: grafana
-    user: grafana
-    jsonData:
-      encrypt: "true"
-      tlsSkipVerify: true
-    secureJsonData:
-      password: Password!
-
-  - name: gdev-mssql-ds-tests
-    type: mssql
-    url: mssqltests:1433
-    database: grafanatest
-    user: grafana
-    secureJsonData:
-      password: Password!
-
   - name: gdev-postgres
     type: postgres
     url: postgres:5432
@@ -166,11 +139,4 @@ datasources:
     uid: gdev-loki
     access: proxy
     url: http://loki:3100
-    editable: false
-
-  - name: gdev-pyroscope
-    type: grafana-pyroscope-datasource
-    uid: gdev-pyroscope
-    access: proxy
-    url: http://pyroscope:4040
     editable: false

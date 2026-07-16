@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type Placement } from '@popperjs/core';
-import classnames from 'classnames';
+import classnames from 'clsx';
 import { type ReactElement, type ReactNode, cloneElement, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';

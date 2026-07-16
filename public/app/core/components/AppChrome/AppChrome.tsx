@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { Resizable } from 're-resizable';
 import { type PropsWithChildren, useEffect } from 'react';
 
@@ -48,7 +48,7 @@ export function AppChrome({ children }: Props) {
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
-    scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
+    !state.chromeless && scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
 
   const headerLevels = useChromeHeaderLevels();

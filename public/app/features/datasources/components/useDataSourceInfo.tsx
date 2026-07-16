@@ -9,6 +9,8 @@ import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 type DataSourceInfo = {
   dataSourcePluginName: string;
   alertingSupported: boolean;
+  // while true, alertingSupported is not known yet and the badge is not rendered
+  alertingLoading?: boolean;
   failure?: DatasourceFailureDetails;
 };
 
@@ -26,19 +28,21 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
     value: dataSourceInfo.dataSourcePluginName,
   });
 
-  info.push({
-    label: t('datasources.use-data-source-info.label.alerting', 'Alerting'),
-    value: (
-      <Badge
-        color={alertingEnabled ? 'green' : 'red'}
-        text={
-          alertingEnabled
-            ? t('datasources.use-data-source-info.badge-text-supported', 'Supported')
-            : t('datasources.use-data-source-info.badge-text-not-supported', 'Not supported')
-        }
-      ></Badge>
-    ),
-  });
+  if (!dataSourceInfo.alertingLoading) {
+    info.push({
+      label: t('datasources.use-data-source-info.label.alerting', 'Alerting'),
+      value: (
+        <Badge
+          color={alertingEnabled ? 'green' : 'red'}
+          text={
+            alertingEnabled
+              ? t('datasources.use-data-source-info.badge-text-supported', 'Supported')
+              : t('datasources.use-data-source-info.badge-text-not-supported', 'Not supported')
+          }
+        ></Badge>
+      ),
+    });
+  }
 
   if (isAdvisorEnabled()) {
     info.push({

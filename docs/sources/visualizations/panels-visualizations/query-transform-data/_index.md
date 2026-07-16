@@ -399,6 +399,10 @@ To get a consistent visual representation in both views, set **Max data points**
 For example, if you set it to `100`, Grafana requests no more than 100 points, regardless of the panel’s pixel width.
 This means the query resolution remains more consistent whether the panel is in the dashboard grid or in view mode.
 
+{{< admonition type="note" >}}
+**Max data points** defaults to the panel’s pixel width, so resizing a panel changes how many points the data source returns. This affects not only the visual resolution, but also any values calculated from that data, such as transformations, reducer calculations (the **Calculation** option in visualizations like Stat, Gauge, and Bar gauge), and expressions. If a panel’s computed value shifts with its size, set **Max data points** to a fixed value, or set **Min interval** to stabilize the resolution.
+{{< /admonition >}}
+
 With streaming data, Grafana uses the max data points value for the rolling buffer.
 Streaming is a continuous flow of data, and buffering divides the stream into chunks.
 For example, Loki streams data in its live tailing mode.
@@ -464,6 +468,15 @@ Panel time overrides have no effect when the dashboard's time range is absolute.
 | Last entire month    | `1M/M`           |
 | This entire year     | `1d/y`           |
 | Last entire year     | `1y/y`           |
+
+{{< admonition type="caution">}}
+Avoid using bare month offsets such as `1M` without a rounding suffix.
+Because calendar months vary in length, a plain `1M` shift can produce inconsistent results.
+For example, shifting from a 30-day month might truncate the end date unexpectedly.
+
+Use `1M/M` instead to snap the shifted range to true calendar month boundaries.
+The `/M` suffix rounds the start and end of the shifted range down to the beginning of the month, ensuring consistent behavior regardless of the current month's length.
+{{< /admonition >}}
 
 ### Cache timeout
 

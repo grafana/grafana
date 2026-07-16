@@ -63,6 +63,7 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   let prepareConfigSpy: jest.SpyInstance;
 
   const assertCanvasOutput = async () => {
+    await waitFor(() => uPlotInstance?.status === 1);
     await waitFor(() => expect(document.querySelector('.u-over')).toBeInTheDocument());
     expect(removeCanvasTransforms(uPlotInstance!.ctx.__getEvents())).toMatchCanvasSnapshot([], { width, height });
   };
