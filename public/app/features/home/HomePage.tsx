@@ -17,7 +17,7 @@ import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
-import Recommendations from './Recommendations/Recommendations';
+import { Recommendations } from './Recommendations/Recommendations';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {
@@ -50,7 +50,9 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isLoadingTabs;
+  const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
+  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs;
+
   // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
   // what actually renders below.
   const extraContent = renderLimitedComponents({
@@ -68,7 +70,9 @@ export default function HomePage() {
   });
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();
-  const skeleton = <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />;
+  const skeleton = (
+    <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} redesignEnabled={redesignEnabled} />
+  );
 
   return (
     <Page
@@ -86,24 +90,48 @@ export default function HomePage() {
         ) : (
           <Suspense fallback={skeleton}>
             <Stack direction="column" gap={2}>
-              <HomeSection direction="column" display="flex" gap={2}>
-                {/* Assistant injects an Assistant-based prompt input when available */}
-                {renderLimitedComponents({
-                  props: {},
-                  limit: 1,
-                  components: assistantComponents,
-                  pluginId: ASSISTANT_PLUGIN_ID,
-                })}
-                <DashboardTabs extensionComponents={tabComponents} />
-              </HomeSection>
+              {redesignEnabled ? (
+                <>
+                  {renderLimitedComponents({
+                    props: {},
+                    limit: 1,
+                    components: assistantComponents,
+                    pluginId: ASSISTANT_PLUGIN_ID,
+                    wrapper: ({ children }) => (
+                      <div className={styles.extra}>
+                        <HomeSection>{children}</HomeSection>
+                      </div>
+                    ),
+                  })}
 
-              {redesignEnabled && <Recommendations />}
+                  <Recommendations />
 
-              <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                <FiringAlertsCard />
-                <IncidentsCard />
-              </Grid>
+                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                    {/* Skip the HomepageTabs extension point for the redesign UI */}
+                    <DashboardTabs extensionComponents={[]} />
+                    {/* TODO: Alerts and incidents will combine into one card */}
+                    <FiringAlertsCard />
+                  </Grid>
+                </>
+              ) : (
+                <>
+                  <HomeSection direction="column" display="flex" gap={2}>
+                    {/* Assistant injects an Assistant-based prompt input when available */}
+                    {renderLimitedComponents({
+                      props: {},
+                      limit: 1,
+                      components: assistantComponents,
+                      pluginId: ASSISTANT_PLUGIN_ID,
+                    })}
+                    <DashboardTabs extensionComponents={tabComponents} />
+                  </HomeSection>
 
+                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                    <FiringAlertsCard />
+                    <IncidentsCard />
+                  </Grid>
+                </>
+              )}
               {extraContent}
             </Stack>
           </Suspense>
