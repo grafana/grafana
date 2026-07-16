@@ -37,4 +37,18 @@ describe('variable payloads require a non-empty name', () => {
     const result = payloads.updateVariable.safeParse({ name: 'region', variable: variable('') });
     expect(result.success).toBe(false);
   });
+
+  it('UPDATE_ROW rejects an empty section-variable name', () => {
+    const named = payloads.updateRow.safeParse({ path: '/rows/0', spec: { variables: [variable('region')] } });
+    expect(named.success).toBe(true);
+    const blank = payloads.updateRow.safeParse({ path: '/rows/0', spec: { variables: [variable('')] } });
+    expect(blank.success).toBe(false);
+  });
+
+  it('UPDATE_TAB rejects an empty section-variable name', () => {
+    const named = payloads.updateTab.safeParse({ path: '/tabs/0', spec: { variables: [variable('region')] } });
+    expect(named.success).toBe(true);
+    const blank = payloads.updateTab.safeParse({ path: '/tabs/0', spec: { variables: [variable('')] } });
+    expect(blank.success).toBe(false);
+  });
 });

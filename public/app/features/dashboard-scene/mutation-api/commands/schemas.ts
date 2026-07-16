@@ -159,7 +159,7 @@ const partialRowSpecSchema = z
       .optional()
       .describe('Show/hide rules for this row. Omit to leave unchanged.'),
     variables: z
-      .array(variableKindSchema)
+      .array(namedVariableKindSchema)
       .optional()
       .describe('Section-scoped variables for this row. Omit to leave unchanged. Pass [] to clear section variables.'),
   })
@@ -182,7 +182,7 @@ const partialTabSpecSchema = z
       .optional()
       .describe('Show/hide rules for this tab. Omit to leave unchanged.'),
     variables: z
-      .array(variableKindSchema)
+      .array(namedVariableKindSchema)
       .optional()
       .describe('Section-scoped variables for this tab. Omit to leave unchanged. Pass [] to clear section variables.'),
   })
