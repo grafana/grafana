@@ -15,7 +15,7 @@ func TestOSSEnvironment(t *testing.T) {
 	environment := ProvideEnvironment(&setting.Cfg{AppURL: appURL})
 
 	require.Equal(t, appURL, environment.AppURL())
-	token, err := environment.Prepare(context.Background(), "acme-widget")
+	token, err := environment.LicenseToken(context.Background(), "acme-widget")
 	require.NoError(t, err)
 	require.Empty(t, token)
 }

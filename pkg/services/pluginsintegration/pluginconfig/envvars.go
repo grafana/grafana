@@ -96,7 +96,7 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 		return nil
 	}
 
-	token, err := p.environment.Prepare(ctx, pluginID)
+	token, err := p.environment.LicenseToken(ctx, pluginID)
 	if err != nil {
 		p.logger.Warn("Failed to prepare marketplace license environment", "pluginId", pluginID)
 		return nil
