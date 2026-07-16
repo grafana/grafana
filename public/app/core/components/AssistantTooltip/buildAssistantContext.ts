@@ -156,7 +156,7 @@ export function buildDatapointAssistantContext({
   const origin = field.state?.origin;
   const sourceFrame = origin ? dataSeries[origin.frameIndex] : undefined;
   const refId = sourceFrame?.refId ?? alignedFrame.refId;
-  const query = sourceFrame?.meta?.executedQueryString;
+  const query = sourceFrame?.meta?.executedQueryString ?? alignedFrame.meta?.executedQueryString;
 
   const windowMs = isTime ? getStepMs(xField.values, xIdx) : 0;
   const matchedAnnotations = isTime ? matchAnnotations(annotations, xField.values[xIdx], windowMs) : [];
