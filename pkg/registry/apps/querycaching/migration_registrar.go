@@ -10,6 +10,7 @@ import (
 const (
 	apiGroup = "querycaching.grafana.app"
 	resource = "querycacheconfigs"
+	version = "v1beta1" // must match the apiVersion the migrator writes
 )
 
 func QueryCacheConfigMigration(m migrator.QueryCacheConfigMigrator) migrations.MigrationDefinition {
@@ -19,7 +20,11 @@ func QueryCacheConfigMigration(m migrator.QueryCacheConfigMigrator) migrations.M
 		ID:          "querycacheconfigs",
 		MigrationID: "querycacheconfigs migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: gr, LockTables: []string{"data_source_cache", "data_source"}},
+			{
+				GroupResource: gr,
+				LockTables:    []string{"data_source_cache", "data_source"},
+				TargetVersion: version,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			gr: m.MigrateQueryCacheConfigs,

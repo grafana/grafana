@@ -17,8 +17,17 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 		ID:          migrations.FoldersDashboardsMigrationID,
 		MigrationID: "folders and dashboards migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: folderGR, LockTables: []string{"dashboard", "dashboard_version", "dashboard_provisioning"}},
-			{GroupResource: dashboardGR, LockTables: []string{"dashboard", "dashboard_version", "dashboard_provisioning"}},
+			{
+				GroupResource: folderGR,
+				LockTables:    []string{"dashboard", "dashboard_version", "dashboard_provisioning"},
+				TargetVersion: folders.APIVersion,
+			},
+			{
+				GroupResource: dashboardGR,
+				LockTables:    []string{"dashboard", "dashboard_version", "dashboard_provisioning"},
+				// Per-row api_version (floor v0alpha1, up to v1).
+				TargetVersion: migrations.DynamicTargetVersion,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			folderGR:    migrator.MigrateFolders,
