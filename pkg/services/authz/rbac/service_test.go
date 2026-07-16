@@ -1058,6 +1058,51 @@ func TestService_listPermission(t *testing.T) {
 			},
 			expectedItems: []string{"some_folder_parent", "some_folder_child"},
 		},
+		{
+			name: "should not grant access to root-parented items via folders:uid:general scope on list",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "some_folder"},
+			},
+			list: listRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+		},
+		{
+			name: "should grant root scope for create verb so bulk create at root is allowed",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:create",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "some_folder"},
+			},
+			list: listRequest{
+				Action:   "dashboards:create",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Verb:     utils.VerbCreate,
+				Options:  &ListRequestOptions{},
+			},
+			expectedFolders: []string{"general"},
+		},
 	}
 
 	for _, tc := range testCases {

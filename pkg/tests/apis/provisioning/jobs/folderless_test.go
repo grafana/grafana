@@ -14,6 +14,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -54,7 +55,7 @@ func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 	require.Len(t, folders.Items, 1, "only the subdirectory should become a folder")
 	subFolder := folders.Items[0]
 	require.NotEqual(t, repo, subFolder.GetName(), "the folder must not be the repo wrapper folder")
-	require.Empty(t, subFolder.GetAnnotations()[utils.AnnoKeyFolder],
+	require.True(t, foldermodel.IsRootFolderUID(subFolder.GetAnnotations()[utils.AnnoKeyFolder]),
 		"the subdirectory folder must be at the top level (no parent)")
 	require.Equal(t, repo, subFolder.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"the folder must be managed by the folderless repo")
@@ -62,7 +63,7 @@ func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 	// Root-level dashboard must be top-level (no parent folder).
 	rootDash, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 	require.NoError(t, err, "root dashboard should exist")
-	require.Empty(t, rootDash.GetAnnotations()[utils.AnnoKeyFolder],
+	require.True(t, foldermodel.IsRootFolderUID(rootDash.GetAnnotations()[utils.AnnoKeyFolder]),
 		"root-level dashboard must have no parent folder")
 	require.Equal(t, repo, rootDash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
@@ -197,7 +198,7 @@ func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *tes
 		}
 		assert.Equal(collect, folderlessRepo, fld.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 		// A folderless root file is at the top level.
-		assert.Empty(collect, fld.GetAnnotations()[utils.AnnoKeyFolder])
+		assert.True(collect, foldermodel.IsRootFolderUID(fld.GetAnnotations()[utils.AnnoKeyFolder]))
 
 		um, err := helper.DashboardsV1.Resource.Get(ctx, unmanagedName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
@@ -280,7 +281,7 @@ func TestIntegrationProvisioning_FolderlessMigrate(t *testing.T) {
 			}
 			assert.Equal(collect, repo, d.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 				"dashboard %s should be managed after migration", name)
-			assert.Empty(collect, d.GetAnnotations()[utils.AnnoKeyFolder],
+			assert.True(collect, foldermodel.IsRootFolderUID(d.GetAnnotations()[utils.AnnoKeyFolder]),
 				"migrated dashboard %s should be at the top level", name)
 		}
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboards should be managed at the top level")
@@ -346,7 +347,7 @@ func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
 			return
 		}
 		assert.Equal(collect, repo, root.GetAnnotations()[utils.AnnoKeyManagerIdentity])
-		assert.Empty(collect, root.GetAnnotations()[utils.AnnoKeyFolder],
+		assert.True(collect, foldermodel.IsRootFolderUID(root.GetAnnotations()[utils.AnnoKeyFolder]),
 			"root file must map to a top-level resource")
 
 		sub, err := helper.DashboardsV1.Resource.Get(ctx, "fldless-sub", metav1.GetOptions{})
@@ -365,7 +366,7 @@ func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
 		if !assert.NoError(collect, err, "parent folder should exist") {
 			return
 		}
-		assert.Empty(collect, parentFolder.GetAnnotations()[utils.AnnoKeyFolder],
+		assert.True(collect, foldermodel.IsRootFolderUID(parentFolder.GetAnnotations()[utils.AnnoKeyFolder]),
 			"the subdirectory folder must be at the top level")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "created resources should map to top level / top-level folder")
 }
@@ -393,7 +394,7 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 	// Initially top-level: no parent folder.
 	dash, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Empty(t, dash.GetAnnotations()[utils.AnnoKeyFolder], "dashboard should start at the top level")
+	require.True(t, foldermodel.IsRootFolderUID(dash.GetAnnotations()[utils.AnnoKeyFolder]), "dashboard should start at the top level")
 
 	// Move root -> subdirectory (reparent into a top-level folder).
 	resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
@@ -437,7 +438,7 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 		if !assert.NoError(collect, err) {
 			return
 		}
-		assert.Empty(collect, back.GetAnnotations()[utils.AnnoKeyFolder],
+		assert.True(collect, foldermodel.IsRootFolderUID(back.GetAnnotations()[utils.AnnoKeyFolder]),
 			"dashboard should be back at the top level after moving to root")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should return to the top level")
 }

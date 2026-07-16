@@ -108,7 +108,10 @@ func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.
 	require.NotNil(t, search.lastReq)
 	require.Len(t, search.lastReq.Options.Fields, 1)
 	require.Equal(t, resource.SEARCH_FIELD_FOLDER, search.lastReq.Options.Fields[0].Key)
-	require.Equal(t, []string{""}, search.lastReq.Options.Fields[0].Values)
+	// The root sentinel is passed through unchanged; the search backend expands
+	// it to match both "" and "general" server-side.
+	require.Equal(t, "=", search.lastReq.Options.Fields[0].Operator)
+	require.Equal(t, []string{folder.GeneralFolderUID}, search.lastReq.Options.Fields[0].Values)
 
 	list, ok := resp.obj.(*folders.FolderList)
 	require.True(t, ok)

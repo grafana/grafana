@@ -154,7 +154,8 @@ func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidatio
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	// treat both the legacy empty value and "general" as root so the
+	// The unified storage prepare step now writes "general" for resources at
+	// the root; treat both the legacy empty value and "general" as root so the
 	// editor/viewer default permissions are still granted on new root folders.
 	isNested := !folder.IsRootFolderUID(parentUID)
 	if isNested {

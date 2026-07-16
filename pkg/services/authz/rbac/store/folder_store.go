@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -172,7 +173,11 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 
 		folder := Folder{UID: object.GetName()}
 		parent := object.GetFolder()
-		if parent != "" {
+		// Root sentinels must not show up as a real parent in the tree,
+		// otherwise inherited scopes like folders:uid:general (granted by
+		// fixed:folders.general:reader to Viewers) leak access to every
+		// root-parented folder.
+		if !foldermodel.IsRootFolderUID(parent) {
 			folder.ParentUID = &parent
 		}
 
