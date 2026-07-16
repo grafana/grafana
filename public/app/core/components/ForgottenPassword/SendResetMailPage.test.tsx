@@ -1,30 +1,16 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
+
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import { SendResetMailPage } from './SendResetMailPage';
 
-const postMock = jest.fn();
-jest.mock('@grafana/runtime', () => ({
-  getBackendSrv: () => ({
-    post: postMock,
-  }),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    buildInfo: {
-      version: 'v1.0',
-      commit: '1',
-      env: 'production',
-      edition: 'Open Source',
-    },
-    licenseInfo: {
-      stateInfo: '',
-      licenseUrl: '',
-    },
-    appSubUrl: '',
-  },
-}));
+setBackendSrv(backendSrv);
+setupMockServer();
 
-describe('VerifyEmail Page', () => {
+describe('SendResetMail Page', () => {
   it('renders correctly', () => {
     render(<SendResetMailPage />);
     expect(screen.getByText('Reset password')).toBeInTheDocument();
@@ -44,19 +30,20 @@ describe('VerifyEmail Page', () => {
     await userEvent.type(screen.getByRole('textbox', { name: /User Enter your information/i }), 'test@gmail.com');
     await waitFor(() => expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument());
   });
-  it('should show success meessage if reset-password is successful', async () => {
-    postMock.mockResolvedValueOnce({ message: 'Email sent' });
+  it('should show success message if reset-password is successful', async () => {
+    const capture = captureRequests(
+      (r) => r.url.includes('/api/user/password/send-reset-email') && r.method === 'POST'
+    );
     render(<SendResetMailPage />);
 
     await userEvent.type(screen.getByRole('textbox', { name: /User Enter your information/i }), 'test@gmail.com');
     await userEvent.click(screen.getByRole('button', { name: 'Send reset email' }));
-    await waitFor(() =>
-      expect(postMock).toHaveBeenCalledWith('/api/user/password/send-reset-email', {
-        userOrEmail: 'test@gmail.com',
-      })
-    );
-    expect(screen.getByText(/An email with a reset link/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/An email with a reset link/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to login' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to login' })).toHaveAttribute('href', '/login');
+
+    const [resetRequest] = await capture;
+    expect(await resetRequest.clone().json()).toEqual({ userOrEmail: 'test@gmail.com' });
   });
 });

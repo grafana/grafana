@@ -17,10 +17,12 @@ import appPlatformPreferencesv1alpha1Handlers from './apis/preferences.grafana.a
 import appPlatformProvisioningv0alpha1Handlers from './apis/provisioning.grafana.app/v0alpha1/handlers';
 import appPlatformQuotasv0alpha1Handlers from './apis/quotas.grafana.app/v0alpha1/handlers';
 import appPlatformScopev0alpha1Handlers from './apis/scope.grafana.app/v0alpha1/handlers';
+import authHandlers from './auth/handlers';
 
 const allHandlers: HttpHandler[] = [
   // Legacy handlers
   ...accessControlHandlers,
+  ...authHandlers,
   ...dashboardsHandlers,
   ...folderHandlers,
   ...pluginsHandlers,
