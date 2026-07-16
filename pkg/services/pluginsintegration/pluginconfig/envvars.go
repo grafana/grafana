@@ -24,20 +24,20 @@ import (
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
 
 type EnvVarsProvider struct {
-	cfg         *PluginInstanceCfg
-	license     plugins.Licensing
-	logger      log.Logger
-	environment marketplacelicensing.Environment
-	ssoSettings pluginsso.SettingsProvider
+	cfg                  *PluginInstanceCfg
+	license              plugins.Licensing
+	marketplaceLicensing marketplacelicensing.Licensing
+	logger               log.Logger
+	ssoSettings          pluginsso.SettingsProvider
 }
 
-func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider, environment marketplacelicensing.Environment) *EnvVarsProvider {
+func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider, environment marketplacelicensing.Licensing) *EnvVarsProvider {
 	return &EnvVarsProvider{
-		cfg:         cfg,
-		license:     license,
-		logger:      log.New("plugins.envvars"),
-		environment: environment,
-		ssoSettings: ssoSettings,
+		cfg:                  cfg,
+		license:              license,
+		logger:               log.New("plugins.envvars"),
+		marketplaceLicensing: environment,
+		ssoSettings:          ssoSettings,
 	}
 }
 
@@ -89,6 +89,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 }
 
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
+	// Marketplace plugins require feature toggle and a valid Enterprise license
 	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] {
 		return nil
 	}
@@ -96,7 +97,9 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 		return nil
 	}
 
-	token, err := p.environment.LicenseToken(ctx, pluginID)
+	// Try to get the license token, falling-back to the JWT path on disk if token is not available.
+
+	token, err := p.marketplaceLicensing.LicenseToken(ctx, pluginID)
 	if err != nil {
 		p.logger.Warn("Failed to prepare marketplace license environment", "pluginId", pluginID)
 		return nil
@@ -108,7 +111,10 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 	if token == "" && !hasPath {
 		return nil
 	}
-	variables := []string{p.envVar("GF_MARKETPLACE_APP_URL", p.environment.AppURL())}
+
+	// Pass the most relevant marketplace license information to the plugin.
+	// The SDK gives higher priority to the license token over the license path.
+	variables := []string{p.envVar("GF_MARKETPLACE_APP_URL", p.marketplaceLicensing.AppURL())}
 	if token != "" {
 		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_TEXT", token))
 	}

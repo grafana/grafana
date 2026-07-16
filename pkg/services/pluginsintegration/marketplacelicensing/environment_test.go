@@ -13,7 +13,7 @@ import (
 func TestOSSEnvironment(t *testing.T) {
 	const appURL = "https://grafana.example.com/raw"
 
-	environment := ProvideEnvironment(&setting.Cfg{AppURL: appURL})
+	environment := Provide(&setting.Cfg{AppURL: appURL})
 
 	require.Equal(t, appURL, environment.AppURL())
 	token, err := environment.LicenseToken(context.Background(), "acme-widget")

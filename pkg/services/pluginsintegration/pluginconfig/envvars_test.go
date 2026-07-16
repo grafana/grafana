@@ -51,7 +51,7 @@ func (e *fakeMarketplaceEnvironment) LicenseToken(_ context.Context, pluginID st
 	return e.token, e.prepareErr
 }
 
-var _ marketplacelicensing.Environment = (*fakeMarketplaceEnvironment)(nil)
+var _ marketplacelicensing.Licensing = (*fakeMarketplaceEnvironment)(nil)
 
 func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 	t.Run("backend datasource with license", func(t *testing.T) {
@@ -193,7 +193,7 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 
 // TestPluginEnvVarsProvider_marketplaceLicenseEnvironment verifies marketplace environment variables.
 func TestPluginEnvVarsProvider_marketplaceLicenseEnvironment(t *testing.T) {
-	newProvider := func(environment marketplacelicensing.Environment) *EnvVarsProvider {
+	newProvider := func(environment marketplacelicensing.Licensing) *EnvVarsProvider {
 		return NewEnvVarsProvider(&PluginInstanceCfg{
 			Features:                    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
 			MarketplaceLicenseDirectory: "marketplace-licenses",
