@@ -1,6 +1,12 @@
 import { type ChangeEvent, useCallback } from 'react';
 
-import { FieldType, type SelectableValue, type TransformerUIProps, getTimeZones } from '@grafana/data';
+import {
+  type FieldNamePickerConfigSettings,
+  FieldType,
+  type SelectableValue,
+  type StandardEditorsRegistryItem,
+  type TransformerUIProps,
+} from '@grafana/data';
 import { type ConvertFieldTypeOptions, type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
@@ -12,11 +18,8 @@ import { getTimezoneOptions } from '../utils';
 import { EnumMappingEditor } from './EnumMappingEditor';
 
 const fieldNamePickerSettings = {
-  editor: FieldNamePicker,
-  id: '',
-  name: '',
   settings: { width: 24, isClearable: false },
-} as const;
+} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 export const ConvertFieldTypeTransformerEditor = ({
   input,
@@ -25,20 +28,6 @@ export const ConvertFieldTypeTransformerEditor = ({
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
   const allTypes = getAllFieldTypeIconOptions().filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
-
-  // Format timezone options
-  const tzs = getTimeZones();
-  timeZoneOptions.push({
-    label: t('transformers.convert-field-type-transformer-editor.label.browser', 'Browser'),
-    value: 'browser',
-  });
-  timeZoneOptions.push({
-    label: t('transformers.convert-field-type-transformer-editor.label.utc', 'UTC'),
-    value: 'utc',
-  });
-  for (const tz of tzs) {
-    timeZoneOptions.push({ label: tz, value: tz });
-  }
 
   const onSelectField = useCallback(
     (idx: number) => (value: string | undefined) => {

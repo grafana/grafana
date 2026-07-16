@@ -61,9 +61,10 @@ describe('field convert type', () => {
   });
 
   it.each([
-    ['utc', Date.UTC(2024, 0, 1)],
-    ['Asia/Kolkata', Date.UTC(2023, 11, 31, 18, 30)],
-  ])('will parse string time in the specified timezone', (timezone, expected) => {
+    ['utc', 'YYYY-MM-DD HH:mm:ss', Date.UTC(2024, 0, 1)],
+    ['Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss', Date.UTC(2023, 11, 31, 18, 30)],
+    ['utc', '', Date.UTC(2024, 0, 1)],
+  ])('will parse string time in the specified timezone', (timezone, dateFormat, expected) => {
     const field: Field = {
       name: 'date',
       type: FieldType.string,
@@ -73,7 +74,7 @@ describe('field convert type', () => {
 
     const result = convertFieldType(field, {
       destinationType: FieldType.time,
-      dateFormat: 'YYYY-MM-DD HH:mm:ss',
+      dateFormat,
       timezone,
     });
 

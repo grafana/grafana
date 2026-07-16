@@ -125,8 +125,12 @@ const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]
 /**
  * @internal
  */
-export function fieldToTimeField(field: Field, dateFormat?: string, timeZone?: TimeZone): Field {
-  const opts = dateFormat || timeZone ? { format: dateFormat, timeZone } : undefined;
+export function fieldToTimeField(field: Field, dateFormat?: string): Field {
+  return fieldToTimeFieldWithTimeZone(field, dateFormat);
+}
+
+function fieldToTimeFieldWithTimeZone(field: Field, dateFormat?: string, timeZone?: TimeZone): Field {
+  const opts = dateFormat || timeZone ? { format: dateFormat || undefined, timeZone } : undefined;
 
   const timeValues = field.values.slice();
 
@@ -282,7 +286,7 @@ function ensureTimeFieldWithTimeZone(field: Field, dateFormat?: string, timeZone
       type: FieldType.time, //assumes it should be time
     };
   }
-  return fieldToTimeField(field, dateFormat, timeZone);
+  return fieldToTimeFieldWithTimeZone(field, dateFormat, timeZone);
 }
 
 function fieldToEnumField(field: Field, config?: EnumFieldConfig): Field {
