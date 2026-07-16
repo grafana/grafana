@@ -11,6 +11,7 @@ import (
 	natsclient "github.com/nats-io/nats.go"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // tokenExchangeTimeout bounds a single access-token mint so a slow or unreachable
@@ -231,16 +232,18 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		options = append(options, natsclient.Secure(tc))
 	}
 
-	// Precedence: per-role creds file > shared creds file > exchanged access
-	// token > static token. TokenHandler is invoked on every (re)connect, so the
-	// minted token is always fresh; the authlib client caches it under the hood.
-	switch creds := c.credentials(); {
-	case creds != "":
-		options = append(options, natsclient.UserCredentials(creds))
-	case c.config.TokenExchangeConfigured():
+	// The auth mechanism is selected explicitly by mode, not inferred from which
+	// fields are populated. For token exchange, TokenHandler is invoked on every
+	// (re)connect so the minted token is always fresh; the authlib client caches
+	// it under the hood.
+	switch c.config.AuthMode() {
+	case setting.NATSAuthModeCredentials:
+		options = append(options, natsclient.UserCredentials(c.credentials()))
+	case setting.NATSAuthModeTokenExchange:
 		options = append(options, natsclient.TokenHandler(c.tokenHandler))
-	case c.config.Token() != "":
+	case setting.NATSAuthModeToken:
 		options = append(options, natsclient.Token(c.config.Token()))
+	case setting.NATSAuthModeNone:
 	}
 
 	return options, nil

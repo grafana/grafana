@@ -130,6 +130,9 @@ func (s *cipherService) Encrypt(ctx context.Context, payload []byte, secret stri
 
 	var encrypted []byte
 	encrypted, err = s.cipher.Encrypt(ctx, payload, secret)
+	if err != nil {
+		return nil, err
+	}
 
 	prefix := make([]byte, base64.RawStdEncoding.EncodedLen(len([]byte(s.algorithm)))+2)
 	base64.RawStdEncoding.Encode(prefix[1:], []byte(s.algorithm))

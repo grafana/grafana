@@ -70,7 +70,9 @@ The per-repository `spec.webhook.baseUrl` field still overrides `public_root_url
 
 ### Expose necessary paths only
 
-If your security setup doesn't permit publicly exposing the Grafana instance, you can either choose to allowlist the GitHub IP addresses, or expose only the necessary paths.
+If your security setup doesn't permit publicly exposing the Grafana instance, you can either choose to allowlist the Git provider's IP addresses, or expose only the necessary paths.
+
+For information about the traffic between Grafana and your Git server, refer to [Network connectivity and IP allowlisting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#network-connectivity-and-ip-allowlisting).
 
 The necessary paths required to be exposed are, in RegExp:
 
