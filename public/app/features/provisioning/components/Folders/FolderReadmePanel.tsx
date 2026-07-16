@@ -44,7 +44,8 @@ export function FolderReadmePanel({ folderUID }: Props) {
 
 function FolderReadmePanelContent({ folderUID }: Props) {
   const styles = useStyles2(getStyles);
-  const { repository, folder, readmePath, status, isLoading, markdownContent, refetch } = useFolderReadme(folderUID);
+  const { repository, folder, readmePath, status, isLoading, markdownContent, refetch, syncFinished } =
+    useFolderReadme(folderUID);
 
   const sectionRef = useRef<HTMLElement>(null);
   const intersection = useIntersection(sectionRef, { threshold: 0.5 });
@@ -132,6 +133,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
           readmePath={readmePath}
           newFileUrl={newFileUrl}
           refetch={refetch}
+          syncFinished={syncFinished}
         />
       </div>
     </section>
@@ -145,9 +147,18 @@ interface ReadmeBodyProps {
   readmePath: string;
   newFileUrl: string | undefined;
   refetch: () => void;
+  syncFinished: number | undefined;
 }
 
-function ReadmeBody({ status, markdownContent, repository, readmePath, newFileUrl, refetch }: ReadmeBodyProps) {
+function ReadmeBody({
+  status,
+  markdownContent,
+  repository,
+  readmePath,
+  newFileUrl,
+  refetch,
+  syncFinished,
+}: ReadmeBodyProps) {
   if (status === 'loading' || !repository) {
     return (
       <Stack justifyContent="center">
@@ -163,6 +174,7 @@ function ReadmeBody({ status, markdownContent, repository, readmePath, newFileUr
           repository={repository}
           baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
           repositoryType={repository.type}
+          syncFinished={syncFinished}
         />
       ) : (
         <Text color="secondary">
@@ -181,15 +193,17 @@ function RenderedMarkdown({
   repository,
   baseDirInRepo,
   repositoryType,
+  syncFinished,
 }: {
   markdown: string;
   repository: RepositoryView;
   baseDirInRepo: string;
   repositoryType: RepositoryView['type'];
+  syncFinished: number | undefined;
 }) {
   // Links to JSON/YAML files or folders are tagged during rewrite; the resource
-  // listing is fetched lazily only when the user actually clicks one of them.
-  const [fetchResources] = useLazyGetRepositoryResourcesQuery();
+  // listing is fetched lazily only when the user first clicks one of them.
+  const [fetchResources, { data: resourcesData }] = useLazyGetRepositoryResourcesQuery();
   const repositoryName = repository.name;
   const repositoryPath = repository.path;
 
@@ -202,21 +216,23 @@ function RenderedMarkdown({
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
   const safe = textUtil.sanitize(rewritten);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Only the latest click navigates, so overlapping clicks can't race and push
-  // an earlier link's destination after a later one.
+  // Only the latest async (first-click) resolution navigates, so overlapping
+  // clicks can't race and push an earlier link's destination after a later one.
   const navTokenRef = useRef(0);
-  // Whether the resource listing has been fetched at least once (kept lazy: no
-  // fetch until the first candidate-link click).
-  const hasFetchedRef = useRef(false);
+  // Latest listing, read synchronously in the click handler so we only take over
+  // navigation when there is an in-app route.
+  const itemsRef = useRef<ResourceListItem[] | undefined>(undefined);
+  itemsRef.current = resourcesData?.items;
 
-  // After a sync the README content changes; refresh the cached resource listing
-  // so resources added by that sync resolve — but only once we've loaded it, to
-  // stay lazy for READMEs whose links are never clicked.
+  // Refresh the cached listing when a sync completes: it may add or rename
+  // resources without changing the README, which would otherwise leave stale
+  // links falling back to the host. Only refetch once we've loaded it, to stay
+  // lazy for READMEs whose links are never clicked.
   useEffect(() => {
-    if (hasFetchedRef.current) {
+    if (itemsRef.current) {
       void fetchResources({ name: repositoryName }, false);
     }
-  }, [markdown, repositoryName, fetchResources]);
+  }, [syncFinished, repositoryName, fetchResources]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -224,36 +240,35 @@ function RenderedMarkdown({
       return;
     }
 
-    // Resolve a tagged link to its in-app Grafana page, falling back to the host
-    // URL on the anchor when it has no matching resource or the lookup fails.
-    const resolveAndNavigate = async (href: string | null, repoPath: string) => {
+    const routeFor = (items: ResourceListItem[], repoPath: string) =>
+      createGrafanaLinkResolver(items, repositoryPath)(repoPath);
+
+    // First click before the listing is cached: resolve asynchronously. This is
+    // the only path that may navigate the current tab on a host fallback (a
+    // window.open after the await would be treated as non-user-initiated and
+    // blocked); once cached, clicks resolve synchronously below.
+    const resolveAsync = async (href: string | null, repoPath: string) => {
       const token = ++navTokenRef.current;
       let items: ResourceListItem[] = [];
       try {
-        // Prefer the cached listing so multi-link READMEs don't refetch on every
-        // click; the effect above refreshes it after a sync.
         const result = await fetchResources({ name: repositoryName }, true).unwrap();
         items = result.items ?? [];
-        hasFetchedRef.current = true;
       } catch {
         // Ignore — fall back to the host link below.
       }
       if (token !== navTokenRef.current) {
         return; // A later click superseded this one.
       }
-      const route = createGrafanaLinkResolver(items, repositoryPath)(repoPath);
+      const route = routeFor(items, repoPath);
       if (route) {
         locationService.push(route);
+        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'in_app' });
         return;
       }
-      if (!href) {
-        return;
+      if (href) {
+        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'host' });
+        window.location.assign(href);
       }
-      // No matching resource: follow the host link. Default navigation was already
-      // suppressed, and a window.open here (after the await) would be treated as
-      // non-user-initiated and blocked by most browsers — so navigate the current
-      // tab, which is deterministic and carries no opener/tabnabbing risk.
-      window.location.assign(href);
     };
 
     const handleClick = (e: MouseEvent) => {
@@ -264,16 +279,36 @@ function RenderedMarkdown({
       if (!anchor) {
         return;
       }
-      FolderReadmeEvents.linkClicked({ repositoryType });
-
       const repoPath = anchor.getAttribute(RESOURCE_PATH_ATTR);
-      // Only JSON/YAML/folder links carry the attribute. Leave modified/middle
-      // clicks to the browser so "open in new tab" keeps hitting the host URL.
-      if (!repoPath || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
-        return;
+      const href = anchor.getAttribute('href');
+      const plainClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+
+      if (repoPath && plainClick) {
+        const items = itemsRef.current;
+        if (items) {
+          // Cached: resolve synchronously and take over navigation only when
+          // there is an in-app route, so unresolved links keep their native
+          // (new-tab) behavior — consistent with untagged links beside them.
+          const route = routeFor(items, repoPath);
+          if (route) {
+            e.preventDefault();
+            locationService.push(route);
+            FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'in_app' });
+            return;
+          }
+        } else {
+          // Listing not loaded yet — resolve asynchronously for this first click.
+          e.preventDefault();
+          void resolveAsync(href, repoPath);
+          return;
+        }
       }
-      e.preventDefault();
-      void resolveAndNavigate(anchor.getAttribute('href'), repoPath);
+
+      // Native navigation to the host link. Only count links that actually go
+      // somewhere (skip anchors whose href was stripped for hostless repos).
+      if (href) {
+        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'host' });
+      }
     };
 
     el.addEventListener('click', handleClick);

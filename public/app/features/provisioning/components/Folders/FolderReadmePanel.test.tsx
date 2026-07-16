@@ -1,27 +1,31 @@
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel';
 import { FolderReadmeEvents } from './analytics/main';
 
 jest.mock('../../hooks/useFolderReadme');
 
-// The resource listing is fetched lazily on link click; drive its result per test.
-const mockResourcesUnwrap = jest.fn();
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  __esModule: true,
-  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
-  useLazyGetRepositoryResourcesQuery: () => [() => ({ unwrap: mockResourcesUnwrap })],
-}));
+setupProvisioningMswServer();
+
+// The resource listing is fetched lazily on link click; stub the endpoint per test.
+function setResources(items: ResourceListItem[]) {
+  server.use(http.get(`${BASE}/repositories/:name/resources`, () => HttpResponse.json({ items })));
+}
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
 const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
+const linkClickedSpy = jest.spyOn(FolderReadmeEvents, 'linkClicked').mockImplementation();
 
 const mockRepository = {
   name: 'test-repo',
@@ -53,6 +57,7 @@ function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
     isLoading: false,
     markdownContent: '# Hello\n\nThis is a README.',
     refetch: jest.fn(),
+    syncFinished: undefined,
     ...overrides,
   });
 }
@@ -115,14 +120,16 @@ describe('FolderReadmePanel', () => {
   });
 
   describe('resource links', () => {
-    beforeEach(() => {
-      mockResourcesUnwrap.mockResolvedValue({ items: [] as ResourceListItem[] });
-    });
+    const dashboardItem: ResourceListItem = {
+      path: 'dashboards/team-a/cpu.json',
+      resource: 'dashboards',
+      name: 'abc',
+      group: '',
+      hash: '',
+    };
 
     it('navigates in-app when a JSON link maps to a synced dashboard', async () => {
-      mockResourcesUnwrap.mockResolvedValue({
-        items: [{ path: 'dashboards/team-a/cpu.json', resource: 'dashboards', name: 'abc', group: '', hash: '' }],
-      });
+      setResources([dashboardItem]);
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
       const { user } = setup();
@@ -131,12 +138,11 @@ describe('FolderReadmePanel', () => {
       await user.click(screen.getByRole('link', { name: 'CPU' }));
 
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+      expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'in_app' });
     });
 
     it('resolves a bare relative link (no ./) that renderMarkdown would otherwise strip', async () => {
-      mockResourcesUnwrap.mockResolvedValue({
-        items: [{ path: 'dashboards/team-a/cpu.json', resource: 'dashboards', name: 'abc', group: '', hash: '' }],
-      });
+      setResources([dashboardItem]);
       setReadmeResult({ markdownContent: 'See [CPU](cpu.json)' });
 
       const { user } = setup();
@@ -150,6 +156,7 @@ describe('FolderReadmePanel', () => {
     });
 
     it('navigates the current tab to the host URL when a JSON link has no synced resource', async () => {
+      setResources([]);
       const assignMock = jest.fn();
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
@@ -165,6 +172,7 @@ describe('FolderReadmePanel', () => {
           expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json')
         );
         expect(pushSpy).not.toHaveBeenCalled();
+        expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'host' });
       } finally {
         if (originalLocation) {
           Object.defineProperty(window, 'location', originalLocation);
@@ -172,7 +180,7 @@ describe('FolderReadmePanel', () => {
       }
     });
 
-    it('leaves a non-resource link (markdown doc) to the host without a resource lookup', async () => {
+    it('records a host outcome for a non-resource link (markdown doc) and never pushes', async () => {
       setReadmeResult({ markdownContent: 'See [notes](./notes.md)' });
 
       const { user } = setup();
@@ -182,7 +190,7 @@ describe('FolderReadmePanel', () => {
       await user.click(link);
 
       expect(pushSpy).not.toHaveBeenCalled();
-      expect(mockResourcesUnwrap).not.toHaveBeenCalled();
+      expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'host' });
     });
   });
 
