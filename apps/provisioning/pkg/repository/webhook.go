@@ -34,6 +34,19 @@ const (
 	PullRequestActionUpdated  PullRequestAction = "updated"
 )
 
+type WebhookID struct {
+	ID   int64
+	UUID string
+}
+
+func (id WebhookID) GetID() int64 {
+	return id.ID
+}
+
+func (id WebhookID) GetUUID() string {
+	return id.UUID
+}
+
 // WebhookEvent is the provider-agnostic form of an inbound webhook delivery.
 // A provider's ProcessRequest normalizes its native event into this shape.
 type WebhookEvent struct {

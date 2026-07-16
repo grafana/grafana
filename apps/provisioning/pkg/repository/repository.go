@@ -199,9 +199,10 @@ type WebhookRepository interface {
 
 // WebhookConfig is the provider-agnostic representation of a git provider webhook.
 // Each provider implements it with its own struct holding the common fields
-// plus any provider-specific ones.
+// plus any provider-specific ones. Identifiers are strings because providers
+// disagree on the type: GitHub and GitLab use numeric IDs, Bitbucket uses UUIDs.
 type WebhookConfig interface {
-	GetID() int64
+	GetID() string
 	GetURL() string
 	GetEvents() []string
 	GetSecret() string
@@ -213,9 +214,9 @@ type WebhookConfig interface {
 //go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
 type WebhookClient interface {
 	CreateWebhook(ctx context.Context, url string, events []string, secret string) (WebhookConfig, error)
-	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
+	GetWebhook(ctx context.Context, id provisioning.WebhookID) (WebhookConfig, error)
 	EditWebhook(ctx context.Context, hook WebhookConfig) error
-	DeleteWebhook(ctx context.Context, webhookID int64) error
+	DeleteWebhook(ctx context.Context, id provisioning.WebhookID) error
 }
 
 type FileAction string

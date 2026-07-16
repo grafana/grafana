@@ -716,7 +716,10 @@ require (
 
 require gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
 
-require github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
+require (
+	github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
+	github.com/ktrysmt/go-bitbucket v0.10.0 // indirect
+)
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
