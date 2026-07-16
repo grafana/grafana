@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -142,6 +143,7 @@ var WireSet = wire.NewSet(
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
 // extended.
 var WireExtensionSet = wire.NewSet(
+	marketplacelicensing.ProvideEnvironment,
 	coreplugin.ProvideCoreProvider,
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
