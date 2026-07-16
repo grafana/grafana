@@ -154,12 +154,15 @@ func HasCapturedHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffe
 	if harBuffer != nil && harBuffer.Len() > 0 {
 		return true
 	}
-	// Only count a frame that actually carries a non-empty "har" payload -- the same thing collectHAR
-	// extracts. A frame present but without a har payload contributes nothing, so treating it as
-	// "captured" would wrongly suppress the no-capture error path.
+	// A frame only counts if its "har" payload actually parses as HAR JSON -- entries may
+	// legitimately be empty (the plugin's capture middleware ran but made zero HTTP calls), but a
+	// malformed payload is indistinguishable from no payload at all: collectHAR/mergeHAR would skip
+	// it and contribute nothing to the bundle, so treating it as "captured" here would wrongly
+	// suppress the no-capture error path and leave the handler returning a 200 bundle with no
+	// traffic.har.
 	captured := false
 	forEachHARFrameCustom(resp, func(custom map[string]interface{}) {
-		if harStr, ok := custom["har"].(string); ok && harStr != "" {
+		if harStr, ok := custom["har"].(string); ok && isParseableHAR(harStr) {
 			captured = true
 		}
 	})
@@ -239,18 +242,29 @@ func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) (
 	return mergeHAR(docs)
 }
 
+// harEnvelope is the minimal HAR 1.2 shape used to inspect and merge captured documents.
+type harEnvelope struct {
+	Log struct {
+		Creator json.RawMessage   `json:"creator"`
+		Entries []json.RawMessage `json:"entries"`
+	} `json:"log"`
+}
+
+// isParseableHAR reports whether harStr parses as HAR JSON. Shared by HasCapturedHAR and mergeHAR
+// (via harEnvelope) so both agree on what a malformed payload is: HasCapturedHAR must not count a
+// payload as captured if mergeHAR would just skip it and contribute nothing to the bundle. Entries
+// may legitimately be empty -- that's a real, distinct "the plugin ran but made no calls" case, not
+// a malformed one -- so this only checks parseability, not entry count.
+func isParseableHAR(harStr string) bool {
+	var env harEnvelope
+	return json.Unmarshal([]byte(harStr), &env) == nil
+}
+
 // mergeHAR combines multiple HAR 1.2 documents into a single one by concatenating their
 // log.entries. Documents that fail to parse are skipped. Returns (nil, nil) when there are no
 // entries (a benign "no captured traffic" -- e.g. a valid but empty external frame), and a non-nil
 // error only when the merged result can't be marshaled.
 func mergeHAR(docs [][]byte) ([]byte, error) {
-	type harEnvelope struct {
-		Log struct {
-			Creator json.RawMessage   `json:"creator"`
-			Entries []json.RawMessage `json:"entries"`
-		} `json:"log"`
-	}
-
 	entries := make([]json.RawMessage, 0)
 	var creator json.RawMessage
 	for _, d := range docs {

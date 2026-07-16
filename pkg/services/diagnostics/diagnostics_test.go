@@ -109,6 +109,15 @@ func TestHasCapturedHAR(t *testing.T) {
 	empty.Meta = &data.FrameMeta{Custom: map[string]interface{}{"other": "x"}}
 	noPayload := &backend.QueryDataResponse{Responses: backend.Responses{"__har__": backend.DataResponse{Frames: data.Frames{empty}}}}
 	require.False(t, HasCapturedHAR(noPayload, &harcapture.Buffer{}), "frame without a har payload is not captured traffic")
+
+	// A __har__ frame with a non-empty but unparseable har payload must NOT count as captured
+	// either: collectHAR/mergeHAR would skip it and contribute nothing, so counting it here would
+	// let a failed query fall through to a 200 bundle with no traffic.har -- the exact outcome the
+	// no-capture error path exists to prevent.
+	malformed := data.NewFrame("")
+	malformed.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": "not valid har"}}
+	malformedResp := &backend.QueryDataResponse{Responses: backend.Responses{"__har__": backend.DataResponse{Frames: data.Frames{malformed}}}}
+	require.False(t, HasCapturedHAR(malformedResp, &harcapture.Buffer{}), "a malformed har payload is not captured traffic")
 }
 
 func TestCollectHAR_malformedExternalFrame_benign(t *testing.T) {
