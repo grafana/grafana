@@ -51,11 +51,10 @@ func (s *twinmakerSceneViewerStep) Run(_ context.Context, log logging.Logger, _ 
 		twinmakerSceneViewerMessage,
 		twinmakerSceneViewerStepID,
 		[]advisor.CheckErrorLink{
-			checks.NewCheckErrorLink(
-				"View plugin",
-				"advisor.plugin.twinmaker_sceneviewer.link.view-plugin",
-				fmt.Sprintf("/plugins/%s", p.ID),
-			),
+			{
+				Message: "View plugin",
+				Url:     fmt.Sprintf("/plugins/%s", p.ID),
+			},
 		},
 	)}, nil
 }

@@ -56,8 +56,6 @@ type CheckErrorLink struct {
 	Url string `json:"url"`
 	// Human readable error message
 	Message string `json:"message"`
-	// i18n key for the message. Frontend uses this with @grafana/i18n's t(key, fallback).
-	MessageKey *string `json:"messageKey,omitempty"`
 }
 
 // NewCheckErrorLink creates a new CheckErrorLink object.

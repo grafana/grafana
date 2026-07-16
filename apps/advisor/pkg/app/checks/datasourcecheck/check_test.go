@@ -335,11 +335,9 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, PromDepAuthStepID, failures[0].StepID)
-		sigV4Key := "advisor.datasource.prom-dep-auth.link.view-sigv4-docs"
 		assert.Contains(t, failures[0].Links, advisor.CheckErrorLink{
-			Message:    "View SigV4 docs",
-			MessageKey: &sigV4Key,
-			Url:        "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
+			Message: "View SigV4 docs",
+			Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
 		})
 	})
 
@@ -373,11 +371,9 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, PromDepAuthStepID, failures[0].StepID)
-		azureKey := "advisor.datasource.prom-dep-auth.link.view-azure-auth-docs"
 		assert.Contains(t, failures[0].Links, advisor.CheckErrorLink{
-			Message:    "View Azure auth docs",
-			MessageKey: &azureKey,
-			Url:        "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
+			Message: "View Azure auth docs",
+			Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
 		})
 	})
 

@@ -53,11 +53,10 @@ func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.C
 		// This will only happen in dev mode or if the plugin is in the unsigned allow list
 		links := []advisor.CheckErrorLink{}
 		if _, ok := s.pluginIndex[p.ID]; ok {
-			links = append(links, checks.NewCheckErrorLink(
-				"View plugin",
-				"advisor.plugin.unsigned.link.view-plugin",
-				fmt.Sprintf("/plugins/%s", p.ID),
-			))
+			links = append(links, advisor.CheckErrorLink{
+				Message: "View plugin",
+				Url:     fmt.Sprintf("/plugins/%s", p.ID),
+			})
 		}
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
@@ -77,11 +76,10 @@ func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.C
 	if pluginErr != nil && slices.Contains(invalidErrorCodeTypes, pluginErr.ErrorCode) {
 		links := []advisor.CheckErrorLink{}
 		if _, ok := s.pluginIndex[pluginErr.PluginID]; ok {
-			links = append(links, checks.NewCheckErrorLink(
-				"View plugin",
-				"advisor.plugin.unsigned.link.view-plugin",
-				fmt.Sprintf("/plugins/%s", pluginErr.PluginID),
-			))
+			links = append(links, advisor.CheckErrorLink{
+				Message: "View plugin",
+				Url:     fmt.Sprintf("/plugins/%s", pluginErr.PluginID),
+			})
 		}
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,

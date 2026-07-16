@@ -5,8 +5,16 @@ import (
 	"testing"
 )
 
-// This file enforces parity between i18n keys emitted by the Go code and the
-// entries in en-US.json. When you add a new check type, step, or failure-link
+// This file enforces parity between i18n keys the frontend will look up and
+// the entries in en-US.json. The keys are constructed by the frontend at
+// runtime from IDs already present in the API response:
+//
+//   advisor.{checkTypeID}.name                                     — check type display name annotation
+//   advisor.{checkTypeID}.{stepID}.{title,description,resolution}  — per-step step fields
+//   advisor.link.{slug}                                            — failure-link button label
+//
+// The backend does NOT ship these keys on the wire; they're implied by the
+// naming convention. When you add a new check type, step, or new failure-link
 // message, you must:
 //
 //   1. Wire it in apps/advisor/pkg/app/checks/...
@@ -26,19 +34,20 @@ var checkTypeSteps = map[string][]string{
 	"ssosetting": {"sso-list-format-validation"},
 }
 
-// stepLinks maps "{checkType}.{stepID}" to the link slugs that step emits via
-// checks.NewCheckErrorLink. The key in en-US.json is
-// advisor.{checkType}.{stepID}.link.{slug}.
-var stepLinks = map[string][]string{
-	"config.security_config":                {"avoid-default-value"},
-	"datasource.health-check":               {"fix-me"},
-	"datasource.missing-plugin":             {"delete-data-source", "view-plugin"},
-	"datasource.prom-dep-auth":              {"change-provisioning-file", "view-azure-auth-docs", "view-sigv4-docs"},
-	"plugin.deprecation":                    {"view-plugin"},
-	"plugin.twinmaker_sceneviewer":          {"view-plugin"},
-	"plugin.unsigned":                       {"view-plugin"},
-	"plugin.update":                         {"upgrade"},
-	"ssosetting.sso-list-format-validation": {"check-the-documentation", "configure-provider"},
+// linkSlugs is the set of static failure-link button labels (slugified) that
+// steps produce via inline advisor.CheckErrorLink{...} literals. The frontend
+// derives the key as advisor.link.{slug} from the English link.message.
+var linkSlugs = []string{
+	"avoid-default-value",
+	"change-provisioning-file",
+	"check-the-documentation",
+	"configure-provider",
+	"delete-data-source",
+	"fix-me",
+	"upgrade",
+	"view-azure-auth-docs",
+	"view-plugin",
+	"view-sigv4-docs",
 }
 
 func expectedKeys() []string {
@@ -53,10 +62,8 @@ func expectedKeys() []string {
 			)
 		}
 	}
-	for combined, links := range stepLinks {
-		for _, link := range links {
-			keys = append(keys, "advisor."+combined+".link."+link)
-		}
+	for _, slug := range linkSlugs {
+		keys = append(keys, "advisor.link."+slug)
 	}
 	sort.Strings(keys)
 	return keys

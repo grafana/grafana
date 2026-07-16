@@ -4,16 +4,10 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type CheckTypeStep struct {
-	Title string `json:"title"`
-	// i18n key for the title. Frontend uses this with @grafana/i18n's t(key, fallback).
-	TitleKey    *string `json:"titleKey,omitempty"`
-	Description string  `json:"description"`
-	// i18n key for the description.
-	DescriptionKey *string `json:"descriptionKey,omitempty"`
-	StepID         string  `json:"stepID"`
-	Resolution     string  `json:"resolution"`
-	// i18n key for the resolution.
-	ResolutionKey *string `json:"resolutionKey,omitempty"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	StepID      string `json:"stepID"`
+	Resolution  string `json:"resolution"`
 }
 
 // NewCheckTypeStep creates a new CheckTypeStep object.

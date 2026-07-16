@@ -17,10 +17,6 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	deprecationLinkKey := "advisor.plugin.deprecation.link.view-plugin"
-	updateLinkKey := "advisor.plugin.update.link.upgrade"
-	unsignedLinkKey := "advisor.plugin.unsigned.link.view-plugin"
-
 	tests := []struct {
 		name               string
 		plugins            []pluginstore.Plugin
@@ -52,9 +48,8 @@ func TestRun(t *testing.T) {
 					ItemID:   "plugin1",
 					Links: []advisor.CheckErrorLink{
 						{
-							Url:        "/plugins/plugin1",
-							Message:    "View plugin",
-							MessageKey: &deprecationLinkKey,
+							Url:     "/plugins/plugin1",
+							Message: "View plugin",
 						},
 					},
 				},
@@ -76,9 +71,8 @@ func TestRun(t *testing.T) {
 					ItemID:   "plugin2",
 					Links: []advisor.CheckErrorLink{
 						{
-							Url:        "/plugins/plugin2?page=version-history",
-							Message:    "Upgrade",
-							MessageKey: &updateLinkKey,
+							Url:     "/plugins/plugin2?page=version-history",
+							Message: "Upgrade",
 						},
 					},
 				},
@@ -151,21 +145,21 @@ func TestRun(t *testing.T) {
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 6",
 					ItemID:   "plugin6",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin6", Message: "View plugin", MessageKey: &unsignedLinkKey}},
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin6", Message: "View plugin"}},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 7",
 					ItemID:   "plugin7",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin7", Message: "View plugin", MessageKey: &unsignedLinkKey}},
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin7", Message: "View plugin"}},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 8",
 					ItemID:   "plugin8",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin8", Message: "View plugin", MessageKey: &unsignedLinkKey}},
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin8", Message: "View plugin"}},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityHigh,

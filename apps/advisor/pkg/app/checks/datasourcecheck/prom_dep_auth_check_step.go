@@ -80,11 +80,11 @@ func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, dataSource *dat
 			errorLinks = append(errorLinks, *readOnlyLink)
 		}
 
-		errorLinks = append(errorLinks, checks.NewCheckErrorLink(
-			"View SigV4 docs",
-			"advisor.datasource.prom-dep-auth.link.view-sigv4-docs",
-			"https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
-		))
+		errorLinks = append(errorLinks,
+			advisor.CheckErrorLink{
+				Message: "View SigV4 docs",
+				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
+			})
 		pluginLink := s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS, "Amazon Managed Service for Prometheus")
 		if pluginLink != nil {
 			errorLinks = append(errorLinks, *pluginLink)
@@ -104,11 +104,11 @@ func (s *promDepAuthStep) checkUsingAzureAuth(ctx context.Context, dataSource *d
 		if readOnlyLink != nil {
 			errorLinks = append(errorLinks, *readOnlyLink)
 		}
-		errorLinks = append(errorLinks, checks.NewCheckErrorLink(
-			"View Azure auth docs",
-			"advisor.datasource.prom-dep-auth.link.view-azure-auth-docs",
-			"https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
-		))
+		errorLinks = append(errorLinks,
+			advisor.CheckErrorLink{
+				Message: "View Azure auth docs",
+				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
+			})
 		pluginLink := s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS, "Azure Monitor Managed Service for Prometheus")
 		if pluginLink != nil {
 			errorLinks = append(errorLinks, *pluginLink)
@@ -123,12 +123,10 @@ func checkReadOnly(dataSource *datasources.DataSource) *advisor.CheckErrorLink {
 			// Disabled or not a valid boolean
 			return nil
 		}
-		link := checks.NewCheckErrorLink(
-			"Change provisioning file",
-			"advisor.datasource.prom-dep-auth.link.change-provisioning-file",
-			"https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources",
-		)
-		return &link
+		return &advisor.CheckErrorLink{
+			Message: "Change provisioning file",
+			Url:     "https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources",
+		}
 	}
 	return nil
 }

@@ -79,11 +79,10 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 			ds.Name,
 			ds.UID,
 			[]advisor.CheckErrorLink{
-				checks.NewCheckErrorLink(
-					"Fix me",
-					"advisor.datasource.health-check.link.fix-me",
-					fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
-				),
+				{
+					Message: "Fix me",
+					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
+				},
 			},
 			moreInfo,
 		)}, nil
