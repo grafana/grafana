@@ -15,16 +15,20 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientrest "k8s.io/client-go/rest"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -758,6 +762,113 @@ func TestIntegrationApi_setUserPermissionForTeams_dualWriterModeFallback(t *test
 		})
 	}
 }
+
+// Verifies a team-member removal returns 200 only when the K8s teams redirect actually removed
+// the member (dual-write mode leaves the legacy row already gone), and 404 when the member was
+// never there - whether the redirect is off or a working redirect no-ops on an absent member.
+func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	perms := []accesscontrol.Permission{
+		{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
+		{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+	}
+
+	tests := []struct {
+		name string
+		// redirectHasRestConfig points the redirect at a working K8s stub; without it the redirect
+		// fails and the legacy fallback is the only remover.
+		redirectHasRestConfig bool
+		// memberInRedirectSpec lists the member in the stub's Team, so the redirect actually removes
+		// it. When false the redirect no-ops (the member wasn't there).
+		memberInRedirectSpec bool
+		expectedStatus       int
+	}{
+		{name: "redirect removed the member -> 200, not 500", redirectHasRestConfig: true, memberInRedirectSpec: true, expectedStatus: http.StatusOK},
+		{name: "redirect no-ops on absent member -> 404, not 200", redirectHasRestConfig: true, memberInRedirectSpec: false, expectedStatus: http.StatusNotFound},
+		{name: "no redirect, member genuinely absent -> 404, not 500", redirectHasRestConfig: false, expectedStatus: http.StatusNotFound},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
+
+			// Wire the production OnSetUser hook so a removal actually runs RemoveTeamMemberHook.
+			opts := testOptionsForTeams
+			opts.OnSetUser = func(session *db.Session, orgID int64, usr accesscontrol.User, resourceID, permission string) error {
+				teamID, err := strconv.ParseInt(resourceID, 10, 64)
+				if err != nil {
+					return err
+				}
+				if permission == "" {
+					return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{OrgID: orgID, UserID: usr.ID, TeamID: teamID})
+				}
+				return teamimpl.AddOrUpdateTeamMemberHook(session, usr.ID, orgID, teamID, usr.IsExternal, team.PermissionTypeMember)
+			}
+
+			// memberUID is filled in once the user exists; the K8s stub reads it at request time.
+			var memberUID string
+			if tt.redirectHasRestConfig {
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// The stub Team lists the member only when the case wants the redirect to remove it.
+					var members []iamv0.TeamTeamMember
+					if tt.memberInRedirectSpec {
+						members = []iamv0.TeamTeamMember{{Kind: subjectKindUser, Name: memberUID, Permission: iamv0.TeamTeamPermissionMember}}
+					}
+					teamObj := iamv0.Team{
+						TypeMeta:   metav1.TypeMeta{APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(), Kind: "Team"},
+						ObjectMeta: metav1.ObjectMeta{Name: "team", Namespace: "org-1", ResourceVersion: "1"},
+						Spec:       iamv0.TeamSpec{Members: members},
+					}
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode(teamObj)
+				}))
+				t.Cleanup(ts.Close)
+				opts.RestConfigProvider = &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+			}
+
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures())
+			// Mode1 is non-authoritative, so the request dual-writes and falls through to legacy.
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode1},
+			}
+
+			createdUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
+			require.NoError(t, err)
+			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
+			require.NoError(t, err)
+
+			// Never add the member to the legacy store: emulates the redirect having already removed it.
+			usr, err := usrSvc.GetByID(context.Background(), &user.GetUserByIDQuery{ID: createdUser.ID})
+			require.NoError(t, err)
+			memberUID = usr.UID
+
+			server := setupTestServer(t, &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), perms)},
+			}, service)
+
+			// permission "" removes the user from the team.
+			recorder := setPermission(t, server, testOptionsForTeams.Resource, strconv.Itoa(int(createdTeam.ID)), "", "users", strconv.Itoa(int(createdUser.ID)))
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+		})
+	}
+}
+
+// mockDirectRestConfigProvider returns a fixed rest config so tests can point the K8s redirect at
+// an httptest server instead of a real apiserver.
+type mockDirectRestConfigProvider struct {
+	restConfig *clientrest.Config
+}
+
+func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *clientrest.Config {
+	return m.restConfig
+}
+
+func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
+
+func (m *mockDirectRestConfigProvider) IsReady() bool { return true }
 
 var openFeatureTestMu sync.Mutex
 

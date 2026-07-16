@@ -57,6 +57,11 @@ export function FolderEntry({
         />
         <Icon name="folder" />
         <Stack direction="column" gap={0} flex={1}>
+          {folder.path.length > 0 && (
+            <Text variant="bodySmall" color="secondary" truncate>
+              {folder.path.join(' / ')}
+            </Text>
+          )}
           <Text>{folder.title}</Text>
           <Text variant="bodySmall" color="secondary">
             {t('provisioning.migrate.resources-folder-summary', '', {

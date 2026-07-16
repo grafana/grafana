@@ -48,43 +48,29 @@ func newNatsShadowMetrics(reg prometheus.Registerer) *natsShadowMetrics {
 // watch pipeline, so enabling it cannot change what watch clients observe. It
 // validates NATS delivery (coverage + latency) on a live backend before NATS is
 // wired into the watch path for real.
-// natsShadowRetryInterval is how long start waits before re-subscribing after
-// the notifier channel closes (e.g. NATS was unavailable at startup).
-const natsShadowRetryInterval = 5 * time.Second
-
 type natsShadow struct {
-	notifier      *natsNotifier
-	watchOpts     WatchOptions
-	metrics       *natsShadowMetrics
-	retryInterval time.Duration
-	log           log.Logger
+	notifier  *natsNotifier
+	watchOpts WatchOptions
+	metrics   *natsShadowMetrics
+	log       log.Logger
 }
 
 func newNatsShadow(subscriber EventSubscriber, watchOpts WatchOptions, reg prometheus.Registerer, logger log.Logger) *natsShadow {
 	metrics := newNatsShadowMetrics(reg)
 	return &natsShadow{
-		notifier:      newNatsNotifier(subscriber, metrics.dropped, logger),
-		watchOpts:     watchOpts,
-		metrics:       metrics,
-		retryInterval: natsShadowRetryInterval,
-		log:           logger,
+		notifier:  newNatsNotifier(subscriber, metrics.dropped, logger),
+		watchOpts: watchOpts,
+		metrics:   metrics,
+		log:       logger,
 	}
 }
 
-// start consumes the NATS notifier in a goroutine until ctx is cancelled. The
-// channel closes on ctx cancellation (exit) or subscribe failure; in the latter
-// case it re-subscribes after retryInterval so a NATS outage at startup doesn't
-// leave the shadow inert until the next process restart.
+// start consumes the notifier until ctx is cancelled. The notifier owns its own
+// subscription retry, so a startup outage no longer leaves the shadow inert.
 func (s *natsShadow) start(ctx context.Context) {
 	go func() {
-		for ctx.Err() == nil {
-			for evt := range s.notifier.Watch(ctx, s.watchOpts) {
-				s.observe(evt)
-			}
-			select {
-			case <-ctx.Done():
-			case <-time.After(s.retryInterval):
-			}
+		for evt := range s.notifier.Watch(ctx, s.watchOpts) {
+			s.observe(evt)
 		}
 	}()
 }

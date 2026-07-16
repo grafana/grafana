@@ -14,9 +14,11 @@ declare module "@openfeature/core" {
     | "faroSessionReplay"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
+    | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "provisioning.gitConventions"
+    | "provisioning.userAttribution"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
@@ -24,10 +26,12 @@ declare module "@openfeature/core" {
     | "stateTimeline.nameAboveBars"
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsCodeMirror"
+    | "grafana.savedQueriesPage"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
+    | "alerting.ruleQuality"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
@@ -62,12 +66,14 @@ declare module "@openfeature/core" {
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
     | "table.protoRowParser"
+    | "grafana.queryVarEditorRedesign"
     | "table.refactorNested"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
-    | "grafana.onDemandDiagnostics";
+    | "grafana.onDemandDiagnostics"
+    | "grafana.multiTenantNavTree";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -9,6 +9,7 @@ import {
   type Column,
   FilterInput,
   Icon,
+  IconButton,
   InteractiveTable,
   Link,
   LinkButton,
@@ -49,23 +50,41 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourcesQuery = useGetRepositoryResourcesQuery({ name });
 
   const [searchQuery, setSearchQuery] = useState('');
+  // Folder paths that are currently unfolded. Empty by default so the tree starts fully folded.
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
   const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
-  const flatItems = useMemo(() => {
+  const tree = useMemo(() => {
     const files = filesQuery.data?.items ?? [];
     const resources = resourcesQuery.data?.items ?? [];
 
     const merged = mergeFilesAndResources(files, resources);
-    let tree = buildTree(merged);
+    const built = buildTree(merged);
 
-    if (searchQuery) {
-      tree = filterTree(tree, searchQuery);
-    }
-
-    return flattenTree(tree);
+    return searchQuery ? filterTree(built, searchQuery) : built;
   }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery]);
+
+  // While searching, ignore the folded state so every matching item stays visible.
+  const flatItems = useMemo(
+    () => flattenTree(tree, searchQuery ? undefined : expandedPaths),
+    [tree, expandedPaths, searchQuery]
+  );
+
+  const handleToggleExpand = useCallback((path: string) => {
+    setExpandedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  }, []);
+
+  const isSearching = !!searchQuery;
 
   const columns: Array<Column<FlatTreeItem>> = useMemo(
     () => [
@@ -73,14 +92,38 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'title',
         header: t('provisioning.resource-tree.header-title', 'Title'),
         cell: ({ row: { original } }: TreeCell) => {
-          const { item, level } = original;
+          const { item, level, isExpandable, isExpanded } = original;
           const iconName = getIconName(item.type);
           const link = getGrafanaLink(item);
+          // Label the fold toggle by the item's own title so screen readers announce which
+          // folder is being expanded/collapsed without needing a separate translated string.
+          // Encode the path so ids stay whitespace-free — aria-labelledby is a space-separated
+          // list, and folder paths may contain spaces.
+          const titleId = `resource-tree-item-${encodeURIComponent(item.path)}`;
 
           return (
             <div className={styles.titleCell} style={{ paddingLeft: level * 24 }}>
+              {isExpandable ? (
+                <IconButton
+                  name={isExpanded ? 'angle-down' : 'angle-right'}
+                  size="sm"
+                  onClick={() => handleToggleExpand(item.path)}
+                  // Search forces every folder open, so the toggle can't change what's shown.
+                  disabled={isSearching}
+                  aria-expanded={isExpanded}
+                  aria-labelledby={titleId}
+                />
+              ) : (
+                <span className={styles.expandSpacer} />
+              )}
               <Icon name={iconName} className={styles.icon} />
-              {link ? <Link href={link}>{item.title}</Link> : <span>{item.title}</span>}
+              {link ? (
+                <Link id={titleId} href={link}>
+                  {item.title}
+                </Link>
+              ) : (
+                <span id={titleId}>{item.title}</span>
+              )}
             </div>
           );
         },
@@ -189,7 +232,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [provisioningFolderMetadataEnabled, repo.spec, styles]
+    [handleToggleExpand, isSearching, provisioningFolderMetadataEnabled, repo.spec, styles]
   );
 
   if (isLoading) {
@@ -212,6 +255,9 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         columns={columns}
         data={flatItems}
         pageSize={25}
+        // Folding rows or clearing a search can shrink the list below the current page; reset to
+        // the first page so users aren't stranded on a now-empty page.
+        autoResetPage={true}
         getRowId={(item: FlatTreeItem) => item.item.path}
       />
     </Stack>
@@ -223,6 +269,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+  }),
+  // Keeps rows without a fold control aligned with the chevron on foldable rows.
+  expandSpacer: css({
+    display: 'inline-block',
+    width: theme.spacing(2),
+    flexShrink: 0,
   }),
   icon: css({
     color: theme.colors.text.secondary,
