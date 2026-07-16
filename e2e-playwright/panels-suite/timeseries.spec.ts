@@ -16,14 +16,15 @@ test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, ()
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
   });
 
-  // TODO: https://github.com/grafana/grafana/issues/124170
-  test.skip('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
+  test('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '19' }),
     });
 
-    const timeseriesUplot = page.locator('.uplot');
+    const timeseriesUplot = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Panel.content)
+      .locator('.uplot');
     await expect(timeseriesUplot, 'uplot is rendered').toBeVisible();
 
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
