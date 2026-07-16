@@ -7,6 +7,7 @@ import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, type NavModelItem, type UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   Alert,
   LinkButton,
@@ -336,6 +337,7 @@ export const Title = ({
 
   const textHealth = normalizeHealth(health);
   const textState = isInhibited ? 'inhibited' : normalizeState(state);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
@@ -348,7 +350,12 @@ export const Title = ({
         />
       )}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
-      <Text element="h1" variant="h1" truncate>
+      <Text
+        element="h1"
+        variant={visualRefreshEnabled ? 'h4' : 'h1'}
+        weight={visualRefreshEnabled ? 'bold' : 'regular'}
+        truncate
+      >
         {name}
       </Text>
       {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}

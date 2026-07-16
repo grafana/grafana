@@ -65,6 +65,9 @@
       "focus": "palette.neutral300"
     }
   },
+  "typography": {
+    "fontWeightBold": 600
+  },
   "components": {
     "tag": {
       "colors": [

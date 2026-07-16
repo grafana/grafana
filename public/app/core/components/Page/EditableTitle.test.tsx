@@ -1,5 +1,5 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type FetchError } from '@grafana/runtime';
 

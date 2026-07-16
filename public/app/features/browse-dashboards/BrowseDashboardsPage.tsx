@@ -7,6 +7,7 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
@@ -40,6 +41,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
@@ -145,7 +147,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const renderTitle = (title: string) => {
     return (
       <Stack alignItems={'center'} gap={2}>
-        <Text element={'h1'}>{title}</Text>
+        <Text
+          element={'h1'}
+          variant={visualRefreshEnabled ? 'h4' : 'h1'}
+          weight={visualRefreshEnabled ? 'bold' : 'regular'}
+        >
+          {title}
+        </Text>
         {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && (
           <IconButton
             name="pen"
