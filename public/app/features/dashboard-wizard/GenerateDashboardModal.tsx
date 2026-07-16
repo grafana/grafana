@@ -275,6 +275,7 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
           // Only surface datasources when the set is a deliberate selection; the
           // full instance list (when nothing was attached) is noise the agent picks from.
           datasourceNames={datasources.length < allDatasources.length ? datasources.map((ds) => ds.name ?? ds.uid) : []}
+          variableNames={refinement.summary?.variables ?? []}
           clarifications={clarifications}
           busy={busy}
           onRefine={handleRefinePlan}

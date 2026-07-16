@@ -7951,6 +7951,7 @@
       "structure-rows_other": "Organized into {{count}} stacked rows",
       "structure-tabs_one": "Organized into {{count}} tab",
       "structure-tabs_other": "Organized into {{count}} tabs",
+      "template-variables": "Template variables",
       "title": "Here's what we'll build",
       "your-choices": "Your choices"
     }

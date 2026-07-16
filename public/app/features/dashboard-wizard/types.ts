@@ -86,6 +86,8 @@ export interface WizardSummary {
   structure: 'tabs' | 'rows';
   /** The sections of the dashboard, each a tab or row per the V2 layout schema. */
   sections: WizardSummarySection[];
+  /** Names of the template variables that will scope the dashboard, without the $ prefix. */
+  variables: string[];
 }
 
 /** The metric names a plan's panels will query, grouped by datasource, for existence verification. */

@@ -25,6 +25,8 @@ interface Props {
   fallbackText: string;
   /** Names of the datasources the dashboard will be built from. */
   datasourceNames: string[];
+  /** Names of the variables defined in the dashboard. */
+  variableNames: string[];
   /** The clarifying questions the user answered, if any. */
   clarifications: Array<{ question: string; answer: string }>;
   /** True while a refine round-trip is in flight. */
@@ -41,7 +43,8 @@ interface Props {
  * the plan with feedback, or go back and adjust their answers.
  */
 export function SummaryStep(props: Props) {
-  const { summary, fallbackText, datasourceNames, clarifications, busy, onRefine, onGenerate, onBack } = props;
+  const { summary, fallbackText, datasourceNames, variableNames, clarifications, busy, onRefine, onGenerate, onBack } =
+    props;
 
   const styles = useStyles2(getStyles);
   const [feedback, setFeedback] = useState('');
@@ -111,24 +114,42 @@ export function SummaryStep(props: Props) {
         {hasSections && <SectionList sections={summary.sections} />}
       </div>
 
-      {datasourceNames.length > 0 && (
-        <div className={styles.meta}>
-          <Text variant="bodySmall" weight="medium" color="secondary">
-            {t('dashboard-wizard.summary-step.data-sources', 'Data sources')}
-          </Text>
-          <div className={styles.chips}>
-            {datasourceNames.map((name) => (
-              <span key={name} className={styles.chip}>
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
+      {(datasourceNames.length > 0 || variableNames.length > 0) && (
+        <Stack justifyContent="space-between">
+          {datasourceNames.length > 0 && (
+            <div className={styles.meta}>
+              <Text variant="bodySmall" weight="medium" color="primary">
+                {t('dashboard-wizard.summary-step.data-sources', 'Data sources')}
+              </Text>
+              <div className={styles.chips}>
+                {datasourceNames.map((name) => (
+                  <span key={name} className={styles.chip}>
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {variableNames.length > 0 && (
+            <div className={styles.meta}>
+              <Text variant="bodySmall" weight="medium" color="primary">
+                {t('dashboard-wizard.summary-step.template-variables', 'Template variables')}
+              </Text>
+              <div className={styles.chips}>
+                {variableNames.map((name) => (
+                  <span key={name} className={styles.chip}>
+                    {`$${name}`}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </Stack>
       )}
 
       {clarifications.length > 0 && (
         <div className={styles.meta}>
-          <Text variant="bodySmall" weight="medium" color="secondary">
+          <Text variant="bodySmall" weight="medium" color="primary">
             {t('dashboard-wizard.summary-step.your-choices', 'Your choices')}
           </Text>
           <Stack direction="column" gap={0.5}>
@@ -328,6 +349,7 @@ function getStyles(theme: GrafanaTheme2) {
     // short of the parent's, making the hierarchy visible at a glance.
     nestedSections: css({
       marginRight: theme.spacing(4),
+      marginLeft: theme.spacing(1),
     }),
     // Tab labels of a nested tab group step down to bodySmall (with tighter
     // padding) so they never outweigh the title of the section holding them.

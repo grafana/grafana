@@ -228,11 +228,23 @@ async function verifyMetricLabels(
  * model omitted it or returned something unusable, so the summary step can
  * fall back to the raw build prompt rather than render an empty card.
  */
+/** Cleans up the planned template variable names: strings only, no $ prefix, deduped. */
+function normalizeSummaryVariables(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const names = raw
+    .filter((name): name is string => typeof name === 'string')
+    .map((name) => name.trim().replace(/^\$/, ''))
+    .filter((name) => name !== '');
+  return Array.from(new Set(names));
+}
+
 function normalizeSummary(raw: unknown): WizardSummary | undefined {
   if (!isRecord(raw)) {
     return undefined;
   }
-  const { title, description, structure, sections } = raw;
+  const { title, description, structure, sections, variables } = raw;
   if (typeof title !== 'string' || title.trim() === '') {
     return undefined;
   }
@@ -243,6 +255,7 @@ function normalizeSummary(raw: unknown): WizardSummary | undefined {
     description: typeof description === 'string' ? description.trim() : '',
     structure: normalizedStructure,
     sections: normalizeSummarySections(sections, normalizedStructure === 'tabs' ? 'tab' : 'row'),
+    variables: normalizeSummaryVariables(variables),
   };
 }
 
