@@ -8,6 +8,8 @@ import {
   useReplaceConnectionMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
 
+import { normalizePemPrivateKey } from '../utils/privateKey';
+
 export function useCreateOrUpdateConnection(name?: string) {
   const [create, createRequest] = useCreateConnectionMutation();
   const [update, updateRequest] = useReplaceConnectionMutation();
@@ -16,7 +18,7 @@ export function useCreateOrUpdateConnection(name?: string) {
     async (data: ConnectionSpec, privateKey?: string) => {
       // API expects base64-encoded private key
       const secure: ConnectionSecure | undefined = privateKey?.length
-        ? { privateKey: { create: btoa(privateKey) } }
+        ? { privateKey: { create: btoa(normalizePemPrivateKey(privateKey)) } }
         : undefined;
 
       const connection: Connection = {

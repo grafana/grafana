@@ -211,7 +211,14 @@ describe('ConnectionForm', () => {
       await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
-      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
+      const normalizedPem = [
+        '-----BEGIN RSA PRIVATE KEY-----',
+        'MIIEpAIBAAKCAQEA123',
+        'abc456',
+        '-----END RSA PRIVATE KEY-----',
+      ].join('\n');
+      await user.click(screen.getByLabelText(/^Private Key \(PEM\)/));
+      await user.paste('-----BEGIN RSA PRIVATE KEY----- MIIEpAIBAAKCAQEA123 abc456 -----END RSA PRIVATE KEY-----');
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
@@ -228,6 +235,11 @@ describe('ConnectionForm', () => {
           github: {
             appID: '123456',
             installationID: '12345678',
+          },
+        },
+        secure: {
+          privateKey: {
+            create: btoa(normalizedPem),
           },
         },
       });
