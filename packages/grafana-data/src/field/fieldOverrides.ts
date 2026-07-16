@@ -214,8 +214,8 @@ export function applyFieldOverrides(
       field.type = type;
 
       // Some color modes needs series index to assign field color so we count
-      // up series index here but ignore time fields
-      if (field.type !== FieldType.time) {
+      // up series index here but ignore time and string fields
+      if (field.type !== FieldType.time && field.type !== FieldType.string) {
         seriesIndex++;
       }
 
