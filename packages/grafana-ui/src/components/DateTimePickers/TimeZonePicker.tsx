@@ -81,12 +81,11 @@ interface SelectableZoneGroup extends SelectableValue<string> {
 }
 
 const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): SelectableZoneGroup[] => {
-  const now = Date.now();
-
   const timeZoneGroups = useMemo(() => {
+    const now = Date.now();
     const groups = new Map<string, SelectableZone[]>();
 
-    const pushOption = (group: string, info: TimeZoneInfo, aliasOf?: string) => {
+    const pushOption = (group: string, info: TimeZoneInfo, utcOffset: string, aliasOf?: string) => {
       const name = getTimeZoneTitle(info);
       const options = groups.get(group) ?? [];
 
@@ -94,7 +93,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
         label: name,
         value: info.zone,
         info,
-        searchIndex: getSearchIndex(name, info, now, aliasOf),
+        searchIndex: getSearchIndex(name, info, utcOffset, aliasOf),
       });
 
       groups.set(group, options);
@@ -111,17 +110,17 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     }
 
     for (const zone of internalZones) {
-      pushOption('', getInternalTimeZoneInfo(zone, now));
+      pushOption('', getInternalTimeZoneInfo(zone, now), formatUtcOffset(now, zone));
     }
 
     for (const tz of getTimeZonesAt(now)) {
       const delimiter = tz.name.indexOf('/');
       const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      pushOption(group, toTimeZoneInfo(tz), tz.aliasOf);
+      pushOption(group, toTimeZoneInfo(tz), `UTC${tz.offset}`, tz.aliasOf);
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
-  }, [includeInternal, now]);
+  }, [includeInternal]);
 
   return timeZoneGroups;
 };
@@ -174,12 +173,8 @@ const useFilterBySearchIndex = () => {
   }, []);
 };
 
-const getSearchIndex = (label: string, info: TimeZoneInfo, timestamp: number, aliasOf?: string): string => {
-  const parts: string[] = [
-    info.zone.toLowerCase(),
-    info.abbreviation.toLowerCase(),
-    formatUtcOffset(timestamp, info.zone).toLowerCase(),
-  ];
+const getSearchIndex = (label: string, info: TimeZoneInfo, utcOffset: string, aliasOf?: string): string => {
+  const parts: string[] = [info.zone.toLowerCase(), info.abbreviation.toLowerCase(), utcOffset.toLowerCase()];
 
   if (label !== info.zone) {
     parts.push(label.toLowerCase());
