@@ -1,11 +1,22 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Icon, Input, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  CollapsableSection,
+  Icon,
+  Input,
+  Stack,
+  Tab,
+  TabContent,
+  TabsBar,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 
-import { type WizardSummary } from './types';
+import { type WizardSummary, type WizardSummarySection } from './types';
 
 interface Props {
   /** The assistant's plain-language plan; falls back to `fallbackText` when absent. */
@@ -29,16 +40,9 @@ interface Props {
  * dashboard the assistant is about to generate. The user can confirm, refine
  * the plan with feedback, or go back and adjust their answers.
  */
-export function SummaryStep({
-  summary,
-  fallbackText,
-  datasourceNames,
-  clarifications,
-  busy,
-  onRefine,
-  onGenerate,
-  onBack,
-}: Props) {
+export function SummaryStep(props: Props) {
+  const { summary, fallbackText, datasourceNames, clarifications, busy, onRefine, onGenerate, onBack } = props;
+
   const styles = useStyles2(getStyles);
   const [feedback, setFeedback] = useState('');
   const hasSections = summary && summary.sections.length > 0;
@@ -85,34 +89,26 @@ export function SummaryStep({
 
         <Text color="secondary">{summary?.description ? summary.description : fallbackText}</Text>
 
-        {summary?.layout && (
+        {hasSections && (
           <div className={styles.layout}>
             <Icon name="layer-group" size="sm" className={styles.accent} />
             <Text variant="bodySmall" color="secondary">
-              {summary.layout}
+              {summary.structure === 'tabs'
+                ? t('dashboard-wizard.summary-step.structure-tabs', '', {
+                    count: summary.sections.length,
+                    defaultValue_one: 'Organized into {{count}} tab',
+                    defaultValue_other: 'Organized into {{count}} tabs',
+                  })
+                : t('dashboard-wizard.summary-step.structure-rows', '', {
+                    count: summary.sections.length,
+                    defaultValue_one: 'Organized into {{count}} stacked row',
+                    defaultValue_other: 'Organized into {{count}} stacked rows',
+                  })}
             </Text>
           </div>
         )}
 
-        {hasSections && (
-          <div className={styles.sections}>
-            {summary.sections.map((section, index) => (
-              <div key={index} className={styles.section}>
-                <Text variant="bodySmall" weight="medium">
-                  {section.title}
-                </Text>
-                <ul className={styles.panels}>
-                  {section.panels.map((panel, panelIndex) => (
-                    <li key={panelIndex} className={styles.panel}>
-                      {panel.visualization && <span className={styles.vizChip}>{panel.visualization}</span>}
-                      <span className={styles.panelTitle}>{panel.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
+        {hasSections && <SectionList sections={summary.sections} />}
       </div>
 
       {datasourceNames.length > 0 && (
@@ -170,16 +166,119 @@ export function SummaryStep({
         <Button variant="secondary" fill="outline" onClick={onBack}>
           {t('dashboard-wizard.summary-step.back', 'Back')}
         </Button>
-        <Button
-          onClick={handlePrimary}
-          icon={hasFeedback ? (busy ? 'spinner' : 'sync') : 'ai-sparkle'}
-          disabled={busy}
-        >
+        <Button onClick={handlePrimary} icon={hasFeedback ? (busy ? 'spinner' : 'sync') : 'ai-sparkle'} disabled={busy}>
           {hasFeedback
             ? t('dashboard-wizard.summary-step.refine', 'Refine plan')
             : t('dashboard-wizard.summary-step.generate', 'Generate dashboard')}
         </Button>
       </Stack>
+    </div>
+  );
+}
+
+/**
+ * A group of sibling sections. When they are all tabs, they render as real
+ * clickable tabs showing one tab's content at a time; rows render as stacked
+ * blocks, echoing how they appear in the dashboard editor.
+ *
+ * `depth` drives the type scale: first-level titles and tab labels render at
+ * body size, everything nested steps down to bodySmall so a parent is never
+ * visually outweighed by its children.
+ */
+function SectionList({ sections, depth = 0 }: { sections: WizardSummarySection[]; depth?: number }) {
+  const styles = useStyles2(getStyles);
+  // Clamped so a plan refinement that removes tabs never strands the selection.
+  const [activeIndex, setActiveIndex] = useState(0);
+  const allTabs = sections.length > 0 && sections.every((section) => section.kind === 'tab');
+
+  if (allTabs) {
+    const active = Math.min(activeIndex, sections.length - 1);
+    return (
+      <div className={depth > 0 ? cx(styles.sections, styles.nestedTabs) : styles.sections}>
+        <TabsBar>
+          {sections.map((section, index) => (
+            <Tab
+              key={index}
+              label={section.title}
+              active={index === active}
+              onChangeTab={() => setActiveIndex(index)}
+            />
+          ))}
+        </TabsBar>
+        <TabContent className={styles.tabContent}>
+          {/* Keyed by tab so nested selection/collapse state never leaks between tabs. */}
+          <SectionContent key={active} section={sections[active]} depth={depth} />
+        </TabContent>
+      </div>
+    );
+  }
+
+  return (
+    <div className={depth > 0 ? cx(styles.sections, styles.nestedSections) : styles.sections}>
+      {sections.map((section, index) => (
+        <SectionBlock key={index} section={section} depth={depth} />
+      ))}
+    </div>
+  );
+}
+
+/** The inside of a section: its planned panels, or the sections nested in it. */
+function SectionContent({ section, depth }: { section: WizardSummarySection; depth: number }) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <>
+      {section.panels.length > 0 && (
+        <ul className={styles.panels}>
+          {section.panels.map((panel, panelIndex) => (
+            <li key={panelIndex} className={styles.panel}>
+              {/* Always render the chip cell so the title always lands in the second grid column. */}
+              <span className={panel.visualization ? styles.vizChip : undefined}>{panel.visualization}</span>
+              <span className={styles.panelTitle}>{panel.title}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {section.sections && section.sections.length > 0 && <SectionList sections={section.sections} depth={depth + 1} />}
+    </>
+  );
+}
+
+/** One planned row (or a tab mixed among rows): its header and its content, stacked. */
+function SectionBlock({ section, depth }: { section: WizardSummarySection; depth: number }) {
+  const styles = useStyles2(getStyles);
+  const isTab = section.kind === 'tab';
+
+  const title = (
+    <Text variant={depth === 0 ? 'body' : 'bodySmall'} weight="medium">
+      {section.title}
+    </Text>
+  );
+
+  if (!isTab) {
+    // Rows collapse like real dashboard rows; expanded by default so the whole
+    // plan is visible when the summary opens.
+    return (
+      <div className={styles.rowBlock}>
+        <CollapsableSection
+          isOpen={true}
+          label={title}
+          className={styles.rowHeader}
+          contentClassName={styles.rowContent}
+        >
+          <SectionContent section={section} depth={depth} />
+        </CollapsableSection>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.tabBlock}>
+      <div className={styles.sectionHeader}>
+        {title}
+        <span className={styles.kindBadge}>{t('dashboard-wizard.summary-step.kind-tab', 'Tab')}</span>
+      </div>
+      <SectionContent section={section} depth={depth} />
     </div>
   );
 }
@@ -220,33 +319,82 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1.5),
       marginTop: theme.spacing(0.5),
     }),
-    section: css({
+    tabContent: css({
+      // The summary card provides its own background; keep the tab content transparent.
+      background: 'transparent',
+      paddingTop: theme.spacing(1),
+    }),
+    // Nested section groups pull in from the right so their separators stop
+    // short of the parent's, making the hierarchy visible at a glance.
+    nestedSections: css({
+      marginRight: theme.spacing(4),
+    }),
+    // Tab labels of a nested tab group step down to bodySmall (with tighter
+    // padding) so they never outweigh the title of the section holding them.
+    nestedTabs: css({
+      '[role="tab"]': {
+        fontSize: theme.typography.bodySmall.fontSize,
+        padding: theme.spacing(0.5, 1, 0.5),
+      },
+    }),
+    tabBlock: css({
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(0.75),
       paddingLeft: theme.spacing(1.5),
       borderLeft: `2px solid ${theme.colors.border.medium}`,
     }),
+    rowBlock: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.75),
+    }),
+    sectionHeader: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.75),
+    }),
+    // Applied to CollapsableSection's header: keep the separator under the
+    // row title and tighten the component's default (large) header padding.
+    rowHeader: css({
+      padding: theme.spacing(0, 0, 0.5),
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+    }),
+    rowContent: css({
+      padding: theme.spacing(1, 0, 0),
+    }),
+    kindBadge: css({
+      padding: theme.spacing(0, 0.75),
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.pxToRem(11),
+      whiteSpace: 'nowrap',
+    }),
+    // Two-column grid (chip | title) so every panel title shares the same left
+    // edge regardless of how wide its visualization chip is.
     panels: css({
       listStyle: 'none',
       margin: 0,
       padding: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(0.5),
-    }),
-    panel: css({
-      display: 'flex',
+      display: 'grid',
+      gridTemplateColumns: 'auto 1fr',
       alignItems: 'center',
-      gap: theme.spacing(1),
+      columnGap: theme.spacing(1),
+      rowGap: theme.spacing(0.5),
+    }),
+    // Each list item contributes its two children directly to the grid.
+    panel: css({
+      display: 'contents',
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.primary,
     }),
     vizChip: css({
-      flexShrink: 0,
+      // Hug the content instead of stretching to the grid column's width
+      // (which is sized by the widest chip in the section).
+      justifySelf: 'start',
       padding: theme.spacing(0, 0.75),
-      height: theme.spacing(2.5),
-      lineHeight: theme.spacing(2.5),
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,

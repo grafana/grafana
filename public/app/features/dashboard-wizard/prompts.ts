@@ -1,4 +1,10 @@
-import { type WizardDatasource, type WizardFinding, type WizardSummary, type WizardVerifiedMetric } from './types';
+import {
+  type WizardDatasource,
+  type WizardFinding,
+  type WizardSummary,
+  type WizardSummarySection,
+  type WizardVerifiedMetric,
+} from './types';
 
 /** Origin reported to the assistant for all wizard interactions. */
 export const WIZARD_ORIGIN = 'grafana/dashboard-wizard';
@@ -13,17 +19,26 @@ export interface WizardRevision {
   feedback: string;
 }
 
+/** Renders one section (and its nested sections) as indented plan lines. */
+function formatSectionForPrompt(section: WizardSummarySection, indent: string, lines: string[]): void {
+  lines.push(`${indent}${section.kind === 'tab' ? 'Tab' : 'Row'} "${section.title}":`);
+  for (const panel of section.panels) {
+    lines.push(`${indent}  - ${panel.title}${panel.visualization ? ` (${panel.visualization})` : ''}`);
+  }
+  for (const child of section.sections ?? []) {
+    formatSectionForPrompt(child, `${indent}  `, lines);
+  }
+}
+
 /** Renders a previously proposed plan back into text for the revision prompt. */
 function formatSummaryForPrompt(summary: WizardSummary): string {
-  const lines = [`Title: ${summary.title}`, `Description: ${summary.description}`];
-  if (summary.layout) {
-    lines.push(`Layout: ${summary.layout}`);
-  }
+  const lines = [
+    `Title: ${summary.title}`,
+    `Description: ${summary.description}`,
+    `Structure: top level organized as ${summary.structure}`,
+  ];
   for (const section of summary.sections) {
-    lines.push(`Section "${section.title}":`);
-    for (const panel of section.panels) {
-      lines.push(`  - ${panel.title}${panel.visualization ? ` (${panel.visualization})` : ''}`);
-    }
+    formatSectionForPrompt(section, '', lines);
   }
   return lines.join('\n');
 }
@@ -84,8 +99,8 @@ ${JSON_ONLY_RULE}
   "summary": {
     "title": string,
     "description": string,
-    "layout": string,
-    "sections": [{ "title": string, "panels": [{ "title": string, "visualization": string }] }]
+    "structure": "tabs" | "rows",
+    "sections": [{ "title": string, "kind": "tab" | "row", "panels": [{ "title": string, "visualization": string }], "sections": [ /* optional: nested sections of the same shape, INSTEAD of "panels" */ ] }]
   },
   "dataNotes": string,
   "metrics": [{ "datasourceUid": string, "names": [string] }],
@@ -97,15 +112,15 @@ Rules:
 - "summary": a plain-language preview of the dashboard laid out panel by panel, shown to the user to review before building. It must describe the SAME dashboard as "prompt".
   - "title": a concise dashboard title (max ~6 words).
   - "description": one sentence naming what it monitors.
-  - "layout": one sentence on the overall structure — how the sections are organized (e.g. "Four tabs — Overview, Traffic, Errors, and Resources — each auto-arranged.").
-  - "sections": 3-6 sections, in the order they appear. Each has a "title" (the tab or row name) and "panels": 2-6 panels, each with a human-readable "title" and a "visualization" naming the panel type in plain language (one of: stat, gauge, bar gauge, time series, bar chart, table, logs, heatmap, pie chart, state timeline). Lead with an at-a-glance section of stats/gauges where it fits, then detail sections.
+  - "structure": how the dashboard is organized at the top level — "tabs" when the sections cover distinct domains, "rows" for a single scrolling page. Prefer "tabs".
+  - "sections": 3-6 top-level sections, in the order they appear. Each has a "title", a "kind" ("tab" or "row") that matches "structure" at the top level, and EITHER "panels" OR nested "sections" — never both. "panels": 2-6 panels, each with a human-readable "title" and a "visualization" naming the panel type in plain language (one of: stat, gauge, bar gauge, time series, bar chart, table, logs, heatmap, pie chart, state timeline). Nested "sections" (e.g. rows inside a tab) group panels within a section; a section with nested sections holds no panels of its own — put every panel in a leaf section. Tabs must never appear anywhere inside a tab, at any depth — within a tab, group with rows only. Keep nesting to one extra level unless the request demands more. Lead with an at-a-glance section of stats/gauges where it fits, then detail sections.
   Write for the user, not the builder: no datasource uids, no raw metric names, no tool names, no jargon. Keep it consistent with "prompt".
 - "dataNotes": the exact datasource uids, metric names, and label/value pairs you verified exist and the dashboard should be built from (comma-separated). Only include what you actually verified with tools — never list something here on faith. Empty string if you verified nothing.
 - "metrics": every metric name the planned panels will query, grouped by datasource uid. You MUST have confirmed each one exists via list_label_values on "__name__" — never list a metric on faith; this list is checked against the datasource before the plan is shown. Only list Prometheus-style metric names; omit datasources that have no metric-name concept (e.g. Loki). Empty array if none apply.
 - "questions": 0-3 clarifying questions, ONLY when the answer genuinely changes the dashboard (e.g. which environment, cluster, namespace, or service to focus on; fleet-wide vs single-instance). Each question has a short slug "id" and 2-5 short answer options — real values you verified beat generic placeholders. No free-text questions, no questions about layout/visualization taste, and never ask about something the request or attached context already answers. If the request is already specific enough to build a good dashboard, return [].
 
 Example (user wrote "I want to see how my checkout service is doing", you verified job="checkout" exists in the Prometheus datasource with RED-style http metrics):
-{"prompt":"Monitor the checkout service using the Prometheus datasource (uid: prom-1), scoped to job=\\"checkout\\". Cover request rate, error ratio, and latency percentiles from the http_request_duration_seconds histogram, plus resource usage if available. Sections: an overview of KPIs, then traffic, errors, and latency detail.","summary":{"title":"Checkout service health","description":"Monitors the reliability and performance of the checkout service using its Prometheus metrics.","layout":"Three tabs — Overview, Traffic & errors, and Latency & resources — each auto-arranged.","sections":[{"title":"Overview","panels":[{"title":"Request rate","visualization":"stat"},{"title":"Error rate","visualization":"stat"},{"title":"p95 latency","visualization":"gauge"}]},{"title":"Traffic & errors","panels":[{"title":"Requests per second by endpoint","visualization":"time series"},{"title":"Error ratio over time","visualization":"time series"},{"title":"Top failing endpoints","visualization":"table"}]},{"title":"Latency & resources","panels":[{"title":"Latency percentiles (p50/p95/p99)","visualization":"time series"},{"title":"CPU and memory usage","visualization":"time series"}]}]},"dataNotes":"datasource prom-1 (prometheus), job=checkout, http_requests_total, http_request_duration_seconds_bucket","metrics":[{"datasourceUid":"prom-1","names":["http_requests_total","http_request_duration_seconds_bucket"]}],"questions":[{"id":"env","text":"Which environment should the dashboard focus on?","options":["production","staging","All environments"],"allowMultiple":false}]}${
+{"prompt":"Monitor the checkout service using the Prometheus datasource (uid: prom-1), scoped to job=\\"checkout\\". Cover request rate, error ratio, and latency percentiles from the http_request_duration_seconds histogram, plus resource usage if available. Sections: an overview of KPIs, then traffic, errors, and latency detail.","summary":{"title":"Checkout service health","description":"Monitors the reliability and performance of the checkout service using its Prometheus metrics.","structure":"tabs","sections":[{"title":"Overview","kind":"tab","panels":[{"title":"Request rate","visualization":"stat"},{"title":"Error rate","visualization":"stat"},{"title":"p95 latency","visualization":"gauge"}]},{"title":"Traffic & errors","kind":"tab","panels":[{"title":"Requests per second by endpoint","visualization":"time series"},{"title":"Error ratio over time","visualization":"time series"},{"title":"Top failing endpoints","visualization":"table"}]},{"title":"Latency & resources","kind":"tab","sections":[{"title":"Latency","kind":"row","panels":[{"title":"Latency percentiles (p50/p95/p99)","visualization":"time series"}]},{"title":"Resources","kind":"row","panels":[{"title":"CPU and memory usage","visualization":"time series"}]}]}]},"dataNotes":"datasource prom-1 (prometheus), job=checkout, http_requests_total, http_request_duration_seconds_bucket","metrics":[{"datasourceUid":"prom-1","names":["http_requests_total","http_request_duration_seconds_bucket"]}],"questions":[{"id":"env","text":"Which environment should the dashboard focus on?","options":["production","staging","All environments"],"allowMultiple":false}]}${
     contextNotes
       ? '\n- The user attached specific context items (below). Treat them as the definitive subject of the dashboard: build the request around them, never ask questions their presence already answers.'
       : ''
@@ -117,7 +132,7 @@ Example (user wrote "I want to see how my checkout service is doing", you verifi
   // Apply the feedback to the previous plan rather than starting over, and
   // don't re-open clarifying questions.
   const revisionSystem = revision
-    ? '\n\nThe user reviewed the plan you previously proposed and asked for changes. Apply their feedback and return the full updated plan. Keep everything they did not ask to change, and preserve the parts of the previous plan that still hold. Return an empty "questions" array — do not ask for more clarification, just apply the changes.'
+    ? '\n\nThe user reviewed the plan you previously proposed and asked for changes. Apply their feedback and return the full updated plan. Keep everything they did not ask to change, and preserve the parts of the previous plan that still hold. If a requested change would produce a structure the dashboard cannot have (e.g. tabs nested inside a tab), realize the intent with the closest legal structure instead (rows inside that tab) and reflect that in the summary. Return an empty "questions" array — do not ask for more clarification, just apply the changes.'
     : '';
 
   const revisionBlock = revision
@@ -242,7 +257,7 @@ export function buildGenerationPrompt(args: {
   }
 
   const structureRequirement = plan
-    ? '- Follow the approved plan above as the source of truth for structure: the same sections in the same order, each holding the listed panels with the stated visualization. Put each section in its own tab or row and use auto grid inside it so panels arrange themselves. Do not invent extra panels or sections beyond the plan.'
+    ? `- The approved plan above is the source of truth for structure — realize it exactly. The dashboard's top-level layout must be a ${plan.structure === 'rows' ? 'rows' : 'tabs'} layout. Every section marked Tab becomes a tab and every section marked Row becomes a row; indented sections become nested layouts inside their parent (rows may nest inside tabs and rows, but a tab must never be placed anywhere inside a tab). Use auto grid inside each leaf section so panels arrange themselves. Never convert a tab to a row or vice versa, never drop, merge, or reorder sections, and never invent extra panels or sections beyond the plan.`
     : '- Structure the dashboard into sections — never one flat grid of panels. An overview row of KPI stats first, then detail sections grouped by domain (e.g. traffic, errors, latency, resources); use tabs when the domains are distinct, and auto grid inside every section so panels arrange themselves. Aim for roughly 8-16 panels across 3-5 sections — deep enough to be genuinely useful, without filler panels.';
 
   const titleRequirement = plan

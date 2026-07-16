@@ -74,13 +74,57 @@ function normalizeQuestions(raw: unknown): WizardQuestion[] {
   return questions;
 }
 
-function normalizeSummarySections(raw: unknown): WizardSummarySection[] {
-  if (!Array.isArray(raw)) {
+/**
+ * When the model omits "structure", infer it from the explicit top-level
+ * section kinds; tabs is the agreed default when there's no clear signal.
+ */
+function inferStructureFromSections(raw: unknown): 'tabs' | 'rows' {
+  if (Array.isArray(raw)) {
+    const kinds = raw.filter(isRecord).map((entry) => entry.kind);
+    if (kinds.length > 0 && kinds.every((kind) => kind === 'row')) {
+      return 'rows';
+    }
+  }
+  return 'tabs';
+}
+
+/** Matches the dashboard editor's MAX_NESTING_DEPTH for layout grouping. */
+const MAX_SECTION_DEPTH = 3;
+
+function normalizeSummarySections(
+  raw: unknown,
+  fallbackKind: 'tab' | 'row',
+  depth = 0,
+  /** True when any ancestor section is a tab — the editor forbids tabs anywhere under a tab. */
+  underTab = false
+): WizardSummarySection[] {
+  if (!Array.isArray(raw) || depth >= MAX_SECTION_DEPTH) {
     return [];
   }
   const sections: WizardSummarySection[] = [];
   for (const entry of raw) {
     if (!isRecord(entry) || typeof entry.title !== 'string' || entry.title.trim() === '') {
+      continue;
+    }
+    // At the top level the dashboard's structure dictates the kind ("structure
+    // wins"), so the headline never contradicts the rendered sections. Below
+    // it, explicit kinds are respected.
+    const requestedKind =
+      depth === 0 ? fallbackKind : entry.kind === 'row' ? 'row' : entry.kind === 'tab' ? 'tab' : fallbackKind;
+    // The dashboard editor never allows tabs nested under a tab, at any depth;
+    // coerce such sections to rows so the plan is always buildable.
+    const kind = underTab && requestedKind === 'tab' ? 'row' : requestedKind;
+    // Nested sections default to the opposite kind (rows inside tabs, tabs inside rows).
+    const nested = normalizeSummarySections(
+      entry.sections,
+      kind === 'tab' ? 'row' : 'tab',
+      depth + 1,
+      underTab || kind === 'tab'
+    );
+    // The V2 layout schema allows a section to hold panels OR nested sections,
+    // never both. When the model emits both, the nested structure wins.
+    if (nested.length > 0) {
+      sections.push({ title: entry.title.trim(), kind, panels: [], sections: nested });
       continue;
     }
     const panels: WizardSummaryPanel[] = [];
@@ -95,7 +139,7 @@ function normalizeSummarySections(raw: unknown): WizardSummarySection[] {
         });
       }
     }
-    sections.push({ title: entry.title.trim(), panels });
+    sections.push({ title: entry.title.trim(), kind, panels });
   }
   return sections;
 }
@@ -188,15 +232,17 @@ function normalizeSummary(raw: unknown): WizardSummary | undefined {
   if (!isRecord(raw)) {
     return undefined;
   }
-  const { title, description, layout, sections } = raw;
+  const { title, description, structure, sections } = raw;
   if (typeof title !== 'string' || title.trim() === '') {
     return undefined;
   }
+  const normalizedStructure =
+    structure === 'rows' || structure === 'tabs' ? structure : inferStructureFromSections(sections);
   return {
     title: title.trim(),
     description: typeof description === 'string' ? description.trim() : '',
-    layout: typeof layout === 'string' && layout.trim() !== '' ? layout.trim() : undefined,
-    sections: normalizeSummarySections(sections),
+    structure: normalizedStructure,
+    sections: normalizeSummarySections(sections, normalizedStructure === 'tabs' ? 'tab' : 'row'),
   };
 }
 

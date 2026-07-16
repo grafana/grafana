@@ -55,12 +55,21 @@ export interface WizardSummaryPanel {
   visualization: string;
 }
 
-/** A planned section (tab or row) of the dashboard and the panels it holds. */
+/**
+ * A planned section of the dashboard: a tab or a row, and what it holds.
+ * Mirrors the V2 dashboard schema: a section holds EITHER panels directly OR
+ * nested sections (rows inside a tab, tabs inside a row, …), never both.
+ * Normalization enforces the invariant, so consumers can trust it.
+ */
 export interface WizardSummarySection {
   /** Section name. */
   title: string;
-  /** The panels this section contains. */
+  /** How this section is realized in the dashboard. */
+  kind: 'tab' | 'row';
+  /** The panels this section contains directly; empty when it holds nested sections. */
   panels: WizardSummaryPanel[];
+  /** Inner sections nested inside this one; unset when the section holds panels. */
+  sections?: WizardSummarySection[];
 }
 
 /**
@@ -73,9 +82,9 @@ export interface WizardSummary {
   title: string;
   /** One plain-language sentence describing what the dashboard monitors. */
   description: string;
-  /** One sentence on the overall structure (how sections are organized). */
-  layout?: string;
-  /** The sections of the dashboard and the panels planned in each. */
+  /** Top-level organization: tabs across the top or stacked rows. */
+  structure: 'tabs' | 'rows';
+  /** The sections of the dashboard, each a tab or row per the V2 layout schema. */
   sections: WizardSummarySection[];
 }
 
