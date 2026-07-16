@@ -483,7 +483,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
+  // Redirect only when the scope node has an explicit redirectPath configured.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
     if (!this.redirectEnabled) {
       return;
@@ -493,6 +493,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // so its panels can render. Checked synchronously here (not via setRedirectEnabled) because
     // applyScopes runs during ScopesService boot, before any React effect can toggle the flag.
     if (isRenderTarget()) {
+      return;
+    }
+
+    if (!scopeNode?.spec.redirectPath) {
       return;
     }
 
@@ -508,32 +512,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     });
 
     // Only redirect to redirectPath if we are not currently on an active scope navigation
-    if (
-      !activeScopeNavigation &&
-      scopeNode &&
-      scopeNode.spec.redirectPath &&
-      // Don't redirect if we're already on the target path
-      !isCurrentPath(currentPath, scopeNode.spec.redirectPath)
-    ) {
+    // and not already on the target path.
+    if (!activeScopeNavigation && !isCurrentPath(currentPath, scopeNode.spec.redirectPath)) {
       locationService.push(scopeNode.spec.redirectPath);
-      return;
-    }
-
-    // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
-    if (!activeScopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
-      // Redirect to the first available scopeNavigation
-      const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
-
-      if (
-        firstScopeNavigation &&
-        'url' in firstScopeNavigation.spec &&
-        // Only redirect to dashboards TODO: Remove this once Logs Drilldown has Scopes support
-        firstScopeNavigation.spec.url.includes('/d/') &&
-        // Don't redirect if we're already on the target path
-        !isCurrentPath(currentPath, firstScopeNavigation.spec.url)
-      ) {
-        locationService.push(firstScopeNavigation.spec.url);
-      }
     }
   };
 

@@ -282,9 +282,9 @@ export class ScopesService implements ScopesContextValue {
               // Bypass this.changeScopes (which hardcodes redirectOnApply=false
               // for URL-driven init) and call the selector service directly
               // with redirectOnApply=true. Applying the default scope on first
-              // mount should land the user on the scope's redirectPath or
-              // first scope navigation, matching the behavior of selecting
-              // the scope manually. The scope metadata is already in the
+              // mount should land the user on the scope's redirectPath when
+              // one is configured, matching the behavior of selecting the
+              // scope manually. The scope metadata is already in the
               // getScope RTK Query cache (seeded by fetchDefaultScope), so
               // applyScopes' downstream fetch is a cache hit.
               // Return the promise so the outer .catch below actually catches
