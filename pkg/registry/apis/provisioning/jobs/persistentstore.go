@@ -534,13 +534,12 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
-	// Set up the provisioning identity for this namespace
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
-	}
-
+	// The job is created with the caller's identity so that the admission
+	// mutator can attribute it to the acting user (see AdmissionMutator).
+	// Unlike the other store operations, Insert does not switch to the
+	// provisioning identity: user-triggered flows keep the requesting user in
+	// context, while background callers (repository controller, webhooks)
+	// establish the provisioning identity themselves before calling Insert.
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,

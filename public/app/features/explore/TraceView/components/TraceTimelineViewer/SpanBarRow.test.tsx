@@ -17,10 +17,10 @@ import userEvent from '@testing-library/user-event';
 
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 
-import { type SpanLinkDef } from '../types/links';
+import { type SpanLinkDef, SpanLinkType } from '../types/links';
 import { type TraceSpan } from '../types/trace';
 
-import SpanBarRow, { type SpanBarRowProps } from './SpanBarRow';
+import { SpanBarRow, type SpanBarRowProps } from './SpanBarRow';
 
 describe('<SpanBarRow>', () => {
   const spanID = 'some-id';
@@ -111,7 +111,12 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ href: 'href' }, { href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          [
+            { href: 'href', type: SpanLinkType.Traces },
+            { href: 'href', type: SpanLinkType.Traces },
+          ] as SpanLinkDef[]
+        }
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
@@ -138,7 +143,11 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ content: 'This span is referenced by another span', href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          [
+            { content: 'This span is referenced by another span', href: 'href', type: SpanLinkType.Traces },
+          ] as SpanLinkDef[]
+        }
       />
     );
     expect(screen.getByRole('link', { name: 'This span is referenced by another span' })).toBeInTheDocument();
@@ -191,7 +200,12 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ href: 'href' }, { href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          [
+            { href: 'href', type: SpanLinkType.Traces },
+            { href: 'href', type: SpanLinkType.Traces },
+          ] as SpanLinkDef[]
+        }
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);

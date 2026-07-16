@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -47,7 +46,7 @@ func TestPullRequestWorker_IsSupported(t *testing.T) {
 			evaluator := NewMockEvaluator(t)
 			commenter := NewMockCommenter(t)
 			worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
-			result := worker.IsSupported(context.Background(), tt.job)
+			result := worker.IsSupported(t.Context(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
 	}
@@ -71,7 +70,7 @@ func TestPullRequestWorker_Process_NotPullRequestRepository(t *testing.T) {
 	}
 
 	// The repository is not a PullRequestRepo, so it should fail
-	err := worker.Process(context.Background(), repo, job, progress)
+	err := worker.Process(t.Context(), repo, job, progress)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "repository is not a pull request repository")
 
@@ -98,7 +97,7 @@ func TestPullRequestWorker_Process_NotReaderRepository(t *testing.T) {
 	}
 
 	// The repository is not a Reader, so it should fail
-	err := worker.Process(context.Background(), repo, job, progress)
+	err := worker.Process(t.Context(), repo, job, progress)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "repository that is not a Reader")
 	repo.AssertExpectations(t)
@@ -134,20 +133,31 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				Ref: "test-ref",
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(nil, errors.New("failed to list files"))
+			},
+			expectedError: "failed to list pull request files: failed to list files",
+		},
+		{
+			name: "falls back to the configured branch when base resolution fails",
+			opts: &provisioning.PullRequestJobOptions{
+				PR:  123,
+				Ref: "test-ref",
+			},
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
 					Spec: provisioning.RepositorySpec{
-						Title:  "test-repo",
 						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
 					},
 				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(nil, errors.New("failed to list files"))
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("", errors.New("api unavailable"))
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return([]repository.VersionedFileChange{}, nil)
+				progress.On("SetFinalMessage", mock.Anything, "no files to process").Return()
 			},
-			expectedError: "failed to list pull request files: failed to list files",
+			expectedError: "",
 		},
 		{
 			name: "no files to process",
@@ -156,18 +166,9 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				Ref: "test-ref",
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title:  "test-repo",
-						Type:   provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					},
-				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return([]repository.VersionedFileChange{}, nil)
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return([]repository.VersionedFileChange{}, nil)
 				progress.On("SetFinalMessage", mock.Anything, "no files to process").Return()
 			},
 			expectedError: "",
@@ -179,16 +180,6 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				Ref: "test-ref",
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title:  "test-repo",
-						Type:   provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					},
-				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 
 				// Create a mix of ignored and supported files
@@ -198,7 +189,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					{Path: "another.yaml"}, // Supported file
 				}
 
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(files, nil)
 
 				// Only non-ignored files should be passed to the evaluator
 				expectedFiles := []repository.VersionedFileChange{
@@ -218,16 +210,6 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				Ref: "test-ref",
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title:  "test-repo",
-						Type:   provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					},
-				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 
 				// Create a mix of supported and unsupported files
@@ -239,7 +221,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					{Path: ".github/something"},    // Unsupported file
 				}
 
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(files, nil)
 
 				// Only supported files should be passed to the evaluator
 				expectedFiles := []repository.VersionedFileChange{
@@ -259,21 +242,12 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				Ref: "test-ref",
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title:  "test-repo",
-						Type:   provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					},
-				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, errors.New("evaluation failed"))
 			},
 			expectedError: "calculate changes: evaluation failed",
@@ -285,21 +259,12 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				Ref: "test-ref",
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title:  "test-repo",
-						Type:   provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					},
-				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, nil)
 				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("comment failed"))
 			},
@@ -312,21 +277,12 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				Ref: "test-ref",
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title:  "test-repo",
-						Type:   provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					},
-				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, nil)
 				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
@@ -339,21 +295,12 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				Ref: "test-ref",
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title:  "test-repo",
-						Type:   provisioning.GitLabRepositoryType,
-						GitLab: &provisioning.GitLabRepositoryConfig{Branch: "main"},
-					},
-				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, nil)
 				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
@@ -380,7 +327,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				},
 			}
 
-			err := worker.Process(logging.Context(context.Background(), logging.DefaultLogger), repo, job, progress)
+			err := worker.Process(logging.Context(t.Context(), logging.DefaultLogger), repo, job, progress)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			} else {

@@ -47,8 +47,6 @@ repository: {
 					token?: string
 					// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
 					encryptedToken?: [...string]
-					// Whether we should show dashboard previews for pull requests.
-					generateDashboardPreviews?: bool
 					// Path is the subdirectory for the Grafana data inside the repository.
 					path?: string
 				}

@@ -207,6 +207,7 @@ type Cfg struct {
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
+	MarketplaceLicenseDirectory               string
 	// PluginsPaths: list of paths where Grafana will look for plugins.
 	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
 	PluginsPaths []string
@@ -1768,6 +1769,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
+	marketplace := iniFile.Section("marketplace")
+	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
 
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")

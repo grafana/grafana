@@ -327,9 +327,8 @@ func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
 
 	if o.GrpcClientKeepaliveTime > 0 {
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                o.GrpcClientKeepaliveTime,
-			Timeout:             10 * time.Second,
-			PermitWithoutStream: true,
+			Time:    o.GrpcClientKeepaliveTime,
+			Timeout: 10 * time.Second,
 		}))
 	}
 

@@ -1851,6 +1851,54 @@ func TestV16(t *testing.T) {
 				},
 			},
 		},
+		{
+			// span > 12 yields panelWidth > gridColumnCount, so the panel can never
+			// fit the row area. Previously this recursed forever in getPanelPosition
+			// and overflowed the stack; now placement gives up after one wrap.
+			name: "should not overflow the stack when a panel span exceeds the grid width",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":  false,
+						"showTitle": true,
+						"title":     "Hosted Exporters API",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    2,
+								"type":  "table",
+								"span":  24,
+								"title": "Clusters",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    2,
+						"type":  "table",
+						"title": "Clusters",
+						"gridPos": map[string]interface{}{
+							"x": 0, "y": 8, "w": 48, "h": 7,
+						},
+					},
+					map[string]interface{}{
+						"id":        3,
+						"type":      "row",
+						"title":     "Hosted Exporters API",
+						"collapsed": false,
+						"repeat":    "",
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0, "y": 0, "w": 24, "h": 7,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	runMigrationTests(t, tests, schemaversion.V16)

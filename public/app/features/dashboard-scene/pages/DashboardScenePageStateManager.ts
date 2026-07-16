@@ -39,6 +39,7 @@ import { getDashboardSceneProfiler } from 'app/features/dashboard/services/Dashb
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
@@ -66,6 +67,7 @@ import {
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
@@ -443,13 +445,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
-      const isRenderTarget =
-        options.route === DashboardRoutes.Report ||
-        options.route === DashboardRoutes.Embedded ||
-        (options.route === DashboardRoutes.Normal && contextSrv.user?.authenticatedBy === 'render');
+      const renderTarget = isRenderTarget(options.route);
       const enableProfiling =
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1 ||
-        isRenderTarget;
+        renderTarget;
 
       if (enableProfiling) {
         // Initialize both performance services before starting profiling to ensure observers are registered
@@ -462,7 +461,7 @@ abstract class DashboardScenePageStateManagerBase<T>
         }
       }
 
-      if (isRenderTarget) {
+      if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
         // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
         initializeReportRenderReadinessObserver();
@@ -522,9 +521,19 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
-    const scene = this.transformResponseToScene(rsp, options);
+    const enrichedOptions = await this.enrichLoadOptions(rsp, options);
+    const scene = this.transformResponseToScene(rsp, enrichedOptions);
 
     return scene;
+  }
+
+  /**
+   * Post-fetch hook that lets managers asynchronously extend the load options (e.g.
+   * inject predefined variables) before the scene is created. Public (not protected)
+   * because the unified manager delegates to the version-specific managers.
+   */
+  async enrichLoadOptions(_rsp: T, options: LoadDashboardOptions): Promise<LoadDashboardOptions> {
+    return options;
   }
 
   public getDashboardFromCache(cacheKey: string): T | null {
@@ -992,6 +1001,32 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     throw new Error('Snapshot not found');
   }
 
+  async enrichLoadOptions(
+    rsp: DashboardWithAccessInfo<DashboardV2Spec>,
+    options: LoadDashboardOptions
+  ): Promise<LoadDashboardOptions> {
+    // Public dashboards are rendered anonymously and must not fetch org-level resources.
+    if (options.route === DashboardRoutes.Public) {
+      return options;
+    }
+
+    // fetchPredefinedVariables is a no-op when the feature flag is off.
+    if (!config.featureToggles.globalDashboardVariables) {
+      return options;
+    }
+
+    // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
+    const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
+    const predefinedVariables = await fetchPredefinedVariables(folderUid);
+
+    // Always attach (including []) so scene-cache hits can sync — including clearing
+    // variables that were deleted after the scene was cached.
+    return {
+      ...options,
+      defaultVariables: [...predefinedVariables, ...(options.defaultVariables ?? [])],
+    };
+  }
+
   transformResponseToScene(
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
@@ -1003,6 +1038,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       const fromCache = this.getSceneFromCache(options.uid);
 
       if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+        // Scene cache has no TTL. Re-apply predefined variables fetched by enrichLoadOptions
+        // so revisits pick up changes after the 30s predefined-variables cache expires.
+        if (options.defaultVariables !== undefined) {
+          fromCache.setPredefinedVariables(options.defaultVariables);
+        }
+
         const profiler = getDashboardSceneProfiler();
         profiler.setMetadata({
           dashboardUID: fromCache.state.uid,
@@ -1238,7 +1279,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         return;
       }
 
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      // Re-apply predefined variables so param-triggered reloads keep the injected variables.
+      const reloadOptions = await this.enrichLoadOptions(rsp, { uid, route: DashboardRoutes.Normal });
+      const scene = transformSaveModelSchemaV2ToScene(rsp, reloadOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
@@ -1334,6 +1377,17 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public getDashboardFromCache(uid: string) {
     return this.activeManager.getDashboardFromCache(uid);
+  }
+
+  async enrichLoadOptions(
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>,
+    options: LoadDashboardOptions
+  ): Promise<LoadDashboardOptions> {
+    if (isDashboardV2Resource(rsp)) {
+      return this.v2Manager.enrichLoadOptions(rsp, options);
+    }
+
+    return options;
   }
 
   transformResponseToScene(
