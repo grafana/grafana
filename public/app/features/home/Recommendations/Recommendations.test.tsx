@@ -460,6 +460,34 @@ describe('Recommendations', () => {
       jest.useRealTimers();
     }
   });
+
+  it('does not schedule autoplay when there is a single recommendation', async () => {
+    mockAllAppsEnabled(); // invite card is the only recommendation
+    jest.useFakeTimers();
+    // A hand-rolled wrapper instead of jest.spyOn: the afterEach restoreAllMocks would re-install
+    // the fake-timer setTimeout after useRealTimers and poison the following tests.
+    const fakeSetTimeout = window.setTimeout;
+    const scheduledDelays: Array<number | undefined> = [];
+    window.setTimeout = new Proxy(fakeSetTimeout, {
+      apply(target, thisArg, args) {
+        scheduledDelays.push(args[1]);
+        return Reflect.apply(target, thisArg, args);
+      },
+    });
+    try {
+      render(<Recommendations />);
+      expect(await screen.findByRole('heading', { name: 'Invite your team' })).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(20_000);
+      });
+      // The autoplay effect arms a 5s tick; with a lone slide it must never be scheduled.
+      expect(scheduledDelays.filter((delay) => delay === 5000)).toHaveLength(0);
+      expect(screen.getByRole('heading', { name: 'Invite your team' })).toBeInTheDocument();
+    } finally {
+      window.setTimeout = fakeSetTimeout;
+      jest.useRealTimers();
+    }
+  });
   it('announces the recommendation slides as a carousel region', async () => {
     render(<Recommendations />);
 

@@ -37,7 +37,7 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
   const safeIndex = Math.min(index, recommendations.length - 1);
 
   useEffect(() => {
-    if (collapsed || paused) {
+    if (collapsed || paused || recommendations.length <= 1) {
       return;
     }
 
@@ -116,10 +116,10 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
                     aria-label={t('home.recommendations.previous', 'Previous')}
                   />
 
-                  {recommendations.map((_, i) =>
+                  {recommendations.map((recommendation, i) =>
                     i === safeIndex ? (
                       <Button
-                        key={i}
+                        key={recommendation.id}
                         variant="secondary"
                         size="sm"
                         fill="solid"
@@ -133,7 +133,7 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
                       />
                     ) : (
                       <Button
-                        key={i}
+                        key={recommendation.id}
                         variant="secondary"
                         size="sm"
                         fill="solid"
