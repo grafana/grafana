@@ -1,5 +1,7 @@
 // Vendored from the easy-tz library ("07-baked-rules" dist build), converted
-// from the published index.mjs + index.d.ts into a single TypeScript module.
+// from the published index.mjs + index.d.ts into a single TypeScript module:
+// https://github.com/leeoniya/easy-tz/tree/1b8de57d6d6500eec281ff9b642594549f178bde/dist/07-baked-rules
+//
 // It lists every IANA zone the runtime supports with a DST-correct
 // abbreviation and UTC offset, using pre-baked transition rules instead of
 // moment-timezone's bundled tz database. Keep edits minimal to ease future
