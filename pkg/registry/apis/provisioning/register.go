@@ -905,7 +905,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningPerformance)), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningPerformance)), 30*time.Second) //nolint:staticcheck
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -1053,7 +1053,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 
 			// Synthetic load-testing worker; a no-op unless provisioning.performance is enabled.
-			perfTestWorker := perftest.NewWorker(b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningPerformance))
+			perfTestWorker := perftest.NewWorker(b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningPerformance)) //nolint:staticcheck
 
 			// All workers registered - export/migrate/perftest check their feature flag at runtime
 			workers := make([]jobs.Worker, 0, 9+len(b.extraWorkers))

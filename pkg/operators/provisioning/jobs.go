@@ -87,7 +87,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	features := featuremgmt.ProvideToggles(featureManager)
 	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
-	perfTestingEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningPerformance)
+	perfTestingEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningPerformance)       //nolint:staticcheck
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
