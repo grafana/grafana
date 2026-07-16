@@ -26,6 +26,15 @@ import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboa
 
 import { annotationQueryKindSchema, variableKindSchema } from '../../v2schema/dashboardV2Schema';
 
+// The canonical schema lets `spec.name` default to '' (the v2 CUE has
+// `name: string | *""`, valid for a full spec). A create/update command must
+// name the variable, so payloads require a non-empty name on top of the shared
+// structural schema.
+const namedVariableKindSchema = variableKindSchema.refine(
+  (variable) => typeof variable.spec.name === 'string' && variable.spec.name.trim().length > 0,
+  { message: 'Variable spec.name is required and must be non-empty', path: ['spec', 'name'] }
+);
+
 const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
   group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
@@ -134,7 +143,7 @@ const rowsLayoutRowSpecSchema = z.object({
   fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
   repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
   conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
-  variables: z.array(variableKindSchema).optional().describe('Section-scoped variables for this row.'),
+  variables: z.array(namedVariableKindSchema).optional().describe('Section-scoped variables for this row.'),
 });
 
 const partialRowSpecSchema = z
@@ -160,7 +169,7 @@ const tabsLayoutTabSpecSchema = z.object({
   title: z.string().optional().describe('Tab title'),
   repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
   conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
-  variables: z.array(variableKindSchema).optional().describe('Section-scoped variables for this tab.'),
+  variables: z.array(namedVariableKindSchema).optional().describe('Section-scoped variables for this tab.'),
 });
 
 const partialTabSpecSchema = z
@@ -232,7 +241,7 @@ const partialAnnotationQueryKindSchema = z.object({
 // each command's `payload` field expects.
 
 const addVariablePayloadSchema = z.object({
-  variable: variableKindSchema.describe('Variable definition (VariableKind)'),
+  variable: namedVariableKindSchema.describe('Variable definition (VariableKind)'),
   position: z.number().optional().describe('Position in variables list (optional, appends if not set)'),
   parentPath: layoutPathSchema
     .optional()
@@ -244,7 +253,7 @@ const addVariablePayloadSchema = z.object({
 
 const updateVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to update'),
-  variable: variableKindSchema.describe('New variable definition (VariableKind)'),
+  variable: namedVariableKindSchema.describe('New variable definition (VariableKind)'),
   parentPath: layoutPathSchema
     .optional()
     .describe(
