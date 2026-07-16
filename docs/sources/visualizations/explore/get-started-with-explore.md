@@ -119,7 +119,7 @@ Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-managemen
 The query inspector provides detailed statistics regarding your query.
 Inspector functions as a kind of debugging tool that "inspects" your query.
 It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
-Refer to [Query inspector in Explore](/docs/grafana/latest/explore/explore-inspector/) for additional information.
+Refer to [Query inspector in Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/explore-inspector/) for additional information.
 
 ## Access Explore
 
