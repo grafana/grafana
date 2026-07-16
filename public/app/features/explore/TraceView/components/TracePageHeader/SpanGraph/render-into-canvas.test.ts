@@ -212,6 +212,38 @@ describe('renderIntoCanvas()', () => {
     });
   });
 
+  describe('fill color caching', () => {
+    it('computes each service fill color once, regardless of item count or summary/normal mix', () => {
+      // Large, mostly-normal trace with only three services repeated: this is the
+      // hot path (unpruned traces) that motivates caching per service instead of
+      // recomputing the fill for every span.
+      const items = _range(300).map((i) => ({
+        valueWidth: 100,
+        valueOffset: i,
+        serviceName: `svc-${i % 3}`,
+        isSummary: i % 50 === 0,
+      }));
+      const canvas = new Canvas();
+      const getFillColor = getColorFactory();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getFillColor, BG_COLOR);
+      expect(getFillColor.inputOutput.map((io) => io.input)).toEqual(['svc-0', 'svc-1', 'svc-2']);
+    });
+
+    it('reuses one identical solid fill string for every normal span of a service', () => {
+      const items = [
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-a' },
+        { valueWidth: 100, valueOffset: 1, serviceName: 'svc-a' },
+        { valueWidth: 100, valueOffset: 2, serviceName: 'svc-a' },
+      ];
+      const canvas = new Canvas();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
+      // index 0 is the background fill; the rest are the span rects.
+      const [, ...rects] = canvas.contexts[0].fillRectAccumulator;
+      expect(typeof rects[0].fillStyle).toBe('string');
+      expect(new Set(rects.map((r) => r.fillStyle)).size).toBe(1);
+    });
+  });
+
   describe('when there are many items', () => {
     it('sets the height when there are many items', () => {
       const canvas = new Canvas();
