@@ -38,6 +38,9 @@ message EmbeddingInput {
 
 // Plain upsert: inserts or overwrites exactly the (uid, subresource) rows in the batch.
 // All params are required
+//
+// Not transactional across inputs. Validation errors fail the whole request
+// (INVALID_ARGUMENT, nothing written); runtime embed/storage failures are in the response — see VectorUpsertResponse.
 message VectorUpsertRequest {
   // Identifies the collection: namespace (tenant) + group + resource; name must be empty.
   // The group identifies external resources, e.g. "investigation.assistant.external"; the
@@ -64,9 +67,9 @@ message VectorUpsertFailure {
   string reason = 3;
 }
 
-// Upserting a batch could have partial failures. The failed resources are in the response.
 message VectorUpsertResponse {
   int64 upserted = 1;
+  // these are failures that happened at runtime while trying to embed and upsert
   repeated VectorUpsertFailure failures = 2;
 }
 
