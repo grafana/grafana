@@ -1,10 +1,9 @@
 import { type ComponentProps } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 
-import { RepoTypeDisplay } from '../Wizard/types';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { getRepoFileUrl } from '../utils/git';
 
@@ -15,6 +14,8 @@ interface SourceLinkProps {
   sourcePath?: string;
   /** Button size, to match the surrounding actions. Defaults to `sm`. */
   size?: ComponentProps<typeof LinkButton>['size'];
+  /** Button fill, to match the surrounding actions. Defaults to `solid`. */
+  fill?: ComponentProps<typeof LinkButton>['fill'];
 }
 
 /**
@@ -22,7 +23,7 @@ interface SourceLinkProps {
  * like the external links shown on dashboards. Renders nothing when there is no resolvable git
  * source (not repository-managed, local/generic-git provisioning, or no source path).
  */
-export function SourceLink({ repositoryName, sourcePath, size = 'sm' }: SourceLinkProps) {
+export function SourceLink({ repositoryName, sourcePath, size = 'sm', fill = 'solid' }: SourceLinkProps) {
   const skipQuery = !config.featureToggles.provisioning || !repositoryName || !sourcePath;
   const { repository } = useGetResourceRepositoryView({ name: skipQuery ? undefined : repositoryName, skipQuery });
 
@@ -53,10 +54,15 @@ export function SourceLink({ repositoryName, sourcePath, size = 'sm' }: SourceLi
       icon="external-link-alt"
       variant="secondary"
       size={size}
+      fill={fill}
+      onClick={() =>
+        reportInteraction('grafana_provisioning_source_link_clicked', {
+          repositoryName,
+          repositoryType: repoType,
+        })
+      }
     >
-      <Trans i18nKey="provisioning.source-link.title" values={{ provider: RepoTypeDisplay[repoType] }}>
-        Source ({'{{provider}}'})
-      </Trans>
+      <Trans i18nKey="provisioning.source-link.title">View source</Trans>
     </LinkButton>
   );
 }

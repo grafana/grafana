@@ -1,7 +1,8 @@
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -9,6 +10,11 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { setupProvisioningMswServer } from '../mocks/server';
 
 import { SourceLink } from './SourceLink';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 setupProvisioningMswServer();
 
@@ -52,9 +58,23 @@ describe('SourceLink', () => {
 
     render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
 
-    const link = await screen.findByRole('link', { name: /source \(github\)/i });
+    const link = await screen.findByRole('link', { name: /view source/i });
     expect(link).toHaveAttribute('href', 'https://github.com/grafana/repo/blob/main/playlists/foo.json');
     expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('reports an interaction when the source link is clicked', async () => {
+    mockRepositories([makeRepository({ type: 'github', url: 'https://github.com/grafana/repo', branch: 'main' })]);
+    const user = userEvent.setup();
+
+    render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
+
+    await user.click(await screen.findByRole('link', { name: /view source/i }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_provisioning_source_link_clicked', {
+      repositoryName: 'my-repo',
+      repositoryType: 'github',
+    });
   });
 
   it('prefixes the repository path when present', async () => {
@@ -64,7 +84,7 @@ describe('SourceLink', () => {
 
     render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
 
-    expect(await screen.findByRole('link', { name: /source \(github\)/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /view source/i })).toHaveAttribute(
       'href',
       'https://github.com/grafana/repo/blob/main/grafana/playlists/foo.json'
     );
@@ -77,7 +97,7 @@ describe('SourceLink', () => {
 
     render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
 
-    expect(await screen.findByRole('link', { name: /source \(github enterprise\)/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /view source/i })).toHaveAttribute(
       'href',
       'https://ghe.example.com/grafana/repo/blob/main/playlists/foo.json'
     );

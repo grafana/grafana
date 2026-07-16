@@ -20,7 +20,6 @@ import {
 import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -82,13 +81,6 @@ export class K8sDashboardV2API
         }
       } else if (dashboard.metadata.annotations) {
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
-      }
-
-      // Inject source link for repo-managed dashboards
-      const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
-      if (sourceLink) {
-        const linksWithoutSource = removeExistingSourceLinks(dashboard.spec.links);
-        dashboard.spec.links = [sourceLink, ...linksWithoutSource];
       }
 
       return dashboard;
