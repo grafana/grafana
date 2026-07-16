@@ -72,8 +72,11 @@ function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunn
 }
 
 // panel.state.key is "panel-<id>"; parse the numeric id without importing utils (import cycle, as above).
+// Mirrors getPanelIdForVizPanel in dashboard-scene/utils/utils.ts, including its non-null assertion:
+// every VizPanel in the scene graph is keyed this way, so an undefined key indicates a real bug
+// upstream rather than something to paper over with a fallback id.
 function panelIdFrom(panel: VizPanel): number {
-  return parseInt(panel.state.key?.replace('panel-', '') ?? '0', 10);
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
 // Collects every data panel's queries (with the runner-level datasource filled in and hidden queries
