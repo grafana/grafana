@@ -2,6 +2,7 @@ package pluginconfig
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,8 +21,32 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+type fakeMarketplaceEnvironment struct {
+	appURL       string
+	prepareErr   error
+	prepareCalls int
+	preparedWith string
+}
+
+func newTestMarketplaceEnvironment(appURL string) *fakeMarketplaceEnvironment {
+	return &fakeMarketplaceEnvironment{appURL: appURL}
+}
+
+func (e *fakeMarketplaceEnvironment) AppURL() string {
+	return e.appURL
+}
+
+func (e *fakeMarketplaceEnvironment) Prepare(_ context.Context, pluginID string) error {
+	e.prepareCalls++
+	e.preparedWith = pluginID
+	return e.prepareErr
+}
+
+var _ marketplacelicensing.Environment = (*fakeMarketplaceEnvironment)(nil)
 
 func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 	t.Run("backend datasource with license", func(t *testing.T) {
@@ -48,7 +73,7 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 			Features:             featuremgmt.WithFeatures(),
 		}
 
-		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{})
+		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 		envVars := provider.PluginEnvVars(context.Background(), p)
 		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
@@ -109,10 +134,10 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 			name:        "valid license",
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
 			directory:   marketplaceLicenseDirectory,
-			pluginID:    "acme-widget",
+			pluginID:    "acme-datasource",
 			appURL:      grafanaAppURL,
 			license:     &pluginfakes.FakeLicensingService{ValidLicense: true},
-			wantLicense: filepath.Join(marketplaceLicenseDirectory, "license-acme-widget.jwt"),
+			wantLicense: filepath.Join(marketplaceLicenseDirectory, "license-acme-datasource.jwt"),
 			wantAppURL:  grafanaAppURL,
 		},
 		{
@@ -141,7 +166,7 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 				Features:                    tc.features,
 				MarketplaceLicenseDirectory: tc.directory,
 				GrafanaAppURL:               tc.appURL,
-			}, tc.license, &fakeSSOSettingsProvider{})
+			}, tc.license, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(tc.appURL))
 
 			envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: tc.pluginID}})
 			license, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
@@ -159,20 +184,107 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 		})
 	}
 
-	for _, pluginID := range []string{"", ".", "..", "../license", "acme/widget", `acme\widget`, "/tmp/license", "C:\\license", "C:license", "acme:widget", "acme\x00widget"} {
-		t.Run("rejects unsafe plugin ID "+pluginID, func(t *testing.T) {
-			provider := NewEnvVarsProvider(&PluginInstanceCfg{
-				Features:                    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
-				MarketplaceLicenseDirectory: marketplaceLicenseDirectory,
-			}, &pluginfakes.FakeLicensingService{ValidLicense: true}, &fakeSSOSettingsProvider{})
+}
 
-			envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
-			_, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
-			_, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
-			require.False(t, hasLicense)
-			require.False(t, hasAppURL)
-		})
+func TestPluginEnvVarsProvider_marketplaceLicenseEnvironment(t *testing.T) {
+	newProvider := func(environment marketplacelicensing.Environment) *EnvVarsProvider {
+		return NewEnvVarsProvider(&PluginInstanceCfg{
+			Features:                    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			MarketplaceLicenseDirectory: "marketplace-licenses",
+			GrafanaAppURL:               "https://configured.example.com/",
+		}, &pluginfakes.FakeLicensingService{ValidLicense: true}, &fakeSSOSettingsProvider{}, environment)
 	}
+
+	t.Run("prepares the environment for the plugin and uses its identity", func(t *testing.T) {
+		environment := newTestMarketplaceEnvironment("hmac:marketplace-environment")
+		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+
+		require.Equal(t, "acme-widget", environment.preparedWith)
+		require.Equal(t, 1, environment.prepareCalls)
+		require.Equal(t, "hmac:marketplace-environment", getEnvVar(envVars, "GF_MARKETPLACE_APP_URL"))
+	})
+
+	t.Run("preparation failure omits marketplace variables", func(t *testing.T) {
+		environment := newTestMarketplaceEnvironment("https://grafana.example.com/")
+		environment.prepareErr = errors.New("prepare environment")
+		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+
+		_, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		_, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
+		require.False(t, hasLicense)
+		require.False(t, hasAppURL)
+	})
+
+	t.Run("does not prepare when a marketplace gate fails", func(t *testing.T) {
+		for _, tc := range []struct {
+			name      string
+			features  featuremgmt.FeatureToggles
+			directory string
+			license   plugins.Licensing
+			pluginID  string
+		}{
+			{
+				name:      "feature disabled",
+				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing, false),
+				directory: "marketplace-licenses",
+				license:   &pluginfakes.FakeLicensingService{ValidLicense: true},
+				pluginID:  "acme-widget",
+			},
+			{
+				name:      "nil features",
+				directory: "marketplace-licenses",
+				license:   &pluginfakes.FakeLicensingService{ValidLicense: true},
+				pluginID:  "acme-widget",
+			},
+			{
+				name:     "empty directory",
+				features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+				license:  &pluginfakes.FakeLicensingService{ValidLicense: true},
+				pluginID: "acme-widget",
+			},
+			{
+				name:      "missing host license",
+				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+				directory: "marketplace-licenses",
+				pluginID:  "acme-widget",
+			},
+			{
+				name:      "invalid host license",
+				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+				directory: "marketplace-licenses",
+				license:   &pluginfakes.FakeLicensingService{},
+				pluginID:  "acme-widget",
+			},
+			{
+				name:      "empty plugin ID",
+				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+				directory: "marketplace-licenses",
+				license:   &pluginfakes.FakeLicensingService{ValidLicense: true},
+			},
+			{
+				name:      "unsafe plugin ID",
+				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+				directory: "marketplace-licenses",
+				license:   &pluginfakes.FakeLicensingService{ValidLicense: true},
+				pluginID:  "../license",
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				environment := newTestMarketplaceEnvironment("hmac:marketplace-environment")
+				provider := NewEnvVarsProvider(&PluginInstanceCfg{
+					Features:                    tc.features,
+					MarketplaceLicenseDirectory: tc.directory,
+				}, tc.license, &fakeSSOSettingsProvider{}, environment)
+
+				envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: tc.pluginID}})
+				require.Zero(t, environment.prepareCalls)
+				_, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+				_, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
+				require.False(t, hasLicense)
+				require.False(t, hasAppURL)
+			})
+		}
+	})
 }
 
 func mustAbs(t *testing.T, path string) string {
@@ -201,7 +313,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 		envVars := provider.PluginEnvVars(context.Background(), p)
 
 		// We want to test that the envvars.Provider does not add any of the host env vars.
@@ -217,7 +329,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		cfg := setting.NewCfg()
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
-		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 
 		t.Run("should populate allowed host env vars", func(t *testing.T) {
 			// Set all allowed variables
@@ -542,7 +654,7 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			p := NewEnvVarsProvider(tc.cfg, nil, &fakeSSOSettingsProvider{})
+			p := NewEnvVarsProvider(tc.cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 			envVars := p.PluginEnvVars(context.Background(), tc.plugin)
 			tc.exp(t, envVars)
 		})
@@ -597,7 +709,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 		envVars := provider.PluginEnvVars(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
 		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
@@ -706,7 +818,7 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 				Features:                  featuremgmt.WithFeatures(),
 			}
 
-			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{})
+			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 			envVars := provider.PluginEnvVars(context.Background(), p)
 			assert.ElementsMatch(t, tc.expected, envVars)
 
@@ -730,7 +842,7 @@ func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
 			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
 		}
 
-		p := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{})
+		p := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 		envVars := p.PluginEnvVars(context.Background(), &plugins.Plugin{})
 		assert.Equal(t, 2, len(envVars))
 
@@ -781,7 +893,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
@@ -829,7 +941,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{
 			GetForProviderFunc: getAzureSSOSettings,
-		})
+		}, newTestMarketplaceEnvironment(""))
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
@@ -888,7 +1000,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{
 			GetForProviderFunc: getAzureSSOSettings,
-		})
+		}, newTestMarketplaceEnvironment(""))
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
@@ -1052,7 +1164,7 @@ func TestPluginEnvVarsProvider_azureHostEnvVars(t *testing.T) {
 			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 			require.NoError(t, err)
 
-			provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
+			provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceEnvironment(""))
 			envVars := provider.PluginEnvVars(context.Background(), p)
 
 			for _, expected := range tc.expectedKeys {

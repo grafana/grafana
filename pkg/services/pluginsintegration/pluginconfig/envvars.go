@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
@@ -27,14 +27,16 @@ type EnvVarsProvider struct {
 	cfg         *PluginInstanceCfg
 	license     plugins.Licensing
 	logger      log.Logger
+	environment marketplacelicensing.Environment
 	ssoSettings pluginsso.SettingsProvider
 }
 
-func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider) *EnvVarsProvider {
+func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider, environment marketplacelicensing.Environment) *EnvVarsProvider {
 	return &EnvVarsProvider{
 		cfg:         cfg,
 		license:     license,
 		logger:      log.New("plugins.envvars"),
+		environment: environment,
 		ssoSettings: ssoSettings,
 	}
 }
@@ -94,34 +96,19 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 		return nil
 	}
 
-	licensePath, ok := marketplaceLicenseFilePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
+	licensePath, ok := marketplacelicensing.LicensePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
 	if !ok {
+		return nil
+	}
+	if err := p.environment.Prepare(ctx, pluginID); err != nil {
+		p.logger.Warn("Failed to prepare marketplace license environment", "pluginId", pluginID)
 		return nil
 	}
 
 	return []string{
 		p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath),
-		p.envVar("GF_MARKETPLACE_APP_URL", p.cfg.GrafanaAppURL),
+		p.envVar("GF_MARKETPLACE_APP_URL", p.environment.AppURL()),
 	}
-}
-
-func marketplaceLicenseFilePath(directory, pluginID string) (string, bool) {
-	if pluginID == "" || pluginID == "." || pluginID == ".." || strings.Contains(pluginID, "\x00") ||
-		strings.ContainsAny(pluginID, "/\\:") || filepath.IsAbs(pluginID) || filepath.Base(pluginID) != pluginID {
-		return "", false
-	}
-
-	absDirectory, err := filepath.Abs(directory)
-	if err != nil {
-		return "", false
-	}
-	absDirectory = filepath.Clean(absDirectory)
-	licensePath := filepath.Join(absDirectory, "license-"+pluginID+".jwt")
-	if filepath.Dir(licensePath) != absDirectory {
-		return "", false
-	}
-
-	return licensePath, true
 }
 
 func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
