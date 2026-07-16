@@ -103,7 +103,7 @@ export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, f
 export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): Field {
   switch (opts.destinationType) {
     case FieldType.time:
-      return ensureTimeField(field, opts.dateFormat, opts.timezone);
+      return ensureTimeFieldWithTimeZone(field, opts.dateFormat, opts.timezone);
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
@@ -260,12 +260,15 @@ function fieldToComplexField(field: Field): Field {
  * Checks the first value. Assumes any number should be time fieldtype. Otherwise attempts to make the fieldtype time.
  * @param field - field to ensure is a time fieldtype
  * @param dateFormat - date format used to parse a string datetime
- * @param timeZone - timezone used to parse a string datetime
  * @returns field as time
  *
  * @public
  */
-export function ensureTimeField(field: Field, dateFormat?: string, timeZone?: TimeZone): Field {
+export function ensureTimeField(field: Field, dateFormat?: string): Field {
+  return ensureTimeFieldWithTimeZone(field, dateFormat);
+}
+
+function ensureTimeFieldWithTimeZone(field: Field, dateFormat?: string, timeZone?: TimeZone): Field {
   const firstValueTypeIsNumber = typeof field.values[0] === 'number';
   // if the format is unix seconds, we don't want to skip formatting
   const isUnixSecondsFormat = dateFormat === 'X';
