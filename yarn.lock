@@ -2197,7 +2197,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:^8.0.0"
     tinycolor2: "npm:^1.6.0"
     type-fest: "npm:^4.40.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
   peerDependencies:
     "@grafana/data": ">=11.6 <= 12.x"
     "@grafana/runtime": ">=11.6 <= 12.x"
@@ -2216,7 +2216,7 @@ __metadata:
     enquirer: "npm:^2.4.1"
     openapi-types: "npm:^12.1.3"
     rollup: "npm:^4.60.1"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
   peerDependencies:
     "@grafana/runtime": ">=11.6 <= 12.x"
     "@reduxjs/toolkit": ^2.10.0
@@ -2331,7 +2331,7 @@ __metadata:
     string-hash: "npm:^1.1.3"
     tinycolor2: "npm:^1.6.0"
     tsx: "npm:^4.21.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
     uplot: "npm:^1.6.32"
     xss: "npm:^1.0.14"
     zod: "npm:^4.3.0"
@@ -2354,7 +2354,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     semver: "npm:^7.7.0"
-    typescript: "npm:^6.0.2"
+    typescript: "npm:^7.0.2"
   languageName: unknown
   linkType: soft
 
@@ -2485,7 +2485,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:^8.0.0"
     storybook: "npm:10.3.6"
     tinycolor2: "npm:^1.6.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
     react: ^18.0.0
@@ -2508,7 +2508,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     react-i18next: "npm:^17.0.9"
     rollup: "npm:^4.60.1"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
   peerDependencies:
     react: ">=18"
   languageName: unknown
@@ -2873,7 +2873,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:^7.8.2"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -2946,7 +2946,7 @@ __metadata:
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
   languageName: unknown
   linkType: soft
 
@@ -2983,7 +2983,7 @@ __metadata:
     rollup: "npm:^4.60.1"
     rxjs: "npm:^7.8.2"
     sql-formatter-plus: "npm:^1.3.6"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
     "@grafana/runtime": ">=10.4.0"
@@ -3015,7 +3015,7 @@ __metadata:
     lodash: "npm:^4.17.23"
     msw: "npm:2.10.4"
     rxjs: "npm:7.8.2"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
   languageName: unknown
   linkType: soft
 
@@ -3149,7 +3149,7 @@ __metadata:
     storybook: "npm:10.3.6"
     style-loader: "npm:4.0.0"
     tinycolor2: "npm:^1.6.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^7.0.2"
     uplot: "npm:^1.6.32"
     uwrap: "npm:^0.1.2"
     webpack: "npm:^5.105.0"
@@ -10971,7 +10971,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native@npm:typescript@^7.0.2":
+"@typescript/native@npm:typescript@^7.0.2, typescript@npm:^7.0.2":
   version: 7.0.2
   resolution: "typescript@npm:7.0.2"
   dependencies:
@@ -32135,7 +32135,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:6.0.2, typescript@npm:^6.0.2":
+"typescript@npm:6.0.2":
   version: 6.0.2
   resolution: "typescript@npm:6.0.2"
   bin:
@@ -32176,7 +32176,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^6.0.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>":
   version: 6.0.2
   resolution: "typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>::version=6.0.2&hash=5786d5"
   bin:
@@ -32194,6 +32194,77 @@ __metadata:
   bin:
     tsc6: bin/tsc6
   checksum: 10/b190ec6b713b0fa95c059ff8019b740c17591ea83a3b60e6fe592d51d56d73c360b86abce48f616d25c39697cc5f4bb9efe8e2a231096f493758457cb175e11c
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A^7.0.2#optional!builtin<compat/typescript>":
+  version: 7.0.2
+  resolution: "typescript@patch:typescript@npm%3A7.0.2#optional!builtin<compat/typescript>::version=7.0.2&hash=3bafbf"
+  dependencies:
+    "@typescript/typescript-aix-ppc64": "npm:7.0.2"
+    "@typescript/typescript-darwin-arm64": "npm:7.0.2"
+    "@typescript/typescript-darwin-x64": "npm:7.0.2"
+    "@typescript/typescript-freebsd-arm64": "npm:7.0.2"
+    "@typescript/typescript-freebsd-x64": "npm:7.0.2"
+    "@typescript/typescript-linux-arm": "npm:7.0.2"
+    "@typescript/typescript-linux-arm64": "npm:7.0.2"
+    "@typescript/typescript-linux-loong64": "npm:7.0.2"
+    "@typescript/typescript-linux-mips64el": "npm:7.0.2"
+    "@typescript/typescript-linux-ppc64": "npm:7.0.2"
+    "@typescript/typescript-linux-riscv64": "npm:7.0.2"
+    "@typescript/typescript-linux-s390x": "npm:7.0.2"
+    "@typescript/typescript-linux-x64": "npm:7.0.2"
+    "@typescript/typescript-netbsd-arm64": "npm:7.0.2"
+    "@typescript/typescript-netbsd-x64": "npm:7.0.2"
+    "@typescript/typescript-openbsd-arm64": "npm:7.0.2"
+    "@typescript/typescript-openbsd-x64": "npm:7.0.2"
+    "@typescript/typescript-sunos-x64": "npm:7.0.2"
+    "@typescript/typescript-win32-arm64": "npm:7.0.2"
+    "@typescript/typescript-win32-x64": "npm:7.0.2"
+  dependenciesMeta:
+    "@typescript/typescript-aix-ppc64":
+      optional: true
+    "@typescript/typescript-darwin-arm64":
+      optional: true
+    "@typescript/typescript-darwin-x64":
+      optional: true
+    "@typescript/typescript-freebsd-arm64":
+      optional: true
+    "@typescript/typescript-freebsd-x64":
+      optional: true
+    "@typescript/typescript-linux-arm":
+      optional: true
+    "@typescript/typescript-linux-arm64":
+      optional: true
+    "@typescript/typescript-linux-loong64":
+      optional: true
+    "@typescript/typescript-linux-mips64el":
+      optional: true
+    "@typescript/typescript-linux-ppc64":
+      optional: true
+    "@typescript/typescript-linux-riscv64":
+      optional: true
+    "@typescript/typescript-linux-s390x":
+      optional: true
+    "@typescript/typescript-linux-x64":
+      optional: true
+    "@typescript/typescript-netbsd-arm64":
+      optional: true
+    "@typescript/typescript-netbsd-x64":
+      optional: true
+    "@typescript/typescript-openbsd-arm64":
+      optional: true
+    "@typescript/typescript-openbsd-x64":
+      optional: true
+    "@typescript/typescript-sunos-x64":
+      optional: true
+    "@typescript/typescript-win32-arm64":
+      optional: true
+    "@typescript/typescript-win32-x64":
+      optional: true
+  bin:
+    tsc: bin/tsc
+  checksum: 10/6d7f3d34ca7fbd3eb4999f06db29340d3dcedd7d40ed71654ea53ecd0f28a330edf0f55a0acf541bf294a2f024f11242075c1a83aed4bd99776fe99af45b994b
   languageName: node
   linkType: hard
 

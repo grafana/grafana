@@ -89,7 +89,7 @@
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "storybook": "10.3.6",
-    "typescript": "6.0.2"
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "@grafana/assistant": "^0.1.1",

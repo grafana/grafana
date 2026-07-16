@@ -250,6 +250,6 @@
     "rollup-plugin-copy": "3.5.0",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "typescript": "6.0.2"
+    "typescript": "^7.0.2"
   }
 }

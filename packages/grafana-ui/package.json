@@ -186,7 +186,7 @@
     "sass-loader": "16.0.5",
     "storybook": "10.3.6",
     "style-loader": "4.0.0",
-    "typescript": "6.0.2",
+    "typescript": "^7.0.2",
     "webpack": "^5.105.0"
   },
   "peerDependencies": {
