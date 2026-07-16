@@ -80,9 +80,27 @@ function NotebookDocument({ scene }: { scene: DashboardScene }) {
   // dedicated top-level Notebooks nav section is deferred to its own follow-up.
   return (
     <Page navId="dashboards/browse" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
+      {renderHiddenVariables(scene)}
       {controls && <NotebookControls controls={controls} />}
       {body && <body.Component model={body} />}
     </Page>
+  );
+}
+// Some variables like ScopesVariable need to be rendered for their logic to work even if hidden.
+function renderHiddenVariables(scene: DashboardScene) {
+  if (!scene.state.$variables) {
+    return null;
+  }
+  return (
+    <>
+      {scene.state.$variables.state.variables.map((variable) => {
+        if (variable.UNSAFE_renderAsHidden) {
+          return <variable.Component model={variable} key={variable.state.key} />;
+        }
+        return null;
+      })}
+    </>
   );
 }
 
