@@ -143,7 +143,7 @@ var WireSet = wire.NewSet(
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
 // extended.
 var WireExtensionSet = wire.NewSet(
-	marketplacelicensing.ProvideEnvironment,
+	marketplacelicensing.Provide,
 	coreplugin.ProvideCoreProvider,
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
