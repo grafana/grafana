@@ -318,7 +318,6 @@
 /devenv/docker/blocks/prometheus_random_data/ @grafana/data-sources-plugins
 /devenv/docker/blocks/prometheus_high_card/ @grafana/data-sources-plugins
 /devenv/docker/blocks/prometheus_utf8/ @grafana/data-sources-plugins
-/devenv/docker/blocks/pyroscope/ @grafana/data-sources-plugins
 /devenv/docker/blocks/redis/ @bergquist
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
 /devenv/docker/blocks/slow_proxy/ @bergquist
@@ -363,7 +362,6 @@
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/data-sources-plugins
 /pkg/tsdb/loki/ @grafana/data-sources-plugins
-/pkg/tsdb/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
 
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
@@ -405,6 +403,7 @@
 /pkg/plugins/ @grafana/grafana-catalog
 /pkg/services/datasourceproxy/ @grafana/grafana-catalog
 /pkg/services/datasources/ @grafana/grafana-catalog
+/pkg/services/diagnostics/ @grafana/data-sources
 /pkg/services/pluginsintegration/ @grafana/grafana-catalog
 /pkg/plugins/codegen/pfs/ @grafana/grafana-catalog @grafana/grafana-as-code
 /pkg/tsdb/grafana-testdata-datasource/ @grafana/grafana-catalog
@@ -709,7 +708,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/gauge @grafana/dataviz-squad
 /packages/grafana-schema/src/**/geomap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/googlecloudmonitoring @grafana/data-sources-plugins
-/packages/grafana-schema/src/**/grafanapyroscope @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/heatmap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/histogram @grafana/dataviz-squad
 /packages/grafana-schema/src/**/logs @grafana/observability-logs
@@ -775,6 +773,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/folder/ @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/iam/ @grafana/access-squad @grafana/identity-squad
 /packages/grafana-api-clients/src/clients/rtkq/logsdrilldown/ @grafana/observability-logs
+/packages/grafana-api-clients/src/clients/rtkq/plugins/ @grafana/grafana-catalog
 /packages/grafana-api-clients/src/clients/rtkq/preferences/ @grafana/grafana-catalog
 /packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
@@ -792,6 +791,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-openapi/src/apis/folder.* @grafana/grafana-frontend-navigation
 /packages/grafana-openapi/src/apis/iam.* @grafana/access-squad @grafana/identity-squad
 /packages/grafana-openapi/src/apis/logsdrilldown.* @grafana/observability-logs
+/packages/grafana-openapi/src/apis/plugins.* @grafana/grafana-catalog
 /packages/grafana-openapi/src/apis/preferences.* @grafana/grafana-catalog
 /packages/grafana-openapi/src/apis/provisioning.* @grafana/grafana-frontend-navigation
 /packages/grafana-openapi/src/apis/shorturl.* @grafana/sharing-squad
@@ -816,6 +816,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.prettierignore @grafana/grafana-frontend-platform
 /.yarn @grafana/grafana-frontend-platform
 /.yarnrc.yml @grafana/grafana-frontend-platform
+/yarn.config.cjs @grafana/grafana-frontend-platform
 /yarn.lock @grafana/grafana-frontend-platform
 /lerna.json @grafana/grafana-frontend-platform
 /.prettierrc.js @grafana/grafana-frontend-platform
@@ -1166,7 +1167,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad

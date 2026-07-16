@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -63,17 +62,15 @@ type SearchHandler struct {
 	log          log.Logger
 	client       resourcepb.ResourceIndexClient
 	tracer       trace.Tracer
-	features     featuremgmt.FeatureToggles
 	accessClient authlib.AccessClient
 	teamGetter   k8srest.Getter
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, accessClient authlib.AccessClient) *SearchHandler {
 	return &SearchHandler{
 		client:       searchClient,
 		log:          log.New("grafana-apiserver.teams.search"),
 		tracer:       tracer,
-		features:     features,
 		accessClient: accessClient,
 	}
 }

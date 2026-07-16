@@ -23,7 +23,8 @@
       "metadata": {
         "name": "advisorDatasourceIntegration",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-15T11:02:00Z"
       },
       "spec": {
         "description": "Enables the advisor report integration with datasource pages",
@@ -1026,6 +1027,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.fullscreenWorkspace",
+        "resourceVersion": "1782120503827",
+        "creationTimestamp": "2026-06-22T09:28:23Z"
+      },
+      "spec": {
+        "description": "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-12-29T15:28:29Z"
@@ -1067,6 +1082,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "awsAssumeRolePerDatasourceExternalId",
+        "resourceVersion": "1784056946678",
+        "creationTimestamp": "2026-07-14T19:22:26Z"
+      },
+      "spec": {
+        "description": "Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -2751,6 +2779,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.multiTenantNavTree",
+        "resourceVersion": "1784042116563",
+        "creationTimestamp": "2026-07-14T15:15:16Z"
+      },
+      "spec": {
+        "description": "Builds the navigation tree client-side instead of reading it from /bootdata",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1781775898347",
         "creationTimestamp": "2026-06-18T09:44:58Z"
@@ -2766,17 +2809,17 @@
     {
       "metadata": {
         "name": "grafana.newPreferencesPage",
-        "resourceVersion": "1781704114797",
+        "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-06-17 13:48:34.797786 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2839,6 +2882,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.savedQueriesPage",
+        "resourceVersion": "1784068714544",
+        "creationTimestamp": "2026-07-14T22:38:34Z"
+      },
+      "spec": {
+        "description": "Enables the dedicated Saved queries page and its navigation entry",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
       }
     },
     {
@@ -3008,7 +3064,8 @@
       "metadata": {
         "name": "grafanaAdvisor",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-01-20T10:08:00Z"
+        "creationTimestamp": "2025-01-20T10:08:00Z",
+        "deletionTimestamp": "2026-07-15T09:55:36Z"
       },
       "spec": {
         "description": "Enables Advisor app",
@@ -4533,14 +4590,17 @@
     {
       "metadata": {
         "name": "preferences.rerouteLegacyAPIs",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1783676521307",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use K8s client implementation for legacy preferences API",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4666,6 +4726,20 @@
       },
       "spec": {
         "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioning.performance",
+        "resourceVersion": "1784190107345",
+        "creationTimestamp": "2026-07-16T08:21:47Z"
+      },
+      "spec": {
+        "description": "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
