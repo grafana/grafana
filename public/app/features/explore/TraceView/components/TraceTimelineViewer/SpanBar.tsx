@@ -27,7 +27,6 @@ import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
 import type TNil from '../types/TNil';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
-import { getSummaryDurationStats } from '../utils/summary-span';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { type ViewedBoundsFunctionType } from './utils';
@@ -170,7 +169,7 @@ function SpanBar({
   className,
   labelClassName,
 }: Props) {
-  const summaryStats = span.aggregation?.isSummary ? getSummaryDurationStats(span.aggregation) : null;
+  const isSummary = span.aggregation?.isSummary === true;
 
   const [expanded, setExpanded] = useState(false);
   const collapse = () => setExpanded(false);
@@ -200,7 +199,7 @@ function SpanBar({
     backgroundColor: color,
     left: toPercent(viewStart),
     width: toPercent(viewEnd - viewStart),
-    ...(span.aggregation?.isSummary ? { '--span-summary-color': color } : {}),
+    ...(isSummary ? { '--span-summary-color': color } : {}),
   };
 
   return (
@@ -215,12 +214,12 @@ function SpanBar({
       data-testid={selectors.components.TraceViewer.spanBar}
     >
       <div
-        aria-label={summaryStats ? shortLabel : normalLabel}
-        className={cx(styles.bar, { [styles.barSummary]: span.aggregation?.isSummary })}
+        aria-label={isSummary ? shortLabel : normalLabel}
+        className={cx(styles.bar, { [styles.barSummary]: isSummary })}
         data-testid="SpanBar--bar"
         style={barStyle}
       >
-        {summaryStats ? (
+        {isSummary ? (
           <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
             {expanded && detailBeforeStats && (
               <span>

@@ -90,6 +90,18 @@ describe('<SpanBar>', () => {
     expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
   });
 
+  it('keeps the summary bar layout when a summary span has no min/max stats', async () => {
+    // isSummary is true but getSummaryDurationStats() is null (no min/max). The bar must still use
+    // the summary layout (fixed shortLabel + detail revealed as a sibling on hover), matching the
+    // row, rather than reverting to the normal-span longLabel swap.
+    const summaryProps = { ...props, span: { ...props.span, aggregation: { isSummary: true, spanCount: 3 } } };
+    render(<SpanBar {...(summaryProps as unknown as Props)} />);
+    await userEvent.hover(screen.getByTestId(selectors.components.TraceViewer.spanBar));
+    expect(screen.getByText(shortLabel)).toBeInTheDocument();
+    expect(screen.getByText(labelDetail, { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
+  });
+
   it('log markers count', () => {
     // 3 log entries, two grouped together with the same timestamp
     render(<SpanBar {...(props as unknown as Props)} />);
