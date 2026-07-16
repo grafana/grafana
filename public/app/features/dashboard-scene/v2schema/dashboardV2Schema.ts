@@ -81,14 +81,14 @@ const controlSourceRefSchema = z.object({
   group: z.string(),
 }) satisfies z.ZodType<ControlSourceRef>;
 
-export const elementReferenceSchema = z.object({
+const elementReferenceSchema = z.object({
   kind: z.literal('ElementReference'),
   name: z.string(),
 }) satisfies z.ZodType<ElementReference>;
 
 const datasourceRefSchema = z.object({ name: z.string().optional() });
 
-export const dataQueryKindSchema = z.object({
+const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery'),
   group: z.string(),
   version: z.string().optional().default('v0'),
@@ -379,7 +379,7 @@ const conditionalRenderingTimeRangeSizeKindSchema = z.object({
   spec: z.object({ value: z.string() }),
 }) satisfies z.ZodType<ConditionalRenderingTimeRangeSizeKind>;
 
-export const conditionalRenderingGroupKindSchema = z.object({
+const conditionalRenderingGroupKindSchema = z.object({
   kind: z.literal('ConditionalRenderingGroup'),
   spec: z.object({
     visibility: z.enum(['show', 'hide']),
@@ -473,7 +473,7 @@ const vizConfigKindSchema = z.object({
   }),
 }) satisfies z.ZodType<VizConfigKind>;
 
-export const panelKindSchema = z.object({
+const panelKindSchema = z.object({
   kind: z.literal('Panel'),
   spec: z.object({
     id: z.number(),
@@ -495,7 +495,7 @@ const libraryPanelKindSchema = z.object({
   }),
 }) satisfies z.ZodType<LibraryPanelKind>;
 
-export const elementSchema = z.discriminatedUnion('kind', [
+const elementSchema = z.discriminatedUnion('kind', [
   panelKindSchema,
   libraryPanelKindSchema,
 ]) satisfies z.ZodType<DashboardElement>;
@@ -666,6 +666,3 @@ export const dashboardV2SpecSchema = z.object({
   variables: nullableArray(variableKindSchema),
   preferences: preferencesSchema.optional(),
 }) satisfies z.ZodType<DashboardV2Spec>;
-
-/** Input accepted by {@link dashboardV2SpecSchema} (before defaults are applied). */
-export type DashboardV2SpecInput = z.input<typeof dashboardV2SpecSchema>;
