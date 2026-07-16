@@ -27,6 +27,11 @@ interface ManagedBadgeProps {
   repositoryName?: string;
   /** Path of the resource's source file within the repository (`grafana.app/sourcePath`). */
   sourcePath?: string;
+  /**
+   * Branch or commit the resource was loaded from (e.g. a provisioning preview ref). Takes
+   * precedence over the repository's configured branch when building the source file link.
+   */
+  sourceRef?: string;
 }
 
 /**
@@ -42,11 +47,20 @@ interface ManagedBadgeProps {
  * repository administration page (repository managers with `provisioning.repositories:write`).
  * Users without any available action (e.g. Viewers) get the plain, non-interactive badge.
  */
-export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
+export function ManagedBadge({
+  managerKind,
+  name,
+  isOrphaned = false,
+  repositoryName,
+  sourcePath,
+  sourceRef,
+}: ManagedBadgeProps) {
   // The interactive variant is a separate component so the RTK Query hook only runs (and only
   // requires a store context) when a repository lookup can actually yield actions.
   if (config.featureToggles.provisioning && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
-    return <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} />;
+    return (
+      <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} sourceRef={sourceRef} />
+    );
   }
 
   return <StaticManagedBadge managerKind={managerKind} name={name} isOrphaned={isOrphaned} />;
@@ -62,13 +76,30 @@ interface RepoManagedBadgeProps {
   name?: string;
   repositoryName: string;
   sourcePath?: string;
+  sourceRef?: string;
+}
+
+/**
+ * The `grafana.app/sourcePath` annotation can carry a `#ref` fragment on provisioning previews
+ * (see `loadProvisioningDashboard`, which appends the previewed ref). Split it off so the file
+ * path stays valid and the ref can target the right branch/commit in the source link.
+ */
+function splitSourcePath(sourcePath?: string): { filePath?: string; fragmentRef?: string } {
+  if (!sourcePath) {
+    return {};
+  }
+  const hashIndex = sourcePath.indexOf('#');
+  if (hashIndex <= 0) {
+    return { filePath: sourcePath };
+  }
+  return { filePath: sourcePath.substring(0, hashIndex), fragmentRef: sourcePath.substring(hashIndex + 1) };
 }
 
 /**
  * Repository-managed variant: resolves the repository view (viewer-safe endpoint) and, when the
  * user has any permitted action, renders the badge as a dropdown trigger.
  */
-function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadgeProps) {
+function RepoManagedBadge({ name, repositoryName, sourcePath, sourceRef }: RepoManagedBadgeProps) {
   const styles = useStyles2(getStyles);
   const { repository, status } = useGetResourceRepositoryView({ name: repositoryName });
 
@@ -80,15 +111,18 @@ function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadge
     isOrphaned,
   });
 
+  const { filePath, fragmentRef } = splitSourcePath(sourcePath);
+
   // Source file link: Editors/Admins only, and only for git providers with a browsable web UI
-  // (getRepoFileUrl resolves to undefined for local/generic-git).
+  // (getRepoFileUrl resolves to undefined for local/generic-git). Prefer the ref the resource was
+  // loaded from (provisioning previews) over the repository's configured branch.
   const rawSourceUrl =
-    contextSrv.isEditor && repository && sourcePath
+    contextSrv.isEditor && repository && filePath
       ? getRepoFileUrl({
           repoType: repository.type,
           url: repository.url,
-          branch: repository.branch,
-          filePath: sourcePath,
+          branch: sourceRef || fragmentRef || repository.branch,
+          filePath,
           pathPrefix: repository.path,
         })
       : undefined;
@@ -134,7 +168,7 @@ function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadge
         </Menu>
       }
     >
-      <button type="button" className={styles.trigger} aria-label={tooltip} title={tooltip}>
+      <button type="button" className={styles.trigger} aria-label={tooltip}>
         <Badge color={color} icon={icon} text={<Icon name="angle-down" size="sm" />} />
       </button>
     </Dropdown>

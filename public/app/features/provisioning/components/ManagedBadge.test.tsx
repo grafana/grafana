@@ -157,6 +157,57 @@ describe('ManagedBadge', () => {
       );
     });
 
+    it('uses the ref from a source path fragment instead of the configured branch', async () => {
+      setPermissions({ isEditor: true });
+      mockRepositories([makeRepository()]);
+
+      const { user } = render(
+        <ManagedBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json#feature-branch"
+        />
+      );
+
+      await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
+
+      expect(await screen.findByRole('menuitem', { name: /view source file/i })).toHaveAttribute(
+        'href',
+        'https://github.com/grafana/repo/blob/feature-branch/dashboards/foo.json'
+      );
+    });
+
+    it('prefers an explicit sourceRef over the fragment and the configured branch', async () => {
+      setPermissions({ isEditor: true });
+      mockRepositories([makeRepository()]);
+
+      const { user } = render(
+        <ManagedBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json#fragment-ref"
+          sourceRef="preview-ref"
+        />
+      );
+
+      await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
+
+      expect(await screen.findByRole('menuitem', { name: /view source file/i })).toHaveAttribute(
+        'href',
+        'https://github.com/grafana/repo/blob/preview-ref/dashboards/foo.json'
+      );
+    });
+
+    it('does not set a title attribute on the dropdown trigger', async () => {
+      setPermissions({ isEditor: true });
+      mockRepositories([makeRepository()]);
+
+      render(<ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />);
+
+      const trigger = await screen.findByRole('button', { name: 'Managed by: Repository My Repo' });
+      expect(trigger).not.toHaveAttribute('title');
+    });
+
     it('shows the repository administration link for repository managers', async () => {
       setPermissions({ isEditor: false, canManageRepositories: true });
       mockRepositories([makeRepository()]);
