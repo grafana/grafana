@@ -31,12 +31,12 @@ type EnvVarsProvider struct {
 	ssoSettings          pluginsso.SettingsProvider
 }
 
-func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider, environment marketplacelicensing.Licensing) *EnvVarsProvider {
+func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider, marketplace marketplacelicensing.Licensing) *EnvVarsProvider {
 	return &EnvVarsProvider{
 		cfg:                  cfg,
 		license:              license,
 		logger:               log.New("plugins.envvars"),
-		marketplaceLicensing: environment,
+		marketplaceLicensing: marketplace,
 		ssoSettings:          ssoSettings,
 	}
 }

@@ -15,6 +15,8 @@ type Licensing interface {
 }
 
 // OSS provides marketplace licensing data for OSS Grafana.
+// This implementation always returns an empty license token
+// (license tokens are Enterprise-only).
 type OSS struct {
 	appURL string
 }
