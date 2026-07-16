@@ -44,6 +44,7 @@ export const SecretInput = ({ isConfigured, onReset, ...props }: Props) => {
               aria-checked={visible}
               onClick={() => setVisible(!visible)}
               tooltip={toggleLabel}
+              size="sm"
             />
           }
         />
