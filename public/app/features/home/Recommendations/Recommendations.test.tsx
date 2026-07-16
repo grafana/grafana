@@ -8,6 +8,7 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { Recommendations } from './Recommendations';
+import { fetchOrgUserCount } from './inviteTeam';
 import {
   fetchClusterCpuSeries,
   fetchKubernetesHealth,
@@ -41,6 +42,11 @@ jest.mock('./kubernetesData', () => ({
   fetchClusterCpuSeries: jest.fn().mockResolvedValue(null),
 }));
 
+jest.mock('./inviteTeam', () => ({
+  ...jest.requireActual('./inviteTeam'),
+  fetchOrgUserCount: jest.fn(),
+}));
+
 const APP_IDS = [
   'grafana-exploretraces-app',
   'grafana-synthetic-monitoring-app',
@@ -53,8 +59,10 @@ const listItem = (id: string, overrides: Partial<LocalPlugin> = {}) => ({
   accessControl: { [AccessControlAction.PluginsWrite]: true },
   ...overrides,
 });
+const mockAllAppsEnabled = () => mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
+const mockFetchOrgUserCount = jest.mocked(fetchOrgUserCount);
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -66,6 +74,7 @@ beforeEach(() => {
   });
   mockGet.mockReset();
   mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id)));
+  mockFetchOrgUserCount.mockResolvedValue(1);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 });
 
@@ -192,6 +201,87 @@ describe('Recommendations', () => {
       await waitFor(() => expect(container).toBeEmptyDOMElement());
     } finally {
       config.pluginAdminEnabled = true;
+    }
+  });
+
+  it('appends the invite-team recommendation as the last carousel item', async () => {
+    const { user } = render(<Recommendations />);
+
+    await screen.findByText('Recommendations for your stack');
+    // 4 plugin cards + invite; wrapping backwards from the first slide lands on the invite card.
+    await user.click(screen.getByRole('button', { name: 'Previous' }));
+
+    expect(screen.getByRole('heading', { name: 'Invite your team' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Invite teammates/ })).toHaveAttribute('href', '/org/users/invite');
+  });
+
+  it('falls back to the invite-team recommendation when every app is already enabled', async () => {
+    mockAllAppsEnabled();
+
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('heading', { name: 'Invite your team' })).toBeInTheDocument();
+    // Count resolved to 1 — the solo claim is grounded, not static copy.
+    expect(screen.getByText("You're the only user here")).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
+  });
+
+  it('grounds the invite context in the org user count', async () => {
+    mockAllAppsEnabled();
+    mockFetchOrgUserCount.mockResolvedValue(12);
+
+    render(<Recommendations />);
+
+    expect(await screen.findByText('12 users in this organization')).toBeInTheDocument();
+    expect(screen.queryByText(/only user here/)).not.toBeInTheDocument();
+  });
+
+  it('uses countless invite copy when the user count is unavailable', async () => {
+    mockAllAppsEnabled();
+    mockFetchOrgUserCount.mockResolvedValue(null);
+
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('heading', { name: 'Invite your team' })).toBeInTheDocument();
+    expect(screen.getByText('Bring your teammates into Grafana')).toBeInTheDocument();
+    expect(screen.queryByText(/only user here/)).not.toBeInTheDocument();
+  });
+
+  it('renders the section with a count skeleton while the org-user lookup is pending', async () => {
+    mockAllAppsEnabled();
+    mockFetchOrgUserCount.mockImplementation(() => new Promise(() => {}));
+
+    render(<Recommendations />);
+
+    expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Invite teammates/ })).toBeInTheDocument();
+    expect(screen.getByTestId('recommendation-context-skeleton')).toBeInTheDocument();
+    expect(screen.queryByText(/users in this organization/)).not.toBeInTheDocument();
+  });
+
+  it('hides the section when nothing is recommendable and the user cannot invite', async () => {
+    mockAllAppsEnabled();
+    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action !== AccessControlAction.OrgUsersAdd);
+
+    const { container } = render(<Recommendations />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('sends the invite CTA to the external user management portal when configured', async () => {
+    const original = config.externalUserMngLinkUrl;
+    config.externalUserMngLinkUrl = 'https://grafana.com/orgs/example/members';
+    try {
+      mockAllAppsEnabled();
+
+      render(<Recommendations />);
+
+      expect(await screen.findByRole('link', { name: /Invite teammates/ })).toHaveAttribute(
+        'href',
+        'https://grafana.com/orgs/example/members'
+      );
+    } finally {
+      config.externalUserMngLinkUrl = original;
     }
   });
 

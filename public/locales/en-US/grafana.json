@@ -10943,6 +10943,14 @@
         "description": "Add distributed tracing to see how requests flow between services and where they slow down.",
         "title": "Trace requests across services"
       },
+      "invite-team": {
+        "action": "Invite teammates",
+        "context": "Bring your teammates into Grafana",
+        "description": "Observability is a team sport — share dashboards, alerts, and on-call with your teammates.",
+        "title": "Invite your team",
+        "user-count_one": "You're the only user here",
+        "user-count_other": "{{count}} users in this organization"
+      },
       "kubernetes": {
         "action": "Open K8s app",
         "alerts-firing_one": "{{value}} alert firing",

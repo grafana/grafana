@@ -8,6 +8,7 @@ export interface RecommendationItem {
   icon: IconName;
   color: string | ((theme: GrafanaTheme2) => string);
   context: string; // short "why you are seeing this" line under the title
+  contextLoading?: boolean; // context line renders a skeleton while true
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"
   href: string;

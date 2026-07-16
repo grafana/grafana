@@ -5,6 +5,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { RecommendationsView } from './RecommendationsView';
+import { buildInviteTeamItem, fetchOrgUserCount } from './inviteTeam';
 import { fetchInstalledPlugins, getRecommendations } from './pluginRecommendations';
 
 export function Recommendations() {
@@ -23,6 +24,7 @@ interface GatedRecommendationsProps {
 
 function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   const { value: installedPlugins, loading: pluginsLoading } = useAsync(fetchInstalledPlugins, []);
+  const { value: orgUserCount, loading: countLoading } = useAsync(fetchOrgUserCount, []);
 
   // An unavailable plugin list fails closed. /api/plugins always lists at least the core plugins,
   // so an empty response means the list is unreliable and also fails closed.
@@ -44,7 +46,8 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
     return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
   });
 
-  const recommendations = pluginRecommendations;
+  const inviteItem = buildInviteTeamItem(orgUserCount ?? null, countLoading);
+  const recommendations = inviteItem ? [...pluginRecommendations, inviteItem] : pluginRecommendations;
   if (recommendations.length === 0) {
     return null;
   }
