@@ -176,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center',
+      justifyContent: 'flex-start',
       alignItems: 'center',
       height: '100%',
       width: '100%',
