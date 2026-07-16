@@ -5813,12 +5813,16 @@
       }
     },
     "get-field-override-categories": {
+      "body-matcher-no-editor": "This override is active, but this matcher type can only be edited in the dashboard JSON.",
+      "body-unknown-matcher": "This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.",
       "label-add-field-override": "Add field override",
       "label-add-override-property": "Add override property",
       "override-name": "Override {{overrideNum}}",
       "title": {
         "add-button": "add button"
-      }
+      },
+      "title-matcher-no-editor": "Matcher \"{{matcherName}}\" has no visual editor",
+      "title-unknown-matcher": "Unknown matcher type \"{{matcherId}}\""
     },
     "get-library-panel-options-category": {
       "descriptor": {
@@ -7326,6 +7330,8 @@
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
       "tooltip": "Added by the {{pluginName}} plugin",
+      "tooltip-folder": "Folder variable, inherited from this dashboard's folder",
+      "tooltip-global": "Global variable, shared across all dashboards",
       "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {
@@ -7654,6 +7660,9 @@
           "variables": "Variables"
         }
       }
+    },
+    "validate-variable-name": {
+      "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
@@ -10817,6 +10826,10 @@
       "starred": "Starred",
       "starred-active": "Starred dashboards"
     },
+    "dashboards": {
+      "title": "Dashboards",
+      "view-all": "View all"
+    },
     "firing-alerts-card": {
       "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
@@ -10868,7 +10881,8 @@
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards..."
+      "loading": "Loading recently viewed dashboards...",
+      "reset": "Reset recent dashboards"
     },
     "recommendations": {
       "application-observability": {
@@ -12250,11 +12264,21 @@
       "aria-label": "Breadcrumbs"
     },
     "extension-sidebar": {
+      "assistant-close": "Close Grafana Assistant",
+      "assistant-label": "Chat",
+      "assistant-open": "Open Grafana Assistant",
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
         "open-all": "Open AI assistants and sidebar apps"
       }
+    },
+    "fullscreen-workspace": {
+      "enter": "Enter Workspace",
+      "error-exit": "Exit workspace",
+      "error-message": "The Grafana Assistant workspace could not be loaded.",
+      "error-reload": "Reload page",
+      "error-title": "Workspace unavailable"
     },
     "help": {
       "aria-label": "Help",
@@ -15695,7 +15719,6 @@
       "from-input": "From",
       "open-input-calendar": "Open calendar",
       "range-error": "\"From\" date must be before \"To\" date",
-      "required-error": "This field is required",
       "to-input": "To"
     },
     "range-picker": {

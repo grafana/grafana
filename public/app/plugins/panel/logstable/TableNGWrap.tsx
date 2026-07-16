@@ -13,7 +13,7 @@ import {
   store,
 } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
-import { useFlagTableProtoRowParser, useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { useFlagTableRefactorNested } from '@grafana/runtime/internal';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
@@ -56,7 +56,6 @@ export function TableNGWrap({
   }, [data.series]);
 
   const panelContext = usePanelContext();
-  const protoParserEnabled = useFlagTableProtoRowParser();
   const nestedRefactorEnabled = useFlagTableRefactorNested();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
   const getActions = useCallback(
@@ -146,7 +145,6 @@ export function TableNGWrap({
         transparent={transparent}
         disableSanitizeHtml={getConfig().disableSanitizeHtml}
         disableKeyboardEvents={options.disableKeyboardEvents}
-        protoParserEnabled={protoParserEnabled}
         nestedRefactorEnabled={nestedRefactorEnabled}
       />
     </div>

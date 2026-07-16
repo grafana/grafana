@@ -9,8 +9,9 @@
  * 2. PAYLOAD SCHEMAS & `payloads` RECORD -- one Zod schema per mutation
  *    command, accessible via DashboardMutationAPI.getPayloadSchema().
  *
- * This file only depends on Zod, keeping it safe for import from any
- * internal module without pulling in the DashboardScene dependency tree.
+ * This file only depends on Zod and enum constants from @grafana/data,
+ * keeping it safe for import from any internal module without pulling in
+ * the DashboardScene dependency tree.
  *
  * DEFAULTS: Literal `kind` and `version` fields use .optional().default()
  * so consumers (e.g. LLM tools) can omit boilerplate. After parsing, these
@@ -22,6 +23,7 @@
 
 import { z } from 'zod';
 
+import { FieldMatcherID } from '@grafana/data';
 import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 const dataQueryKindSchema = z.object({
@@ -873,7 +875,9 @@ const fieldConfigSchema = z
       .array(
         z.object({
           matcher: z.object({
-            id: z.string().describe('Matcher ID'),
+            id: z
+              .enum(FieldMatcherID)
+              .describe('Field matcher ID (e.g., "byName", "byRegexp", "byType", "byFrameRefID", "byValue")'),
             options: z.unknown().optional().describe('Matcher options'),
           }),
           properties: z.array(
@@ -1101,7 +1105,14 @@ const listPanelsPayloadSchema = z.object({
     .optional()
     .default(false)
     .describe(
-      'When true, include runtime status (isLoading, hasError, hasNoData, errors) and data frame schema per panel'
+      'When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source query/plugin/notice, message, refId/type), and info/warning notices'
+    ),
+  includeSchema: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'When true, include per-panel dataSchema: the fields each result frame produced ({ name, type, labels }), for targeting field names in transformations or byName overrides'
     ),
 });
 

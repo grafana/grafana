@@ -13,9 +13,19 @@ import (
 // same map-backed provider NewMapProvider produces, so the per-field and
 // cross-version consistency checks apply here too.
 //
-// CopyFromStandard has no manifest counterpart and is never set from a
-// manifest. A kind that needs it keeps a builder-side provider instead.
+// Panics on an invalid declaration, like NewMapProvider. Runtime callers use
+// newManifestBackedProvider instead.
 func NewManifestBackedProvider(manifests []app.Manifest) SearchFieldsProvider {
+	p, err := newManifestBackedProvider(manifests)
+	if err != nil {
+		panic(err.Error())
+	}
+	return p
+}
+
+// newManifestBackedProvider is NewManifestBackedProvider's error-returning
+// core, so a runtime manifest source can reject a bad set instead of crashing.
+func newManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, error) {
 	fields := map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	preferred := map[schema.GroupResource]string{}
 
@@ -47,7 +57,7 @@ func NewManifestBackedProvider(manifests []app.Manifest) SearchFieldsProvider {
 			}
 		}
 	}
-	return NewMapProvider(fields, preferred)
+	return newMapProvider(fields, preferred)
 }
 
 // manifestResourceName returns the lower-cased resource (plural) name for a
@@ -109,18 +119,35 @@ func manifestDeclaredKindKeys(manifests []app.Manifest) map[LowerGroupResource]b
 // drives bleve mappings. Every kind that declares search fields in its manifest
 // is mapped to a single manifest-backed provider; each entry queries it for its
 // own (group, resource).
-func SearchFieldProviders(manifests []app.Manifest) map[LowerGroupResource]SearchFieldsProvider {
+func SearchFieldProviders(manifests []app.Manifest) (map[LowerGroupResource]SearchFieldsProvider, error) {
 	declared := manifestDeclaredKindKeys(manifests)
 	out := make(map[LowerGroupResource]SearchFieldsProvider, len(declared))
 	if len(declared) == 0 {
-		return out
+		return out, nil
 	}
 
 	// A single manifest-backed provider covers every declared kind; each map
 	// entry queries it for its own (group, resource).
-	manifestProvider := NewManifestBackedProvider(manifests)
+	manifestProvider, err := newManifestBackedProvider(manifests)
+	if err != nil {
+		return nil, err
+	}
 	for key := range declared {
 		out[key] = manifestProvider
+	}
+	return out, nil
+}
+
+// SearchFieldsHashesForProviders returns the per-kind index-affecting hash for
+// each provider in the map. Deriving the change-detection hashes from the same
+// providers that drive the mappings keeps the two in step, so an index rebuild
+// is triggered exactly when the fields that shape the mapping change.
+func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchFieldsProvider) map[LowerGroupResource]string {
+	out := make(map[LowerGroupResource]string, len(providers))
+	for key, p := range providers {
+		if h := p.IndexAffectingHash(key.Group, key.Resource); h != "" {
+			out[key] = h
+		}
 	}
 	return out
 }

@@ -232,8 +232,7 @@ export function Workbench({
             </Box>
           ) : (
             <>
-              <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-                <div />
+              <div className={styles.summaryContainer}>
                 <SummaryChartReact />
               </div>
               {groupBy && groupBy.length > 0 && (
@@ -317,12 +316,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
     }),
-    groupItemWrapper: (width: number) =>
-      css({
-        display: 'grid',
-        gridTemplateColumns: `${width}px auto`,
-        gap: theme.spacing(2),
-      }),
     virtualizedContainer: css({
       display: 'flex',
       flex: 1,
@@ -330,9 +323,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden', // Let AutoSizer handle the overflow
     }),
     summaryContainer: css({
+      width: '100%',
       height: theme.spacing(20),
       marginBottom: theme.spacing(2),
-      alignItems: 'stretch',
     }),
     loadingBarContainer: css({
       position: 'sticky',

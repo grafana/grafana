@@ -80,21 +80,12 @@ type BleveOptions struct {
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
 
-	// Selectable fields per kind, keyed by (group, kind) and (group, plural).
-	// Only given fields are indexed (have mapping).
-	SelectableFieldsForKinds map[resource.LowerGroupResource][]string
-
-	// Hash of the SearchFieldDefinition slices registered for a (group,
-	// resource) across every version, keyed by (group, resource). The value
-	// is recorded in each new index's IndexBuildInfo so a future run can
-	// detect drift and rebuild.
-	SearchFieldsHashesForKinds map[resource.LowerGroupResource]string
-
-	// SearchFieldsProvider per (group, resource) that drives the bleve
-	// mapping. When a provider is registered for a kind, the bleve mapping is
-	// built from the provider's SearchFieldDefinitions rather than from the
-	// legacy column-definition list carried by SearchableDocumentFields.
-	SearchFieldsProvidersForKinds map[resource.LowerGroupResource]resource.SearchFieldsProvider
+	// SearchFields holds the per-kind search-field wiring: selectable fields,
+	// the hash of the SearchFieldDefinitions (recorded in each new index's
+	// IndexBuildInfo for drift detection), and the provider that drives the
+	// bleve mapping. Shared with the search server so both see the same set.
+	// May be nil in tests.
+	SearchFields *resource.SearchFieldsRegistry
 
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
@@ -189,9 +180,7 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	selectableFields     map[resource.LowerGroupResource][]string
-	searchFieldsHashes   map[resource.LowerGroupResource]string
-	searchFieldsProvider map[resource.LowerGroupResource]resource.SearchFieldsProvider
+	fields *resource.SearchFieldsRegistry
 
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
@@ -265,15 +254,18 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownFn = func(key resource.NamespacedResource) (bool, error) { return true, nil }
 	}
 
+	fields := opts.SearchFields
+	if fields == nil {
+		fields = resource.NewSearchFieldsRegistry(nil, nil, nil)
+	}
+
 	be := &bleveBackend{
 		log:                     l,
 		cache:                   map[resource.NamespacedResource]*bleveIndex{},
 		opts:                    opts,
 		ownsIndexFn:             ownFn,
 		indexMetrics:            indexMetrics,
-		selectableFields:        opts.SelectableFieldsForKinds,
-		searchFieldsHashes:      opts.SearchFieldsHashesForKinds,
-		searchFieldsProvider:    opts.SearchFieldsProvidersForKinds,
+		fields:                  fields,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -752,9 +744,7 @@ func (b *bleveBackend) BuildIndex(
 	)
 
 	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
-	selectableFields := b.selectableFields[sfKey]
-	searchFieldsHash := b.searchFieldsHashes[sfKey]
-	searchFieldsProvider := b.searchFieldsProvider[sfKey]
+	selectableFields, searchFieldsHash, searchFieldsProvider := b.fields.For(sfKey)
 
 	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 	if err != nil {
