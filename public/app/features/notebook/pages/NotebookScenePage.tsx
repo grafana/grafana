@@ -80,7 +80,7 @@ function NotebookDocument({ scene }: { scene: DashboardScene }) {
   // dedicated top-level Notebooks nav section is deferred to its own follow-up.
   return (
     <Page navId="dashboards/browse" pageNav={pageNav} layout={PageLayoutType.Custom}>
-    {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
+      {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
       {renderHiddenVariables(scene)}
       {controls && <NotebookControls controls={controls} />}
       {body && <body.Component model={body} />}
