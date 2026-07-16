@@ -58,7 +58,13 @@ export default function renderIntoCanvas(
   // summary is here" and flatten that extent. A normal span weighs 1; a summary with
   // no span_count falls back to 1.
   const weightOf = (item: SpanGraphItem) => (item.isSummary ? Math.max(item.spanCount ?? 0, 1) : 1);
-  const totalWeight = items.reduce((sum, item) => sum + weightOf(item), 0);
+  // Plain loop rather than reduce: on large unpruned traces (all normal spans)
+  // this runs once per span, so the closure + call overhead of reduce is worth
+  // avoiding.
+  let totalWeight = 0;
+  for (let i = 0; i < items.length; i++) {
+    totalWeight += weightOf(items[i]);
+  }
   const cHeight = totalWeight < MIN_TOTAL_HEIGHT ? MIN_TOTAL_HEIGHT : Math.min(totalWeight, MAX_TOTAL_HEIGHT);
   const cWidth = window.innerWidth * 2;
   // eslint-disable-next-line no-param-reassign
@@ -69,6 +75,9 @@ export default function renderIntoCanvas(
   // matches the previous layout exactly. Guard the empty-trace case (totalWeight 0)
   // so step stays finite; the draw loop below does nothing when there are no items.
   const step = totalWeight > 0 ? cHeight / totalWeight : 0;
+  // A normal span always weighs 1, so its clamped height is invariant across the
+  // loop; hoist it out instead of recomputing per span (the hot path).
+  const normalItemHeight = Math.min(MAX_ITEM_HEIGHT, Math.max(MIN_ITEM_HEIGHT, step));
 
   const ctx = canvas.getContext('2d', { alpha: false });
   if (ctx) {
@@ -82,12 +91,6 @@ export default function renderIntoCanvas(
       if (width < MIN_ITEM_WIDTH) {
         width = MIN_ITEM_WIDTH;
       }
-      const weight = weightOf(items[i]);
-      // Summary fills its whole proportional slot (the vertical extent its spans
-      // would have occupied); normal spans keep the clamped thin-bar height.
-      const itemHeight = isSummary
-        ? Math.max(MIN_ITEM_HEIGHT, step * weight)
-        : Math.min(MAX_ITEM_HEIGHT, Math.max(MIN_ITEM_HEIGHT, step * weight));
       const y = step * cumulativeWeight;
 
       let rgb = colorCache.get(serviceName);
@@ -96,11 +99,16 @@ export default function renderIntoCanvas(
         colorCache.set(serviceName, rgb);
       }
       if (isSummary) {
+        // Summary fills its whole proportional slot (the vertical extent its spans
+        // would have occupied).
+        const weight = weightOf(items[i]);
         const gradient = ctx.createLinearGradient(x, 0, x + width, 0);
         gradient.addColorStop(0, tint(rgb));
         gradient.addColorStop(0.38, rgba(rgb));
         gradient.addColorStop(1, shade(rgb));
         ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, width, Math.max(MIN_ITEM_HEIGHT, step * weight));
+        cumulativeWeight += weight;
       } else {
         let fill = fillCache.get(serviceName);
         if (fill === undefined) {
@@ -108,9 +116,9 @@ export default function renderIntoCanvas(
           fillCache.set(serviceName, fill);
         }
         ctx.fillStyle = fill;
+        ctx.fillRect(x, y, width, normalItemHeight);
+        cumulativeWeight += 1;
       }
-      ctx.fillRect(x, y, width, itemHeight);
-      cumulativeWeight += weight;
     }
   }
 }
