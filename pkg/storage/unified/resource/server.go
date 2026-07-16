@@ -2435,6 +2435,10 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
+	if nsr.Namespace == "" {
+		return nil
+	}
+
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent("checkQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
