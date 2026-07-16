@@ -24,25 +24,21 @@ export function createGrafanaLinkResolver(
 ): (repoPath: string) => string | undefined {
   const byPath = new Map<string, ResourceListItem>();
   for (const resource of resources) {
-    // The repository's root folder has an empty path; it still gets a key once
-    // joined with a configured root, so a root `_folder.json` link can resolve.
-    const key = stripTrailingSlashes(joinRepoPath(repositoryPath, resource.path));
-    if (key) {
-      byPath.set(key, resource);
-    }
+    // The repository's root folder has an empty path; it's stored under the empty
+    // key (or the configured root once joined) so a root `_folder.json` link can
+    // resolve to it.
+    byPath.set(stripTrailingSlashes(joinRepoPath(repositoryPath, resource.path)), resource);
   }
 
   return (repoPath) => {
     const normalized = stripTrailingSlashes(repoPath);
-    if (!normalized) {
-      return undefined;
-    }
 
     // A link may point straight at a folder's _folder.json, but the folder
-    // resource is keyed by its directory — fall back to the containing directory.
-    // Guard the empty dir so a non-metadata path can't match a root-keyed entry.
-    const folderDir = folderDirOf(normalized);
-    const resource = byPath.get(normalized) ?? (folderDir ? byPath.get(folderDir) : undefined);
+    // resource is keyed by its directory (empty for the repo root) — fall back to
+    // it. Returns undefined for non-metadata paths so an unrelated file can't
+    // match a root-keyed entry.
+    const metadataDir = folderMetadataDir(normalized);
+    const resource = byPath.get(normalized) ?? (metadataDir !== undefined ? byPath.get(metadataDir) : undefined);
     // Without a resource name there's no per-item route to build; fall back to the
     // host link rather than pushing a broken route (e.g. `/d/`, which 404s home).
     if (!resource?.name) {
@@ -64,10 +60,17 @@ function stripTrailingSlashes(s: string): string {
   return s.replace(/\/+$/, '');
 }
 
-/** For a `_folder.json` path, the directory the folder resource is keyed by; '' otherwise. */
-function folderDirOf(path: string): string {
-  if (!path.endsWith(`/${FOLDER_METADATA_FILE}`)) {
+/**
+ * For a folder-metadata (`_folder.json`) path, the directory the folder resource
+ * is keyed by (`''` for the repo root). Returns `undefined` for non-metadata
+ * paths, so the resolver only falls back to a directory for real metadata links.
+ */
+function folderMetadataDir(path: string): string | undefined {
+  if (path === FOLDER_METADATA_FILE) {
     return '';
   }
-  return path.slice(0, -(FOLDER_METADATA_FILE.length + 1));
+  if (path.endsWith(`/${FOLDER_METADATA_FILE}`)) {
+    return path.slice(0, -(FOLDER_METADATA_FILE.length + 1));
+  }
+  return undefined;
 }

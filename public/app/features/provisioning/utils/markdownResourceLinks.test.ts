@@ -84,6 +84,15 @@ describe('createGrafanaLinkResolver', () => {
     expect(resolve('dev/resources/_folder.json')).toBe('/dashboards/f/root-folder');
   });
 
+  it('resolves a root _folder.json link when the repository has no configured path', () => {
+    const resolve = createGrafanaLinkResolver(
+      [resource({ resource: 'folders', name: 'root-folder', path: '' })],
+      undefined
+    );
+
+    expect(resolve('_folder.json')).toBe('/dashboards/f/root-folder');
+  });
+
   it('returns undefined when the matched resource has no name', () => {
     // A nameless entry would otherwise build a broken route like `/d/`.
     const resolve = createGrafanaLinkResolver(

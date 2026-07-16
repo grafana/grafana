@@ -60,15 +60,17 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       anchor.setAttribute('href', absolute + result.suffix);
       anchor.setAttribute('target', '_blank');
       anchor.setAttribute('rel', 'noopener noreferrer');
-      // Tag JSON/YAML/folder links so the README click handler can lazily upgrade
-      // them to the in-app Grafana page; other links stay plain host links.
-      if (isResourceLinkCandidate(result.path)) {
-        anchor.setAttribute(RESOURCE_PATH_ATTR, result.path);
-      }
     } else {
       // No host link pattern (e.g. local repo) — strip the broken relative
       // href so it doesn't render as a clickable but non-functional link.
       anchor.removeAttribute('href');
+    }
+
+    // Tag JSON/YAML/folder links so the README click handler can resolve them to
+    // the in-app Grafana page. Done regardless of the host URL so links in repos
+    // without one (local/git) still resolve via the resource listing.
+    if (isResourceLinkCandidate(result.path)) {
+      anchor.setAttribute(RESOURCE_PATH_ATTR, result.path);
     }
   });
 

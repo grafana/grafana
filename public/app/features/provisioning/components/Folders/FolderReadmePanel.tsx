@@ -205,6 +205,18 @@ function RenderedMarkdown({
   // Only the latest click navigates, so overlapping clicks can't race and push
   // an earlier link's destination after a later one.
   const navTokenRef = useRef(0);
+  // Whether the resource listing has been fetched at least once (kept lazy: no
+  // fetch until the first candidate-link click).
+  const hasFetchedRef = useRef(false);
+
+  // After a sync the README content changes; refresh the cached resource listing
+  // so resources added by that sync resolve — but only once we've loaded it, to
+  // stay lazy for READMEs whose links are never clicked.
+  useEffect(() => {
+    if (hasFetchedRef.current) {
+      void fetchResources({ name: repositoryName }, false);
+    }
+  }, [markdown, repositoryName, fetchResources]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -218,10 +230,11 @@ function RenderedMarkdown({
       const token = ++navTokenRef.current;
       let items: ResourceListItem[] = [];
       try {
-        // No preferCacheValue: fetch fresh so resources added by a sync (which
-        // also refreshes the README) resolve instead of falling back to the host.
-        const result = await fetchResources({ name: repositoryName }).unwrap();
+        // Prefer the cached listing so multi-link READMEs don't refetch on every
+        // click; the effect above refreshes it after a sync.
+        const result = await fetchResources({ name: repositoryName }, true).unwrap();
         items = result.items ?? [];
+        hasFetchedRef.current = true;
       } catch {
         // Ignore — fall back to the host link below.
       }
@@ -236,14 +249,15 @@ function RenderedMarkdown({
       if (!href) {
         return;
       }
-      // No matching resource: open the host link. Default navigation was already
-      // suppressed, so do it ourselves in a new tab (severing the opener rather
-      // than using the `noopener` feature, which makes window.open return null on
-      // success and defeat the blocked-popup check). Fall back to same-tab if the
-      // popup is blocked so the click always goes somewhere.
-      const opened = window.open(href, '_blank');
+      // No matching resource: open the host link in a new tab. Default navigation
+      // was already suppressed, so do it ourselves — open about:blank first and
+      // sever the opener before navigating, so the external page can't reach back
+      // into Grafana (tabnabbing). The return value still signals a blocked
+      // popup; fall back to same-tab so the click always goes somewhere.
+      const opened = window.open('about:blank', '_blank');
       if (opened) {
         opened.opener = null;
+        opened.location.href = href;
       } else {
         window.location.assign(href);
       }

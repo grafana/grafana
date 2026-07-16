@@ -150,7 +150,7 @@ describe('FolderReadmePanel', () => {
     });
 
     it('opens the host URL in a new tab (opener severed) when a JSON link has no synced resource', async () => {
-      const fakeWindow = { opener: {} } as unknown as Window;
+      const fakeWindow = { opener: {}, location: { href: '' } } as unknown as Window;
       const openSpy = jest.spyOn(window, 'open').mockReturnValue(fakeWindow);
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
@@ -158,15 +158,12 @@ describe('FolderReadmePanel', () => {
       const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
       await user.click(screen.getByRole('link', { name: 'CPU' }));
 
-      await waitFor(() =>
-        // No `noopener` feature (so the return value reliably signals a blocked
-        // popup); the opener is severed manually instead.
-        expect(openSpy).toHaveBeenCalledWith(
-          'https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json',
-          '_blank'
-        )
-      );
+      // Opens about:blank first, severs the opener, then navigates — so the host
+      // page never gets a live window.opener (tabnabbing) and a blocked popup is
+      // still detectable from the return value.
+      await waitFor(() => expect(openSpy).toHaveBeenCalledWith('about:blank', '_blank'));
       expect(fakeWindow.opener).toBeNull();
+      expect(fakeWindow.location.href).toBe('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json');
       expect(pushSpy).not.toHaveBeenCalled();
     });
 
