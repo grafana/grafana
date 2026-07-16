@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { firstValueFrom, timeout } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { from, lastValueFrom } from 'rxjs';
 
 import {
   CoreApp,
@@ -9,13 +8,11 @@ import {
   type DataQuery,
   getDefaultTimeRange,
   type GrafanaTheme2,
-  LoadingState,
   type TimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { useStyles2, DataLinkButton } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
-import { runRequest } from 'app/features/query/state/runRequest';
 
 import { type SpanLinkModel } from '../../types/links';
 
@@ -46,12 +43,10 @@ function getStyles(theme: GrafanaTheme2) {
   });
 }
 
-const LOGS_CHECK_TIMEOUT_MS = 5_000;
-
 type LogsPresence = 'loading' | 'present' | 'absent';
 
 /**
- * Runs the link's interpolated query against its datasource to determine whether
+ * Runs the link's query against its datasource to determine whether
  * any logs exist for the span, so the button can be disabled when there is nothing to link to.
  */
 function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
@@ -92,7 +87,10 @@ function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
 }
 
 async function checkForLogs(query: DataQuery, timeRange: TimeRange): Promise<boolean> {
-  const datasource = await getDataSourceSrv().get(query.datasource ?? null);
+  if (!query.datasource) {
+    return false;
+  }
+  const datasource = await getDataSourceInstance(query.datasource);
 
   const request = {
     requestId: getNextRequestId(),
@@ -107,13 +105,10 @@ async function checkForLogs(query: DataQuery, timeRange: TimeRange): Promise<boo
     startTime: Date.now(),
   };
 
-  const panelData = await firstValueFrom(
-    runRequest(datasource, request).pipe(
-      filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error),
-      timeout(LOGS_CHECK_TIMEOUT_MS)
-    )
-  );
+  // `query` can return either an Observable or a Promise, so normalize with `from`
+  // and take the final response once the datasource has finished emitting.
+  const response = await lastValueFrom(from(datasource.query(request)));
 
-  const series: DataFrame[] = panelData.series ?? [];
-  return series.some((frame) => frame.length > 0 && frame.meta?.preferredVisualisationType === 'logs');
+  const series: DataFrame[] = response.data ?? [];
+  return series.some((frame) => frame.length > 0);
 }
