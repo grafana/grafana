@@ -221,11 +221,15 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 	skipDSCache := c.SkipDSCache
 
 	// detachedCtx carries its own cloned *http.Request (see contexthandler.CopyWithReqContext), so
-	// it stays safe to use after this handler returns. Force SkipQueryCache on it so a cache-hit
-	// query still goes to the wire under capture -- otherwise HAR capture runs on nothing and
-	// traffic.har is silently empty (same requirement as QueryDiagnostics in ds_query_diagnostics.go
-	// for the single-panel path, where c.SkipQueryCache is set directly on the request's ReqContext).
-	detachedCtx := contexthandler.CopyWithReqContext(c.Req.Context())
+	// it stays safe to use after this handler returns. CopyWithReqContext only clones the request;
+	// it does not detach from cancellation, and the parent request's context is canceled by net/http
+	// as soon as this handler returns -- so context.WithoutCancel first, or the background goroutine
+	// below would be canceled within microseconds of starting, before any panel query completes.
+	// Force SkipQueryCache on it so a cache-hit query still goes to the wire under capture --
+	// otherwise HAR capture runs on nothing and traffic.har is silently empty (same requirement as
+	// QueryDiagnostics in ds_query_diagnostics.go for the single-panel path, where c.SkipQueryCache
+	// is set directly on the request's ReqContext).
+	detachedCtx := contexthandler.CopyWithReqContext(context.WithoutCancel(c.Req.Context()))
 	if reqCtx := contexthandler.FromContext(detachedCtx); reqCtx != nil {
 		reqCtx.SkipQueryCache = true
 	}
