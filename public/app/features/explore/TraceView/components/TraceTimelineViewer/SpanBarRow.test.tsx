@@ -380,6 +380,16 @@ describe('<SpanBarRow>', () => {
       expect(screen.queryByLabelText(/aggregated spans/)).not.toBeInTheDocument();
     });
 
+    it('renders the duration stats outside the toggle button (no focusable descendant in the switch)', () => {
+      // The stats tooltip trigger gets tabIndex=0 from @grafana/ui Tooltip; a <button> may not have
+      // a tabindex descendant, so the stats must be a sibling of the switch, not a child of it.
+      const span = summarySpanFromFixture(summaryWithConditionalAttrs);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      const toggle = screen.getByRole('switch');
+      expect(toggle).not.toHaveTextContent('4ms | 9ms | 60ms');
+      expect(screen.getByText('(4ms | 9ms | 60ms)')).toBeInTheDocument();
+    });
+
     it('renders the stat string (no parens) on the span bar itself', () => {
       const span = summarySpanFromFixture(summaryWithConditionalAttrs);
       render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);

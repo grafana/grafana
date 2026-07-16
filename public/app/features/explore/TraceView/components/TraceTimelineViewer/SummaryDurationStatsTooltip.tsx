@@ -9,9 +9,9 @@ interface Props {
   children: React.ReactElement;
 }
 
-// Wraps the inline summary duration stats (rendered the same way on the row
-// label and the span bar) with a tooltip that labels each value, since the
-// bare `min | median | max` numbers are otherwise ambiguous.
+// Wraps the row-label summary duration stats with a tooltip that labels each
+// value, since the bare `min | median | max` numbers are otherwise ambiguous.
+// Only the row label uses this; the bar-side stats are aria-hidden decorative.
 export function SummaryDurationStatsTooltip({ stats, children }: Props) {
   return (
     <Tooltip
