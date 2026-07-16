@@ -7,7 +7,6 @@ import {
   type DataSourceInstanceSettings,
   type GrafanaTheme2,
   type IconName,
-  type LinkModel,
   PluginExtensionPoints,
   type RawTimeRange,
   type TimeRange,
@@ -21,8 +20,10 @@ import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui'
 export const RelatedProfilesTitle = 'Related profiles';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
-import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from '../../types/links';
+import { type SpanLinkDef, type SpanLinkFunc, type SpanLinkModel, SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
+
+import { LogsLinkButton } from './LogsLink';
 
 export type ProfilesButtonContext = {
   serviceName: string;
@@ -153,7 +154,13 @@ export const SpanDetailLinkButtons = (props: Props) => {
       {links.length > MAX_LINKS ? (
         <DropDownMenu links={links}></DropDownMenu>
       ) : (
-        links.map((spanLinkModel, index) => <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />)
+        links.map((spanLinkModel, index) =>
+          spanLinkModel.type === SpanLinkType.Logs ? (
+            <LogsLinkButton spanLinkModel={spanLinkModel} key={index} />
+          ) : (
+            <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
+          )
+        )
       )}
       {shareButton}
     </span>
@@ -257,13 +264,6 @@ export const getProfileLinkButtonsContext = (
     datasource: { uid: traceToProfilesOptions?.datasourceUid },
   };
   return context;
-};
-
-type SpanLinkModel = {
-  linkModel: LinkModel;
-  icon: IconName;
-  className?: string;
-  type: SpanLinkType;
 };
 
 const createLinkModel = (
