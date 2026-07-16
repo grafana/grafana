@@ -207,7 +207,7 @@ require (
 	gocloud.dev/secrets/hashivault v0.45.0 // @grafana/grafana-operator-experience-squad
 	golang.org/x/net v0.56.0 // @grafana/data-sources-plugins
 	golang.org/x/oauth2 v0.36.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.21.0 // @grafana/alerting-backend
+	golang.org/x/sync v0.22.0 // @grafana/alerting-backend
 	golang.org/x/text v0.39.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
