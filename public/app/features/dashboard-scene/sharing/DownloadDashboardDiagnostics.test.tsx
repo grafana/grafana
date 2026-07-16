@@ -99,6 +99,26 @@ describe('DownloadDashboardDiagnostics', () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(downloadDashboardDiagnostics).not.toHaveBeenCalled();
   });
+
+  it('sends one entry per repeat-by-variable clone, all carrying the source panel id', async () => {
+    jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
+    jest
+      .mocked(getDashboardDiagnosticsStatus)
+      .mockResolvedValue({ uid: 'job-1', state: 'complete', panelsDone: 2, panelsTotal: 2 });
+    const { tab } = setupCloneScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    await screen.findByRole('button', { name: 'Download diagnostics' });
+
+    // Repeat clones aren't serialized as separate elements in dashboard.getSaveModel(), so the id
+    // sent for each clone must match the one source panel the backend can actually resolve --
+    // fabricating a distinct id per clone would leave it unable to find panel JSON for any of them.
+    const [panels] = jest.mocked(startDashboardDiagnostics).mock.calls[0];
+    expect(panels.map((p) => p.id)).toEqual([3, 3]);
+    expect(panels.map((p) => p.title)).toEqual(['Repeated panel', 'Repeated panel']);
+  });
 });
 
 function setupScenario(opts: { onDismiss?: () => void; onlyEmptyPanels?: boolean } = {}) {
@@ -139,6 +159,42 @@ function setupScenario(opts: { onDismiss?: () => void; onlyEmptyPanels?: boolean
   // query-runner lookup need here. We deliberately skip activation so the SceneQueryRunners do not
   // try to execute (and fail) their queries against a real datasource.
   const tab = new DownloadDashboardDiagnostics({ dashboardRef: dashboard.getRef(), onDismiss });
+
+  return { tab, dashboard };
+}
+
+function setupCloneScenario() {
+  // Mirrors how repeat-by-variable actually keys clones: the source panel's own key, suffixed with
+  // `-clone-<n>` (see dashboard-scene/utils/clone.ts). Both clones below parse to base id 3.
+  const source = new VizPanel({
+    key: 'panel-3',
+    pluginId: 'table',
+    title: 'Repeated panel',
+    $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
+  });
+  const clone = new VizPanel({
+    key: 'panel-3-clone-1',
+    pluginId: 'table',
+    title: 'Repeated panel',
+    $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
+  });
+
+  const dashboard = new DashboardScene({
+    title: 'Dash',
+    uid: 'dash-1',
+    meta: { canEdit: true },
+    $timeRange: new SceneTimeRange({}),
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [
+          new DashboardGridItem({ key: 'grid-item-1', body: source }),
+          new DashboardGridItem({ key: 'grid-item-2', body: clone }),
+        ],
+      }),
+    }),
+  });
+
+  const tab = new DownloadDashboardDiagnostics({ dashboardRef: dashboard.getRef() });
 
   return { tab, dashboard };
 }

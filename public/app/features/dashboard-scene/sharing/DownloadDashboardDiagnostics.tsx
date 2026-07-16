@@ -82,11 +82,6 @@ function panelIdFrom(panel: VizPanel): number {
 function collectDashboardPanels(dashboard: DashboardScene): DashboardDiagnosticsPanel[] {
   const vizPanels = sceneGraph.findAllObjects(dashboard, (o) => o instanceof VizPanel);
   const panels: DashboardDiagnosticsPanel[] = [];
-  // Repeat-by-variable clones share their source panel's key (e.g. `panel-3-clone-1` and
-  // `panel-3-clone-2` both parse to id 3 in panelIdFrom), so track how many times each id has
-  // already been seen and disambiguate repeats with a negative id -- real panel ids are never
-  // negative, so this can't collide with another panel's id.
-  const seenCounts = new Map<number, number>();
 
   for (const obj of vizPanels) {
     const panel = obj instanceof VizPanel ? obj : undefined;
@@ -102,11 +97,14 @@ function collectDashboardPanels(dashboard: DashboardScene): DashboardDiagnostics
       continue;
     }
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
-    const baseId = panelIdFrom(panel);
-    const occurrence = seenCounts.get(baseId) ?? 0;
-    seenCounts.set(baseId, occurrence + 1);
+    // Repeat-by-variable clones share their source panel's key (e.g. `panel-3-clone-1` and
+    // `panel-3-clone-2` both parse to id 3 in panelIdFrom), so multiple entries below can carry the
+    // same id -- that's intentional. dashboard.getSaveModel(), sent alongside this list in
+    // startDashboardDiagnostics, only serializes the source panel once (clones aren't separate
+    // save-model elements), so the id has to match that source panel for the backend to resolve its
+    // panel JSON. Each clone still gets its own array entry, so its captured queries aren't lost.
     panels.push({
-      id: occurrence === 0 ? baseId : -(baseId * 1000 + occurrence),
+      id: panelIdFrom(panel),
       title: panel.state.title ?? '',
       from: String(timeRange.from.valueOf()),
       to: String(timeRange.to.valueOf()),

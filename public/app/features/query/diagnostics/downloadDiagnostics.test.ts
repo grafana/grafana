@@ -93,7 +93,7 @@ describe('dashboard diagnostics', () => {
   it('startDashboardDiagnostics throws when no uid is returned', async () => {
     setupBackendSrv({ data: {} });
     await expect(startDashboardDiagnostics([{ id: 1, title: 'A', from: '1', to: '2', queries: [] }])).rejects.toThrow(
-      'diagnostics job was not created'
+      'Diagnostics job was not created'
     );
   });
 

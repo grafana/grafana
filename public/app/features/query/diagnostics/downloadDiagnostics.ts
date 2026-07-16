@@ -1,6 +1,7 @@
 import { saveAs } from 'file-saver';
 import { lastValueFrom } from 'rxjs';
 
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
@@ -104,7 +105,7 @@ export async function startDashboardDiagnostics(
   );
   const uid = response.data?.uid;
   if (!uid) {
-    throw new Error('diagnostics job was not created');
+    throw new Error(t('dashboard.diagnostics.job-not-created', 'Diagnostics job was not created'));
   }
   return uid;
 }
