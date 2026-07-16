@@ -104,6 +104,29 @@ describe('AssistantTooltipButton', () => {
     expect(screen.queryByRole('button', { name: /add to assistant/i })).not.toBeInTheDocument();
   });
 
+  it('renders nothing when openAssistant is undefined', () => {
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+      openAssistant: undefined,
+      closeAssistant: undefined,
+      toggleAssistant: undefined,
+    });
+
+    render(
+      <AssistantTooltipButton
+        series={makeSeries()}
+        seriesIdx={1}
+        dataIdxs={[1, 1]}
+        replaceVariables={(s) => s}
+        context={makeContext()}
+        xVal={2000}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: /add to assistant/i })).not.toBeInTheDocument();
+  });
+
   it('opens the assistant with a single data-point context pill (without auto-send) on click', async () => {
     const openAssistant = jest.fn();
     mockUseAssistant.mockReturnValue({

@@ -40,7 +40,7 @@ export function AssistantTooltipButton({
   const { isOpen, dockedComponentId } = useExtensionSidebarContext();
   const styles = useStyles2(getStyles);
 
-  if (!isAvailable) {
+  if (!isAvailable || !openAssistant) {
     return null;
   }
 
@@ -62,7 +62,7 @@ export function AssistantTooltipButton({
       return;
     }
 
-    openAssistant?.({
+    openAssistant({
       origin: 'grafana/panel-tooltip',
       context: items,
       autoSend: false,
