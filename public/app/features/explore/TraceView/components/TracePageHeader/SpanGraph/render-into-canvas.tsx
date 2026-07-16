@@ -47,6 +47,10 @@ export default function renderIntoCanvas(
   bgColor: string
 ) {
   const colorCache: Map<string, [number, number, number]> = new Map();
+  // Solid normal-span fill string, built once per service. Rebuilding it per item
+  // (a template-literal alloc on every span) is a measurable cost on large,
+  // unpruned traces where every span takes this path.
+  const fillCache: Map<string, string> = new Map();
   // A summary span weighs as much as the spans it represents (span_count), so the
   // aggregated region keeps its vertical density extent instead of collapsing to one
   // thin bar: total weight equals the original span count, and the summary occupies
@@ -98,7 +102,12 @@ export default function renderIntoCanvas(
         gradient.addColorStop(1, shade(rgb));
         ctx.fillStyle = gradient;
       } else {
-        ctx.fillStyle = rgba(rgb);
+        let fill = fillCache.get(serviceName);
+        if (fill === undefined) {
+          fill = rgba(rgb);
+          fillCache.set(serviceName, fill);
+        }
+        ctx.fillStyle = fill;
       }
       ctx.fillRect(x, y, width, itemHeight);
       cumulativeWeight += weight;
