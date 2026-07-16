@@ -97,6 +97,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
+        xVal={2000}
       />
     );
 
@@ -120,6 +121,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
+        xVal={2000}
       />
     );
 
@@ -131,7 +133,7 @@ describe('AssistantTooltipButton', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           kind: 'viz-datapoint',
-          point: expect.objectContaining({ value: 42 }),
+          point: expect.objectContaining({ value: 42, timestamp: '1970-01-01T00:00:02.000Z' }),
           series: expect.objectContaining({
             name: 'cpu host-a',
             refId: 'A',
@@ -172,6 +174,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
+        xVal={2000}
       />
     );
 
@@ -202,6 +205,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
+        xVal={2000}
       />
     );
 
@@ -234,6 +238,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
+        xVal={2000}
       />
     );
 

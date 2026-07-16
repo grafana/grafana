@@ -129,6 +129,7 @@ export const TimeSeriesTooltip = ({
                 dataIdxs={dataIdxs}
                 replaceVariables={replaceVariables}
                 context={assistantContext}
+                xVal={xVal}
               />
             ) : undefined
           }

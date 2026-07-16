@@ -11,9 +11,8 @@ import {
   ReducerID,
   type TimeRange,
 } from '@grafana/data';
+import { getXAnnotationFrames } from 'app/plugins/panel/timeseries/plugins/utils';
 
-const EXEMPLAR_FRAME_NAME = 'exemplar';
-const XYMARK_FRAME_NAME = 'xymark';
 // Bound the context payload size.
 const MAX_MATCHES = 5;
 
@@ -34,9 +33,7 @@ export interface AssistantTooltipContext {
   panelId: number;
   panelTitle: string;
   timeRange: TimeRange;
-  /** Graphable frames the viz was aligned from; `origin.frameIndex` indexes into this. */
   dataSeries: DataFrame[];
-  /** Annotation + exemplar frames (PanelData.annotations). */
   annotations?: DataFrame[];
 }
 
@@ -55,11 +52,11 @@ export function getAssistantTooltipContext(
 }
 
 interface BuildArgs extends AssistantTooltipContext {
-  /** uPlot-aligned frame (field 0 is x). */
   alignedFrame: DataFrame;
   seriesIdx: number;
   dataIdxs: Array<number | null>;
   replaceVariables: InterpolateFunction;
+  xVal: number;
 }
 
 function findField(frame: DataFrame, name: string): Field | undefined {
@@ -92,10 +89,7 @@ function getStepMs(xValues: number[], idx: number): number {
 
 function matchAnnotations(frames: DataFrame[], xVal: number, windowMs: number) {
   const matches: Array<Record<string, unknown>> = [];
-  for (const frame of frames) {
-    if (frame.name === EXEMPLAR_FRAME_NAME || frame.name === XYMARK_FRAME_NAME) {
-      continue;
-    }
+  for (const frame of getXAnnotationFrames(frames)) {
     const timeF = findField(frame, 'time');
     if (!timeF) {
       continue;
@@ -108,19 +102,20 @@ function matchAnnotations(frames: DataFrame[], xVal: number, windowMs: number) {
     for (let i = 0; i < frame.length; i++) {
       const t = timeF.values[i];
       const tEnd = timeEndF?.values[i];
-      const inRegion = tEnd != null ? xVal >= t && xVal <= tEnd : false;
+      const inRegion = tEnd != null && xVal >= t && xVal <= tEnd;
       const nearPoint = Math.abs(t - xVal) <= windowMs;
-      if (inRegion || nearPoint) {
-        matches.push({
-          time: toIso(t),
-          ...(tEnd != null ? { timeEnd: toIso(tEnd) } : {}),
-          ...(titleF?.values[i] != null ? { title: titleF.values[i] } : {}),
-          ...(typeof textF?.values[i] === 'string' ? { text: textF.values[i] } : {}),
-          ...(tagsF?.values[i] != null ? { tags: tagsF.values[i] } : {}),
-        });
-        if (matches.length >= MAX_MATCHES) {
-          return matches;
-        }
+      if (!inRegion && !nearPoint) {
+        continue;
+      }
+      matches.push({
+        time: toIso(t),
+        ...(tEnd != null ? { timeEnd: toIso(tEnd) } : {}),
+        ...(titleF?.values[i] != null ? { title: titleF.values[i] } : {}),
+        ...(typeof textF?.values[i] === 'string' ? { text: textF.values[i] } : {}),
+        ...(tagsF?.values[i] != null ? { tags: tagsF.values[i] } : {}),
+      });
+      if (matches.length >= MAX_MATCHES) {
+        return matches;
       }
     }
   }
@@ -138,6 +133,7 @@ export function buildDatapointAssistantContext({
   panelTitle,
   timeRange,
   replaceVariables,
+  xVal,
 }: BuildArgs): ChatContextItem[] {
   const xField = alignedFrame.fields[0];
   const field = alignedFrame.fields[seriesIdx];
@@ -149,36 +145,23 @@ export function buildDatapointAssistantContext({
   }
 
   const seriesName = getFieldDisplayName(field, alignedFrame);
-  const xVal = xField.values[xIdx];
-  const value = field.values[dataIdx];
   const isTime = xField.type === FieldType.time;
+  const value = field.values[dataIdx];
   const xDisp = formattedValueToString(xField.display!(xVal));
   const timestamp = isTime ? toIso(xVal) : xDisp;
   const displayValue = formattedValueToString(field.display!(value));
   const unit = field.config?.unit;
   const labels = field.labels ?? {};
 
-  // Origin maps the aligned field back to its source frame.
   const origin = field.state?.origin;
   const sourceFrame = origin ? dataSeries[origin.frameIndex] : undefined;
   const refId = sourceFrame?.refId ?? alignedFrame.refId;
   const query = sourceFrame?.meta?.executedQueryString;
 
   const windowMs = isTime ? getStepMs(xField.values, xIdx) : 0;
-  const matchedAnnotations = isTime ? matchAnnotations(annotations, xVal, windowMs) : [];
+  const matchedAnnotations = isTime ? matchAnnotations(annotations, xField.values[xIdx], windowMs) : [];
 
-  const calcs = reduceField({ field, reducers: SERIES_REDUCERS });
-  const stats = {
-    min: calcs[ReducerID.min],
-    max: calcs[ReducerID.max],
-    mean: calcs[ReducerID.mean],
-    last: calcs[ReducerID.last],
-    first: calcs[ReducerID.first],
-    sum: calcs[ReducerID.sum],
-    count: calcs[ReducerID.count],
-    range: calcs[ReducerID.range],
-    stdDev: calcs[ReducerID.stdDev],
-  };
+  const stats = reduceField({ field, reducers: SERIES_REDUCERS });
 
   const dashboardUid = resolveMacro(replaceVariables, '${__dashboard.uid}');
   const dashboardTitle = resolveMacro(replaceVariables, '${__dashboard.title}');

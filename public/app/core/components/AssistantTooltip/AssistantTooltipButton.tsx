@@ -19,15 +19,12 @@ function getActiveAssistantChatId(): string | undefined {
 }
 
 interface AssistantTooltipButtonProps {
-  /** uPlot-aligned frame (field 0 is x). */
   series: DataFrame;
-  /** Index of the hovered series field within `series.fields`. */
   seriesIdx: number;
-  /** Per-field hovered row indices (field 0 holds the x index). */
   dataIdxs: Array<number | null>;
   replaceVariables: InterpolateFunction;
-  /** Panel-level context assembled by the viz panel. */
   context: AssistantTooltipContext;
+  xVal: number;
 }
 
 /** "Add to Assistant" button that sends a hovered data point to the assistant as a context pill. */
@@ -37,6 +34,7 @@ export function AssistantTooltipButton({
   dataIdxs,
   replaceVariables,
   context,
+  xVal,
 }: AssistantTooltipButtonProps) {
   const { isAvailable, openAssistant } = useAssistant();
   const { isOpen, dockedComponentId } = useExtensionSidebarContext();
@@ -57,6 +55,7 @@ export function AssistantTooltipButton({
       dataIdxs,
       replaceVariables,
       ...context,
+      xVal,
     });
 
     if (items.length === 0) {
