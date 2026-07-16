@@ -80,7 +80,7 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint32]
+	ids: [...number]
 }
 
 // Annotation event field source. Defines how to obtain the value for an annotation event field.
@@ -285,7 +285,9 @@ MatcherConfig: {
 Threshold: {
 	// Value null means -Infinity
 	value: number | null
-	color: string
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	valueExpr?: string
+	color:      string
 }
 
 ThresholdsMode: "absolute" | "percentage"

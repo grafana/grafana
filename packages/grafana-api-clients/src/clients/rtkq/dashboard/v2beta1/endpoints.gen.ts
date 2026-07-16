@@ -1100,6 +1100,8 @@ export type DashboardThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  valueExpr?: string;
 };
 export type DashboardThresholdsConfig = {
   mode: string;
@@ -2008,6 +2010,8 @@ export type NotebookThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  valueExpr?: string;
 };
 export type NotebookThresholdsConfig = {
   mode: string;

@@ -630,10 +630,8 @@ func TestListStoredResources(t *testing.T) {
 	})
 
 	t.Run("backend errors are returned as codes.Internal", func(t *testing.T) {
-		// mockStorageBackend inherits ListStoredResources from
-		// UnimplementedStorageBackend, which returns an error.
 		errServer, err := NewResourceServer(ResourceServerOptions{
-			Backend: &mockStorageBackend{},
+			Backend: &mockStorageBackend{listStoredErr: errors.New("boom")},
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {

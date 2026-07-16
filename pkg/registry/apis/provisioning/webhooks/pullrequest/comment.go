@@ -162,7 +162,7 @@ const commentTemplateMissingImageRenderer = `
 const commentTemplateFooter = `
 
 ---
-_{{if .RepositoryTitle}}🔄 Synced from {{if .RepositoryURL}}[**{{.SafeRepositoryTitle}}**]({{.RepositoryURL}}){{else}}**{{.SafeRepositoryTitle}}**{{end}} · {{end}}Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}})_`
+_{{if .RepositoryTitle}}🔄 Synced from {{if .RepositoryAdminURL}}[**{{.SafeRepositoryTitle}}**]({{.RepositoryAdminURL}}){{else}}**{{.SafeRepositoryTitle}}**{{end}} · {{end}}Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}})_`
 
 func (f *fileChangeInfo) Action() string {
 	if f.Parsed != nil {

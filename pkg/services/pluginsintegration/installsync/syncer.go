@@ -2,6 +2,8 @@ package installsync
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -198,7 +200,7 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 	}
 
 	primaryPlugins := filterPrimaryPlugins(installedPlugins)
-	installedMap := make(map[string]struct{})
+	installedMap := make(map[string]struct{}, len(primaryPlugins))
 	for _, p := range primaryPlugins {
 		installedMap[p.ID] = struct{}{}
 	}
@@ -216,9 +218,10 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 	// register plugins that are installed
 	for _, p := range primaryPlugins {
 		err := s.installRegistrar.Register(ctx, namespace, &install.PluginInstall{
-			ID:      p.ID,
-			Version: p.Info.Version,
-			Source:  source,
+			ID:           p.ID,
+			Version:      p.Info.Version,
+			Source:       source,
+			Dependencies: pluginDependencyIDs(p),
 		})
 		if err != nil {
 			return err
@@ -226,6 +229,18 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 	}
 
 	return nil
+}
+
+func pluginDependencyIDs(p pluginstore.Plugin) []string {
+	dependencies := p.Dependencies.Plugins
+	ids := make([]string, 0, len(dependencies))
+	for _, dependency := range dependencies {
+		id := strings.TrimSpace(dependency.ID)
+		if id != "" && !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 func filterPrimaryPlugins(plugins []pluginstore.Plugin) []pluginstore.Plugin {

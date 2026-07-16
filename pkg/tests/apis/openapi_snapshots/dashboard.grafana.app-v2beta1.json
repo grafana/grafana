@@ -2534,8 +2534,8 @@
             "description": "Panel IDs that should be included or excluded",
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64",
+              "type": "number",
+              "format": "double",
               "default": 0
             }
           }
@@ -5205,6 +5205,10 @@
             "description": "Value null means -Infinity",
             "type": "number",
             "format": "double"
+          },
+          "valueExpr": {
+            "description": "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+            "type": "string"
           }
         }
       },
@@ -6906,6 +6910,10 @@
             "description": "Value null means -Infinity",
             "type": "number",
             "format": "double"
+          },
+          "valueExpr": {
+            "description": "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+            "type": "string"
           }
         }
       },
