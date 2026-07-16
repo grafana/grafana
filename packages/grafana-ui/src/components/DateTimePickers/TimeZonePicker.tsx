@@ -7,7 +7,6 @@ import { Select } from '../Select/Select';
 
 import { getTimeZonesAt, type TimeZoneInfo as EasyTzInfo } from './TimeZonePicker/easytz';
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
-import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
 import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { findTimeZoneAt, offsetToMinutes, resolveIanaName } from './TimeZonePicker/timeZoneUtils';
@@ -60,7 +59,7 @@ export const TimeZonePicker = (props: Props) => {
     <Select
       inputId={inputId}
       value={selected}
-      placeholder={t('time-picker.zone.select-search-input', 'Type to search (city, abbreviation, offset)')}
+      placeholder={t('time-picker.zone.select-search-input', 'Type to search (city, abbreviation)')}
       autoFocus={autoFocus}
       menuShouldPortal={menuShouldPortal}
       openMenuOnFocus={openMenuOnFocus}
@@ -85,7 +84,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     const now = Date.now();
     const groups = new Map<string, SelectableZone[]>();
 
-    const pushOption = (group: string, info: TimeZoneInfo, utcOffset: string, aliasOf?: string) => {
+    const pushOption = (group: string, info: TimeZoneInfo, aliasOf?: string) => {
       const name = getTimeZoneTitle(info);
       const options = groups.get(group) ?? [];
 
@@ -93,7 +92,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
         label: name,
         value: info.zone,
         info,
-        searchIndex: getSearchIndex(name, info, utcOffset, aliasOf),
+        searchIndex: getSearchIndex(name, info, aliasOf),
       });
 
       groups.set(group, options);
@@ -110,13 +109,13 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     }
 
     for (const zone of internalZones) {
-      pushOption('', getInternalTimeZoneInfo(zone, now), formatUtcOffset(now, zone));
+      pushOption('', getInternalTimeZoneInfo(zone, now));
     }
 
     for (const tz of getTimeZonesAt(now)) {
       const delimiter = tz.name.indexOf('/');
       const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      pushOption(group, toTimeZoneInfo(tz), `UTC${tz.offset}`, tz.aliasOf);
+      pushOption(group, toTimeZoneInfo(tz), tz.aliasOf);
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
@@ -173,8 +172,8 @@ const useFilterBySearchIndex = () => {
   }, []);
 };
 
-const getSearchIndex = (label: string, info: TimeZoneInfo, utcOffset: string, aliasOf?: string): string => {
-  const parts: string[] = [info.zone.toLowerCase(), info.abbreviation.toLowerCase(), utcOffset.toLowerCase()];
+const getSearchIndex = (label: string, info: TimeZoneInfo, aliasOf?: string): string => {
+  const parts: string[] = [info.zone.toLowerCase(), info.abbreviation.toLowerCase()];
 
   if (label !== info.zone) {
     parts.push(label.toLowerCase());
