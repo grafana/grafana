@@ -2,7 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { getWrapper, testWithFeatureToggles } from 'test/test-utils';
 
 import { OrgRole } from '@grafana/data';
-import { type AlertManagerDataSourceJsonData, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -20,29 +20,40 @@ function renderUseShowImportToGMARulesBanner() {
   return renderHook(() => useShowImportToGMARulesBanner(), { wrapper });
 }
 
-function setupExternalAlertmanager() {
-  const am = mockDataSource<AlertManagerDataSourceJsonData>({
-    name: 'external-alertmanager',
-    uid: 'external-alertmanager-uid',
-    type: DataSourceType.Alertmanager,
+function setupExternalRulesSource() {
+  const ds = mockDataSource({
+    name: 'prometheus',
+    uid: 'prometheus-uid',
+    type: DataSourceType.Prometheus,
+    jsonData: { manageAlerts: true },
   });
-  setupDataSources(am);
-  return am;
+  setupDataSources(ds);
+  return ds;
 }
 
 describe('useShowImportToGMARulesBanner', () => {
   beforeEach(() => {
     grantUserRole(OrgRole.Admin);
-    grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
-    setupExternalAlertmanager();
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingProvisioningSetStatus,
+      AccessControlAction.AlertingRuleExternalRead,
+    ]);
+    setupExternalRulesSource();
   });
 
   describe('with alertingMigrationWizardUI enabled', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
 
-    it('shows the banner when the user can import rules and an external Alertmanager exists', () => {
+    it('shows the banner when the user can import rules and a rule source exists', () => {
       const { result } = renderUseShowImportToGMARulesBanner();
       expect(result.current).toBe(true);
+    });
+
+    it('does not show the banner when there are no rule sources', () => {
+      setupDataSources(); // replaces the datasource list with an empty one
+      const { result } = renderUseShowImportToGMARulesBanner();
+      expect(result.current).toBe(false);
     });
   });
 
@@ -59,6 +70,19 @@ describe('useShowImportToGMARulesBanner', () => {
 
       await waitFor(() => {
         expect(result.current).toBe(false);
+      });
+    });
+
+    it('does not flash the banner before the auto-sync state has loaded', async () => {
+      // Auto-sync is NOT active, but while the admin_config query is in flight we do not yet
+      // know that, so the banner stays hidden and only appears once the response arrives.
+      setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+
+      const { result } = renderUseShowImportToGMARulesBanner();
+
+      expect(result.current).toBe(false);
+      await waitFor(() => {
+        expect(result.current).toBe(true);
       });
     });
   });

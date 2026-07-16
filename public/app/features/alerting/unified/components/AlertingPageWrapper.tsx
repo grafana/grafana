@@ -97,14 +97,15 @@ function ImportToGMABannerForAlertmanager() {
   const { isGrafanaAlertmanager } = useAlertmanager();
   const { canImportNotifications } = useCanImportToGMA();
   const isEditOrNewForm = useIsDisabledAlertmanagerSelection();
-  const { disabled: importDisabled } = useImportEntrypointState();
+  const { disabled: importDisabled, isLoading: importStateLoading } = useImportEntrypointState();
 
   const showBanner =
     Boolean(config.featureToggles.alertingMigrationWizardUI) &&
     !isGrafanaAlertmanager &&
     canImportNotifications &&
     !isEditOrNewForm &&
-    !importDisabled;
+    !importDisabled &&
+    !importStateLoading;
 
   return showBanner ? <ImportToGMABanner /> : null;
 }
