@@ -89,7 +89,9 @@ const elementReferenceSchema = z.object({
 const datasourceRefSchema = z.object({ name: z.string().optional() });
 
 const dataQueryKindSchema = z.object({
-  kind: z.literal('DataQuery'),
+  // Not a discriminated-union member, so defaulting the constant kind keeps the
+  // output faithful to the type while tolerating payloads that omit it.
+  kind: z.literal('DataQuery').optional().default('DataQuery'),
   group: z.string(),
   version: z.string().optional().default('v0'),
   labels: z.record(z.string(), z.string()).optional(),
@@ -341,7 +343,9 @@ const annotationEventFieldMappingSchema = z.object({
 }) satisfies z.ZodType<AnnotationEventFieldMapping>;
 
 export const annotationQueryKindSchema = z.object({
-  kind: z.literal('AnnotationQuery'),
+  // Not a discriminated-union member; default the constant kind so a payload can
+  // omit it (annotations are a plain array, not a discriminated union).
+  kind: z.literal('AnnotationQuery').optional().default('AnnotationQuery'),
   spec: z.object({
     query: dataQueryKindSchema,
     enable: z.boolean().optional().default(true),
@@ -468,7 +472,10 @@ const vizConfigKindSchema = z.object({
   group: z.string(),
   version: z.string(),
   spec: z.object({
-    options: z.record(z.string(), z.unknown()),
+    // `transformSceneToSaveModelSchemaV2` passes `vizPanel.state.options` through
+    // verbatim, which is `undefined` for a panel that never set options. Normalize
+    // to `{}` so validating serialized output doesn't reject what GET_SPEC returns.
+    options: z.preprocess((value) => (value == null ? {} : value), z.record(z.string(), z.unknown())),
     fieldConfig: fieldConfigSourceSchema,
   }),
 }) satisfies z.ZodType<VizConfigKind>;

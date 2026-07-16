@@ -168,4 +168,76 @@ describe('dashboardV2SpecSchema', () => {
     }
     expect(variable.spec.options).toEqual([]);
   });
+
+  it('normalizes undefined VizConfig options to {} (serializer passes state.options through)', () => {
+    const spec = minimalSpec({
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'P',
+            description: '',
+            links: [],
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              // `options` omitted, mirroring `vizPanel.state.options === undefined`.
+              spec: { fieldConfig: { defaults: {}, overrides: [] } },
+            },
+          },
+        },
+      },
+    });
+
+    const result = dashboardV2SpecSchema.safeParse(spec);
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const panel = result.data.elements['panel-1'];
+    if (panel.kind !== 'Panel') {
+      throw new Error('expected Panel');
+    }
+    expect(panel.spec.vizConfig.spec.options).toEqual({});
+  });
+
+  it('defaults the constant DataQuery kind when a query omits it', () => {
+    const result = dashboardV2SpecSchema.safeParse(
+      minimalSpec({
+        variables: [
+          {
+            kind: 'QueryVariable',
+            // query omits `kind: 'DataQuery'`.
+            spec: { name: 'v', query: { group: 'prometheus', spec: {} } },
+          },
+        ],
+      })
+    );
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const variable = result.data.variables[0];
+    if (variable.kind !== 'QueryVariable') {
+      throw new Error('expected QueryVariable');
+    }
+    expect(variable.spec.query.kind).toBe('DataQuery');
+  });
+
+  it('defaults the constant AnnotationQuery kind when an annotation omits it', () => {
+    const result = dashboardV2SpecSchema.safeParse(
+      minimalSpec({
+        // annotation omits `kind: 'AnnotationQuery'`.
+        annotations: [{ spec: { name: 'a', query: { group: 'prometheus', spec: {} } } }],
+      })
+    );
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    expect(result.data.annotations[0].kind).toBe('AnnotationQuery');
+  });
 });
