@@ -24,6 +24,8 @@ const (
 	defaultMaxBufferedObjects = 50000
 
 	flushLeasePrefix = "stats-flush/"
+
+	flushLeaseTTL = 30 * time.Second
 )
 
 var ErrInvalidEvent = errors.New("invalid usage event")
@@ -254,7 +256,7 @@ func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamesp
 		}
 	}
 
-	l, err := i.leases.Acquire(ctx, scope.leaseName())
+	l, err := i.leases.Acquire(ctx, scope.leaseName(), lease.WithTTL(flushLeaseTTL), lease.WithAutoRenew())
 	if err != nil {
 		rebufferFrom(0)
 		return err
@@ -266,6 +268,16 @@ func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamesp
 	}()
 
 	for idx, o := range objs {
+		select {
+		case <-l.Lost():
+			i.log.Warn("usage stats flush lease lost; rebuffering remaining objects",
+				"group", scope.Group, "resource", scope.Resource, "namespace", scope.Namespace,
+				"remaining", len(objs)-idx)
+			rebufferFrom(idx)
+			return nil
+		default:
+		}
+
 		deltas := drained[o]
 		if len(deltas) == 0 {
 			continue
