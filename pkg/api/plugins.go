@@ -203,6 +203,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	dto := &dtos.PluginSetting{
 		Type:             string(plugin.Type),
 		Id:               plugin.ID,
+		AliasIDs:         plugin.AliasIDs,
 		Name:             plugin.Name,
 		Info:             plugin.Info,
 		Dependencies:     plugin.Dependencies,
@@ -229,7 +230,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	}
 
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
-		PluginID: pluginID,
+		PluginID: plugin.ID,
 		OrgID:    c.GetOrgID(),
 	})
 	if err != nil {
