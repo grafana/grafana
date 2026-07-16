@@ -224,16 +224,16 @@ The following non-tabular formats are automatically converted to a tabular forma
 
 - **Time Series Wide**: Label keys become column names.
 - **Time Series Multi**: Label values become the values in each row (or null if a label is missing).
-- **Numeric Wide**: The `value` column contains the numeric metric value.
-- **Numeric Multi**: If a display name exists, it will appear in the `display_name` column.
+- **Numeric Wide**: The `__value__` column contains the numeric metric value.
+- **Numeric Multi**: If a display name exists, it will appear in the `__display_name__` column.
 
 During conversion:
 
 - Label keys become column names.
 - Label values populate the corresponding rows (null if a label is missing).
-- The `value` column contains the numeric metric.
-- If available, the `display_name` column contains a human-readable name.
-- The `metric_name` column stores the raw metric identifier.
+- The `__value__` column contains the numeric metric.
+- If available, the `__display_name__` column contains a human-readable name.
+- The `__metric_name__` column stores the raw metric identifier.
 - For time series data, Grafana includes a `time` column with timestamps
 
 ## Supported functions
