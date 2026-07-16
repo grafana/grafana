@@ -280,7 +280,10 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 
 	panels := make([]diagnostics.DashboardPanel, 0, len(reqDTO.Panels))
 	for i, p := range reqDTO.Panels {
-		if err := ctx.Err(); err != nil { // bail out early if the run is cancelled
+		// ctx is detachedCtx (see QueryDashboardDiagnostics), derived from context.WithoutCancel, so
+		// this never fires today -- there is no per-run timeout yet (MVP scope, see the NOTE above).
+		// Kept so this loop bails out for free once that follow-up wires up a cancelable context.
+		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
 
