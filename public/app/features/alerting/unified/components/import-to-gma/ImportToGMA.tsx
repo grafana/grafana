@@ -394,6 +394,7 @@ function ImportWizardContent() {
       const isRootFolder = isEmpty(targetFolder?.uid);
 
       trackImportToGMASuccess({
+        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
         isRootFolder,
@@ -418,6 +419,7 @@ function ImportWizardContent() {
     } catch (err) {
       setImportStatus('error');
       trackImportToGMAError({
+        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
       });

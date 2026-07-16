@@ -82,6 +82,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		SyncJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
 		SyncOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
 		SyncStatus{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
+		TestJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref),
 		TestResults{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		TokenStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref),
 		WebhookConfig{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref),
@@ -1075,13 +1076,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref 
 							Format:      "",
 						},
 					},
-					"generateDashboardPreviews": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews for pull requests.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Path is the subdirectory for the Grafana data inside the repository.",
@@ -1701,11 +1695,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"deleteResources\"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.\n - `\"releaseResources\"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.",
+							Description: "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"deleteResources\"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.\n - `\"releaseResources\"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.\n - `\"test\"` is a synthetic job that does no real work: it simply sleeps for a configurable duration and then completes successfully. It exists only to generate controlled load on the job queue and controllers for performance testing, and is gated behind the provisioning.performance feature flag.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"delete", "deleteResources", "fixFolderMetadata", "migrate", "move", "pr", "pull", "push", "releaseResources"},
+							Enum:        []interface{}{"delete", "deleteResources", "fixFolderMetadata", "migrate", "move", "pr", "pull", "push", "releaseResources", "test"},
 						},
 					},
 					"repository": {
@@ -1764,12 +1758,18 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Ref:         ref(FixFolderMetadataJobOptions{}.OpenAPIModelName()),
 						},
 					},
+					"test": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Required when the action is `test`",
+							Ref:         ref(TestJobOptions{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"action"},
 			},
 		},
 		Dependencies: []string{
-			DeleteJobOptions{}.OpenAPIModelName(), ExportJobOptions{}.OpenAPIModelName(), FixFolderMetadataJobOptions{}.OpenAPIModelName(), MigrateJobOptions{}.OpenAPIModelName(), MoveJobOptions{}.OpenAPIModelName(), PullRequestJobOptions{}.OpenAPIModelName(), SyncJobOptions{}.OpenAPIModelName()},
+			DeleteJobOptions{}.OpenAPIModelName(), ExportJobOptions{}.OpenAPIModelName(), FixFolderMetadataJobOptions{}.OpenAPIModelName(), MigrateJobOptions{}.OpenAPIModelName(), MoveJobOptions{}.OpenAPIModelName(), PullRequestJobOptions{}.OpenAPIModelName(), SyncJobOptions{}.OpenAPIModelName(), TestJobOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -2084,6 +2084,13 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.Referen
 					"enforceTemplate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When true, the PR title field in Save drawers is read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -3563,6 +3570,34 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 				Required: []string{"state", "message"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TestJobOptions configures a synthetic performance-testing job. The job does no real work; it sleeps for Duration and then completes. It is only usable when the provisioning.performance feature flag is enabled.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"duration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Duration is how long the job should sleep before completing, expressed as a Go duration string (for example \"10s\" or \"2m\"). It must be positive and is capped by the server to keep a single job's runtime predictable.",
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Duration"),
+						},
+					},
+					"progressUpdates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"io.k8s.apimachinery.pkg.apis.meta.v1.Duration"},
 	}
 }
 

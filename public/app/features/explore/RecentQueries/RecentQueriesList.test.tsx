@@ -57,13 +57,11 @@ jest.mock('@grafana/data', () => {
   };
 });
 
-// Mock getDataSourceSrv for datasource resolution
-const mockGet = jest.fn();
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: mockGet,
-  }),
+// Mock getDataSourceInstance so datasource resolution
+const mockGetDataSourceInstance = jest.fn();
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (uid: string) => mockGetDataSourceInstance(uid),
 }));
 
 function makeQuery(id: string, dsUid: string, dsName: string, createdAt: number): RichHistoryQuery {
@@ -107,7 +105,7 @@ describe('RecentQueriesList', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGet.mockImplementation((uid: string) => {
+    mockGetDataSourceInstance.mockImplementation((uid: string) => {
       if (uid === 'ds-prom') {
         return Promise.resolve(makeDsApi('ds-prom', '/img/prometheus.svg'));
       }
@@ -123,14 +121,14 @@ describe('RecentQueriesList', () => {
       render(<RecentQueriesList {...defaultProps} isLoading={true} />);
       expect(screen.getByText(/loading/i)).toBeInTheDocument();
       // Let useAsync settle to avoid act() warnings
-      await waitFor(() => expect(mockGet).not.toHaveBeenCalled());
+      await waitFor(() => expect(mockGetDataSourceInstance).not.toHaveBeenCalled());
     });
 
     it('does not show query rows when loading', async () => {
       render(<RecentQueriesList {...defaultProps} isLoading={true} queries={allQueries} />);
       expect(screen.queryByTestId('recent-query-row')).not.toBeInTheDocument();
       // Let useAsync settle
-      await waitFor(() => expect(mockGet).toHaveBeenCalled());
+      await waitFor(() => expect(mockGetDataSourceInstance).toHaveBeenCalled());
     });
   });
 
@@ -139,13 +137,13 @@ describe('RecentQueriesList', () => {
       render(<RecentQueriesList {...defaultProps} queries={[]} />);
       expect(screen.getByText(/no recent queries found/i)).toBeInTheDocument();
       // Let useAsync settle (empty queries = no DS calls)
-      await waitFor(() => expect(mockGet).not.toHaveBeenCalled());
+      await waitFor(() => expect(mockGetDataSourceInstance).not.toHaveBeenCalled());
     });
 
     it('does not show empty state when loading', async () => {
       render(<RecentQueriesList {...defaultProps} queries={[]} isLoading={true} />);
       expect(screen.queryByText(/no recent queries found/i)).not.toBeInTheDocument();
-      await waitFor(() => expect(mockGet).not.toHaveBeenCalled());
+      await waitFor(() => expect(mockGetDataSourceInstance).not.toHaveBeenCalled());
     });
   });
 
@@ -187,7 +185,7 @@ describe('RecentQueriesList', () => {
 
   describe('datasource resolution failure', () => {
     it('renders rows with fallback when datasource resolution fails', async () => {
-      mockGet.mockRejectedValue(new Error('not found'));
+      mockGetDataSourceInstance.mockRejectedValue(new Error('not found'));
       const queries = [makeQuery('q1', 'ds-missing', 'Missing DS', jan3)];
       render(<RecentQueriesList {...defaultProps} queries={queries} />);
       // Wait for DS resolution attempt to complete

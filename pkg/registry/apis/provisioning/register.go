@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
 	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -817,7 +819,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	connCombinedValidator := appadmission.NewCombinedValidator(connAdmissionValidator, connDeleteValidator)
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
-	// Jobs validator (no mutator needed)
+	// Jobs mutator and validator. The mutator attributes each job to the acting
+	// user at creation time (gated by the provisioning.userAttribution flag) and
+	// the validator enforces that the recorded author is immutable.
 	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
 		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
@@ -826,7 +830,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 			Disabled: !r.IsActive(),
 		})
 	}
-	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources))
+	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator(userAttributionEnabled))
+	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources, b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningPerformance))) //nolint:staticcheck
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
@@ -900,7 +905,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningPerformance)), 30*time.Second) //nolint:staticcheck
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -911,6 +916,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
+}
+
+// userAttributionEnabled reports whether Git Sync commits should be attributed
+// to the acting user. It lives here (rather than in apps/provisioning) because
+// the feature flag machinery is only available in the main Grafana module.
+func userAttributionEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx))
 }
 
 // Mutate delegates to the admission handler for resource-specific mutation
@@ -1040,8 +1052,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 
-			// All workers registered - export/migrate will check feature flag at runtime
-			workers := make([]jobs.Worker, 0, 8+len(b.extraWorkers))
+			// Synthetic load-testing worker; a no-op unless provisioning.performance is enabled.
+			perfTestWorker := perftest.NewWorker(b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningPerformance)) //nolint:staticcheck
+
+			// All workers registered - export/migrate/perftest check their feature flag at runtime
+			workers := make([]jobs.Worker, 0, 9+len(b.extraWorkers))
 			workers = append(workers,
 				deleteResourcesWorker,
 				deleteWorker,
@@ -1049,6 +1064,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				fixMetadataWorker,
 				migrationWorker,
 				moveWorker,
+				perfTestWorker,
 				releaseResourcesWorker,
 				syncWorker,
 			)

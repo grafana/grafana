@@ -1701,6 +1701,13 @@ export type ExportJobOptions = {
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
   resources?: ResourceRef[];
 };
+export type Duration = string;
+export type TestJobOptions = {
+  /** Duration is how long the job should sleep before completing, expressed as a Go duration string (for example "10s" or "2m"). It must be positive and is capped by the server to keep a single job's runtime predictable. */
+  duration?: Duration;
+  /** ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default. */
+  progressUpdates?: number;
+};
 export type JobSpec = {
   /** Possible enum values:
      - `"delete"` deletes files in the remote repository
@@ -1711,7 +1718,8 @@ export type JobSpec = {
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch.
-     - `"releaseResources"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set. */
+     - `"releaseResources"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.
+     - `"test"` is a synthetic job that does no real work: it simply sleeps for a configurable duration and then completes successfully. It exists only to generate controlled load on the job queue and controllers for performance testing, and is gated behind the provisioning.performance feature flag. */
   action:
     | 'delete'
     | 'deleteResources'
@@ -1721,7 +1729,8 @@ export type JobSpec = {
     | 'pr'
     | 'pull'
     | 'push'
-    | 'releaseResources';
+    | 'releaseResources'
+    | 'test';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
   /** Options when the action is `fix-folder-metadata` */
@@ -1740,6 +1749,8 @@ export type JobSpec = {
   push?: ExportJobOptions;
   /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
   repository?: string;
+  /** Required when the action is `test` */
+  test?: TestJobOptions;
 };
 export type JobResourceSummary = {
   create?: number;
@@ -1883,8 +1894,6 @@ export type GitHubRepositoryConfig = {
 export type GitHubEnterpriseRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Whether we should show dashboard previews for pull requests. */
-  generateDashboardPreviews?: boolean;
   /** Path is the subdirectory for the Grafana data inside the repository. */
   path?: string;
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
@@ -1908,6 +1917,8 @@ export type LocalRepositoryConfig = {
 export type PullRequestOptions = {
   /** When true, the PR title field in Save drawers is read-only. */
   enforceTemplate?: boolean;
+  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
+  generateDashboardPreviews?: boolean;
   /** Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used. */
   titleTemplate?: string;
 };
