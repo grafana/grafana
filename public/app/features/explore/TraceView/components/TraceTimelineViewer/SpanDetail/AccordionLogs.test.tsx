@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import AccordianLogs, { type AccordianLogsProps } from './AccordianLogs';
+import AccordionLogs, { type AccordionLogsProps } from './AccordionLogs';
 
 const logs = [
   {
@@ -34,7 +34,7 @@ const logs = [
   },
 ];
 
-const setup = (propOverrides?: AccordianLogsProps) => {
+const setup = (propOverrides?: AccordionLogsProps) => {
   const props = {
     logs,
     isOpen: false,
@@ -45,10 +45,10 @@ const setup = (propOverrides?: AccordianLogsProps) => {
     ...propOverrides,
   };
 
-  return render(<AccordianLogs {...props} />);
+  return render(<AccordionLogs {...props} />);
 };
 
-describe('AccordianLogs tests', () => {
+describe('AccordionLogs tests', () => {
   it('renders without exploding', () => {
     expect(() => setup()).not.toThrow();
   });
@@ -60,13 +60,13 @@ describe('AccordianLogs tests', () => {
   });
 
   it('hides log entries when not expanded', () => {
-    setup({ isOpen: false } as AccordianLogsProps);
+    setup({ isOpen: false } as AccordionLogsProps);
 
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
   it('shows log entries when expanded', () => {
-    setup({ isOpen: true } as AccordianLogsProps);
+    setup({ isOpen: true } as AccordionLogsProps);
 
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.queryAllByRole('cell')).toHaveLength(6);
@@ -85,7 +85,7 @@ describe('AccordianLogs tests', () => {
       isOpen: true,
       logs: [longNameLog],
       openedItems: new Set([longNameLog]),
-    } as AccordianLogsProps);
+    } as AccordionLogsProps);
 
     expect(
       screen.getByRole('switch', {
@@ -100,7 +100,7 @@ describe('AccordianLogs tests', () => {
   });
 
   it('renders event name and duration when events list is closed', () => {
-    setup({ isOpen: true, openedItems: new Set() } as AccordianLogsProps);
+    setup({ isOpen: true, openedItems: new Set() } as AccordionLogsProps);
     expect(
       screen.getByRole('switch', {
         name: '15μs (foo event name) message oh the next log message more stuff',
@@ -110,7 +110,7 @@ describe('AccordianLogs tests', () => {
   });
 
   it('renders event name and duration when events list is open', () => {
-    setup({ isOpen: true, openedItems: new Set(logs) } as AccordianLogsProps);
+    setup({ isOpen: true, openedItems: new Set(logs) } as AccordionLogsProps);
     expect(screen.getByRole('switch', { name: '15μs (foo event name)' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: '5μs' })).toBeInTheDocument();
   });
