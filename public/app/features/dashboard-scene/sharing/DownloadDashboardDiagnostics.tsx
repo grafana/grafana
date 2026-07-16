@@ -165,7 +165,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
     abortRef.current = controller;
     setProgress({ done: 0, total: panels.length });
 
-    const uid = await startDashboardDiagnostics(panels, undefined, controller.signal);
+    const uid = await startDashboardDiagnostics(panels, dashboard.getSaveModel(), controller.signal);
 
     for (let attempt = 0; ; attempt++) {
       const status = await getDashboardDiagnosticsStatus(uid, controller.signal);
