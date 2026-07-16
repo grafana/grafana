@@ -58,6 +58,13 @@ describe('Worldmap Migrations', () => {
           "layers": [
             {
               "config": {
+                "cluster": {
+                  "color": "",
+                  "enabled": false,
+                  "maxZoom": 24,
+                  "minPoints": 2,
+                  "radius": 40,
+                },
                 "showLegend": true,
                 "style": {
                   "color": {

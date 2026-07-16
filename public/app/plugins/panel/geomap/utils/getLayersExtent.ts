@@ -4,6 +4,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorImage from 'ol/layer/VectorImage';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
 
+import { isMarkerClusterSourceLayer } from '../layers/data/markerCluster';
 import { type MapLayerState } from '../types';
 
 export function getLayersExtent(
@@ -49,32 +50,39 @@ export function getLayersExtent(
 }
 
 export function getLayerGroupExtent(lg: LayerGroup, lastOnly: boolean) {
-  return lg
-    .getLayers()
-    .getArray()
-    .filter((l) => l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer)
-    .map((l) => {
-      if (l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer) {
-        if (lastOnly) {
-          // Return last coordinate only
-          const feat = l.getSource().getFeatures();
-          const featOfInterest = feat[feat.length - 1];
-          const geo = featOfInterest?.getGeometry();
-          if (geo) {
-            // Look at flatCoordinates for more robust support including route layer
-            const flatCoordinates = geo.flatCoordinates;
-            const flatCoordinatesLength = flatCoordinates.length;
-            if (flatCoordinatesLength > 1) {
-              const lastX = flatCoordinates[flatCoordinatesLength - 2];
-              const lastY = flatCoordinates[flatCoordinatesLength - 1];
-              return [lastX, lastY, lastX, lastY];
+  return (
+    lg
+      .getLayers()
+      .getArray()
+      // Cluster-source layers hold derived features whose positions are
+      // resolution-dependent centroids. The raw-source layer in the same group
+      // already covers the real data extent, and in lastOnly mode a centroid
+      // would be unioned with the true last point.
+      .filter((l) => !isMarkerClusterSourceLayer(l))
+      .filter((l) => l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer)
+      .map((l) => {
+        if (l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer) {
+          if (lastOnly) {
+            // Return last coordinate only
+            const feat = l.getSource().getFeatures();
+            const featOfInterest = feat[feat.length - 1];
+            const geo = featOfInterest?.getGeometry();
+            if (geo) {
+              // Look at flatCoordinates for more robust support including route layer
+              const flatCoordinates = geo.flatCoordinates;
+              const flatCoordinatesLength = flatCoordinates.length;
+              if (flatCoordinatesLength > 1) {
+                const lastX = flatCoordinates[flatCoordinatesLength - 2];
+                const lastY = flatCoordinates[flatCoordinatesLength - 1];
+                return [lastX, lastY, lastX, lastY];
+              }
             }
+            return [];
           }
+          return l.getSource().getExtent() ?? [];
+        } else {
           return [];
         }
-        return l.getSource().getExtent() ?? [];
-      } else {
-        return [];
-      }
-    });
+      })
+  );
 }

@@ -9,6 +9,7 @@ import { getFrameMatchers, type MapLayerHandler, type MapLayerOptions, type Pane
 import { config } from '@grafana/runtime';
 
 import { type GeomapPanel } from '../GeomapPanel';
+import { isMarkerClusterSourceLayer } from '../layers/data/markerCluster';
 import { MARKERS_LAYER_ID } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { type MapLayerState } from '../types';
@@ -16,6 +17,26 @@ import { type MapLayerState } from '../types';
 import { getNextLayerName } from './utils';
 
 const layerStateMap = new WeakMap<BaseLayer, MapLayerState>();
+
+export function setMapLayerState(layer: BaseLayer & { __state?: MapLayerState }, state: MapLayerState): void {
+  layerStateMap.set(layer, state);
+  layer.__state = state;
+
+  if (layer instanceof LayerGroup) {
+    layer
+      .getLayers()
+      .getArray()
+      .forEach((childLayer: BaseLayer) => {
+        // Only register children that render interactive data features: WebGL
+        // point layers and cluster-source layers. Registering every child would
+        // make decorative sub-layers (day/night shading, route crosshairs)
+        // respond to hover and clicks with featureless tooltips.
+        if (childLayer instanceof WebGLPointsLayer || isMarkerClusterSourceLayer(childLayer)) {
+          setMapLayerState(childLayer, state);
+        }
+      });
+  }
+}
 
 export const applyLayerFilter = (
   handler: MapLayerHandler<unknown>,
@@ -159,19 +180,7 @@ export async function initLayer(
   };
 
   panel.byName.set(UID, state);
-  layerStateMap.set(state.layer, state);
-
-  // Pass state into WebGLPointsLayers contained in a LayerGroup
-  if (layer instanceof LayerGroup) {
-    layer
-      .getLayers()
-      .getArray()
-      .forEach((layer: BaseLayer) => {
-        if (layer instanceof WebGLPointsLayer) {
-          layerStateMap.set(layer, state);
-        }
-      });
-  }
+  setMapLayerState(state.layer, state);
 
   applyLayerFilter(handler, options, panel.props.data);
 

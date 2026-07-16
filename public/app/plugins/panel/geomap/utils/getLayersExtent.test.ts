@@ -3,6 +3,7 @@ import { createEmpty, extend, isEmpty } from 'ol/extent';
 import { LineString, Point, type Geometry } from 'ol/geom';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
+import Cluster from 'ol/source/Cluster';
 import VectorSource from 'ol/source/Vector';
 
 import { type MapLayerState } from '../types';
@@ -85,5 +86,18 @@ describe('getLayerGroupExtent', () => {
 
     const extents = getLayerGroupExtent(group, true);
     expect(extents[0]).toEqual([9, 9, 9, 9]);
+  });
+
+  it('should ignore cluster-source layers whose features are derived centroids', () => {
+    const raw = new VectorSource({
+      features: [new Feature(new Point([0, 0])), new Feature(new Point([10, 10]))],
+    });
+    const rawLayer = new VectorLayer({ source: raw });
+    const clusterLayer = new VectorLayer({ source: new Cluster({ source: raw }) });
+    const group = new LayerGroup({ layers: [rawLayer, clusterLayer] });
+
+    const extents = getLayerGroupExtent(group, false);
+    expect(extents).toHaveLength(1);
+    expect(extents[0]).toEqual(raw.getExtent());
   });
 });

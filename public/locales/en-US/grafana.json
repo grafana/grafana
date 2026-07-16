@@ -9308,7 +9308,17 @@
       "use-current-map-settings": "Use current map settings"
     },
     "markers-layer": {
+      "description-cluster-color": "Fixed color for clusters. Leave empty to blend the colors of the grouped markers.",
+      "description-cluster-enabled": "Group nearby points into clusters",
+      "description-cluster-max-zoom": "Clustering is disabled above this zoom level",
+      "description-cluster-min-points": "Minimum number of points required to form a cluster",
+      "description-cluster-radius": "Radius in pixels within which points are grouped",
       "description-show-legend": "Show map legend",
+      "name-cluster-color": "Cluster color",
+      "name-cluster-enabled": "Cluster points",
+      "name-cluster-max-zoom": "Max zoom",
+      "name-cluster-min-points": "Minimum points",
+      "name-cluster-radius": "Cluster radius",
       "name-show-legend": "Show legend",
       "name-styles": "Styles"
     },
