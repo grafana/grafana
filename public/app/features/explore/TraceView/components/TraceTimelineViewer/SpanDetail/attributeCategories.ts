@@ -210,9 +210,11 @@ function orderAttributeCategories(
   return [...priorityCategories, ...remainingCategories];
 }
 
+export const OTHER_CATEGORY_ID = 'other' as const;
+
 function getOtherCategory(): AttributeCategoryDefinition {
   return {
-    id: 'other',
+    id: OTHER_CATEGORY_ID,
     label: t('explore.span-detail.attribute-category.other', 'Other'),
     icon: 'tag-alt',
     match: () => true,

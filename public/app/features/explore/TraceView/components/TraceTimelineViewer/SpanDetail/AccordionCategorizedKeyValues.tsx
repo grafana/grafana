@@ -11,6 +11,7 @@ import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 import {
   type AttributeSectionType,
   groupAttributesByCategory,
+  OTHER_CATEGORY_ID,
   SERVICE_HEXAGON_CATEGORY_ICON,
 } from './attributeCategories';
 import { ServiceHexagonIcon } from './icons/ServiceHexagonIcon';
@@ -35,6 +36,8 @@ export default function AccordionCategorizedKeyValues({
   const styles = useStyles2(getStyles);
   const isEmpty = !Array.isArray(data) || !data.length;
   const groupedCategories = React.useMemo(() => groupAttributesByCategory(data, sectionType), [data, sectionType]);
+  const showFlatAttributes =
+    groupedCategories.length === 1 && groupedCategories[0].category.id === OTHER_CATEGORY_ID;
   const [closedCategories, setClosedCategories] = React.useState<Set<string>>(() => new Set());
 
   React.useEffect(() => {
@@ -83,42 +86,45 @@ export default function AccordionCategorizedKeyValues({
           </span>
         )}
       </div>
-      {isOpen && (
-        <div className={styles.categories} data-testid="AccordionCategorizedKeyValues--categories">
-          {groupedCategories.map(({ category, attributes }) => {
-            const isCategoryOpen = !closedCategories.has(category.id);
+      {isOpen &&
+        (showFlatAttributes ? (
+          <KeyValuesTable data={data} linksGetter={linksGetter} />
+        ) : (
+          <div className={styles.categories} data-testid="AccordionCategorizedKeyValues--categories">
+            {groupedCategories.map(({ category, attributes }) => {
+              const isCategoryOpen = !closedCategories.has(category.id);
 
-            return (
-              <div className={styles.category} key={category.id} data-testid={`attribute-category-${category.id}`}>
-                <button
-                  type="button"
-                  className={styles.categoryHeader}
-                  aria-expanded={isCategoryOpen}
-                  onClick={() => toggleCategory(category.id)}
-                >
-                  <Icon name={isCategoryOpen ? 'angle-down' : 'angle-right'} className={styles.chevronIcon} />
-                  <span className={styles.categoryHeaderContent}>
-                    {category.icon === SERVICE_HEXAGON_CATEGORY_ICON ? (
-                      <ServiceHexagonIcon className={styles.categoryIcon} />
-                    ) : (
-                      <Icon name={category.icon} className={styles.categoryIcon} />
-                    )}
-                    <span className={styles.categoryLabel}>{category.label}</span>
-                    <span className={styles.categoryCounter}>
-                      <Counter value={attributes.length} variant="secondary" />
+              return (
+                <div className={styles.category} key={category.id} data-testid={`attribute-category-${category.id}`}>
+                  <button
+                    type="button"
+                    className={styles.categoryHeader}
+                    aria-expanded={isCategoryOpen}
+                    onClick={() => toggleCategory(category.id)}
+                  >
+                    <Icon name={isCategoryOpen ? 'angle-down' : 'angle-right'} className={styles.chevronIcon} />
+                    <span className={styles.categoryHeaderContent}>
+                      {category.icon === SERVICE_HEXAGON_CATEGORY_ICON ? (
+                        <ServiceHexagonIcon className={styles.categoryIcon} />
+                      ) : (
+                        <Icon name={category.icon} className={styles.categoryIcon} />
+                      )}
+                      <span className={styles.categoryLabel}>{category.label}</span>
+                      <span className={styles.categoryCounter}>
+                        <Counter value={attributes.length} variant="secondary" />
+                      </span>
                     </span>
-                  </span>
-                </button>
-                {isCategoryOpen && (
-                  <div className={styles.categoryContent}>
-                    <KeyValuesTable data={attributes} linksGetter={linksGetter} />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  </button>
+                  {isCategoryOpen && (
+                    <div className={styles.categoryContent}>
+                      <KeyValuesTable data={attributes} linksGetter={linksGetter} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
     </div>
   );
 }
