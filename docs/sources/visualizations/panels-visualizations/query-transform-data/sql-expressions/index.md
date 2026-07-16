@@ -61,7 +61,7 @@ A key capability of SQL expressions is the ability to JOIN data from multiple ta
 
 To work with SQL expressions, you must use data from a backend data source. In Grafana, a backend data source refers to a data source plugin or integration that communicates with a database, service, or API through the Grafana server, rather than directly from the browser (frontend).
 
-Frontend-only data sources, such as the *** [Dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#dashboard) ** data source, aren't supported. Use one of the compatible data sources listed below for queries that you want to reference in a SQL expression.
+Frontend-only data sources, such as the **[Dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#dashboard)** data source, aren't supported. Use one of the compatible data sources listed below for queries that you want to reference in a SQL expression.
 
 ## Compatible data sources
 
