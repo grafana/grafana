@@ -1,3 +1,5 @@
+import { buildAppPluginResourceUrl } from '@grafana/runtime/internal';
+
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
@@ -17,13 +19,13 @@ export const labelsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getLabels: build.query<LabelItem[], void>({
       query: () => ({
-        url: `/api/plugins/${SupportedPlugin.Labels}/resources/v2alpha1/labels/keys`,
+        url: buildAppPluginResourceUrl(SupportedPlugin.Labels, '/v2alpha1/labels/keys'),
       }),
       providesTags: ['GrafanaLabels'],
     }),
     getLabelValues: build.query<LabelKeyAndValues, { key: string }>({
       query: ({ key }) => ({
-        url: `/api/plugins/${SupportedPlugin.Labels}/resources/v2alpha1/labels/name/${key}`,
+        url: buildAppPluginResourceUrl(SupportedPlugin.Labels, `/v2alpha1/labels/name/${key}`),
       }),
       providesTags: ['GrafanaLabels'],
     }),

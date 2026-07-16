@@ -434,12 +434,12 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID)) // RBAC check performed in handler for App Plugins
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))
-		apiRoute.Get("/plugins/:pluginId/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), checkAppEnabled(hs.pluginStore, hs.PluginSettings), routing.Wrap(hs.CheckHealth))
-		apiRoute.Any("/plugins/:pluginId/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.CallResource)
-		apiRoute.Any("/plugins/:pluginId/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.CallResource)
+		apiRoute.Get("/plugins/:pluginId/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.callK8sAppPluginHealthHandler())
+		apiRoute.Any("/plugins/:pluginId/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.callK8sAppPluginResourceHandler())
+		apiRoute.Any("/plugins/:pluginId/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.callK8sAppPluginResourceHandler())
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
-		apiRoute.Any("/plugin-proxy/:pluginId/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.ProxyPluginRequest)
-		apiRoute.Any("/plugin-proxy/:pluginId", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.ProxyPluginRequest)
+		apiRoute.Any("/plugin-proxy/:pluginId/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.callK8sAppPluginProxyHandler())
+		apiRoute.Any("/plugin-proxy/:pluginId", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.callK8sAppPluginProxyHandler())
 
 		if hs.Cfg.PluginAdminEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {

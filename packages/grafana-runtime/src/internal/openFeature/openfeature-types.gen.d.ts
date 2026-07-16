@@ -49,6 +49,7 @@ declare module "@openfeature/core" {
     | "inlineLogDetailsNoScrolls"
     | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
+    | "plugins.useMTPluginBackend"
     | "splashScreen"
     | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"

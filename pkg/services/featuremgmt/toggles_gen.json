@@ -4505,6 +4505,23 @@
     },
     {
       "metadata": {
+        "name": "plugins.useMTPluginBackend",
+        "resourceVersion": "1782914927421",
+        "creationTimestamp": "2026-07-01T09:51:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 14:08:47.42148 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables app plugin backend calls from new apis (frontend + legacy-route redirect)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.useMTPluginSettings",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

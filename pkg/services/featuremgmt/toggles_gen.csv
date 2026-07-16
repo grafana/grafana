@@ -309,6 +309,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,true
 2026-05-22,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,true
 2026-05-22,plugins.useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-07-01,plugins.useMTPluginBackend,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-05-22,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
 2026-05-22,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
