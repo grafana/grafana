@@ -46,6 +46,7 @@ func TestWorker_Process(t *testing.T) {
 		// 80ms can't deliver the default count without out-pacing the throttle, so
 		// the total is clamped to 1.
 		progress.On("SetTotal", mock.Anything, 1).Return()
+		progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
 
@@ -59,6 +60,7 @@ func TestWorker_Process(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		// 50ms / 3 is far tighter than the throttle, so the total is clamped to 1.
 		progress.On("SetTotal", mock.Anything, 1).Return()
+		progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
 
@@ -71,6 +73,7 @@ func TestWorker_Process(t *testing.T) {
 		// 2 updates over 4× the interval are deliverable, so the count is honored.
 		// Cancel early; SetTotal is recorded before the loop starts.
 		progress.On("SetTotal", mock.Anything, 2).Return()
+		progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 
 		duration := 4 * jobs.NotifyThrottleInterval
@@ -79,6 +82,19 @@ func TestWorker_Process(t *testing.T) {
 
 		err := NewWorker(true).Process(ctx, nil, testJob(duration, 2), progress)
 		require.ErrorIs(t, err, context.DeadlineExceeded)
+	})
+
+	t.Run("records results so progress advances", func(t *testing.T) {
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetTotal", mock.Anything, 2).Return()
+		// Each tick must Record a result; without it JobStatus.Progress stays 0.
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
+
+		// 2 updates over 4× the interval: both ticks fire before completion.
+		err := NewWorker(true).Process(context.Background(), nil, testJob(4*jobs.NotifyThrottleInterval, 2), progress)
+		require.NoError(t, err)
 	})
 
 	t.Run("missing test options", func(t *testing.T) {
@@ -97,6 +113,7 @@ func TestWorker_Process(t *testing.T) {
 	t.Run("honors context cancellation", func(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetTotal", mock.Anything, defaultProgressUpdates).Return()
+		progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)

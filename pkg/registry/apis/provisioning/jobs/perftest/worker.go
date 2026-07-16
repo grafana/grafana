@@ -107,6 +107,10 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 			return nil
 		case <-ticker.C:
 			step++
+			progress.Record(ctx, jobs.NewResourceResult().
+				WithAction(repository.FileActionCreated).
+				WithName(fmt.Sprintf("perftest-%d", step)).
+				Build())
 			progress.SetMessage(ctx, fmt.Sprintf("performance-test job running (%d/%d)", step, progressUpdates))
 		}
 	}
