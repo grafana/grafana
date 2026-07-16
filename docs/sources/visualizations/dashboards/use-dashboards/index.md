@@ -212,7 +212,7 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 - `e`: Toggle panel edit view
 - `v`: Toggle panel full screen view
-- `pu`: Copy panel short link
+- `pu`: Copy panel share link
 - `pe`: Open share panel embed configuration
 - `ps`: Open share panel snapshot configuration
 - `pd`: Duplicate panel
