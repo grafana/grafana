@@ -20,8 +20,6 @@ import {
 import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
-import { removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -83,12 +81,6 @@ export class K8sDashboardV2API
         }
       } else if (dashboard.metadata.annotations) {
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
-      }
-
-      // Strip runtime-injected source links that older Grafana versions committed to the
-      // dashboard JSON. Source links now live in the managed badge and are never persisted.
-      if (isManagedByRepository(dashboard) && dashboard.spec.links?.length) {
-        dashboard.spec.links = removeExistingSourceLinks(dashboard.spec.links);
       }
 
       return dashboard;

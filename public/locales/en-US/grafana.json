@@ -6254,9 +6254,6 @@
         "title": "View panel controls"
       }
     },
-    "source-link": {
-      "tooltip": "View source file in repository"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
