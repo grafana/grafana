@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
@@ -65,6 +67,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
+	hostEnv = append(hostEnv, p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.secureSocksProxyEnvVars()...)
 	azureSettings := p.getAzureSettings()
@@ -81,6 +84,44 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	return hostEnv
+}
+
+func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
+	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] || p.cfg.MarketplaceLicenseDirectory == "" {
+		return nil
+	}
+	if p.license == nil || !p.license.HasValidLicense() {
+		return nil
+	}
+
+	licensePath, ok := marketplaceLicenseFilePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
+	if !ok {
+		return nil
+	}
+
+	return []string{
+		p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath),
+		p.envVar("GF_MARKETPLACE_APP_URL", p.cfg.GrafanaAppURL),
+	}
+}
+
+func marketplaceLicenseFilePath(directory, pluginID string) (string, bool) {
+	if pluginID == "" || pluginID == "." || pluginID == ".." || strings.Contains(pluginID, "\x00") ||
+		strings.ContainsAny(pluginID, "/\\:") || filepath.IsAbs(pluginID) || filepath.Base(pluginID) != pluginID {
+		return "", false
+	}
+
+	absDirectory, err := filepath.Abs(directory)
+	if err != nil {
+		return "", false
+	}
+	absDirectory = filepath.Clean(absDirectory)
+	licensePath := filepath.Join(absDirectory, "license-"+pluginID+".jwt")
+	if filepath.Dir(licensePath) != absDirectory {
+		return "", false
+	}
+
+	return licensePath, true
 }
 
 func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {

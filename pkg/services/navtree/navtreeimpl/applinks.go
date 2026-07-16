@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -20,6 +19,8 @@ import (
 // The Knowledge Graph's version of the "Application" page.
 const assertsServicesPath = "/a/grafana-asserts-app/services"
 const appObservabilityAppID = "grafana-app-observability-app"
+const assistantAppID = "grafana-assistant-app"
+const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
@@ -43,10 +44,19 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	enabledAccessibleAppPluginMap := make(map[string]*pluginstore.Plugin)
+	assistantAppEnabled := false
+	assistantOnboardingAppEnabled := false
 
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
 		if !isPluginEnabled(plugin) {
 			continue
+		}
+
+		switch plugin.ID {
+		case assistantAppID:
+			assistantAppEnabled = true
+		case assistantOnboardingAppID:
+			assistantOnboardingAppEnabled = true
 		}
 
 		if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
@@ -57,6 +67,19 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
 		}
+	}
+
+	if assistantOnboardingAppEnabled && !assistantAppEnabled {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Assistant",
+			Id:         "plugin-page-" + assistantAppID,
+			SubTitle:   "AI-powered assistant for Grafana",
+			Icon:       "ai-sparkle",
+			SortWeight: navtree.WeightAssistant,
+			IsSection:  true,
+			PluginID:   assistantAppID,
+			Url:        s.cfg.AppSubURL + "/a/" + assistantAppID,
+		})
 	}
 
 	if adaptiveTelemetryPlugin := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"]; adaptiveTelemetryPlugin != nil {
@@ -454,15 +477,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4},
 		"grafana-cmab-app":                 {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCMAB, Icon: "cmab-logo", IsNew: true},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
-		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
-			SectionID: navtree.NavIDCfg,
-			Text:      "Advisor",
-			SubTitle:  "Run checks and get suggestions to fix issues",
-		}
+		"grafana-advisor-app":              {SectionID: navtree.NavIDCfg, Text: "Advisor", SubTitle: "Run checks and get suggestions to fix issues"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

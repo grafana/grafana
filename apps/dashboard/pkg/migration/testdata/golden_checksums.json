@@ -10,8 +10,6 @@
   "dev-dashboards-output/datasource-influxdb/influxdb-templated.v42.json": "f9e9b99c029576e2ef9e7ca57c681ea8f411d836e48f1d0c5c9fd38b2642fe9f",
   "dev-dashboards-output/datasource-loki/loki_fakedata.v42.json": "e37063e29e0f0ccd4bb5ab36a229e3880e84a360b69fe10641118c41af0af1fe",
   "dev-dashboards-output/datasource-loki/loki_query_splitting.v42.json": "53a51b8c974ab11b871e95daf9efb1665950d55be2f6d5e446df13c7a35d6711",
-  "dev-dashboards-output/datasource-mssql/mssql_fakedata.v42.json": "9e26d7a8723f1c97f4e79bc47e5507ebe79666d013f0c374e80eaf41a889f3e1",
-  "dev-dashboards-output/datasource-mssql/mssql_unittest.v42.json": "985bab4a2dfda0494bbe00e1be6034354af96db100f07b7ab5cd014294986e92",
   "dev-dashboards-output/datasource-mysql/mysql_fakedata.v42.json": "4c1e1c67578a30a17fdd82c9fdc4570e90e8a6e90b7dc3c5bbf47e0704bfb27c",
   "dev-dashboards-output/datasource-mysql/mysql_unittest.v42.json": "60944ba2fbffba5416766fb858fe2ca6aa114bc2fba1793a2b3930ee47216a60",
   "dev-dashboards-output/datasource-postgres/postgres_fakedata.v42.json": "56e70b06aa663034431eb33d40e8b293cf822b0992ad68ebb7c1aeb95efb6f96",

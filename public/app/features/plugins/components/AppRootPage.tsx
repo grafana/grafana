@@ -14,6 +14,7 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { getLogger, getPluginSettings } from '@grafana/runtime/unstable';
@@ -72,7 +73,7 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const { plugin, loading, loadingError, pluginNav } = state;
   const navModel = buildPluginSectionNav(currentUrl, pluginNavSection);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
-  const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
+  const context = useMemo(() => buildPluginPageContext(navModel, pluginId), [navModel, pluginId]);
   const grafanaContext = useGrafana();
 
   useEffect(() => {
@@ -192,11 +193,18 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
   return (
     <>
       {navModel ? (
-        <Page navModel={navModel} pageNav={pluginNav?.node}>
+        <Page
+          data-testid={selectors.components.Plugins.appPage(pluginId)}
+          data-plugin-id={pluginId}
+          navModel={navModel}
+          pageNav={pluginNav?.node}
+        >
           <Page.Contents isLoading={loading}>{pluginRoot}</Page.Contents>
         </Page>
       ) : (
-        <Page>{pluginRoot}</Page>
+        <Page data-testid={selectors.components.Plugins.appPage(pluginId)} data-plugin-id={pluginId}>
+          {pluginRoot}
+        </Page>
       )}
     </>
   );
