@@ -124,6 +124,8 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
           ...request,
           targets,
           range: compareRange,
+          // Must match compare range; inheriting primary rangeRaw (to: 'now') enables Prometheus incremental cache incorrectly.
+          rangeRaw: compareRange.raw,
         },
         processor: timeShiftAlignmentProcessor,
       });
