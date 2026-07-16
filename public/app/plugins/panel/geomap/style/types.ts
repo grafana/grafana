@@ -39,7 +39,7 @@ export interface StyleConfig {
   rotation?: ScalarDimensionConfig;
 }
 
-export const DEFAULT_SIZE = 5;
+export const DEFAULT_SIZE = 7;
 
 export enum TextAlignment {
   Left = 'left',
