@@ -21,6 +21,7 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
+import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -28,6 +29,11 @@ const applySpecPayloadSchema = z.object({
   spec: z
     .record(z.string(), z.unknown())
     .describe('A complete v2 DashboardSpec to apply (same shape GET_SPEC returns).'),
+  validate: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
 });
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
@@ -118,6 +124,19 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      // Opt-in structural validation (default off to avoid breaking existing
+      // callers). When enabled, reject an invalid spec before mutating anything.
+      if (payload.validate) {
+        const parsed = dashboardV2SpecSchema.safeParse(payload.spec);
+        if (!parsed.success) {
+          const errorMessages = parsed.error.issues.map((issue) => {
+            const path = issue.path.join('.');
+            return path ? `${path}: ${issue.message}` : issue.message;
+          });
+          return { success: false, error: `Validation failed: ${errorMessages.join(', ')}`, changes: [] };
+        }
+      }
+
       enterEditModeIfNeeded(scene);
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- caller-supplied spec is validated by the transform
