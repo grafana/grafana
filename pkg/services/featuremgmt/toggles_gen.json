@@ -4719,6 +4719,20 @@
     },
     {
       "metadata": {
+        "name": "provisioning.performance",
+        "resourceVersion": "1784190107345",
+        "creationTimestamp": "2026-07-16T08:21:47Z"
+      },
+      "spec": {
+        "description": "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning.readmes",
         "resourceVersion": "1781078230859",
         "creationTimestamp": "2026-05-22T09:03:04Z",

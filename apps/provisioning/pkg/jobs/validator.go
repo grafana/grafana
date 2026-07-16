@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -86,6 +87,13 @@ func ValidateJob(job *provisioning.Job, supportedResources []provisioning.Suppor
 
 	case provisioning.JobActionFixFolderMetadata:
 		// No required options for fix-folder-metadata; it's a no-op placeholder
+
+	case provisioning.JobActionTest:
+		if job.Spec.Test == nil {
+			list = append(list, field.Required(field.NewPath("spec", "test"), "test options required for test action"))
+		} else {
+			list = append(list, validateTestJobOptions(job.Spec.Test)...)
+		}
 
 	case provisioning.JobActionReleaseResources,
 		provisioning.JobActionDeleteResources:
@@ -250,6 +258,26 @@ func validateDeleteJobOptions(opts *provisioning.DeleteJobOptions) field.ErrorLi
 		if r.Kind == "" {
 			list = append(list, field.Required(field.NewPath("spec", "delete", "resources").Index(i).Child("kind"), "resource kind is required"))
 		}
+	}
+
+	return list
+}
+
+// MaxTestJobDuration caps how long a synthetic test job may sleep. It mirrors
+// the default per-job processing timeout, since a job that sleeps longer would
+// be cancelled by the driver and reported as a failure rather than completing.
+const MaxTestJobDuration = 20 * time.Minute
+
+// validateTestJobOptions validates performance-testing job options
+func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
+	list := field.ErrorList{}
+
+	d := opts.Duration.Duration
+	switch {
+	case d <= 0:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), "duration must be positive"))
+	case d > MaxTestJobDuration:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), fmt.Sprintf("duration must not exceed %s", MaxTestJobDuration)))
 	}
 
 	return list

@@ -957,6 +957,64 @@ func TestValidateJob(t *testing.T) {
 				require.Contains(t, err.Error(), "must have at most 100 items")
 			},
 		},
+		{
+			name: "valid test job",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "test action without test options",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test: Required value")
+			},
+		},
+		{
+			name: "test action with non-positive duration",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 0}},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.duration")
+				require.Contains(t, err.Error(), "must be positive")
+			},
+		},
+		{
+			name: "test action over the duration cap",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: MaxTestJobDuration + time.Second}},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.duration")
+				require.Contains(t, err.Error(), "must not exceed")
+			},
+		},
 	}
 
 	for _, tt := range tests {
