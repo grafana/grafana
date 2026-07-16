@@ -75,10 +75,19 @@ export function setupFaroPageMeta(faro: Faro): () => void {
   // Landing page - emitted before any internal navigation.
   applyPageMeta();
 
-  // Subsequent internal navigations within the SPA.
-  locationService.getHistory().listen((location) => {
-    previousPath = currentPath;
-    currentPath = location.pathname;
+  // Subsequent history updates within the SPA. Only real route changes shift the chain:
+  // - REPLACE rewrites the current entry (slug normalization after a dashboard loads, scenes URL
+  //   sync, home-dashboard redirect) - the page must not become its own predecessor, so only
+  //   currentPath is updated.
+  // - PUSH/POP with an unchanged pathname is query-only churn (time range, variables).
+  // Either way we still re-emit so `page.url` tracks the full URL.
+  locationService.getHistory().listen((location, action) => {
+    if (action === 'REPLACE') {
+      currentPath = location.pathname;
+    } else if (location.pathname !== currentPath) {
+      previousPath = currentPath;
+      currentPath = location.pathname;
+    }
     applyPageMeta();
   });
 

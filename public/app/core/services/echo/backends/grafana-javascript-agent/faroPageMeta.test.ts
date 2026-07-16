@@ -39,7 +39,7 @@ describe('setupFaroPageMeta', () => {
   let setPage: jest.Mock;
   let getSession: jest.Mock;
   let faro: Faro;
-  let navigate: (location: { pathname: string }) => void;
+  let navigate: (location: { pathname: string }, action?: 'PUSH' | 'REPLACE' | 'POP') => void;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -50,8 +50,8 @@ describe('setupFaroPageMeta', () => {
 
     getLocationMock.mockReturnValue({ pathname: '/search' } as ReturnType<typeof locationService.getLocation>);
     getHistoryMock.mockReturnValue({
-      listen: (listener: (location: { pathname: string }) => void) => {
-        navigate = listener;
+      listen: (listener: (location: { pathname: string }, action: string) => void) => {
+        navigate = (location, action = 'PUSH') => listener(location, action);
         return () => {};
       },
     } as unknown as ReturnType<typeof locationService.getHistory>);
@@ -97,6 +97,54 @@ describe('setupFaroPageMeta', () => {
         previousUrl: '/d/abc',
         sessionStart: String(SESSION_START),
       },
+    });
+  });
+
+  it('does not shift the navigation chain on query-only history updates', () => {
+    setReferrer('');
+
+    setupFaroPageMeta(faro);
+    navigate({ pathname: '/d/abc' });
+
+    // Same pathname again: scenes URL sync writing time range/variables into the query string.
+    navigate({ pathname: '/d/abc' });
+
+    // Still re-emits (page.url must track the query string), but previousUrl is unchanged.
+    expect(setPage).toHaveBeenCalledTimes(3);
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { previousUrl: '/search', sessionStart: String(SESSION_START) },
+    });
+
+    // A real navigation afterwards reports the dashboard, not a self-reference.
+    navigate({ pathname: '/d/xyz' });
+
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { previousUrl: '/d/abc', sessionStart: String(SESSION_START) },
+    });
+  });
+
+  it('does not shift the navigation chain when a REPLACE rewrites the current entry', () => {
+    setReferrer('');
+
+    setupFaroPageMeta(faro);
+    navigate({ pathname: '/d/abc/stale-slug' });
+
+    // Slug normalization after the dashboard loads: the URL is replaced with the canonical slug.
+    navigate({ pathname: '/d/abc/canonical-slug' }, 'REPLACE');
+
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { previousUrl: '/search', sessionStart: String(SESSION_START) },
+    });
+
+    // A later real navigation reports the canonical path, not the stale slug.
+    navigate({ pathname: '/d/xyz' });
+
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { previousUrl: '/d/abc/canonical-slug', sessionStart: String(SESSION_START) },
     });
   });
 
