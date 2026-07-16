@@ -300,6 +300,10 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 		}
 
+		if cmd.AfterUIDAssigned != nil {
+			cmd.AfterUIDAssigned(cmd.UID, cmd.JsonData)
+		}
+
 		ds = &datasources.DataSource{
 			OrgID:           cmd.OrgID,
 			Name:            cmd.Name,

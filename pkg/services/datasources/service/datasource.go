@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -387,6 +388,14 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return nil, err
 		}
 	}
+	if cmd.JsonData == nil {
+		cmd.JsonData = simplejson.New()
+	}
+	allowPerDsExternalID := awsAssumeRolePerDatasourceExternalIDEnabled(ctx)
+	// Run after the store assigns the final UID so the minted ID matches what is inserted.
+	cmd.AfterUIDAssigned = func(uid string, jsonData *simplejson.Json) {
+		ensureGrafanaExternalID(uid, s.cfg.AWSExternalId, jsonData, allowPerDsExternalID)
+	}
 
 	var dataSource *datasources.DataSource
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -668,6 +677,11 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				return err
 			}
 		}
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+		allowPerDsExternalID := awsAssumeRolePerDatasourceExternalIDEnabled(ctx)
+		preserveGrafanaExternalID(cmd.UID, s.cfg.AWSExternalId, dataSource.JsonData, cmd.JsonData, allowPerDsExternalID)
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource

@@ -183,6 +183,10 @@ type AddDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
+	// AfterUIDAssigned runs after a UID is assigned (client-provided or generated)
+	// and before insert, in the same DB transaction. Used for fields that must
+	// bind to the final UID (e.g. grafanaExternalId).
+	AfterUIDAssigned func(uid string, jsonData *simplejson.Json) `json:"-"`
 }
 
 // Also acts as api DTO
