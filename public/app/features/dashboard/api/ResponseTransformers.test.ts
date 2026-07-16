@@ -379,7 +379,6 @@ describe('ResponseTransformers', () => {
             transformations: [],
             repeat: 'var1',
             repeatDirection: 'h',
-            timeCompare: '1d',
           },
           {
             id: 2,
@@ -522,7 +521,7 @@ describe('ResponseTransformers', () => {
                   },
                 },
               ],
-              queryOptions: { timeCompare: '1d' },
+              queryOptions: {},
               transformations: [],
             },
           },
@@ -1138,7 +1137,6 @@ describe('ResponseTransformers', () => {
     expect(v1.queryCachingTTL).toBe(v2Spec.data.spec.queryOptions.queryCachingTTL);
     expect(v1.timeFrom).toBe(v2Spec.data.spec.queryOptions.timeFrom);
     expect(v1.timeShift).toBe(v2Spec.data.spec.queryOptions.timeShift);
-    expect(v1.timeCompare).toBe(v2Spec.data.spec.queryOptions.timeCompare);
     expect(v1.transparent).toBe(v2Spec.transparent);
   }
 
