@@ -1,7 +1,9 @@
 syntax = "proto3";
-package vectorstore;
+package resource;
 
 option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
+
+import "resource.proto";
 
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
@@ -9,18 +11,18 @@ option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
-//   INVALID_ARGUMENT   bad filter, oversized batch (>500 vectors or >4 KiB metadata), empty content
-//   ALREADY_EXISTS     attempted to create something that already exists
+//   INVALID_ARGUMENT   bad filter, oversized batch (>500 vectors or >4 KiB metadata), empty content,
+//                      missing delete selector, empty metadata update (neither set nor unset)
 //   NOT_FOUND          collection not allowlisted / never provisioned
 //   PERMISSION_DENIED  request namespace not permitted for the caller identity
 //   RESOURCE_EXHAUSTED per-cluster embed budget exhausted (retryable)
 //   UNAVAILABLE        transient; retryable
 // The response bodies below are only returned on OK.
 service VectorStore {
-  rpc Upsert(UpsertRequest) returns (UpsertResponse);
-  rpc UpsertSubresources(UpsertSubresourcesRequest) returns (UpsertSubresourcesResponse);
-  rpc Delete(DeleteRequest) returns (DeleteResponse);
-  rpc UpdateMetadata(UpdateMetadataRequest) returns (UpdateMetadataResponse);
+  rpc Upsert(VectorUpsertRequest) returns (VectorUpsertResponse);
+  rpc UpsertSubresources(VectorUpsertSubresourcesRequest) returns (VectorUpsertSubresourcesResponse);
+  rpc Delete(VectorDeleteRequest) returns (VectorDeleteResponse);
+  rpc UpdateMetadata(VectorUpdateMetadataRequest) returns (VectorUpdateMetadataResponse);
 }
 
 // EmbeddingInput is a document to be embedded, plus its identity and metadata.
@@ -33,62 +35,64 @@ message EmbeddingInput {
 }
 
 // Plain upsert: inserts or overwrites exactly the (uid, subresource) rows in the batch.
-// All inputs must be from the same namespace
 // All params are required
-message UpsertRequest {
-  // required
-  string namespace = 1;         // tenant
-  // required
-  string collection = 2;        // For example: incidents or infra_memories (we'll need to agree on naming, as these collection names will be allowlisted on our side)
-  // required
-  repeated EmbeddingInput inputs = 3;  // max 500
+message VectorUpsertRequest {
+  // Identifies the collection: namespace (tenant) + group + resource; name must be empty.
+  // The group identifies external resources, e.g. "investigation.assistant.external"; the
+  // resource segment must be lowercase alphanumeric/underscore (it becomes a storage
+  // partition name). Group/resource pairs are allowlisted on the server.
+  ResourceKey key = 1;
+  repeated EmbeddingInput inputs = 2;  // max 500
 }
 
 // Upsert subresources (chunks) for a single entity atomically.
 // All subresources must be part of the same parent entity (i.e have the same uid).
 // New chunks will be embedded, existing ones will be re-embedded only if content has changed, and chunks that don't
 // exist in the inputs set will be deleted.
-message UpsertSubresourcesRequest {
-  string namespace = 1; // required
-  string collection = 2; // required
-  repeated EmbeddingInput inputs = 3;  // max 500 (required)
+message VectorUpsertSubresourcesRequest {
+  ResourceKey key = 1; // required; see VectorUpsertRequest.key
+  repeated EmbeddingInput inputs = 2;  // max 500 (required)
 }
 
-message UpsertFailure {
+message VectorUpsertFailure {
   string uid = 1;
   string subresource = 2;
   string reason = 3;
 }
 
 // Upserting a batch could have partial failures. The failed resources are in the response.
-message UpsertResponse {
+message VectorUpsertResponse {
   int64 upserted = 1;
-  repeated UpsertFailure failures = 2;
+  repeated VectorUpsertFailure failures = 2;
 }
 
 // UpsertSubresources is atomic: the whole request succeeds or fails as one,
 // so there is no partial-failure list — any failure is a gRPC status.
 // Chunks whose content didn't change are not re-embedded and are not counted.
-message UpsertSubresourcesResponse {
+message VectorUpsertSubresourcesResponse {
   int64 created = 1; // count of chunks that didn't exist before
   int64 updated = 2; // count of chunks whose content changed (re-embedded)
   int64 deleted = 3; // count of existing chunks not in the inputs set
 }
 
 // For a tenant + collection, you can:
-// 1. Delete everything
-// 2. Delete by uid(s)
-// 3. Delete by metadata
-message DeleteRequest {
-  // required
-  string namespace = 1;
-  // required
-  string collection = 2;
-  // If the selector is not set, will delete all from tenant/collection up to the page limit
+// 1. Delete by uid(s)
+// 2. Delete by metadata filter
+// 3. Delete everything (explicit delete_all)
+// A request with no selector set is INVALID_ARGUMENT.
+//
+// To replace a filtered set of rows: Upsert with a run timestamp in the metadata,
+// then Delete with a filter matching timestamps older than the run. A failure between
+// the two calls leaves stale rows behind (swept by the next run) rather than a
+// window with missing data.
+message VectorDeleteRequest {
+  ResourceKey key = 1; // required; see VectorUpsertRequest.key
+  // required; exactly one must be set
   oneof selector {
     // The uids are the parent/resource uids. This means you cant directly delete specific subresources by their id.
-    StringList uids = 3;  // delete whole entities (and their subresources)
-    bytes filter = 4;     // delete by metadata filter (paged, 10k/page)
+    StringList uids = 2;  // delete whole entities (and their subresources)
+    bytes filter = 3;     // delete by metadata filter (paged, 10k/page)
+    bool delete_all = 4;  // must be true; deletes everything in tenant/collection (paged, 10k/page)
   }
 }
 
@@ -97,22 +101,20 @@ message StringList {
   repeated string values = 1;
 }
 
-message DeleteResponse {
+message VectorDeleteResponse {
   int64 deleted = 1; // number of rows deleted
   bool has_more = 2; // is there more left to delete?
 }
 
-message UpdateMetadataRequest {
-  string namespace = 1; // required
-  string collection = 2; // required
-  bytes filter = 3; // required; selects the rows to update
-  // required; one update kind per call
-  oneof update {
-    bytes set = 4;         // JSON merged into metadata
-    StringList unset = 5;  // metadata keys to remove
-  }
+message VectorUpdateMetadataRequest {
+  ResourceKey key = 1; // required; see VectorUpsertRequest.key
+  bytes filter = 2; // required; selects the rows to update
+  // At least one of set/unset is required. Both may be provided in one call and are
+  // applied atomically in a single update: set is merged first, then unset keys are removed.
+  bytes set = 3;             // JSON merged into metadata
+  repeated string unset = 4; // metadata keys to remove
 }
 
-message UpdateMetadataResponse {
+message VectorUpdateMetadataResponse {
   int64 updated = 1; // number of rows changes
 }
