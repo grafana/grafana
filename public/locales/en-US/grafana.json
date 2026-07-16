@@ -6004,6 +6004,12 @@
       "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type."
     },
     "new-panel-title": "New panel",
+    "notebook-layout": {
+      "description": "A vertical sequence of panels, text, and code cells",
+      "name": "Notebook",
+      "pill": "Published Notebook",
+      "time": "Time"
+    },
     "on-create-new-row": {
       "new-row": {
         "title": {
@@ -12432,6 +12438,9 @@
       "title-zoom-in": "Zoom in",
       "title-zoom-out": "Zoom out"
     }
+  },
+  "notebook": {
+    "breadcrumb-title": "Notebooks"
   },
   "notifications": {
     "empty-state": {
