@@ -275,6 +275,39 @@ test.describe('Scope Redirect Functionality', () => {
     });
   });
 
+  test('should not redirect when the image renderer binding is present', async ({ page, gotoDashboardPage }) => {
+    const scopes = testScopesWithRedirect();
+
+    await test.step('Inject the image-renderer binding before any page script runs', async () => {
+      // Mimics what grafana-image-renderer's chromedp does on real /render calls.
+      await page.addInitScript(() => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        (
+          window as unknown as { __grafanaImageRendererMessageChannel: (m: string) => void }
+        ).__grafanaImageRendererMessageChannel = () => {};
+      });
+    });
+
+    await test.step('Set up routes and navigate to dashboard', async () => {
+      await setupScopeRoutes(page, scopes);
+      await gotoDashboardPage({ uid: 'cuj-dashboard-3' });
+    });
+
+    await test.step('Apply a scope whose redirect fallback would normally navigate away', async () => {
+      await openScopesSelector(page, scopes);
+      await selectScope(page, 'sn-redirect-fallback', scopes[1]);
+      await applyScopes(page, [scopes[1]]);
+
+      // Scope must still be applied…
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+      // …but the redirect must not fire, so we stay on cuj-dashboard-3
+      // (which is NOT in the scope's dashboard bindings — the same dashboard
+      // that causes a redirect in the non-render-target sibling test above).
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
+      await expect(page).not.toHaveURL(/\/d\/cuj-dashboard-2/);
+    });
+  });
+
   test('should redirect again after exiting edit mode', async ({ page, gotoDashboardPage, selectors }) => {
     const scopes = testScopesWithRedirect();
     let dashboardPage: Awaited<ReturnType<typeof gotoDashboardPage>>;

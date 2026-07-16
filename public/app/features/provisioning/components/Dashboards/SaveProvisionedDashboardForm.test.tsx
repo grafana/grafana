@@ -156,6 +156,35 @@ function setup(props: Partial<Props> = {}) {
   };
 }
 
+function setupFolderless(
+  overrides: {
+    repository?: Partial<NonNullable<Props['repository']>>;
+    defaultValues?: Partial<Props['defaultValues']>;
+  } = {}
+) {
+  return setup({
+    repository: {
+      type: 'github',
+      name: 'test-repo',
+      title: 'Test Repo',
+      workflows: ['write'],
+      target: 'folderless',
+      ...overrides.repository,
+    },
+    defaultValues: {
+      ref: 'main',
+      path: 'test-dashboard.json',
+      repo: 'test-repo',
+      comment: '',
+      folder: { uid: '', title: '' },
+      title: 'Test Dashboard',
+      description: '',
+      workflow: 'write',
+      ...overrides.defaultValues,
+    },
+  });
+}
+
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
   expect(capturedRequest).not.toBeNull();
   return capturedRequest as { url: URL; body: unknown };
@@ -1149,6 +1178,328 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
     expect(request.url.searchParams.get('message')).toBe('Save with raw JSON');
     expect(request.body).toEqual(dashboardFromRawJson);
+  });
+
+  it('shows New folder button for folderless repos in write mode', async () => {
+    setupFolderless();
+
+    expect(await screen.findByRole('button', { name: /new folder/i })).toBeInTheDocument();
+  });
+
+  it('does not show New folder button for non-folderless repos', async () => {
+    setup({
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folder' },
+    });
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+  });
+
+  it('does not show New folder button when workflow is branch', async () => {
+    setupFolderless({ repository: { workflows: ['branch'] }, defaultValues: { workflow: 'branch' } });
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+  });
+
+  it('does not show New folder button for read-only repos (no workflow)', async () => {
+    setupFolderless({ repository: { workflows: [] }, defaultValues: { workflow: undefined } });
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+  });
+
+  it('creates a folder when New folder is used in folderless mode', async () => {
+    let folderRequest: { url: URL; body: unknown } | null = null;
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        const body = await request.json();
+        if ((body as Record<string, unknown>).type === 'folder') {
+          folderRequest = { url, body };
+          return HttpResponse.json({
+            resource: {
+              upsert: {
+                metadata: { name: 'new-folder-uid' },
+                spec: { title: 'My Team' },
+              },
+            },
+          });
+        }
+        dashboardRequest = { url, body };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const { user, props } = setupFolderless();
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => expect(folderRequest).not.toBeNull());
+    // raw title is used for the path (no slugification)
+    expect(decodeURIComponent(folderRequest!.url.pathname)).toContain('/repositories/test-repo/files/My Team/');
+
+    // saving the dashboard after folder creation should place it inside the new folder
+    await user.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(dashboardRequest).not.toBeNull());
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/My Team/test-dashboard.json'
+    );
+  });
+
+  it('creates the folder once on Enter without submitting the dashboard form', async () => {
+    let folderPostCount = 0;
+    let releaseFolderPost: () => void = () => {};
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const body = await request.json();
+        if ((body as Record<string, unknown>).type === 'folder') {
+          folderPostCount++;
+          // hold the request in flight so a second Enter hits the guard deterministically
+          await new Promise<void>((resolve) => {
+            releaseFolderPost = resolve;
+          });
+          return HttpResponse.json({
+            resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'My Team' } } },
+          });
+        }
+        dashboardRequest = { url: new URL(request.url), body };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const { user } = setupFolderless();
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team{Enter}{Enter}');
+
+    // while the folder POST is in flight, a dashboard save must not race the path update
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    releaseFolderPost();
+
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
+    expect(folderPostCount).toBe(1);
+    expect(dashboardRequest).toBeNull();
+  });
+
+  it('shows a required error for whitespace-only folder names without sending a request', async () => {
+    let folderRequest = false;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () => {
+        folderRequest = true;
+        return HttpResponse.json({});
+      })
+    );
+
+    const { user } = setupFolderless();
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), '   ');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    expect(await screen.findByText(/folder name is required/i)).toBeInTheDocument();
+    expect(folderRequest).toBe(false);
+  });
+
+  it('nests the new folder under the selected target folder', async () => {
+    let folderRequest: { url: URL; body: unknown } | null = null;
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        const body = await request.json();
+        if ((body as Record<string, unknown>).type === 'folder') {
+          folderRequest = { url, body };
+          return HttpResponse.json({
+            resource: {
+              upsert: {
+                metadata: { name: 'new-folder-uid' },
+                spec: { title: 'My Team' },
+              },
+            },
+          });
+        }
+        dashboardRequest = { url, body };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const { user, props } = setupFolderless({
+      defaultValues: { path: 'dashboards/test-dashboard.json', folder: { uid: 'dashboards-uid', title: 'dashboards' } },
+    });
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => expect(folderRequest).not.toBeNull());
+    expect(decodeURIComponent(folderRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/dashboards/My Team/'
+    );
+
+    // the dashboard path should follow the folder into its nested location
+    await user.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(dashboardRequest).not.toBeNull());
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/dashboards/My Team/test-dashboard.json'
+    );
+  });
+
+  it('syncs dashboard meta with the created folder so defaults recompute against it', async () => {
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        const body = await request.json();
+        if ((body as Record<string, unknown>).type === 'folder') {
+          return HttpResponse.json({
+            resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'My Team' } } },
+          });
+        }
+        dashboardRequest = { url, body };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const { user, props, rerender } = setupFolderless({
+      defaultValues: { path: 'dashboards/test-dashboard.json', folder: { uid: 'dashboards-uid', title: 'dashboards' } },
+    });
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
+
+    // the dashboard meta drives the upstream defaultValues recompute, mirroring the
+    // folder picker's onChange, so downstream consumers see the created folder
+    await waitFor(() =>
+      expect(props.dashboard.setState).toHaveBeenCalledWith({
+        meta: expect.objectContaining({ folderUid: 'new-folder-uid' }),
+      })
+    );
+
+    // defaults recompute with a generic timestamped filename; the form must resync it from the title
+    rerender(
+      <SaveProvisionedDashboardForm
+        {...props}
+        defaultValues={{
+          ...props.defaultValues,
+          folder: { uid: 'new-folder-uid', title: '' },
+          path: 'My Team/new-dashboard-2023-01-01-abcde.json',
+        }}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(dashboardRequest).not.toBeNull());
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/My Team/test-dashboard.json'
+    );
+  });
+
+  it('keeps the form usable when sync is disabled and no folder resource is returned', async () => {
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        const body = await request.json();
+        if ((body as Record<string, unknown>).type === 'folder') {
+          // sync disabled: the folder is committed to git but no Grafana resource is created
+          return HttpResponse.json({ resource: { upsert: null } });
+        }
+        dashboardRequest = { url, body };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const { user, props } = setupFolderless();
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    // the mini-form closes without error and the dashboard meta stays untouched
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
+    expect(props.dashboard.setState).not.toHaveBeenCalled();
+
+    // the dashboard still saves into the folder created in git
+    await user.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(dashboardRequest).not.toBeNull());
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/My Team/test-dashboard.json'
+    );
+  });
+
+  it('rejects invalid folder names without sending a request', async () => {
+    let folderRequest = false;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () => {
+        folderRequest = true;
+        return HttpResponse.json({});
+      })
+    );
+
+    const { user } = setupFolderless();
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'team/a');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    expect(await screen.findByText(/invalid characters/i)).toBeInTheDocument();
+    expect(folderRequest).toBe(false);
+  });
+
+  it('sends message and omits ref when creating a folder in write workflow', async () => {
+    let folderRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        const body = await request.json();
+        folderRequest = { url, body };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'Team A' } } },
+        });
+      })
+    );
+
+    const { user } = setupFolderless({ defaultValues: { comment: 'my commit' } });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'Team A');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => expect(folderRequest).not.toBeNull());
+    // a dedicated folder commit message is sent; ref is omitted for write workflow
+    expect(folderRequest!.url.searchParams.get('message')).toContain('Create folder: Team A');
+    expect(folderRequest!.url.searchParams.get('ref')).toBeNull();
   });
 
   it('clears dashboardWatcher suppression on error and surfaces the error message', async () => {

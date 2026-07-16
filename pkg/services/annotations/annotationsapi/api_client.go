@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,11 +49,12 @@ func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service, exchanger au
 		return nil
 	}
 
-	restCfg := buildRESTConfig(url, exchanger, cfg.Env == setting.Dev)
+	nsMapper := request.GetNamespaceMapper(cfg)
+	restCfg := buildRESTConfig(url, exchanger, nsMapper, cfg.Env == setting.Dev)
 
 	return &annotationAPIClient{
 		k8sClient: client.NewK8sHandler(
-			request.GetNamespaceMapper(cfg),
+			nsMapper,
 			annotationV0.AnnotationKind().GroupVersionResource(),
 			func(_ context.Context) (*rest.Config, error) { return restCfg, nil },
 			userSvc,
@@ -237,10 +239,10 @@ func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) 
 	return tc, nil
 }
 
-func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, allowInsecure bool) *rest.Config {
+func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, allowInsecure bool) *rest.Config {
 	return &rest.Config{
 		Host:          url,
-		WrapTransport: newBearerTokenExchangeWrapper(exchanger),
+		WrapTransport: newBearerTokenExchangeWrapper(exchanger, nsMapper),
 		TLSClientConfig: rest.TLSClientConfig{
 			Insecure: allowInsecure,
 		},
@@ -249,13 +251,20 @@ func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, allowInsecur
 
 type bearerTokenExchangeRT struct {
 	exchanger authnlib.TokenExchanger
+	nsMapper  request.NamespaceMapper
 	next      http.RoundTripper
 }
 
 func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, error) {
-	resp, err := rt.exchanger.Exchange(req.Context(), authnlib.TokenExchangeRequest{
+	ctx := req.Context()
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("resolving requester for token exchange: %w", err)
+	}
+
+	resp, err := rt.exchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
 		Audiences: []string{annotationServerAudience},
-		Namespace: "*",
+		Namespace: rt.nsMapper(requester.GetOrgID()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("exchanging token: %w", err)
@@ -265,8 +274,8 @@ func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, e
 	return rt.next.RoundTrip(req)
 }
 
-func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger) func(http.RoundTripper) http.RoundTripper {
+func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper) func(http.RoundTripper) http.RoundTripper {
 	return func(rt http.RoundTripper) http.RoundTripper {
-		return &bearerTokenExchangeRT{exchanger: exchanger, next: rt}
+		return &bearerTokenExchangeRT{exchanger: exchanger, nsMapper: nsMapper, next: rt}
 	}
 }

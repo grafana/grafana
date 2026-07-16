@@ -3,6 +3,8 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -106,6 +108,15 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *dat
 	if err != nil {
 		return nil, err
 	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userID, err := strconv.ParseInt(strings.TrimPrefix(user.GetID(), "user:"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	cmd.UserID = userID
 	out, err := q.dsService.AddDataSource(ctx, cmd)
 	if err != nil {
 		return nil, err
