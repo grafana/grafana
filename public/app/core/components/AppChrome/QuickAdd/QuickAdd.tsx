@@ -88,7 +88,8 @@ export const QuickAdd = ({}: Props) => {
 
       const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
       if (dashboardGroup) {
-        dashboardGroup.items.push(generateItem);
+        const newDashboardIndex = dashboardGroup.items.findIndex((item) => item.id === 'dashboards/new');
+        dashboardGroup.items.splice(newDashboardIndex + 1, 0, generateItem);
       }
     }
 

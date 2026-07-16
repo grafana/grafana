@@ -427,16 +427,18 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     stepDoneText: css({
       color: theme.colors.text.secondary,
+      display: '-webkit-box',
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: 'vertical',
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
     }),
     stepActiveText: css({
       color: theme.colors.text.primary,
       fontWeight: theme.typography.fontWeightMedium,
+      display: '-webkit-box',
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: 'vertical',
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
     }),
     tipCard: css({
       display: 'flex',

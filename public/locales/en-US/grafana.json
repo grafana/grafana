@@ -7935,8 +7935,19 @@
     },
     "questions-step": {
       "back": "Back",
-      "generate": "Generate dashboard",
+      "continue": "Continue",
       "title": "A couple of quick questions"
+    },
+    "summary-step": {
+      "back": "Back",
+      "data-sources": "Data sources",
+      "default-title": "New dashboard",
+      "generate": "Generate dashboard",
+      "refine": "Refine plan",
+      "refine-label": "Not quite right? Tell the assistant what to change",
+      "refine-placeholder": "e.g. add a section for cache hit ratio, or use a table for errors",
+      "title": "Here's what we'll build",
+      "your-choices": "Your choices"
     }
   },
   "dashboards": {

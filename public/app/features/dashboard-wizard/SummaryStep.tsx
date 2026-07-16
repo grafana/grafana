@@ -48,9 +48,24 @@ export function SummaryStep({
     setFeedback('');
   }, [summary]);
 
+  const hasFeedback = feedback.trim() !== '';
+
   const submitFeedback = () => {
-    if (!busy && feedback.trim() !== '') {
+    if (!busy && hasFeedback) {
       onRefine(feedback);
+    }
+  };
+
+  // A single primary action: with feedback typed it refines the plan, otherwise
+  // it kicks off the build.
+  const handlePrimary = () => {
+    if (busy) {
+      return;
+    }
+    if (hasFeedback) {
+      submitFeedback();
+    } else {
+      onGenerate();
     }
   };
 
@@ -134,41 +149,35 @@ export function SummaryStep({
         <Text variant="bodySmall" weight="medium" color="secondary">
           {t('dashboard-wizard.summary-step.refine-label', 'Not quite right? Tell the assistant what to change')}
         </Text>
-        <div className={styles.refineRow}>
-          <div className={styles.refineInput}>
-            <Input
-              value={feedback}
-              onChange={(event) => setFeedback(event.currentTarget.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  submitFeedback();
-                }
-              }}
-              placeholder={t(
-                'dashboard-wizard.summary-step.refine-placeholder',
-                'e.g. add a section for cache hit ratio, or use a table for errors'
-              )}
-              disabled={busy}
-            />
-          </div>
-          <Button
-            variant="secondary"
-            icon={busy ? 'spinner' : 'sync'}
-            disabled={busy || feedback.trim() === ''}
-            onClick={submitFeedback}
-          >
-            {t('dashboard-wizard.summary-step.update-plan', 'Update plan')}
-          </Button>
-        </div>
+        <Input
+          value={feedback}
+          onChange={(event) => setFeedback(event.currentTarget.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              submitFeedback();
+            }
+          }}
+          placeholder={t(
+            'dashboard-wizard.summary-step.refine-placeholder',
+            'e.g. add a section for cache hit ratio, or use a table for errors'
+          )}
+          disabled={busy}
+        />
       </div>
 
       <Stack justifyContent="space-between">
         <Button variant="secondary" fill="outline" onClick={onBack}>
           {t('dashboard-wizard.summary-step.back', 'Back')}
         </Button>
-        <Button onClick={onGenerate} icon="ai-sparkle" disabled={busy}>
-          {t('dashboard-wizard.summary-step.generate', 'Generate dashboard')}
+        <Button
+          onClick={handlePrimary}
+          icon={hasFeedback ? (busy ? 'spinner' : 'sync') : 'ai-sparkle'}
+          disabled={busy}
+        >
+          {hasFeedback
+            ? t('dashboard-wizard.summary-step.refine', 'Refine plan')
+            : t('dashboard-wizard.summary-step.generate', 'Generate dashboard')}
         </Button>
       </Stack>
     </div>
@@ -266,14 +275,6 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.primary,
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
-    }),
-    refineRow: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-    }),
-    refineInput: css({
-      flex: 1,
     }),
   };
 }
