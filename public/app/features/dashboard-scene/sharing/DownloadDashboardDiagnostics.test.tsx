@@ -89,9 +89,7 @@ describe('DownloadDashboardDiagnostics', () => {
 
   it('calls onDismiss when cancelled', async () => {
     const onDismiss = jest.fn();
-    jest
-      .mocked(startDashboardDiagnostics)
-      .mockImplementation(() => new Promise(() => {})); // never resolves
+    jest.mocked(startDashboardDiagnostics).mockImplementation(() => new Promise(() => {})); // never resolves
     const { tab } = setupScenario({ onDismiss });
 
     render(<tab.Component model={tab} />);
