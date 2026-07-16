@@ -8,9 +8,11 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/chromedp/cdproto/har"
 	"github.com/stretchr/testify/assert"
@@ -248,6 +250,21 @@ func TestBuffer_bodyTruncation(t *testing.T) {
 	require.Equal(t, int64(len(body)), c.Size, "Content.Size reports the original (untruncated) size")
 	require.Len(t, c.Text, maxHARBodyBytes, "stored body text is capped at maxHARBodyBytes")
 	require.Contains(t, c.Comment, "body truncated")
+}
+
+func TestCapBody_truncationAtRuneBoundary(t *testing.T) {
+	const euro = "€" // 3-byte UTF-8 rune; maxHARBodyBytes isn't a multiple of 3, so a naive
+	// byte-offset cut lands mid-rune here.
+	repeats := maxHARBodyBytes/len(euro) + 10
+	body := []byte(strings.Repeat(euro, repeats))
+
+	text, encoding, comment := capBody(body)
+
+	require.Empty(t, encoding, "a body cut mid-rune should still round-trip as plain text, not fall back to base64")
+	require.True(t, utf8.ValidString(text), "trimmed text must itself be valid UTF-8")
+	require.Contains(t, comment, "body truncated")
+	require.LessOrEqual(t, len(text), maxHARBodyBytes, "trimmed text never exceeds the cap")
+	require.Greater(t, len(text), maxHARBodyBytes-utf8.UTFMax, "trims only the incomplete trailing rune, nothing more")
 }
 
 func TestBuffer_perRequestTotalCap(t *testing.T) {

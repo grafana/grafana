@@ -57,11 +57,28 @@ func encodeBody(body []byte) (text, encoding string) {
 // (not the encoded text) so a base64 payload stays validly decodable.
 func capBody(full []byte) (text, encoding, comment string) {
 	if len(full) > maxHARBodyBytes {
-		text, encoding = encodeBody(full[:maxHARBodyBytes])
-		return text, encoding, fmt.Sprintf("body truncated: stored %d of %d bytes", maxHARBodyBytes, len(full))
+		truncated := trimIncompleteRune(full[:maxHARBodyBytes])
+		text, encoding = encodeBody(truncated)
+		return text, encoding, fmt.Sprintf("body truncated: stored %d of %d bytes", len(truncated), len(full))
 	}
 	text, encoding = encodeBody(full)
 	return text, encoding, ""
+}
+
+// trimIncompleteRune drops up to utf8.UTFMax-1 trailing bytes that form an incomplete UTF-8 rune, so
+// truncating a valid UTF-8 body at an arbitrary byte offset doesn't spuriously force it into base64
+// just because the cut landed mid-rune. Bytes that aren't UTF-8 to begin with are left as found
+// (aside from at most a few extra trimmed bytes) -- encodeBody's own utf8.Valid check still decides
+// text vs. base64 for the result.
+func trimIncompleteRune(b []byte) []byte {
+	end := len(b)
+	for i := 0; i < utf8.UTFMax && end > 0; i++ {
+		if r, size := utf8.DecodeLastRune(b[:end]); r != utf8.RuneError || size > 1 {
+			break
+		}
+		end--
+	}
+	return b[:end]
 }
 
 type contextKey struct{}
