@@ -263,10 +263,12 @@ func validateDeleteJobOptions(opts *provisioning.DeleteJobOptions) field.ErrorLi
 	return list
 }
 
-// MaxTestJobDuration caps how long a synthetic test job may sleep. It mirrors
-// the default per-job processing timeout, since a job that sleeps longer would
-// be cancelled by the driver and reported as a failure rather than completing.
-const MaxTestJobDuration = 20 * time.Minute
+// MaxTestJobDuration caps how long a synthetic test job may sleep. It sits
+// below the default per-job processing timeout (20m): the driver starts that
+// timeout before repository lookup and Process run, so a job allowed to sleep
+// for the full timeout would race the deadline and be cancelled — reported as a
+// failure — instead of completing. The margin leaves headroom for that preamble.
+const MaxTestJobDuration = 15 * time.Minute
 
 // validateTestJobOptions validates performance-testing job options
 func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
