@@ -93,7 +93,7 @@ const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
     labelKey: 'explore.span-detail.attribute-category.frontend',
     defaultLabel: 'Frontend',
     icon: 'frontend-observability',
-    prefixes: ['browser', 'device', 'session'],
+    prefixes: ['browser', 'device', 'session', 'gf.feo11y'],
   },
   {
     id: 'telemetry-sdk',

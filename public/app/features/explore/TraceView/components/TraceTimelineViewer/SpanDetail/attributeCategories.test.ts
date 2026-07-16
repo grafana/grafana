@@ -90,6 +90,20 @@ describe('groupAttributesByCategory', () => {
     expect(grouped[0].attributes).toHaveLength(2);
   });
 
+  it('groups gf.feo11y resource attributes under Frontend', () => {
+    const attributes = [
+      { key: 'gf.feo11y.app.id', value: '42' },
+      { key: 'gf.feo11y.app.name', value: 'my-app' },
+      { key: 'gf.feo11y.app.original_name', value: 'my-original-app' },
+    ];
+
+    const grouped = groupAttributesByCategory(attributes, 'resource');
+
+    expect(grouped).toHaveLength(1);
+    expect(grouped[0].category.id).toBe('frontend');
+    expect(grouped[0].attributes).toHaveLength(3);
+  });
+
   it('groups host, system, and os attributes under Host / OS', () => {
     const attributes = [
       { key: 'host.name', value: 'node-1' },
