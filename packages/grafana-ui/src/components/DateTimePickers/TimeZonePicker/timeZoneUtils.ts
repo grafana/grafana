@@ -34,9 +34,15 @@ export const offsetToMinutes = (offset: string): number => {
   return sign * (hours * 60 + minutes);
 };
 
-/** Returns the runtime's current IANA timezone (replaces moment.tz.guess()). */
+let browserTimeZone: string | undefined;
+
+/**
+ * Returns the runtime's IANA timezone (replaces moment.tz.guess()). Cached for
+ * the lifetime of the page since constructing Intl.DateTimeFormat is costly
+ * and this gets called on every render of the Browser Time / Default options.
+ */
 export const guessBrowserTimeZone = (): string => {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return (browserTimeZone ??= Intl.DateTimeFormat().resolvedOptions().timeZone);
 };
 
 // Resolves Grafana's internal time zones ('', 'browser', 'utc') to a concrete
