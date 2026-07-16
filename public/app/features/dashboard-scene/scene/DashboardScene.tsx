@@ -16,6 +16,7 @@ import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
+  type CancelActivationHandler,
   SceneDataTransformer,
   sceneGraph,
   type SceneObject,
@@ -178,6 +179,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _changeTracker: DashboardSceneChangeTracker;
 
+  private _editPaneActivation?: CancelActivationHandler;
+
   /**
    * Remember scroll position when going into panel edit
    */
@@ -252,6 +255,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
+      this.deactivateEditPane();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
@@ -366,6 +370,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   };
 
+  /**
+   * Activate the edit pane if it is not already active (e.g. not rendered), so programmatic
+   * mutations that dispatch DashboardEditActionEvents get performed. The activation is
+   * reference-counted, so we retain the handler and release it on exit (see deactivateEditPane).
+   */
+  public activateEditPane() {
+    const { editPane } = this.state;
+    if (editPane.isActive) {
+      return;
+    }
+    // Release the previous pane's activation before acquiring a new one.
+    this.deactivateEditPane();
+    this._editPaneActivation = editPane.activate();
+  }
+
+  private deactivateEditPane() {
+    this._editPaneActivation?.();
+    this._editPaneActivation = undefined;
+  }
+
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
     this.serializer.onSaveComplete(saveModel, result);
 
@@ -457,6 +481,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
+    // Release any edit pane we activated programmatically before the pane is swapped/unmounted.
+    this.deactivateEditPane();
+
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
@@ -508,6 +535,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Stop tracking while we reset state.
     this._changeTracker.stopTrackingChanges();
 
+    // The restored state swaps in a cloned edit pane, so release the one we activated programmatically.
+    const hadProgrammaticEditPane = this._editPaneActivation !== undefined;
+    this.deactivateEditPane();
+
     const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
 
     // Ensure the restored layout stays editable.
@@ -522,6 +553,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       editview: undefined,
       overlay: undefined,
     });
+
+    // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
+    if (hadProgrammaticEditPane) {
+      this.activateEditPane();
+    }
 
     this._changeTracker.startTrackingChanges();
   }

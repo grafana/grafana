@@ -106,37 +106,7 @@ type SearchFieldDefinition struct {
 	// indexed document. Set this when sort or range queries depend on every
 	// document having the field present.
 	EmitZeroIfAbsent bool
-
-	// CopyFromStandard copies a value from one of the IndexableDocument's
-	// standard top-level fields into doc.Fields[Name]. Used to expose a
-	// standard field (e.g. Created) under a resource-specific name in the
-	// per-kind fields.* sub-document, because some top-level fields lack a
-	// bleve FieldMapping and are otherwise unindexed / unretrievable.
-	//
-	// Mutually exclusive with Path: when CopyFromStandard is set, the
-	// extractor reads from the already-built IndexableDocument instead of
-	// from the raw JSON.
-	//
-	// This is a workaround for the current top-level mapping asymmetry.
-	// A planned follow-up promotes Created, Updated and similar fields to
-	// StandardSearchFieldDefinitions with their own top-level
-	// FieldMappings; once that lands, kinds can read those fields directly
-	// and the CopyFromStandard mirror becomes redundant.
-	CopyFromStandard StandardField
 }
-
-// StandardField identifies a top-level field of IndexableDocument that
-// CopyFromStandard can mirror into doc.Fields. The set is intentionally
-// closed; adding a new value requires extending the switch in document.go.
-type StandardField string
-
-const (
-	StandardFieldUnknown   StandardField = ""
-	StandardFieldCreated   StandardField = "Created"
-	StandardFieldUpdated   StandardField = "Updated"
-	StandardFieldCreatedBy StandardField = "CreatedBy"
-	StandardFieldUpdatedBy StandardField = "UpdatedBy"
-)
 
 // HasCapability reports whether the field declares the given capability.
 func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
@@ -173,6 +143,17 @@ func SearchFieldDefinitionsToTableColumns(sfds []SearchFieldDefinition) []*resou
 			}
 		}
 		out = append(out, col)
+	}
+	return out
+}
+
+// TableColumnsByName keys the table columns by field name, so the IAM legacy
+// SQL search backends can look one up by a requested field name.
+func TableColumnsByName(sfds []SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
+	cols := SearchFieldDefinitionsToTableColumns(sfds)
+	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
+	for _, c := range cols {
+		out[c.Name] = c
 	}
 	return out
 }
@@ -217,8 +198,8 @@ type SearchFieldsProvider interface {
 	// (group, resource), all declarations must agree on Type, Array, and
 	// Capabilities — the attributes that feed into the kind's bleve
 	// mapping. NewMapProvider rejects diverging declarations at
-	// construction time. Path, EmitZeroIfAbsent, CopyFromStandard, and
-	// Description may differ across versions: they are extractor- or
+	// construction time. Path, EmitZeroIfAbsent, and Description may
+	// differ across versions: they are extractor- or
 	// presentation-side and the extractor applies them per-document with
 	// the document's own version's declaration. The returned slice is
 	// owned by the provider; do not mutate it.
@@ -233,7 +214,7 @@ type SearchFieldsProvider interface {
 	// shared StandardSearchFieldDefinitions and every per-(group, resource)
 	// SearchFieldDefinition across all registered versions. Only fields
 	// that change what gets indexed contribute: Name, Path, Type, Array,
-	// Capabilities (sorted), EmitZeroIfAbsent, CopyFromStandard.
+	// Capabilities (sorted), and EmitZeroIfAbsent.
 	// Description is intentionally excluded so presentation-only edits do
 	// not trigger a rebuild.
 	//
@@ -296,8 +277,8 @@ func newMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefiniti
 // SearchFieldDefinition used for cross-version equality. Only Type, Array,
 // and Capabilities count: those are what GetBleveMappings reads to produce
 // the kind's mapping, which is built once per (group, resource) from the
-// union across versions. Path, EmitZeroIfAbsent, and CopyFromStandard are
-// extractor-side concerns applied per-document with the document's own
+// union across versions. Path and EmitZeroIfAbsent are extractor-side
+// concerns applied per-document with the document's own
 // version's declaration, so they may legitimately differ between versions.
 // Description is presentation-only.
 //
@@ -351,7 +332,7 @@ func diffMappingAttributes(a, b mappingAttributes) []string {
 // first.
 //
 // A field declared by only one version is fine: union without conflict.
-// Path, EmitZeroIfAbsent, CopyFromStandard, and Description may differ
+// Path, EmitZeroIfAbsent, and Description may differ
 // across versions: they do not feed into the mapping and the extractor
 // applies them per-document with the document's own version's declaration.
 func validateCrossVersionConsistency(fields map[schema.GroupVersionResource][]SearchFieldDefinition) error {
@@ -503,7 +484,6 @@ type hashableField struct {
 	Array            bool               `json:"a,omitempty"`
 	Capabilities     []SearchCapability `json:"c,omitempty"`
 	EmitZeroIfAbsent bool               `json:"z,omitempty"`
-	CopyFromStandard StandardField      `json:"s,omitempty"`
 }
 
 type hashableVersion struct {
@@ -535,7 +515,6 @@ func canonicalHashableFields(sfds []SearchFieldDefinition) []hashableField {
 			Array:            sfd.Array,
 			Capabilities:     caps,
 			EmitZeroIfAbsent: sfd.EmitZeroIfAbsent,
-			CopyFromStandard: sfd.CopyFromStandard,
 		})
 	}
 	slices.SortFunc(fields, func(a, b hashableField) int {

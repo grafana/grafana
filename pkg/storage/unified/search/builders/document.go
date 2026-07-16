@@ -84,20 +84,17 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 		return nil, err
 	}
 
-	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings}, nil
-}
-
-// tableColumnsByName builds a map[fieldName]*ResourceTableColumnDefinition
-// from the given SearchFieldDefinitions. Used by IAM builders that expose
-// the historical XxxTableColumnDefinitions shape for wire-API consumers
-// (legacy SQL search backends) that look fields up by name.
-func tableColumnsByName(sfds []resource.SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
-	cols := resource.SearchFieldDefinitionsToTableColumns(sfds)
-	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
-	for _, c := range cols {
-		out[c.Name] = c
+	alertRules, err := GetAlertRuleSearchBuilder()
+	if err != nil {
+		return nil, err
 	}
-	return out
+
+	recordingRules, err := GetRecordingRuleSearchBuilder()
+	if err != nil {
+		return nil, err
+	}
+
+	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, alertRules, recordingRules}, nil
 }
 
 // iamBuilder assembles the DocumentBuilderInfo for an IAM kind. Every IAM kind

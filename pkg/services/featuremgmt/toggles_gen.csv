@@ -22,6 +22,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-21,queryHistory.localOnly,experimental,@grafana/datapro,false,false,true
 2026-05-21,queryHistory.recentQueriesUI,experimental,@grafana/datapro,false,false,true
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/data-sources-plugins,false,false,false
+2026-07-14,awsAssumeRolePerDatasourceExternalId,experimental,@grafana/data-sources-plugins,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 2024-09-19,datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
@@ -358,3 +359,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-01,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,true

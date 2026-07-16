@@ -21,6 +21,8 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
+  AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -59,6 +61,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Builds the navigation tree client-side instead of reading it from /bootdata */
+  GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
@@ -181,6 +185,17 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.
+ *
+ * **Details:**
+ * - flag key: `awsAssumeRolePerDatasourceExternalId`
+ * - default value: `false`
+ */
+export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("awsAssumeRolePerDatasourceExternalId", false, options).value;
 };
 
 /**
@@ -390,6 +405,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Builds the navigation tree client-side instead of reading it from /bootdata
+ *
+ * **Details:**
+ * - flag key: `grafana.multiTenantNavTree`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.multiTenantNavTree", false, options).value;
 };
 
 /**

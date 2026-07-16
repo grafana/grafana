@@ -1291,6 +1291,8 @@ github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17/go.mod h1:06F4s5K
 github.com/grafana/alerting v0.0.0-20260521151554-b942723acbb2/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib v0.0.0-20260511070317-cdec9a89f585/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
+github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2/go.mod h1:jlv0zQBdgsu/kmcq7tfO3KDjNiBB2ToiM5amsP0PjG0=
+github.com/grafana/authlib v0.0.0-20260715120426-830dc1e2a477/go.mod h1:DKf93Uhnfwl8dkOoFdsiUVMaO08mcpvyRXhGUkT5v38=
 github.com/grafana/authlib/types v0.0.0-20260304161757-e152786a5bb4/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/authlib/types v0.0.0-20260414201248-d766c8627a66/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/authlib/types v0.0.0-20260511070317-cdec9a89f585/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
@@ -2503,6 +2505,7 @@ golang.org/x/text v0.34.0/go.mod h1:homfLqTYRFyVYemLBFl5GgL/DWEiH5wcsQ5gSh1yziA=
 golang.org/x/text v0.35.0/go.mod h1:khi/HExzZJ2pGnjenulevKNX1W67CUy0AsXcNubPGCA=
 golang.org/x/text v0.36.0/go.mod h1:NIdBknypM8iqVmPiuco0Dh6P5Jcdk8lJL0CUebqK164=
 golang.org/x/text v0.37.0/go.mod h1:a5sjxXGs9hsn/AJVwuElvCAo9v8QYLzvavO5z2PiM38=
+golang.org/x/text v0.38.0/go.mod h1:YXZt3QhHUKYT53r2lLKFIVi6Ao1jdzrTR/KQ09qyxF4=
 golang.org/x/time v0.5.0/go.mod h1:3BpzKBy/shNhVucY/MWOyx10tF3SFh9QdLuxbVysPQM=
 golang.org/x/time v0.6.0/go.mod h1:3BpzKBy/shNhVucY/MWOyx10tF3SFh9QdLuxbVysPQM=
 golang.org/x/time v0.8.0/go.mod h1:3BpzKBy/shNhVucY/MWOyx10tF3SFh9QdLuxbVysPQM=
@@ -2600,6 +2603,8 @@ google.golang.org/genproto/googleapis/bytestream v0.0.0-20260523011958-0a33c5d7c
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260523011958-0a33c5d7ca68/go.mod h1:6TABGosqSqU2l1+fJ3jdvOYPPVryeKybxYF0cCZkTBE=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260610212136-7ab31c22f7ad h1:AQNRuAGtmTu2MkVRLyzlkwV1iG/zrR9C6L/W77rGGO4=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260610212136-7ab31c22f7ad/go.mod h1:6TABGosqSqU2l1+fJ3jdvOYPPVryeKybxYF0cCZkTBE=
+google.golang.org/genproto/googleapis/bytestream v0.0.0-20260622175928-b703f567277d h1:KGwkOI9Wx5htCTVEINNd72m7V9jNkQeOz28UXNmUR2A=
+google.golang.org/genproto/googleapis/bytestream v0.0.0-20260622175928-b703f567277d/go.mod h1:6TABGosqSqU2l1+fJ3jdvOYPPVryeKybxYF0cCZkTBE=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d/go.mod h1:+Bk1OCOj40wS2hwAMA+aCW9ypzm63QTBBHp6lQ3p+9M=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240429193739-8cf5692501f6/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=

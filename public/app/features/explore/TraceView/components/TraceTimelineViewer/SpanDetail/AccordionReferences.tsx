@@ -23,37 +23,37 @@ import { autoColor } from '../../Theme';
 import { type TraceSpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
 
-import AccordianKeyValues from './AccordianKeyValues';
+import AccordionKeyValues from './AccordionKeyValues';
 
 import { alignIcon } from '.';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  AccordianReferenceItem: css({
+  AccordionReferenceItem: css({
     borderBottom: `1px solid ${autoColor(theme, '#d8d8d8')}`,
   }),
-  AccordianKeyValues: css({
+  AccordionKeyValues: css({
     marginLeft: '10px',
   }),
-  AccordianReferences: css({
-    label: 'AccordianReferences',
+  AccordionReferences: css({
+    label: 'AccordionReferences',
     position: 'relative',
   }),
-  AccordianReferencesHeader: css({
-    label: 'AccordianReferencesHeader',
+  AccordionReferencesHeader: css({
+    label: 'AccordionReferencesHeader',
     color: 'inherit',
     display: 'block',
     padding: '0.25rem 0',
   }),
-  AccordianReferencesContent: css({
-    label: 'AccordianReferencesContent',
+  AccordionReferencesContent: css({
+    label: 'AccordionReferencesContent',
     borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
     padding: '0.5rem 0.5rem 0.25rem 0.5rem',
   }),
-  AccordianReferencesFooter: css({
-    label: 'AccordianReferencesFooter',
-    color: autoColor(theme, '#999'),
+  AccordionReferencesFooter: css({
+    label: 'AccordionReferencesFooter',
+    color: theme.colors.text.secondary,
   }),
-  AccordianKeyValuesItem: css({
+  AccordionKeyValuesItem: css({
     marginBottom: theme.spacing(0.5),
   }),
   ReferencesList: css({
@@ -91,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   debugLabel: css({
     margin: '0 5px 0 5px',
     '&::before': {
-      color: autoColor(theme, '#666'),
+      color: theme.colors.text.secondary,
       content: 'attr(data-label)',
     },
   }),
@@ -105,7 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export type AccordianReferencesProps = {
+export type AccordionReferencesProps = {
   data: TraceSpanReference[];
   highContrast?: boolean;
   interactive?: boolean;
@@ -130,9 +130,9 @@ function References(props: ReferenceItemProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.AccordianReferencesContent}>
+    <div className={styles.AccordionReferencesContent}>
       {data.map((reference, i) => (
-        <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
+        <div className={i < data.length - 1 ? styles.AccordionReferenceItem : undefined} key={i}>
           <div className={styles.item} key={`${reference.spanID}`}>
             <ReferenceLink reference={reference} createFocusSpanLink={createFocusSpanLink}>
               <span className={styles.itemContent}>
@@ -161,9 +161,9 @@ function References(props: ReferenceItemProps) {
             </ReferenceLink>
           </div>
           {!!reference.tags?.length && (
-            <div className={styles.AccordianKeyValues}>
-              <AccordianKeyValues
-                className={i < data.length - 1 ? styles.AccordianKeyValuesItem : null}
+            <div className={styles.AccordionKeyValues}>
+              <AccordionKeyValues
+                className={i < data.length - 1 ? styles.AccordionKeyValuesItem : null}
                 data={reference.tags || []}
                 highContrast
                 interactive={interactive}
@@ -179,7 +179,7 @@ function References(props: ReferenceItemProps) {
   );
 }
 
-const AccordianReferences = ({
+const AccordionReferences = ({
   data,
   interactive = true,
   isOpen,
@@ -187,7 +187,7 @@ const AccordianReferences = ({
   onItemToggle,
   openedItems,
   createFocusSpanLink,
-}: AccordianReferencesProps) => {
+}: AccordionReferencesProps) => {
   const isEmpty = !Array.isArray(data) || !data.length;
   let arrow: React.ReactNode | null = null;
   let HeaderComponent: 'span' | 'a' = 'span';
@@ -208,8 +208,8 @@ const AccordianReferences = ({
 
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.AccordianReferences}>
-      <HeaderComponent className={styles.AccordianReferencesHeader} {...headerProps}>
+    <div className={styles.AccordionReferences}>
+      <HeaderComponent className={styles.AccordionReferencesHeader} {...headerProps}>
         {arrow}
         <strong>
           <span>
@@ -231,4 +231,4 @@ const AccordianReferences = ({
   );
 };
 
-export default React.memo(AccordianReferences);
+export default React.memo(AccordionReferences);

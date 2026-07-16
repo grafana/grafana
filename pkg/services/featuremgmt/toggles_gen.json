@@ -1072,6 +1072,19 @@
     },
     {
       "metadata": {
+        "name": "awsAssumeRolePerDatasourceExternalId",
+        "resourceVersion": "1784056946678",
+        "creationTimestamp": "2026-07-14T19:22:26Z"
+      },
+      "spec": {
+        "description": "Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAsyncQueryCaching",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-07-21T15:34:07Z"
@@ -2745,6 +2758,21 @@
         "description": "When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.multiTenantNavTree",
+        "resourceVersion": "1784042116563",
+        "creationTimestamp": "2026-07-14T15:15:16Z"
+      },
+      "spec": {
+        "description": "Builds the navigation tree client-side instead of reading it from /bootdata",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
