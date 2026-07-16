@@ -30,6 +30,7 @@ export type SpanLinkModel = {
   icon: IconName;
   className?: string;
   type: SpanLinkType;
+  traceDatasourceUid?: string;
 };
 
 export type SpanLinkFunc = (span: TraceSpan) => SpanLinkDef[] | undefined;

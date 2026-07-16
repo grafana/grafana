@@ -1,16 +1,20 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { from, lastValueFrom } from 'rxjs';
 
 import {
   CoreApp,
   type DataFrame,
   type DataQuery,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
   getDefaultTimeRange,
   type GrafanaTheme2,
   type TimeRange,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { t } from '@grafana/i18n';
+import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
+import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { useStyles2, DataLinkButton } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 
@@ -23,13 +27,17 @@ interface Props {
 export const LogsLinkButton = ({ spanLinkModel }: Props) => {
   const styles = useStyles2(getStyles);
   const presence = useHasLogs(spanLinkModel);
-  const { linkModel, icon, className } = spanLinkModel;
+  const { linkModel, icon, className, traceDatasourceUid } = spanLinkModel;
+
+  const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
+
+  const tooltip = useMemo(() => getLogsButtonTooltip(settings, presence), [presence, settings]);
 
   return (
     <span className={styles}>
       <DataLinkButton
         link={linkModel}
-        buttonProps={{ icon, className, variant: presence === 'absent' ? 'secondary' : 'primary' }}
+        buttonProps={{ icon, className, variant: presence === 'absent' ? 'secondary' : 'primary', tooltip }}
       ></DataLinkButton>
     </span>
   );
@@ -111,4 +119,71 @@ async function checkForLogs(query: DataQuery, timeRange: TimeRange): Promise<boo
 
   const series: DataFrame[] = response.data ?? [];
   return series.some((frame) => frame.length > 0);
+}
+
+export function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
+  const defaultCTA = t('explore.span-detail-link-buttons.related-logs', 'Related logs');
+  if (!settings) {
+    return defaultCTA;
+  }
+
+  // The trace-to-logs config lives on jsonData; getTraceToLogsOptions also
+  // migrates the legacy `tracesToLogs` shape to the v2 shape.
+  const options = getTraceToLogsOptions(settings.jsonData);
+  if (options?.filterBySpanID) {
+    return t('explore.span-detail-link-buttons.logs-for-this-span.button', 'Logs for this span');
+  }
+  if (options?.filterByTraceID) {
+    return t('explore.span-detail-link-buttons.logs-for-this-trace.button', 'Logs for this trace');
+  }
+
+  return defaultCTA;
+}
+
+function getLogsButtonTooltip(
+  settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
+  presence: LogsPresence
+) {
+  const defaultCTA = t(
+    'explore.span-detail-link-buttons.related-logs.tooltip',
+    'View related logs using the trace data source configuration.'
+  );
+  if (!settings) {
+    return defaultCTA;
+  }
+  const options = getTraceToLogsOptions(settings.jsonData);
+
+  if (presence === 'absent') {
+    if (options?.filterBySpanID) {
+      return t(
+        'explore.span-detail-link-buttons.logs-for-this-span.no-logs-tooltip',
+        'No logs found for this span using the trace data source configuration.'
+      );
+    }
+    if (options?.filterByTraceID) {
+      return t(
+        'explore.span-detail-link-buttons.logs-for-this-trace.no-logs-tooltip',
+        'No logs found for this trace using the trace data source configuration.'
+      );
+    }
+    return t(
+      'explore.span-detail-link-buttons.related-logs.no-logstooltip',
+      'No related logs found using the trace data source configuration.'
+    );
+  }
+
+  if (options?.filterBySpanID) {
+    return t(
+      'explore.span-detail-link-buttons.logs-for-this-span.tooltip',
+      'See logs related to this span using the trace data source configuration.'
+    );
+  }
+  if (options?.filterByTraceID) {
+    return t(
+      'explore.span-detail-link-buttons.logs-for-this-trace.tooltip',
+      'See logs related to this trace using the trace data source configuration.'
+    );
+  }
+
+  return defaultCTA;
 }

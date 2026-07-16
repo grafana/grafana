@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 
 import {
   CoreApp,
-  type DataSourceInstanceSettings,
   type GrafanaTheme2,
   type IconName,
   PluginExtensionPoints,
@@ -12,10 +11,10 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTraceToLogsOptions, type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 export const RelatedProfilesTitle = 'Related profiles';
 
@@ -23,7 +22,7 @@ import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { type SpanLinkDef, type SpanLinkFunc, type SpanLinkModel, SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
 
-import { LogsLinkButton } from './LogsLink';
+import { getLogsButtonCTA, LogsLinkButton } from './LogsLink';
 
 export type ProfilesButtonContext = {
   serviceName: string;
@@ -89,7 +88,14 @@ export const SpanDetailLinkButtons = (props: Props) => {
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
         if (link.type === SpanLinkType.Logs) {
-          return createLinkModel(link, SpanLinkType.Logs, getLogsButtonCTA(settings), 'gf-logs', datasourceType);
+          return createLinkModel(
+            link,
+            SpanLinkType.Logs,
+            getLogsButtonCTA(settings),
+            'gf-logs',
+            datasourceType,
+            datasourceUid
+          );
         }
         if (link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle) {
           linkToProfiles = link;
@@ -143,7 +149,7 @@ export const SpanDetailLinkButtons = (props: Props) => {
     });
 
     return links;
-  }, [app, createSpanLink, datasourceType, pluginLinks, settings, span]);
+  }, [app, createSpanLink, datasourceType, datasourceUid, pluginLinks, settings, span]);
 
   if (!links.length && !shareButton) {
     return null;
@@ -177,25 +183,6 @@ const styles = {
     gap: '5px',
   }),
 };
-
-function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
-  const defaultCTA = t('explore.span-detail-link-buttons.related-logs', 'Related logs');
-  if (!settings) {
-    return defaultCTA;
-  }
-
-  // The trace-to-logs config lives on jsonData; getTraceToLogsOptions also
-  // migrates the legacy `tracesToLogs` shape to the v2 shape.
-  const options = getTraceToLogsOptions(settings.jsonData);
-  if (options?.filterBySpanID) {
-    return t('explore.span-detail-link-buttons.logs-for-this-span', 'Logs for this span');
-  }
-  if (options?.filterByTraceID) {
-    return t('explore.span-detail-link-buttons.logs-for-this-trace', 'Logs for this trace');
-  }
-
-  return defaultCTA;
-}
 
 function getResponsibleButtonStyles(theme: GrafanaTheme2) {
   return css({
@@ -272,11 +259,10 @@ const createLinkModel = (
   title: string,
   icon: IconName,
   datasourceType: string,
-  className?: string
+  traceDatasourceUid?: string
 ): SpanLinkModel => {
   return {
     icon,
-    className,
     type,
     linkModel: {
       ...link.linkModel,
@@ -317,5 +303,6 @@ const createLinkModel = (
         }
       },
     },
+    traceDatasourceUid,
   };
 };
