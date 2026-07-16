@@ -123,7 +123,7 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
                     {selected.alert.primary}
                   </Text>
                 </span>
-                {selected.alert.secondary?.map((segment, i) => (
+                {selected.alert.details?.map((segment, i) => (
                   <span key={i} className={styles.segment}>
                     <Text variant="body" color="secondary">
                       {segment}

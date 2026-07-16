@@ -109,7 +109,7 @@ export function buildKubernetesItem(parts: KubernetesItemParts, settings: Plugin
                   defaultValue_other: '{{value}} alerts firing',
                 })
               : healthRows[0],
-          secondary: alertsFiring > 0 ? healthRows : healthRows.slice(1),
+          details: alertsFiring > 0 ? healthRows : healthRows.slice(1),
           action: t('home.recommendations.kubernetes.view', 'View'),
           href: alertsHref,
         }

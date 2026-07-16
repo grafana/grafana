@@ -22,7 +22,7 @@ const stubbedExisting: ExistingItem[] = [
     },
     alert: {
       primary: '3 hosts above 90% disk',
-      secondary: ['web-03 critical at 96%, ~6 h to full'],
+      details: ['web-03 critical at 96%, ~6 h to full'],
       action: 'View',
       href: '#',
     },
@@ -38,7 +38,7 @@ const stubbedExisting: ExistingItem[] = [
     },
     alert: {
       primary: 'Ingest spike detected',
-      secondary: ['checkout-service logs up 3x in the last hour'],
+      details: ['checkout-service logs up 3x in the last hour'],
       action: 'View',
       href: '#',
     },

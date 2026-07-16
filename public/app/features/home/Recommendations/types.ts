@@ -23,7 +23,7 @@ export interface ExistingItem {
   sparklineLoading?: boolean;
   alert?: {
     primary: string;
-    secondary?: string[];
+    details?: string[];
     action: string;
     href: string;
   };
