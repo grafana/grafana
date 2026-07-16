@@ -3590,7 +3590,7 @@ func schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref common.ReferenceCa
 						SchemaProps: spec.SchemaProps{
 							Description: "ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default.",
 							Type:        []string{"integer"},
-							Format:      "int64",
+							Format:      "int32",
 						},
 					},
 				},

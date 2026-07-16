@@ -19,6 +19,9 @@ type TestJobOptionsApplyConfiguration struct {
 	// a Go duration string (for example "10s" or "2m"). It must be positive and
 	// is capped by the server to keep a single job's runtime predictable.
 	Duration *v1.Duration `json:"duration,omitempty"`
+	// ProgressUpdates controls how many progress notifications the job emits
+	// while running. A value of 0 uses the server default.
+	ProgressUpdates *int `json:"progressUpdates,omitempty"`
 }
 
 // TestJobOptionsApplyConfiguration constructs a declarative configuration of the TestJobOptions type for use with
@@ -32,5 +35,13 @@ func TestJobOptions() *TestJobOptionsApplyConfiguration {
 // If called multiple times, the Duration field is set to the value of the last call.
 func (b *TestJobOptionsApplyConfiguration) WithDuration(value v1.Duration) *TestJobOptionsApplyConfiguration {
 	b.Duration = &value
+	return b
+}
+
+// WithProgressUpdates sets the ProgressUpdates field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ProgressUpdates field is set to the value of the last call.
+func (b *TestJobOptionsApplyConfiguration) WithProgressUpdates(value int) *TestJobOptionsApplyConfiguration {
+	b.ProgressUpdates = &value
 	return b
 }
