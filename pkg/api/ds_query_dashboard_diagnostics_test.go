@@ -146,7 +146,7 @@ func readTarGzFiles(t *testing.T, data []byte) map[string][]byte {
 	files := map[string][]byte{}
 	for {
 		hdr, err := tr.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		require.NoError(t, err)
