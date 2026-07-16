@@ -98,7 +98,7 @@ export function TablePanel(props: Props) {
   return (
     <Stack direction="column" gap={1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <Field label={t('table.frame-picker.label', 'Query')} noMargin>
+      <Field aria-label={t('table.frame-picker.label', 'Query')} noMargin>
         <Combobox options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
       </Field>
     </Stack>
