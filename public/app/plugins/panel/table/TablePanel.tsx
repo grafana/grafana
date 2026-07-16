@@ -11,16 +11,16 @@ import {
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { useFlagTableProtoRowParser, useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { type TableOptions } from '@grafana/schema';
 import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
 import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
-import { type Options } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {
+interface Props extends PanelProps<TableOptions> {
   initialRowIndex?: number;
   sortByBehavior?: 'initial' | 'managed';
 }
@@ -44,7 +44,6 @@ export function TablePanel(props: Props) {
     cacheFieldDisplayNames(data.series);
   }, [data.series]);
 
-  const tableProtoParserEnabled = useFlagTableProtoRowParser();
   const nestedRefactorEnabled = useFlagTableRefactorNested();
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -108,7 +107,6 @@ export function TablePanel(props: Props) {
       transparent={transparent}
       disableSanitizeHtml={disableSanitizeHtml}
       disableKeyboardEvents={options.disableKeyboardEvents}
-      protoParserEnabled={tableProtoParserEnabled}
       nestedRefactorEnabled={nestedRefactorEnabled}
     />
   );

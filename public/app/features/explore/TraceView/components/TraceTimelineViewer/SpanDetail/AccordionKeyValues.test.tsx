@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import AccordianKeyValues, { type AccordianKeyValuesProps } from './AccordianKeyValues';
+import AccordionKeyValues, { type AccordionKeyValuesProps } from './AccordionKeyValues';
 import { KeyValuesSummary } from './KeyValuesSummary';
 
 const tags = [
@@ -22,19 +22,19 @@ const tags = [
   { key: 'omg', value: 'mos-def' },
 ];
 
-const setupAccordian = (propOverrides?: AccordianKeyValuesProps) => {
+const setupAccordion = (propOverrides?: AccordionKeyValuesProps) => {
   const props = {
     compact: false,
     data: tags,
     isOpen: true,
-    label: 'test accordian',
+    label: 'test accordion',
     onToggle: jest.fn(),
     ...propOverrides,
   };
-  return render(<AccordianKeyValues {...(props as AccordianKeyValuesProps)} />);
+  return render(<AccordionKeyValues {...(props as AccordionKeyValuesProps)} />);
 };
 
-const setupKeyValues = (propOverrides?: AccordianKeyValuesProps) => {
+const setupKeyValues = (propOverrides?: AccordionKeyValuesProps) => {
   const props = {
     data: tags,
     ...propOverrides,
@@ -48,7 +48,7 @@ describe('KeyValuesSummary tests', () => {
   });
 
   it('returns `null` when props.data is empty', () => {
-    setupKeyValues({ data: null } as unknown as AccordianKeyValuesProps);
+    setupKeyValues({ data: null } as unknown as AccordionKeyValuesProps);
 
     expect(screen.queryAllByRole('table')).toHaveLength(0);
     expect(screen.queryAllByRole('row')).toHaveLength(0);
@@ -71,21 +71,21 @@ describe('KeyValuesSummary tests', () => {
   });
 });
 
-describe('AccordianKeyValues test', () => {
+describe('AccordionKeyValues test', () => {
   it('renders without exploding', () => {
-    expect(() => setupAccordian()).not.toThrow();
+    expect(() => setupAccordion()).not.toThrow();
   });
 
   it('renders the label', () => {
-    setupAccordian();
+    setupAccordion();
 
-    expect(screen.getByTestId('AccordianKeyValues--header')).toBeInTheDocument();
+    expect(screen.getByTestId('AccordionKeyValues--header')).toBeInTheDocument();
   });
 
   it('renders table correctly when passed data & is open ', () => {
-    setupAccordian();
+    setupAccordion();
 
-    expect(screen.getByRole('switch', { name: 'test accordian' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'test accordion' })).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: 'span.kind "client"' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'span.kind' })).toBeInTheDocument();
@@ -95,9 +95,9 @@ describe('AccordianKeyValues test', () => {
   });
 
   it('renders the summary instead of the table when it is not expanded', () => {
-    setupAccordian({ isOpen: false } as AccordianKeyValuesProps);
+    setupAccordion({ isOpen: false } as AccordionKeyValuesProps);
 
-    expect(screen.getByRole('switch', { name: 'test accordian span.kind client omg mos-def' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'test accordion span.kind client omg mos-def' })).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.queryAllByRole('cell')).toHaveLength(0);
   });

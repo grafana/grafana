@@ -209,6 +209,15 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name: "awsAssumeRolePerDatasourceExternalId",
+			Description: "Generate a per-datasource external ID for Grafana Assume Role " +
+				"(jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.",
+			Stage:      FeatureStageExperimental,
+			Expression: "false",
+			Owner:      grafanaDataSourcesPlugins,
+			Generate:   Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+		},
+		{
 			Name:        "mlExpressions",
 			Description: "Enable support for Machine Learning in server-side expressions",
 			Stage:       FeatureStageExperimental,
@@ -2630,14 +2639,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "advisorDatasourceIntegration",
-			Description: "Enables the advisor report integration with datasource pages",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "inlineLogDetailsNoScrolls",
 			Description: "Enables an inline version of Log Details that creates no new scrolls",
 			Stage:       FeatureStageExperimental,
@@ -2975,6 +2976,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "assistant.fullscreenWorkspace",
+			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "splunk.useLegacyResultsApi",
 			Description:  "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
 			Stage:        FeatureStageExperimental,
@@ -3085,6 +3094,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.multiTenantNavTree",
+			Description:  "Builds the navigation tree client-side instead of reading it from /bootdata",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

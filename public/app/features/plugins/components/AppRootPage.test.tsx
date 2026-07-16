@@ -1,10 +1,11 @@
 import { act, screen } from '@testing-library/react';
-import { Component } from 'react';
+import { Component, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { AppPlugin, PluginType, type AppRootProps, type NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { setEchoSrv } from '@grafana/runtime';
 import { getPluginSettings } from '@grafana/runtime/unstable';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
@@ -179,6 +180,34 @@ describe('AppRootPage', () => {
       screen.getByRole('link', { name: 'Navigate' }).click();
     });
     expect(RootComponent.timesRendered).toEqual(2);
+  });
+
+  it('should mark the plugin boundary on the page when the plugin provides its own nav', async () => {
+    getPluginSettingsMock.mockResolvedValue(pluginMeta);
+
+    const NavChangingRootComponent = ({ onNavChanged }: AppRootProps) => {
+      useEffect(() => {
+        onNavChanged({
+          main: { text: 'My awesome plugin' },
+          node: { text: 'My awesome plugin' },
+        });
+      }, [onNavChanged]);
+
+      return <p>my great component</p>;
+    };
+
+    const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
+    plugin.root = NavChangingRootComponent;
+    importAppPluginMock.mockResolvedValue(plugin);
+
+    renderUnderRouter();
+
+    expect(await screen.findByText('my great component')).toBeVisible();
+    expect(await screen.findByTestId(selectors.components.Plugins.appPage('my-awesome-plugin'))).toHaveAttribute(
+      'data-plugin-id',
+      'my-awesome-plugin'
+    );
   });
 
   describe('When accessing using different roles', () => {

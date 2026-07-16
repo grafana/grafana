@@ -28,7 +28,7 @@ import { Popover } from '../common/Popover';
 import type TNil from '../types/TNil';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 
-import AccordianLogs from './SpanDetail/AccordianLogs';
+import AccordionLogs from './SpanDetail/AccordionLogs';
 import { type ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -190,7 +190,7 @@ function SpanBar({
           <Popover
             key={positionKey}
             content={
-              <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
+              <AccordionLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
             <div data-testid="SpanBar--logMarker" className={cx(styles.logMarker)} style={{ left: positionKey }} />
