@@ -237,7 +237,7 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     maxWidth: '100%',
     alignItems: 'start',
     justifyContent: justify,
-    columnGap: theme.spacing(0.75),
+    columnGap: theme.spacing(0.25),
   }),
   label: css({ display: 'inline' }),
   value: css({
