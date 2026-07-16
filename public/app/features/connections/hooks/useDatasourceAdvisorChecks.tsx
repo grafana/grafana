@@ -189,7 +189,11 @@ export function useDatasourceFailureByUID(): DatasourceFailuresResult {
     return byUID;
   }, [check, checkType]);
 
-  return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading, isAvailable, hasCheck: Boolean(check) };
+  // A check object can exist before it has produced a report (created but not
+  // yet completed); only treat it as evaluated once the report is present.
+  const hasCheck = Boolean(check?.status?.report);
+
+  return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading, isAvailable, hasCheck };
 }
 
 /**

@@ -257,6 +257,17 @@ describe('useDatasourceFailureByUID', () => {
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
 
+  it('does not report hasCheck when a check exists but has not produced a report yet', () => {
+    // Check object created but not yet completed: no status/report.
+    const check = makeCheck({});
+    mockPluginFunctions({ completedCheck: check });
+
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
+
+    expect(result.current.hasCheck).toBe(false);
+    expect(result.current.datasourceFailureByUID.size).toBe(0);
+  });
+
   it('returns all datasources with any failure and their highest severity', () => {
     const check = makeCheck({
       failures: {
