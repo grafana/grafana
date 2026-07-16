@@ -105,12 +105,6 @@
       "import": "./dist/esm/raw/composable/googlecloudmonitoring/dataquery/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/googlecloudmonitoring/dataquery/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/grafanapyroscope/dataquery/x/GrafanaPyroscopeDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/grafanapyroscope/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/grafanapyroscope/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/grafanapyroscope/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/grafanapyroscope/dataquery/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/heatmap/panelcfg/x/HeatmapPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/heatmap/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/heatmap/panelcfg/x/types.gen.d.ts",
