@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -97,6 +98,14 @@ func main() {
 		Help: "a high cardinality counter",
 	}, dimensions)
 
+	// Models k8s pod recycle for TimeComparison high-cardinality pairing (#126181):
+	// keep a few active pods and retire the oldest on a fixed cadence, so two overlapping
+	// compare windows genuinely return a DIFFERENT set of pod series.
+	podChurn := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "fakedata_pod_churn_requests_total",
+		Help: "request counter with rotating pod labels (simulates restarts)",
+	}, []string{"pod"})
+
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -117,7 +126,64 @@ func main() {
 		}
 	}()
 
+	go runPodChurn(podChurn)
+
 	fmt.Printf("Server started at :9111\n")
 
 	log.Fatal(http.ListenAndServe(":9111", nil))
+}
+
+func runPodChurn(podChurn *prometheus.CounterVec) {
+	const activeCount = 4                // pods alive at any moment (legend stays small)
+	const rotateEvery = 30 * time.Second // retire oldest / add new on this cadence
+
+	var mu sync.Mutex
+	nextID := 1
+	active := make([]string, 0, activeCount)
+	// Per-pod increment rate so lines are visually distinct.
+	rate := map[string]int{}
+
+	rotate := func() {
+		mu.Lock()
+		defer mu.Unlock()
+
+		if len(active) >= activeCount {
+			old := active[0]
+			active = active[1:]
+			delete(rate, old)
+			podChurn.DeleteLabelValues(old)
+		}
+
+		name := fmt.Sprintf("pod-%d", nextID)
+		nextID++
+		active = append(active, name)
+		rate[name] = 1 + rand.IntN(5)
+		podChurn.WithLabelValues(name).Add(float64(rate[name]))
+	}
+
+	for i := 0; i < activeCount; i++ {
+		rotate()
+	}
+
+	go func() {
+		t := time.NewTicker(rotateEvery)
+		defer t.Stop()
+		for range t.C {
+			rotate()
+		}
+	}()
+
+	for {
+		mu.Lock()
+		snapshot := make(map[string]int, len(active))
+		for _, pod := range active {
+			snapshot[pod] = rate[pod]
+		}
+		mu.Unlock()
+
+		for pod, r := range snapshot {
+			podChurn.WithLabelValues(pod).Add(float64(r))
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 }
