@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestLicensePath verifies marketplace license paths accept only safe plugin IDs.
 func TestLicensePath(t *testing.T) {
 	directory, err := filepath.Abs("marketplace-license-test")
 	require.NoError(t, err)
@@ -96,6 +97,7 @@ func TestLicensePath(t *testing.T) {
 	}
 }
 
+// mustAbs returns the absolute form of path or fails the test.
 func mustAbs(t *testing.T, path string) string {
 	t.Helper()
 	abs, err := filepath.Abs(path)

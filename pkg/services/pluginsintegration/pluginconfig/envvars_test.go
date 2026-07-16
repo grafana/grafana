@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// fakeMarketplaceEnvironment supplies controllable marketplace licensing data for tests.
 type fakeMarketplaceEnvironment struct {
 	appURL       string
 	token        string
@@ -33,14 +34,17 @@ type fakeMarketplaceEnvironment struct {
 	preparedWith string
 }
 
+// newTestMarketplaceEnvironment returns a fake marketplace environment with appURL.
 func newTestMarketplaceEnvironment(appURL string) *fakeMarketplaceEnvironment {
 	return &fakeMarketplaceEnvironment{appURL: appURL}
 }
 
+// AppURL returns the fake application's URL.
 func (e *fakeMarketplaceEnvironment) AppURL() string {
 	return e.appURL
 }
 
+// LicenseToken records the plugin ID and returns the configured token or error.
 func (e *fakeMarketplaceEnvironment) LicenseToken(_ context.Context, pluginID string) (string, error) {
 	e.prepareCalls++
 	e.preparedWith = pluginID
@@ -187,6 +191,7 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 
 }
 
+// TestPluginEnvVarsProvider_marketplaceLicenseEnvironment verifies marketplace environment variables.
 func TestPluginEnvVarsProvider_marketplaceLicenseEnvironment(t *testing.T) {
 	newProvider := func(environment marketplacelicensing.Environment) *EnvVarsProvider {
 		return NewEnvVarsProvider(&PluginInstanceCfg{
