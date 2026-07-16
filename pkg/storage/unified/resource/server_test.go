@@ -2166,6 +2166,124 @@ func TestNewEventPermissionChecks(t *testing.T) {
 	})
 }
 
+// TestStatsAccessChecks covers the authorization behavior of the usage-stats
+// RPCs: reads must be equivalent to reading the object (folder-aware authz),
+// while ingest only requires an authenticated caller.
+func TestStatsAccessChecks(t *testing.T) {
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Login:     "testuser",
+		UserID:    123,
+		UserUID:   "u123",
+		OrgRole:   identity.RoleEditor,
+		Namespace: "default",
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), user)
+
+	const (
+		group     = "playlist.grafana.app"
+		resource  = "playlists"
+		namespace = "default"
+		name      = "test-resource"
+		folderA   = "folder-a"
+	)
+
+	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t","interval":"5m","items":[]}}`)
+
+	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
+
+	// newStatsServer builds a stats-enabled server backed by an in-memory KV
+	// store (leases are required by the ingester) and seeds one resource in
+	// folderA using an always-allow client before switching to ac.
+	newStatsServer := func(t *testing.T, ac *callbackAccessClient) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kv := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend:           store,
+			AccessClient:      ac,
+			UsageStatsEnabled: true,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Stop(stopCtx)
+		})
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		return srv
+	}
+
+	t.Run("GetResourceDailyStats passes the resolved folder to the access check", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac)
+
+		var capturedReq authlib.CheckRequest
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedReq, capturedFolder = req, folder
+			return allow()
+		}
+
+		_, err := srv.GetResourceDailyStats(ctx, &resourcepb.GetResourceDailyStatsRequest{Key: key})
+		require.NoError(t, err)
+		require.Equal(t, utils.VerbGet, capturedReq.Verb)
+		require.Equal(t, name, capturedReq.Name)
+		require.Equal(t, folderA, capturedFolder, "read must resolve the object folder, not pass an empty one")
+	})
+
+	t.Run("GetResourceDailyStats is denied when the user cannot read the object", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
+
+		_, err := srv.GetResourceDailyStats(ctx, &resourcepb.GetResourceDailyStatsRequest{Key: key})
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+	})
+
+	t.Run("RecordEvent does not perform an object-level access check", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac)
+
+		// Even a deny-all access client must not block ingest: the path only
+		// requires an authenticated caller.
+		accessCalled := false
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			accessCalled = true
+			return deny()
+		}
+
+		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
+			Key:    key,
+			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
+		})
+		require.NoError(t, err)
+		require.False(t, accessCalled, "ingest must not call the access client")
+	})
+
+	t.Run("RecordEvent requires an authenticated caller", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac)
+
+		_, err := srv.RecordEvent(context.Background(), &resourcepb.RecordEventRequest{
+			Key:    key,
+			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
+		})
+		require.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
 // TestFolderDeletePermissionChecks verifies that the unified resource server enforces
 // authorization correctly when the resource being deleted is itself a folder
 // (group=folder.grafana.app, resource=folders). The key difference from generic resources

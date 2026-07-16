@@ -16,7 +16,8 @@ const (
 	// everything older than MaxWindow days.
 	overflowBucket = "overflow"
 
-	// dayLayout is the UTC day-bucket format.
+	// dayLayout is the day-bucket format. Days are bucketed in the server's
+	// local timezone.
 	dayLayout = "2006-01-02"
 )
 
@@ -90,7 +91,7 @@ func parseAggregateKey(key string) (parsedAggregateKey, error) {
 }
 
 func dayString(unix int64) string {
-	return time.Unix(unix, 0).UTC().Format(dayLayout)
+	return time.Unix(unix, 0).Format(dayLayout)
 }
 
 func parseDay(day string) (time.Time, error) {

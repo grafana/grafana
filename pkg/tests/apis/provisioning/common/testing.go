@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
+	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1460,16 +1460,16 @@ func WithProvisioningMaxFileSize(n int64) GrafanaOption {
 // WithNATS enables the embedded Core NATS bus and the SQL KV storage backend so
 // the provisioning controllers reconcile off NATS-delivered resource-change
 // notifications instead of the apiserver watch. The KV backend is what publishes
-// those notifications, so both must be on together. Two free TCP ports are
-// allocated for the embedded server's client and cluster listeners so parallel
-// test binaries don't collide on the conventional 4222/6222.
+// those notifications, so both must be on together. The embedded server binds
+// kernel-assigned ephemeral ports for its client and cluster listeners
+// so parallel test binaries don't collide on the conventional 4222/6222.
 func WithNATS() GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.NATSEnabled = true
 		opts.EnableSQLKVBackend = true
 		opts.NATSListenAddress = "127.0.0.1"
-		opts.NATSClientPort = freePort()
-		opts.NATSClusterPort = freePort()
+		opts.NATSClientPort = natsserver.RANDOM_PORT
+		opts.NATSClusterPort = natsserver.RANDOM_PORT
 		// Push the informer re-list and the job driver's fallback poll far out so
 		// any reconcile/job pickup observed within a test's wait budget can only
 		// have come from a live NATS notification, not the periodic LIST/poll.
@@ -1492,27 +1492,13 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.NATSEnabled = true
 		opts.NATSListenAddress = "127.0.0.1"
-		opts.NATSClientPort = freePort()
-		opts.NATSClusterPort = freePort()
+		opts.NATSClientPort = natsserver.RANDOM_PORT
+		opts.NATSClusterPort = natsserver.RANDOM_PORT
 		// EnableSQLKVBackend stays false: only the KV backend publishes watch
 		// notifications, so leaving it off means the informers never receive a
 		// live event and the re-list is the sole reconcile driver.
 		opts.ProvisioningControllerResyncInterval = resync
 	}
-}
-
-// freePort asks the kernel for an available TCP port on the loopback interface
-// and returns it after closing the listener. There is an inherent (small) race
-// between closing and the embedded NATS server binding, but it is the same
-// approach used by the unified-storage NATS round-trip test and is adequate for
-// test isolation.
-func freePort() int {
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		panic(fmt.Sprintf("failed to allocate a free port for NATS: %v", err))
-	}
-	defer func() { _ = l.Close() }()
-	return l.Addr().(*net.TCPAddr).Port
 }
 
 // WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,

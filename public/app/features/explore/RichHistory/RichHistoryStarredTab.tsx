@@ -94,7 +94,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
       return;
     }
     const datasourceFilters =
-      richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
+      !richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
         : exploreActiveDS.dsToExplore
             .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
@@ -126,7 +126,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
       richHistorySearchFilters?.datasourceFilters && richHistorySearchFilters?.datasourceFilters.length > 0
         ? richHistorySearchFilters?.datasourceFilters
         : listOfDatasources.map((ds) => ds.uid);
-    const dsGetProm = await datasourcesToGet.map(async (dsf) => {
+    const dsGetProm = datasourcesToGet.map(async (dsf) => {
       try {
         return await getDataSourceInstance(dsf);
       } catch (e) {
@@ -141,12 +141,12 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     } else {
       return [];
     }
-  }, [richHistorySearchFilters?.datasourceFilters]);
+  }, [richHistorySearchFilters?.datasourceFilters, listOfDatasources]);
 
   if (!richHistorySearchFilters) {
     return (
       <span>
-        <Trans i18nKey="explore.rich-history-starred-tab.loading">Loading...</Trans>;
+        <Trans i18nKey="explore.rich-history-starred-tab.loading">Loading...</Trans>
       </span>
     );
   }
@@ -197,12 +197,12 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
             />
           </div>
         </div>
-        {loading && loadingDs && (
+        {(loading || loadingDs) && (
           <span>
             <Trans i18nKey="explore.rich-history-starred-tab.loading-results">Loading results...</Trans>
           </span>
         )}
-        {!(loading && loadingDs) &&
+        {!(loading || loadingDs) &&
           queries.map((q) => {
             return <RichHistoryCard queryHistoryItem={q} key={q.id} datasourceInstances={datasourceFilterApis} />;
           })}
