@@ -2,7 +2,7 @@ import { type SignatureHelp, type SignatureHelpProvider } from '@grafana/ui/unst
 
 import { getEnclosingFunctionCall } from './completionSituation';
 
-interface SqlFunctionParameter {
+export interface SqlFunctionParameter {
   label: string;
   documentation?: string;
 }

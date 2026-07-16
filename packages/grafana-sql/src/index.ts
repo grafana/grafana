@@ -30,3 +30,12 @@ export { applyQueryDefaults } from './defaults';
 export { makeVariable } from './utils/testHelpers';
 export { QueryEditorExpressionType } from './expressions';
 export { loadResources } from './loadResources';
+export { SqlEditor } from './components/SqlEditor/SqlEditor';
+export type { SqlEditorProps } from './components/SqlEditor/SqlEditor';
+export type { SqlFunctionSignature } from './components/SqlEditor/signatureHelp';
+export type {
+  SqlCompletionContext,
+  SqlCompletionItem,
+  SqlCompletionKind,
+  SqlCompletionProvider,
+} from './components/SqlEditor/utils';

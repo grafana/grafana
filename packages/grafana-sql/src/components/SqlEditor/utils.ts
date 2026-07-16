@@ -7,12 +7,12 @@ import type {
 
 import { getSqlCompletionSituation } from './completionSituation';
 
-type SqlCompletionKind = 'column' | 'function' | 'keyword' | 'table';
+export type SqlCompletionKind = 'column' | 'function' | 'keyword' | 'table';
 
 const SQL_WORD_PATTERN = /[\w$]*/;
 const SQL_COMPLETION_VALID_FOR_PATTERN = /^[\w$]*$/;
 
-interface SqlCompletionItem {
+export interface SqlCompletionItem {
   label: string;
   insertText?: string;
   detail?: string;
@@ -21,7 +21,7 @@ interface SqlCompletionItem {
   boost?: number;
 }
 
-interface SqlCompletionContext {
+export interface SqlCompletionContext {
   table?: string;
 }
 

@@ -3,13 +3,13 @@ import { act, render, testWithFeatureToggles, userEvent, waitFor } from 'test/te
 import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
 import { SQLEditor } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
+import { SqlEditor } from '@grafana/sql';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataSource } from '../../ExpressionDatasource';
 import { type ExpressionQuery, ExpressionQueryType } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
 
-import { SqlEditor } from './SqlEditor/SqlEditor';
 import { SqlExpr, type SqlExprProps } from './SqlExpr';
 import { SqlQueryActions } from './SqlQueryActions';
 
@@ -49,7 +49,8 @@ jest.mock('react-virtualized-auto-sizer', () => ({
     children({ width: 800, height: 300 }),
 }));
 
-jest.mock('./SqlEditor/SqlEditor', () => ({
+jest.mock('@grafana/sql', () => ({
+  ...jest.requireActual('@grafana/sql'),
   SqlEditor: jest.fn(({ value, onChange, children }) => (
     <div>
       <div data-testid="sql-editor">{value}</div>

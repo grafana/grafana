@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { type SqlFunctionSignature } from '../SqlEditor/signatureHelp';
+import { type SqlFunctionSignature } from '@grafana/sql';
 
 /**
  * Lazily loads the SQL function signature metadata, keeping the large table out

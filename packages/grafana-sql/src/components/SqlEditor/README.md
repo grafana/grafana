@@ -1,6 +1,6 @@
 # SQL Editor Completion Terms
 
-This folder contains the generic SQL completion logic used by the SQL editor. Most of the names in
+This folder contains the generic SQL completion logic used by the exported SQL editor. Most of the names in
 `completionSituation.ts` come from SQL grammar concepts, plus a few CodeMirror completion terms.
 
 ## Mental Model
