@@ -312,6 +312,50 @@ func newAlertmanagerImportsTranslation() translation {
 	}
 }
 
+// newAlertRuleTranslation maps the rule resources in rules.alerting.grafana.app
+// (alertrules, recordingrules, rulesequences) to the alert.rules:* actions.
+//
+// Alert-rule permissions are always folder-scoped: they are granted on the folder
+// scope (folders:uid:<uid>), never on a per-rule scope. The translation therefore
+// uses the folder scope prefix and enables folder inheritance so a permission on a
+// parent folder cascades to descendants. The alert.rules:* actions are also part of
+// the folder view/edit/admin action sets, so users granted via managed folder roles
+// are matched too.
+func newAlertRuleTranslation() translation {
+	t := translation{
+		resource:  "folders", // alert-rule permissions are scoped to folders:uid:<uid>
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionAlertingRuleRead,
+			utils.VerbList:             accesscontrol.ActionAlertingRuleRead,
+			utils.VerbWatch:            accesscontrol.ActionAlertingRuleRead,
+			utils.VerbCreate:           accesscontrol.ActionAlertingRuleCreate,
+			utils.VerbUpdate:           accesscontrol.ActionAlertingRuleUpdate,
+			utils.VerbPatch:            accesscontrol.ActionAlertingRuleUpdate,
+			utils.VerbDelete:           accesscontrol.ActionAlertingRuleDelete,
+			utils.VerbDeleteCollection: accesscontrol.ActionAlertingRuleDelete,
+		},
+		folderSupport: true,
+	}
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range t.verbMapping {
+		var actionSets []string
+		if slices.Contains(ossaccesscontrol.FolderViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.FolderEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.FolderAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+	t.actionSetMapping = actionSetMapping
+	return t
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -330,6 +374,12 @@ func NewMapperRegistry() MapperRegistry {
 		"notifications.alerting.grafana.app": {
 			"routingtrees":        newRoutingTreeTranslation(),
 			"alertmanagerimports": newAlertmanagerImportsTranslation(),
+		},
+		"rules.alerting.grafana.app": {
+			// All rule resources share the folder-scoped alert.rules:* actions.
+			"alertrules":     newAlertRuleTranslation(),
+			"recordingrules": newAlertRuleTranslation(),
+			"rulesequences":  newAlertRuleTranslation(),
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),

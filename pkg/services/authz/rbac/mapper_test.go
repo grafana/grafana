@@ -258,6 +258,66 @@ func TestMapper_ServiceAccountTranslation_ActionSets(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_AlertRules verifies the rules.alerting.grafana.app rule
+// resources map to the folder-scoped alert.rules:* actions, expose the folder
+// scope prefix, support folder inheritance, and flow through the folder action
+// sets (folders:view/edit/admin) for managed roles.
+func TestMapperRegistry_AlertRules(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	readActionSets := []string{"folders:view", "folders:edit", "folders:admin"}
+	writeActionSets := []string{"folders:edit", "folders:admin"}
+
+	for _, resource := range []string{"alertrules", "recordingrules", "rulesequences"} {
+		t.Run(resource, func(t *testing.T) {
+			mapping, ok := reg.Get("rules.alerting.grafana.app", resource, "")
+			require.True(t, ok, "%q should be registered in the mapper", resource)
+			require.NotNil(t, mapping)
+
+			// Alert-rule permissions are folder-scoped.
+			assert.True(t, mapping.HasFolderSupport(), "alert rules are folder-scoped")
+			assert.Equal(t, "folders:uid:", mapping.Prefix())
+			assert.Equal(t, "folders:uid:abc", mapping.Scope("abc"))
+
+			actionTests := []struct {
+				verb   string
+				action string
+			}{
+				{utils.VerbGet, "alert.rules:read"},
+				{utils.VerbList, "alert.rules:read"},
+				{utils.VerbWatch, "alert.rules:read"},
+				{utils.VerbCreate, "alert.rules:create"},
+				{utils.VerbUpdate, "alert.rules:write"},
+				{utils.VerbPatch, "alert.rules:write"},
+				{utils.VerbDelete, "alert.rules:delete"},
+				{utils.VerbDeleteCollection, "alert.rules:delete"},
+			}
+			for _, tt := range actionTests {
+				action, ok := mapping.Action(tt.verb)
+				assert.True(t, ok, "verb %q should map to an action", tt.verb)
+				assert.Equal(t, tt.action, action, "verb %q", tt.verb)
+			}
+
+			actionSetTests := []struct {
+				verb     string
+				expected []string
+			}{
+				{utils.VerbGet, readActionSets},
+				{utils.VerbList, readActionSets},
+				{utils.VerbWatch, readActionSets},
+				{utils.VerbCreate, writeActionSets},
+				{utils.VerbUpdate, writeActionSets},
+				{utils.VerbPatch, writeActionSets},
+				{utils.VerbDelete, writeActionSets},
+				{utils.VerbDeleteCollection, writeActionSets},
+			}
+			for _, tt := range actionSetTests {
+				assert.ElementsMatch(t, tt.expected, mapping.ActionSets(tt.verb), "action sets for verb %q", tt.verb)
+			}
+		})
+	}
+}
+
 // TestMapper_AnnotationSubresource_ActionSets verifies that managed roles (dashboards:view etc.)
 // flow through to annotation verbs via the subresource action set mapping.
 func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
