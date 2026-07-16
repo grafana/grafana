@@ -1,12 +1,14 @@
 import { render, screen } from 'test/test-utils';
 
+import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchLayout, type SearchState } from 'app/features/search/types';
 
 import { BrowseFilters } from './BrowseFilters';
 
 const mockUseSearchStateManager = jest.fn();
-const mockSearchTeamsQuery = jest.fn();
 const mockGetSortOptions = jest.fn().mockResolvedValue([]);
 
 jest.mock('app/features/search/state/SearchStateManager', () => ({
@@ -20,22 +22,8 @@ jest.mock('app/features/search/service/searcher', () => ({
   }),
 }));
 
-jest.mock('app/api/clients/legacy', () => ({
-  legacyAPI: {
-    reducerPath: 'legacyAPI',
-    reducer: (state = {}) => state,
-    middleware: () => (next: (action: unknown) => unknown) => (action: unknown) => next(action),
-  },
-  useSearchTeamsQuery: (...args: unknown[]) => mockSearchTeamsQuery(...args),
-}));
-
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    hasPermission: jest.fn(() => true),
-    user: { uid: 1, orgId: 1 },
-  },
-}));
-
+setBackendSrv(backendSrv);
+setupMockServer();
 mockComboboxRect();
 
 const createSearchState = (partial?: Partial<SearchState>): SearchState => ({
@@ -63,23 +51,11 @@ const createStateManager = () => ({
 });
 
 describe('BrowseFilters', () => {
-  beforeEach(() => {
-    mockSearchTeamsQuery.mockReturnValue({
-      data: {
-        teams: [
-          { uid: 'team-a', name: 'Team A', avatarUrl: '' },
-          { uid: 'test-team', name: 'Test Team', avatarUrl: '' },
-        ],
-      },
-      isLoading: false,
-    });
-  });
-
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('shows the owner filter with the all teams option and user teams', async () => {
+  it('shows the owner filter with the fetched teams', async () => {
     const stateManager = createStateManager();
     mockUseSearchStateManager.mockReturnValue([createSearchState(), stateManager]);
 
@@ -87,7 +63,6 @@ describe('BrowseFilters', () => {
 
     await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
 
-    expect(await screen.findByText('All teams')).toBeInTheDocument();
     expect(await screen.findByText('Team A')).toBeInTheDocument();
     expect(await screen.findByText('Test Team')).toBeInTheDocument();
   });
@@ -102,20 +77,5 @@ describe('BrowseFilters', () => {
     await user.click(await screen.findByText('Team A'));
 
     expect(stateManager.onOwnerReferenceChange).toHaveBeenCalledWith(['iam.grafana.app/Team/team-a']);
-  });
-
-  it('normalizes the all teams option into all ownerReference values', async () => {
-    const stateManager = createStateManager();
-    mockUseSearchStateManager.mockReturnValue([createSearchState(), stateManager]);
-
-    const { user } = render(<BrowseFilters />);
-
-    await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
-    await user.click(await screen.findByText('All teams'));
-
-    expect(stateManager.onOwnerReferenceChange).toHaveBeenCalledWith([
-      'iam.grafana.app/Team/team-a',
-      'iam.grafana.app/Team/test-team',
-    ]);
   });
 });

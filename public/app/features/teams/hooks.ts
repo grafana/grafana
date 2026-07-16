@@ -30,7 +30,8 @@ import { useDispatch } from 'app/types/store';
 
 import { buildNavModel } from './state/navModel';
 
-const rolesEnabled =
+// Evaluated lazily so importing this module doesn't touch contextSrv before it's initialised.
+const rolesEnabled = () =>
   contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
 
 export const canUpdateRoles = () =>
@@ -60,11 +61,11 @@ export const useGetTeams = ({
   }, [legacyResponse.data?.teams]);
 
   const teamsRolesResponse = useListTeamsRolesQuery(
-    rolesEnabled && teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken
+    rolesEnabled() && teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken
   );
 
   const teamsWithRoles = useMemo(() => {
-    if (!rolesEnabled || (rolesEnabled && teamsRolesResponse.isLoading)) {
+    if (!rolesEnabled() || teamsRolesResponse.isLoading) {
       return legacyResponse.data?.teams || [];
     }
     return (legacyResponse.data?.teams || []).map((team) => {
@@ -79,7 +80,7 @@ export const useGetTeams = ({
 
   return {
     ...legacyResponse,
-    isLoading: legacyResponse.isLoading || (rolesEnabled ? teamsRolesResponse.isLoading : false),
+    isLoading: legacyResponse.isLoading || (rolesEnabled() ? teamsRolesResponse.isLoading : false),
     data: {
       teams: teamsWithRoles,
       totalCount: legacyResponse.data?.totalCount,
