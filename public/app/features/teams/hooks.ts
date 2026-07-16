@@ -156,8 +156,8 @@ function teamDtoToTeam(dto: TeamDto): Team {
 /**
  * Transform legacy TeamDto[] to IAM search hit shape.
  */
-function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
-  return teams.map((t) => ({ title: t.name, name: t.uid }));
+function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string; email: string }> {
+  return teams.map((t) => ({ title: t.name, name: t.uid, email: t.email ?? '' }));
 }
 
 const appPlatformIamEnabled = () => Boolean(config.featureToggles.kubernetesTeamsApi);
@@ -224,13 +224,16 @@ export function useLazySearchTeamsQuery() {
   const [iamTrigger, iamResult] = useLazyGetSearchTeamsQueryIam();
   const [legacyTrigger, legacyResult] = useLazySearchTeamsQueryLegacy();
 
-  const legacyTriggerWrapped = (args: { query?: string }, preferCacheValue?: boolean) =>
-    legacyTrigger({ query: args.query }, preferCacheValue).then((result) => ({
-      ...result,
-      data: result.data
-        ? { hits: legacySearchToIamSearchHits(result.data.teams ?? []), totalHits: result.data.totalCount ?? 0 }
-        : undefined,
-    }));
+  const legacyTriggerWrapped = useCallback(
+    (args: { query?: string }, preferCacheValue?: boolean) =>
+      legacyTrigger({ query: args.query }, preferCacheValue).then((result) => ({
+        ...result,
+        data: result.data
+          ? { hits: legacySearchToIamSearchHits(result.data.teams ?? []), totalHits: result.data.totalCount ?? 0 }
+          : undefined,
+      })),
+    [legacyTrigger]
+  );
 
   if (enabled) {
     return [iamTrigger, iamResult] as const;
