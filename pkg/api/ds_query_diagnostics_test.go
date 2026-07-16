@@ -43,3 +43,24 @@ func TestDiagnosticsNoCaptureError(t *testing.T) {
 		require.Nil(t, hs.diagnosticsNoCaptureError(nil, nil))
 	})
 }
+
+// TestValidateDiagnosticsQueryCount guards the bounds on the number of queries a single-panel
+// diagnostics request may run: zero is rejected as a bad request, as is more than
+// maxDiagnosticsQueries; everything in between proceeds (nil).
+func TestValidateDiagnosticsQueryCount(t *testing.T) {
+	t.Run("zero queries is a client error", func(t *testing.T) {
+		r := validateDiagnosticsQueryCount(0)
+		require.NotNil(t, r)
+		require.Equal(t, http.StatusBadRequest, r.Status())
+	})
+
+	t.Run("query count at the max is allowed", func(t *testing.T) {
+		require.Nil(t, validateDiagnosticsQueryCount(maxDiagnosticsQueries))
+	})
+
+	t.Run("query count over the max is a client error", func(t *testing.T) {
+		r := validateDiagnosticsQueryCount(maxDiagnosticsQueries + 1)
+		require.NotNil(t, r)
+		require.Equal(t, http.StatusBadRequest, r.Status())
+	})
+}

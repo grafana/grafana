@@ -51,11 +51,8 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if len(reqDTO.Queries) == 0 {
-		return response.Error(http.StatusBadRequest, "at least one query is required", nil)
-	}
-	if len(reqDTO.Queries) > maxDiagnosticsQueries {
-		return response.Error(http.StatusBadRequest, fmt.Sprintf("too many queries (%d); the maximum is %d", len(reqDTO.Queries), maxDiagnosticsQueries), nil)
+	if r := validateDiagnosticsQueryCount(len(reqDTO.Queries)); r != nil {
+		return r
 	}
 
 	captureCtx, harBuffer := harcapture.WithCapture(ctx)
@@ -111,6 +108,18 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
+}
+
+// validateDiagnosticsQueryCount returns the 400 response to send when n (the number of queries in
+// the request) is zero or exceeds maxDiagnosticsQueries, else nil so the caller proceeds.
+func validateDiagnosticsQueryCount(n int) response.Response {
+	if n == 0 {
+		return response.Error(http.StatusBadRequest, "at least one query is required", nil)
+	}
+	if n > maxDiagnosticsQueries {
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("too many queries (%d); the maximum is %d", n, maxDiagnosticsQueries), nil)
+	}
+	return nil
 }
 
 // diagnosticsNoCaptureError returns the response to send when a query failed and nothing was

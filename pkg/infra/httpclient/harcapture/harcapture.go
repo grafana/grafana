@@ -90,6 +90,12 @@ func FromContext(ctx context.Context) *Buffer {
 // a transport-level failure (connection refused, DNS/TLS error, timeout) leaves resp nil and is
 // recorded in the entry's comment. Thread-safe.
 func (b *Buffer) AddEntry(req *http.Request, resp *http.Response, rtErr error, started time.Time, elapsed time.Duration) {
+	if b.Truncated() {
+		// Already over the per-request cap: skip the read/encode work below entirely, rather than
+		// doing it only to discard the result once locked.
+		return
+	}
+
 	e := buildEntry(req, resp, rtErr, started, elapsed)
 	sz := entryStoredSize(e)
 
