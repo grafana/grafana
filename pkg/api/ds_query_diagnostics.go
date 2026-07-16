@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// maxDiagnosticsQueries bounds how many queries a single-panel diagnostics request will run, so a
+// request can't trigger an unbounded number of datasource calls and captures.
+const maxDiagnosticsQueries = 100
+
 // diagnosticsRequest is the body posted by the "Download diagnostics" panel action. It carries
 // the datasource queries to run with HAR capture active, plus the optional panel and dashboard
 // definitions the client already holds (so we avoid a dashboard-service lookup).
@@ -49,6 +53,9 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	}
 	if len(reqDTO.Queries) == 0 {
 		return response.Error(http.StatusBadRequest, "at least one query is required", nil)
+	}
+	if len(reqDTO.Queries) > maxDiagnosticsQueries {
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("too many queries (%d); the maximum is %d", len(reqDTO.Queries), maxDiagnosticsQueries), nil)
 	}
 
 	captureCtx, harBuffer := harcapture.WithCapture(ctx)

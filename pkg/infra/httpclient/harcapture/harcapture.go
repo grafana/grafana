@@ -15,6 +15,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"sort"
@@ -27,6 +28,20 @@ import (
 	"github.com/chromedp/cdproto/har"
 )
 
+// Resource caps bound in-memory growth per capturing request. HAR stores full request/response
+// bodies, so without these a large or hostile datasource response could exhaust memory.
+const (
+	// maxHARBodyBytes caps a single captured request/response body; larger bodies are truncated in
+	// the HAR (a comment records the original size). The full body still flows to the caller intact.
+	maxHARBodyBytes = 8 << 20 // 8 MiB
+	// maxHARTotalBytes is a hard per-request cap on captured bytes; once reached, further entries are
+	// dropped and the buffer is marked truncated.
+	maxHARTotalBytes = 64 << 20 // 64 MiB
+	// harEntryOverhead is a rough fixed allowance per entry (headers, URL, timings) counted towards
+	// maxHARTotalBytes in addition to body bytes.
+	harEntryOverhead = 4 << 10 // 4 KiB
+)
+
 // encodeBody returns the HAR text representation of a body plus its encoding. Valid UTF-8 is stored
 // as-is; binary payloads are base64-encoded (with encoding "base64") so they survive JSON marshaling
 // intact instead of being corrupted by string() replacing invalid bytes with U+FFFD.
@@ -37,12 +52,26 @@ func encodeBody(body []byte) (text, encoding string) {
 	return base64.StdEncoding.EncodeToString(body), "base64"
 }
 
+// capBody truncates a captured body to maxHARBodyBytes before encoding, returning the HAR text, its
+// encoding, and a comment noting truncation (empty when the body fit). The raw bytes are truncated
+// (not the encoded text) so a base64 payload stays validly decodable.
+func capBody(full []byte) (text, encoding, comment string) {
+	if len(full) > maxHARBodyBytes {
+		text, encoding = encodeBody(full[:maxHARBodyBytes])
+		return text, encoding, fmt.Sprintf("body truncated: stored %d of %d bytes", maxHARBodyBytes, len(full))
+	}
+	text, encoding = encodeBody(full)
+	return text, encoding, ""
+}
+
 type contextKey struct{}
 
 // Buffer collects HTTP request/response pairs as HAR 1.2 entries in memory.
 type Buffer struct {
-	mu      sync.Mutex
-	entries []*har.Entry
+	mu        sync.Mutex
+	entries   []*har.Entry
+	total     int64 // approx captured bytes, bounded by maxHARTotalBytes
+	truncated bool  // set once the per-request cap is hit; further entries are dropped
 }
 
 // WithCapture returns a child context carrying a new Buffer and the buffer itself.
@@ -62,9 +91,19 @@ func FromContext(ctx context.Context) *Buffer {
 // recorded in the entry's comment. Thread-safe.
 func (b *Buffer) AddEntry(req *http.Request, resp *http.Response, rtErr error, started time.Time, elapsed time.Duration) {
 	e := buildEntry(req, resp, rtErr, started, elapsed)
+	sz := entryStoredSize(e)
+
 	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.truncated {
+		return
+	}
+	if b.total+sz > maxHARTotalBytes {
+		b.truncated = true // keep what we have; stop capturing further entries
+		return
+	}
 	b.entries = append(b.entries, e)
-	b.mu.Unlock()
+	b.total += sz
 }
 
 // Len returns the number of captured entries. Thread-safe.
@@ -74,6 +113,26 @@ func (b *Buffer) Len() int {
 	return len(b.entries)
 }
 
+// Truncated reports whether capture stopped early because the per-request byte cap was reached.
+func (b *Buffer) Truncated() bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.truncated
+}
+
+// entryStoredSize approximates the memory an entry occupies: the stored (possibly truncated) body
+// text plus a fixed overhead for headers/URL/timings.
+func entryStoredSize(e *har.Entry) int64 {
+	sz := int64(harEntryOverhead)
+	if e.Response != nil && e.Response.Content != nil {
+		sz += int64(len(e.Response.Content.Text))
+	}
+	if e.Request != nil && e.Request.PostData != nil {
+		sz += int64(len(e.Request.PostData.Text))
+	}
+	return sz
+}
+
 // ToHAR serializes the captured entries to HAR 1.2 JSON. The entry types come from
 // github.com/chromedp/cdproto/har -- the same library the plugin SDK's e2e HAR storage uses -- so
 // the output stays replay-compatible with that fixture format.
@@ -81,16 +140,18 @@ func (b *Buffer) ToHAR() ([]byte, error) {
 	b.mu.Lock()
 	entries := make([]*har.Entry, len(b.entries))
 	copy(entries, b.entries)
+	truncated := b.truncated
 	b.mu.Unlock()
 
-	doc := har.HAR{
-		Log: &har.Log{
-			Version: "1.2",
-			Creator: &har.Creator{Name: "Grafana", Version: "1.0"},
-			Entries: entries,
-		},
+	logEntry := &har.Log{
+		Version: "1.2",
+		Creator: &har.Creator{Name: "Grafana", Version: "1.0"},
+		Entries: entries,
 	}
-	return json.Marshal(doc)
+	if truncated {
+		logEntry.Comment = fmt.Sprintf("capture truncated: per-request limit of %d bytes reached; some entries were dropped", maxHARTotalBytes)
+	}
+	return json.Marshal(har.HAR{Log: logEntry})
 }
 
 // buildEntry builds a HAR entry from a request/response pair. Values are captured verbatim -- see the
@@ -117,10 +178,11 @@ func buildEntry(req *http.Request, resp *http.Response, rtErr error, started tim
 				// marker. base64 preserves the bytes (vs string() corrupting invalid UTF-8 to U+FFFD),
 				// but a replay tool can't tell it's base64. Accepted: datasource request bodies are
 				// text in practice, and body handling overall is a redaction/limits follow-up (#1281).
-				text, _ := encodeBody(body)
+				text, _, comment := capBody(body)
 				pd = &har.PostData{
 					MimeType: req.Header.Get("Content-Type"),
 					Text:     text,
+					Comment:  comment,
 				}
 			}
 		}
@@ -151,12 +213,13 @@ func buildEntry(req *http.Request, resp *http.Response, rtErr error, started tim
 				resp.Body = io.NopCloser(bytes.NewReader(body))
 			}
 			harResp.BodySize = int64(len(body))
-			text, encoding := encodeBody(body)
+			text, encoding, comment := capBody(body)
 			harResp.Content = &har.Content{
 				Size:     int64(len(body)),
 				MimeType: resp.Header.Get("Content-Type"),
 				Text:     text,
 				Encoding: encoding,
+				Comment:  comment,
 			}
 		}
 	}

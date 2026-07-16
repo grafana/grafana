@@ -235,6 +235,48 @@ func TestBuffer_concurrentAddEntry(t *testing.T) {
 
 // --- helpers ---
 
+func TestBuffer_bodyTruncation(t *testing.T) {
+	buf := &Buffer{}
+	body := bytes.Repeat([]byte("a"), maxHARBodyBytes+10)
+	buf.AddEntry(newGetReq(t, "http://example.com"), respWithBody(200, body), nil, time.Now(), time.Millisecond) //nolint:bodyclose
+
+	out, err := buf.ToHAR()
+	require.NoError(t, err)
+	var doc har.HAR
+	require.NoError(t, json.Unmarshal(out, &doc))
+	c := doc.Log.Entries[0].Response.Content
+	require.Equal(t, int64(len(body)), c.Size, "Content.Size reports the original (untruncated) size")
+	require.Len(t, c.Text, maxHARBodyBytes, "stored body text is capped at maxHARBodyBytes")
+	require.Contains(t, c.Comment, "body truncated")
+}
+
+func TestBuffer_perRequestTotalCap(t *testing.T) {
+	buf := &Buffer{}
+	body := bytes.Repeat([]byte("a"), maxHARBodyBytes) // 8 MiB, at the per-body cap (not itself truncated)
+	for i := 0; i < 12 && !buf.Truncated(); i++ {
+		buf.AddEntry(newGetReq(t, "http://example.com"), respWithBody(200, body), nil, time.Now(), time.Millisecond) //nolint:bodyclose
+	}
+	require.True(t, buf.Truncated(), "per-request byte cap should trip after enough large entries")
+
+	n := buf.Len()
+	buf.AddEntry(newGetReq(t, "http://example.com"), respWithBody(200, body), nil, time.Now(), time.Millisecond) //nolint:bodyclose
+	require.Equal(t, n, buf.Len(), "entries are dropped once the buffer is truncated")
+
+	out, err := buf.ToHAR()
+	require.NoError(t, err)
+	require.Contains(t, string(out), "capture truncated", "the HAR log records that capture was truncated")
+}
+
+func respWithBody(status int, body []byte) *http.Response {
+	return &http.Response{
+		StatusCode: status,
+		Status:     http.StatusText(status),
+		Proto:      "HTTP/1.1",
+		Header:     http.Header{},
+		Body:       io.NopCloser(bytes.NewReader(body)),
+	}
+}
+
 func newGetReq(t *testing.T, url string) *http.Request {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, url, nil)
