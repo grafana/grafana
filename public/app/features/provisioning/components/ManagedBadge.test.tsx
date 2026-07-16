@@ -177,27 +177,6 @@ describe('ManagedBadge', () => {
       );
     });
 
-    it('prefers an explicit sourceRef over the fragment and the configured branch', async () => {
-      setPermissions({ isEditor: true });
-      mockRepositories([makeRepository()]);
-
-      const { user } = render(
-        <ManagedBadge
-          managerKind={ManagerKind.Repo}
-          repositoryName="my-repo"
-          sourcePath="dashboards/foo.json#fragment-ref"
-          sourceRef="preview-ref"
-        />
-      );
-
-      await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
-
-      expect(await screen.findByRole('menuitem', { name: /view source file/i })).toHaveAttribute(
-        'href',
-        'https://github.com/grafana/repo/blob/preview-ref/dashboards/foo.json'
-      );
-    });
-
     it('does not set a title attribute on the dropdown trigger', async () => {
       setPermissions({ isEditor: true });
       mockRepositories([makeRepository()]);

@@ -25,13 +25,11 @@ interface ManagedBadgeProps {
    * badge becomes a dropdown exposing permission-gated actions (source file, repository admin).
    */
   repositoryName?: string;
-  /** Path of the resource's source file within the repository (`grafana.app/sourcePath`). */
-  sourcePath?: string;
   /**
-   * Branch or commit the resource was loaded from (e.g. a provisioning preview ref). Takes
-   * precedence over the repository's configured branch when building the source file link.
+   * Path of the resource's source file within the repository (`grafana.app/sourcePath`).
+   * May carry a `#ref` fragment (provisioning previews); the source link then targets that ref.
    */
-  sourceRef?: string;
+  sourcePath?: string;
 }
 
 /**
@@ -47,20 +45,11 @@ interface ManagedBadgeProps {
  * repository administration page (repository managers with `provisioning.repositories:write`).
  * Users without any available action (e.g. Viewers) get the plain, non-interactive badge.
  */
-export function ManagedBadge({
-  managerKind,
-  name,
-  isOrphaned = false,
-  repositoryName,
-  sourcePath,
-  sourceRef,
-}: ManagedBadgeProps) {
+export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
   // The interactive variant is a separate component so the RTK Query hook only runs (and only
   // requires a store context) when a repository lookup can actually yield actions.
   if (config.featureToggles.provisioning && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
-    return (
-      <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} sourceRef={sourceRef} />
-    );
+    return <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} />;
   }
 
   return <StaticManagedBadge managerKind={managerKind} name={name} isOrphaned={isOrphaned} />;
@@ -76,7 +65,6 @@ interface RepoManagedBadgeProps {
   name?: string;
   repositoryName: string;
   sourcePath?: string;
-  sourceRef?: string;
 }
 
 /**
@@ -99,7 +87,7 @@ function splitSourcePath(sourcePath?: string): { filePath?: string; fragmentRef?
  * Repository-managed variant: resolves the repository view (viewer-safe endpoint) and, when the
  * user has any permitted action, renders the badge as a dropdown trigger.
  */
-function RepoManagedBadge({ name, repositoryName, sourcePath, sourceRef }: RepoManagedBadgeProps) {
+function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadgeProps) {
   const styles = useStyles2(getStyles);
   const { repository, status } = useGetResourceRepositoryView({ name: repositoryName });
 
@@ -121,7 +109,7 @@ function RepoManagedBadge({ name, repositoryName, sourcePath, sourceRef }: RepoM
       ? getRepoFileUrl({
           repoType: repository.type,
           url: repository.url,
-          branch: sourceRef || fragmentRef || repository.branch,
+          branch: fragmentRef || repository.branch,
           filePath,
           pathPrefix: repository.path,
         })
