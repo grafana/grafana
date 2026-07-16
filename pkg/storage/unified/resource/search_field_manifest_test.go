@@ -232,9 +232,42 @@ func TestMergeManifestsByKind(t *testing.T) {
 		require.Equal(t, []string{"first"}, fieldNames(t, merged, "g.test", "v1", "foos"))
 	})
 
+	t.Run("a selectable-only manifest survives the merge", func(t *testing.T) {
+		// Its kinds declare only selectable fields (no search fields), and the merge
+		// output drives selectable-field wiring too, so it must not be dropped.
+		kind := app.ManifestVersionKind{Kind: "Foo", Plural: "foos", SelectableFields: []string{"spec.x"}}
+		in := []app.Manifest{mergeTestManifest("app", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{kind}})}
+
+		merged := MergeManifestsByKind(in)
+
+		require.NotEmpty(t, SelectableFieldsForManifests(merged))
+		require.Equal(t, SelectableFieldsForManifests(in), SelectableFieldsForManifests(merged))
+	})
+
 	t.Run("manifests without data pass through", func(t *testing.T) {
 		merged := MergeManifestsByKind([]app.Manifest{{ManifestData: nil}})
 		require.Len(t, merged, 1)
 		require.Nil(t, merged[0].ManifestData)
 	})
+}
+
+func TestSearchFieldsForManifests(t *testing.T) {
+	kind := mergeTestKind("Foo", "one")
+	kind.SelectableFields = []string{"spec.two"}
+	manifests := []app.Manifest{mergeTestManifest("app", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{kind}})}
+
+	selectable, hashes, providers, err := SearchFieldsForManifests(manifests)
+	require.NoError(t, err)
+
+	// The three inputs all come from the same manifests.
+	wantProviders, err := SearchFieldProviders(manifests)
+	require.NoError(t, err)
+	require.Equal(t, wantProviders, providers)
+	require.Equal(t, SearchFieldsHashesForProviders(wantProviders), hashes)
+	require.Equal(t, SelectableFieldsForManifests(manifests), selectable)
+
+	// The kind declares both search and selectable fields, so none is empty.
+	require.NotEmpty(t, providers)
+	require.NotEmpty(t, hashes)
+	require.NotEmpty(t, selectable)
 }
