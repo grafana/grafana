@@ -2,14 +2,17 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Drawer, Field, Select, Stack, Text } from '@grafana/ui';
+import { Alert, Button, Checkbox, Drawer, Field, Input, Select, Stack, Text } from '@grafana/ui';
 import { type Repository, type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
+import { BranchValidationError } from '../Shared/BranchValidationError';
 import { GitSyncLimitationsAlert } from '../Shared/GitSyncLimitationsAlert';
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useSyncJob } from '../Wizard/hooks/useSyncJob';
 import { type StepStatusInfo } from '../Wizard/types';
+import { generateNewBranchName } from '../components/utils/newBranchName';
+import { validateBranchName } from '../utils/git';
 
 interface MigrateDrawerProps {
   repos: Repository[];
@@ -47,20 +50,24 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   // it here in the drawer too, not just in the caller.
   const hasResourcesToMigrate = !isSelective || (resources?.length ?? 0) > 0;
 
-  // Migration writes directly to the repository's configured branch (the
-  // `write` workflow). A repository that only opens pull requests (`branch`
-  // workflow) or is read-only can't run a migration, so it stays in the list
-  // but is disabled — the note below explains how to enable it.
+  // A migration needs somewhere to land. The `write` workflow lets it commit
+  // directly to the configured branch; the `branch` workflow lets it open a
+  // pull request against another branch. A repository with neither (read-only)
+  // can't run a migration, so it stays in the list but is disabled — the note
+  // below explains how to enable it.
   const repoOptions = useMemo<Array<SelectableValue<string>>>(
     () =>
       repos
         .filter((repo) => Boolean(repo.metadata?.name))
-        .map((repo) => ({
-          label: repo.spec?.title || repo.metadata?.name || '',
-          value: repo.metadata?.name ?? '',
-          description: repo.spec?.type,
-          isDisabled: !repo.spec?.workflows.includes('write'),
-        })),
+        .map((repo) => {
+          const workflows = repo.spec?.workflows ?? [];
+          return {
+            label: repo.spec?.title || repo.metadata?.name || '',
+            value: repo.metadata?.name ?? '',
+            description: repo.spec?.type,
+            isDisabled: !workflows.includes('write') && !workflows.includes('branch'),
+          };
+        }),
     [repos]
   );
 
@@ -73,7 +80,6 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     const selectable = repoOptions.filter((option) => !option.isDisabled);
     return selectable.length === 1 ? selectable[0].value : undefined;
   });
-
   const { job, startJob, isLoading } = useSyncJob({ repoName: selectedRepo ?? '' });
   const migratedRef = useRef(false);
   // Track the job's reported status so the drawer can surface errors/warnings.
@@ -84,15 +90,52 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   const selectedRepoObj = repos.find((repo) => repo.metadata?.name === selectedRepo);
   const syncTarget = selectedRepoObj?.spec?.sync?.target;
 
+  const workflows = selectedRepoObj?.spec?.workflows ?? [];
+  const supportsWrite = workflows.includes('write');
+  const supportsBranch = workflows.includes('branch');
+  // A branch-only repo can't commit to its configured branch, so pushing to a
+  // branch (opening a pull request) is mandatory there; a write-capable repo
+  // chooses via the checkbox.
+  const branchRequired = supportsBranch && !supportsWrite;
+
+  // Unchecked by default and reset when the repository changes, so a choice made
+  // for one repo doesn't carry into another.
+  const [pushToBranch, setPushToBranch] = useState(false);
+  const pushChangesToBranch = supportsBranch && (branchRequired || pushToBranch);
+
+  // Auto-populate the target branch when pushing to a branch. Keyed on the repo
+  // and the toggle so the timestamped name is stable across renders and matches
+  // what we display and submit.
+  const generatedBranch = useMemo(
+    () => (selectedRepo && pushChangesToBranch ? generateNewBranchName(`migrate-${selectedRepo}`) : ''),
+    [selectedRepo, pushChangesToBranch]
+  );
+
+  // The generated name is only a default; the user can edit it. Re-seed the
+  // editable value whenever the generated default changes (repo or toggle
+  // change) so a name chosen for one repo doesn't carry into another.
+  const [branchRef, setBranchRef] = useState(generatedBranch);
+  const [prevGeneratedBranch, setPrevGeneratedBranch] = useState(generatedBranch);
+  if (generatedBranch !== prevGeneratedBranch) {
+    setPrevGeneratedBranch(generatedBranch);
+    setBranchRef(generatedBranch);
+  }
+
+  // When pushing to a branch the name must be a valid git ref before we submit.
+  const branchNameValid = !pushChangesToBranch || Boolean(validateBranchName(branchRef));
+
+  const canMigrate = Boolean(selectedRepo) && hasResourcesToMigrate && branchNameValid;
+
   const startMigration = useCallback(async () => {
-    if (!selectedRepo || !hasResourcesToMigrate) {
+    if (!canMigrate) {
       return;
     }
     await startJob(true, {
       syncTarget,
+      ...(branchRef ? { branch: branchRef } : {}),
       ...(isSelective ? { resources } : {}),
     });
-  }, [selectedRepo, hasResourcesToMigrate, startJob, isSelective, resources, syncTarget]);
+  }, [canMigrate, startJob, syncTarget, branchRef, isSelective, resources]);
 
   // Start a fresh job and let it replace the current one once created. We avoid
   // clearing `job` first so the drawer doesn't flash back to the setup form.
@@ -179,11 +222,56 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
                 options={repoOptions}
                 value={selectedRepo ?? null}
                 placeholder={t('provisioning.migrate.repo-placeholder', 'Select a repository')}
-                onChange={(option) => setSelectedRepo(option.value)}
+                onChange={(option) => {
+                  setSelectedRepo(option.value);
+                  setPushToBranch(false);
+                }}
               />
             )}
           </Stack>
         </Field>
+
+        {supportsBranch && (
+          <Field noMargin>
+            <Checkbox
+              label={t('provisioning.migrate.push-to-branch-label', 'Push changes to a branch')}
+              description={
+                branchRequired
+                  ? t(
+                      'provisioning.migrate.push-to-branch-required',
+                      'This repository only allows pull requests, so changes are always pushed to a branch.'
+                    )
+                  : t(
+                      'provisioning.migrate.push-to-branch-description',
+                      'Open a pull request instead of committing directly to the configured branch.'
+                    )
+              }
+              value={pushChangesToBranch}
+              disabled={branchRequired}
+              onChange={(e) => setPushToBranch(e.currentTarget.checked)}
+            />
+          </Field>
+        )}
+
+        {pushChangesToBranch && (
+          <Field
+            noMargin
+            label={t('provisioning.migrate.branch-label', 'Target branch')}
+            description={t(
+              'provisioning.migrate.branch-description-generated',
+              'Grafana creates this branch and opens the pull request for you. Edit the name to use a different branch.'
+            )}
+            invalid={!branchNameValid}
+            error={!branchNameValid ? <BranchValidationError /> : undefined}
+          >
+            <Input
+              id="migrate-target-branch"
+              width={40}
+              value={branchRef}
+              onChange={(e) => setBranchRef(e.currentTarget.value)}
+            />
+          </Field>
+        )}
 
         {hasBlockedRepos && (
           <Alert
@@ -191,9 +279,9 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
             title={t('provisioning.migrate.repo-no-push-title', 'Some repositories can’t be used for migration')}
           >
             <Trans i18nKey="provisioning.migrate.repo-no-push-body">
-              Migration pushes directly to the repository’s configured branch. Repositories that aren’t set up to allow
-              that are disabled above. To migrate into one, enable pushing to the configured branch in the repository’s
-              settings — you may also need to temporarily allow pushes to that branch in your Git provider.
+              Migration needs to write to the repository, either directly to its configured branch or through a pull
+              request. Read-only repositories are disabled above. To migrate into one, enable the write or branch
+              workflow in the repository’s settings — you may also need to allow pushes in your Git provider.
             </Trans>
           </Alert>
         )}
@@ -206,14 +294,19 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           </Button>
           <Button
             variant="primary"
-            disabled={!selectedRepo || isLoading || !hasResourcesToMigrate}
+            disabled={isLoading || !canMigrate}
             onClick={startMigration}
             tooltip={
               !selectedRepo
                 ? t('provisioning.migrate.migrate-button-disabled-tooltip', 'Select a target repository first')
                 : !hasResourcesToMigrate
                   ? t('provisioning.migrate.migrate-button-empty-tooltip', 'Select at least one resource to migrate')
-                  : undefined
+                  : !branchNameValid
+                    ? t(
+                        'provisioning.migrate.migrate-button-invalid-branch-tooltip',
+                        'Enter a valid target branch name'
+                      )
+                    : undefined
             }
           >
             {isSelective ? (

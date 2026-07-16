@@ -18,6 +18,12 @@ export interface SyncJobOptions {
   resources?: ResourceRef[];
   /** The repository's sync target, used to decide whether folder UIDs are regenerated on migrate. */
   syncTarget?: Target;
+  /**
+   * Target branch for the migration (git only). Empty (or equal to the configured branch) writes
+   * directly to the configured branch and takes ownership; a different branch writes there via a
+   * pull request and removes the migrated resources until the branch is merged.
+   */
+  branch?: string;
 }
 
 export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJobParams) {
@@ -25,7 +31,7 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
 
   const createSyncJob = useCallback(
     async (requiresMigration: boolean, options?: SyncJobOptions & { skipStatusUpdates?: boolean }) => {
-      const { skipStatusUpdates = false, resources, syncTarget } = options || {};
+      const { skipStatusUpdates = false, resources, syncTarget, branch } = options || {};
 
       if (!repoName) {
         if (!skipStatusUpdates) {
@@ -64,6 +70,10 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
                 // are migrated; otherwise the migrate object keeps the legacy
                 // "migrate everything unmanaged" behavior the wizard relies on.
                 ...(resources?.length ? { resources } : {}),
+                // Omit when empty so the backend defaults to a direct write to
+                // the configured branch; a value routes the migration through a
+                // pull request on that branch instead.
+                ...(branch ? { branch } : {}),
               },
             }
           : {
