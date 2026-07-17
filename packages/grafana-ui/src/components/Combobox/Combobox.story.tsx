@@ -120,6 +120,30 @@ export const CustomValue: Story = {
   render: BaseCombobox,
 };
 
+export const DescriptionsOnRight: Story = {
+  args: {
+    descriptionPosition: 'right',
+    placeholder: 'Type to search (city, abbreviation)',
+    value: 'default',
+    options: [
+      { label: 'Default', value: 'default', description: 'CDT UTC-05:00' },
+      { label: 'Browser Time', value: 'browser', description: 'CDT UTC-05:00' },
+      { label: 'Coordinated Universal Time', value: 'utc', description: 'UTC, GMT UTC+00:00' },
+      { label: 'UTC', value: 'zone-utc', description: 'UTC UTC+00:00' },
+      { label: 'Abidjan', value: 'africa/abidjan', description: 'GMT UTC+00:00', group: 'Africa' },
+      { label: 'Accra', value: 'africa/accra', description: 'GMT UTC+00:00', group: 'Africa' },
+      { label: 'Addis Ababa', value: 'africa/addis_ababa', description: 'EAT UTC+03:00', group: 'Africa' },
+      { label: 'Algiers', value: 'africa/algiers', description: 'CET UTC+01:00', group: 'Africa' },
+      { label: 'Cairo', value: 'africa/cairo', description: 'EEST UTC+03:00', group: 'Africa' },
+      { label: 'Adak', value: 'america/adak', description: 'HDT UTC-09:00', group: 'America' },
+      { label: 'Anchorage', value: 'america/anchorage', description: 'AKDT UTC-08:00', group: 'America' },
+      { label: 'Chicago', value: 'america/chicago', description: 'CDT UTC-05:00', group: 'America' },
+      { label: 'New York', value: 'america/new_york', description: 'EDT UTC-04:00', group: 'America' },
+    ],
+  },
+  render: BaseCombobox,
+};
+
 const onIsOpenChangeAction = action('onIsOpenChange');
 
 export const ControlledOpenState: Story = {

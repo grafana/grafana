@@ -15,10 +15,13 @@ import {
   MENU_OPTION_HEIGHT,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
-import { type ComboboxOption } from './types';
+import { type ComboboxDescriptionPosition, type ComboboxOption } from './types';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
+
+// Should match the flex gap in the optionBodyDescriptionRight style (theme.spacing(2))
+const DESCRIPTION_RIGHT_GAP = 16;
 
 // Clearance around the popover to prevent it from being too close to the edge of the viewport
 const POPOVER_PADDING = 16;
@@ -31,7 +34,11 @@ const ICON_WIDTH = 28;
 // MessageRow uses Box padding={2} = theme.spacing(2) = 16px each side
 const MESSAGE_ROW_PADDING = 32;
 
-export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
+export const useComboboxFloat = (
+  items: Array<ComboboxOption<string | number>>,
+  isOpen: boolean,
+  descriptionPosition: ComboboxDescriptionPosition = 'bottom'
+) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -97,14 +104,19 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
       : 0;
     const iconSize = longestLabelIndex > -1 && items[longestLabelIndex].icon ? ICON_WIDTH : 0;
 
-    const textWidth = Math.max(labelWidth + iconSize, descriptionWidth);
+    // Right-positioned descriptions share the line with the label, so their widths add up
+    // instead of the wider of the two winning.
+    const textWidth =
+      descriptionPosition === 'right'
+        ? labelWidth + iconSize + (descriptionWidth ? descriptionWidth + DESCRIPTION_RIGHT_GAP : 0)
+        : Math.max(labelWidth + iconSize, descriptionWidth);
     const itemWidth = textWidth + SCROLL_CONTAINER_PADDING + MENU_ITEM_PADDING * 2 + scrollbarWidth;
 
     const noOptionsText = t(NO_OPTIONS_I18N_KEY, 'No options found.');
     const noOptionsWidth = measureText(noOptionsText, MENU_ITEM_FONT_SIZE).width + MESSAGE_ROW_PADDING + scrollbarWidth;
 
     return Math.max(itemWidth, noOptionsWidth);
-  }, [items, scrollbarWidth]);
+  }, [items, scrollbarWidth, descriptionPosition]);
 
   const floatStyles = {
     ...floatingStyles,
