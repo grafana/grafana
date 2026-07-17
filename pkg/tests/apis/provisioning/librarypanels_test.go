@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // waitForSingleFolder waits until the repo's folder is listable and returns it.
@@ -137,17 +136,7 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		require.Contains(t, managedFolder.GetAnnotations(), utils.AnnoKeyManagerKind, "folder should be managed")
 		require.Contains(t, managedFolder.GetAnnotations(), utils.AnnoKeyManagerIdentity, "folder should be managed")
 
-		_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-		{
-			"op": "replace",
-			"path": "/metadata/finalizers",
-			"value": ["cleanup", "release-orphan-resources"]
-		}
-		]`), metav1.PatchOptions{})
-		require.NoError(t, err, "should successfully patch finalizers")
-
-		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		helper.WaitForRepositoryDeleted(t, repo)
+		helper.ReleaseAndDeleteRepository(t, repo)
 		common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
 		libraryElement := map[string]interface{}{

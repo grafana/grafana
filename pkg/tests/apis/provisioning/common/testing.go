@@ -1273,6 +1273,39 @@ func (h *ProvisioningTestHelper) WaitForRepositoryDeleted(t *testing.T, name str
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should be deleted", name)
 }
 
+// ReleaseAndDeleteRepository sets the release-orphan-resources finalizer on the
+// repository, deletes it, and waits until the deletion completes. Managed
+// resources are released (manager annotations stripped) rather than deleted;
+// callers that depend on the release having finished should follow up with
+// WaitForResourcesReleased on the relevant client.
+func (h *ProvisioningTestHelper) ReleaseAndDeleteRepository(t *testing.T, name string) {
+	t.Helper()
+	_, err := h.Repositories.Resource.Patch(t.Context(), name, types.JSONPatchType, []byte(`[
+		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
+	]`), metav1.PatchOptions{})
+	require.NoError(t, err, "should successfully patch finalizers")
+	require.NoError(t, h.Repositories.Resource.Delete(t.Context(), name, metav1.DeleteOptions{}))
+	h.WaitForRepositoryDeleted(t, name)
+}
+
+// RequireRepoFileExists asserts the repository serves a file at the given path
+// via the files subresource.
+func (h *ProvisioningTestHelper) RequireRepoFileExists(t *testing.T, repo string, path ...string) {
+	t.Helper()
+	subresources := append([]string{"files"}, path...)
+	_, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, subresources...)
+	require.NoError(t, err, "file %s should exist in repository %s", strings.Join(path, "/"), repo)
+}
+
+// RequireRepoFileNotFound asserts the repository has no file at the given path.
+func (h *ProvisioningTestHelper) RequireRepoFileNotFound(t *testing.T, repo string, path ...string) {
+	t.Helper()
+	subresources := append([]string{"files"}, path...)
+	_, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, subresources...)
+	require.True(t, apierrors.IsNotFound(err),
+		"file %s should not exist in repository %s, got: %v", strings.Join(path, "/"), repo, err)
+}
+
 // WaitForResourcesReleased polls until every item returned by client no longer
 // carries provisioning-manager annotations — i.e. the release-orphan-resources
 // finalizer has finished handing the objects back to the user.
@@ -2942,6 +2975,19 @@ func NewUnmanagedDashboard(apiVersion, title, folderUID string) *unstructured.Un
 			},
 		},
 	}
+}
+
+// CreateUnmanagedFolderWithName creates a folder with no manager annotations
+// using an explicit name instead of a generated one. Pass "" for parentUID to
+// create a root folder.
+func (h *ProvisioningTestHelper) CreateUnmanagedFolderWithName(t *testing.T, name, title, parentUID string) {
+	t.Helper()
+	folder := NewUnmanagedFolder(title, parentUID)
+	metadata := folder.Object["metadata"].(map[string]interface{})
+	delete(metadata, "generateName")
+	metadata["name"] = name
+	_, err := h.Folders.Resource.Create(t.Context(), folder, metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged folder %q", name)
 }
 
 // CreateUnmanagedFolder creates a folder with no manager annotations under the

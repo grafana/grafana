@@ -23,7 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -1068,8 +1067,7 @@ func TestIntegrationProvisioning_DashboardStrictValidationExempted(t *testing.T)
 
 	// The dry run through the files endpoint must succeed despite the unknown
 	// field, because dashboards are exempt from strict validation.
-	_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard-unknown-field.json")
-	require.NoError(t, err, "dry run of a dashboard with an unknown field should succeed while dashboards are exempt from strict validation")
+	helper.RequireRepoFileExists(t, repo, "dashboard-unknown-field.json")
 
 	// The dashboard must exist in Grafana after sync.
 	const dashboardUID = "dashboard-unknown-field"
@@ -1802,19 +1800,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
 	}
 
-	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-		{
-			"op": "replace",
-			"path": "/metadata/finalizers",
-			"value": ["cleanup", "release-orphan-resources"]
-		}
-	]`), metav1.PatchOptions{})
-	require.NoError(t, err, "should successfully patch finalizers")
-
-	err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
-	require.NoError(t, err, "should delete repository")
-
-	helper.WaitForRepositoryDeleted(t, repo)
+	helper.ReleaseAndDeleteRepository(t, repo)
 	common.WaitForResourcesReleased(t, helper.DashboardsV1.Resource, "dashboards")
 	common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 }
@@ -1888,15 +1874,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
 		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
 
-		_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-			{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
-		]`), metav1.PatchOptions{})
-		require.NoError(t, err, "should successfully patch finalizers")
-
-		err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
-		require.NoError(t, err, "should delete repository")
-
-		helper.WaitForRepositoryDeleted(t, repo)
+		helper.ReleaseAndDeleteRepository(t, repo)
 
 		dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "finalizer-release-classic-uid", metav1.GetOptions{})
 		require.NoError(t, err, "classic dashboard should still exist after release")

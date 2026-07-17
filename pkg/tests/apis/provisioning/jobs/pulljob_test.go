@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -165,13 +164,7 @@ func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 
 	// Mimic "Delete and keep resources" from the UI: ensure the
 	// release-orphan-resources finalizer is set, then delete the repo.
-	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
-	]`), metav1.PatchOptions{})
-	require.NoError(t, err, "should patch finalizers")
-
-	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-	helper.WaitForRepositoryDeleted(t, repo)
+	helper.ReleaseAndDeleteRepository(t, repo)
 	common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
 	orphan, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})

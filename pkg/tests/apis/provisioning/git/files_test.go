@@ -49,9 +49,7 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 		require.NoError(t, result.Error(), "should create file on default branch")
 
 		// Verify file exists in repository
-		fileObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files", "dashboard1.json")
-		require.NoError(t, err, "file should exist in repository")
-		require.NotNil(t, fileObj)
+		helper.RequireRepoFileExists(t, repoName, "dashboard1.json")
 
 		// Trigger sync and verify dashboard is created
 		helper.SyncAndWait(t, repoName)
@@ -318,11 +316,8 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "should move file on default branch")
 
 		// Verify file moved
-		_, err = helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files", "moved", "dashboard.json")
-		require.NoError(t, err, "file should exist at new location")
-
-		_, err = helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files", "dashboard.json")
-		require.Error(t, err, "file should not exist at old location")
+		helper.RequireRepoFileExists(t, repoName, "moved", "dashboard.json")
+		helper.RequireRepoFileNotFound(t, repoName, "dashboard.json")
 	})
 }
 

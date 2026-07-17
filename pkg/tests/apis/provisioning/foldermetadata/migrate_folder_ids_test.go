@@ -52,8 +52,8 @@ func TestIntegrationProvisioning_MigrateJob_GenerateNewFolderIDs(t *testing.T) {
 		Workflows:  []string{"write"},
 	})
 
-	createUnmanagedFolder(t, helper, parentUID, parentTitle)
-	createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
+	helper.CreateUnmanagedFolderWithName(t, parentUID, parentTitle, "")
+	helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, parentUID)
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,

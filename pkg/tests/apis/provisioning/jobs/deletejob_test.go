@@ -58,8 +58,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		helper.DebugState(t, repo, "BEFORE DELETE")
 
 		// Verify file exists in repository before attempting delete
-		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard1.json")
-		require.NoError(t, err, "dashboard1.json should exist in repository before delete")
+		helper.RequireRepoFileExists(t, repo, "dashboard1.json")
 
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
@@ -73,21 +72,15 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		// Debug state after successful delete
 		helper.DebugState(t, repo, "AFTER DELETE")
 
-		// FIXME: create a helper to verify repository files
-
 		// Verify file is deleted from repository
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard1.json")
-		require.Error(t, err, "file should be deleted from repository")
-		require.True(t, apierrors.IsNotFound(err), "should be not found error")
+		helper.RequireRepoFileNotFound(t, repo, "dashboard1.json")
 
 		// Verify dashboard is removed from Grafana after sync
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Verify other files still exist
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard2.json")
-		require.NoError(t, err, "other files should still exist")
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
-		require.NoError(t, err, "nested files should still exist")
+		helper.RequireRepoFileExists(t, repo, "dashboard2.json")
+		helper.RequireRepoFileExists(t, repo, "folder", "dashboard3.json")
 	})
 
 	t.Run("delete multiple files", func(t *testing.T) {
@@ -99,15 +92,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		}
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
-		// FIXME: use helper
 		// Verify files are deleted from repository
-		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard2.json")
-		require.Error(t, err, "dashboard2.json should be deleted")
-		require.True(t, apierrors.IsNotFound(err))
-
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
-		require.Error(t, err, "folder/dashboard3.json should be deleted")
-		require.True(t, apierrors.IsNotFound(err))
+		helper.RequireRepoFileNotFound(t, repo, "dashboard2.json")
+		helper.RequireRepoFileNotFound(t, repo, "folder", "dashboard3.json")
 
 		// Verify all dashboards are removed from Grafana after sync
 		helper.RequireRepoDashboardCount(t, repo, 0)
@@ -164,20 +151,15 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
-			// FIXME: use helpers
 			// Verify corresponding file is deleted from repository
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "resource-test-1.json")
-			require.Error(t, err, "file should be deleted from repository")
-			require.True(t, apierrors.IsNotFound(err), "should be not found error")
+			helper.RequireRepoFileNotFound(t, repo, "resource-test-1.json")
 
 			// Verify dashboard is removed from Grafana (check count like other successful tests)
 			helper.RequireRepoDashboardCount(t, repo, 2)
 
 			// Verify other resources still exist
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "resource-test-2.json")
-			require.NoError(t, err, "other files should still exist")
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "nested", "resource-test-3.json")
-			require.NoError(t, err, "nested files should still exist")
+			helper.RequireRepoFileExists(t, repo, "resource-test-2.json")
+			helper.RequireRepoFileExists(t, repo, "nested", "resource-test-3.json")
 		})
 
 		t.Run("delete multiple resources by reference", func(t *testing.T) {
@@ -211,11 +193,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			require.True(t, apierrors.IsNotFound(err))
 
 			// Verify corresponding files are deleted from repository
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "resource-test-2.json")
-			require.Error(t, err, "resource-test-2.json should be deleted")
-
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "nested", "resource-test-3.json")
-			require.Error(t, err, "nested/resource-test-3.json should be deleted")
+			helper.RequireRepoFileNotFound(t, repo, "resource-test-2.json")
+			helper.RequireRepoFileNotFound(t, repo, "nested", "resource-test-3.json")
 
 			// Verify specific dashboards are removed from Grafana
 			helper.RequireRepoDashboardCount(t, repo, 0)
@@ -267,14 +246,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			require.NoError(t, err, "untargeted dashboard should still exist")
 
 			// Verify files are properly deleted/preserved in repository
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "mixed-test-1.json")
-			require.Error(t, err, "file deleted by path should be removed")
-
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "mixed-test-2.json")
-			require.Error(t, err, "file for resource deleted by ref should be removed")
-
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "mixed-test-3.json")
-			require.NoError(t, err, "untargeted file should still exist")
+			helper.RequireRepoFileNotFound(t, repo, "mixed-test-1.json")
+			helper.RequireRepoFileNotFound(t, repo, "mixed-test-2.json")
+			helper.RequireRepoFileExists(t, repo, "mixed-test-3.json")
 		})
 
 		t.Run("delete folder by resource reference", func(t *testing.T) {
@@ -306,8 +280,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			testFolderName := testFolder.GetName()
 
 			// Verify dashboard inside the folder exists
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "test-folder", "dashboard-in-folder.json")
-			require.NoError(t, err, "dashboard inside folder should exist")
+			helper.RequireRepoFileExists(t, repo, "test-folder", "dashboard-in-folder.json")
 
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
@@ -325,14 +298,12 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			// FIXME: use helpers
 			// Verify folder is deleted from Grafana
-			_, err = helper.Folders.Resource.Get(t.Context(), testFolderName, metav1.GetOptions{})
+			_, err := helper.Folders.Resource.Get(t.Context(), testFolderName, metav1.GetOptions{})
 			require.Error(t, err, "folder should be deleted from Grafana")
 			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
 			// Verify folder contents are also deleted from repository
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "test-folder", "dashboard-in-folder.json")
-			require.Error(t, err, "dashboard inside deleted folder should also be deleted")
-			require.True(t, apierrors.IsNotFound(err), "should be not found error")
+			helper.RequireRepoFileNotFound(t, repo, "test-folder", "dashboard-in-folder.json")
 		})
 
 		t.Run("delete non-existent resource by reference", func(t *testing.T) {

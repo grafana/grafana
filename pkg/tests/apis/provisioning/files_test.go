@@ -125,8 +125,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "should return MethodNotAllowed for configured branch folder delete")
 
 		// Verify a file inside the folder still exists (operation was rejected)
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "folder", "dashboard2.json")
-		require.NoError(t, err, "file inside folder should still exist after rejected delete")
+		helper.RequireRepoFileExists(t, repo, "folder", "dashboard2.json")
 	})
 
 	t.Run("deleting a non-existent file should fail", func(t *testing.T) {
@@ -180,12 +179,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
 		// Verify file was moved - read from new location
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
-		require.NoError(t, err, "file should exist at new location")
+		helper.RequireRepoFileExists(t, repo, "moved", "simple-move.json")
 
 		// Verify file no longer exists at old location
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "all-panels.json")
-		require.Error(t, err, "file should not exist at old location")
+		helper.RequireRepoFileNotFound(t, repo, "all-panels.json")
 	})
 
 	t.Run("move file without content change on branch should succeed", func(t *testing.T) {
@@ -242,12 +239,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
 		// File should exist at new location
-		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
-		require.NoError(t, err, "file should exist at new nested location")
+		helper.RequireRepoFileExists(t, repo, "deep", "nested", "timeline.json")
 
 		// File should not exist at original location
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", sourceFile)
-		require.Error(t, err, "file should not exist at original location after move")
+		helper.RequireRepoFileNotFound(t, repo, sourceFile)
 	})
 
 	t.Run("move file with content update on configured branch should succeed", func(t *testing.T) {
@@ -282,8 +277,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, "Text options", title, "content should be updated")
 
 		// Source file should not exist anymore
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", sourcePath)
-		require.Error(t, err, "source file should not exist after move")
+		helper.RequireRepoFileNotFound(t, repo, sourcePath)
 	})
 
 	t.Run("move directory on configured branch should return MethodNotAllowed", func(t *testing.T) {
@@ -315,8 +309,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "directory move on configured branch should return MethodNotAllowed")
 
 		// Verify files in source directory still exist (operation was rejected)
-		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "source-dir", "timeline-demo.json")
-		require.NoError(t, err, "file in source directory should still exist after rejected move")
+		helper.RequireRepoFileExists(t, repo, "source-dir", "timeline-demo.json")
 	})
 
 	t.Run("error cases", func(t *testing.T) {
@@ -931,7 +924,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 
 	// Grant view permission to Viewer role for the initial dashboard
 	setDashboardPermissions([]map[string]interface{}{
-		{"role": "Viewer", "permission": 1}, // View permission
+		{"role": "Viewer", "permission": common.FolderPermissionView},
 	})
 
 	t.Run("GET operations", func(t *testing.T) {
@@ -1148,8 +1141,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 
 			// Verify file still exists
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "delete-viewer-test.json")
-			require.NoError(t, err, "file should still exist after failed delete")
+			helper.RequireRepoFileExists(t, repo, "delete-viewer-test.json")
 		})
 
 		t.Run("editor can DELETE files", func(t *testing.T) {
@@ -1165,9 +1157,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 			// Verify file was deleted
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "delete-editor-test.json")
-			require.Error(t, err, "file should be deleted")
-			require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted file")
+			helper.RequireRepoFileNotFound(t, repo, "delete-editor-test.json")
 		})
 
 		t.Run("admin can DELETE files", func(t *testing.T) {
@@ -1183,9 +1173,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 			// Verify file was deleted
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "delete-admin-test.json")
-			require.Error(t, err, "file should be deleted")
-			require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted file")
+			helper.RequireRepoFileNotFound(t, repo, "delete-admin-test.json")
 		})
 	})
 

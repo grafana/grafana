@@ -72,20 +72,10 @@ func TestIntegrationFolderOwnerRefs_UnprovisionedFolders(t *testing.T) {
 	t.Run("should set ownerReferences when folder is released", func(t *testing.T) {
 		managedFolderName := helper.ListRepoFolders(t, repo)[0].GetName()
 
-		_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-		{
-			"op": "replace",
-			"path": "/metadata/finalizers",
-			"value": ["cleanup", "release-orphan-resources"]
-		}
-		]`), metav1.PatchOptions{})
-		require.NoError(t, err, "should successfully patch finalizers")
-
-		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		helper.WaitForRepositoryDeleted(t, repo)
+		helper.ReleaseAndDeleteRepository(t, repo)
 		common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
-		_, err = helper.Folders.Resource.Patch(t.Context(), managedFolderName, types.JSONPatchType, ownerRefsPatch, metav1.PatchOptions{})
+		_, err := helper.Folders.Resource.Patch(t.Context(), managedFolderName, types.JSONPatchType, ownerRefsPatch, metav1.PatchOptions{})
 		require.NoError(t, err, "should set ownerReferences on released folder")
 
 		updated, err := helper.Folders.Resource.Get(t.Context(), managedFolderName, metav1.GetOptions{})

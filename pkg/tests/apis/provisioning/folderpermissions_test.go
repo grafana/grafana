@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // We currently block permission updates for folders managed by provisioning.
@@ -32,7 +31,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 			"items": []map[string]interface{}{
 				{
 					"role":       "Viewer",
-					"permission": 1, // View permission
+					"permission": common.FolderPermissionView,
 				},
 			},
 		}
@@ -64,32 +63,10 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	t.Run("should update permissions when folder is released", func(t *testing.T) {
 		managedFolderName := helper.ListRepoFolders(t, repo)[0].GetName()
 
-		_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-		{
-			"op": "replace",
-			"path": "/metadata/finalizers",
-			"value": ["cleanup", "release-orphan-resources"]
-		}
-		]`), metav1.PatchOptions{})
-		require.NoError(t, err, "should successfully patch finalizers")
-
-		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		helper.WaitForRepositoryDeleted(t, repo)
+		helper.ReleaseAndDeleteRepository(t, repo)
 		common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
-		permissionsPayload := map[string]interface{}{
-			"items": []map[string]interface{}{
-				{
-					"role":       "Viewer",
-					"permission": 1, // View permission
-				},
-			},
-		}
-		permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", managedFolderName)
-		permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, code)
-		require.NotNil(t, permissionsData)
+		common.SetFolderPermissions(t, helper, managedFolderName, common.RolePermission{Role: "Viewer", Permission: common.FolderPermissionView})
 	})
 
 	t.Run("should update permissions for unmanaged folder", func(t *testing.T) {
@@ -109,19 +86,6 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdFolder)
 
-		unmanagedFolderName := createdFolder.GetName()
-		permissionsPayload := map[string]interface{}{
-			"items": []map[string]interface{}{
-				{
-					"role":       "Editor",
-					"permission": 2, // Edit permission
-				},
-			},
-		}
-		permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", unmanagedFolderName)
-		permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, code)
-		require.NotNil(t, permissionsData)
+		common.SetFolderPermissions(t, helper, createdFolder.GetName(), common.RolePermission{Role: "Editor", Permission: common.FolderPermissionEdit})
 	})
 }
