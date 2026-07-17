@@ -671,6 +671,10 @@ export const TooltipPlugin2 = ({
 
         transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
 
+        // Anchor the hover tooltip to the bottom-right corner instead of following the cursor,
+        // so it never occludes the series directly under the pointer.
+        transform = `translateX(calc(100vw - 100% - ${TOOLTIP_OFFSET}px)) translateY(calc(100vh - 100% - ${TOOLTIP_OFFSET}px))`;
+
         if (domRef.current != null) {
           domRef.current.style.transform = transform;
         } else {
