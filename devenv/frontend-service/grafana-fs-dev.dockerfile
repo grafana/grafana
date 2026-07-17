@@ -34,4 +34,10 @@ ADD devenv/frontend-service/build/grafana bin/grafana
 COPY public/build/assets-manifest-react19.json public/build/assets-manifest-react19.json
 COPY public/build/boot.js public/build/boot.js
 
+RUN groupadd --system grafana && \
+    useradd --system --gid grafana --no-create-home grafana && \
+    chown -R grafana:grafana /grafana
+
+USER grafana
+
 ENTRYPOINT ["bin/grafana", "server"]
