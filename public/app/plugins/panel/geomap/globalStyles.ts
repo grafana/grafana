@@ -62,16 +62,16 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.secondary, // rgba(255,255,255,0.6);
     },
     '.ol-control button': {
-      color: theme.colors.secondary.text, // white;
-      backgroundColor: theme.colors.secondary.main, // rgba(0,60,136,0.5);
+      color: theme.colors.primary.contrastText,
+      backgroundColor: theme.colors.primary.main,
     },
     '.ol-control button:hover': {
-      color: theme.colors.secondary.text,
-      backgroundColor: theme.colors.secondary.shade, // rgba(0,60,136,0.5);
+      color: theme.colors.primary.contrastText,
+      backgroundColor: theme.colors.primary.shade,
     },
     '.ol-control button:focus': {
-      color: theme.colors.secondary.text,
-      backgroundColor: theme.colors.secondary.main, // rgba(0,60,136,0.5);
+      color: theme.colors.primary.contrastText,
+      backgroundColor: theme.colors.primary.main,
     },
     '.ol-attribution ul': {
       color: theme.colors.text.primary, //  #000;
