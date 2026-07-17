@@ -89,9 +89,11 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
                       <Text variant="h2" color="primary">
                         {selected.stats.primary}
                       </Text>
-                      <Text variant="body" color="secondary">
-                        {selected.stats.secondary}
-                      </Text>
+                      {selected.stats.secondary && (
+                        <Text variant="body" color="secondary">
+                          {selected.stats.secondary}
+                        </Text>
+                      )}
                     </Stack>
                   )
                 )}

@@ -10934,6 +10934,14 @@
         "title": "Kubernetes Monitoring",
         "view": "View"
       },
+      "metrics": {
+        "action": "Open metrics",
+        "active-series-24h": "Active series · last 24h",
+        "data-points-per-minute": "{{value}} data points/min",
+        "data-points-per-minute-24h": "Data points/min · last 24h",
+        "series": "{{value}} series",
+        "title": "Metrics & infrastructure"
+      },
       "next": "Next",
       "pause": "Pause",
       "previous": "Previous",
