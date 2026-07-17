@@ -133,6 +133,16 @@ describe('SqlExpr', () => {
     expect(updatedQuery.expression.toUpperCase()).toContain('SELECT');
   });
 
+  it('uses a placeholder table when initializing without refIds', async () => {
+    const onChange = jest.fn();
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={[]} query={query} queries={[]} />);
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(onChange.mock.calls[0][0].expression).toContain('FROM\n  `table name`');
+  });
+
   it('preserves existing expressions when mounted', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
@@ -162,6 +172,32 @@ describe('SqlExpr', () => {
       })
     );
     expect(SqlEditorMock).not.toHaveBeenCalled();
+  });
+
+  it('quotes legacy editor table completions that contain spaces', async () => {
+    render(
+      <SqlExpr
+        onChange={jest.fn()}
+        refIds={[{ value: 'table A' }]}
+        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM `table A`' } as ExpressionQuery}
+        queries={[]}
+      />
+    );
+
+    const getCompletionProvider = SQLEditorMock.mock.calls[0][0].language?.completionProvider;
+    if (!getCompletionProvider) {
+      throw new Error('Expected legacy completion provider');
+    }
+
+    const monaco = {} as Parameters<typeof getCompletionProvider>[0];
+    const sqlLanguage = {} as Parameters<typeof getCompletionProvider>[1];
+    const completionProvider = getCompletionProvider(monaco, sqlLanguage);
+    const resolveTables = completionProvider.tables?.resolve;
+    if (!resolveTables) {
+      throw new Error('Expected legacy table completion resolver');
+    }
+
+    await expect(resolveTables(null)).resolves.toEqual([{ name: 'table A', completion: '`table A`' }]);
   });
 
   it('uses the CodeMirror SQL editor when sqlExpressionsCodeMirror is enabled', () => {
