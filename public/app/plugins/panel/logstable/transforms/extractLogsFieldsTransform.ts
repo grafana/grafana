@@ -1,6 +1,11 @@
-import { type DataFrame, DataFrameType, type Field, FieldType } from '@grafana/data';
+import { type DataFrame, DataFrameType, type DataTransformerConfig, type Field, FieldType } from '@grafana/data';
 
-export function extractLogsFieldsTransform(dataFrame: DataFrame) {
+export function extractLogsFieldsTransform(dataFrame: DataFrame): DataTransformerConfig[] {
+  // Fields may already have been extracted upstream, if so: skip by returning no transforms
+  if (dataFrame?.meta?.custom?.extracted) {
+    return [];
+  }
+
   return dataFrame?.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
       const isFieldLokiLabels =

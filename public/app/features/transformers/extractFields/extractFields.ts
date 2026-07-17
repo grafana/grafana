@@ -47,13 +47,14 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
 
   const ext = fieldExtractors.getIfExists(options.format ?? FieldExtractorID.Auto);
   if (!ext) {
-    throw new Error('unkonwn extractor');
+    throw new Error('unknown extractor');
   }
 
   const count = frame.length;
   const names: string[] = []; // keep order
   const values = new Map<string, unknown[]>();
   const parse = ext.getParser(options);
+  frame.meta = { ...frame.meta, custom: { ...frame.meta?.custom, extracted: true } };
 
   for (let i = 0; i < count; i++) {
     let obj = source.values[i];
