@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -225,8 +224,6 @@ func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClient
 		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
 	), nil
 }
-
-var authLogger = log.New("resource-client-auth-interceptor")
 
 func IDTokenExtractor(ctx context.Context) (string, error) {
 	if identity.IsServiceIdentity(ctx) {
