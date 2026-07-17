@@ -29,6 +29,7 @@ type K8sHandler interface {
 	Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error)
 	Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error)
 	Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, orgID int64, opts v1.PatchOptions) (*unstructured.Unstructured, error)
 	Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, orgID int64, listOptions v1.ListOptions) error
 	List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error)
