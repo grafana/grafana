@@ -27,6 +27,7 @@ import { collectUnsubs, str } from './utils';
  *   - timeout: 1 hour — no end condition fires (generous to account for reading docs mid-setup)
  *
  * Silent interactions added by this journey:
+ *   - connections_datasource_list_add_datasource_clicked — emitted in DataSourceAddButton.tsx on click
  *   - connections_new_datasource_cancelled — emitted in NewDataSource.tsx on Cancel click
  *   - connections_datasource_deleted — emitted in datasources/state/hooks.ts on delete confirm
  *   - connections_datasource_config_page_left — emitted in EditDataSource.tsx on component unmount

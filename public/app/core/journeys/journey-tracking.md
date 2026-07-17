@@ -296,7 +296,7 @@ User adds and configures a new datasource until a successful connection test.
 | End (abandoned) | `connections_datasource_config_page_left`                     | User navigated away without testing             |
 | End (abandoned) | `connections_new_datasource_page_left` (no type selected yet) | User left the catalog without picking a plugin  |
 
-**Silent interactions added by this journey:** `connections_new_datasource_cancelled`, `connections_datasource_deleted`, `connections_datasource_config_page_left`, `connections_new_datasource_page_view`, `connections_new_datasource_page_left`.
+**Silent interactions added by this journey:** `connections_datasource_list_add_datasource_clicked`, `connections_new_datasource_cancelled`, `connections_datasource_deleted`, `connections_datasource_config_page_left`, `connections_new_datasource_page_view`, `connections_new_datasource_page_left`.
 
 **Key behavior:** The same event (`grafana_ds_test_datasource_clicked`) is either a `test_failed` step or a `success` end depending on the `success` property - this is the classic "dual-meaning event" case that drove the hybrid design choice. `connections_new_datasource_page_left` is ignored after a plugin is selected, because choosing a type unmounts the catalog while navigating to the config page. 1-hour timeout tolerates reading docs mid-setup.
 
