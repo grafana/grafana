@@ -11,6 +11,7 @@ import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
+import { ErrorModal } from '../ErrorModal';
 
 import { type MuteTiming, useDeleteMuteTiming } from './useMuteTimings';
 
@@ -24,6 +25,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
     alertmanager: alertManagerSourceName!,
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
+  const [deleteError, setDeleteError] = useState<unknown>();
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
   const updateAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Update, context: muteTiming });
   const deleteAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: muteTiming });
@@ -95,14 +97,19 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         )}
         confirmText={t('alerting.common.delete', 'Delete')}
         onConfirm={async () => {
-          await deleteMuteTiming.execute({
-            name: muteTiming?.metadata?.name ?? muteTiming.name,
-          });
-
-          closeDeleteModal();
+          try {
+            await deleteMuteTiming.execute({
+              name: muteTiming?.metadata?.name ?? muteTiming.name,
+            });
+          } catch (error) {
+            setDeleteError(error);
+          } finally {
+            closeDeleteModal();
+          }
         }}
         onDismiss={closeDeleteModal}
       />
+      <ErrorModal isOpen={deleteError !== undefined} onDismiss={() => setDeleteError(undefined)} error={deleteError} />
       {ExportDrawer}
     </>
   );
