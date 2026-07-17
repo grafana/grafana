@@ -60,10 +60,9 @@ export class PostHogBackend implements EchoBackend<PageviewEchoEvent, PostHogBac
       // array.js replays pending init() calls from the standard snippet's _i queue rather than
       // from the array above, so register init in that format or the token is silently dropped.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-      const ph = tempPosthog as Record<string, any>;
-      ph.__SV = 1;
-      ph._i = ph._i || [];
-      ph._i.push([options.postHogToken, { api_host: apiHost }, '']);
+      (tempPosthog as Record<string, any>).__SV = 1;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+      (tempPosthog as Record<string, any>)._i = [[options.postHogToken, { api_host: apiHost }, '']];
 
       loadScript(`${apiHost}/static/array.js`, true);
     } else {
