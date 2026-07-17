@@ -18,12 +18,14 @@ const makeProps = (propOverrides?: Partial<RichHistoryQueriesTabProps>): RichHis
     queries: [],
     totalQueries: 0,
     loading: false,
+    loadError: false,
     updateFilters: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     loadMoreRichHistory: jest.fn(),
     activeDatasources: ['test-ds'],
     listOfDatasources: [{ name: 'test-ds', uid: 'test-123' }],
     isLoadingDatasources: false,
+    dsListError: false,
     richHistorySearchFilters: {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -127,5 +129,46 @@ describe('RichHistoryQueriesTab', () => {
     // Once resolved, it seeds exactly once, using the now-populated active datasources.
     expect(updateFiltersSpy).toHaveBeenCalledTimes(1);
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ datasourceFilters: ['test-ds'] }));
+  });
+
+  it('shows a datasource-list error instead of results when the list fails in active-only mode', () => {
+    setup({
+      dsListError: true,
+      richHistorySettings: {
+        retentionPeriod: 7,
+        starredTabAsFirstTab: false,
+        activeDatasourcesOnly: true,
+        lastUsedDatasourceFilters: [],
+      },
+    });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
+
+  it('hides the partial-results "Load more" footer when loadError is true, even with stale partial results', () => {
+    setup({
+      loadError: true,
+      queries: [
+        {
+          id: '1',
+          createdAt: 1,
+          datasourceUid: 'test-123',
+          datasourceName: 'test-ds',
+          starred: false,
+          comment: '',
+          queries: [],
+        },
+      ],
+      totalQueries: 2,
+      richHistorySearchFilters: {
+        search: '',
+        sortOrder: SortOrder.Descending,
+        datasourceFilters: ['test-ds'],
+        from: 0,
+        to: 30,
+        starred: false,
+      },
+    });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
   });
 });

@@ -33,7 +33,7 @@ export interface RichHistoryProps {
   richHistorySearchFilters?: RichHistorySearchFilters;
   updateHistorySettings: (settings: RichHistorySettings) => void;
   updateHistorySearchFilters: (filters: RichHistorySearchFilters) => void;
-  loadRichHistory: () => void;
+  loadRichHistory: () => Promise<void>;
   loadMoreRichHistory: () => void;
   clearRichHistoryResults: () => void;
   deleteRichHistory: () => void;
@@ -46,6 +46,7 @@ export function RichHistory(props: RichHistoryProps) {
   const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
@@ -62,8 +63,12 @@ export function RichHistory(props: RichHistoryProps) {
   };
 
   const loadRichHistory = debounce(() => {
-    props.loadRichHistory();
     setLoading(true);
+    setLoadError(false);
+    props.loadRichHistory().catch(() => {
+      setLoading(false);
+      setLoadError(true);
+    });
   }, 300);
 
   const onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
@@ -80,10 +85,15 @@ export function RichHistory(props: RichHistoryProps) {
 
   useEffect(() => {
     setLoading(false);
+    setLoadError(false);
   }, [richHistory]);
 
   const exploreActiveDS = useSelector(selectExploreDSMaps);
-  const { items: dataSourceItems, isLoading: isLoadingDatasources } = useDataSourceInstanceList({ mixed: true });
+  const {
+    items: dataSourceItems,
+    isLoading: isLoadingDatasources,
+    error: dsListError,
+  } = useDataSourceInstanceList({ mixed: true });
   const listOfDatasources = useMemo(
     () => dataSourceItems.map((ds) => ({ name: ds.name, uid: ds.uid })),
     [dataSourceItems]
@@ -100,6 +110,7 @@ export function RichHistory(props: RichHistoryProps) {
         queries={richHistory}
         totalQueries={richHistoryTotal || 0}
         loading={loading}
+        loadError={loadError}
         updateFilters={updateFilters}
         clearRichHistoryResults={() => props.clearRichHistoryResults()}
         loadMoreRichHistory={() => props.loadMoreRichHistory()}
@@ -109,6 +120,7 @@ export function RichHistory(props: RichHistoryProps) {
         activeDatasources={activeDatasources}
         listOfDatasources={listOfDatasources}
         isLoadingDatasources={isLoadingDatasources}
+        dsListError={!!dsListError}
       />
     ),
     icon: 'history',
@@ -122,11 +134,16 @@ export function RichHistory(props: RichHistoryProps) {
         queries={richHistory}
         totalQueries={richHistoryTotal || 0}
         loading={loading}
+        loadError={loadError}
         updateFilters={updateFilters}
         clearRichHistoryResults={() => props.clearRichHistoryResults()}
         loadMoreRichHistory={() => props.loadMoreRichHistory()}
         richHistorySettings={props.richHistorySettings}
         richHistorySearchFilters={props.richHistorySearchFilters}
+        activeDatasources={activeDatasources}
+        listOfDatasources={listOfDatasources}
+        isLoadingDatasources={isLoadingDatasources}
+        dsListError={!!dsListError}
       />
     ),
     icon: 'star',

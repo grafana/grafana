@@ -47,7 +47,7 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     richHistoryTotal: 0,
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
-    loadRichHistory: jest.fn(),
+    loadRichHistory: jest.fn().mockResolvedValue(undefined),
     loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     onClose: jest.fn(),
@@ -120,5 +120,14 @@ describe('RichHistory', () => {
     expect(updateHistorySearchFilters).toHaveBeenLastCalledWith(
       expect.objectContaining({ datasourceFilters: [], starred: true })
     );
+  });
+
+  it('clears loading and shows an error when the history fetch rejects', async () => {
+    const loadRichHistory = jest.fn().mockRejectedValue(new Error('boom'));
+    setup({ loadRichHistory });
+
+    // The debounced load fires ~300ms after mount; findBy polls until the rejection settles.
+    expect(await screen.findByRole('alert', {}, { timeout: 2000 })).toBeInTheDocument();
+    expect(screen.queryByText('Loading results...')).not.toBeInTheDocument();
   });
 });
