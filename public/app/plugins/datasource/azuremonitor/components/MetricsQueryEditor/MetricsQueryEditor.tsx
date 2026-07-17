@@ -34,6 +34,16 @@ interface MetricsQueryEditorProps {
 const supportsMultipleResources = (namespace?: string): boolean =>
   multiResourceCompatibleTypes[namespace?.toLocaleLowerCase() ?? ''] ?? false;
 
+// isBatchableNamespace reports whether a metric namespace can be queried through the
+// Metrics Batch API. Guest OS metrics ("azure.vm.*") and legacy Windows Azure Diagnostics
+// ("windows azure"/"wad") namespaces are not resource types and are only available via the
+// legacy ARM metrics endpoint, so they cannot be batched. This mirrors isBatchableModel in
+// the backend batch executor (pkg/tsdb/azuremonitor/metrics/batch-executor.go).
+export const isBatchableNamespace = (namespace?: string): boolean => {
+  const ns = namespace?.toLocaleLowerCase().trim() ?? '';
+  return !(ns.startsWith('azure.vm.') || ns.startsWith('windows azure') || ns.startsWith('wad'));
+};
+
 // isResourceRowDisabled decides whether a resource row can be added to the current
 // selection. With the batch API enabled, resources only need to share a metric namespace
 // (they can span subscriptions and regions); otherwise they must also share the same
@@ -43,12 +53,16 @@ export const isResourceRowDisabled = (
   selectedRows: ResourceRowGroup,
   batchAPIEnabled?: boolean
 ): boolean => {
+  const rowResource = parseResourceDetails(row.uri, row.location);
+  if (batchAPIEnabled && row.type === ResourceRowType.Resource && !isBatchableNamespace(rowResource.metricNamespace)) {
+    return true;
+  }
+
   // Only disable rows once something is already selected.
   if (selectedRows.length === 0) {
     return false;
   }
 
-  const rowResource = parseResourceDetails(row.uri, row.location);
   const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
 
   if (batchAPIEnabled) {
@@ -112,6 +126,10 @@ const MetricsQueryEditor = ({
 
   const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
+  const selectableMetricNamespaces = batchAPIEnabled
+    ? metricNamespaces.filter((option) => isBatchableNamespace(option.value))
+    : metricNamespaces;
+
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) =>
     isResourceRowDisabled(row, selectedRows, batchAPIEnabled);
 
@@ -141,7 +159,7 @@ const MetricsQueryEditor = ({
               selectionNotice={selectionNotice}
             />
             <MetricNamespaceField
-              metricNamespaces={metricNamespaces}
+              metricNamespaces={selectableMetricNamespaces}
               query={query}
               datasource={datasource}
               variableOptionGroup={variableOptionGroup}

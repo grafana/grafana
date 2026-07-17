@@ -182,7 +182,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   }
 
   // Note globalRegion should be false when querying custom metric namespaces
-  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string, custom?: boolean) {
+  getMetricNamespaces(
+    query: GetMetricNamespacesQuery,
+    globalRegion: boolean,
+    region?: string,
+    custom?: boolean,
+    excludeCustom?: boolean
+  ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
@@ -196,6 +202,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       .then((result: AzureAPIResponse<MetricNamespace>) => {
         if (custom) {
           result.value = result.value.filter((namespace) => namespace.classification === 'Custom');
+        } else if (excludeCustom) {
+          // Custom metric namespaces (e.g. Application Insights custom telemetry) are not
+          // available through the Metrics Batch API, so drop them when the caller can only
+          // use batchable namespaces. The API's classification is the reliable signal here;
+          // custom namespaces have no fixed naming prefix.
+          result.value = result.value.filter((namespace) => namespace.classification !== 'Custom');
         }
         return ResponseParser.parseResponseValues(
           result,

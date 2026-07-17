@@ -333,7 +333,35 @@ describe('AzureMonitor: metrics dataHooks', () => {
             metricNamespace: 'azure/vm',
           }),
           // Here, "global" should be false
-          false
+          false,
+          undefined,
+          false,
+          // excludeCustom mirrors whether the batch API is enabled
+          undefined
+        );
+      });
+    });
+
+    it('excludes custom namespaces when the batch API is enabled', async () => {
+      datasource.azureMonitorDatasource.batchAPIEnabled = true;
+      const query = {
+        ...bareQuery,
+        azureMonitor: metricNamespacesConfig.emptyQueryPartial,
+      };
+      renderHook(() => metricNamespacesConfig.hook(query, datasource, onChange, jest.fn()));
+
+      await waitFor(() => {
+        expect(datasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+          expect.objectContaining({
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+            metricNamespace: 'azure/vm',
+          }),
+          false,
+          undefined,
+          false,
+          // excludeCustom should be true when the batch API is enabled
+          true
         );
       });
     });

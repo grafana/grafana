@@ -54,6 +54,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
   const { subscription } = query;
   const { metricNamespace, resources } = query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
+  const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
   const metricNamespaces = useAsyncState(
     async () => {
@@ -68,7 +69,13 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
           resourceGroup,
           resourceName,
         },
-        false
+        false,
+        undefined,
+        false,
+        // The batch API can't query custom metric namespaces, so exclude them from the
+        // options when it's enabled. Guest OS / WAD namespaces are filtered separately by
+        // the editor (they're detectable by name prefix).
+        batchAPIEnabled
       );
       const options = formatOptions(results, metricNamespace);
 
@@ -80,7 +87,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
       return options;
     },
     setError,
-    [subscription, metricNamespace, resourceGroup, resourceName]
+    [subscription, metricNamespace, resourceGroup, resourceName, batchAPIEnabled]
   );
 
   return metricNamespaces;
