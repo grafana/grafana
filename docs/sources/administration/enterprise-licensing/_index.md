@@ -91,7 +91,7 @@ to the grafana.ini configuration file:
 
 ```bash
 [enterprise]
-license_text = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aGlzIjoiaXMiLCJub3QiOiJhIiwidmFsaWQiOiJsaWNlbnNlIn0.bxDzxIoJlYMwiEYKYT_l2s42z0Y30tY-6KKoyz9RuLE
+license_text = <YOUR_LICENSE_JWT_CONTENT>
 ```
 
 This option can be set using the `GF_ENTERPRISE_LICENSE_TEXT`
