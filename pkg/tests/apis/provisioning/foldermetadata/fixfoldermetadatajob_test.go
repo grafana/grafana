@@ -24,10 +24,11 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard1.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("job completes successfully", func(t *testing.T) {
 		spec := provisioning.JobSpec{
@@ -80,10 +81,9 @@ func TestIntegrationProvisioning_FixFolderMetadataJob_RemovesKeepFiles(t *testin
 
 	const repo = "fix-folder-metadata-keep-files"
 	testRepo := common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	}
 	helper.CreateLocalRepo(t, testRepo)
 

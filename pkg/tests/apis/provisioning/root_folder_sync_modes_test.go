@@ -50,9 +50,10 @@ func TestIntegrationProvisioning_RootFolder_FolderMode(t *testing.T) {
 			"testdata/all-panels.json":    "dashboard.json",
 			"testdata/timeline-demo.json": "team/dashboard.json",
 		},
-		ExpectedDashboards: 2,
-		ExpectedFolders:    2,
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 2)
+	helper.RequireRepoFolderCount(t, repo, 2)
 
 	// The root folder's k8s name is the repository name. Wait for it to be
 	// created and settled (title, empty sourcePath, empty parent) before reading
@@ -94,9 +95,10 @@ func TestIntegrationProvisioning_RootFolder_FolderlessMode(t *testing.T) {
 			"testdata/timeline-demo.json": "platform/dashboard.json",
 			"testdata/text-options.json":  "applications/nested/dashboard.json",
 		},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    3,
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 3)
 
 	// No wrapper folder named after the repository must exist in folderless mode.
 	// CreateLocalRepo already waited for exactly ExpectedFolders to settle, so a

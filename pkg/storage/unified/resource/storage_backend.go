@@ -211,10 +211,10 @@ type KVBackendOptions struct {
 	// metrics only, never feeds the watch pipeline. Requires EventSubscriber set
 	// and enabled.
 	EnableNatsNotifierShadow bool
-	// UseNatsNotifier feeds the watch pipeline directly from the bus instead of
+	// EnableNatsNotifier feeds the watch pipeline directly from the bus instead of
 	// polling. Requires EventSubscriber set and enabled; falls back to the
 	// polling notifier otherwise.
-	UseNatsNotifier bool
+	EnableNatsNotifier bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -323,7 +323,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		notifier: newNotifier(eventStore, notifierOptions{
 			log:                logger,
 			useChannelNotifier: opts.UseChannelNotifier,
-			useNatsNotifier:    opts.UseNatsNotifier,
+			enableNatsNotifier: opts.EnableNatsNotifier,
 			eventSubscriber:    opts.EventSubscriber,
 			natsDropped:        metrics.NatsNotifierDropped,
 		}),
