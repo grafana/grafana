@@ -36,7 +36,7 @@ type jobsConnector struct {
 	access                auth.AccessChecker
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
-	perfTestingEnabled    bool
+	perfTestingEnabled    func(ctx context.Context) bool
 }
 
 func NewJobsConnector(
@@ -47,7 +47,7 @@ func NewJobsConnector(
 	access auth.AccessChecker,
 	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
-	perfTestingEnabled bool,
+	perfTestingEnabled func(ctx context.Context) bool,
 ) *jobsConnector {
 	return &jobsConnector{
 		repoGetter:            repoGetter,
@@ -302,7 +302,7 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	if spec.Action == provisioning.JobActionFixFolderMetadata && !c.folderMetadataEnabled {
 		return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
 	}
-	if spec.Action == provisioning.JobActionTest && !c.perfTestingEnabled {
+	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
 		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
 	}
 
