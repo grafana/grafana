@@ -36,6 +36,7 @@ export function WebhookSection<T extends FieldValues>({
         <Field noMargin invalid={!!disabledError} error={disabledError}>
           {forcedDisabled ? (
             <Checkbox
+              key="forced"
               disabled
               checked
               label={t('provisioning.webhook-section.label-webhook-disabled', 'Disable webhook integration')}
@@ -50,6 +51,7 @@ export function WebhookSection<T extends FieldValues>({
             />
           ) : (
             <Checkbox
+              key="user"
               {...register(disabledName)}
               label={t('provisioning.webhook-section.label-webhook-disabled', 'Disable webhook integration')}
               description={t(

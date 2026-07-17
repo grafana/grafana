@@ -122,6 +122,19 @@ describe('WebhookSection', () => {
   });
 
   describe('disabledReason', () => {
+    it('restores the stored value when the disabled reason goes away', async () => {
+      const { user, rerender } = render(<Wrapper />);
+
+      await user.click(screen.getByText('Webhook options'));
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).not.toBeChecked();
+
+      rerender(<Wrapper disabledReason="Webhooks need an email." />);
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeChecked();
+
+      rerender(<Wrapper />);
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).not.toBeChecked();
+    });
+
     it('disables the checkbox and URL input and shows the reason', async () => {
       const { user } = render(<Wrapper disabledReason="Webhooks need an email." />);
 
