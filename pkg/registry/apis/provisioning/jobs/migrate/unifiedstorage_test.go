@@ -827,7 +827,7 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("rejects a selective migration on instance-target repos", func(t *testing.T) {
+	t.Run("rejects a selective migration on instance-target repos before doing any work", func(t *testing.T) {
 		exportWorker := jobs.NewMockWorker(t)
 		syncWorker := jobs.NewMockWorker(t)
 		pr := jobs.NewMockJobProgressRecorder(t)
@@ -838,20 +838,10 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
 		})
-		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
-		pr.On("StrictMaxErrors", 1).Return()
-		pr.On("ResetResults", false).Return()
 
-		exportWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
-			return job.Spec.Push != nil
-		}), mock.Anything).Return(nil)
-
-		syncWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
-			return job.Spec.Pull != nil
-		}), pr).Return(nil)
-
-		// Instance repositories must migrate everything, so a subset is rejected and
-		// the namespace is never cleaned (no Clean expectation registered).
+		// The migration is rejected up front, so nothing runs: no export, pull, or
+		// cleanup. mockery fails the test if any of those are called, since no
+		// expectations are registered for them.
 		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
 		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
 		require.Error(t, err)

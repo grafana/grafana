@@ -419,10 +419,6 @@ func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning
 //  1. Read permission on all supported resource types at root level.
 //  2. Create permission on all supported resource types in the target folder.
 func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
-	if spec.Push == nil && spec.Migrate == nil {
-		return nil
-	}
-
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
@@ -434,15 +430,46 @@ func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repositor
 }
 
 func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
-	err := c.authorizeResourceJob(ctx, repo, cfg, spec)
-	if err != nil {
+	if spec.Migrate == nil {
+		return nil
+	}
+
+	if err := c.authorizeResourceJob(ctx, repo, cfg, spec); err != nil {
 		return err
 	}
 
-	if len(spec.Migrate.Resources) > 0 {
-		return c.authorizeDeleteJob(ctx, repo, cfg, nil, spec.Migrate.Resources)
-	}
+	// Require delete permission only for what the migration will actually remove,
+	// mirroring UnifiedStorageMigrator:
+	//   - instance/unset targets always clean the whole namespace → delete-all.
+	//   - folder/folderless coexist with unmanaged resources and only delete on a
+	//     branch migration (the exported resources); a configured-branch migration
+	//     just exports and pulls, so it needs no delete permission.
+	branchMigration := spec.Migrate.Branch != "" && spec.Migrate.Branch != cfg.Branch()
+	selective := len(spec.Migrate.Resources) > 0
 
+	switch cfg.Spec.Sync.Target {
+	case provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeFolderless:
+		switch {
+		case !branchMigration:
+			// Export + pull (takeover) only; nothing is deleted from the instance.
+			return nil
+		case selective:
+			// Deletes only the chosen resources.
+			return c.authorizeDeleteJob(ctx, repo, cfg, nil, spec.Migrate.Resources)
+		default:
+			// A full branch migration deletes every exported resource.
+			return c.authorizeDeleteAllSupported(ctx, repo, cfg)
+		}
+	default:
+		// Instance (and an unset target, which defaults to instance) always wipes
+		// the namespace.
+		return c.authorizeDeleteAllSupported(ctx, repo, cfg)
+	}
+}
+
+// authorizeDeleteAllSupported checks that the user may delete every supported
+// resource type (used before migrations that remove all instance resources).
+func (c *jobsConnector) authorizeDeleteAllSupported(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository) error {
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err

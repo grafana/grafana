@@ -47,6 +47,18 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	// runs on the configured branch.
 	branchMigration := options.Branch != "" && options.Branch != repo.Config().Branch()
 
+	// selective is true when the caller scoped the migration to an explicit
+	// resource list rather than migrating everything unmanaged.
+	selective := len(options.Resources) > 0
+
+	target := repo.Config().Spec.Sync.Target
+
+	// Instance repositories require the whole instance to be managed, so migrating
+	// only a subset is not supported. Reject up front, before exporting anything.
+	if selective && target != provisioning.SyncTargetTypeFolder && target != provisioning.SyncTargetTypeFolderless {
+		return fmt.Errorf("received a subset of resources to migrate for instance target type. Instance repositories should only migrate all resources")
+	}
+
 	// Export resources first (for both folder and instance sync).
 	// Wrap the progress recorder so we can capture which resources were exported.
 	progress.SetMessage(ctx, "export resources")
@@ -94,48 +106,28 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		}
 	}
 
-	// selective is true when the caller scoped the migration to an explicit
-	// resource list rather than migrating everything unmanaged.
-	selective := len(options.Resources) > 0
-
-	// deleteMigratedResources removes exactly the resources this migration
-	// exported. A branch migration can't take them over yet (they live on an
-	// unmerged branch), so deleting them lets them return as managed once the
-	// branch is merged and a regular sync runs. Folders are excluded: they are
-	// emitted purely to resolve paths and may be shared with resources that were
-	// not migrated.
-	deleteMigratedResources := func() error {
-		progress.SetMessage(ctx, "delete migrated resources")
-		if err := m.namespaceCleaner.CleanResources(ctx, namespace, collector.ExportedNonFolderResources(), progress); err != nil {
-			return fmt.Errorf("delete migrated resources: %w", err)
-		}
-		return nil
-	}
-
 	// What to remove from the instance depends on the sync target. A non-branch
 	// migration already adopted its resources during the pull, so nothing below
 	// runs for it.
-	switch repo.Config().Spec.Sync.Target {
+	switch target {
 	case provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeFolderless:
 		// Folder and folderless repositories coexist with unmanaged resources, so we
 		// never wipe the namespace. A branch migration still deletes the specific
 		// resources it exported (full or selective) so they return as managed on
-		// merge.
+		// merge. Folders are excluded: they are emitted purely to resolve paths and
+		// may be shared with resources that were not migrated.
 		if branchMigration {
-			if err := deleteMigratedResources(); err != nil {
-				return err
+			progress.SetMessage(ctx, "delete migrated resources")
+			if err := m.namespaceCleaner.CleanResources(ctx, namespace, collector.ExportedNonFolderResources(), progress); err != nil {
+				return fmt.Errorf("delete migrated resources: %w", err)
 			}
 		}
 	default:
-		// Instance repositories require the whole instance to be managed, so
-		// migrating only a subset is not supported.
-		if selective {
-			return fmt.Errorf("received a subset of resources to migrate for instance target type. Instance repositories should only migrate all resources")
-		}
-
-		// A full instance migration always removes every remaining unmanaged
-		// resource, regardless of branch: the leftovers the pull did not take over
-		// (default branch), or the exports that were never taken over (branch).
+		// Instance (and an unset target, which defaults to instance): selective was
+		// rejected up front, so this is always a full migration. Remove every
+		// remaining unmanaged resource regardless of branch — the leftovers the pull
+		// did not take over (default branch), or the exports that were never taken
+		// over (branch).
 		progress.SetMessage(ctx, "clean namespace")
 		if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
 			return fmt.Errorf("clean namespace: %w", err)

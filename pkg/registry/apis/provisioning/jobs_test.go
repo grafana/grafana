@@ -468,13 +468,29 @@ func TestAuthorizeResourceJob(t *testing.T) {
 
 func TestAuthorizeMigrateJob(t *testing.T) {
 	ctx := context.Background()
-	cfg := newTestRepo("my-repo", "default")
 	dashGVR := resources.DashboardResource
 	forbidden := apierrors.NewForbidden(schema.GroupResource{}, "", nil)
 
-	// A full migration (no explicit resource list) can delete every exportable
-	// resource, so it requires delete permission on all supported types.
-	t.Run("full migration authorized when delete on all supported is allowed", func(t *testing.T) {
+	instanceRepo := func() *provisioning.Repository {
+		return &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+		}
+	}
+	folderRepo := func() *provisioning.Repository {
+		return &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+			Spec: provisioning.RepositorySpec{
+				Type:   provisioning.GitHubRepositoryType,
+				GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
+				Sync:   provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+	}
+
+	// An instance migration always wipes the namespace, so it requires delete
+	// permission on every supported resource type.
+	t.Run("instance migration requires delete on all supported resources", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -482,17 +498,15 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
 
-		err := c.authorizeMigrateJob(ctx, mockReader, cfg, spec)
+		err := c.authorizeMigrateJob(ctx, mockReader, instanceRepo(), spec)
 		require.NoError(t, err)
 	})
 
-	t.Run("full migration forbidden when delete on a supported resource is denied", func(t *testing.T) {
+	t.Run("instance migration forbidden when delete is denied", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
-		// Read/create (the export authorization) are allowed...
 		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(nil)
-		// ...but delete is denied, so the full migration is rejected.
 		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbDelete
 		}), mock.Anything).Return(forbidden)
@@ -501,21 +515,57 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
 
-		err := c.authorizeMigrateJob(ctx, mockReader, cfg, spec)
+		err := c.authorizeMigrateJob(ctx, mockReader, instanceRepo(), spec)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
 	})
 
-	// A selective migration only deletes the chosen resources, so the delete check
-	// is scoped to those resources' folders rather than a delete-all check.
-	t.Run("selective migration checks delete only on the chosen resources", func(t *testing.T) {
+	// Folder/folderless repos on the configured branch only export and pull (they
+	// never delete instance resources), so no delete permission is required — a
+	// delete check would be an unexpected call and fail the mock.
+	t.Run("folder migration on the configured branch requires no delete permission", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
-		// Read/create for the export authorization.
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
+		}), mock.Anything).Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
+
+		err := c.authorizeMigrateJob(ctx, mockReader, folderRepo(), spec)
+		require.NoError(t, err)
+	})
+
+	// A full branch migration on a folder repo deletes every exported resource, so
+	// it requires delete on all supported types.
+	t.Run("full branch migration on a folder repo requires delete permission", func(t *testing.T) {
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
+		}), mock.Anything).Return(nil)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbDelete
+		}), mock.Anything).Return(forbidden)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"}}
+
+		err := c.authorizeMigrateJob(ctx, mockReader, folderRepo(), spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+
+	// A selective branch migration only deletes the chosen resources, so the delete
+	// check is scoped to those resources' folders rather than a delete-all.
+	t.Run("selective branch migration on a folder repo checks delete only on the chosen resources", func(t *testing.T) {
+		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(nil)
 		// Delete is checked against the chosen dashboard's actual folder, proving
-		// the selective (subset) path runs instead of a root-level delete-all.
+		// the selective (subset) path runs instead of a delete-all.
 		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbDelete
 		}), "folder-abc").Return(nil)
@@ -545,13 +595,14 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMigrate,
 			Migrate: &provisioning.MigrateJobOptions{
+				Branch: "feature-x",
 				Resources: []provisioning.ResourceRef{
 					{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 				},
 			},
 		}
 
-		err := c.authorizeMigrateJob(ctx, mockReader, cfg, spec)
+		err := c.authorizeMigrateJob(ctx, mockReader, folderRepo(), spec)
 		require.NoError(t, err)
 	})
 }
