@@ -31,8 +31,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -75,8 +74,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -121,8 +119,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -185,8 +182,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -271,8 +267,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"../testdata/all-panels.json":   "subfolder/dashboard1.json",
 				"../testdata/text-options.json": "subfolder/nested/dashboard2.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -374,8 +369,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"../testdata/text-options.json":  "dashboard2.json",
 				"../testdata/timeline-demo.json": "dashboard3.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -422,8 +416,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"../testdata/text-options.json":  "dashboard2.json",
 				"../testdata/timeline-demo.json": "dashboard3.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)

@@ -73,8 +73,10 @@ async function importWith(method: 'stage' | 'promote', user: ReturnType<typeof r
   }
   // Method -> Notifications
   await user.click(await screen.findByTestId('wizard-next-button'));
+  await screen.findByRole('group', { name: /import notification resources/i });
   // Notifications -> Rules (Step1Content is stubbed; it seeds a YAML source and validation is forced true)
   await user.click(await screen.findByTestId('wizard-next-button'));
+  await screen.findByRole('group', { name: /import alert rules/i });
   // Skip Rules -> Review
   await user.click(await screen.findByTestId('wizard-skip-button'));
   // Review -> open confirm modal
