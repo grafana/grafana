@@ -205,8 +205,7 @@ type searchServer struct {
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
-	selectableFields     map[string][]string
-	searchFieldsHashes   map[string]string
+	searchFields         *SearchFieldsRegistry
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -275,6 +274,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		}
 	}
 
+	searchFields := opts.SearchFields
+	if searchFields == nil {
+		searchFields = NewSearchFieldsRegistry(nil, nil, nil)
+	}
+
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
@@ -293,8 +297,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
-		selectableFields:          opts.SelectableFieldsForKinds,
-		searchFieldsHashes:        opts.SearchFieldsHashesForKinds,
+		searchFields:              searchFields,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
@@ -1127,7 +1130,10 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
 	}
 
-	return s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	start := time.Now()
+	stats, err = s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err)
+	return stats, err
 }
 
 func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
@@ -1339,9 +1345,8 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
-		sfields := s.selectableFields[sfKey]
-		expectedSearchFieldsHash := s.searchFieldsHashes[sfKey]
+		sfKey := NewLowerGroupResource(key.Group, key.Resource)
+		sfields, expectedSearchFieldsHash, _ := s.searchFields.For(sfKey)
 
 		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, nil) {
 			completeCh := make(chan struct{})
@@ -1535,9 +1540,8 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 	}
 
 	// Search-field metadata that affects what gets indexed (paths, types,
-	// capabilities, EmitZeroIfAbsent, CopyFromStandard) has changed since the
-	// index was built. Rebuild so documents are re-extracted with the new
-	// declarations.
+	// capabilities, EmitZeroIfAbsent) has changed since the index was built.
+	// Rebuild so documents are re-extracted with the new declarations.
 	//
 	// An empty expected hash means "no opinion" for this kind: either no
 	// SearchFieldsProvider is registered today, or the running binary doesn't

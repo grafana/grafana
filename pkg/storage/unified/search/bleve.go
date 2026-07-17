@@ -80,22 +80,12 @@ type BleveOptions struct {
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
 
-	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
-	// Only given fields are indexed (have mapping).
-	SelectableFieldsForKinds map[string][]string
-
-	// Map "group/resource" -> hash of the SearchFieldDefinition slices
-	// registered for that (group, resource), across every version. The
-	// value is recorded in each new index's IndexBuildInfo so a future run
-	// can detect drift and rebuild. Keys must be lower-case.
-	SearchFieldsHashesForKinds map[string]string
-
-	// Map "group/resource" -> SearchFieldsProvider that drives the bleve
-	// mapping for that (group, resource). When a provider is registered
-	// for a kind, the bleve mapping is built from the provider's
-	// SearchFieldDefinitions rather than from the legacy column-definition
-	// list carried by SearchableDocumentFields. Keys must be lower-case.
-	SearchFieldsProvidersForKinds map[string]resource.SearchFieldsProvider
+	// SearchFields holds the per-kind search-field wiring: selectable fields,
+	// the hash of the SearchFieldDefinitions (recorded in each new index's
+	// IndexBuildInfo for drift detection), and the provider that drives the
+	// bleve mapping. Shared with the search server so both see the same set.
+	// May be nil in tests.
+	SearchFields *resource.SearchFieldsRegistry
 
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
@@ -190,9 +180,7 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	selectableFields     map[string][]string
-	searchFieldsHashes   map[string]string
-	searchFieldsProvider map[string]resource.SearchFieldsProvider
+	fields *resource.SearchFieldsRegistry
 
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
@@ -266,15 +254,18 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownFn = func(key resource.NamespacedResource) (bool, error) { return true, nil }
 	}
 
+	fields := opts.SearchFields
+	if fields == nil {
+		fields = resource.NewSearchFieldsRegistry(nil, nil, nil)
+	}
+
 	be := &bleveBackend{
 		log:                     l,
 		cache:                   map[resource.NamespacedResource]*bleveIndex{},
 		opts:                    opts,
 		ownsIndexFn:             ownFn,
 		indexMetrics:            indexMetrics,
-		selectableFields:        opts.SelectableFieldsForKinds,
-		searchFieldsHashes:      opts.SearchFieldsHashesForKinds,
-		searchFieldsProvider:    opts.SearchFieldsProvidersForKinds,
+		fields:                  fields,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -752,10 +743,8 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	sfKey := strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))
-	selectableFields := b.selectableFields[sfKey]
-	searchFieldsHash := b.searchFieldsHashes[sfKey]
-	searchFieldsProvider := b.searchFieldsProvider[sfKey]
+	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
+	selectableFields, searchFieldsHash, searchFieldsProvider := b.fields.For(sfKey)
 
 	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 	if err != nil {
@@ -833,6 +822,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx.facetFieldByRequestName = facetFieldsForMapping(searchFieldsProvider, key.Group, key.Resource)
 
 	if prepared.source.needsBuild() {
 		// Type-convert so buildIndexFromScratch can call updateResourceVersion after the builder returns.
@@ -1246,6 +1236,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 	}
 
 	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, allFields, standardSearchFields, updater, delegate.logger)
+	promoted.facetFieldByRequestName = delegate.facetFieldByRequestName
 	promoted.resourceVersion.Store(delegate.resourceVersion.Load())
 	cleanup = false
 
@@ -1546,6 +1537,11 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 			_ = idx.Close()
 			continue
 		}
+		if indexRV <= 0 {
+			b.log.Warn("index has non-positive rv, not reusing it", "indexDir", indexDir, "rv", indexRV)
+			_ = idx.Close()
+			continue
+		}
 
 		b.registerInFlightBuildDir(indexDir)
 		return idx, indexName, indexRV, nil
@@ -1607,6 +1603,9 @@ type bleveIndex struct {
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
+	// facetFieldByRequestName maps ResourceSearchRequest facet field names to
+	// keyword-analyzed Bleve index field names.
+	facetFieldByRequestName map[string]string
 
 	indexStorage string // memory or file, used when updating metrics
 
@@ -2117,6 +2116,11 @@ func (b *bleveIndex) Search(
 	// parse the facet fields
 	for k, v := range res.Facets {
 		f := newResponseFacet(v)
+		// Bleve reports the physical keyword-variant field. Keep that internal
+		// detail out of the API response.
+		if requested, ok := req.Facet[k]; ok {
+			f.Field = requested.Field
+		}
 		if response.Facet == nil {
 			response.Facet = make(map[string]*resourcepb.ResourceSearchResponse_Facet)
 		}
@@ -2204,8 +2208,12 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	defer span.End()
 
 	facets := bleve.FacetsRequest{}
-	for _, f := range req.Facet {
-		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
+	for name, facet := range req.Facet {
+		field, ok := b.facetFieldByRequestName[facet.Field]
+		if !ok {
+			return nil, resource.NewBadRequestError(fmt.Sprintf("field %q does not support faceting", facet.Field))
+		}
+		facets[name] = bleve.NewFacetRequest(field, int(facet.Limit))
 	}
 
 	// Convert resource-specific fields to bleve fields. Any field declared
@@ -2285,13 +2293,6 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			group:     b.key.Group,
 			resources: b.authzResources(req),
 		})
-	}
-
-	for k, v := range req.Facet {
-		if searchrequest.Facets == nil {
-			searchrequest.Facets = make(bleve.FacetsRequest)
-		}
-		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 	}
 
 	// Add the sort fields

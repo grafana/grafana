@@ -1,7 +1,6 @@
 package git
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -33,7 +32,6 @@ func folderJSON(uid, title string) []byte {
 // folder-typed JSON file produces a warning (not an error) during full sync.
 func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "full-folder-file-warning"
 
@@ -57,7 +55,7 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 		"full sync should produce at least one warning for the folder file")
 	common.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
 
-	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning
@@ -65,7 +63,6 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 // sync produces a warning rather than an error.
 func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "incr-folder-file-create"
 
@@ -74,7 +71,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 	})
 
 	helper.SyncAndWait(t, repoName)
-	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.NoError(t, local.CreateFile("new-folder.json", string(folderJSON("new-folder", "New Folder"))))
 	_, err := local.Git("add", ".")
@@ -99,7 +96,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 		"incremental sync should produce at least one warning for the folder file")
 	common.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
 
-	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning
@@ -108,7 +105,6 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 // managed by directory structure, not file content.
 func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "incr-folder-file-delete"
 
@@ -123,7 +119,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
 	})
-	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	// Delete the folder file from git.
 	_, err := local.Git("rm", "my-folder.json")
@@ -149,14 +145,13 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 		"incremental sync should produce at least one warning for the deleted folder file")
 	common.RequireJobWarningContains(t, incrJobObj, "cannot declare folders through files")
 
-	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationGitFiles_CreateFolderFileRejected verifies that creating a
 // folder-typed resource via the POST /files/ endpoint is rejected with BadRequest.
 func TestIntegrationGitFiles_CreateFolderFileRejected(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-create-folder-file"
 	_, _ = helper.CreateGitRepo(t, repoName, nil, "write")
@@ -169,7 +164,7 @@ func TestIntegrationGitFiles_CreateFolderFileRejected(t *testing.T) {
 		Param("message", "Create folder file").
 		Body(folderJSON("new-folder", "New Folder")).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 
 	require.Error(t, result.Error(), "creating a folder file should be rejected")
 	require.True(t, apierrors.IsBadRequest(result.Error()),
@@ -180,7 +175,6 @@ func TestIntegrationGitFiles_CreateFolderFileRejected(t *testing.T) {
 // folder-typed file via the DELETE /files/ endpoint is rejected with BadRequest.
 func TestIntegrationGitFiles_DeleteFolderFileRejected(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-delete-folder-file"
 	_, _ = helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -193,7 +187,7 @@ func TestIntegrationGitFiles_DeleteFolderFileRejected(t *testing.T) {
 		Name(repoName).
 		SubResource("files", "my-folder.json").
 		Param("message", "Delete folder file").
-		Do(ctx)
+		Do(t.Context())
 
 	require.Error(t, result.Error(), "deleting a folder file should be rejected")
 	require.True(t, apierrors.IsBadRequest(result.Error()),
@@ -204,7 +198,6 @@ func TestIntegrationGitFiles_DeleteFolderFileRejected(t *testing.T) {
 // folder-typed file via the PUT /files/ endpoint is rejected with BadRequest.
 func TestIntegrationGitFiles_UpdateFolderFileRejected(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-update-folder-file"
 	_, _ = helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -219,7 +212,7 @@ func TestIntegrationGitFiles_UpdateFolderFileRejected(t *testing.T) {
 		Param("message", "Update folder file").
 		Body(folderJSON("upd-folder", "Updated")).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 
 	require.Error(t, result.Error(), "updating a folder file should be rejected")
 	require.True(t, apierrors.IsBadRequest(result.Error()),
