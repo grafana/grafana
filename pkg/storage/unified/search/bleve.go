@@ -1535,6 +1535,11 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 			_ = idx.Close()
 			continue
 		}
+		if indexRV <= 0 {
+			b.log.Warn("index has non-positive rv, not reusing it", "indexDir", indexDir, "rv", indexRV)
+			_ = idx.Close()
+			continue
+		}
 
 		b.registerInFlightBuildDir(indexDir)
 		return idx, indexName, indexRV, nil

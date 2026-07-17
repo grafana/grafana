@@ -1364,6 +1364,42 @@ func TestBuildIndex(t *testing.T) {
 	}
 }
 
+func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+	tmpDir := t.TempDir()
+	backend, _ := setupBleveBackend(t, withRootDir(tmpDir))
+
+	mapper, err := GetBleveMappings(nil, ns.Group, ns.Resource, nil)
+	require.NoError(t, err)
+	resourceDir := backend.getResourceDir(ns)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	rv, err := getRV(unfinished)
+	require.NoError(t, err)
+	require.Zero(t, rv)
+	require.NoError(t, unfinished.Close())
+
+	buildCalls := 0
+	builder := func(index resource.ResourceIndex) (int64, error) {
+		buildCalls++
+		return indexTestDocs(ns, 10, 100)(index)
+	}
+	idx, err := backend.BuildIndex(t.Context(), ns, 10, "test", builder, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	require.Equal(t, 1, buildCalls)
+
+	count, err := idx.DocCount(t.Context(), "", nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(10), count)
+	require.Equal(t, int64(100), idx.(*bleveIndex).resourceVersion.Load())
+	verifyDirEntriesCount(t, resourceDir, 1)
+}
+
 func TestBuildIndexAdaptivePromotion(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
