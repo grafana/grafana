@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -24,7 +24,6 @@ export const FinishStep = memo(function FinishStep() {
     control,
     watch,
     setValue,
-    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
@@ -36,7 +35,7 @@ export const FinishStep = memo(function FinishStep() {
     'repository.email',
   ]);
 
-  const emailWebhookDisabled = type === 'bitbucket' && !email;
+  const emailWebhookDisabled = type === 'bitbucket' && !email?.trim();
 
   const isGitBased = isGitProvider(type);
 
@@ -60,19 +59,6 @@ export const FinishStep = memo(function FinishStep() {
       setValue('repository.webhook.disabled', true);
     }
   }, [connectionWebhookDisabled, setValue]);
-
-  const preEmailWebhookDisabled = useRef<boolean | null>(null);
-  useEffect(() => {
-    if (emailWebhookDisabled) {
-      if (preEmailWebhookDisabled.current === null) {
-        preEmailWebhookDisabled.current = Boolean(getValues('repository.webhook.disabled'));
-      }
-      setValue('repository.webhook.disabled', true);
-    } else if (preEmailWebhookDisabled.current !== null) {
-      setValue('repository.webhook.disabled', preEmailWebhookDisabled.current);
-      preEmailWebhookDisabled.current = null;
-    }
-  }, [emailWebhookDisabled, setValue, getValues]);
 
   useEffect(() => {
     if (!hasStepError) {
@@ -197,7 +183,7 @@ export const FinishStep = memo(function FinishStep() {
             emailWebhookDisabled
               ? t(
                   'provisioning.webhook-section.description-webhook-disabled-email-step',
-                  'Webhook integration is disabled because the Atlassian account email is not set. Set it in the connection step to enable webhooks.'
+                  'Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.'
                 )
               : undefined
           }

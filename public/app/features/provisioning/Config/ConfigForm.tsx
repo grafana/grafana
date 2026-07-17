@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -103,26 +103,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
-  const emailWebhookDisabled = type === 'bitbucket' && !watch('email');
+  const emailWebhookDisabled = type === 'bitbucket' && !watch('email')?.trim();
 
   useEffect(() => {
     if (connectionWebhookDisabled) {
       setValue('webhook.disabled', true);
     }
   }, [connectionWebhookDisabled, setValue]);
-
-  const preEmailWebhookDisabled = useRef<boolean | null>(null);
-  useEffect(() => {
-    if (emailWebhookDisabled) {
-      if (preEmailWebhookDisabled.current === null) {
-        preEmailWebhookDisabled.current = Boolean(getValues('webhook.disabled'));
-      }
-      setValue('webhook.disabled', true);
-    } else if (preEmailWebhookDisabled.current !== null) {
-      setValue('webhook.disabled', preEmailWebhookDisabled.current);
-      preEmailWebhookDisabled.current = null;
-    }
-  }, [emailWebhookDisabled, setValue, getValues]);
 
   const {
     data: refsData,

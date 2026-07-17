@@ -152,7 +152,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       spec.bitbucket = {
         ...baseConfig,
         tokenUser: data.tokenUser,
-        email: data.email,
+        email: data.email?.trim() || undefined,
       };
       break;
     case 'git':

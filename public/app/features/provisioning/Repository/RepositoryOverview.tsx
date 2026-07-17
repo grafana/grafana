@@ -146,7 +146,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     </div>
                     <div className={styles.valueColumn}>
                       <Text variant="body">
-                        {status?.webhook?.id || status?.webhook?.uuid?.replace(/[{}]/g, '') || 'N/A'}
+                        {status?.webhook?.id ?? status?.webhook?.uuid?.replace(/[{}]/g, '') ?? 'N/A'}
                       </Text>
                     </div>
                     <div className={styles.labelColumn}>
@@ -249,7 +249,9 @@ function getWebhookURL(repo: Repository) {
     return textUtil.sanitizeUrl(`${repoUrl}/-/hooks/${status.webhook?.id}/edit`);
   }
   if (spec?.type === 'bitbucket' && status?.webhook?.uuid && spec.bitbucket?.url) {
-    return textUtil.sanitizeUrl(`${spec.bitbucket.url}/admin/webhooks/${encodeURIComponent(status.webhook.uuid)}/edit`);
+    return textUtil.sanitizeUrl(
+      `${spec.bitbucket.url}/admin/webhooks/${encodeURIComponent(status.webhook.uuid.replace(/[{}]/g, ''))}/edit`
+    );
   }
   return undefined;
 }
