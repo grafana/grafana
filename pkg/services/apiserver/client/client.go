@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -86,6 +87,14 @@ func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured,
 	}
 
 	return client.Update(ctx, obj, opts)
+}
+
+func (h *k8sHandler) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, orgID int64, opts v1.PatchOptions) (*unstructured.Unstructured, error) {
+	client, err := h.getClient(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	return client.Patch(ctx, name, pt, data, opts)
 }
 
 func (h *k8sHandler) Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error {
