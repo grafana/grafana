@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
 import { FileListItem as FileListItemComponent, type FileListItemProps } from './FileListItem';
 import mdx from './FileListItem.mdx';

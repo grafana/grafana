@@ -12,15 +12,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/alerting/notify/notifytest"
-	"github.com/grafana/alerting/receivers/line"
-	"github.com/grafana/alerting/receivers/schema"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/line"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/alerting/notify"
 
@@ -1130,7 +1131,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer("something"),
+				ResourceVersion: new("something"),
 			},
 		})
 		require.Truef(t, errors.IsConflict(err), "should get conflict error but got %s", err)
@@ -1141,7 +1142,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer(actual.ResourceVersion),
+				ResourceVersion: new(actual.ResourceVersion),
 			},
 		})
 		require.NoError(t, err)
@@ -1152,7 +1153,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer(actual.ResourceVersion),
+				ResourceVersion: new(actual.ResourceVersion),
 			},
 		})
 		require.NoError(t, err)
@@ -1667,7 +1668,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig,
 			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v1beta1.ReceiverIntegration{
 				Settings:              settings.Object,
 				Type:                  integration.Type,
-				DisableResolveMessage: util.Pointer(false),
+				DisableResolveMessage: new(false),
 			})
 		}
 
@@ -1832,7 +1833,7 @@ func createIntegrationWithSettings(t *testing.T, integrationType schema.Integrat
 		Settings:              settings.Object,
 		Type:                  string(integrationType),
 		Version:               string(integrationVersion),
-		DisableResolveMessage: util.Pointer(false),
+		DisableResolveMessage: new(false),
 	}
 }
 

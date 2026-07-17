@@ -81,7 +81,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
       if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
         const selectedDataFrame = this.state.selectedDataFrame;
         const dataFrameIndex = this.state.dataFrameIndex;
-        const subscription = transformDataFrame([currentTransform.transformer], this.props.data).subscribe((data) => {
+        const input =
+          currentTransform.transformer.id === DataTransformerID.joinByField
+            ? moveFirstNonEmptyFrameToFront(this.props.data)
+            : this.props.data;
+        const subscription = transformDataFrame([currentTransform.transformer], input).subscribe((data) => {
           this.setState({ transformedData: data, selectedDataFrame, dataFrameIndex }, () => subscription.unsubscribe());
         });
         return;
@@ -303,6 +307,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+function moveFirstNonEmptyFrameToFront(frames: DataFrame[]): DataFrame[] {
+  const idx = frames.findIndex((f) => f?.fields?.length);
+  if (idx <= 0) {
+    return frames;
+  }
+  return [frames[idx], ...frames.slice(0, idx), ...frames.slice(idx + 1)];
 }
 
 function buildTransformationOptions() {

@@ -2,7 +2,6 @@ import { of } from 'rxjs';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -14,7 +13,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -78,11 +77,6 @@ const dataSources = {
 };
 
 setupDataSources(...Object.values(dataSources));
-
-// DatasourceSrv.loadDatasource falls back to instanceSettings.meta when the
-// plugin meta lookup misses and logs a warning via logPluginMetaWarning. Register
-// a silent logger so the call doesn't surface through console.warn in CI.
-mockLogger('grafana/runtime.plugins.meta');
 
 let deactivate: CancelActivationHandler | undefined;
 
@@ -422,15 +416,7 @@ describe('PanelEditor', () => {
     });
   });
   describe('isVizPickerOpen', () => {
-    it('should not auto-open viz picker for new panels when newVizSuggestions=false', async () => {
-      config.featureToggles.newVizSuggestions = false;
-      const { panelEditor } = await setup({ isNewPanel: true });
-      const optionsPane = panelEditor.state.optionsPane;
-      expect(optionsPane?.state.isVizPickerOpen).toBe(false);
-    });
-
-    it('should auto-open viz picker for new panels when newVizSuggestions=true', async () => {
-      config.featureToggles.newVizSuggestions = true;
+    it('should auto-open viz picker for new unconfigured panels', async () => {
       const { panelEditor } = await setup({ isNewPanel: true, pluginId: UNCONFIGURED_PANEL_PLUGIN_ID });
       const optionsPane = panelEditor.state.optionsPane;
       expect(optionsPane?.state.isVizPickerOpen).toBe(true);

@@ -1,17 +1,20 @@
-import { type Extension } from '@uiw/react-codemirror';
 import { useEffect, useState } from 'react';
 
 import { faro } from '@grafana/faro-web-sdk';
 
-import { loadLanguageExtension, type CodeEditorLanguage } from './languageLoader';
+import { loadLanguageExtension } from './languageLoader';
+import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
 
 export interface LanguageExtensionState {
-  extension: Extension | null;
+  extension: CodeMirrorExtension | null;
   error: Error | null;
 }
 
-export function useLanguageExtension(language?: CodeEditorLanguage): LanguageExtensionState {
-  const [languageExtension, setLanguageExtension] = useState<Extension | null>(null);
+export function useLanguageExtension(
+  language?: CodeMirrorEditorLanguage,
+  sqlDialect?: CodeMirrorSqlDialect
+): LanguageExtensionState {
+  const [languageExtension, setLanguageExtension] = useState<CodeMirrorExtension | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -26,7 +29,7 @@ export function useLanguageExtension(language?: CodeEditorLanguage): LanguageExt
     setLanguageExtension(null);
     setError(null);
 
-    void loadLanguageExtension(language)
+    void loadLanguageExtension(language, { sqlDialect })
       .then((extension) => {
         if (!cancelled) {
           setLanguageExtension(extension);
@@ -56,7 +59,7 @@ export function useLanguageExtension(language?: CodeEditorLanguage): LanguageExt
     return () => {
       cancelled = true;
     };
-  }, [language]);
+  }, [language, sqlDialect]);
 
   return { extension: languageExtension, error };
 }

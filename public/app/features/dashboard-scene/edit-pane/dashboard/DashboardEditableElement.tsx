@@ -17,6 +17,7 @@ import {
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 
 import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
@@ -113,17 +114,16 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
 
-  public renderActions(): ReactNode {
+  public renderTopButton(): ReactNode {
     return (
       <Button
         variant="secondary"
-        size="sm"
         onClick={() => this.dashboard.onOpenSettings()}
         tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
         icon="sliders-v-alt"
-        iconPlacement="right"
+        fullWidth
       >
-        <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+        <Trans i18nKey="dashboard.actions.open-settings">View all settings</Trans>
       </Button>
     );
   }
@@ -193,7 +193,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
             title: '',
             id: variableListId,
             skipField: true,
-            render: () => <DashboardVariablesList variableSet={$variables} />,
+            render: () => <DashboardVariablesList sourceVariableSet={$variables} />,
           })
         );
       }
@@ -207,6 +207,16 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
         render: () => <AddVariableButton dashboard={dashboard} />,
       })
     );
+    if ($variables?.state.variables.length) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: 'dashboard-variables-dependencies',
+          skipField: true,
+          render: () => <VariablesDependenciesButton variables={$variables?.state.variables} isInSidebar />,
+        })
+      );
+    }
 
     return [category];
   }, [$variables, addVariableButtonId, variableListId, dashboard]);

@@ -1,7 +1,7 @@
 import { type QueryResultMeta } from '../types/data';
 import { type Field, FieldType, type DataFrame, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
 
-import { guessFieldTypeForField } from './processDataFrame';
+import { guessFieldTypeForField } from './guessFieldType';
 
 /**
  * The ArrayDataFrame takes an array of objects and presents it as a DataFrame

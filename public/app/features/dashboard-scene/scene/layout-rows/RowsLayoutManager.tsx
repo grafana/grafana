@@ -11,7 +11,8 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
+import { ObjectsReorderedOnCanvasEvent } from '../../edit-pane/events';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -145,7 +146,13 @@ export class RowsLayoutManager
     dashboardEditActions.addElement({
       addedObject: newRow,
       source: this,
-      perform: () => this.setState({ rows: [...this.state.rows, newRow] }),
+      perform: () => {
+        this.setState({ rows: [...this.state.rows, newRow] });
+        const dashboard = getDashboardSceneFor(this);
+        if (dashboard.state.isEditing) {
+          newRow.getLayout().editModeChanged?.(true);
+        }
+      },
       undo: () => this.setState({ rows: this.state.rows.filter((r) => r !== newRow) }),
     });
 

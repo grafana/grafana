@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert } from '../ErrorBoundary/ErrorBoundary';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
 
-import { type CodeEditorProps } from './CodeEditor';
+import { type CodeMirrorEditorProps } from './types';
 
 const CodeEditor = lazy(() =>
   import(/* webpackChunkName: "react-codemirror-editor" */ './CodeEditor').then((module) => ({
@@ -13,7 +13,7 @@ const CodeEditor = lazy(() =>
   }))
 );
 
-export function CodeMirrorEditor(props: CodeEditorProps) {
+export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
   return (
     <ErrorBoundaryAlert
       boundaryName="CodeMirrorEditorLazy"

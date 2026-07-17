@@ -27,6 +27,7 @@ import {
 import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
 
@@ -446,6 +447,7 @@ describe('when creating variables objects', () => {
       description: 'Adhoc Description',
       allowCustomValue: false,
       applicabilityEnabled: false,
+      $behaviors: [expect.any(ReportInteractionBehavior)],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -527,6 +529,7 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       applicabilityEnabled: false,
+      $behaviors: [expect.any(ReportInteractionBehavior)],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -1041,5 +1044,44 @@ describe('getUserDefinedVariables', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]).toBe(userVar);
+  });
+
+  it('includes dashboard-level variables when called from a section with its own variables', () => {
+    const dashboardVar = new TestVariable({ name: 'instance' });
+    const tabVar = new TestVariable({ name: 'detected_app' });
+
+    const section = new SceneFlexLayout({
+      $variables: new SceneVariableSet({ variables: [tabVar] }),
+      children: [],
+    });
+
+    new EmbeddedScene({
+      $variables: new SceneVariableSet({ variables: [dashboardVar] }),
+      body: section,
+    });
+
+    const result = getUserDefinedVariables(section);
+
+    expect(result.map((v) => v.state.name)).toEqual(['detected_app', 'instance']);
+  });
+
+  it('lets the nearest variable shadow a dashboard-level variable with the same name', () => {
+    const dashboardVar = new TestVariable({ name: 'instance' });
+    const sectionVar = new TestVariable({ name: 'instance' });
+
+    const section = new SceneFlexLayout({
+      $variables: new SceneVariableSet({ variables: [sectionVar] }),
+      children: [],
+    });
+
+    new EmbeddedScene({
+      $variables: new SceneVariableSet({ variables: [dashboardVar] }),
+      body: section,
+    });
+
+    const result = getUserDefinedVariables(section);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(sectionVar);
   });
 });

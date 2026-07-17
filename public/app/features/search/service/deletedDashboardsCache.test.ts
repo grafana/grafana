@@ -1,5 +1,6 @@
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
-import { AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
+import { AnnoKeyUpdatedBy, EMPTY_TABLE_RESPONSE } from 'app/features/apiserver/types';
+import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
 import { dispatch } from 'app/types/store';
 
 import { deletedDashboardsCache, resolveDeletedByDisplayMap } from './deletedDashboardsCache';
@@ -24,9 +25,6 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
 
-jest.mock('app/features/apiserver/guards', () => ({
-  isResourceList: jest.fn(() => true),
-}));
 const mockInitiate = iamAPIv0alpha1.endpoints.getDisplayMapping.initiate as unknown as jest.Mock;
 const mockDispatch = dispatch as unknown as jest.Mock;
 
@@ -336,25 +334,33 @@ describe('DeletedDashboardsCache', () => {
     deletedDashboardsCache.clear();
   });
 
-  function makeResourceList(uids: string[]) {
+  function makeTable(uids: string[]) {
     return {
-      apiVersion: 'v1' as const,
-      kind: 'List' as const,
+      ...EMPTY_TABLE_RESPONSE,
       metadata: { resourceVersion: '1' },
-      items: uids.map((uid) => ({
-        metadata: {
-          name: `dash-${uid}`,
-          annotations: { [AnnoKeyUpdatedBy]: uid },
+      columnDefinitions: [
+        { name: 'Name', type: 'string' },
+        { name: 'Title', type: 'string' },
+        { name: 'Created At', type: 'date' },
+      ],
+      rows: uids.map((uid) => ({
+        cells: [`dash-${uid}`, `Dashboard ${uid}`, '2024-01-01T00:00:00Z'],
+        object: {
+          metadata: {
+            name: `dash-${uid}`,
+            resourceVersion: '1',
+            creationTimestamp: '2024-01-01T00:00:00Z',
+            annotations: { [AnnoKeyUpdatedBy]: uid },
+          },
         },
-        spec: { title: `Dashboard ${uid}` },
       })),
     };
   }
 
   it('self-heals DELETED_BY_UNKNOWN on subsequent get() without clear()', async () => {
-    const resourceList = makeResourceList(['user:alice']);
+    const table = makeTable(['user:alice']);
     getDashboardAPI.mockResolvedValue({
-      listDeletedDashboards: jest.fn().mockResolvedValue(resourceList),
+      listDeletedDashboards: jest.fn().mockResolvedValue(table),
     });
 
     // First IAM call fails — batch returns an error result.
@@ -366,7 +372,7 @@ describe('DeletedDashboardsCache', () => {
 
     expect(firstResult).toHaveLength(1);
     expect(firstResult[0].field.deletedBy).toBe(DELETED_BY_UNKNOWN);
-    // ResourceList fetch was called once.
+    // Table fetch was called once.
     expect(getDashboardAPI).toHaveBeenCalledTimes(1);
 
     // Second IAM call succeeds — same UID now resolves.
@@ -378,9 +384,294 @@ describe('DeletedDashboardsCache', () => {
 
     expect(secondResult).toHaveLength(1);
     expect(secondResult[0].field.deletedBy).toBe('Alice');
-    // ResourceList fetch NOT called again — cached from first get().
+    // Table fetch NOT called again — cached from first get().
     expect(getDashboardAPI).toHaveBeenCalledTimes(1);
 
     consoleError.mockRestore();
+  });
+
+  it('accumulates rows across paginated responses', async () => {
+    const page1 = {
+      ...makeTable(['user:alice', 'user:bob']),
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+    };
+    const page2 = {
+      ...makeTable(['user:carol']),
+      metadata: { resourceVersion: '2' },
+    };
+
+    const mockListDeletedDashboards = jest.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    // IAM calls — one per unique UID batch
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+          { identity: { type: 'user', name: 'carol' }, displayName: 'Carol' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(3);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(2);
+    expect(mockListDeletedDashboards).toHaveBeenNthCalledWith(1, expect.objectContaining({ continue: undefined }));
+    expect(mockListDeletedDashboards).toHaveBeenNthCalledWith(2, expect.objectContaining({ continue: 'page2-token' }));
+  });
+
+  it('stops fetching when no continue token is present', async () => {
+    const table = makeTable(['user:alice']);
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue(table);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(1);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns empty table when response has no rows on first page', async () => {
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue({ unexpected: true });
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    const table = await deletedDashboardsCache.getAsTable();
+
+    expect(table.rows).toHaveLength(0);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns partial results when a subsequent page has no rows', async () => {
+    const page1 = {
+      ...makeTable(['user:alice']),
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+    };
+
+    const mockListDeletedDashboards = jest
+      .fn()
+      .mockResolvedValueOnce(page1)
+      .mockResolvedValueOnce({ unexpected: true });
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].field.deletedBy).toBe('Alice');
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(2);
+  });
+
+  it('deduplicates rows by UID keeping the newest resourceVersion', async () => {
+    const duplicateTable = {
+      ...EMPTY_TABLE_RESPONSE,
+      metadata: { resourceVersion: '1' },
+      columnDefinitions: [
+        { name: 'Name', type: 'string' },
+        { name: 'Title', type: 'string' },
+        { name: 'Created At', type: 'date' },
+      ],
+      rows: [
+        {
+          cells: ['dash-a', 'Dashboard A (new)', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '200',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-a', 'Dashboard A (old)', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '100',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-b', 'Dashboard B', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-b',
+              resourceVersion: '150',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:bob' },
+            },
+          },
+        },
+      ],
+    };
+
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue(duplicateTable);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.title)).toEqual(['Dashboard A (new)', 'Dashboard B']);
+  });
+
+  it('counts unique dashboards toward the limit when paging (limit applied after dedup)', async () => {
+    // page1: 3 raw rows, 2 unique (dash-a appears twice with different resourceVersions, dash-b once)
+    const page1 = {
+      ...EMPTY_TABLE_RESPONSE,
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+      columnDefinitions: [
+        { name: 'Name', type: 'string' },
+        { name: 'Title', type: 'string' },
+        { name: 'Created At', type: 'date' },
+      ],
+      rows: [
+        {
+          cells: ['dash-a', 'Dashboard A (v1)', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '100',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-a', 'Dashboard A (v2)', '2024-01-02T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '200',
+              creationTimestamp: '2024-01-02T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-b', 'Dashboard B', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-b',
+              resourceVersion: '150',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:bob' },
+            },
+          },
+        },
+      ],
+    };
+
+    const page2 = {
+      ...EMPTY_TABLE_RESPONSE,
+      metadata: { resourceVersion: '2' },
+      columnDefinitions: page1.columnDefinitions,
+      rows: [
+        {
+          cells: ['dash-c', 'Dashboard C', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-c',
+              resourceVersion: '300',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:carol' },
+            },
+          },
+        },
+      ],
+    };
+
+    const mockList = jest.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockList });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+          { identity: { type: 'user', name: 'carol' }, displayName: 'Carol' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(3);
+    expect(mockList).toHaveBeenCalledTimes(2);
+    // The second page's limit must reflect 2 unique dashboards, not 3 raw rows.
+    expect(mockList).toHaveBeenNthCalledWith(2, expect.objectContaining({ limit: DELETED_DASHBOARDS_LIMIT - 2 }));
+  });
+
+  it('removeItems filters specified UIDs from the cached table', async () => {
+    const table = makeTable(['user:alice', 'user:bob', 'user:carol']);
+    getDashboardAPI.mockResolvedValue({
+      listDeletedDashboards: jest.fn().mockResolvedValue(table),
+    });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+          { identity: { type: 'user', name: 'carol' }, displayName: 'Carol' },
+        ]),
+      })
+    );
+
+    // Populate the cache
+    await deletedDashboardsCache.get();
+
+    // Remove bob's dashboard
+    deletedDashboardsCache.removeItems(['dash-user:bob']);
+
+    const tableAfter = await deletedDashboardsCache.getAsTable();
+    expect(tableAfter.rows).toHaveLength(2);
+    expect(tableAfter.rows.map((r) => r.object.metadata.name)).toEqual(['dash-user:alice', 'dash-user:carol']);
+
+    // No additional fetch
+    expect(getDashboardAPI).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeItems is a no-op when cache is not populated', async () => {
+    // Should not throw
+    deletedDashboardsCache.removeItems(['dash-nonexistent']);
+
+    const table = makeTable(['user:alice']);
+    getDashboardAPI.mockResolvedValue({
+      listDeletedDashboards: jest.fn().mockResolvedValue(table),
+    });
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+
+    // Next get() fetches fresh (the removed UID was never cached)
+    const result = await deletedDashboardsCache.get();
+    expect(result).toHaveLength(1);
+    expect(getDashboardAPI).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,6 +3,8 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -12,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -105,6 +108,15 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *dat
 	if err != nil {
 		return nil, err
 	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userID, err := strconv.ParseInt(strings.TrimPrefix(user.GetID(), "user:"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	cmd.UserID = userID
 	out, err := q.dsService.AddDataSource(ctx, cmd)
 	if err != nil {
 		return nil, err
@@ -177,6 +189,11 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 			delete(ds.SecureJsonData, k)
 		}
 	}
+
+	// Add the decrypted secrets to the context if they were requested
+	pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
+		return secrets, nil
+	})
 
 	return q.converter.AsDataSource(ds)
 }

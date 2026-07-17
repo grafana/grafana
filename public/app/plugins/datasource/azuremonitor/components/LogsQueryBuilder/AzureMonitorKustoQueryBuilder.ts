@@ -41,7 +41,7 @@ const buildCondition = (
   return;
 };
 
-export const appendWhere = (
+const appendWhere = (
   phrases: string[],
   timeFilter?: BuilderQueryEditorWhereExpressionArray,
   fuzzySearch?: BuilderQueryEditorWhereExpressionArray,

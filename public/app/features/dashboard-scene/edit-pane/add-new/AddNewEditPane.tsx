@@ -10,7 +10,7 @@ import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneLike } from '../../scene/types/dashboard';
 import { DashboardEditPane } from '../DashboardEditPane';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
@@ -29,11 +29,11 @@ export class AddNewEditPane extends SceneObjectBase {
   }
 }
 
-export function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
+function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
   const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
-  const dashboardScene = getDashboardSceneFor(model);
+  const dashboardScene = getDashboardSceneLike(model);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
   const selectedObj = editPane.getSelectedObject();
 
@@ -44,7 +44,7 @@ export function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEdit
 
   return (
     <div className={styles.wrapper}>
-      <Sidebar.PaneHeader title={t('dashboard.add.pane-header', 'Add')} onGoBack={editPane.getOnGetBackCallback()} />
+      <Sidebar.PaneHeader title={t('dashboard.add.pane-header', 'Add')} />
       <ScrollContainer showScrollIndicators={true}>
         <AddNewSection
           title={t('dashboard.add.new-panel.title', 'Panel')}

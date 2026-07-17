@@ -1,14 +1,15 @@
+//nolint:staticcheck // SA1019: Legacy envelope encryption migrator; intentionally uses deprecated secrets manager types.
 package migrator
 
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -261,7 +262,7 @@ func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secre
 				}
 			}
 
-			marshalled, err := json.Marshal(postableUserConfig)
+			marshalled, err := legacy_storage.SerializeAlertmanagerConfig(*postableUserConfig)
 			if err != nil {
 				logger.Warn("Could not marshal alert_configuration while re-encrypting it", "id", result.Id, "error", err)
 				return err

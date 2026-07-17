@@ -178,6 +178,10 @@ export const getDataFrameVars = (dataFrames: DataFrame[]) => {
   const frame = dataFrames[0];
 
   for (const field of frame.fields) {
+    if (field.type === FieldType.nestedFrames) {
+      continue;
+    }
+
     const displayName = getFieldDisplayName(field, frame, dataFrames);
 
     if (keys[displayName]) {
@@ -265,20 +269,6 @@ export const getDataLinksVariableSuggestions = (
         ...getDataFrameVars(dataFrames),
         ...getPanelLinksVariableSuggestions(),
       ];
-};
-
-export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const fieldVars = getFieldVars(dataFrames);
-  const valueCalcVar = {
-    value: `${DataLinkBuiltInVars.valueCalc}`,
-    label: t(
-      'panel.get-calculation-value-data-links-variable-suggestions.value-calc-var.label.calculation-name',
-      'Calculation name'
-    ),
-    documentation: 'Name of the calculation the value is a result of',
-    origin: VariableOrigin.Value,
-  };
-  return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
 };
 
 export interface LinkService {

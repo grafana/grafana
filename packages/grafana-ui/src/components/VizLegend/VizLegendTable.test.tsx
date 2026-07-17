@@ -107,9 +107,13 @@ describe('VizLegendTable', () => {
     render(
       <VizLegendTable placement="bottom" items={[makeItem('A', [{ title: 'min', numeric: 1 }])]} isSortable={false} />
     );
-    screen.getAllByRole('columnheader').forEach((th) => {
-      expect(th.className).toContain('sr-only');
-    });
+    screen
+      .getAllByRole('columnheader')
+      // skip placeholder th for icon
+      .slice(1)
+      .forEach((th) => {
+        expect(th.className).toContain('sr-only');
+      });
   });
 
   it('uses custom itemRenderer when provided', () => {
@@ -121,4 +125,19 @@ describe('VizLegendTable', () => {
     render(<VizLegendTable placement="bottom" items={[makeItem('X')]} itemRenderer={itemRenderer} />);
     expect(screen.getByText('X-custom')).toBeInTheDocument();
   });
+});
+
+it('shows (right y-axis) when items have mixed axes', () => {
+  const items = [makeItem('Left'), makeItem('Right', [{ title: 'min', numeric: 1 }])];
+  items[1].yAxis = 2;
+  render(<VizLegendTable placement="bottom" items={items} />);
+  expect(screen.getByText('(right y-axis)')).toBeInTheDocument();
+});
+
+it('does not show (right y-axis) when all items use the right axis', () => {
+  const items = [makeItem('A', [{ title: 'min', numeric: 1 }]), makeItem('B', [{ title: 'min', numeric: 2 }])];
+  items[0].yAxis = 2;
+  items[1].yAxis = 2;
+  render(<VizLegendTable placement="bottom" items={items} />);
+  expect(screen.queryByText('(right y-axis)')).not.toBeInTheDocument();
 });

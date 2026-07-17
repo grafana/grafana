@@ -14,6 +14,7 @@ import (
 	notificationHistorian "github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -62,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -76,7 +79,7 @@ func ProvideService(
 	expressionService *expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service,
-	secretsService secrets.Service,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	notificationService notifications.Service,
 	m *metrics.NGAlert,
 	folderService folder.Service,
@@ -95,6 +98,7 @@ func ProvideService(
 	routeResourcePermissions accesscontrol.RoutePermissionsService,
 	userService user.Service,
 	orgService org.Service,
+	clientGenerator resource.ClientGenerator,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                      cfg,
@@ -123,6 +127,7 @@ func ProvideService(
 		store:                    ruleStore,
 		httpClientProvider:       httpClientProvider,
 		pluginContextProvider:    pluginContextProvider,
+		clientGenerator:          clientGenerator,
 		ResourcePermissions:      resourcePermissions,
 		RouteResourcePermissions: routeResourcePermissions,
 		userService:              userService,
@@ -152,7 +157,7 @@ type AlertNG struct {
 	ExpressionService     *expr.Service
 	DataProxy             *datasourceproxy.DataSourceProxyService
 	QuotaService          quota.Service
-	SecretsService        secrets.Service
+	SecretsService        secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	Metrics               *metrics.NGAlert
 	NotificationService   notifications.Service
 	Log                   log.Logger
@@ -182,12 +187,23 @@ type AlertNG struct {
 	userService              user.Service
 	orgService               org.Service
 
-	bus          bus.Bus
-	pluginsStore pluginstore.Store
-	tracer       tracing.Tracer
+	bus             bus.Bus
+	pluginsStore    pluginstore.Store
+	tracer          tracing.Tracer
+	clientGenerator resource.ClientGenerator
 
 	evaluationCoordinator EvaluationCoordinator
 	schedCfg              schedule.SchedulerCfg
+}
+
+// newRuleSequenceStore returns a RuleSequenceStore backed by the k8s API if a
+// ClientGenerator is available, or nil otherwise (which causes NewScheduler
+// to fall back to the NoopRuleSequenceStore).
+func (ng *AlertNG) newRuleSequenceStore() schedule.RuleSequenceStore {
+	if ng.clientGenerator == nil {
+		return nil
+	}
+	return schedule.NewK8sRuleSequenceStore(ng.clientGenerator, log.New("ngalert.rulesequence.store"))
 }
 
 func (ng *AlertNG) init() error {
@@ -283,6 +299,26 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
+	// Reuse the validator wired into the user-driven datasource proxy so the sync
+	// worker honours the same allow/deny rules. Tests construct ngalert without a
+	// DataProxy — fall back to the no-op OSS validator so they don't NPE.
+	var dsRequestValidator validations.DataSourceRequestValidator = &validations.OSSDataSourceRequestValidator{}
+	if ng.DataProxy != nil && ng.DataProxy.DataSourceRequestValidator != nil {
+		dsRequestValidator = ng.DataProxy.DataSourceRequestValidator
+	}
+
+	externalAMSyncer := notifier.NewExternalAMSyncer(
+		ng.DataSourceService,
+		ng.httpClientProvider,
+		dsRequestValidator,
+		ng.Cfg,
+		multiOrgMetrics,
+		moaLogger,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
+		ng.store,
+	)
+
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		ng.Cfg,
 		ng.store,
@@ -299,6 +335,7 @@ func (ng *AlertNG) init() error {
 		ng.FeatureToggles,
 		notificationHistorian,
 		skipClustering,
+		externalAMSyncer,
 		opts...,
 	)
 	if err != nil {
@@ -360,6 +397,7 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
+		RuleSequenceStore:    ng.newRuleSequenceStore(),
 		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
@@ -415,7 +453,7 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
 
 	var apiStateManager state.AlertInstanceManager
-	var apiStatusReader apiprometheus.StatusReader
+	var ruleMutator apiprometheus.RuleMutator
 	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
 		peer := ng.MultiOrgAlertmanager.Peer()
 		if peer == nil {
@@ -431,7 +469,7 @@ func (ng *AlertNG) init() error {
 		// because non-primary nodes have no in-memory state
 		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log)
 		apiStateManager = storeStateReader
-		apiStatusReader = storeStateReader
+		ruleMutator = apiprometheus.NewDBRuleMutator(storeStateReader)
 	} else {
 		// No need for a real evaluation coordinator in non-HA mode.
 		ng.evaluationCoordinator = cluster.NewNoopEvaluationCoordinator()
@@ -439,7 +477,7 @@ func (ng *AlertNG) init() error {
 		// Use in-memory state/scheduler for API calls
 		apiStateManager = ng.stateManager
 		ng.schedule = schedule.NewScheduler(ng.schedCfg, ng.stateManager)
-		apiStatusReader = ng.schedule
+		ruleMutator = apiprometheus.NewInMemoryRuleMutator(ng.schedule, ng.stateManager)
 	}
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
@@ -564,7 +602,7 @@ func (ng *AlertNG) init() error {
 		ProvenanceStore:       ng.store,
 		MultiOrgAlertmanager:  ng.MultiOrgAlertmanager,
 		StateManager:          apiStateManager,
-		RuleStatusReader:      apiStatusReader,
+		RuleMutator:           ruleMutator,
 		AccessControl:         ng.accesscontrol,
 		Policies:              policyService,
 		RouteService:          routeService,

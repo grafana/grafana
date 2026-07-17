@@ -109,6 +109,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	deleteTeamMembersByTeam := func(q *DeleteTeamMembersByTeamCommand) sqltemplate.SQLTemplate {
+		v := newDeleteTeamMembersByTeam(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	createTeamMembersBulk := func(q *CreateTeamMembersBulkCommand) sqltemplate.SQLTemplate {
 		v := newCreateTeamMembersBulk(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -355,7 +361,7 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
-						External: boolPtr(true),
+						External: new(true),
 					}),
 				},
 				{
@@ -416,6 +422,15 @@ func TestIdentityQueries(t *testing.T) {
 					Data: deleteTeamMembersBulk(&DeleteTeamMembersBulkCommand{
 						OrgID: 1,
 						UIDs:  []string{"team-member-1", "team-member-2", "team-member-3"},
+					}),
+				},
+			},
+			sqlDeleteTeamMembersByTeamQuery: {
+				{
+					Name: "delete_team_members_by_team",
+					Data: deleteTeamMembersByTeam(&DeleteTeamMembersByTeamCommand{
+						OrgID:  1,
+						TeamID: 1,
 					}),
 				},
 			},
@@ -869,8 +884,4 @@ func TestIdentityQueries(t *testing.T) {
 			},
 		},
 	})
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

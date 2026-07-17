@@ -213,7 +213,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   );
 };
 
-export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
+const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
   // Prometheus has a custom frame visualization alongside the table view, but they both handle the data the same
   const tableFrames = data.rawPrometheusFrames;
 

@@ -6,7 +6,7 @@ import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
@@ -16,15 +16,15 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyFolder, type Resource, type ResourceList } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, type Resource, type TableResponse } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
-import { dispatch } from 'app/store/store';
+import { dispatch, getState } from 'app/store/store';
 import { type PermissionLevel } from 'app/types/acl';
-import { type ImportDashboardResponseDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import {
   type DescendantCount,
   type DescendantCountDTO,
@@ -35,14 +35,13 @@ import {
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
+import { findItem } from '../state/utils';
+import { getFolderURL } from '../utils/dashboards';
 
 import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
 
 async function refreshTeamFolders() {
-  if (!config.featureToggles.teamFolders) {
-    return;
-  }
   dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
 }
 
@@ -69,20 +68,6 @@ export interface MoveFolderArgs {
   destinationUID: string;
 }
 
-export interface ImportInputs {
-  name: string;
-  type: string;
-  value: string;
-  pluginId?: string;
-}
-
-interface ImportOptions {
-  dashboard: Dashboard;
-  overwrite: boolean;
-  inputs: ImportInputs[];
-  folderUid: string;
-}
-
 interface RestoreDashboardArgs {
   dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
@@ -90,10 +75,10 @@ interface RestoreDashboardArgs {
 // We need to do this as the API will return different responses depending on the type of storage used and existing
 // resource types, even when we are using the old api/ endpoint.
 const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): DescendantCount => ({
-  folders: folderCounts.folders ?? folderCounts.folder ?? 0,
-  dashboards: folderCounts.dashboards ?? folderCounts.dashboard ?? 0,
-  library_elements: folderCounts.library_elements ?? folderCounts.librarypanel ?? 0,
-  alertrules: folderCounts.alertrules ?? folderCounts.alertrule ?? 0,
+  folders: folderCounts.folders || folderCounts.folder || 0,
+  dashboards: folderCounts.dashboards || folderCounts.dashboard || 0,
+  librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
+  alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -106,10 +91,8 @@ export interface ListFolderQueryArgs {
 const folderListTag = { type: 'getFolder' as const, id: 'LIST' };
 const invalidateFolderListOnSuccess = (_result: unknown, error: unknown) => (error ? [] : [folderListTag]);
 
-// TODO: Once backend returns alert rule counts, set this back to true
-// when this is merged https://github.com/grafana/grafana/pull/67259
 const deleteFolderParams = {
-  forceDeleteRules: false,
+  forceDeleteRules: true,
 } as const;
 
 export const browseDashboardsAPI = createApi({
@@ -185,7 +168,7 @@ export const browseDashboardsAPI = createApi({
           version,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ uid, title, parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -194,6 +177,10 @@ export const browseDashboardsAPI = createApi({
             })
           );
           refreshTeamFolders();
+          // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
+          if (title) {
+            dispatch(updateDashboardName({ id: uid, title, url: getFolderURL(uid) }));
+          }
         });
       },
     }),
@@ -234,6 +221,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
+          dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
         }
@@ -254,7 +242,7 @@ export const browseDashboardsAPI = createApi({
           const totalCounts: DescendantCount = {
             folders: folderUIDs.length,
             dashboards: dashboardUIDs.length,
-            library_elements: 0,
+            librarypanels: 0,
             alertrules: 0,
           };
 
@@ -263,7 +251,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.folders += normalizedCounts.folders;
             totalCounts.dashboards += normalizedCounts.dashboards;
             totalCounts.alertrules += normalizedCounts.alertrules;
-            totalCounts.library_elements += normalizedCounts.library_elements;
+            totalCounts.librarypanels += normalizedCounts.librarypanels;
           }
 
           return { data: totalCounts };
@@ -369,11 +357,15 @@ export const browseDashboardsAPI = createApi({
             continue;
           }
 
-          await baseQuery({
+          const response = await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
             params: deleteFolderParams,
           });
+          if (!response.error) {
+            // Only clear the nav starred entry for folders that were actually deleted
+            api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+          }
         }
 
         return { data: undefined };
@@ -394,7 +386,6 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
-        const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
         let deletedCount = 0;
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
@@ -416,7 +407,7 @@ export const browseDashboardsAPI = createApi({
                 continue;
               }
             }
-            await api.deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
+            await api.deleteDashboard(dashboardUID, false);
 
             deletedCount++;
             deletedDashboardUIDs.push(dashboardUID);
@@ -429,27 +420,18 @@ export const browseDashboardsAPI = createApi({
               pageStateManager.removeSceneCache(uid);
             }
 
-            // Show success notification after all deletions
-            if (restoreDashboardsEnabled) {
-              // Show notification with button to Recently Deleted
-              const title =
-                deletedCount === 1
-                  ? t('browse-dashboards.delete.success-single', 'Dashboard deleted')
-                  : t('browse-dashboards.delete.success-multiple', 'Dashboards deleted');
-              const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
-              const component = buildNotificationButton({
-                title,
-                buttonLabel: buttonText,
-                href: config.appSubUrl + '/dashboard/recently-deleted',
-              });
-              dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-            } else if (config.featureToggles.kubernetesDashboards) {
-              // Legacy notification for kubernetes dashboards
-              appEvents.publish({
-                type: AppEvents.alertSuccess.name,
-                payload: ['Dashboard deleted'],
-              });
-            }
+            // Show notification with button to Recently Deleted
+            const title =
+              deletedCount === 1
+                ? t('browse-dashboards.delete.success-single', 'Dashboard deleted')
+                : t('browse-dashboards.delete.success-multiple', 'Dashboards deleted');
+            const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
+            const component = buildNotificationButton({
+              title,
+              buttonLabel: buttonText,
+              href: config.appSubUrl + '/dashboard/recently-deleted',
+            });
+            dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
           }
         }
 
@@ -496,8 +478,18 @@ export const browseDashboardsAPI = createApi({
         }
       },
 
-      onQueryStarted: ({ folderUid, dashboard }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: (cmd, { queryFulfilled, dispatch }) => {
+        const { folderUid, dashboard } = cmd;
         dashboardWatcher.ignoreNextSave();
+        const dashboardUid = isV1DashboardCommand(cmd) ? cmd.dashboard.uid : cmd.k8s?.name;
+
+        // Capture the dashboard's previous folder from the cache before save, so that
+        // if the user is moving it to a different folder we can invalidate the source
+        // folder's children cache. Without this, childrenByParentUID[previousFolderUid]
+        // stays stale and folder-select cascades in the list view incorrectly include
+        // the moved-out dashboard.
+        const previousFolderUid = getDashboardFolder(dashboardUid);
+
         queryFulfilled.then(async ({ data }) => {
           try {
             await contextSrv.fetchUserPermissions();
@@ -510,6 +502,15 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          // If the dashboard was moved, also refetch old parent folder
+          if (previousFolderUid !== undefined && previousFolderUid !== folderUid) {
+            dispatch(
+              refetchChildren({
+                parentUID: previousFolderUid,
+                pageSize: PAGE_SIZE,
+              })
+            );
+          }
           // version 1 means a newly created dashboard — only then does the resource count change
           if (data.version === 1) {
             invalidateQuotaUsage(dispatch);
@@ -524,68 +525,8 @@ export const browseDashboardsAPI = createApi({
       },
     }),
 
-    importDashboard: builder.mutation<ImportDashboardResponseDTO, ImportOptions>({
-      query: ({ dashboard, overwrite, inputs, folderUid }) => ({
-        method: 'POST',
-        url: '/dashboards/import',
-        body: {
-          dashboard,
-          overwrite,
-          inputs,
-          folderUid,
-        },
-      }),
-      onQueryStarted: async ({ dashboard, folderUid }, { queryFulfilled, dispatch }) => {
-        // Check if a dashboard with this UID already exists to find its current folder
-        let currentFolderUid: string | undefined;
-        if (dashboard.uid) {
-          try {
-            const api = await getDashboardAPI();
-            const existingDashboard = await api.getDashboardDTO(dashboard.uid);
-            currentFolderUid = isDashboardV2Resource(existingDashboard)
-              ? existingDashboard.metadata?.name
-              : existingDashboard.meta?.folderUid;
-          } catch (error) {
-            if (isFetchError(error)) {
-              if (error.status !== 404) {
-                console.error('Error fetching dashboard', error);
-              } else {
-                // Do not show the error alert if the dashboard does not exist
-                // this is expected when importing a new dashboard
-                error.isHandled = true;
-              }
-            }
-          }
-        }
-
-        queryFulfilled.then(async (response) => {
-          // Refresh destination folder
-          dispatch(
-            refetchChildren({
-              parentUID: folderUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
-
-          // If the dashboard was moved from a different folder, refresh the source folder too
-          if (currentFolderUid && currentFolderUid !== folderUid) {
-            dispatch(
-              refetchChildren({
-                parentUID: currentFolderUid,
-                pageSize: PAGE_SIZE,
-              })
-            );
-          }
-
-          const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
-          locationService.push(dashboardUrl);
-          invalidateQuotaUsage(dispatch);
-        });
-      },
-    }),
-
     // RTK wrapper for the dashboard API
-    listDeletedDashboards: builder.query<ResourceList<Dashboard | DashboardV2Spec>, void>({
+    listDeletedDashboards: builder.query<TableResponse, void>({
       providesTags: ['getFolder'],
       queryFn: async () => {
         try {
@@ -627,14 +568,26 @@ export const browseDashboardsAPI = createApi({
   }),
 });
 
+/**
+ * Gets a parent folder of a dashboard from the cache in the store.
+ * @param dashboardUid
+ */
+function getDashboardFolder(dashboardUid?: string) {
+  if (dashboardUid) {
+    const { browseDashboards } = getState();
+    const item = findItem(browseDashboards.rootItems?.items ?? [], browseDashboards.childrenByParentUID, dashboardUid);
+    return item?.parentUID;
+  }
+  return undefined;
+}
+
 export const {
-  endpoints,
   useDeleteFolderMutation,
   useDeleteFoldersMutation,
   useDeleteDashboardsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
-  useLazyGetFolderQuery,
+
   useMoveFolderMutation,
   useMoveDashboardsMutation,
   useMoveFoldersMutation,
@@ -642,5 +595,4 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
-  useListDeletedDashboardsQuery,
 } = browseDashboardsAPI;

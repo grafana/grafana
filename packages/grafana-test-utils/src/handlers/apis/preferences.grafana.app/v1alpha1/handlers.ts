@@ -1,11 +1,15 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
-import { wellFormedTree } from '../../../../fixtures/folders';
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 
-const [_, { dashbdD }] = wellFormedTree();
+import { mockUserPreferences, setMockUserPreferences } from '../../../../fixtures/preferences';
+
+export const MERGED_PREFS_URL = '/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences/merged';
+const LIST_PREFS_URL = '/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences';
+const UPDATE_PREFS_URL = `${LIST_PREFS_URL}/:name`;
 
 const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
-  http.get('/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences', () => {
+  http.get(LIST_PREFS_URL, () => {
     return (
       override ??
       HttpResponse.json({
@@ -13,16 +17,7 @@ const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>)
         items: [
           {
             metadata: { name: 'user' },
-            spec: {
-              theme: 'light',
-              timezone: 'browser',
-              weekStart: 'monday',
-              homeDashboardUID: dashbdD.item.uid,
-              language: '',
-              regionalFormat: '',
-              queryHistory: { homeTab: '' },
-              navbar: { bookmarkUrls: [] },
-            },
+            spec: mockUserPreferences,
           },
         ],
       })
@@ -30,18 +25,36 @@ const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>)
   });
 
 const updatePreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
-  http.patch('/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences/:name', () => {
+  http.patch(UPDATE_PREFS_URL, async ({ request }) => {
+    if (override) {
+      return override;
+    }
+    const { spec }: Preferences = await request.clone().json();
+    setMockUserPreferences(spec);
+    return HttpResponse.json({
+      metadata: { name: 'user' },
+      spec: mockUserPreferences,
+    });
+  });
+
+const mergedPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
+  http.get(MERGED_PREFS_URL, () => {
     return (
       override ??
       HttpResponse.json({
-        metadata: { name: 'user' },
-        spec: {},
+        metadata: {},
+        spec: mockUserPreferences,
       })
     );
   });
 
-export const preferencesHandlers = { listPreferencesHandler, updatePreferencesHandler };
+export const customGetUserPreferencesHandler = (resolver: HttpResponseResolver) => http.get(LIST_PREFS_URL, resolver);
 
-const handlers = [listPreferencesHandler(), updatePreferencesHandler()];
+export const customPatchUserPreferencesHandler = (resolver: HttpResponseResolver) =>
+  http.patch(UPDATE_PREFS_URL, resolver);
+
+export const preferencesHandlers = { listPreferencesHandler, updatePreferencesHandler, mergedPreferencesHandler };
+
+const handlers = [listPreferencesHandler(), updatePreferencesHandler(), mergedPreferencesHandler()];
 
 export default handlers;

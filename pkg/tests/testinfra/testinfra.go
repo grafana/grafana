@@ -101,22 +101,22 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 
 	// Potentially allocate a real gRPC port for unified storage
 	runstore := false
+	var grpcListener net.Listener
 	unistore, _ := cfg.Raw.GetSection("grafana-apiserver")
 	if unistore != nil &&
 		unistore.Key("storage_type").MustString("") == string(options.StorageTypeUnifiedGrpc) &&
 		unistore.Key("address").String() == "" {
-		// Allocate a new address
-		listener2, err := net.Listen("tcp", "127.0.0.1:0")
+		// Reserve an ephemeral port and keep the listener open. We hand it
+		// straight to the gRPC server below instead of closing it and dialing
+		// the address again at startup, which left a window for a parallel
+		// process to claim the port and flake the test.
+		grpcListener, err = net.Listen("tcp", "127.0.0.1:0")
 		require.NoError(t, err)
 
 		cfg.GRPCServer.Network = "tcp"
-		cfg.GRPCServer.Address = listener2.Addr().String()
+		cfg.GRPCServer.Address = grpcListener.Addr().String()
 		cfg.GRPCServer.TLSConfig = nil
 		_, err = unistore.NewKey("address", cfg.GRPCServer.Address)
-		require.NoError(t, err)
-
-		// release the one we just discovered -- it will be used by the services on startup
-		err = listener2.Close()
 		require.NoError(t, err)
 		runstore = true
 	}
@@ -166,14 +166,16 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	var grpcService *grpcserver.DSKitService
 	if runstore {
 		tracer := otel.Tracer("test-grpc-server")
-		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitServiceWithListener(env.Cfg, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server", grpcListener)
 		require.NoError(t, err)
 
 		registerer := prometheus.NewPedanticRegistry()
 		storageMetrics := resource.ProvideStorageMetrics(registerer)
 		env.Cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").SetValue(string(options.StorageTypeUnified))
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, false)
+		eDB, err := sql.ProvideResourceDB(env.Cfg, env.SQLStore)
+		require.NoError(t, err)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
 		backendService := storageBackend.(services.Service)
@@ -181,7 +183,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
-			env.Cfg.Logger, registerer, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, grpcService)
+			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, grpcService)
 		require.NoError(t, err)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)
@@ -307,15 +309,19 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	err = os.MkdirAll(publicDir, 0o750)
 	require.NoError(t, err)
 
+	// Symlink read-only static assets from the source tree instead of copying.
+	// The plugin loader / template renderer only read from these paths, and
+	// CopyRecursive on public/app/plugins (~74 MB, ~66 plugins) is a measurable
+	// chunk of per-test startup time.
 	viewsDir := filepath.Join(publicDir, "views")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "views"), viewsDir)
+	err = os.Symlink(filepath.Join(rootDir, "public", "views"), viewsDir)
 	require.NoError(t, err)
 
 	// add a stub manifest to the build directory
 	buildDir := filepath.Join(publicDir, "build")
 	err = os.MkdirAll(buildDir, 0o750)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
+	mockAssets := `{
 		"entrypoints": {
 		  "app": {
 			"assets": {
@@ -343,11 +349,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		  "integrity": "sha256-k1g7TksMHFQhhQGE"
 		}
 	  }
-	  `), 0o750)
+	  `
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(mockAssets), 0o750)
+	require.NoError(t, err)
+	// Also write the React 19 manifest so tests work regardless of the react19 feature flag state
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest-react19.json"), []byte(mockAssets), 0o750)
 	require.NoError(t, err)
 
 	emailsDir := filepath.Join(publicDir, "emails")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "emails"), emailsDir)
+	err = os.Symlink(filepath.Join(rootDir, "public", "emails"), emailsDir)
 	require.NoError(t, err)
 	provDir := filepath.Join(cfgDir, "provisioning")
 	provDSDir := filepath.Join(provDir, "datasources")
@@ -362,8 +372,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	provDashboardsDir := filepath.Join(provDir, "dashboards")
 	err = os.MkdirAll(provDashboardsDir, 0o750)
 	require.NoError(t, err)
+	err = os.MkdirAll(filepath.Join(publicDir, "app"), 0o750)
+	require.NoError(t, err)
 	corePluginsDir := filepath.Join(publicDir, "app/plugins")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
+	err = os.Symlink(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
 	require.NoError(t, err)
 
 	cfg := ini.Empty()
@@ -428,6 +440,31 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.EnableAnnotationAppPlatform {
+		annotationSect, err := cfg.NewSection("annotations.app_platform")
+		require.NoError(t, err)
+		_, err = annotationSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = annotationSect.NewKey("store_backend", "memory")
+		require.NoError(t, err)
+	}
+
+	if opts.AnnotationMigrationPhase != "" {
+		migrationSect, err := cfg.NewSection("annotations.app_platform")
+		require.NoError(t, err)
+		_, err = migrationSect.NewKey("api_migration_phase", opts.AnnotationMigrationPhase)
+		require.NoError(t, err)
+		_, err = migrationSect.NewKey("api_server_url", opts.AnnotationAPIServerURL)
+		require.NoError(t, err)
+	}
+
+	if opts.AnnotationProxyStaticToken != "" {
+		grpcClientSect, err := cfg.NewSection("grpc_client_authentication")
+		require.NoError(t, err)
+		_, err = grpcClientSect.NewKey("token", opts.AnnotationProxyStaticToken)
+		require.NoError(t, err)
+	}
+
 	if opts.LicensePath != "" {
 		section, err := cfg.NewSection("enterprise")
 		require.NoError(t, err)
@@ -441,6 +478,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	if opts.RBACSingleOrganization {
 		_, err = rbacSect.NewKey("single_organization", "true")
+		require.NoError(t, err)
+	}
+	if opts.GlobalRoleSeedingEnabled {
+		_, err = rbacSect.NewKey("global_role_seeding_enabled", "true")
 		require.NoError(t, err)
 	}
 
@@ -488,6 +529,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
 	require.NoError(t, err)
+	// Disable phone-home services in tests. Each of these makes outbound
+	// HTTP requests to grafana.com / stats.grafana.org on startup, which is
+	// a source of flakiness on CI runners and adds nothing to the tests.
+	_, err = analyticsSect.NewKey("reporting_enabled", "false")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("check_for_updates", "false")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("check_for_plugin_updates", "false")
+	require.NoError(t, err)
 
 	grpcServerAuth, err := cfg.NewSection("grpc_server_authentication")
 	require.NoError(t, err)
@@ -503,6 +553,17 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		}
 		return section, err
 	}
+
+	pluginsSect, err := getOrCreateSection("plugins")
+	require.NoError(t, err)
+	_, err = pluginsSect.NewKey("disable_plugins", "grafana-assistant-app")
+	require.NoError(t, err)
+	// Disable async plugin preinstall in tests. The background installer
+	// downloads plugins from grafana.com into the test's tempdir, racing
+	// t.TempDir cleanup and producing "directory not empty" failures, and
+	// adds a network dependency that no integration test actually needs.
+	_, err = pluginsSect.NewKey("preinstall_disabled", "true")
+	require.NoError(t, err)
 
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
@@ -567,15 +628,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 	if opts.PluginAdminEnabled {
-		anonSect, err := cfg.NewSection("plugins")
+		pluginsSect, err := getOrCreateSection("plugins")
 		require.NoError(t, err)
-		_, err = anonSect.NewKey("plugin_admin_enabled", "true")
+		_, err = pluginsSect.NewKey("plugin_admin_enabled", "true")
 		require.NoError(t, err)
 	}
 	if opts.PluginAdminExternalManageEnabled {
-		anonSect, err := cfg.NewSection("plugins")
+		pluginsSect, err := getOrCreateSection("plugins")
 		require.NoError(t, err)
-		_, err = anonSect.NewKey("plugin_admin_external_manage_enabled", "true")
+		_, err = pluginsSect.NewKey("plugin_admin_external_manage_enabled", "true")
 		require.NoError(t, err)
 	}
 	if opts.ViewersCanEdit {
@@ -745,10 +806,39 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("migration_parquet_buffer", "true")
 		require.NoError(t, err)
 	}
+	if opts.MigrationChunkMaxBytes > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("migration_chunked_writes", "true")
+		require.NoError(t, err)
+		_, err = section.NewKey("migration_chunk_max_bytes", fmt.Sprintf("%d", opts.MigrationChunkMaxBytes))
+		require.NoError(t, err)
+	}
 	if opts.EnableSQLKVBackend {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("enable_sqlkv_backend", "true")
+		require.NoError(t, err)
+	}
+	if opts.NATSEnabled {
+		listenAddress := opts.NATSListenAddress
+		if listenAddress == "" {
+			listenAddress = "127.0.0.1"
+		}
+		section, err := getOrCreateSection("nats")
+		require.NoError(t, err)
+		_, err = section.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = section.NewKey("mode", "embedded")
+		require.NoError(t, err)
+		_, err = section.NewKey("listen_address", listenAddress)
+		require.NoError(t, err)
+		_, err = section.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
+		require.NoError(t, err)
+		_, err = section.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
+		require.NoError(t, err)
+		// Single-node test bus: skip KV-backed peer discovery/clustering.
+		_, err = section.NewKey("discovery_enabled", "false")
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -759,6 +849,24 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("allowed_targets", strings.Join(opts.ProvisioningAllowedTargets, "|"))
+		require.NoError(t, err)
+	}
+	if len(opts.ProvisioningResources) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resources", strings.Join(opts.ProvisioningResources, ", "))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningAllowInsecure {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("allow_insecure", "true")
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningPublicRootURL != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("public_root_url", opts.ProvisioningPublicRootURL)
 		require.NoError(t, err)
 	}
 	if len(opts.ProvisioningRepositoryTypes) > 0 {
@@ -781,18 +889,38 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))
 		require.NoError(t, err)
 	}
-	if opts.ProvisioningFolderAPIVersion != "" {
-		provisioningSect, err := getOrCreateSection("provisioning")
-		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
-		require.NoError(t, err)
-	}
 	// nil means "use the ini default" (100). Non-nil writes the value, including
 	// 0 which disables the size check.
 	if opts.ProvisioningMaxIncrementalChanges != nil {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("max_incremental_changes", fmt.Sprintf("%d", *opts.ProvisioningMaxIncrementalChanges))
+		require.NoError(t, err)
+	}
+	// nil means "use the ini default" (5 MB). Non-nil writes the value,
+	// including 0 which disables the per-file size check.
+	if opts.ProvisioningMaxFileSize != nil {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_file_size", fmt.Sprintf("%d", *opts.ProvisioningMaxFileSize))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningControllerResyncInterval > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resync_interval", opts.ProvisioningControllerResyncInterval.String())
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningHistoryExpiration > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("history_expiration", opts.ProvisioningHistoryExpiration.String())
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningJobPollInterval > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("job_poll_interval", opts.ProvisioningJobPollInterval.String())
 		require.NoError(t, err)
 	}
 	if opts.EnableSCIM {
@@ -874,6 +1002,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("runtime_config", opts.APIServerRuntimeConfig)
 		require.NoError(t, err)
 	}
+
+	if opts.ScopesApiEnabled {
+		section, err := getOrCreateSection("scopes")
+		require.NoError(t, err)
+		_, err = section.NewKey("api_enabled", "true")
+		require.NoError(t, err)
+	}
+
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
@@ -882,7 +1018,11 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	maxConns := opts.DBMaxConns
 	if maxConns <= 0 {
-		maxConns = 2
+		// Keep the pool small to surface connection leaks, but not so small that
+		// startup deadlocks: while migrating, the migrator can hold one connection
+		// on the database lock while each migration's transaction needs a second,
+		// and other startup components share the same pool.
+		maxConns = 5
 	}
 
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
@@ -952,28 +1092,60 @@ type GrafanaOpts struct {
 	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
 	PermittedProvisioningPaths                           string
 	ProvisioningAllowedTargets                           []string
+	ProvisioningAllowInsecure                            bool
+	ProvisioningPublicRootURL                            string
 	ProvisioningRepositoryTypes                          []string
+	ProvisioningResources                                []string
 	ProvisioningMaxResourcesPerRepository                int64
 	ProvisioningMaxRepositories                          int64
-	ProvisioningFolderAPIVersion                         string
 	ProvisioningMaxIncrementalChanges                    *int
-	GrafanaComSSOAPIToken                                string
-	LicensePath                                          string
-	EnableRecordingRules                                 bool
-	EnableSCIM                                           bool
-	RBACSingleOrganization                               bool
-	APIServerRuntimeConfig                               string
-	DisableControllers                                   bool
-	DisableDBCleanup                                     bool
-	MigrationParquetBuffer                               bool
-	EnableSQLKVBackend                                   bool
-	SecretsManagerEnableDBMigrations                     bool
-	OpenFeatureAPIEnabled                                bool
-	DisableAuthZClientCache                              bool
-	ZanzanaReconciliationInterval                        time.Duration
-	ZanzanaReconcilerMode                                setting.ZanzanaReconcilerMode
-	DisableZanzanaCache                                  bool
-	DisableZanzanaServerCheckQueryCache                  bool
+	ProvisioningMaxFileSize                              *int64
+	// ProvisioningControllerResyncInterval overrides [provisioning]
+	// resync_interval (repo/connection/job informer re-list). Set it
+	// high in NATS tests so a fast reconcile can only be a live notification, not
+	// the periodic re-list. Zero leaves the ini default (60s).
+	ProvisioningControllerResyncInterval time.Duration
+	// ProvisioningHistoryExpiration overrides [provisioning] history_expiration
+	// (HistoricJob retention + historic-job informer resync). Set it low to
+	// exercise the re-list-driven cleanup quickly. Zero leaves the default (10m).
+	ProvisioningHistoryExpiration time.Duration
+	// ProvisioningJobPollInterval overrides [provisioning] job_poll_interval (job
+	// driver fallback poll). Set it high in NATS tests so a job that completes
+	// quickly can only have been woken by the live notification, not the poll.
+	// Zero leaves the default (30s).
+	ProvisioningJobPollInterval time.Duration
+	GrafanaComSSOAPIToken       string
+	LicensePath                 string
+	EnableRecordingRules        bool
+	EnableSCIM                  bool
+	RBACSingleOrganization      bool
+	GlobalRoleSeedingEnabled    bool
+	APIServerRuntimeConfig      string
+	DisableControllers          bool
+	DisableDBCleanup            bool
+	MigrationParquetBuffer      bool
+	MigrationChunkMaxBytes      int64
+	EnableSQLKVBackend          bool
+	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
+	// mode=embedded). Provisioning controllers then consume resource-change
+	// notifications through the NATS-backed informer instead of the apiserver
+	// watch. Publishing requires EnableSQLKVBackend=true.
+	NATSEnabled bool
+	// NATSListenAddress is the embedded server's bind address; defaults to
+	// 127.0.0.1 when empty.
+	NATSListenAddress string
+	// NATSClientPort / NATSClusterPort are the embedded server's ports. Callers
+	// should pass free ports so parallel test binaries don't collide on the
+	// conventional 4222/6222.
+	NATSClientPort                      int
+	NATSClusterPort                     int
+	SecretsManagerEnableDBMigrations    bool
+	OpenFeatureAPIEnabled               bool
+	DisableAuthZClientCache             bool
+	ZanzanaReconciliationInterval       time.Duration
+	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode
+	DisableZanzanaCache                 bool
+	DisableZanzanaServerCheckQueryCache bool
 
 	// If set to 0, the default (2) is used.
 	DBMaxConns int
@@ -992,6 +1164,15 @@ type GrafanaOpts struct {
 	HARedisAddr            string
 	HARedisPeerName        string
 	HASingleNodeEvaluation bool
+
+	// Annotation app platform configuration
+	EnableAnnotationAppPlatform bool
+	AnnotationMigrationPhase    string
+	AnnotationAPIServerURL      string
+	AnnotationProxyStaticToken  string
+
+	// Enables Scope Api
+	ScopesApiEnabled bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

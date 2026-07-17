@@ -7,16 +7,16 @@ import (
 	"testing"
 	"time"
 
+	prom_model "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	prom_model "github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
@@ -58,10 +58,10 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 			Title: rule.Title,
 			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -71,6 +71,8 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -248,8 +250,8 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 			for k, v := range expectedModel {
 				require.EqualValues(t, v, retrievedModel[k], "Model field %s should match", k)
 			}
-			require.EqualValues(t, r.NoDataState, retrievedRule.Spec.NoDataState)
-			require.EqualValues(t, r.ExecErrState, retrievedRule.Spec.ExecErrState)
+			require.Equal(t, common.ToK8sNoDataState(ngmodels.NoDataState(r.NoDataState)), retrievedRule.Spec.NoDataState)
+			require.Equal(t, common.ToK8sExecErrState(ngmodels.ExecutionErrorState(r.ExecErrState)), retrievedRule.Spec.ExecErrState)
 
 			// change the title of the rule and check that it's updated in k8s and provisioning API
 			updatedRule := retrievedRule.DeepCopy()
@@ -388,8 +390,8 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *test
 			for k, v := range expectedModel {
 				require.EqualValues(t, v, retrievedModel[k], "Model field %s should match", k)
 			}
-			require.EqualValues(t, r.NoDataState, retrievedRule.Spec.NoDataState)
-			require.EqualValues(t, r.ExecErrState, retrievedRule.Spec.ExecErrState)
+			require.Equal(t, common.ToK8sNoDataState(ngmodels.NoDataState(r.NoDataState)), retrievedRule.Spec.NoDataState)
+			require.Equal(t, common.ToK8sExecErrState(ngmodels.ExecutionErrorState(r.ExecErrState)), retrievedRule.Spec.ExecErrState)
 
 			// - change group should be allowed and reflected in the provisioning api
 			updatedRule := retrievedRule.DeepCopy()

@@ -16,10 +16,10 @@ import {
   StackingMode,
   VisibilityMode,
 } from '@grafana/schema';
-import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { defaultGraphConfig } from './config';
 import { type Options } from './panelcfg.gen';
+import { TIMESERIES_CARD_OPTIONS } from './suggestions';
 
 /**
  * Default values
@@ -36,11 +36,7 @@ const PRESET_STYLE_DEFAULTS: Partial<GraphFieldConfig> = {
 };
 
 const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) => {
-  s.options!.disableKeyboardEvents = true;
-  s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
-  if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-    s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
-  }
+  TIMESERIES_CARD_OPTIONS?.previewModifier?.(s);
   s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
 };
 
@@ -58,7 +54,7 @@ function makePreset(
       },
       overrides: fieldConfig.overrides,
     },
-    cardOptions: { previewModifier, maxRows },
+    cardOptions: { ...TIMESERIES_CARD_OPTIONS, previewModifier, maxRows },
   };
 }
 

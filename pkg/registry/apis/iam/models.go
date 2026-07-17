@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
@@ -22,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -48,18 +49,19 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Stores
 	store legacy.LegacyIdentityStore
 
-	userLegacyStore                  *user.LegacyStore
-	saLegacyStore                    *serviceaccount.LegacyStore
-	legacyTeamStore                  *team.LegacyStore
-	teamBindingLegacyStore           *teambinding.LegacyBindingStore
-	ssoLegacyStore                   *sso.LegacyStore
-	roleApiInstaller                 RoleApiInstaller
-	globalRoleApiInstaller           GlobalRoleApiInstaller
-	teamLBACApiInstaller             TeamLBACApiInstaller
-	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
-	resourcePermissionsStorage       resource.StorageBackend
-	mappers                          *resourcepermission.MappersRegistry
-	roleBindingsApiInstaller         RoleBindingApiInstaller
+	userLegacyStore            *user.LegacyStore
+	saLegacyStore              *serviceaccount.LegacyStore
+	legacyTeamStore            *team.LegacyStore
+	externalGroupReconciler    legacy.ExternalGroupReconciler
+	teamBindingLegacyStore     *teambinding.LegacyBindingStore
+	ssoLegacyStore             *sso.LegacyStore
+	ssoUseMTSettings           bool
+	roleApiInstaller           RoleApiInstaller
+	globalRoleApiInstaller     GlobalRoleApiInstaller
+	teamLBACApiInstaller       TeamLBACApiInstaller
+	resourcePermissionsStorage resource.StorageBackend
+	mappers                    *resourcepermission.MappersRegistry
+	roleBindingsApiInstaller   RoleBindingApiInstaller
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
@@ -85,15 +87,16 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
+	teamSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
-	teamSearch                        *TeamSearchHandler
+	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
-	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
+	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider
 
 	// non-k8s api route
-	display *user.LegacyDisplayREST
+	display *display.DisplayHandler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.
@@ -101,9 +104,6 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
-
-	// Toggle for enabling authz management apis
-	features featuremgmt.FeatureToggles
 
 	tracing tracing.Tracer
 
@@ -113,6 +113,10 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
+
+	// ofClient evaluates the feature flags gating the IAM APIs. The default
+	// client resolves the globally-registered provider at evaluation time.
+	ofClient openfeature.IClient
 
 	apiConfig Config
 }

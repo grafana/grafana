@@ -12,11 +12,11 @@ cards:
     - title: HTTP API
       height: 24
       href: ./http-api/
-      description: Every Grafana instance exposes an HTTP API, which is the same API used by the Grafana frontend to manage resources like saving dashboards, creating users, updating data sources, deleting alerts, and more. You can use the HTTP API to programmatically access or manage resources from your Grafana instance.
+      description: Every Grafana instance exposes an HTTP API, used by the Grafana frontend to manage resources like saving dashboards, creating users, updating data sources, deleting alerts, and more. You can use the HTTP API to programmatically access or manage resources from your Grafana instance.
     - title: Grafana Cloud API
       height: 24
       href: ./cloud-api/
-      description: The Grafana Cloud API, sometimes referred to as the Grafana.com API or GCOM API, allows you to interact with resources from your Grafana Cloud Stack programmatically.
+      description: The Grafana Cloud API, also known as the Grafana.com API or GCOM API, allows you to interact with resources from your Grafana Cloud Stack programmatically.
     - title: Tracing API
       height: 24
       href: ./tracing-api/

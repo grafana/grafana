@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   alignTimeRangeCompareData,
@@ -24,7 +24,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { type Options } from './panelcfg.gen';
-import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
@@ -42,6 +42,7 @@ export const TimeSeriesPanel = ({
   options,
   fieldConfig,
   onChangeTimeRange,
+  onOptionsChange,
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
@@ -108,6 +109,13 @@ export const TimeSeriesPanel = ({
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
+  const onPinnedToSidebarChange = useCallback(
+    (pinned: boolean) => {
+      onOptionsChange({ ...options, legend: { ...options.legend, facetedFilterPinned: pinned } });
+    },
+    [onOptionsChange, options]
+  );
+
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
@@ -136,6 +144,7 @@ export const TimeSeriesPanel = ({
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
       annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
+      onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
         return (
@@ -174,8 +183,7 @@ export const TimeSeriesPanel = ({
 
                   const groupingFilters =
                     seriesIdx !== null &&
-                    (config.featureToggles.perPanelFiltering ||
-                      config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                    config.featureToggles.dashboardUnifiedDrilldownControls &&
                     getFiltersBasedOnGrouping
                       ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
                       : [];
@@ -195,16 +203,18 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       filterByGroupedLabels={
-                        (config.featureToggles.perPanelFiltering ||
-                          config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                        config.featureToggles.dashboardUnifiedDrilldownControls &&
                         groupingFilters.length &&
                         onAddAdHocFilters
                           ? {
-                              onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
-                              onFilterOutGroupedLabels: () =>
+                              onFilterForGroupedLabels: () => {
+                                onAddAdHocFilters(groupingFilters);
+                              },
+                              onFilterOutGroupedLabels: () => {
                                 onAddAdHocFilters(
                                   groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                ),
+                                );
+                              },
                             }
                           : undefined
                       }

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +20,7 @@ func TestRegions(t *testing.T) {
 		mockRegions := &ec2.DescribeRegionsOutput{
 			Regions: []ec2types.Region{
 				{
-					RegionName: utils.Pointer("earth-1"),
+					RegionName: new("earth-1"),
 				},
 			},
 		}

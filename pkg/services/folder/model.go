@@ -49,8 +49,21 @@ var ErrCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", err
 var ErrNameExists = errutil.BadRequest("folder.name-exists", errutil.WithPublicMessage("A folder with that name already exists"))
 
 const (
-	GeneralFolderUID      = "general"
-	RootFolderUID         = ""
+	// GeneralFolderUID is the Grafana UID that identifies the root folder.
+	GeneralFolderUID = "general"
+
+	// LegacyRootFolderUID is the legacy root sentinel — an empty string — still
+	// surfaced by older /api/ responses and stored on resources written before
+	// folder annotations were populated.
+	//
+	// Deprecated: use GeneralFolderUID for the canonical root folder UID. This
+	// constant is retained only for compatibility with legacy API responses and
+	// stored data that still uses the empty-string sentinel.
+	LegacyRootFolderUID = ""
+
+	// SharedWithMeFolderUID is the UID for the special "Shared with me" folder,
+	// It is not a real folder but used to identify the location of resources that you
+	// can see, but do not have access to the containing folder
 	SharedWithMeFolderUID = "sharedwithme"
 )
 
@@ -112,6 +125,26 @@ func (f *Folder) IsGeneral() bool {
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
+}
+
+// ToLegacyFolderUID maps the GeneralFolderUID ("general") sentinel back to the
+// empty-for-root convention expected by legacy API responses
+// (/api/dashboards, /api/folders, /api/search). All other UIDs are returned
+// unchanged.
+func ToLegacyFolderUID(uid string) string {
+	if uid == GeneralFolderUID {
+		return LegacyRootFolderUID //nolint:staticcheck
+	}
+	return uid
+}
+
+// IsRootFolderUID reports whether the given folder UID identifies the root
+// folder. Use this for "does this resource have a parent folder?" checks
+// where both root sentinels must be treated equivalently:
+//   - "" (legacy empty annotation)
+//   - "general" (canonical root UID)
+func IsRootFolderUID(uid string) bool {
+	return uid == LegacyRootFolderUID || uid == GeneralFolderUID //nolint:staticcheck
 }
 
 func (f *Folder) WithURL() *Folder {

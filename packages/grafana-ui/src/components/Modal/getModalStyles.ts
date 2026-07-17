@@ -87,6 +87,11 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
         padding: theme.spacing(1, 2, 0, 2),
         marginBottom: theme.spacing(2),
       },
+
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.accent.main}`,
+        outlineOffset: '-2px',
+      },
     }),
     modalButtonRow: css({
       background: theme.colors.background.primary,

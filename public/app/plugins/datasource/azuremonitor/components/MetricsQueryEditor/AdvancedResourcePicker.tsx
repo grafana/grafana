@@ -9,7 +9,7 @@ import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
 import { type AzureMonitorResource } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 
-export interface ResourcePickerProps<T> {
+interface ResourcePickerProps<T> {
   resources: T[];
   onChange: (resources: T[]) => void;
 }
@@ -172,13 +172,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
           </div>
         ))}
       </div>
-      <Button
-        aria-label={t('components.advanced-resource-picker.aria-label-add', 'Add')}
-        icon="plus"
-        variant="secondary"
-        onClick={addResource}
-        type="button"
-      >
+      <Button icon="plus" variant="secondary" onClick={addResource} type="button">
         <Trans i18nKey="components.advanced-resource-picker.button-add-resource">Add resource</Trans>
       </Button>
     </>

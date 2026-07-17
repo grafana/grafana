@@ -14,11 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -73,8 +73,19 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 
 type settingsStorage struct {
 	pluginID       string
-	pluginSettings pluginsettings.Service
+	pluginSettings pluginsettings.Service // TODO we may need a caching version
 	resourceInfo   *utils.ResourceInfo
+}
+
+func NewLegacySettingsStore(pluginID string, pluginSettings pluginsettings.Service) grafanarest.Storage {
+	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
+		pluginID, pluginID,
+	)
+	return &settingsStorage{
+		pluginID:       pluginID,
+		pluginSettings: pluginSettings,
+		resourceInfo:   &settingsRI,
+	}
 }
 
 var _ grafanarest.Storage = (*settingsStorage)(nil)
@@ -102,18 +113,31 @@ func (s *settingsStorage) ConvertToTable(ctx context.Context, object runtime.Obj
 }
 
 func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
-	if name != s.pluginID {
+	if name != apppluginV0.INSTANCE_NAME {
 		return nil, apierrors.NewNotFound(s.resourceInfo.GroupResource(), name)
 	}
+	return s.get(ctx)
+}
 
+func (s *settingsStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+	obj, err := s.get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &apppluginV0.SettingsList{
+		Items: []apppluginV0.Settings{*obj},
+	}, nil
+}
+
+func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error) {
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	obj := &apppluginv0alpha1.Settings{
+	obj := &apppluginV0.Settings{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
+			Name:            apppluginV0.INSTANCE_NAME,
 			Namespace:       nsInfo.Value,
 			UID:             getLegacySettingsUID(nsInfo.OrgID, s.pluginID),
 			ResourceVersion: getLegacySettingsResourceVersion(nil),
@@ -127,8 +151,14 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 	if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
-	if err == nil {
+	if ps != nil {
+		pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
+			return s.pluginSettings.DecryptedValues(ps), nil
+		})
+
+		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
 		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
+
 		obj.Spec.Enabled = ps.Enabled
 		obj.Spec.Pinned = ps.Pinned
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
@@ -141,30 +171,20 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 		}
 		obj.Secure = secureValues
 	}
-
 	return obj, nil
 }
 
-func (s *settingsStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
-	obj, err := s.Get(ctx, s.pluginID, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &apppluginv0alpha1.SettingsList{
-		Items: []apppluginv0alpha1.Settings{*obj.(*apppluginv0alpha1.Settings)},
-	}, nil
-}
-
-func (s *settingsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+func (s *settingsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
 		}
 	}
-	return s.save(ctx, obj)
+	isDryRun := options != nil && dryrun.IsDryRun(options.DryRun)
+	return s.save(ctx, obj, isDryRun)
 }
 
-func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	old, err := s.Get(ctx, name, nil)
 	if err != nil {
 		return nil, false, err
@@ -181,22 +201,21 @@ func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.
 		}
 	}
 
-	obj, err := s.save(ctx, updated)
+	isDryRun := options != nil && dryrun.IsDryRun(options.DryRun)
+	obj, err := s.save(ctx, updated, isDryRun)
 	return obj, false, err
 }
 
 func (s *settingsStorage) Delete(_ context.Context, _ string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// pluginSettings does not support deletion
-	return nil, false, nil
+	return nil, false, fmt.Errorf("not supported")
 }
 
 func (s *settingsStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	// pluginSettings does not support deletion
-	return nil, nil
+	return nil, fmt.Errorf("not supported")
 }
 
-func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
-	p, ok := obj.(*apppluginv0alpha1.Settings)
+func (s *settingsStorage) save(ctx context.Context, obj runtime.Object, isDryRun bool) (*apppluginV0.Settings, error) {
+	p, ok := obj.(*apppluginV0.Settings)
 	if !ok {
 		return nil, fmt.Errorf("expected Settings object")
 	}
@@ -204,6 +223,10 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (runtime
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
+	}
+
+	if isDryRun {
+		return p, nil
 	}
 
 	if err := s.pluginSettings.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
@@ -216,6 +239,5 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (runtime
 	}); err != nil {
 		return nil, fmt.Errorf("failed to save plugin settings: %w", err)
 	}
-
-	return s.Get(ctx, s.pluginID, nil)
+	return s.get(ctx)
 }

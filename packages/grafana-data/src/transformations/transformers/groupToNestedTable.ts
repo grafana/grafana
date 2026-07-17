@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import type { MatcherConfig } from '@grafana/schema';
 
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { guessFieldTypeForField } from '../../dataframe/guessFieldType';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
 import { type DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
@@ -15,6 +15,7 @@ import { DataTransformerID } from './ids';
 import { findMaxFields } from './utils';
 
 export const SHOW_NESTED_HEADERS_DEFAULT = true;
+export const EXPAND_ALL_ROWS_DEFAULT = false;
 const MINIMUM_FIELDS_REQUIRED = 2;
 
 // ---------------------------------------------------------------------------
@@ -27,6 +28,7 @@ const MINIMUM_FIELDS_REQUIRED = 2;
  */
 export interface GroupToNestedTableTransformerOptions {
   showSubframeHeaders?: boolean;
+  expandAllRows?: boolean;
   fields: Record<string, GroupByFieldOptions>;
 }
 
@@ -52,6 +54,8 @@ export interface GroupToNestedTableMatcherConfig {
 
 export interface GroupToNestedTableTransformerOptionsV2 {
   showSubframeHeaders?: boolean;
+  /** When true, all nested rows are expanded by default when the panel loads. */
+  expandAllRows?: boolean;
   /** Ordered list of matcher rules. First matching rule for a field wins. */
   rules: GroupToNestedTableMatcherConfig[];
 }
@@ -89,6 +93,7 @@ export function migrateGroupToNestedTableOptions(
 
   return {
     showSubframeHeaders: options.showSubframeHeaders,
+    expandAllRows: options.expandAllRows,
     rules,
   };
 }
@@ -252,7 +257,9 @@ export const groupToNestedTable: DataTransformerInfo<
             values: subFrames,
           });
 
+          const expandAllRows = options.expandAllRows ?? EXPAND_ALL_ROWS_DEFAULT;
           processed.push({
+            meta: expandAllRows ? { custom: { expandAllRows: true } } : undefined,
             fields,
             length: valuesByGroupKey.size,
           });
@@ -274,10 +281,11 @@ export const groupToNestedTable: DataTransformerInfo<
 function createSubframe(
   fields: Field[],
   frameLength: number,
-  { showSubframeHeaders = SHOW_NESTED_HEADERS_DEFAULT }: GroupToNestedTableTransformerOptionsV2
+  { showSubframeHeaders = SHOW_NESTED_HEADERS_DEFAULT }: GroupToNestedTableTransformerOptionsV2,
+  stableRowKey: string
 ) {
   return {
-    meta: { custom: { noHeader: !showSubframeHeaders } },
+    meta: { custom: { noHeader: !showSubframeHeaders, stableRowKey } },
     length: frameLength,
     fields,
   };
@@ -312,7 +320,7 @@ function groupToSubframes(
 ): DataFrame[][] {
   const subFrames: DataFrame[][] = [];
 
-  for (const [, value] of valuesByGroupKey) {
+  for (const [groupKey, value] of valuesByGroupKey) {
     const nestedFields: Field[] = [];
 
     for (const fieldName in value) {
@@ -339,9 +347,9 @@ function groupToSubframes(
     }
 
     if (nestedFields.length > 0) {
-      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length, options)]);
+      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length, options, groupKey)]);
     } else {
-      subFrames.push([createSubframe([], 0, options)]);
+      subFrames.push([createSubframe([], 0, options, groupKey)]);
     }
   }
 

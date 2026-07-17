@@ -149,6 +149,14 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 	return client.GetStats(ctx, in, opts...)
 }
 
+// VectorSearch is unified-storage-only — there's no legacy bleve fallback for
+// vector search, so always route to the unified client regardless of the
+// dual-write toggle.
+func (s *searchWrapper) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest,
+	opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return s.unifiedClient.VectorSearch(ctx, in, opts...)
+}
+
 func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest,
 	opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	client := s.legacyClient

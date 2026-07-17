@@ -1420,7 +1420,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "stable-uid"},
-				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "stable-uid"},
+				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "stable-uid", Hash: "dash-hash"},
 			},
 		}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
@@ -1437,8 +1437,12 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything).
 			Return("hash-uid", nil)
-		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref").
-			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
+		// The child dashboard has a known hash in the resource list, so
+		// WithExistingHash should be passed to allow skipping strict validation
+		// when the content is unchanged.
+		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref",
+			mock.MatchedBy(func(opt resources.WriteResourceOption) bool { return opt != nil }),
+		).Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "stable-uid").Return(nil)
 
 		progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -1452,8 +1456,58 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything)
-		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref")
+		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref",
+			mock.MatchedBy(func(opt resources.WriteResourceOption) bool { return opt != nil }))
 		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "stable-uid")
+	})
+
+	t.Run("metadata deletion without existing hash does not pass WithExistingHash", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		changes := []repository.VersionedFileChange{
+			{Action: repository.FileActionDeleted, Path: "gamma/_folder.json", PreviousRef: "old-ref"},
+		}
+		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+
+		// No Hash on the dashboard item.
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "gamma/", Group: resources.FolderResource.Group, Name: "gamma-uid"},
+				{Path: "gamma/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "gamma-uid"},
+			},
+		}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
+
+		repo.MockReader.On("Read", mock.Anything, "gamma/", "new-ref").Return(&repository.FileInfo{}, nil)
+
+		progress.On("SetTotal", mock.Anything, mock.Anything).Return()
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
+
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "gamma/", "new-ref", mock.Anything).
+			Return("hash-uid", nil)
+		// No hash in resource list → WriteResourceFromFile called without options.
+		repoResources.On("WriteResourceFromFile", mock.Anything, "gamma/dash.json", "new-ref").
+			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
+		repoResources.On("RemoveFolder", mock.Anything, "gamma-uid").Return(nil)
+
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+
+		repo.MockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+			{Path: "gamma", Blob: false},
+			{Path: "gamma/dash.json", Blob: true},
+		}, nil)
+
+		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+		require.NoError(t, err)
+
+		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "gamma/dash.json", "new-ref")
 	})
 
 	t.Run("deleted _folder.json is skipped in apply phase", func(t *testing.T) {
@@ -1515,7 +1569,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-alpha-uid"},
-				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-alpha-uid"},
+				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-alpha-uid", Hash: "dash-hash"},
 			},
 		}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
@@ -1536,8 +1590,10 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything, mock.Anything).
 			Return("new-alpha-uid", nil)
-		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref").
-			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
+		// Child dashboard has hash in resource list → WithExistingHash passed.
+		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref",
+			mock.MatchedBy(func(opt resources.WriteResourceOption) bool { return opt != nil }),
+		).Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "old-alpha-uid").Return(nil)
 
 		progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -1552,7 +1608,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything, mock.Anything)
-		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref")
+		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref",
+			mock.MatchedBy(func(opt resources.WriteResourceOption) bool { return opt != nil }))
 		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "old-alpha-uid")
 	})
 

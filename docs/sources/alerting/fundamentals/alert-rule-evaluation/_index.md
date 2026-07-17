@@ -53,22 +53,24 @@ These settings affect how alert instances progress through their lifecycle.
 
 Each alert rule can generate one or more alert instances.
 
-An alert instance transitions between these common states based on how long the alert condition remains met or not met.
+An alert instance can be in any of the following states, depending on the outcome of the alert rule evaluation:
 
-| State          | Description                                                                                                                             |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Normal**     | The state of an alert when the condition (threshold) is not met.                                                                        |
-| **Pending**    | The state of an alert that has breached the threshold but for less than the [pending period](#pending-period).                          |
-| **Alerting**   | The state of an alert that has breached the threshold for longer than the [pending period](#pending-period).                            |
-| **Recovering** | The state of a firing alert when the threshold is no longer breached, but for less than the [keep firing for](#keep-firing-for) period. |
+| State                    | Description                                                                                                                                                                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Normal**               | The state of an alert when no alerting conditions (threshold breach, no data, or error) are met.                                                                                                                                                           |
+| **Pending**              | The state of an alert when a condition (threshold breach, no data, or error) has been met, but the [pending period](#pending-period) has not yet elapsed.                                                                                                  |
+| **Alerting**             | The state of an alert when the threshold has been breached after the [pending period](#pending-period) has elapsed.                                                                                                                                        |
+| **Recovering**           | The state of a firing alert when the threshold is no longer breached, but the [keep firing for](#keep-firing-for) period has not yet elapsed.                                                                                                              |
+| **No Data<sup>\*</sup>** | The state of an alert when the query returns no data or all values are null after the pending period has elapsed. You can customize the behavior of the [No Data state](ref:nodata-and-error-states), which by default triggers a different alert.         |
+| **Error<sup>\*</sup>**   | The state of an alert when an error or timeout occurs while evaluating the alert rule after the pending period has elapsed. You can customize the behavior of the [Error state](ref:nodata-and-error-states), which by default triggers a different alert. |
 
-{{< figure src="/media/docs/alerting/alert-rule-evaluation-basic-statediagram.png" alt="A diagram of the lifecyle of a firing alert instance." max-width="750px" >}}
+{{< figure src="/media/docs/alerting/alert-rule-evaluation-full-statediagram_v3.svg" caption="The lifecycle diagram of alert instances" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
 
 If an alert rule changes (except for updates to annotations, the evaluation interval, or other internal fields), its alert instances reset to the **Normal** state, and update accordingly during the next evaluation.
 
 {{< admonition type="note" >}}
 
-To learn about additional alert instance states, see [No Data and Error states](ref:nodata-and-error-states).
+The **No Data** and **Error** states are supported only for Grafana-managed alert rules. Refer to [No Data and Error states](ref:nodata-and-error-states) to customize their default behavior for triggering a dedicated alert.
 
 {{< /admonition >}}
 
@@ -95,7 +97,7 @@ Rules can be evaluated concurrently or sequentially. For details, see [How rules
 
 You can set a **Pending period** to prevent unnecessary notifications caused by temporary issues.
 
-When the alert condition is met, the alert instance enters the **Pending** state. It remains in this state until the condition has been continuously true for the entire **Pending period**.
+When an alerting condition is met, the alert instance enters the **Pending** state. It remains in this state while any alerting condition is met during the configured pending period. After the pending period has elapsed, the alert transitions to the state corresponding to the last evaluation.
 
 This ensures the condition breach is stable before the alert transitions to the **Alerting** state and routed for notification.
 
@@ -103,7 +105,7 @@ This ensures the condition breach is stable before the alert transitions to the 
 
 - **Normal** -> **Pending** -> **Alerting**<sup>\*</sup>
 
-You can also set the **Pending period** to zero to skip the **Pending** state entirely and transition to **Alerting** immediately.
+You can also set the **Pending period** to zero to skip the **Pending** state entirely and transition immediately to the **Alerting**, **No Data**, or **Error** state.
 
 ## Keep firing for
 
@@ -144,3 +146,5 @@ With a **keep firing for** period of 0 seconds, the alert instance transitions i
 | -------------------------- | --------- | ----------------------------- | --------------- |
 | 03:00 (sixth evaluation)   | Not met   | Normal <sup>Resolved</sup> 📩 | 120s            |
 | 03:30 (seventh evaluation) | Not met   | Normal                        | 150s            |
+
+{{< figure src="/media/docs/alerting/alert-evaluation2.svg" alt="A diagram of alert state transitions of an alert example." max-width="750px" >}}

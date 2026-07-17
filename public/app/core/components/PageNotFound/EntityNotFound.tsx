@@ -47,7 +47,7 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
   );
 }
 
-export function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       padding: theme.spacing(8, 2, 2, 2),

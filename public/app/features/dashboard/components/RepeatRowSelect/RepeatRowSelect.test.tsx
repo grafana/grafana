@@ -10,6 +10,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
@@ -47,18 +48,7 @@ const setup = async (variables?: SceneVariable[]) => {
 
 describe('RepeatRowSelect2', () => {
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
 
   it('should render correct options', async () => {

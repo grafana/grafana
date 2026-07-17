@@ -55,10 +55,16 @@ it('renders an empty panel with required props only', () => {
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 });
 
+it('renders a panel with subtitle and title', () => {
+  setup({ title: 'A', subtitle: 'B' });
+
+  expect(screen.getByText("Panel's Content").parentElement).toHaveStyle({ padding: '0px 8px 8px 8px' });
+});
+
 it('renders an empty panel without padding', () => {
   setup({ padding: 'none' });
 
-  expect(screen.getByText("Panel's Content").parentElement).toHaveStyle({ padding: '0px' });
+  expect(screen.getByText("Panel's Content").parentElement).toHaveStyle({ padding: '0px 0px 0px 0px' });
 });
 
 it('renders an empty panel with padding', () => {
@@ -243,6 +249,8 @@ it('does not select the panel when clicking interactive content', async () => {
         {() => (
           <div>
             <button type="button">Button text</button>
+            <input role="combobox" />
+            {/* eslint-disable-next-line @grafana/no-plain-links */}
             <a href="#">Anchor text</a>
             <canvas />
             <svg />
@@ -259,6 +267,9 @@ it('does not select the panel when clicking interactive content', async () => {
       </div>
     </ElementSelectionContext.Provider>
   );
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('combobox') });
+  expect(onSelect).not.toHaveBeenCalled();
 
   await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('button', { name: 'Button text' }) });
   expect(onSelect).not.toHaveBeenCalled();

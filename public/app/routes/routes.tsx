@@ -37,9 +37,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPageProxy" */ '../features/dashboard/containers/DashboardPageProxy')
-      ),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "HomeRoute" */ '../features/home/HomeRoute')),
     },
     {
       path: '/d/:uid/:slug?',
@@ -56,6 +54,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
+      ),
+    },
+    {
+      path: '/notebook/:uid/:slug?',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Notebook,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
       ),
     },
     {
@@ -155,6 +161,41 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboards',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
+      ),
+    },
+    config.featureToggles.globalDashboardVariables && {
+      path: '/dashboards/variables',
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    config.featureToggles.globalDashboardVariables && {
+      path: '/dashboards/variables/new',
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    config.featureToggles.globalDashboardVariables && {
+      // Nested under a static /edit segment so a variable whose derived
+      // metadata.name is literally "new" can never collide with the create route.
+      path: '/dashboards/variables/edit/:name',
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
       ),
     },
     {
@@ -544,7 +585,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
       ),
     },
-    config.featureToggles.restoreDashboards && {
+    {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
@@ -576,7 +617,7 @@ export function getAppRoutes(): RouteDescriptor[] {
   return routes.filter(isTruthy);
 }
 
-export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
+function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
   if (!cfg.supportBundlesEnabled) {
     return [];
   }

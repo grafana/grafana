@@ -17,7 +17,7 @@ type Props = {
   onChange: (value: JaegerQuery) => void;
 };
 
-export const ALL_OPERATIONS_KEY = 'All';
+const ALL_OPERATIONS_KEY = 'All';
 const allOperationsOption: SelectableValue<string> = {
   label: ALL_OPERATIONS_KEY,
   value: undefined,
@@ -213,5 +213,3 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     </>
   );
 }
-
-export default SearchForm;

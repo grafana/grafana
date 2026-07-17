@@ -42,6 +42,7 @@ export const getGraphFieldOptions: () => {
         'grafana-ui.u-plot.config.get-graph-field-options.line-interpolation.description-linear',
         'Linear'
       ),
+      ariaLabel: t('grafana-ui.u-plot.config.get-graph-field-options.line-interpolation.description-linear', 'Linear'),
       value: LineInterpolation.Linear,
       icon: 'gf-interpolation-linear',
     },
@@ -50,6 +51,7 @@ export const getGraphFieldOptions: () => {
         'grafana-ui.u-plot.config.get-graph-field-options.line-interpolation.description-smooth',
         'Smooth'
       ),
+      ariaLabel: t('grafana-ui.u-plot.config.get-graph-field-options.line-interpolation.description-smooth', 'Smooth'),
       value: LineInterpolation.Smooth,
       icon: 'gf-interpolation-smooth',
     },
@@ -58,11 +60,19 @@ export const getGraphFieldOptions: () => {
         'grafana-ui.u-plot.config.get-graph-field-options.line-interpolation.description-step-before',
         'Step before'
       ),
+      ariaLabel: t(
+        'grafana-ui.u-plot.config.get-graph-field-options.line-interpolation.description-step-before',
+        'Step before'
+      ),
       value: LineInterpolation.StepBefore,
       icon: 'gf-interpolation-step-before',
     },
     {
       description: t(
+        'grafana-ui.u-plot.config.get-graph-field-options.line-interpolation.description-step-after',
+        'Step after'
+      ),
+      ariaLabel: t(
         'grafana-ui.u-plot.config.get-graph-field-options.line-interpolation.description-step-after',
         'Step after'
       ),

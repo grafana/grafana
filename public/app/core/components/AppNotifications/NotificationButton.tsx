@@ -9,7 +9,7 @@ export interface NotificationButtonProps {
   ariaLabel?: string;
 }
 
-export function NotificationButton({ title, buttonLabel, href, ariaLabel }: NotificationButtonProps) {
+function NotificationButton({ title, buttonLabel, href, ariaLabel }: NotificationButtonProps) {
   return (
     <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
       {title}

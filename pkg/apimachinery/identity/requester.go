@@ -61,6 +61,10 @@ type Requester interface {
 	// Retrieve the teams from the team service instead of using this method.
 	GetTeams() []int64
 
+	// GetExternalGroups returns the groups asserted by the external IdP
+	// (SAML/OIDC/LDAP). Distinct from GetGroups, which carries team UIDs.
+	GetExternalGroups() []string
+
 	// DEPRECATED: GetOrgName returns the name of the active organization.
 	// Retrieve the organization name from the organization service instead of using this method.
 	GetOrgName() string

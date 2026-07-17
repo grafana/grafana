@@ -11,15 +11,26 @@
 
 export * from './utils/skeleton';
 
-export { TableNG } from './components/Table/TableNG/TableNG';
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { signatureHelp } from './components/CodeMirror/signatureHelp';
+export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
 export type {
-  CodeEditorProps as CodeMirrorEditorProps,
-  CodeEditorCompletionMode as CodeMirrorCompletionMode,
-} from './components/CodeMirror/CodeEditor';
-export type {
-  Completion as CodeMirrorCompletion,
-  CompletionContext as CodeMirrorCompletionContext,
-  CompletionResult as CodeMirrorCompletionResult,
-  CompletionSource as CodeMirrorCompletionSource,
-} from '@codemirror/autocomplete';
+  CodeMirrorBasicSetup,
+  CodeMirrorCompletion,
+  CodeMirrorCompletionContext,
+  CodeMirrorCompletionMode,
+  CodeMirrorCompletionResult,
+  CodeMirrorCompletionSource,
+  CodeMirrorEditorLanguage,
+  CodeMirrorEditorProps,
+  CodeMirrorEditorTheme,
+  CodeMirrorExtension,
+  CodeMirrorSqlDialect,
+  SignatureHelp,
+  SignatureHelpProvider,
+  SignatureInformation,
+  SignatureParameter,
+} from './components/CodeMirror/types';
+export { getQueryFieldConfig } from './components/QueryFieldConfig/queryFieldConfig';
+export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/QueryFieldConfig/queryFieldConfig';
+export { TableNG } from './components/Table/TableNG/TableNG';

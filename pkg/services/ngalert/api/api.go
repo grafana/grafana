@@ -67,7 +67,7 @@ type API struct {
 	DataProxy             *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager  *notifier.MultiOrgAlertmanager
 	StateManager          state.AlertInstanceManager
-	RuleStatusReader      apiprometheus.StatusReader
+	RuleMutator           apiprometheus.RuleMutator
 	AccessControl         ac.AccessControl
 	ReceiverService       *notifier.ReceiverService
 	ReceiverTestService   *notifier.ReceiverTestingService
@@ -109,6 +109,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.AlertRules,
 		api.FeatureManager,
 		api.MultiOrgAlertmanager,
+		accesscontrol.NewAlertmanagerImportsAccess(api.AccessControl),
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
@@ -133,7 +134,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleStatusReader, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
+		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleMutator, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
@@ -172,9 +173,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		&ConfigSrv{
 			datasourceService:    api.DatasourceService,
 			store:                api.AdminConfigStore,
+			cfg:                  &api.Cfg.UnifiedAlerting,
 			log:                  logger,
 			alertmanagerProvider: api.AlertsRouter,
-			featureManager:       api.FeatureManager,
 		},
 	), m)
 

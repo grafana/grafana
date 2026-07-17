@@ -21,6 +21,10 @@ export function publicDashboardQueryHandler(request: DataQueryRequest<DataQuery>
     return of({ data: [] });
   }
 
+  if (panelId == null || Number.isNaN(panelId)) {
+    return of({ data: [] });
+  }
+
   const body = {
     intervalMs,
     maxDataPoints,

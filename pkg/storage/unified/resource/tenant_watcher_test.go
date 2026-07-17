@@ -64,6 +64,22 @@ func TestNewTenantWatcherConfig(t *testing.T) {
 		cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token_exchange_url").SetValue("")
 		require.Nil(t, NewTenantWatcherConfig(cfg))
 	})
+
+	t.Run("ignores allow_insecure_tls outside development", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.Env = setting.Prod
+		tenantWatcherCfg := NewTenantWatcherConfig(cfg)
+		require.NotNil(t, tenantWatcherCfg)
+		require.False(t, tenantWatcherCfg.AllowInsecure, "AllowInsecure must be forced off when app_mode is not development")
+	})
+
+	t.Run("honours allow_insecure_tls in development", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.Env = setting.Dev
+		tenantWatcherCfg := NewTenantWatcherConfig(cfg)
+		require.NotNil(t, tenantWatcherCfg)
+		require.True(t, tenantWatcherCfg.AllowInsecure)
+	})
 }
 
 func TestTenantAddPendingDeleted(t *testing.T) {

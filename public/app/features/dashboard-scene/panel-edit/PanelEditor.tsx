@@ -25,18 +25,15 @@ import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/d
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
-import { DashboardEditActionEvent, EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
+import { DashboardEditActionEvent } from '../edit-pane/events';
+import { EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import {
-  activateSceneObjectAndParentTree,
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { type PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -79,6 +76,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
+  private _tableViewPanelActivationAdded = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -104,9 +102,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     dashboard.state.editPane.clearSelection();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-      // default to timeseries if newVizSuggestions is off or the options pane is collapsed
       const isPaneCollapsed = sessionStorage.getItem(EDIT_PANE_COLLAPSED_KEY) === 'true';
-      if (!config.featureToggles.newVizSuggestions || isPaneCollapsed) {
+      if (isPaneCollapsed) {
         panel.changePluginType('timeseries');
       }
     }
@@ -118,16 +115,19 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       })
     );
 
-    const deactivateParents = activateSceneObjectAndParentTree(panel);
+    // Listen for panel plugin changes
+    this._subs.add(
+      panel.subscribeToState((n, p) => {
+        if (n.pluginId !== p.pluginId) {
+          this.waitForPlugin();
+        }
+      })
+    );
 
     this.waitForPlugin();
 
     return () => {
       this.commitChanges();
-
-      if (deactivateParents) {
-        deactivateParents();
-      }
     };
   }
 
@@ -167,7 +167,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     dashboard.state.editPane.setPanelEditAction(editAction);
   }
 
-  private waitForPlugin(retry = 0) {
+  public waitForPlugin(retry = 0) {
     const panel = this.getPanel();
     const plugin = panel.getPlugin();
 
@@ -231,15 +231,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this._setupChangeDetection();
       this._updateDataPane(plugin);
 
-      // Listen for panel plugin changes
-      this._subs.add(
-        panel.subscribeToState((n, p) => {
-          if (n.pluginId !== p.pluginId) {
-            this.waitForPlugin();
-          }
-        })
-      );
-
       // Setup options pane
       const optionsPane = new PanelOptionsPane({
         panelRef: this.state.panelRef,
@@ -249,14 +240,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         isNewPanel: this.state.isNewPanel,
       });
 
-      this.setState({
-        optionsPane,
-        isInitializing: false,
-      });
+      this.setState({ optionsPane, isInitializing: false });
     } else {
       // plugin changed after first time initialization
       // Just update data pane
       this._updateDataPane(plugin);
+    }
+
+    // If switching plugin when tableView is enabled, then disable it
+    if (this.state.tableView) {
+      this.setState({ tableView: undefined });
     }
   }
 
@@ -348,6 +341,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._changesHaveBeenMade = true;
   }
 
+  public getLibraryPanelBehavior(): LibraryPanelBehavior | undefined {
+    return getLibraryPanelBehavior(this.getPanel());
+  }
+
   public onSaveLibraryPanel = () => {
     this.setState({ showLibraryPanelSaveModal: true });
   };
@@ -391,6 +388,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dataProvider = panel.state.$data;
     if (!dataProvider) {
       return;
+    }
+
+    // In order to maintain panel active state when switching to table view call activate here so that the panel is never deactivated
+    // This is to make sure panel state subscriptions remain activate from the queries pane
+    if (!this._tableViewPanelActivationAdded) {
+      this._subs.add(panel.activate());
+      this._tableViewPanelActivationAdded = true;
     }
 
     this.setState({

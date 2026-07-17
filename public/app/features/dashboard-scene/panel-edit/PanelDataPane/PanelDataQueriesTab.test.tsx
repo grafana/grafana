@@ -30,7 +30,7 @@ import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-time
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
-import { findVizPanelByKey } from '../../utils/utils';
+import { activateSceneObjectAndParentTree, findVizPanelByKey } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';
 import {
   testDashboard,
@@ -622,6 +622,22 @@ describe('PanelDataQueriesTab', () => {
 
           expect(panel.state.$timeRange).toBeUndefined();
         });
+
+        it('should preserve compareWith when updating other query options', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          panel.setState({ $timeRange: new PanelTimeRange({ compareWith: '1d' }) });
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            maxDataPoints: 100,
+            timeRange: { from: undefined, shift: undefined },
+          });
+
+          expect(panel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
+          expect((panel.state.$timeRange?.state as PanelTimeRangeState).compareWith).toBe('1d');
+        });
       });
 
       describe('max data points and interval', () => {
@@ -995,7 +1011,9 @@ async function setupScene(panelId: string) {
   const panelEditor = buildPanelEditScene(panel);
   dashboard.setState({ editPanel: panelEditor });
 
-  deactivators.push(dashboard.activate());
+  const deactivate = activateSceneObjectAndParentTree(panel);
+
+  deactivators.push(deactivate!);
   deactivators.push(panelEditor.activate());
 
   const dataPane = panelEditor.state.dataPane;
@@ -1020,7 +1038,9 @@ async function setupV2Scene(panelKey: string) {
   const panelEditor = buildPanelEditScene(panel);
   dashboard.setState({ editPanel: panelEditor });
 
-  deactivators.push(dashboard.activate());
+  const deactivate = activateSceneObjectAndParentTree(panel);
+
+  deactivators.push(deactivate!);
   deactivators.push(panelEditor.activate());
 
   const dataPane = panelEditor.state.dataPane;

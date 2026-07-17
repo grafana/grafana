@@ -2,23 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
+import { mockComboboxRect } from '@grafana/test-utils';
 
 import { VariableDisplaySelect } from './VariableDisplaySelect';
 
-// For testing combobox
 beforeAll(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  // For testing combobox
+  mockComboboxRect();
 });
 
 describe('VariableDisplaySelect', () => {
@@ -101,5 +91,24 @@ describe('VariableDisplaySelect', () => {
     await user.click(aboveDashboardOption);
 
     expect(onChange).toHaveBeenCalledWith(VariableHide.dontHide);
+  });
+
+  it('uses section top placement labels when provided', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <VariableDisplaySelect
+        onChange={onChange}
+        display={VariableHide.dontHide}
+        type="query"
+        topPlacementLabel="Top of row"
+      />
+    );
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Top of row')).toBeInTheDocument();
+    expect(screen.getByText('Top of row, label hidden')).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
-import { action } from '@storybook/addon-actions';
-import { useArgs } from '@storybook/preview-api';
-import { type StoryFn, type Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { action } from 'storybook/actions';
+import { useArgs } from 'storybook/preview-api';
 
 import { DatePickerWithInput } from './DatePickerWithInput';
 import mdx from './DatePickerWithInput.mdx';

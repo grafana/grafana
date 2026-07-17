@@ -1,10 +1,12 @@
 package repo
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -80,5 +82,46 @@ func TestSelectSystemCompatibleVersion(t *testing.T) {
 			"test", "2.0.0", fakeCompatOpts(),
 		)
 		require.NoError(t, err)
+	})
+
+	t.Run("Should return versionNotFound when pinned version is missing from catalog", func(t *testing.T) {
+		_, err := SelectSystemCompatibleVersion(logger,
+			createPluginVersions(versionArg{version: "2.0.0"}),
+			"test", "1.0.0+sha-not-published", fakeCompatOpts(),
+		)
+		require.Error(t, err)
+		base := &errutil.Error{}
+		require.True(t, errors.As(err, base))
+		require.Equal(t, "plugin.versionNotFound", base.Public().MessageID)
+	})
+
+	t.Run("Should return versionNotCompatible when pinned version is incompatible but others are", func(t *testing.T) {
+		isCompatibleFalse := false
+		_, err := SelectSystemCompatibleVersion(logger,
+			createPluginVersions(
+				versionArg{version: "2.0.0"},
+				versionArg{version: "1.0.0", isCompatible: &isCompatibleFalse},
+			),
+			"test", "1.0.0", fakeCompatOpts(),
+		)
+		require.Error(t, err)
+		base := &errutil.Error{}
+		require.True(t, errors.As(err, base))
+		require.Equal(t, "plugin.versionNotCompatible", base.Public().MessageID)
+	})
+
+	t.Run("Should return grafanaVersionNotCompatible when no version is compatible", func(t *testing.T) {
+		isCompatibleFalse := false
+		_, err := SelectSystemCompatibleVersion(logger,
+			createPluginVersions(
+				versionArg{version: "2.0.0", isCompatible: &isCompatibleFalse},
+				versionArg{version: "1.0.0", isCompatible: &isCompatibleFalse},
+			),
+			"test", "1.0.0", fakeCompatOpts(),
+		)
+		require.Error(t, err)
+		base := &errutil.Error{}
+		require.True(t, errors.As(err, base))
+		require.Equal(t, "plugin.grafanaVersionNotCompatible", base.Public().MessageID)
 	})
 }

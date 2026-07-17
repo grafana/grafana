@@ -1,8 +1,8 @@
-import { action } from '@storybook/addon-actions';
-import { type Meta, type StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { merge } from 'lodash';
 import { type CSSProperties, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
+import { action } from 'storybook/actions';
 
 import { LoadingState } from '@grafana/data';
 
@@ -144,7 +144,15 @@ export const Examples = () => {
           })}
           {renderPanel('Content', {
             loadingState: LoadingState.Error,
-            title: 'No title, loadingState is Error, no statusMessage',
+            title: 'loadingState is Error, no statusMessage',
+          })}
+          {renderPanel('Content', {
+            title: 'With description',
+            description: 'This is a description',
+          })}
+          {renderPanel('Content', {
+            title: 'With a subtitle',
+            subtitle: 'This is a sub title with',
           })}
           {renderPanel('Content', {
             title: 'loadingState is Streaming',
@@ -340,7 +348,9 @@ export const Basic: StoryFn<typeof PanelChrome> = (overrides?: Partial<PanelChro
     width: 400,
     height: 200,
     title: 'Very long title that should get ellipsis when there is no more space',
-    description,
+    description:
+      overrides?.description ??
+      'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
     menu,
     children: () => undefined,
   };
@@ -365,11 +375,10 @@ const LoadingIcon = [
 
 const leftItems = { LoadingIcon, Default };
 
-const description =
-  'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.';
-
 Basic.argTypes = {
   description: { control: { type: 'text' } },
+  title: { control: { type: 'text' } },
+  subtitle: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),
     mapping: leftItems,

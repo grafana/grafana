@@ -303,6 +303,45 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		require.NotEmpty(t, updatedRule.FolderFullpath, "FolderFullpath should be populated")
 		assert.Equal(t, folderBTitle, updatedRule.FolderFullpath, "FolderFullpath should be updated to Folder B")
 	})
+
+	t.Run("should preserve guid and use correct table when called inside an outer transaction", func(t *testing.T) {
+		// Regression test for the ORM table inference bug where UpdateAlertRules was
+		// called from callers (UpdateRuleGroup, UpdateAlertRule) that already hold an
+		// outer InTransaction session on the context. A prior query on that shared
+		// session could leave xorm's table state pointing at the wrong model,
+		// causing "SELECT alert_rule columns FROM user" on PostgreSQL.
+		rule := createRule(t, store, gen)
+		require.NotEmpty(t, rule.GUID, "rule must have a guid after insert")
+		originalGUID := rule.GUID
+
+		newRule := models.CopyRule(rule)
+		newRule.Title = util.GenerateShortUID()
+
+		err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+			// Simulate a prior query on the shared session using a different table,
+			// as would happen when the folder service or provenance store runs on
+			// the same transaction context before UpdateAlertRules is called.
+			_ = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+				_, _ = sess.Table("alert_rule_version").Where("1=0").Count()
+				return nil
+			})
+			return store.UpdateAlertRules(ctx, &usr, []models.UpdateRule{{
+				Existing: rule,
+				New:      *newRule,
+			}})
+		})
+		require.NoError(t, err)
+
+		dbrule := &alertRule{}
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
+			require.Truef(t, exist, "rule with ID %d not found after update", rule.ID)
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, originalGUID, dbrule.GUID, "guid must not change on update — it is an immutable identifier")
+		require.Equal(t, newRule.Title, dbrule.Title)
+	})
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
@@ -704,7 +743,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -771,7 +810,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -824,7 +863,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), true, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), true, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -2297,6 +2336,23 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
 
 		ns := "test-ns-nogroup-paginated"
+		// Create a rule that we'll query via no-group
+		noGroupRule1 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+			ruleGen.WithGroupIndex(0),
+		))
+		noGroupRule2 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+			ruleGen.WithGroupIndex(0),
+		))
+
+		noGroup1, err := models.NewNoGroupRuleGroup(noGroupRule1.UID)
+		require.NoError(t, err)
+		noGroup2, err := models.NewNoGroupRuleGroup(noGroupRule2.UID)
+		require.NoError(t, err)
+
 		// Create rules in a normal group
 		groupedRule1 := createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
@@ -2306,20 +2362,12 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-a"),
 		))
-		// Create a rule that we'll query via no-group
-		noGroupRule := createRule(t, store, ruleGen.With(
-			ruleGen.WithNamespaceUID(ns),
-			ruleGen.WithGroupName(""),
-		))
-
-		noGroup, err := models.NewNoGroupRuleGroup(noGroupRule.UID)
-		require.NoError(t, err)
 
 		// Page 1: limit to 1 group
 		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
 				OrgID:      orgID,
-				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
 			},
 			Limit: 1,
 		})
@@ -2330,9 +2378,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
 				OrgID:      orgID,
-				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
 			},
-			Limit:         1,
+			Limit:         2,
 			ContinueToken: token1,
 		})
 		require.NoError(t, err)
@@ -2342,7 +2390,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		for _, r := range allResults {
 			allUIDs = append(allUIDs, r.UID)
 		}
-		require.ElementsMatch(t, []string{groupedRule1.UID, groupedRule2.UID, noGroupRule.UID}, allUIDs)
+		require.ElementsMatch(t, []string{groupedRule1.UID, groupedRule2.UID, noGroupRule1.UID, noGroupRule2.UID}, allUIDs)
 		require.Empty(t, token2, "should have no more pages")
 	})
 
@@ -2550,12 +2598,12 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		}{
 			{
 				name:                   "should return only imported prometheus rules when filter is true",
-				importedPrometheusRule: util.Pointer(true),
+				importedPrometheusRule: new(true),
 				expectedRules:          []*models.AlertRule{importedRule},
 			},
 			{
 				name:                   "should return only non-imported rules when filter is false",
-				importedPrometheusRule: util.Pointer(false),
+				importedPrometheusRule: new(false),
 				expectedRules:          []*models.AlertRule{regularRule},
 			},
 			{
@@ -3410,6 +3458,381 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		}
 		require.ElementsMatch(t, []string{panel1.UID, panel2.UID}, gotUIDs)
 	})
+
+	t.Run("ExcludeTitle", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedTitle := "excluded-title"
+		excludedGen := ruleGen.With(ruleGen.WithTitle(excludedTitle))
+		otherGen := ruleGen.With(ruleGen.WithUniqueTitle())
+
+		createRule(t, store, excludedGen)
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:        orgID,
+				ExcludeTitle: excludedTitle,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeDashboardUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedDash := "excluded-dashboard"
+		otherDash := "other-dashboard"
+		excludedGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&excludedDash, nil))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&otherDash, nil))
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:               orgID,
+				ExcludeDashboardUID: excludedDash,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludePanelID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		dashUID := "dash-for-panel-exclude"
+		excludedPanelID := int64(42)
+		otherPanelID := int64(99)
+		excludedGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &excludedPanelID))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &otherPanelID))
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:          orgID,
+				ExcludePanelID: excludedPanelID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
+
+	t.Run("NotificationSettingsType=SimplifiedRouting", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		simplifiedGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-x")))
+		policyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-x"}))
+		noNotifGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		s1 := createRule(t, store, simplifiedGen)
+		s2 := createRule(t, store, simplifiedGen)
+		createRule(t, store, policyGen)
+		createRule(t, store, noNotifGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                    orgID,
+				NotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{s1.UID, s2.UID}, gotUIDs)
+	})
+
+	t.Run("NotificationSettingsType=NamedRoutingTree", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		simplifiedGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-y")))
+		policyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-y"}))
+		noNotifGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		createRule(t, store, simplifiedGen)
+		p1 := createRule(t, store, policyGen)
+		p2 := createRule(t, store, policyGen)
+		createRule(t, store, noNotifGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                    orgID,
+				NotificationSettingsType: models.NotificationSettingsTypeNamedRoutingTree,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeNotificationSettingsType excludes simplified rules", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		simplifiedGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-z")))
+		policyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-z"}))
+		noNotifGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		createRule(t, store, simplifiedGen)
+		p1 := createRule(t, store, policyGen)
+		n1 := createRule(t, store, noNotifGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                           orgID,
+				ExcludeNotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, n1.UID}, gotUIDs)
+	})
+
+	t.Run("RoutingPolicyExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchPolicy := "match-policy"
+		matchGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: matchPolicy}))
+		otherGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "other-policy"}))
+
+		p1 := createRule(t, store, matchGen)
+		p2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:              orgID,
+				RoutingPolicyExact: matchPolicy,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeRoutingPolicy includes rules with no policy", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedPolicy := "excluded-policy"
+		excludedGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: excludedPolicy}))
+		otherGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "other-policy"}))
+		noPolicyGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		noPolicy := createRule(t, store, noPolicyGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                orgID,
+				ExcludeRoutingPolicy: excludedPolicy,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		// Both the rule with a different policy and the rule with no policy should match `!=`.
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, noPolicy.UID}, gotUIDs)
+	})
+
+	t.Run("RecordMetricExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchMetric := "match_metric"
+		matchGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric(matchMetric))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric("other_metric"))
+
+		m1 := createRule(t, store, matchGen)
+		m2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:             orgID,
+				RecordMetricExact: matchMetric,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{m1.UID, m2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeRecordMetric", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedMetric := "excluded_metric"
+		excludedGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric(excludedMetric))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric("other_metric"))
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:               orgID,
+				ExcludeRecordMetric: excludedMetric,
+			},
+			// scope to recording rules so we don't pick up alerting noise.
+			RuleType: models.RuleTypeFilterRecording,
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
+
+	t.Run("RecordTargetDatasourceUIDExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchUID := "match-target-ds-uid"
+		setTargetUID := func(uid string) models.AlertRuleMutator {
+			return func(rule *models.AlertRule) {
+				if rule.Record == nil {
+					rule.Record = &models.Record{}
+				}
+				rule.Record.TargetDatasourceUID = uid
+			}
+		}
+		matchGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID(matchUID))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID("other-target-ds-uid"))
+
+		t1 := createRule(t, store, matchGen)
+		t2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                          orgID,
+				RecordTargetDatasourceUIDExact: matchUID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{t1.UID, t2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeRecordTargetDatasourceUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedUID := "excluded-target-ds-uid"
+		setTargetUID := func(uid string) models.AlertRuleMutator {
+			return func(rule *models.AlertRule) {
+				if rule.Record == nil {
+					rule.Record = &models.Record{}
+				}
+				rule.Record.TargetDatasourceUID = uid
+			}
+		}
+		excludedGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID(excludedUID))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID("other-target-ds-uid"))
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                            orgID,
+				ExcludeRecordTargetDatasourceUID: excludedUID,
+			},
+			RuleType: models.RuleTypeFilterRecording,
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
 }
 
 func TestIntegration_ListDeletedRules(t *testing.T) {
@@ -3471,12 +3894,12 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 
 	// delete the second rule
 	clk.Add(1 * time.Hour)
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule2.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, rule2.UID)
 	require.NoError(t, err)
 
 	// and the first rule hour later
 	clk.Add(1 * time.Hour)
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule1.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, rule1.UID)
 	require.NoError(t, err)
 
 	t.Run("should return deleted rules sorted by date desc", func(t *testing.T) {
@@ -3493,7 +3916,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		assert.Empty(t, list[0].UID)
 		assert.Empty(t, rule1v2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
 		assert.Equal(t, list[0].Updated.UTC(), clk.Now().UTC())
-		assert.EqualValues(t, list[0].UpdatedBy, util.Pointer(models.UserUID("test")))
+		assert.EqualValues(t, list[0].UpdatedBy, new(models.UserUID("test")))
 	})
 }
 
@@ -3541,7 +3964,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 		TimeNow = func() time.Time {
 			return t0.Add(time.Duration(idx) * 10 * time.Second)
 		}
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uid)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uid)
 		require.NoError(t, err)
 	}
 

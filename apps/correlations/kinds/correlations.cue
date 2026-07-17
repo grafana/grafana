@@ -13,14 +13,17 @@ correlationsv0alpha1: {
 		spec: {
 			type:         CorrelationType
 			source:       DataSourceRef
-			target?:      DataSourceRef
+			target?:      DataSourceRef | null // null is for PATCH/edit when we want to clear the value
 			description?: string
 			label:        string
 			config:       ConfigSpec
 		}
 	}
 	selectableFields: [
-		"spec.datasource.name",
+		"spec.source.name",
+		"spec.source.group",
+		"spec.target.name",
+		"spec.target.group",
 	]
 }
 

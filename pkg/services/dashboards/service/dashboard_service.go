@@ -523,7 +523,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 	for _, row := range results.Hits {
 		dashes = append(dashes, &dashboards.DashboardRef{
 			UID:       row.Name,
-			FolderUID: row.Folder,
+			FolderUID: folder.ToLegacyFolderUID(row.Folder),
 			ID:        row.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), // nolint:staticcheck
 		})
 	}
@@ -1144,7 +1144,10 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 		return nil, err
 	}
 
-	dr.SetDefaultPermissions(ctx, dto, dash, false)
+	// new dashboard created
+	if dto.Dashboard.ID == 0 {
+		dr.SetDefaultPermissions(ctx, dto, dash, false)
+	}
 
 	return dash, nil
 }
@@ -1222,8 +1225,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return err
 	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
-	isNested := obj.GetFolder() != ""
-	if isNested {
+	if !folder.IsRootFolderUID(obj.GetFolder()) {
 		// Don't set any permissions for nested dashboards
 		return nil
 	}
@@ -1236,12 +1238,12 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 			UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
-	if !isNested {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
-	}
+	// Root dashboards (we returned above for nested) get default editor/viewer
+	// roles in addition to any caller-specific permissions added above.
+	permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+		{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+		{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+	}...)
 
 	svc := dr.getPermissionsService(key.Resource == "folders")
 	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
@@ -1265,6 +1267,12 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 	resource := "dashboard"
 	if dash.IsFolder {
 		resource = "folder"
+	}
+
+	// With the flag on, dashboard default permissions are set via the App Platform path, so skip the
+	// legacy SQL path here. Folders keep their own handling.
+	if !dash.IsFolder && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+		return
 	}
 
 	if !dr.cfg.RBAC.PermissionsOnCreation(resource) {
@@ -1515,7 +1523,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			Slug:        slugify.Slugify(hit.Title),
 			Description: hit.Description,
 			IsFolder:    false,
-			FolderUID:   hit.Folder,
+			FolderUID:   folder.ToLegacyFolderUID(hit.Folder),
 			FolderTitle: folderTitle,
 			FolderID:    folderID,
 			FolderSlug:  slugify.Slugify(folderTitle),
@@ -1833,6 +1841,18 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	}
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
+	// Request default permissions for new root dashboards via the App Platform path; the dashboard
+	// API server's permission setter acts on this annotation. Root-only (nested inherit from the
+	// parent), dashboards only (folders have their own setter), and ignored on update, so it's safe
+	// before the create-or-update below.
+	if !cmd.IsFolder && cmd.FolderUID == "" && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+	}
+
 	out, err := dr.k8sclient.Update(ctx, obj, orgID, v1.UpdateOptions{
 		FieldValidation: v1.FieldValidationIgnore,
 	})
@@ -1945,15 +1965,9 @@ func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.Fi
 	}
 
 	if len(query.FolderUIDs) > 0 {
-		// Grafana frontend issues a call to search for dashboards in "general" folder. General folder doesn't exists and
-		// should return all dashboards without a parent folder.
-		for i := range query.FolderUIDs {
-			if query.FolderUIDs[i] == folder.GeneralFolderUID {
-				query.FolderUIDs[i] = ""
-				break
-			}
-		}
-
+		// A root folder UID ("general" or the legacy "") is expanded to match
+		// both root sentinels by the search backend, so pass the UIDs through
+		// unchanged here.
 		req := []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_FOLDER,
 			Operator: string(selection.In),
@@ -2173,7 +2187,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 			UID:       hit.Name,
 			Slug:      slugify.Slugify(hit.Title),
 			Title:     hit.Title,
-			FolderUID: hit.Folder,
+			FolderUID: folder.ToLegacyFolderUID(hit.Folder),
 		}
 	}
 
@@ -2257,7 +2271,7 @@ func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *uns
 		ID:         obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		UID:        uid,
 		Slug:       slugify.Slugify(title),
-		FolderUID:  obj.GetFolder(),
+		FolderUID:  folder.ToLegacyFolderUID(obj.GetFolder()),
 		Version:    int(dashVersion),
 		Data:       simplejson.NewFromAny(spec),
 		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboardv0.GROUP+"/"),

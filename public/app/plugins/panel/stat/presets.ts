@@ -17,14 +17,13 @@ import {
 } from '@grafana/schema';
 
 import { defaultOptions, type Options } from './panelcfg.gen';
-
-const MAX_PREVIEW_SERIES = 6;
+import { MAX_STAT_PREVIEW_SERIES, STAT_CARD_OPTIONS } from './suggestions';
 
 const PRESET_CARD_OPTIONS: VisualizationSuggestion<Options, GraphFieldConfig>['cardOptions'] = {
-  maxSeries: MAX_PREVIEW_SERIES,
+  ...STAT_CARD_OPTIONS,
   previewModifier: (s) => {
     if (s.options?.reduceOptions?.values) {
-      s.options.reduceOptions.limit = MAX_PREVIEW_SERIES;
+      s.options.reduceOptions.limit = MAX_STAT_PREVIEW_SERIES;
     }
   },
 };
