@@ -78,6 +78,19 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 	return nil
 }
 
+type updateVersionQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	Version         int64
+	LastExecution   int64
+	OperationUID    string
+	PreviousVersion int64
+}
+
+func (updateVersionQuery) Validate() error {
+	return nil
+}
+
 func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *serverLock) (bool, error) {
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.acquireLock")
 	defer span.End()
@@ -114,6 +127,16 @@ func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *server
 	})
 
 	return result, err
+}
+
+type getLockQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	OperationUID    string
+}
+
+func (getLockQuery) Validate() error {
+	return nil
 }
 
 func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string) (*serverLock, error) {
@@ -266,6 +289,27 @@ func lockWait(minWait time.Duration, maxWait time.Duration) time.Duration {
 	return time.Duration(rand.Int63n(int64(maxWait-minWait)) + int64(minWait))
 }
 
+type getLockForUpdateQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	OperationUID    string
+}
+
+func (getLockForUpdateQuery) Validate() error {
+	return nil
+}
+
+type updateLastExecutionQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	LastExecution   int64
+	OperationUID    string
+}
+
+func (updateLastExecutionQuery) Validate() error {
+	return nil
+}
+
 // acquireForRelease will check if the lock is already on the database, if it is, will check with maxInterval if it is
 // timeouted. Returns nil error if the lock was acquired correctly
 func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName string, maxInterval time.Duration) error {
@@ -343,6 +387,16 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 	return err
 }
 
+type releaseLockQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	OperationUID    string
+}
+
+func (releaseLockQuery) Validate() error {
+	return nil
+}
+
 // releaseLock will delete the row at the database. This is only intended to be used within the scope of LockExecuteAndRelease
 // method, but not as to manually release a Lock
 func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string) error {
@@ -407,6 +461,18 @@ func (sl *ServerLockService) executeFunc(ctx context.Context, actionName string,
 	fn(ctx)
 
 	ctxLogger.Debug("Execution finished", "actionName", actionName, "duration", time.Since(start))
+}
+
+type createLockQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	OperationUID    string
+	LastExecution   int64
+	Version         int64
+}
+
+func (createLockQuery) Validate() error {
+	return nil
 }
 
 func (sl *ServerLockService) createLock(ctx context.Context,
