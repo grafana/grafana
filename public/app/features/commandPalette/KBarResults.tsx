@@ -47,9 +47,9 @@ export const KBarResults = (props: KBarResultsProps) => {
   const itemsRef = React.useRef(props.items);
   itemsRef.current = props.items;
 
-  // A11y: Pre-compute the group label for each item so that option items can
-  // announce their section even when the section header has scrolled out of
-  // the virtual window and is no longer in the DOM.
+  // A11y: Pre-compute the section label for each item so the group wrapper can
+  // label itself even when the section header row has scrolled out of the
+  // virtual window and is no longer in the DOM.
   const itemGroupLabels = React.useMemo(() => {
     const labels: Array<string | null> = [];
     let currentGroup: string | null = null;
@@ -202,7 +202,6 @@ export const KBarResults = (props: KBarResultsProps) => {
     // so our url property is secretly there, but completely untyped
     // Preferably this change is upstreamed and ActionImpl has this
     const { target, url } = item;
-    const groupLabel = itemGroupLabels[virtualRow.index];
 
     const handlers = !isStringItem && {
       onPointerMove: () => pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
@@ -252,7 +251,6 @@ export const KBarResults = (props: KBarResultsProps) => {
           ref={legacyKeyboard && active ? setActiveRow : undefined}
           {...childProps}
         >
-          {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
           {renderedItem}
         </a>
       );
@@ -260,13 +258,48 @@ export const KBarResults = (props: KBarResultsProps) => {
 
     return (
       <div key={virtualRow.index} ref={legacyKeyboard && active ? setActiveRow : undefined} {...childProps}>
-        {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
         {renderedItem}
       </div>
     );
   };
 
-  const renderRows = () => rowVirtualizer.virtualItems.map(renderRow);
+  // A11y: present the results as ARIA groups so screen readers announce each
+  // section and its heading, rather than one flat list of options. Consecutive
+  // virtual rows that share a section are wrapped in a `role="group"` labelled
+  // with the section name (via aria-label, so the label survives the section
+  // header scrolling out of the virtual window). Rows before the first section
+  // header have no group and are rendered directly in the listbox. The group
+  // wrapper is unpositioned, so the absolutely-positioned rows inside still
+  // translate relative to the scroll container.
+  const renderRows = () => {
+    const virtualItems = rowVirtualizer.virtualItems;
+    const rendered: React.ReactNode[] = [];
+
+    let index = 0;
+    while (index < virtualItems.length) {
+      const groupLabel = itemGroupLabels[virtualItems[index].index];
+
+      const runStart = index;
+      while (index < virtualItems.length && itemGroupLabels[virtualItems[index].index] === groupLabel) {
+        index++;
+      }
+      const run = virtualItems.slice(runStart, index);
+
+      if (groupLabel === null) {
+        for (const virtualRow of run) {
+          rendered.push(renderRow(virtualRow));
+        }
+      } else {
+        rendered.push(
+          <div key={`group-${groupLabel}-${run[0].index}`} role="group" aria-label={groupLabel}>
+            {run.map(renderRow)}
+          </div>
+        );
+      }
+    }
+
+    return rendered;
+  };
 
   return (
     <div
