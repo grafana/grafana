@@ -300,6 +300,12 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) *resourcep
 		if len(f.Values) == 0 {
 			return bad(fmt.Sprintf("filter %q has no values", f.Key))
 		}
+		// These keys map to dashboard index fields and dashboard chunk
+		// metadata; other kinds have no equivalents, so the filter would
+		// silently match nothing — reject instead.
+		if (f.Key == "datasource_uid" || f.Key == "language") && req.Key.Resource != "dashboards" {
+			return bad(fmt.Sprintf("filter %q is only supported for dashboards", f.Key))
+		}
 		// Unknown languages would leave the lexical leg unfiltered while
 		// the semantic leg matches nothing — reject instead.
 		if f.Key == "language" {

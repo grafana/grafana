@@ -201,12 +201,20 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 	assert.Contains(t, resp.Error.Message, "duplicate")
 
 	r = valid()
+	r.Key.Resource = "dashboards"
 	r.Filters = []*resourcepb.Requirement{{Key: "language", Operator: "in", Values: []string{"promql", "cypher"}}}
 	resp = validateHybridSearchRequest(r)
 	require.NotNil(t, resp) // unknown language would leave the lexical leg unfiltered
 	assert.Contains(t, resp.Error.Message, "cypher")
 
 	r = valid()
+	r.Filters = []*resourcepb.Requirement{{Key: "datasource_uid", Operator: "in", Values: []string{"d"}}}
+	resp = validateHybridSearchRequest(r)
+	require.NotNil(t, resp) // dashboard-only key on resource "r"
+	assert.Contains(t, resp.Error.Message, "dashboards")
+
+	r = valid()
+	r.Key.Resource = "dashboards"
 	r.Filters = []*resourcepb.Requirement{
 		{Key: "uid", Operator: "in", Values: []string{"u"}},
 		{Key: "folder", Operator: "in", Values: []string{"f"}},
@@ -378,8 +386,10 @@ func TestHybridSearch_FiltersReachBothLegs(t *testing.T) {
 	backend := &fakeVectorBackend{}
 	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
 
+	key := validKey()
+	key.Resource = "dashboards"
 	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q",
+		Key: key, Query: "q",
 		Filters: []*resourcepb.Requirement{
 			{Key: "datasource_uid", Operator: "in", Values: []string{"ds1"}},
 		},
