@@ -2089,7 +2089,8 @@
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-12-12T22:20:04Z"
+        "creationTimestamp": "2024-12-12T22:20:04Z",
+        "deletionTimestamp": "2026-07-10T20:51:17Z"
       },
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch data source",
@@ -4729,6 +4730,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioning.performance",
+        "resourceVersion": "1784287498952",
+        "creationTimestamp": "2026-07-16T08:21:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-17 11:24:58.952225 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
         "expression": "false"
       }
     },

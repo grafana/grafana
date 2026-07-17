@@ -33,11 +33,11 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipResourceAssertions: true,
 		})
 
-		// Verify the classic dashboard was created (all-panels.json has uid "n1jR8vnnz")
 		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		// Verify the classic dashboard was created (all-panels.json has uid "n1jR8vnnz")
 		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "n1jR8vnnz", metav1.GetOptions{})
 		require.NoError(t, err, "classic dashboard should exist after initial sync")
 
@@ -71,14 +71,14 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		require.NoError(t, err)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			LocalPath:              repoPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 		})
 
-		// Verify the dashboard was created
 		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		// Verify the dashboard was created
 		_, err = helper.DashboardsV1.Resource.Get(t.Context(), "inline-classic-uid", metav1.GetOptions{})
 		require.NoError(t, err, "inline classic dashboard should exist after initial sync")
 
@@ -111,10 +111,9 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		require.NoError(t, err)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			LocalPath:              repoPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 		})
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -177,10 +176,9 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		require.NoError(t, err)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			LocalPath:              repoPath,
-			SyncTarget:             "folder",
-			SkipResourceAssertions: true,
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 		})
 
 		// Verify both dashboards were created

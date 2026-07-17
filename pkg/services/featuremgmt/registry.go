@@ -297,6 +297,14 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:        "provisioning.performance",
+			Description: "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -1480,14 +1488,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
-		},
-		{
-			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the Elasticsearch data source",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
