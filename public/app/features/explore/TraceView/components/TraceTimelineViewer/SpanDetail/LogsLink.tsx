@@ -60,20 +60,23 @@ type LogsPresence = 'loading' | 'present' | 'absent';
 function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
   const [presence, setPresence] = useState<LogsPresence>('loading');
 
-  useEffect(() => {
-    const interpolatedParams = spanLinkModel.linkModel.interpolatedParams;
-    const query = interpolatedParams?.query;
+  const { query, timeRange } = spanLinkModel.linkModel.interpolatedParams ?? {};
 
+  const queryKey = query ? JSON.stringify(query) : undefined;
+  const timeRangeKey = timeRange ? `${timeRange.from.valueOf()}-${timeRange.to.valueOf()}` : undefined;
+
+  useEffect(() => {
     // Without an interpolated query we can't check, so assume logs may exist and leave the link enabled.
     if (!query) {
       setPresence('present');
       return;
     }
 
-    const timeRange = interpolatedParams?.timeRange ?? getDefaultTimeRange();
+    const effectiveTimeRange = timeRange ?? getDefaultTimeRange();
     let cancelled = false;
 
-    checkForLogs(query, timeRange)
+    setPresence('loading');
+    checkForLogs(query, effectiveTimeRange)
       .then((hasLogs) => {
         if (!cancelled) {
           setPresence(hasLogs ? 'present' : 'absent');
@@ -89,7 +92,10 @@ function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
     return () => {
       cancelled = true;
     };
-  }, [spanLinkModel]);
+    // The trace view re-renders a lot on every event, including mouse over.
+    // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryKey, timeRangeKey]);
 
   return presence;
 }
