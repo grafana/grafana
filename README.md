@@ -20,7 +20,7 @@ Grafana allows you to query, visualize, alert on and understand your metrics no 
 - [Get Grafana](https://grafana.com/get)
 - [Installation guides](https://grafana.com/docs/grafana/latest/setup-grafana/installation/)
 
-Unsure if Grafana is for you? Watch Grafana in action on [play.grafana.org](https://play.grafana.org/)!
+Unsure if Grafana is for you? Watch Grafana in action on [play.grafana.org](https://play.grafana.org/)!!
 
 ## Documentation
 
