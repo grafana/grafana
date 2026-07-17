@@ -259,9 +259,10 @@ func TestMapper_ServiceAccountTranslation_ActionSets(t *testing.T) {
 }
 
 // TestMapperRegistry_AlertRules verifies the rules.alerting.grafana.app rule
-// resources map to the folder-scoped alert.rules:* actions, expose the folder
-// scope prefix, support folder inheritance, and flow through the folder action
-// sets (folders:view/edit/admin) for managed roles.
+// resources map to the alert.rules:* actions, support folder inheritance, use a
+// rules-specific direct-scope prefix (so the per-object check never spuriously
+// matches a folder grant), and flow through the folder action sets
+// (folders:view/edit/admin) for managed roles.
 func TestMapperRegistry_AlertRules(t *testing.T) {
 	reg := NewMapperRegistry()
 
@@ -274,10 +275,14 @@ func TestMapperRegistry_AlertRules(t *testing.T) {
 			require.True(t, ok, "%q should be registered in the mapper", resource)
 			require.NotNil(t, mapping)
 
-			// Alert-rule permissions are folder-scoped.
+			// Alert-rule permissions are folder-scoped via folder inheritance, not via
+			// the per-object direct scope. The resource is "alert.rules" so Scope()
+			// yields alert.rules:uid:<name> — a scope no grant ever has — which makes
+			// the direct-scope check a no-op and avoids colliding a rule UID with a
+			// folder grant (folders:uid:<uid>).
 			assert.True(t, mapping.HasFolderSupport(), "alert rules are folder-scoped")
-			assert.Equal(t, "folders:uid:", mapping.Prefix())
-			assert.Equal(t, "folders:uid:abc", mapping.Scope("abc"))
+			assert.Equal(t, "alert.rules:uid:", mapping.Prefix())
+			assert.Equal(t, "alert.rules:uid:abc", mapping.Scope("abc"))
 
 			actionTests := []struct {
 				verb   string
