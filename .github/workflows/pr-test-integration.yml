@@ -228,7 +228,17 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' -json "${PACKAGES[@]}" \
+            | tee test-output.json \
+            | jq -Rrj 'fromjson? | select(.Action == "output").Output // empty'
+      - name: Upload test timings
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-timings-sqlite-enterprise-${{ strategy.job-index }}
+          path: test-output.json
+          if-no-files-found: ignore
+          retention-days: 1
 
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -288,7 +298,17 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' -json "${PACKAGES[@]}" \
+            | tee test-output.json \
+            | jq -Rrj 'fromjson? | select(.Action == "output").Output // empty'
+      - name: Upload test timings
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-timings-mysql-enterprise-${{ strategy.job-index }}
+          path: test-output.json
+          if-no-files-found: ignore
+          retention-days: 1
       - name: Cleanup MySQL
         if: always()
         run: make devenv-down sources=mysql_tests
@@ -347,8 +367,65 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' -json "${PACKAGES[@]}" \
+            | tee test-output.json \
+            | jq -Rrj 'fromjson? | select(.Action == "output").Output // empty'
+      - name: Upload test timings
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-timings-postgres-enterprise-${{ strategy.job-index }}
+          path: test-output.json
+          if-no-files-found: ignore
+          retention-days: 1
       - name: Cleanup Postgres
         if: always()
         run: |
           make devenv-down sources=postgres_tests
+
+  report-timings:
+    name: Report test timings
+    needs: [sqlite-enterprise, mysql-enterprise, postgres-enterprise]
+    if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Download test timings
+        uses: actions/download-artifact@v8
+        with:
+          pattern: test-timings-*
+          path: timings
+      - name: Build report
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          ./scripts/ci/backend-tests/timing-report.sh timings timings.csv > comment.md
+          {
+            echo ""
+            echo "Full timings for all $(($(wc -l < timings.csv) - 1)) tests: [\`integration-test-timings\` artifact]($RUN_URL)"
+          } >> comment.md
+      - name: Upload full timings CSV
+        uses: actions/upload-artifact@v5
+        with:
+          name: integration-test-timings
+          path: timings.csv
+      - name: Post comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          marker='<!-- integration-test-timings -->'
+          comment_id=$(gh api "repos/$GH_REPO/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n1)
+          if [ -n "$comment_id" ]; then
+            gh api -X PATCH "repos/$GH_REPO/issues/comments/$comment_id" -F body=@comment.md
+          else
+            gh pr comment "$PR_NUMBER" --body-file comment.md
+          fi
