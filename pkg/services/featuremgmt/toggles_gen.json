@@ -2975,11 +2975,14 @@
     {
       "metadata": {
         "name": "grafana.useDefaultScopesEndpoint",
-        "resourceVersion": "1783088074749",
-        "creationTimestamp": "2026-07-03T14:14:34Z"
+        "resourceVersion": "1784292490130",
+        "creationTimestamp": "2026-07-03T14:14:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-17 12:48:10.130812 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+        "description": "Use the find default scope endpoint to seed the initial scope selection when none is set.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
