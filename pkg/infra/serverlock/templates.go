@@ -4,8 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"text/template"
-
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var (
@@ -27,70 +25,4 @@ func mustTemplate(filename string) *template.Template {
 		return tmpl
 	}
 	panic(fmt.Sprintf("template file not found: %s", filename))
-}
-
-type updateVersionQuery struct {
-	sqltemplate.SQLTemplate
-	ServerLockTable string
-	Version         int64
-	LastExecution   int64
-	OperationUID    string
-	PreviousVersion int64
-}
-
-func (updateVersionQuery) Validate() error {
-	return nil
-}
-
-type getLockQuery struct {
-	sqltemplate.SQLTemplate
-	ServerLockTable string
-	OperationUID    string
-}
-
-func (getLockQuery) Validate() error {
-	return nil
-}
-
-type getLockForUpdateQuery struct {
-	sqltemplate.SQLTemplate
-	ServerLockTable string
-	OperationUID    string
-}
-
-func (getLockForUpdateQuery) Validate() error {
-	return nil
-}
-
-type updateLastExecutionQuery struct {
-	sqltemplate.SQLTemplate
-	ServerLockTable string
-	LastExecution   int64
-	OperationUID    string
-}
-
-func (updateLastExecutionQuery) Validate() error {
-	return nil
-}
-
-type releaseLockQuery struct {
-	sqltemplate.SQLTemplate
-	ServerLockTable string
-	OperationUID    string
-}
-
-func (releaseLockQuery) Validate() error {
-	return nil
-}
-
-type createLockQuery struct {
-	sqltemplate.SQLTemplate
-	ServerLockTable string
-	OperationUID    string
-	LastExecution   int64
-	Version         int64
-}
-
-func (createLockQuery) Validate() error {
-	return nil
 }
