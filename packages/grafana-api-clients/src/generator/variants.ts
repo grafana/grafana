@@ -42,3 +42,8 @@ import { createBaseQuery } from '@grafana/api-clients/rtkq';`,
 export function variantFor(isEnterprise: boolean): Variant {
   return isEnterprise ? ENTERPRISE : OSS;
 }
+
+/** Exhaustive list of permitted shell commands for API generation.
+ *  Derived from the known Variant definitions — any command not in this list
+ *  will be rejected by runGenerateApis() before reaching execSync. */
+export const ALLOWED_GENERATE_COMMANDS: readonly string[] = [OSS.generateCommand, ENTERPRISE.generateCommand];

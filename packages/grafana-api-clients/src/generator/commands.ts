@@ -1,7 +1,7 @@
 import { execSync } from 'child_process';
 import path from 'path';
 
-import { type Variant, PACKAGE_ROOT } from './variants.ts';
+import { type Variant, PACKAGE_ROOT, ALLOWED_GENERATE_COMMANDS } from './variants.ts';
 
 /** Return the list of files that need formatting after generation. */
 export function getFilesToFormat(variant: Variant, groupName: string, version: string): string[] {
@@ -35,6 +35,9 @@ export function formatFiles(basePath: string, files: string[]) {
 
 /** Run the RTK codegen to produce endpoints.gen.ts. */
 export function runGenerateApis(basePath: string, variant: Variant) {
+  if (!ALLOWED_GENERATE_COMMANDS.includes(variant.generateCommand)) {
+    throw new Error(`Refusing to run disallowed generate command: "${variant.generateCommand}"`);
+  }
   console.log(`⏳ Running ${variant.generateCommand} to generate endpoints...`);
   try {
     execSync(variant.generateCommand, { stdio: 'inherit', cwd: basePath });
