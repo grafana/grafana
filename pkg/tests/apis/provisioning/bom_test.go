@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -219,26 +218,8 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 		// Patch repository to add release-orphan-resources finalizer
 		// This causes dashboards to be released (annotations removed) rather than deleted
-		patchData := []byte(`[
-			{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
-		]`)
-		_, err = helper.Repositories.Resource.Patch(t.Context(), repoName, types.JSONPatchType, patchData, metav1.PatchOptions{})
-		require.NoError(t, err, "should successfully patch finalizers")
-
-		// Delete the repository - finalizer will patch dashboard to remove annotations
 		// The key test: PATCH should succeed even though dashboard has BOMs in spec
-		err = helper.Repositories.Resource.Delete(t.Context(), repoName, metav1.DeleteOptions{})
-		require.NoError(t, err)
-
-		// Wait for repository to be deleted (finalizer has completed)
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err = helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-			if err == nil {
-				collect.Errorf("repository should be deleted")
-				return
-			}
-			// Repository not found - good!
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted")
+		helper.ReleaseAndDeleteRepository(t, repoName)
 
 		// Verify dashboard STILL EXISTS (released, not deleted)
 		dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "bom-deletion-test", metav1.GetOptions{})
