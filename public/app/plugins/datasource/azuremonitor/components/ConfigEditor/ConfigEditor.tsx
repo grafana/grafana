@@ -18,7 +18,7 @@ import {
   type AzureMonitorDataSourceSettings,
   type Subscription,
 } from '../../types/types';
-import { routeNames } from '../../utils/common';
+import { fetchAllArmPages, routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
 
@@ -64,16 +64,17 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
     await saveOptions();
 
     const query = `?api-version=2019-03-01`;
+    const resourcePath = `/api/datasources/uid/${options.uid}/resources/${routeNames.azureMonitor}`;
     try {
-      const result = await getBackendSrv()
-        .fetch<AzureAPIResponse<Subscription>>({
-          url: baseURL + query,
-          method: 'GET',
-        })
-        .toPromise();
+      const value = await fetchAllArmPages<Subscription>(resourcePath, baseURL + query, async (path) => {
+        const response = await getBackendSrv()
+          .fetch<AzureAPIResponse<Subscription>>({ url: path, method: 'GET' })
+          .toPromise();
+        return response?.data;
+      });
 
       setError(undefined);
-      return ResponseParser.parseSubscriptionsForSelect(result);
+      return ResponseParser.parseSubscriptionsForSelect({ value });
     } catch (err) {
       if (isFetchError(err)) {
         setError({

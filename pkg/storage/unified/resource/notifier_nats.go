@@ -42,10 +42,10 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 }
 
 // natsNotifier emits an Event per WatchNotification received from NATS rather
-// than by polling the store. Watch subscribes to the entire stream (SubjectAll)
-// and ignores the resource selectors in WatchOptions, so it is not a drop-in
-// per-watch notifier. PreviousRV is carried on the wire, matching the
-// store-sourced notifiers.
+// than by polling the store. Watch subscribes to the whole resource change
+// stream (SubjectAllResources) and ignores the resource selectors in
+// WatchOptions, so it is not a drop-in per-watch notifier. PreviousRV is carried
+// on the wire, matching the store-sourced notifiers.
 //
 // Delivery is at-most-once (core NATS, no JetStream): a missed message is never
 // redelivered, and there is no server-side polling backstop when this is the
@@ -64,7 +64,20 @@ type natsNotifier struct {
 	log        log.Logger
 }
 
+const (
+	dropReasonBufferFull     = "buffer_full"
+	dropReasonUnmarshalError = "unmarshal_error"
+	dropReasonUnknownType    = "unknown_type"
+)
+
+var dropReasons = []string{dropReasonBufferFull, dropReasonUnmarshalError, dropReasonUnknownType}
+
 func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
+	if dropped != nil {
+		for _, r := range dropReasons {
+			dropped.WithLabelValues(r)
+		}
+	}
 	return &natsNotifier{
 		subscriber: subscriber,
 		dropped:    dropped,
@@ -98,7 +111,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		select {
 		case raw <- evt:
 		default:
-			n.drop("buffer_full")
+			n.drop(dropReasonBufferFull)
 			n.log.Warn("dropped watch notification, channel full", "subject", subject)
 		}
 	}
@@ -130,7 +143,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 // unsubscribes on ctx cancel and returns true; on failure it logs and returns
 // false so the caller can retry.
 func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject string, data []byte)) bool {
-	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAll, handler)
+	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAllResources, handler)
 	if err != nil {
 		n.log.Error("failed to subscribe to nats, will retry", "error", err)
 		return false
@@ -149,13 +162,13 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 	var notification resourcepb.WatchNotification
 	if err := proto.Unmarshal(data, &notification); err != nil {
-		n.drop("unmarshal_error")
+		n.drop(dropReasonUnmarshalError)
 		n.log.Warn("failed to unmarshal watch notification", "subject", subject, "error", err)
 		return Event{}, false
 	}
 	action, ok := watchNotificationTypeToAction(notification.Type)
 	if !ok {
-		n.drop("unknown_type")
+		n.drop(dropReasonUnknownType)
 		n.log.Warn("dropped watch notification with unknown type", "subject", subject)
 		return Event{}, false
 	}

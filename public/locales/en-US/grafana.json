@@ -5813,12 +5813,16 @@
       }
     },
     "get-field-override-categories": {
+      "body-matcher-no-editor": "This override is active, but this matcher type can only be edited in the dashboard JSON.",
+      "body-unknown-matcher": "This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.",
       "label-add-field-override": "Add field override",
       "label-add-override-property": "Add override property",
       "override-name": "Override {{overrideNum}}",
       "title": {
         "add-button": "add button"
-      }
+      },
+      "title-matcher-no-editor": "Matcher \"{{matcherName}}\" has no visual editor",
+      "title-unknown-matcher": "Unknown matcher type \"{{matcherId}}\""
     },
     "get-library-panel-options-category": {
       "descriptor": {
@@ -6000,6 +6004,12 @@
       "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type."
     },
     "new-panel-title": "New panel",
+    "notebook-layout": {
+      "description": "A vertical sequence of panels, text, and code cells",
+      "name": "Notebook",
+      "pill": "Published Notebook",
+      "time": "Time"
+    },
     "on-create-new-row": {
       "new-row": {
         "title": {
@@ -6255,7 +6265,6 @@
       }
     },
     "source-link": {
-      "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
     },
     "support-snapshot-service": {
@@ -7326,6 +7335,8 @@
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
       "tooltip": "Added by the {{pluginName}} plugin",
+      "tooltip-folder": "Folder variable, inherited from this dashboard's folder",
+      "tooltip-global": "Global variable, shared across all dashboards",
       "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {
@@ -7492,10 +7503,13 @@
     "save-provisioned-dashboard-form": {
       "advanced-options": "Advanced options",
       "cancel": "Cancel",
+      "cancel-folder": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "create-folder": "Create",
       "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
+      "folder-create-error": "Failed to create folder",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "format": {
@@ -7504,8 +7518,10 @@
         "v2-resource": "V2 Resource"
       },
       "label-description": "Description",
+      "label-folder-name": "Folder name",
       "label-target-folder": "Target folder",
       "label-title": "Title",
+      "new-folder": "New folder",
       "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
@@ -7649,6 +7665,9 @@
           "variables": "Variables"
         }
       }
+    },
+    "validate-variable-name": {
+      "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
@@ -8789,6 +8808,8 @@
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
     "span-bar-row": {
+      "summary-count-aria_one": "{{count}} aggregated span",
+      "summary-count-aria_other": "{{count}} aggregated spans",
       "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
     "span-detail": {
@@ -8827,6 +8848,11 @@
     },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
+    },
+    "summary-span": {
+      "stat-max": "Max",
+      "stat-median": "Median",
+      "stat-min": "Min"
     },
     "supplementary-result-error": {
       "show-details": "Show details"
@@ -10812,6 +10838,10 @@
       "starred": "Starred",
       "starred-active": "Starred dashboards"
     },
+    "dashboards": {
+      "title": "Dashboards",
+      "view-all": "View all"
+    },
     "firing-alerts-card": {
       "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
@@ -10863,12 +10893,33 @@
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards..."
+      "loading": "Loading recently viewed dashboards...",
+      "reset": "Reset recent dashboards"
     },
     "recommendations": {
+      "application-observability": {
+        "action": "Enable Application Observability",
+        "context": "Built automatically from your telemetry",
+        "description": "Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.",
+        "title": "Explore your service map"
+      },
+      "carousel-label": "Recommended apps",
+      "carousel-roledescription": "carousel",
       "existing": "Enabled solution",
+      "frontend-observability": {
+        "action": "Enable Frontend Observability",
+        "context": "Connect the browser to your backend traces",
+        "description": "Capture Core Web Vitals and errors from the browser and tie them back to backend traces.",
+        "title": "Measure real user experience"
+      },
       "go-to": "Go to recommendation {{index}}",
       "hide": "Hide",
+      "hosted-traces": {
+        "action": "Enable Hosted Traces",
+        "context": "Because you set up Kubernetes Monitoring",
+        "description": "Add distributed tracing to see how requests flow between services and where they slow down.",
+        "title": "Trace requests across services"
+      },
       "next": "Next",
       "pause": "Pause",
       "previous": "Previous",
@@ -10876,6 +10927,12 @@
       "resume": "Resume",
       "show": "Show",
       "switch": "Switch to another app you run",
+      "synthetic-monitoring": {
+        "action": "Add Synthetic Monitoring",
+        "context": "Catch outages before your users do",
+        "description": "Probe your endpoints from 20+ global locations before your users notice.",
+        "title": "Watch your cluster from outside"
+      },
       "title": "Recommendations for your stack"
     },
     "starred-dashboards-tab": {
@@ -12144,6 +12201,10 @@
     "reporting": {
       "title": "Reporting"
     },
+    "saved-queries": {
+      "subtitle": "Reusable queries you can use across panels and Explore",
+      "title": "Saved queries"
+    },
     "scenes": {
       "title": "Scenes"
     },
@@ -12219,11 +12280,21 @@
       "aria-label": "Breadcrumbs"
     },
     "extension-sidebar": {
+      "assistant-close": "Close Grafana Assistant",
+      "assistant-label": "Chat",
+      "assistant-open": "Open Grafana Assistant",
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
         "open-all": "Open AI assistants and sidebar apps"
       }
+    },
+    "fullscreen-workspace": {
+      "enter": "Enter Workspace",
+      "error-exit": "Exit workspace",
+      "error-message": "The Grafana Assistant workspace could not be loaded.",
+      "error-reload": "Reload page",
+      "error-title": "Workspace unavailable"
     },
     "help": {
       "aria-label": "Help",
@@ -12377,6 +12448,9 @@
       "title-zoom-in": "Zoom in",
       "title-zoom-out": "Zoom out"
     }
+  },
+  "notebook": {
+    "breadcrumb-title": "Notebooks"
   },
   "notifications": {
     "empty-state": {
@@ -13116,6 +13190,9 @@
   "provisioning": {
     "bitbucket": {
       "branch-required": "Branch is required",
+      "email-description": "The Atlassian account email used to authenticate the Bitbucket API. Required to enable webhooks.",
+      "email-invalid": "Enter a valid email address",
+      "email-label": "Atlassian account email",
       "permissions": {
         "pull-requests-label": "Pull requests",
         "pull-requests-read-write": "Read and write",
@@ -13555,9 +13632,11 @@
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
       "kubectl": "Managed by: Kubectl",
+      "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "terraform": "Managed by: Terraform"
+      "terraform": "Managed by: Terraform",
+      "view-source-file": "View source file"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
@@ -13845,6 +13924,11 @@
       "missing-folder-metadata": "Missing folder metadata file",
       "search-placeholder": "Search by path or title",
       "source": "Source",
+      "status-filter-aria-label": "Filter by status",
+      "status-filter-pending": "Not in sync",
+      "status-filter-placeholder": "Filter by status",
+      "status-filter-synced": "Synced",
+      "status-filter-warning": "Warnings",
       "status-pending": "Pending",
       "status-synced": "Synced",
       "view": "View"
@@ -13918,9 +14002,6 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
-    "source-link": {
-      "title": "Source ({{provider}})"
-    },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",
@@ -13941,9 +14022,15 @@
       "migrate-default-message": "Migrate Grafana resources into repository"
     },
     "sync-repository": {
+      "button-cancel": "Cancel",
+      "button-force-full-pull": "Force full pull",
+      "confirm-force-full-pull": "Are you sure you want to do a full pull? This may take a while, so only continue if you have resources that are unexpectedly not syncing.",
       "error-pulling-resources": "Error pulling resources",
       "pull": "Pull",
+      "pull-diff": "Pull based on diff (default)",
+      "pull-full": "Force full pull",
       "success-pull-started": "Pull started",
+      "title-force-full-pull": "Force full pull?",
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
@@ -13975,9 +14062,6 @@
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
-    "view-repository-button": {
-      "label": "View repository"
-    },
     "warning-title-default": "Warning",
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
@@ -13985,6 +14069,8 @@
     },
     "webhook-section": {
       "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-email": "Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.",
+      "description-webhook-disabled-email-step": "Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.",
       "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
@@ -15658,7 +15744,6 @@
       "from-input": "From",
       "open-input-calendar": "Open calendar",
       "range-error": "\"From\" date must be before \"To\" date",
-      "required-error": "This field is required",
       "to-input": "To"
     },
     "range-picker": {
