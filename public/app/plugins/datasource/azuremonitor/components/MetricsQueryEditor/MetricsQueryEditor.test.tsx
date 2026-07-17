@@ -384,9 +384,7 @@ describe('MetricsQueryEditor', () => {
     openMenu(namespaceField);
 
     const listbox = await screen.findByRole('listbox');
-    await waitFor(() =>
-      expect(within(listbox).getByText('Microsoft.Compute/virtualMachines')).toBeInTheDocument()
-    );
+    await waitFor(() => expect(within(listbox).getByText('Microsoft.Compute/virtualMachines')).toBeInTheDocument());
     expect(within(listbox).queryByText('Guest (classic)')).not.toBeInTheDocument();
     expect(within(listbox).queryByText('Windows Azure Diagnostics')).not.toBeInTheDocument();
     expect(within(listbox).queryByText('My Custom Metrics')).not.toBeInTheDocument();
