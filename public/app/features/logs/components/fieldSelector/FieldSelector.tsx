@@ -85,9 +85,6 @@ export const FieldSelector = ({
     return suggestedFields.filter((_, index) => idxs.includes(index));
   }, [searchValue, suggestedFields]);
 
-  console.log(filteredFields);
-  console.log(filteredSuggestedFields);
-
   return (
     <section className={styles.sidebar}>
       <FieldSearch collapse={collapse} onChange={onSearchInputChange} value={searchValue} />
