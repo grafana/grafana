@@ -102,8 +102,8 @@ type insertQuotaQuery struct {
 	UserID     int64
 	OrgID      int64
 	Limit      int64
-	Created    time.Time
-	Updated    time.Time
+	Created    legacysql.DBTime
+	Updated    legacysql.DBTime
 }
 
 func (q insertQuotaQuery) Validate() error { return nil }
@@ -113,7 +113,7 @@ type updateQuotaQuery struct {
 	QuotaTable string
 	QuotaID    int64
 	Limit      int64
-	Updated    time.Time
+	Updated    legacysql.DBTime
 }
 
 func (q updateQuotaQuery) Validate() error { return nil }
@@ -144,10 +144,10 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 			return err
 		}
 
-		updated := time.Now()
+		updated := legacysql.NewDBTime(time.Now())
 		limit := cmd.Limit
 		if !has {
-			created := time.Now()
+			created := legacysql.NewDBTime(time.Now())
 			// No quota in the DB for this target, so create a new one.
 			insertQuery := insertQuotaQuery{
 				SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
