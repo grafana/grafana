@@ -57,6 +57,7 @@ func TestIntegrationUsers(t *testing.T) {
 			doUserFieldSelectorTests(t, helper)
 			doUserStatusUpdateTests(t, helper)
 			doDisplayTests(t, helper)
+			doSelfTests(t, helper)
 
 			if mode < 3 {
 				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
@@ -719,6 +720,38 @@ func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Len(t, res.Items, 1)
 		require.Equal(t, authlib.TypeServiceAccount, res.Items[0].Identity.Type)
 		require.Equal(t, sa.Id, res.Items[0].InternalID)
+	})
+}
+
+func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
+	// selfPath is the "who am I" endpoint. A literal `~` token must not be
+	// shadowed by the users/{name} resource route.
+	const selfPath = "/apis/iam.grafana.app/v0alpha1/namespaces/default/users/~"
+
+	t.Run("self endpoint returns the calling user's display info", func(t *testing.T) {
+		res := &iam.Display{}
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   selfPath,
+		}, res)
+
+		require.Equal(t, 200, rsp.Response.StatusCode)
+		require.Equal(t, authlib.TypeUser, res.Identity.Type)
+		require.Equal(t, helper.Org1.Admin.Identity.GetRawIdentifier(), res.Identity.Name)
+	})
+
+	t.Run("self endpoint works for a non-admin reading their own info", func(t *testing.T) {
+		res := &iam.Display{}
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Viewer,
+			Method: "GET",
+			Path:   selfPath,
+		}, res)
+
+		require.Equal(t, 200, rsp.Response.StatusCode)
+		require.Equal(t, authlib.TypeUser, res.Identity.Type)
+		require.Equal(t, helper.Org1.Viewer.Identity.GetRawIdentifier(), res.Identity.Name)
 	})
 }
 
