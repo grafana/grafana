@@ -245,9 +245,8 @@ func TestVectorQueries(t *testing.T) {
 						Limit:          5,
 						UIDValues:      []string{"dash-1"},
 						FolderValues:   []string{"folder-a", "folder-b"},
-						MetadataFilters: []MetadataFilterEntry{
-							{JSON: `{"datasource_uids":["ds-uid-1"]}`},
-							{JSON: `{"query_languages":["promql"]}`},
+						MetadataFilterGroups: []MetadataFilterGroup{
+							{JSONs: []string{`{"datasource_uids":["ds1"]}`, `{"datasource_uids":["ds2"]}`}},
 						},
 						Response: &sqlVectorCollectionSearchResponse{},
 					},

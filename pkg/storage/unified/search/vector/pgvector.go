@@ -388,9 +388,12 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		case "folder":
 			req.FolderValues = f.Values
 		default:
-			// JSONB containment: metadata @> '{"field":["v1","v2"]}'
-			j, _ := json.Marshal(map[string][]string{f.Field: f.Values})
-			req.MetadataFilters = append(req.MetadataFilters, MetadataFilterEntry{JSON: string(j)})
+			group := MetadataFilterGroup{JSONs: make([]string, 0, len(f.Values))}
+			for _, v := range f.Values {
+				j, _ := json.Marshal(map[string][]string{f.Field: {v}})
+				group.JSONs = append(group.JSONs, string(j))
+			}
+			req.MetadataFilterGroups = append(req.MetadataFilterGroups, group)
 		}
 	}
 
