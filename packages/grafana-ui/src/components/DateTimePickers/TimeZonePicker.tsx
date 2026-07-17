@@ -1,20 +1,23 @@
 import { useMemo, useCallback } from 'react';
 
-import { type SelectableValue, type TimeZoneInfo, type TimeZone, InternalTimeZones, getTimeZone } from '@grafana/data';
+import { type SelectableValue, type TimeZone, InternalTimeZones } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Select } from '../Select/Select';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
-import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
+import {
+  CompactTimeZoneOption,
+  WideTimeZoneOption,
+  type SelectableZone,
+  type TimeZoneOptionInfo,
+} from './TimeZonePicker/TimeZoneOption';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import {
-  type CanonicalTimeZoneInfo,
   canonicalZoneName,
   findTimeZoneAt,
   getCanonicalTimeZonesAt,
-  guessBrowserTimeZone,
-  offsetToMinutes,
+  resolveIanaName,
 } from './TimeZonePicker/timeZoneUtils';
 
 export interface Props {
@@ -48,7 +51,6 @@ export const TimeZonePicker = (props: Props) => {
   } = props;
   const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);
-  const filterBySearchIndex = useFilterBySearchIndex();
   const TimeZoneOption = width && width <= 45 ? CompactTimeZoneOption : WideTimeZoneOption;
 
   const onChangeTz = useCallback(
@@ -90,17 +92,19 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     const now = Date.now();
     const groups = new Map<string, SelectableZone[]>();
 
-    const pushOption = (group: string, info: TimeZoneInfo, legacyName?: string) => {
-      const name = getTimeZoneTitle(info);
+    const pushOption = (group: string, zone: TimeZone, info: TimeZoneOptionInfo, legacyName?: string) => {
+      const label = getTimeZoneTitle(info);
       const options = groups.get(group) ?? [];
 
-      options.push({
-        label: name,
-        value: info.zone,
-        info,
-        searchIndex: getSearchIndex(name, info, legacyName),
-      });
+      // Filtering matches against the zone id, abbreviation, city label, and
+      // the legacy spelling (e.g. Asia/Kolkata is also searchable as
+      // "calcutta"). Country search is no longer supported.
+      const searchIndex = [zone, info.abbreviation, label !== zone ? label : '', legacyName ?? '']
+        .filter(Boolean)
+        .join('|')
+        .toLowerCase();
 
+      options.push({ label, value: zone, info, searchIndex });
       groups.set(group, options);
     };
 
@@ -115,7 +119,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     }
 
     for (const zone of internalZones) {
-      pushOption('', getInternalTimeZoneInfo(zone, now));
+      pushOption('', zone, getInternalTimeZoneInfo(zone, now));
     }
 
     // Zones are presented under their canonical IANA id (e.g. Asia/Kolkata),
@@ -125,17 +129,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     for (const tz of getCanonicalTimeZonesAt(now)) {
       const delimiter = tz.name.indexOf('/');
       const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      pushOption(group, toTimeZoneInfo(tz), tz.legacyName);
-    }
-
-    // Canonical renames can knock options out of alphabetical order (e.g.
-    // Chrome lists the zone where Calcutta sorts, but it displays as
-    // Kolkata), so re-sort every region group. The label-less internal group
-    // keeps its fixed Default / Browser Time / UTC order.
-    for (const [label, options] of groups) {
-      if (label !== '') {
-        options.sort((a, b) => (a.value ?? '').localeCompare(b.value ?? ''));
-      }
+      pushOption(group, tz.name, { name: tz.name, ianaName: tz.name, abbreviation: tz.abbr }, tz.legacyName);
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
@@ -158,117 +152,43 @@ const useSelectedTimeZone = (
     // returned by Chrome's Intl).
     const tz = canonicalZoneName(timeZone, Date.now()).toLowerCase();
 
-    const group = groups.find((group) => {
-      if (!group.label) {
-        return isInternal(tz);
-      }
-      return tz.startsWith(group.label.toLowerCase());
-    });
+    for (const group of groups) {
+      const option = group.options.find((option) => option.value?.toLowerCase() === tz);
 
-    return group?.options.find((option) => {
-      if (tz === '') {
-        return option.value === InternalTimeZones.default;
+      if (option) {
+        return option;
       }
-      return option.value?.toLowerCase() === tz;
-    });
+    }
+
+    return undefined;
   }, [groups, timeZone]);
 };
 
-const isInternal = (timeZone: TimeZone): boolean => {
-  switch (timeZone) {
-    case InternalTimeZones.default:
-    case InternalTimeZones.localBrowserTime:
-    case InternalTimeZones.utc:
-      return true;
-
-    default:
-      return false;
+const filterBySearchIndex = (option: SelectableValue, searchQuery: string) => {
+  if (!searchQuery || !option.data || !option.data.searchIndex) {
+    return true;
   }
+  return option.data.searchIndex.indexOf(searchQuery.toLowerCase()) > -1;
 };
 
-const useFilterBySearchIndex = () => {
-  return useCallback((option: SelectableValue, searchQuery: string) => {
-    if (!searchQuery || !option.data || !option.data.searchIndex) {
-      return true;
-    }
-    return option.data.searchIndex.indexOf(searchQuery.toLowerCase()) > -1;
-  }, []);
-};
-
-const getSearchIndex = (label: string, info: TimeZoneInfo, legacyName?: string): string => {
-  const parts: string[] = [info.zone.toLowerCase(), info.abbreviation.toLowerCase()];
-
-  if (label !== info.zone) {
-    parts.push(label.toLowerCase());
-  }
-
-  // Make the zone findable under its legacy spelling too
-  // (e.g. Asia/Kolkata is also searchable as "calcutta").
-  if (legacyName) {
-    parts.push(legacyName.toLowerCase());
-  }
-
-  return parts.join('|');
+const internalZoneNames: Record<string, string> = {
+  [InternalTimeZones.default]: 'Default',
+  [InternalTimeZones.localBrowserTime]: 'Browser Time',
+  [InternalTimeZones.utc]: 'Coordinated Universal Time',
 };
 
 /**
- * Maps a canonical catalog entry to Grafana's TimeZoneInfo shape. Country data
- * is intentionally omitted; the picker no longer supports searching by country.
+ * Builds display info for Grafana's internal zones (Default, Browser, UTC).
+ * The Default option inherits the resolved zone's abbreviation and offset,
+ * so e.g. a UTC default shows 'UTC, GMT'.
  */
-const toTimeZoneInfo = (tz: CanonicalTimeZoneInfo): TimeZoneInfo => ({
-  name: tz.name,
-  ianaName: tz.name,
-  zone: tz.name,
-  countries: [],
-  abbreviation: tz.abbr,
-  offsetInMins: offsetToMinutes(tz.offset),
-});
+const getInternalTimeZoneInfo = (zone: TimeZone, timestamp: number): TimeZoneOptionInfo => {
+  const ianaName = canonicalZoneName(resolveIanaName(zone), timestamp);
 
-/** Builds display info for Grafana's internal zones (Default, Browser, UTC). */
-const getInternalTimeZoneInfo = (zone: TimeZone, timestamp: number): TimeZoneInfo => {
-  switch (zone) {
-    case InternalTimeZones.utc:
-      return {
-        name: 'Coordinated Universal Time',
-        ianaName: 'UTC',
-        zone,
-        countries: [],
-        abbreviation: 'UTC, GMT',
-        offsetInMins: 0,
-      };
-
-    case InternalTimeZones.localBrowserTime: {
-      const ianaName = guessBrowserTimeZone();
-      const tz = findTimeZoneAt(ianaName, timestamp);
-
-      return {
-        name: 'Browser Time',
-        ianaName,
-        zone,
-        countries: [],
-        abbreviation: tz?.abbr ?? '',
-        offsetInMins: tz ? offsetToMinutes(tz.offset) : 0,
-      };
-    }
-
-    // InternalTimeZones.default: inherit the resolved zone's info so e.g. a
-    // UTC default keeps the 'UTC, GMT' abbreviation, then override the name.
-    default: {
-      const resolved = getTimeZone();
-      const isInternal = resolved === InternalTimeZones.utc || resolved === InternalTimeZones.localBrowserTime;
-      const tz = isInternal ? undefined : findTimeZoneAt(resolved, timestamp);
-
-      const info = isInternal ? getInternalTimeZoneInfo(resolved, timestamp) : tz ? toTimeZoneInfo(tz) : undefined;
-
-      return {
-        ianaName: '',
-        abbreviation: '',
-        offsetInMins: 0,
-        countries: [],
-        ...info,
-        name: 'Default',
-        zone,
-      };
-    }
-  }
+  return {
+    name: internalZoneNames[zone] ?? zone,
+    ianaName,
+    // The runtime's zone list may not contain a plain UTC entry.
+    abbreviation: ianaName === 'UTC' ? 'UTC, GMT' : (findTimeZoneAt(ianaName, timestamp)?.abbr ?? ''),
+  };
 };

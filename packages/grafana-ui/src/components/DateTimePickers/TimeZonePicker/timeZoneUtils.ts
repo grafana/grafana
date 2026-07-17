@@ -56,6 +56,10 @@ const getCanonicalCatalog = (timestamp: number): CanonicalCatalog => {
       }
     }
 
+    // The source list is ordered by the runtime's spelling, so canonical
+    // renames (Asia/Calcutta -> Asia/Kolkata) land out of order.
+    list.sort((a, b) => a.name.localeCompare(b.name));
+
     catalog = { list, byName };
     catalogCache.set(source, catalog);
   }
@@ -65,8 +69,8 @@ const getCanonicalCatalog = (timestamp: number): CanonicalCatalog => {
 
 /**
  * All zones known to the runtime at `timestamp` (epoch ms), deduplicated to
- * canonical IANA ids. Results are memoized per UTC hour bucket and returned
- * by reference — treat them as immutable.
+ * canonical IANA ids and sorted by name. Results are memoized per UTC hour
+ * bucket and returned by reference — treat them as immutable.
  */
 export const getCanonicalTimeZonesAt = (timestamp: number): CanonicalTimeZoneInfo[] =>
   getCanonicalCatalog(timestamp).list;
@@ -83,13 +87,6 @@ export const findTimeZoneAt = (zone: string, timestamp: number): CanonicalTimeZo
  */
 export const canonicalZoneName = (zone: string, timestamp: number): string =>
   findTimeZoneAt(zone, timestamp)?.name ?? zone;
-
-/** Parses an easy-tz offset string like "-05:00" into minutes east of UTC. */
-export const offsetToMinutes = (offset: string): number => {
-  const sign = offset.startsWith('-') ? -1 : 1;
-  const [hours, minutes] = offset.slice(1).split(':').map(Number);
-  return sign * (hours * 60 + minutes);
-};
 
 let browserTimeZone: string | undefined;
 

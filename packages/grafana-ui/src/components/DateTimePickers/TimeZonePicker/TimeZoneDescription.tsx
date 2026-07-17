@@ -5,7 +5,7 @@ import { type GrafanaTheme2, type TimeZoneInfo } from '@grafana/data';
 import { useStyles2 } from '../../../themes/ThemeContext';
 
 interface Props {
-  info?: TimeZoneInfo;
+  info?: Pick<TimeZoneInfo, 'abbreviation'>;
 }
 
 export const TimeZoneDescription = ({ info }: Props) => {

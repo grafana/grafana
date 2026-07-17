@@ -19,7 +19,7 @@ export const TimeZoneTitle = ({ title }: Props) => {
   return <span className={styles.title}>{title}</span>;
 };
 
-export const getTimeZoneTitle = (info: TimeZoneInfo): string => {
+export const getTimeZoneTitle = (info: Pick<TimeZoneInfo, 'name'>): string => {
   return info.name.split('/').at(-1)!.replace(/_/g, ' ');
 };
 

@@ -4,7 +4,6 @@ import {
   findTimeZoneAt,
   getCanonicalTimeZonesAt,
   guessBrowserTimeZone,
-  offsetToMinutes,
   resolveIanaName,
 } from './timeZoneUtils';
 
@@ -75,16 +74,6 @@ describe('canonicalZoneName', () => {
     expect(canonicalZoneName('Asia/Kolkata', JAN)).toBe('Asia/Kolkata');
     expect(canonicalZoneName('America/New_York', JAN)).toBe('America/New_York');
     expect(canonicalZoneName('Foo/Bar', JAN)).toBe('Foo/Bar');
-  });
-});
-
-describe('offsetToMinutes', () => {
-  it('parses easy-tz offset strings into minutes east of UTC', () => {
-    expect(offsetToMinutes('+00:00')).toBe(0);
-    expect(offsetToMinutes('-05:00')).toBe(-300);
-    expect(offsetToMinutes('+05:30')).toBe(330);
-    expect(offsetToMinutes('-03:30')).toBe(-210);
-    expect(offsetToMinutes('+14:00')).toBe(840);
   });
 });
 

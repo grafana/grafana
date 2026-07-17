@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type PropsWithChildren, type RefCallback, type JSX } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type SelectableValue, type TimeZoneInfo } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
@@ -22,9 +22,18 @@ interface Props {
 
 const offsetClassName = 'tz-utc-offset';
 
+export interface TimeZoneOptionInfo {
+  /** display name; the canonical IANA id, or e.g. 'Default' for internal zones */
+  name: string;
+  /** concrete IANA zone the UTC offset is rendered from */
+  ianaName: string;
+  /** DST-aware abbreviation, e.g. 'EST', or 'UTC, GMT' */
+  abbreviation: string;
+}
+
 export interface SelectableZone extends SelectableValue<string> {
   searchIndex: string;
-  info: TimeZoneInfo;
+  info: TimeZoneOptionInfo;
 }
 
 export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
