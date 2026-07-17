@@ -249,7 +249,7 @@ export const panels: PanelPluginMetas = structuredClone({
   annolist: {
     id: 'annolist',
     name: 'Annotations list',
-    aliasIds: ['ryantxu-annolist-panel'],
+    aliasIDs: ['ryantxu-annolist-panel'],
     info: {
       author: {
         name: 'Grafana Labs',
