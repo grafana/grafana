@@ -304,7 +304,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 <Input
                   {...register('email', {
                     required: gitFields.emailConfig.validation?.required,
+                    pattern: gitFields.emailConfig.validation?.pattern,
                   })}
+                  type="email"
                   placeholder={gitFields.emailConfig.placeholder}
                 />
               </Field>

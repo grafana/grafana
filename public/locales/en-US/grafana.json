@@ -13187,6 +13187,7 @@
     "bitbucket": {
       "branch-required": "Branch is required",
       "email-description": "The Atlassian account email used to authenticate the Bitbucket API. Required to enable webhooks.",
+      "email-invalid": "Enter a valid email address",
       "email-label": "Atlassian account email",
       "permissions": {
         "pull-requests-label": "Pull requests",

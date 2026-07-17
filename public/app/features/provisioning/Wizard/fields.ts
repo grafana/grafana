@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { w3cStandardEmailValidator } from 'app/features/admin/utils';
+
 import { type RepositoryFormData } from '../types';
 import { validateNoUserInfoInUrl } from '../utils/validators';
 
@@ -232,6 +234,12 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder: 'you@example.com',
         required: false,
+        validation: {
+          pattern: {
+            value: w3cStandardEmailValidator,
+            message: t('provisioning.bitbucket.email-invalid', 'Enter a valid email address'),
+          },
+        },
       },
       url: {
         ...shared.url,

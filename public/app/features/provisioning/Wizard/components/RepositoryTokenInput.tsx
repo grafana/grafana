@@ -89,6 +89,7 @@ export function RepositoryTokenInput() {
           <Input
             {...register('repository.email', gitFields.emailConfig.validation)}
             id="email"
+            type="email"
             placeholder={gitFields.emailConfig.placeholder}
           />
         </Field>
