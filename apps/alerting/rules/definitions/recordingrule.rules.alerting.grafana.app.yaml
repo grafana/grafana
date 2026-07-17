@@ -85,6 +85,22 @@ spec:
                 description: additionalFields is reserved for future use
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              evaluationTime:
+                type: number
+              health:
+                enum:
+                - Unknown
+                - Recording
+                - Paused
+                - Error
+                - NoData
+                - NotScheduled
+                type: string
+              lastError:
+                type: string
+              lastEvaluationTime:
+                format: date-time
+                type: string
               operatorStates:
                 additionalProperties:
                   properties:
