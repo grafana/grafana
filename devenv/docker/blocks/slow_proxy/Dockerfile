@@ -8,4 +8,5 @@ FROM scratch
 WORKDIR /
 EXPOSE 3011
 COPY --from=builder /main /main
+USER 65534
 ENTRYPOINT ["/main"]
