@@ -23,7 +23,7 @@ export const RESET_BUTTON_TEXT = 'Reset';
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-secretinput--docs
  */
 export const SecretInput = ({ isConfigured, onReset, ...props }: Props) => {
-  // Some browser extensions block paste from clipboard to password fields. This is a workaround to allow bypass this limitation.
+  // Some browser extensions block pasting from the clipboard into password fields. This is a workaround to bypass this limitation.
   const [visible, setVisible] = useState(false);
   const toggleLabel = visible
     ? t('grafana-ui.secret-input.hide', 'Hide secret')
