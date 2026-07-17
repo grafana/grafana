@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"testing"
 	"time"
 
@@ -47,6 +46,46 @@ func TestIntegrationRuleSearch(t *testing.T) {
 	}
 }
 
+const opIn = v0alpha1.CreateSearchRulesRequestSearchFilterLeafOperatorIn
+
+// query is a small builder for a SearchQuery body used by the tests.
+type query struct {
+	body v0alpha1.CreateSearchRulesRequestBody
+}
+
+func newQuery() *query { return &query{} }
+
+func (q *query) text(v string) *query {
+	q.and(v0alpha1.CreateSearchRulesRequestSearchWhereNode{
+		Text: &v0alpha1.CreateSearchRulesRequestSearchTextLeaf{Value: v},
+	})
+	return q
+}
+
+func (q *query) filter(field string, op v0alpha1.CreateSearchRulesRequestSearchFilterLeafOperator, values ...string) *query {
+	q.and(v0alpha1.CreateSearchRulesRequestSearchWhereNode{
+		Filter: &v0alpha1.CreateSearchRulesRequestSearchFilterLeaf{Field: field, Operator: op, Values: values},
+	})
+	return q
+}
+
+func (q *query) and(node v0alpha1.CreateSearchRulesRequestSearchWhereNode) {
+	if q.body.Where == nil {
+		q.body.Where = &v0alpha1.CreateSearchRulesRequestSearchWhereNode{}
+	}
+	q.body.Where.And = append(q.body.Where.And, node)
+}
+
+func (q *query) labelSelector(s string) *query { q.body.LabelSelector = &s; return q }
+func (q *query) sort(fields ...string) *query {
+	for _, f := range fields {
+		q.body.Sort = append(q.body.Sort, v0alpha1.CreateSearchRulesRequestSearchSortField(f))
+	}
+	return q
+}
+func (q *query) limit(n int64) *query       { q.body.Limit = &n; return q }
+func (q *query) continueAt(s string) *query { q.body.Continue = &s; return q }
+
 func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	ctx := context.Background()
 	common.CreateTestFolder(t, helper, searchFolder)
@@ -61,164 +100,140 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	createRecordingRule(t, ctx, recClient, "disk recording", "ds-prom")
 
 	rc := helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion)
-	getRaw := func(t *testing.T, path string, params url.Values) []byte {
+	search := func(t *testing.T, q *query) v0alpha1.CreateSearchRulesResponse {
 		t.Helper()
-		segments := []string{"apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", "search"}
-		if path != "" {
-			segments = append(segments, path)
+		var payload []byte
+		if q != nil {
+			var err error
+			payload, err = json.Marshal(q.body)
+			require.NoError(t, err)
 		}
-		req := rc.Get().AbsPath(segments...)
-		for k, vals := range params {
-			for _, v := range vals {
-				req = req.Param(k, v)
-			}
-		}
-		raw, err := req.DoRaw(ctx)
+		raw, err := rc.Post().
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", "search").
+			Body(payload).
+			DoRaw(ctx)
 		require.NoError(t, err)
-		return raw
-	}
-	searchAlert := func(t *testing.T, params url.Values) v0alpha1.GetSearchAlertRulesResponse {
-		var resp v0alpha1.GetSearchAlertRulesResponse
-		require.NoError(t, json.Unmarshal(getRaw(t, "alertrules", params), &resp))
+		var resp v0alpha1.CreateSearchRulesResponse
+		require.NoError(t, json.Unmarshal(raw, &resp))
 		return resp
 	}
-	searchRecording := func(t *testing.T, params url.Values) v0alpha1.GetSearchRecordingRulesResponse {
-		var resp v0alpha1.GetSearchRecordingRulesResponse
-		require.NoError(t, json.Unmarshal(getRaw(t, "recordingrules", params), &resp))
-		return resp
-	}
-	searchCrossKind := func(t *testing.T, params url.Values) v0alpha1.GetSearchRulesResponse {
-		var resp v0alpha1.GetSearchRulesResponse
-		require.NoError(t, json.Unmarshal(getRaw(t, "", params), &resp))
-		return resp
+	// searchKind narrows to a single kind via a type filter leaf.
+	searchKind := func(t *testing.T, kind string, q *query) v0alpha1.CreateSearchRulesResponse {
+		if q == nil {
+			q = newQuery()
+		}
+		return search(t, q.filter("type", opIn, kind))
 	}
 
 	t.Run("alert rules: returns all alert rules", func(t *testing.T) {
-		require.Len(t, searchAlert(t, nil).Items, 3)
+		require.Len(t, searchKind(t, "alertrule", nil).Items, 3)
 	})
 
 	t.Run("alert rules: compact-view fields populated", func(t *testing.T) {
 		// interval is a config field common to both backends; assert it round
 		// trips consistently regardless of storage mode.
-		for _, h := range searchAlert(t, nil).Items {
-			require.NotNil(t, h.Interval, h.Title)
-			require.Equal(t, "10s", *h.Interval, h.Title)
+		for _, h := range searchKind(t, "alertrule", nil).Items {
+			require.NotNil(t, h.Fields.Interval, title(h))
+			require.Equal(t, "10s", *h.Fields.Interval, title(h))
 		}
 	})
 
 	t.Run("alert rules: filter by name (uid)", func(t *testing.T) {
-		all := searchAlert(t, nil).Items
+		all := searchKind(t, "alertrule", nil).Items
 		require.GreaterOrEqual(t, len(all), 2)
-		want := []string{all[0].Name, all[1].Name}
-		got := searchAlert(t, url.Values{"names": want})
+		want := []string{all[0].Resource.Name, all[1].Resource.Name}
+		got := searchKind(t, "alertrule", newQuery().filter("name", opIn, want...))
 		gotNames := make([]string, 0, len(got.Items))
 		for _, h := range got.Items {
-			gotNames = append(gotNames, h.Name)
+			gotNames = append(gotNames, h.Resource.Name)
 		}
 		require.ElementsMatch(t, want, gotNames)
 	})
 
 	t.Run("alert rules: free-text title filter", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, alertTitles(searchAlert(t, url.Values{"q": {"usage"}})))
+		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(searchKind(t, "alertrule", newQuery().text("usage"))))
 	})
 
 	t.Run("alert rules: label matcher", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, alertTitles(searchAlert(t, url.Values{"labels": {"team=a"}})))
+		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().labelSelector("team=a"))))
 	})
 
 	t.Run("alert rules: source datasource filter", func(t *testing.T) {
-		require.Equal(t, []string{"memory usage high"}, alertTitles(searchAlert(t, url.Values{"datasourceUIDs": {"ds-loki"}})))
+		require.Equal(t, []string{"memory usage high"}, titles(searchKind(t, "alertrule", newQuery().filter("datasourceUIDs", opIn, "ds-loki"))))
 	})
 
 	t.Run("alert rules: paused filter", func(t *testing.T) {
-		require.Equal(t, []string{"memory usage high"}, alertTitles(searchAlert(t, url.Values{"paused": {"true"}})))
+		require.Equal(t, []string{"memory usage high"}, titles(searchKind(t, "alertrule", newQuery().filter("paused", opIn, "true"))))
 	})
 
 	t.Run("alert rules: sort by title descending", func(t *testing.T) {
-		require.Equal(t, []string{"memory usage high", "disk low", "cpu usage high"}, alertTitles(searchAlert(t, url.Values{"sort": {"-title"}})))
+		require.Equal(t, []string{"memory usage high", "disk low", "cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().sort("-title"))))
 	})
 
 	t.Run("alert rules: pagination", func(t *testing.T) {
-		first := searchAlert(t, url.Values{"sort": {"title"}, "limit": {"2"}})
-		require.Equal(t, []string{"cpu usage high", "disk low"}, alertTitles(first))
-		require.NotEmpty(t, first.Continue)
+		first := searchKind(t, "alertrule", newQuery().sort("title").limit(2))
+		require.Equal(t, []string{"cpu usage high", "disk low"}, titles(first))
+		require.NotNil(t, first.Metadata.Continue)
+		require.NotEmpty(t, *first.Metadata.Continue)
 
-		second := searchAlert(t, url.Values{"sort": {"title"}, "limit": {"2"}, "continueToken": {first.Continue}})
-		require.Equal(t, []string{"memory usage high"}, alertTitles(second))
-		require.Empty(t, second.Continue)
+		second := searchKind(t, "alertrule", newQuery().sort("title").limit(2).continueAt(*first.Metadata.Continue))
+		require.Equal(t, []string{"memory usage high"}, titles(second))
+		require.Nil(t, second.Metadata.Continue)
 	})
 
 	t.Run("recording rules: returns all recording rules", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, recordingTitles(searchRecording(t, nil)))
+		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, titles(searchKind(t, "recordingrule", nil)))
 	})
 
 	t.Run("cross-kind: returns both kinds", func(t *testing.T) {
-		require.Len(t, searchCrossKind(t, nil).Items, 5)
+		require.Len(t, search(t, nil).Items, 5)
 	})
 
 	t.Run("cross-kind: type narrowing", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, crossKindTitles(searchCrossKind(t, url.Values{"type": {"recordingrule"}})))
+		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, titles(searchKind(t, "recordingrule", nil)))
 	})
 
 	t.Run("cross-kind: interleaved by title", func(t *testing.T) {
 		// Sorting the union by title mixes the two kinds rather than grouping
 		// them: the recordings land between alert rules.
-		asc := searchCrossKind(t, url.Values{"sort": {"title"}})
-		require.Equal(t, []string{"cpu recording", "cpu usage high", "disk low", "disk recording", "memory usage high"}, crossKindTitles(asc))
-		require.Equal(t, []string{"recordingrule", "alertrule", "alertrule", "recordingrule", "alertrule"}, crossKindKinds(asc))
+		asc := search(t, newQuery().sort("title"))
+		require.Equal(t, []string{"cpu recording", "cpu usage high", "disk low", "disk recording", "memory usage high"}, titles(asc))
+		require.Equal(t, []string{"recordingrule", "alertrule", "alertrule", "recordingrule", "alertrule"}, kinds(asc))
 
-		desc := searchCrossKind(t, url.Values{"sort": {"-title"}})
-		require.Equal(t, []string{"memory usage high", "disk recording", "disk low", "cpu usage high", "cpu recording"}, crossKindTitles(desc))
-		require.Equal(t, []string{"alertrule", "recordingrule", "alertrule", "alertrule", "recordingrule"}, crossKindKinds(desc))
+		desc := search(t, newQuery().sort("-title"))
+		require.Equal(t, []string{"memory usage high", "disk recording", "disk low", "cpu usage high", "cpu recording"}, titles(desc))
+		require.Equal(t, []string{"alertrule", "recordingrule", "alertrule", "alertrule", "recordingrule"}, kinds(desc))
 	})
 
 	t.Run("consistency: search matches list", func(t *testing.T) {
 		list, err := alertClient.List(ctx, v1.ListOptions{})
 		require.NoError(t, err)
-		require.Len(t, searchAlert(t, nil).Items, len(list.Items))
+		require.Len(t, searchKind(t, "alertrule", nil).Items, len(list.Items))
 	})
 }
 
-func alertTitles(resp v0alpha1.GetSearchAlertRulesResponse) []string {
+func title(h v0alpha1.CreateSearchRulesSearchResultHit) string {
+	if h.Fields.Title == nil {
+		return ""
+	}
+	return *h.Fields.Title
+}
+
+func titles(resp v0alpha1.CreateSearchRulesResponse) []string {
 	out := make([]string, 0, len(resp.Items))
 	for _, h := range resp.Items {
-		out = append(out, h.Title)
+		out = append(out, title(h))
 	}
 	return out
 }
 
-func recordingTitles(resp v0alpha1.GetSearchRecordingRulesResponse) []string {
+// kinds reports the "type" field of each hit, in order, so a test can assert the
+// two kinds are interleaved rather than grouped.
+func kinds(resp v0alpha1.CreateSearchRulesResponse) []string {
 	out := make([]string, 0, len(resp.Items))
 	for _, h := range resp.Items {
-		out = append(out, h.Title)
-	}
-	return out
-}
-
-// crossKindTitles reads the title from whichever variant of the union hit is set.
-func crossKindTitles(resp v0alpha1.GetSearchRulesResponse) []string {
-	out := make([]string, 0, len(resp.Items))
-	for _, h := range resp.Items {
-		switch {
-		case h.AlertRuleHit != nil:
-			out = append(out, h.AlertRuleHit.Title)
-		case h.RecordingRuleHit != nil:
-			out = append(out, h.RecordingRuleHit.Title)
-		}
-	}
-	return out
-}
-
-// crossKindKinds reports the kind of each union hit, in order, so a test can
-// assert the two kinds are interleaved rather than grouped.
-func crossKindKinds(resp v0alpha1.GetSearchRulesResponse) []string {
-	out := make([]string, 0, len(resp.Items))
-	for _, h := range resp.Items {
-		switch {
-		case h.AlertRuleHit != nil:
-			out = append(out, "alertrule")
-		case h.RecordingRuleHit != nil:
-			out = append(out, "recordingrule")
+		if h.Fields.Type != nil {
+			out = append(out, *h.Fields.Type)
 		}
 	}
 	return out

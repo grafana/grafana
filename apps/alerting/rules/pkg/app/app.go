@@ -74,22 +74,19 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-// buildSearchRoutes wires the rule search handlers (provided by the registry)
-// to their namespaced custom routes. Routes whose handler is unset are skipped
-// so manifest validation without a backing instance does not register nil
-// handlers.
+// buildSearchRoutes wires the rule search handler (provided by the registry) to
+// its namespaced POST /search custom route. The route is skipped when the
+// handler is unset so manifest validation without a backing instance does not
+// register a nil handler. The request/response shapes mirror the generic
+// search.grafana.app SearchQuery/SearchResults; the query is a POST body so the
+// typed where tree survives transport (see the createSearchRules route in the
+// kinds' searchRoutes CUE).
 func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
-	handlers := simple.AppVersionRouteHandlers{}
-	add := func(path string, handler simple.AppCustomRouteHandler) {
-		if handler != nil {
-			handlers[simple.AppVersionRoute{Namespaced: true, Path: path, Method: simple.AppCustomRouteMethodGet}] = handler
-		}
-	}
-	add("/search", cfg.SearchRulesHandler)
-	add("/search/alertrules", cfg.SearchAlertRulesHandler)
-	add("/search/recordingrules", cfg.SearchRecordingRulesHandler)
-	if len(handlers) == 0 {
+	if cfg.SearchRulesHandler == nil {
 		return nil
+	}
+	handlers := simple.AppVersionRouteHandlers{
+		simple.AppVersionRoute{Namespaced: true, Path: "/search", Method: simple.AppCustomRouteMethodPost}: cfg.SearchRulesHandler,
 	}
 	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }

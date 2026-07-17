@@ -43,7 +43,6 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:                  ruleTypeForRequest(req),
 		RuleUIDs:                  f.names,
-		GroupFilter:               includeFilter(f.groups),
 		FolderFilter:              includeFilter(f.folders),
 		PausedFilter:              provisioning.ListRuleBoolFilter{Value: f.paused},
 		DashboardFilter:           stringFilter(f.dashboardUID),
@@ -113,7 +112,6 @@ func ruleCells(r *ngmodels.AlertRule) [][]byte {
 		[]byte(ruleType(r)),
 		[]byte(r.Title),
 		[]byte(r.NamespaceUID),
-		[]byte(r.RuleGroup),
 		[]byte(promDuration(time.Duration(r.IntervalSeconds) * time.Second)),
 		[]byte(strconv.FormatBool(r.IsPaused)),
 		labels,
