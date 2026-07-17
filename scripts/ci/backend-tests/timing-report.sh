@@ -49,7 +49,7 @@ jq -r --argjson owners "$owners" '
   | "<!-- integration-test-timings -->",
     "## Slowest integration tests\n",
     "Slowest first, worst time across databases and shards. Bars are colored by codeowner:\n",
-    ($series | to_entries | map("$\\color{\($colors[.key])}\\blacksquare$ `\(.value)`") | join(" · ")),
+    ($series | to_entries | map("![\(.value)](https://img.shields.io/badge/\(.value | gsub("-"; "--"))-\($colors[.key] | ltrimstr("#")))") | join(" ")),
     "",
     "```mermaid",
     "%%{init: {\"themeVariables\": {\"xyChart\": {\"plotColorPalette\": \"\($colors | join(","))\"}}}}%%",
