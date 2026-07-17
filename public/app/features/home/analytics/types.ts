@@ -15,6 +15,13 @@ export interface EmptyCtaClicked extends EventProperty {
   cta_type: 'create_dashboard' | 'browse_dashboards';
 }
 
+export interface RecommendationEnableClicked extends EventProperty {
+  /** Stable id of the recommendation whose Enable CTA was clicked. */
+  recommendation_id: string;
+  /** Which homepage surface fired the CTA. */
+  source: 'card' | 'pill';
+}
+
 export interface AlertsCardClicked extends EventProperty {
   /** Which control on the Firing alerts card was clicked. */
   action: 'alert_detail' | 'create_rule' | 'view_all_alerts' | 'view_all_rules';

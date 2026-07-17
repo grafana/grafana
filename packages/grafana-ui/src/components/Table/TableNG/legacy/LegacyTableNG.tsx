@@ -66,6 +66,7 @@ import {
   useNestedColWidths,
   useNestedRows,
   usePaginatedRows,
+  useRowCompiler,
   useRowHeight,
   useScrollbarWidth,
   useSortedRows,
@@ -94,8 +95,6 @@ import {
 import {
   calculateFooterHeight,
   canFieldBeColorized,
-  compileFrameToRecordsV1,
-  compileFrameToRecordsV2,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -139,7 +138,6 @@ export function LegacyTableNG(props: TableNGProps) {
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
-    protoParserEnabled,
     showTypeIcons,
     structureRev,
     timeRange,
@@ -191,13 +189,7 @@ export function LegacyTableNG(props: TableNGProps) {
     }
     return getDisplayName(firstNestedField);
   }, [data, hasNestedFrames]);
-  const frameToRecords = useMemo(
-    () =>
-      protoParserEnabled
-        ? compileFrameToRecordsV2(data, nestedFramesFieldName)
-        : compileFrameToRecordsV1(data, nestedFramesFieldName),
-    [data, nestedFramesFieldName, protoParserEnabled]
-  );
+  const frameToRecords = useRowCompiler(data, nestedFramesFieldName);
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 
   const nestedData = useMemo(
@@ -240,15 +232,7 @@ export function LegacyTableNG(props: TableNGProps) {
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
-  const nestedRows = useNestedRows(
-    rows,
-    nestedData,
-    hasNestedFrames,
-    nestedFramesFieldName,
-    filter,
-    sortColumns,
-    protoParserEnabled
-  );
+  const nestedRows = useNestedRows(rows, nestedData, hasNestedFrames, nestedFramesFieldName, filter, sortColumns);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();

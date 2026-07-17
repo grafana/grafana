@@ -158,7 +158,7 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
+    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
     id: number,
     source: 'panel' | 'edit_pane' | 'keyboard'
   ) {

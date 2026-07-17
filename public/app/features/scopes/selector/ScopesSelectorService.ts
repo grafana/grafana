@@ -2,6 +2,7 @@ import { type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -485,6 +486,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
     if (!this.redirectEnabled) {
+      return;
+    }
+
+    // Never redirect during image/PDF capture — the renderer must stay on the requested dashboard
+    // so its panels can render. Checked synchronously here (not via setRedirectEnabled) because
+    // applyScopes runs during ScopesService boot, before any React effect can toggle the flag.
+    if (isRenderTarget()) {
       return;
     }
 

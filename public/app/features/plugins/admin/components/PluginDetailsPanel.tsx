@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type PageInfoItem } from '@grafana/runtime/internal';
 import {
   Stack,
@@ -53,9 +53,8 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   const styles = useStyles2(getStyles);
 
-  const onClickReportConcern = (pluginId: string) => {
+  const onClickReportConcern = () => {
     setReportAbuseModalOpen(true);
-    reportInteraction('plugin_detail_report_concern', { plugin_id: pluginId });
   };
 
   function createTestId(text: string) {
@@ -239,7 +238,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
               }
             >
               <Stack direction="column">
-                <Button variant="secondary" fill="solid" icon="bell" onClick={() => onClickReportConcern(plugin.id)}>
+                <Button variant="secondary" fill="solid" icon="bell" onClick={onClickReportConcern}>
                   <Trans i18nKey="plugins.details.labels.contactGrafanaLabs">Contact Grafana Labs</Trans>
                 </Button>
               </Stack>

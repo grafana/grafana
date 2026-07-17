@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash';
 
-import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { AlertState } from '@grafana/data';
 import {
   type Alert,
@@ -71,7 +71,7 @@ export function ruleUsesDefaultPolicy(notificationSettings?: GrafanaNotification
   if (notificationSettings?.receiver) {
     return false;
   }
-  if (notificationSettings?.policy && notificationSettings.policy !== USER_DEFINED_TREE_NAME) {
+  if (notificationSettings?.policy && !isDefaultRoutingTreeName(notificationSettings.policy)) {
     return false;
   }
   return true;

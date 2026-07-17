@@ -22,10 +22,9 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *test
 	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON("team-b-uid", "Team B"))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -115,10 +114,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 	writeToProvisioningPath(t, helper, "plain/.keep", []byte{})
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -188,10 +186,9 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 	writeToProvisioningPath(t, helper, "destination/.keep", []byte{})
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -244,10 +241,9 @@ func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *
 	writeToProvisioningPath(t, helper, "container/inner/_folder.json", folderMetadataJSON("inner-uid", "Inner"))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -298,10 +294,9 @@ func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *
 	writeToProvisioningPath(t, helper, "parent/deep/leaf/_folder.json", folderMetadataJSON("leaf-uid", "Leaf"))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -353,10 +348,9 @@ func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreserve
 	writeToProvisioningPath(t, helper, "legacy-parent/.keep", []byte{})
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
