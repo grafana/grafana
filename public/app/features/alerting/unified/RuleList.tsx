@@ -7,18 +7,27 @@ import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const RuleListV2 = lazy(() => import('./rule-list/RuleList.v2'));
 
+function pickRuleListView(newView: boolean): 'v1' | 'v2' {
+  return newView ? 'v2' : 'v1';
+}
+
 const RuleList = () => {
-  const newView = shouldUseAlertingListViewV2();
+  const view = pickRuleListView(shouldUseAlertingListViewV2());
   const tracked = useRef(false);
 
   useEffect(() => {
     if (!tracked.current) {
-      trackRuleListPageView({ view: newView ? 'v2' : 'v1' });
+      trackRuleListPageView({ view });
       tracked.current = true;
     }
-  }, [newView]);
+  }, [view]);
 
-  return <Suspense>{newView ? <RuleListV2 /> : <RuleListV1 />}</Suspense>;
+  return (
+    <Suspense>
+      {view === 'v2' && <RuleListV2 />}
+      {view === 'v1' && <RuleListV1 />}
+    </Suspense>
+  );
 };
 
 export default withPageErrorBoundary(RuleList);
