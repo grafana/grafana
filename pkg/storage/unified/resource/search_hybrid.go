@@ -6,16 +6,121 @@ import (
 	"sort"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
-// HybridSearch implements ResourceIndexServer.
-func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "hybrid search not implemented")
+// HybridSearch implements ResourceIndexServer. Runs the lexical and
+// semantic legs concurrently, each filtered and authz-checked, then
+// fuses the rankings with RRF. Both legs fetch 2x the requested limit
+// so near-miss overlaps can still fuse into the top results.
+//
+// Returns Unimplemented when no embedding provider or vector backend is
+// configured.
+func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (resp *resourcepb.HybridSearchResponse, retErr error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.HybridSearch")
+	defer span.End()
+
+	if s.embedder == nil || s.vectorBackend == nil {
+		return nil, status.Error(codes.Unimplemented, "hybrid search not configured")
+	}
+	if errResp := validateHybridSearchRequest(req); errResp != nil {
+		return errResp, nil
+	}
+
+	limit := int(req.Limit)
+	switch {
+	case limit <= 0:
+		limit = defaultVectorSearchLimit
+	case limit > maxVectorSearchLimit:
+		limit = maxVectorSearchLimit
+	}
+	depth := hybridFetchDepth(limit)
+
+	span.SetAttributes(
+		attribute.String("namespace", req.Key.Namespace),
+		attribute.String("group", req.Key.Group),
+		attribute.String("resource", req.Key.Resource),
+		attribute.Int("limit", limit),
+	)
+
+	// Hybrid embeds a query, so it draws from the same per-tenant budget
+	// as VectorSearch.
+	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+		return nil, err
+	}
+	user, ok := types.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return nil, status.Error(codes.Unauthenticated, "no user in context")
+	}
+
+	embedText := req.Query
+	if req.SemanticQuery != "" {
+		embedText = req.SemanticQuery
+	}
+
+	g, gctx := errgroup.WithContext(ctx)
+
+	var lex []lexicalHit
+	g.Go(func() error {
+		lexResp, err := s.Search(gctx, hybridLexicalRequest(req, depth))
+		if err != nil {
+			return fmt.Errorf("lexical leg: %w", err)
+		}
+		if lexResp.Error != nil {
+			return fmt.Errorf("lexical leg: %s", lexResp.Error.Message)
+		}
+		lex = lexicalHitsFromResponse(lexResp)
+		return nil
+	})
+
+	var sem []vector.VectorSearchResult
+	g.Go(func() error {
+		dense, err := s.embedVectorSearchQuery(gctx, req.Key.Namespace, embedText)
+		if err != nil {
+			return err
+		}
+		results, err := s.vectorBackend.Search(gctx,
+			req.Key.Namespace, s.embedder.Model, req.Key.Resource,
+			dense, depth, hybridVectorFilters(req.Filters)...)
+		if err != nil {
+			s.log.Error("hybrid search: vector backend", "err", err)
+			return status.Error(codes.Internal, "vector search backend")
+		}
+		allowed, err := s.batchCheckVectorSearchResults(gctx, user, req.Key, results)
+		if err != nil {
+			s.log.Error("hybrid search: authz batch check", "err", err)
+			return status.Error(codes.Internal, "authz batch check")
+		}
+		sem = make([]vector.VectorSearchResult, 0, len(results))
+		for _, r := range results {
+			if allowed[vectorAuthzKey{r.UID, r.Folder}] {
+				sem = append(sem, r)
+			}
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		if status.Code(err) != codes.Unknown {
+			return nil, err
+		}
+		s.log.Error("hybrid search", "err", err)
+		return nil, status.Error(codes.Internal, "hybrid search")
+	}
+
+	fused := fuseRRF(req.Key, lex, sem)
+	if len(fused) > limit {
+		fused = fused[:limit]
+	}
+	return &resourcepb.HybridSearchResponse{Results: fused}, nil
 }
 
 // rrfK is the standard Reciprocal Rank Fusion constant (Cormack, Clarke

@@ -1,12 +1,19 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -246,4 +253,189 @@ func TestHybridVectorFilters(t *testing.T) {
 func TestHybridFetchDepth(t *testing.T) {
 	assert.Equal(t, 20, hybridFetchDepth(10))
 	assert.Equal(t, 200, hybridFetchDepth(150))
+}
+
+type fakeSearchBackend struct {
+	idx ResourceIndex
+}
+
+func (f *fakeSearchBackend) LoadOpenIndexStats(time.Time, time.Duration) ([]ResourceStats, error) {
+	return nil, nil
+}
+func (f *fakeSearchBackend) WriteOpenIndexStats(time.Time) error        { return nil }
+func (f *fakeSearchBackend) GetIndex(NamespacedResource) ResourceIndex { return f.idx }
+func (f *fakeSearchBackend) TotalDocs() int64                          { return 0 }
+func (f *fakeSearchBackend) GetOpenIndexes() []NamespacedResource      { return nil }
+func (f *fakeSearchBackend) Stop()                                     {}
+func (f *fakeSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration) (ResourceIndex, error) {
+	return f.idx, nil
+}
+
+type hybridFakeIndex struct {
+	MockResourceIndex
+	mu     sync.Mutex
+	resp   *resourcepb.ResourceSearchResponse
+	err    error
+	gotReq *resourcepb.ResourceSearchRequest
+}
+
+func (h *hybridFakeIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.gotReq = req
+	return h.resp, h.err
+}
+
+func newHybridTestServer(lexResp *resourcepb.ResourceSearchResponse, backend *fakeVectorBackend, access ...authlib.AccessClient) (*searchServer, *hybridFakeIndex, *fakeTextEmbedder) {
+	idx := &hybridFakeIndex{resp: lexResp}
+	emb := &fakeTextEmbedder{dim: 4}
+	s := newTestSearchServer(newTestEmbedder(emb), backend, access...)
+	s.search = &fakeSearchBackend{idx: idx}
+	return s, idx, emb
+}
+
+func TestHybridSearch_FusesBothLegs(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"both", "Both Legs", "f1"},
+		[3]string{"lexonly", "Lex Only", "f2"},
+	)
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{
+			{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "s1", Score: 0.1, Folder: "f3"},
+			{UID: "both", Title: "Both Legs", Subresource: "panel/2", Content: "b2", Score: 0.2, Folder: "f1"},
+		},
+	}
+	s, idx, _ := newHybridTestServer(lexResp, backend)
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "api latency", Limit: 10,
+	})
+	require.NoError(t, err)
+	assert.Nil(t, resp.Error)
+	require.Len(t, resp.Results, 3)
+
+	assert.Equal(t, "both", resp.Results[0].Key.Name)
+	assert.InDelta(t, 1.0/61+1.0/62, resp.Results[0].Score, 1e-12)
+	require.Len(t, resp.Results[0].Chunks, 1)
+	assert.Equal(t, "panel/2", resp.Results[0].Chunks[0].Subresource)
+
+	// lexical-only hit carries a synthesized title chunk
+	for _, r := range resp.Results {
+		if r.Key.Name == "lexonly" {
+			require.Len(t, r.Chunks, 1)
+			assert.Equal(t, "Lex Only", r.Chunks[0].Content)
+		}
+	}
+
+	idx.mu.Lock()
+	assert.Equal(t, "api latency", idx.gotReq.Query)
+	assert.Equal(t, int64(20), idx.gotReq.Limit)
+	idx.mu.Unlock()
+	assert.Equal(t, 20, backend.gotLimit)
+}
+
+func TestHybridSearch_SemanticQueryOverridesEmbedText(t *testing.T) {
+	s, _, emb := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "cpu", SemanticQuery: "cpu utilization by host",
+	})
+	require.NoError(t, err)
+	require.Len(t, emb.gotIn.Texts, 1)
+	assert.Equal(t, "cpu utilization by host", emb.gotIn.Texts[0])
+}
+
+func TestHybridSearch_FiltersReachBothLegs(t *testing.T) {
+	backend := &fakeVectorBackend{}
+	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+		Filters: []*resourcepb.Requirement{
+			{Key: "datasource_uid", Operator: "in", Values: []string{"ds1"}},
+		},
+	})
+	require.NoError(t, err)
+
+	idx.mu.Lock()
+	require.Len(t, idx.gotReq.Options.Fields, 1)
+	assert.Equal(t, "reference.DataSource", idx.gotReq.Options.Fields[0].Key)
+	idx.mu.Unlock()
+
+	require.Len(t, backend.gotFilters, 1)
+	assert.Equal(t, "datasourceUid", backend.gotFilters[0].Field)
+}
+
+func TestHybridSearch_SemanticAuthzDenied(t *testing.T) {
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{
+			{UID: "denied", Title: "Denied", Score: 0.1, Folder: "f1"},
+		},
+	}
+	s, _, _ := newHybridTestServer(lexTableResponse(), backend, authlib.FixedAccessClient(false))
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	assert.Empty(t, resp.Results)
+}
+
+func TestHybridSearch_LimitTruncates(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"a", "A", "f"}, [3]string{"b", "B", "f"}, [3]string{"c", "C", "f"},
+	)
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", Limit: 2,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 2)
+	assert.Equal(t, "a", resp.Results[0].Key.Name)
+}
+
+func TestHybridSearch_NotConfigured(t *testing.T) {
+	s := newTestSearchServer(nil, nil)
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{Key: validKey(), Query: "q"})
+	require.Error(t, err)
+	assert.Equal(t, codes.Unimplemented, status.Code(err))
+}
+
+func TestHybridSearch_ValidationErrorsEmbedInResponse(t *testing.T) {
+	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{Query: "q"})
+	require.NoError(t, err)
+	require.NotNil(t, resp.Error)
+
+	resp, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+		Filters: []*resourcepb.Requirement{{Key: "tags", Operator: "in", Values: []string{"x"}}},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.Error)
+}
+
+func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
+	backend := &fakeVectorBackend{}
+	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+	idx.err = fmt.Errorf("index exploded")
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestHybridSearch_VectorLegFailureFailsRequest(t *testing.T) {
+	backend := &fakeVectorBackend{err: fmt.Errorf("pgvector exploded")}
+	s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
 }
