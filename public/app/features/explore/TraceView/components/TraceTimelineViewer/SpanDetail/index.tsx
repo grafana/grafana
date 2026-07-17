@@ -51,7 +51,6 @@ import AccordionKeyValues from './AccordionKeyValues';
 import AccordionLogs from './AccordionLogs';
 import AccordionReferences from './AccordionReferences';
 import type DetailState from './DetailState';
-import { ShareSpanButton } from './ShareSpanButton';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
