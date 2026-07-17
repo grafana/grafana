@@ -2,6 +2,27 @@
 
 package v0alpha1
 
+import (
+	time "time"
+)
+
+// +k8s:openapi-gen=true
+type RecordingRuleRecordingRuleHealth string
+
+const (
+	RecordingRuleRecordingRuleHealthUnknown      RecordingRuleRecordingRuleHealth = "Unknown"
+	RecordingRuleRecordingRuleHealthRecording    RecordingRuleRecordingRuleHealth = "Recording"
+	RecordingRuleRecordingRuleHealthPaused       RecordingRuleRecordingRuleHealth = "Paused"
+	RecordingRuleRecordingRuleHealthError        RecordingRuleRecordingRuleHealth = "Error"
+	RecordingRuleRecordingRuleHealthNoData       RecordingRuleRecordingRuleHealth = "NoData"
+	RecordingRuleRecordingRuleHealthNotScheduled RecordingRuleRecordingRuleHealth = "NotScheduled"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for RecordingRuleRecordingRuleHealth.
+func (RecordingRuleRecordingRuleHealth) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRecordingRuleHealth"
+}
+
 // +k8s:openapi-gen=true
 type RecordingRulestatusOperatorState struct {
 	// lastEvaluation is the ResourceVersion last evaluated
@@ -27,9 +48,13 @@ func (RecordingRulestatusOperatorState) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type RecordingRuleStatus struct {
+	Health             *RecordingRuleRecordingRuleHealth `json:"health,omitempty"`
+	LastEvaluationTime *time.Time                        `json:"lastEvaluationTime,omitempty"`
+	EvaluationTime     *float64                          `json:"evaluationTime,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]RecordingRulestatusOperatorState `json:"operatorStates,omitempty"`
+	LastError      *string                                     `json:"lastError,omitempty"`
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }

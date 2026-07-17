@@ -1,5 +1,26 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+export enum AlertRuleHealth {
+	Unknown = "Unknown",
+	OK = "OK",
+	Paused = "Paused",
+	Error = "Error",
+	NoData = "NoData",
+	NotScheduled = "NotScheduled",
+}
+
+export const defaultAlertRuleHealth = (): AlertRuleHealth => (AlertRuleHealth.Unknown);
+
+export enum AlertRuleState {
+	Inactive = "Inactive",
+	Normal = "Normal",
+	Firing = "Firing",
+	Pending = "Pending",
+	Recovering = "Recovering",
+}
+
+export const defaultAlertRuleState = (): AlertRuleState => (AlertRuleState.Inactive);
+
 export interface OperatorState {
 	// lastEvaluation is the ResourceVersion last evaluated
 	lastEvaluation: string;
@@ -18,9 +39,14 @@ export const defaultOperatorState = (): OperatorState => ({
 });
 
 export interface Status {
+	health?: AlertRuleHealth;
+	state?: AlertRuleState;
+	lastEvaluationTime?: string;
+	evaluationDuration?: number;
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	operatorStates?: Record<string, OperatorState>;
+	lastError?: string;
 	// additionalFields is reserved for future use
 	additionalFields?: Record<string, any>;
 }

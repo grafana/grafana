@@ -2,6 +2,43 @@
 
 package v0alpha1
 
+import (
+	time "time"
+)
+
+// +k8s:openapi-gen=true
+type AlertRuleAlertRuleHealth string
+
+const (
+	AlertRuleAlertRuleHealthUnknown      AlertRuleAlertRuleHealth = "Unknown"
+	AlertRuleAlertRuleHealthOK           AlertRuleAlertRuleHealth = "OK"
+	AlertRuleAlertRuleHealthPaused       AlertRuleAlertRuleHealth = "Paused"
+	AlertRuleAlertRuleHealthError        AlertRuleAlertRuleHealth = "Error"
+	AlertRuleAlertRuleHealthNoData       AlertRuleAlertRuleHealth = "NoData"
+	AlertRuleAlertRuleHealthNotScheduled AlertRuleAlertRuleHealth = "NotScheduled"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleAlertRuleHealth.
+func (AlertRuleAlertRuleHealth) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleHealth"
+}
+
+// +k8s:openapi-gen=true
+type AlertRuleAlertRuleState string
+
+const (
+	AlertRuleAlertRuleStateInactive   AlertRuleAlertRuleState = "Inactive"
+	AlertRuleAlertRuleStateNormal     AlertRuleAlertRuleState = "Normal"
+	AlertRuleAlertRuleStateFiring     AlertRuleAlertRuleState = "Firing"
+	AlertRuleAlertRuleStatePending    AlertRuleAlertRuleState = "Pending"
+	AlertRuleAlertRuleStateRecovering AlertRuleAlertRuleState = "Recovering"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleAlertRuleState.
+func (AlertRuleAlertRuleState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleState"
+}
+
 // +k8s:openapi-gen=true
 type AlertRulestatusOperatorState struct {
 	// lastEvaluation is the ResourceVersion last evaluated
@@ -27,9 +64,14 @@ func (AlertRulestatusOperatorState) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type AlertRuleStatus struct {
+	Health             *AlertRuleAlertRuleHealth `json:"health,omitempty"`
+	State              *AlertRuleAlertRuleState  `json:"state,omitempty"`
+	LastEvaluationTime *time.Time                `json:"lastEvaluationTime,omitempty"`
+	EvaluationDuration *float64                  `json:"evaluationDuration,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]AlertRulestatusOperatorState `json:"operatorStates,omitempty"`
+	LastError      *string                                 `json:"lastError,omitempty"`
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }

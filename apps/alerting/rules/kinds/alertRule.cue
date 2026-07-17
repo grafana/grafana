@@ -11,7 +11,8 @@ alertRuleKind: {
 
 alertRulev0alpha1: alertRuleKind & {
 	schema: {
-		spec: v0alpha1.#AlertRuleSpec
+		spec:   v0alpha1.#AlertRuleSpec
+		status: v0alpha1.#AlertRuleStatus
 	}
 	validation: {
 		operations: [
