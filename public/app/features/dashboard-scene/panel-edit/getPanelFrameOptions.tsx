@@ -2,7 +2,7 @@ import React from 'react';
 
 import { CoreApp, type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch, Stack, Label, Field } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
@@ -211,6 +211,20 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   };
 
   const onToggleSubtitle = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
+      source: panel,
+      perform: () => {
+        if (evt.currentTarget.checked) {
+          panel.setState({ subtitle: description });
+          panel.setState({ description: undefined });
+        } else {
+          panel.setState({ description: subtitle });
+          panel.setState({ subtitle: undefined });
+        }
+      },
+      undo: () => {},
+    });
     if (evt.currentTarget.checked) {
       panel.setState({ subtitle: description });
       panel.setState({ description: undefined });
@@ -222,10 +236,18 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const label = (
     <Stack direction="row" justifyContent="space-between">
-      <Label>Description</Label>
+      <Label>
+        <Trans i18nKey="dashboard.viz-panel.options.description">Description</Trans>
+      </Label>
       <Stack>
-        <Label>As subtitle</Label>
-        <Switch value={!!subtitle} onChange={onToggleSubtitle} label="As subtitle" />
+        <Label>
+          <Trans i18nKey="dashboard.viz-panel.options.description-as-subtitle">As subtitle</Trans>
+        </Label>
+        <Switch
+          value={!!subtitle}
+          onChange={onToggleSubtitle}
+          label={t('dashboard.viz-panel.options.description-as-subtitle', 'As subtitle')}
+        />
       </Stack>
     </Stack>
   );
