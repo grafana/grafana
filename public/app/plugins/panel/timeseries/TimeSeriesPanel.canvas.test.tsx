@@ -340,7 +340,12 @@ describe('TimeSeriesPanel (canvas)', () => {
           name: `Y Axis placement: ${axisPlacement}`,
           panelProps: customFieldConfig({ axisPlacement }),
         })),
-      { name: 'Y Axis: soft min/max', panelProps: customFieldConfig({}, { min: 0, max: 100 }) },
+      // Soft min/max (custom axisSoftMin/Max) only expands the auto-range; here it stretches the Y axis to
+      // 0-100 even though the data fits in 10-25.
+      { name: 'Y Axis: soft min/max', panelProps: customFieldConfig({ axisSoftMin: 0, axisSoftMax: 100 }) },
+      // Hard min/max (standard field config, a different path than soft) pins the Y axis to a fixed range.
+      // Uses a different range (0-50) than the soft case so the snapshot stays distinct.
+      { name: 'Y Axis: hard min/max', panelProps: customFieldConfig({}, { min: 0, max: 50 }) },
       { name: 'X Axis: defaults' },
     ])('$name', async ({ data, options, panelProps, size }) => {
       renderTimeSeriesPanel(data, options, panelProps);
