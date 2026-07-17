@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Alert, Modal, useStyles2 } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
 
@@ -44,11 +44,11 @@ const MAX_PREFETCH_DATASOURCES = 4;
  * refers to), asks one round of clarifying questions only when genuinely
  * needed, and then builds. Alternatively, "Just show me what Grafana can do"
  * skips straight to a showcase build. Building happens headlessly (via
- * DashboardGenerationHost): the assistant's dashboarding agent navigates to
- * the new-dashboard editor and builds into the live scene while a blocking
- * overlay lets the user watch. When it finishes, the overlay lifts and the
- * finished dashboard is left in the editor — new, dirty, and unsaved — for
- * the user to review and save.
+ * DashboardGenerationHost): the wizard drops the user into the new-dashboard
+ * editor with the build's conversation streaming in the assistant sidebar,
+ * while the dashboard edit lock (dim + progress pill) blocks manual edits.
+ * When it finishes, the lock lifts and the finished dashboard is left in the
+ * editor — new, dirty, and unsaved — for the user to review and save.
  */
 export function GenerateDashboardModal({ onDismiss, seed }: Props) {
   const styles = useStyles2(getStyles);
@@ -198,10 +198,10 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
 
   /**
    * Publishes the composed request for the app-level DashboardGenerationHost,
-   * which runs the assistant's dashboarding agent headlessly (no assistant
-   * panel). The agent navigates to the new-dashboard editor and builds into
-   * the live scene behind the host's blocking overlay; when it finishes the
-   * dashboard is left in the editor — new, dirty, and unsaved.
+   * which runs the assistant's dashboarding agent headlessly while the build's
+   * conversation streams in the assistant sidebar. The agent builds into the
+   * live scene behind the dashboard edit lock; when it finishes the dashboard
+   * is left in the editor — new, dirty, and unsaved.
    */
   const handOffToAssistant = (
     result: WizardRefinement,
@@ -225,6 +225,12 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
         verifiedMetrics: result.verifiedMetrics,
       }),
     });
+
+    // Land in the new-dashboard editor right away so the user watches the
+    // build from the start. The assistant re-navigates to the same page with
+    // its own params (title, edit source) via location.replace, which reuses
+    // the scene — so history keeps a single entry back to this page.
+    locationService.push('/dashboard/new');
 
     onDismiss();
   };
