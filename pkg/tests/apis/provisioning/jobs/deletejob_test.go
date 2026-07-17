@@ -273,6 +273,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			dash := helper.RequireDashboards(t, "folder-dash")[0]
 			testFolderName := dash.GetAnnotations()[utils.AnnoKeyFolder]
 			require.True(t, strings.HasPrefix(testFolderName, "test-folder"), "test-folder should exist as a Folder resource")
+			helper.RequireFolders(t, testFolderName)
 
 			// Verify dashboard inside the folder exists
 			helper.RequireRepoFileExists(t, repo, "test-folder", "dashboard-in-folder.json")
