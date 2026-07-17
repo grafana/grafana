@@ -77,11 +77,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 
 		const repo = "export-meta-new-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "instance",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -112,11 +111,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 
 		const repo = "export-existing-folder-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "instance",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		// Simulate a folder directory that already exists in the repository
@@ -155,11 +153,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 
 		const repo = "nested-middle-existing-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "instance",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -208,11 +205,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 
 		const repo = "nested-two-level-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "instance",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -246,11 +242,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 
 		const repo = "nested-three-level-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "instance",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -293,11 +288,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 
 		const repo = "nested-siblings-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "instance",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -362,11 +356,10 @@ func TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs(t *testing.T) {
 		t.Helper()
 		helper := sharedHelper(t)
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "folder",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "folder",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 		createUnmanagedFolder(t, helper, parentUID, parentTitle)
 		createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
@@ -444,11 +437,10 @@ func TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata(t *t
 
 	const repo = "selective-export-meta-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		SkipSync:   true,
 	})
 
 	const (
@@ -465,7 +457,7 @@ func TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata(t *t
 	createUnmanagedFolder(t, helper, unrelatedUID, unrelatedTitle)
 
 	// The dashboard lives in the child folder; only it is named in the export.
-	selectedDash := helper.CreateUnmanagedDashboard(t, t.Context(), "selective-meta-dash", childUID)
+	selectedDash := helper.CreateUnmanagedDashboard(t, "selective-meta-dash", childUID)
 
 	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPush,

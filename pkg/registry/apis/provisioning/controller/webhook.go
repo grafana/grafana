@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -106,7 +107,7 @@ func createWebhook(ctx context.Context, repo repository.WebhookRepository) (repo
 // if the webhook does not exist, it will create it.
 func updateWebhook(ctx context.Context, repo repository.WebhookRepository) (repository.WebhookConfig, bool, error) {
 	status := repo.Config().Status.Webhook
-	if status == nil || status.ID == 0 {
+	if repository.GetID(status).IsEmpty() {
 		hook, err := createWebhook(ctx, repo)
 		if err != nil {
 			return nil, false, err
@@ -115,7 +116,7 @@ func updateWebhook(ctx context.Context, repo repository.WebhookRepository) (repo
 	}
 
 	client := repo.WebhookClient()
-	hook, err := client.GetWebhook(ctx, status.ID)
+	hook, err := client.GetWebhook(ctx, repository.GetID(status))
 	switch {
 	case errors.Is(err, repository.ErrFileNotFound):
 		hook, err := createWebhook(ctx, repo)
@@ -165,7 +166,7 @@ func deleteWebhook(ctx context.Context, repo repository.WebhookRepository) error
 		return fmt.Errorf("webhook not found")
 	}
 
-	id := status.ID
+	id := repository.GetID(status)
 
 	err := repo.WebhookClient().DeleteWebhook(ctx, id)
 	if err != nil && !errors.Is(err, repository.ErrFileNotFound) && !errors.Is(err, repository.ErrUnauthorized) {
@@ -190,7 +191,7 @@ func deleteWebhook(ctx context.Context, repo repository.WebhookRepository) error
 // error is returned so the failure is surfaced in logs.
 func rotateWebhookSecret(ctx context.Context, repo repository.WebhookRepository) ([]map[string]any, error) {
 	status := repo.Config().Status.Webhook
-	if status == nil || status.ID == 0 {
+	if repository.GetID(status).IsEmpty() {
 		return nil, nil
 	}
 
@@ -198,10 +199,10 @@ func rotateWebhookSecret(ctx context.Context, repo repository.WebhookRepository)
 	logger.Info("rotating webhook secret", "trigger", "rotation")
 
 	client := repo.WebhookClient()
-	hook, err := client.GetWebhook(ctx, status.ID)
+	hook, err := client.GetWebhook(ctx, repository.GetID(status))
 	switch {
 	case errors.Is(err, repository.ErrFileNotFound):
-		return clearStatusPatch(), fmt.Errorf("webhook %d not found on remote during rotation: %w", status.ID, err)
+		return clearStatusPatch(), fmt.Errorf("webhook %s not found on remote during rotation: %w", repository.GetID(status), err)
 	case err != nil:
 		return nil, fmt.Errorf("get webhook for rotation: %w", err)
 	}
@@ -222,17 +223,22 @@ func rotateWebhookSecret(ctx context.Context, repo repository.WebhookRepository)
 
 // statusPatches returns the JSON patch operations that persist a freshly
 // created or rotated provider webhook: its status and secret.
-func statusPatches(id int64, url string, events []string, secret string) []map[string]any {
+func statusPatches(id string, url string, events []string, secret string) []map[string]any {
+	status := &provisioning.WebhookStatus{
+		URL:              url,
+		SubscribedEvents: events,
+		LastRotated:      time.Now().UnixMilli(),
+	}
+	if numericID, err := strconv.ParseInt(id, 10, 64); err == nil {
+		status.ID = numericID
+	} else {
+		status.UUID = id
+	}
 	return []map[string]any{
 		{
-			"op":   "replace",
-			"path": "/status/webhook",
-			"value": &provisioning.WebhookStatus{
-				ID:               id,
-				URL:              url,
-				SubscribedEvents: events,
-				LastRotated:      time.Now().UnixMilli(),
-			},
+			"op":    "replace",
+			"path":  "/status/webhook",
+			"value": status,
 		},
 		{
 			"op":   "replace",

@@ -9,12 +9,13 @@ import { t, Trans } from '@grafana/i18n';
 import { CompletionItemKind, type TableIdentifier } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { formatSQL } from '@grafana/sql';
+import { formatSQL, quoteIdentifierIfNecessary } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields, type FetchSQLFieldsOptions } from '../../utils/metaSqlExpr';
+import { SQL_EXPRESSIONS_DIALECT } from '../../utils/sqlIdentifier';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider as getLegacySqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
@@ -59,12 +60,17 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const completionProvider = useMemo<SqlCompletionProvider>(
     () => ({
       tables: () =>
-        refIds.map((refId) => ({
-          label: refId.label || refId.value || '',
-          insertText: refId.value || refId.label || '',
-          kind: 'table',
-          boost: 99,
-        })),
+        refIds.map((refId) => {
+          const name = refId.value || refId.label || '';
+
+          return {
+            label: refId.label || refId.value || '',
+            // Quote names that need it (e.g. spaces) so the inserted FROM clause parses and runs on the MySQL backend.
+            insertText: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
+            kind: 'table',
+            boost: 99,
+          };
+        }),
       columns: async ({ table }) => {
         if (!config.featureToggles.sqlExpressionsColumnAutoComplete) {
           return [];
@@ -111,10 +117,11 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     formatter: formatSQL,
   };
 
+  // Quote the seeded table name so refIds with spaces or special characters produce a runnable query.
   const initialQuery = `SELECT
   *
 FROM
-  ${vars[0]}
+  ${quoteIdentifierIfNecessary(vars[0] ?? '', SQL_EXPRESSIONS_DIALECT)}
 LIMIT
   10`;
 

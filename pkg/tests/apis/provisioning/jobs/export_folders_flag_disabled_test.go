@@ -75,11 +75,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 
 		const repo = "export-no-meta-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "instance",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		createUnmanagedFolder(t, helper, "no-meta-folder-uid", "no-meta-folder")
@@ -100,11 +99,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 
 		const repo = "nested-no-meta-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:                   repo,
-			SyncTarget:             "instance",
-			Workflows:              []string{"write"},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (

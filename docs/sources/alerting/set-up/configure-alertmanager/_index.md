@@ -46,6 +46,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
+  export-alerting-resources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/
 ---
 
 {{< admonition type="caution" >}}
@@ -144,3 +149,13 @@ On the Settings page, you can also manage your Alertmanager configurations.
 
 - Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration.
 - Compare the historical snapshot with the latest configuration to see which changes were made.
+
+### Configuration history limits
+
+Grafana stores up to the last 100 configuration versions for the built-in Grafana Alertmanager, per organization, including the current one. Each time the Alertmanager configuration changes, Grafana saves a new version and permanently deletes the oldest version once the limit is exceeded.
+
+To avoid losing a working configuration:
+
+- **Back up your configuration**: [Export and store](ref:export-alerting-resources) your Alertmanager configuration outside of Grafana before you automate changes or run large-scale updates.
+- **Test changes in a low-impact environment**: Run automations and configuration experiments against a development or staging Grafana instance before applying them to production.
+- **Limit the frequency of automated changes**: Frequent automated updates consume the available configuration history. Batch changes where possible so that a single mistake doesn't overwrite every recoverable version.

@@ -41,10 +41,12 @@ func waitForSingleFolder(t *testing.T, helper *common.ProvisioningTestHelper) *u
 func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            "test-repo",
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       "test-repo",
+		SyncTarget: "folder",
 	})
+
+	helper.RequireRepoDashboardCount(t, "test-repo", 0)
+	helper.RequireRepoFolderCount(t, "test-repo", 1)
 
 	t.Run("should fail to create library element in provisioned folder", func(t *testing.T) {
 		managedFolderName := waitForSingleFolder(t, helper).GetName()
@@ -133,10 +135,12 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repo,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repo,
+		SyncTarget: "folder",
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("should create library element when folder is released", func(t *testing.T) {
 		managedFolder := waitForSingleFolder(t, helper)
@@ -154,8 +158,8 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err, "should successfully patch finalizers")
 
 		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		helper.WaitForRepositoryDeleted(t, t.Context(), repo)
-		common.WaitForResourcesReleased(t, t.Context(), helper.Folders.Resource, "folders")
+		helper.WaitForRepositoryDeleted(t, repo)
+		common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
 		libraryElement := map[string]interface{}{
 			"kind":      1,
