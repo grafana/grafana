@@ -3096,6 +3096,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "features.bulkFlagEvalFiltering",
+			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "grafana.multiTenantNavTree",
 			Description:  "Builds the navigation tree client-side instead of reading it from /bootdata",
 			Stage:        FeatureStageExperimental,
