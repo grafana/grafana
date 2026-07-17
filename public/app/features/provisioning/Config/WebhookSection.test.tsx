@@ -128,6 +128,7 @@ describe('WebhookSection', () => {
       await user.click(screen.getByText('Webhook options'));
 
       expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeDisabled();
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeChecked();
       expect(screen.getByRole('textbox')).toBeDisabled();
       expect(screen.getByText('Webhooks need an email.')).toBeInTheDocument();
     });
