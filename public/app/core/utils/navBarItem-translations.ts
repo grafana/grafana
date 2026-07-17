@@ -235,7 +235,7 @@ export function getNavSubTitle(navId: string | undefined) {
         'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
       );
     case 'saved-queries':
-      return t('nav.saved-queries.subtitle', 'Reusable queries that can be referenced from any panel');
+      return t('nav.saved-queries.subtitle', 'Reusable queries you can use across panels and Explore');
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
     case 'alerting-upgrade':
