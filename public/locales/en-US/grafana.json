@@ -10972,6 +10972,16 @@
         "view": "View"
       },
       "next": "Next",
+      "no-data": {
+        "badge": "No solution enabled",
+        "connect": "Connect a data source",
+        "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
+        "popular-solutions": "Popular solutions",
+        "solution-cloud-provider": "Cloud Provider",
+        "solution-infrastructure": "Infrastructure",
+        "solution-kubernetes": "Kubernetes Monitoring",
+        "title": "No data flowing yet"
+      },
       "pause": "Pause",
       "previous": "Previous",
       "recommended": "Recommended",
