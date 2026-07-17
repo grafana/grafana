@@ -48,6 +48,27 @@ import { type Options } from './panelcfg.gen';
  */
 const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Time series');
 
+/** The default dark theme is argument-free and stable, so build it once for the whole suite. */
+const theme = createTheme();
+
+/** Fixed high-contrast color for cases whose effect (fill/stroke) is only visible with a solid series color. */
+const fixedBlue: Partial<FieldConfigSource['defaults']> = {
+  color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
+};
+
+/** Panel props carrying a field config whose custom values extend the graph defaults. */
+function customFieldConfig(
+  custom: Partial<typeof defaultGraphConfig>,
+  extraDefaults?: Partial<FieldConfigSource['defaults']>
+): Partial<PanelProps<Options>> {
+  return {
+    fieldConfig: {
+      overrides: [],
+      defaults: { ...extraDefaults, custom: { ...defaultGraphConfig, ...custom } },
+    },
+  };
+}
+
 const width = 648;
 const height = 378;
 
@@ -177,7 +198,7 @@ function renderTimeSeriesPanel(
     data: rawSeries,
     fieldConfig,
     replaceVariables: (value) => value,
-    theme: createTheme(),
+    theme,
     fieldConfigRegistry: graphFieldConfigRegistry,
     timeZone: 'utc',
   });
@@ -261,7 +282,8 @@ describe('TimeSeriesPanel (canvas)', () => {
   describe('Options', () => {
     describe.each([
       ['defaults'],
-      // Line is the default draw style, covered by the `defaults` case above.
+      // Line is the default draw style, covered by the `defaults` case above. Fixed color + a visible fill
+      // so the shape (bars/points) actually renders — with the default transparent fill they draw nothing.
       ...Object.values(GraphDrawStyle)
         .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
         .map(
@@ -269,20 +291,10 @@ describe('TimeSeriesPanel (canvas)', () => {
             `drawStyle: ${drawStyle}`,
             undefined,
             undefined,
-            {
-              // Fixed color + a visible fill so the shape (bars/points) actually renders and each draw style
-              // produces distinct output; with the default transparent fill bars/points draw nothing.
-              fieldConfig: {
-                overrides: [],
-                defaults: {
-                  color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
-                  custom: { ...defaultGraphConfig, drawStyle, fillOpacity: 25 },
-                },
-              },
-            },
+            customFieldConfig({ drawStyle, fillOpacity: 25 }, fixedBlue),
           ]
         ),
-      // Linear is the default interpolation, so it is covered by the `defaults` case above.
+      // Linear is the default interpolation, covered by the `defaults` case above.
       ...Object.values(LineInterpolation)
         .filter((lineInterpolation) => lineInterpolation !== LineInterpolation.Linear)
         .map(
@@ -290,103 +302,72 @@ describe('TimeSeriesPanel (canvas)', () => {
             `lineInterpolation: ${lineInterpolation}`,
             undefined,
             undefined,
-            { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, lineInterpolation } } } },
+            customFieldConfig({ lineInterpolation }),
           ]
         ),
-      // fillOpacity 0 (no fill) is the default, covered by the `defaults` case above.
+      // fillOpacity 0 (no fill) is the default, covered by the `defaults` case above. Fixed color so the fill
+      // is high-contrast and each opacity step reads clearly (pale to solid).
       ...[25, 50, 80, 100].map(
         (fillOpacity): TestCase => [
           `fillOpacity: ${fillOpacity}`,
           undefined,
           undefined,
-          {
-            // Fixed color so the fill is high-contrast and each opacity step reads clearly (pale to solid).
-            fieldConfig: {
-              overrides: [],
-              defaults: {
-                color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
-                custom: { ...defaultGraphConfig, fillOpacity },
-              },
-            },
-          },
+          customFieldConfig({ fillOpacity }, fixedBlue),
         ]
       ),
-      // None is the default gradient mode, covered by the `defaults` case above.
+      // None is the default gradient mode, covered by `defaults`; Scheme is a separate explicit case below.
       ...Object.values(GraphGradientMode)
-        .filter((gradientMode) => gradientMode !== GraphGradientMode.None)
+        .filter((gradientMode) => gradientMode !== GraphGradientMode.None && gradientMode !== GraphGradientMode.Scheme)
         .map(
           (gradientMode): TestCase => [
             `gradientMode: ${gradientMode}`,
             undefined,
             undefined,
-            {
-              fieldConfig: {
-                overrides: [],
-                defaults: {
-                  custom: { ...defaultGraphConfig, gradientMode },
-                  // Scheme gradients color the line by the field's threshold scale, so they require a
-                  // color mode + thresholds; without them uPlot's gradient builder throws.
-                  ...(gradientMode === GraphGradientMode.Scheme
-                    ? {
-                        color: { mode: FieldColorModeId.Thresholds },
-                        thresholds: {
-                          mode: ThresholdsMode.Absolute,
-                          steps: [
-                            { value: -Infinity, color: 'green' },
-                            { value: 20, color: 'red' },
-                          ],
-                        },
-                      }
-                    : {}),
-                },
-              },
-            },
+            customFieldConfig({ gradientMode }),
           ]
         ),
+      // Scheme gradients color the line by the field's threshold scale, so they require a color mode +
+      // thresholds; without them uPlot's gradient builder throws.
+      [
+        'gradientMode: scheme',
+        undefined,
+        undefined,
+        customFieldConfig(
+          { gradientMode: GraphGradientMode.Scheme },
+          {
+            color: { mode: FieldColorModeId.Thresholds },
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                { value: -Infinity, color: 'green' },
+                { value: 20, color: 'red' },
+              ],
+            },
+          }
+        ),
+      ],
       [
         'stacking: normal',
         { series: [createMultiSeriesFrame()] },
         undefined,
-        {
-          fieldConfig: {
-            overrides: [],
-            defaults: { custom: { ...defaultGraphConfig, stacking: { mode: StackingMode.Normal, group: 'A' } } },
-          },
-          width: compactCanvas.width,
-          height: compactCanvas.height,
-        },
+        { ...customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' } }), ...compactCanvas },
         compactCanvas,
       ],
       [
         'stacking: 100%',
         { series: [createMultiSeriesFrame()] },
         undefined,
-        {
-          fieldConfig: {
-            overrides: [],
-            defaults: { custom: { ...defaultGraphConfig, stacking: { mode: StackingMode.Percent, group: 'A' } } },
-          },
-          width: compactCanvas.width,
-          height: compactCanvas.height,
-        },
+        { ...customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' } }), ...compactCanvas },
         compactCanvas,
       ],
-      // Width 1 is the default, so start at 3 and use bold, well-separated widths that clearly stand out.
+      // Width 1 is the default, so start at 3 and use bold, well-separated widths. Fixed color so the stroke
+      // is high-contrast and each width is visibly distinct.
       ...[3, 6, 10].map(
         (lineWidth): TestCase => [
           `lineWidth: ${lineWidth}`,
           undefined,
           undefined,
-          {
-            // Fixed color so the stroke is high-contrast and each width is visibly distinct.
-            fieldConfig: {
-              overrides: [],
-              defaults: {
-                color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
-                custom: { ...defaultGraphConfig, lineWidth },
-              },
-            },
-          },
+          customFieldConfig({ lineWidth }, fixedBlue),
         ]
       ),
     ] satisfies TestCase[])(
@@ -416,15 +397,10 @@ describe('TimeSeriesPanel (canvas)', () => {
             `Y Axis placement: ${axisPlacement}`,
             undefined,
             undefined,
-            { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, axisPlacement } } } },
+            customFieldConfig({ axisPlacement }),
           ]
         ),
-      [
-        'Y Axis: soft min/max',
-        undefined,
-        undefined,
-        { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig }, min: 0, max: 100 } } },
-      ],
+      ['Y Axis: soft min/max', undefined, undefined, customFieldConfig({}, { min: 0, max: 100 })],
       ['X Axis: defaults'],
     ] satisfies TestCase[])(
       '%s',
