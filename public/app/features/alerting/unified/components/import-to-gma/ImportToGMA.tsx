@@ -540,8 +540,10 @@ function Step1Wrapper({
   onResetDryRun,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
-  // Can proceed if form is valid and dry-run passed (existing config will be force-replaced)
-  const canProceed = isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error';
+  // Only advance once a dry-run has actually passed for the current inputs. An `idle`/`loading` state
+  // means the config hasn't been validated yet, so it must not count as "ready to import".
+  const dryRunPassed = dryRunState === 'success' || dryRunState === 'warning';
+  const canProceed = isStep1Valid && dryRunPassed;
 
   return (
     <WizardStep
@@ -558,6 +560,10 @@ function Step1Wrapper({
       canSkip
       skipLabel={t('alerting.import-to-gma.step1.skip', 'Skip this step')}
       disableNext={!canProceed}
+      disabledNextTooltip={t(
+        'alerting.import-to-gma.step1.next-disabled-tooltip',
+        'Complete the required fields and wait for validation to pass before continuing.'
+      )}
     >
       <Step1Content
         canImport={canImport}
@@ -855,6 +861,14 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                         : formData.notificationsDatasourceName || 'Data source'}
                     </Text>
                   </div>
+                  {/* Uploaded template files only apply to the YAML source; list them so the user can
+                      confirm which templates will be imported. */}
+                  {formData.notificationsSource === 'yaml' && formData.notificationsTemplateFiles.length > 0 && (
+                    <div className={styles.row}>
+                      <Text color="secondary">{t('alerting.import-to-gma.review.templates', 'Templates')}</Text>
+                      <Text>{formData.notificationsTemplateFiles.map((file) => file.name).join(', ')}</Text>
+                    </div>
+                  )}
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.policy-tree', 'Policy tree')}</Text>
                     <Stack direction="row" gap={1} alignItems="center" wrap="wrap">

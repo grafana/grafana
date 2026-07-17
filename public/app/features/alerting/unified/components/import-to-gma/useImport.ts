@@ -1,5 +1,5 @@
 import { load } from 'js-yaml';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -389,13 +389,19 @@ export function useDryRunNotifications() {
     [dryRunAlertmanagerConfig]
   );
 
+  // RTK recreates the mutation's `reset` on every trigger (its identity tracks the in-flight request),
+  // so keep the latest in a ref and expose a stable `reset`. Callers use it as an effect dependency
+  // (Step 1 trigger effect); an unstable identity would re-fire that effect and loop dry-runs forever.
+  const resetMutationRef = useRef(resetMutation);
+  resetMutationRef.current = resetMutation;
+
   // Clear the cached response and any pre-run error so `result` returns to undefined. Called when the
   // step is no longer runnable (e.g. a duplicate template name) so a previously successful dry-run
   // can't keep reporting the config as valid once the inputs have become invalid.
   const reset = useCallback(() => {
     setPreRunError(undefined);
-    resetMutation();
-  }, [resetMutation]);
+    resetMutationRef.current();
+  }, []);
 
   const parsed = useMemo(() => (data ? parseDryRunResponse(data) : undefined), [data]);
   const error = mutationError ? stringifyErrorLike(mutationError) : preRunError;

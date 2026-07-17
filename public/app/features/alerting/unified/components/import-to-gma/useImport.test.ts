@@ -235,6 +235,25 @@ describe('useDryRunNotifications reset', () => {
     });
     await waitFor(() => expect(result.current.result).toBeUndefined());
   });
+
+  // Regression: the Step 1 trigger effect depends on runDryRun/reset identity. RTK recreates the
+  // mutation's reset on every trigger, so if reset isn't stabilized its identity changes after each
+  // dry-run, re-firing that effect and triggering another dry-run — an infinite request loop.
+  it('keeps stable runDryRun and reset identities across a dry-run', async () => {
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
+
+    const runDryRunBefore = result.current.runDryRun;
+    const resetBefore = result.current.reset;
+
+    await act(async () => {
+      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
+    });
+    await waitFor(() => expect(result.current.result?.valid).toBe(true));
+
+    expect(result.current.runDryRun).toBe(runDryRunBefore);
+    expect(result.current.reset).toBe(resetBefore);
+  });
 });
 
 function templateFile(name: string, content: string) {

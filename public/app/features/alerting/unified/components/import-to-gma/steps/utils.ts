@@ -76,7 +76,7 @@ export function isStep1Valid(params: Step1ValidationParams): boolean {
     notificationsTemplateFiles,
   } = params;
 
-  if (!policyTreeName) {
+  if (!policyTreeName || validatePolicyTreeName(policyTreeName) !== true) {
     return false;
   }
   if (findDuplicateTemplateFileName(notificationsTemplateFiles)) {
