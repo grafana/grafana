@@ -91,7 +91,9 @@ export function AppNotificationList() {
     // dismiss it — ModalBase treats presses inside the portal container as "inside" the modal.
     <Portal>
       <div className={styles.wrapper}>
-        <div className="sr-only" role="log" aria-live="polite" aria-atomic="true" aria-label={liveRegionMessage} />
+        <div className="sr-only" role="log" aria-live="polite" aria-atomic="true">
+          {liveRegionMessage}
+        </div>
         <Stack direction="column">
           {appNotifications.map((appNotification, index) => {
             return (

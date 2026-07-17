@@ -46,7 +46,9 @@ describe('AppNotificationList', () => {
     // so query the document rather than the render container.
     const liveRegion = document.body.querySelector('[aria-live="polite"]');
     expect(liveRegion).toBeInTheDocument();
-    expect(liveRegion).toHaveAttribute('aria-label', expect.stringContaining(expectedInfoMessage));
+    // Screen readers announce changes to a live region's text content, not to its attributes,
+    // so the message must live inside the region rather than in aria-label.
+    expect(liveRegion).toHaveTextContent(expectedInfoMessage);
   });
 
   describe('Error notifications', () => {
@@ -54,7 +56,7 @@ describe('AppNotificationList', () => {
       renderWithContext(undefined, '/d/test-dashboard');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: expectedErrorMessage })).toBeInTheDocument();
     });
 
     it('should hide error notifications in kiosk mode on dashboard page', async () => {
@@ -68,7 +70,7 @@ describe('AppNotificationList', () => {
       renderWithContext(KioskMode.Full, '/alerting');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: expectedErrorMessage })).toBeInTheDocument();
     });
 
     it('should hide error notifications in kiosk mode on home dashboard', async () => {
@@ -82,7 +84,7 @@ describe('AppNotificationList', () => {
       renderWithContext(KioskMode.Full, '/');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: expectedErrorMessage })).toBeInTheDocument();
     });
   });
 
@@ -91,21 +93,21 @@ describe('AppNotificationList', () => {
       renderWithContext(KioskMode.Full, '/d/test-dashboard');
       await sendTestNotification(AppEvents.alertSuccess, expectedSuccessMessage);
 
-      expect(await screen.findByText(expectedSuccessMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: expectedSuccessMessage })).toBeInTheDocument();
     });
 
     it('should always show warning notifications in kiosk mode on dashboard', async () => {
       renderWithContext(KioskMode.Full, '/d/test-dashboard');
       await sendTestNotification(AppEvents.alertWarning, expectedWarningMessage);
 
-      expect(await screen.findByText(expectedWarningMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: expectedWarningMessage })).toBeInTheDocument();
     });
 
     it('should always show info notifications in kiosk mode on dashboard', async () => {
       renderWithContext(KioskMode.Full, '/d/test-dashboard');
       await sendTestNotification(AppEvents.alertInfo, expectedInfoMessage);
 
-      expect(await screen.findByText(expectedInfoMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: expectedInfoMessage })).toBeInTheDocument();
     });
   });
 
@@ -157,7 +159,7 @@ describe('AppNotificationList', () => {
       renderWithContext(undefined, '/d/test-uid/test-slug');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: expectedErrorMessage })).toBeInTheDocument();
     });
 
     it('should hide error in kiosk mode on dashboard page with uid and slug', async () => {
@@ -171,7 +173,7 @@ describe('AppNotificationList', () => {
       renderWithContext(KioskMode.Full, '/dashboard/db/test-dashboard');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: expectedErrorMessage })).toBeInTheDocument();
     });
   });
 });
