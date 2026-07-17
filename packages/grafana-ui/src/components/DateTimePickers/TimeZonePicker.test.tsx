@@ -43,15 +43,38 @@ describe('TimeZonePicker', () => {
     expect(await screen.findByText('Sydney')).toBeInTheDocument();
   });
 
-  it('finds a zone by its alternate spelling', async () => {
+  it('lists zones under their canonical id even when the runtime uses a legacy spelling', async () => {
     render(<TimeZonePicker onChange={jest.fn()} />);
 
-    // Depending on the runtime's ICU, the zone is listed as either
-    // Asia/Kolkata or the legacy Asia/Calcutta; searching the canonical
-    // spelling must find it either way.
+    // Node's ICU (like Chrome's) lists the legacy Asia/Calcutta; the option
+    // must still be presented as the canonical Asia/Kolkata.
     await userEvent.type(screen.getByRole('combobox'), 'kolkata');
 
-    expect(await screen.findByText(/^(Calcutta|Kolkata)$/)).toBeInTheDocument();
+    expect(await screen.findByText('Kolkata')).toBeInTheDocument();
+    expect(screen.queryByText('Calcutta')).not.toBeInTheDocument();
+  });
+
+  it('finds the canonical zone by its legacy spelling', async () => {
+    render(<TimeZonePicker onChange={jest.fn()} />);
+
+    await userEvent.type(screen.getByRole('combobox'), 'calcutta');
+
+    expect(await screen.findByText('Kolkata')).toBeInTheDocument();
+  });
+
+  it('calls onChange with the canonical id when selecting an aliased zone', async () => {
+    const onChange = jest.fn();
+    render(<TimeZonePicker onChange={onChange} />);
+
+    await userEvent.type(screen.getByRole('combobox'), 'kolkata');
+    await userEvent.click(await screen.findByText('Kolkata'));
+
+    expect(onChange).toHaveBeenCalledWith('Asia/Kolkata');
+  });
+
+  it('selects the canonical option when the value uses a legacy spelling', () => {
+    render(<TimeZonePicker value="Asia/Calcutta" onChange={jest.fn()} />);
+    expect(screen.getByText('Kolkata')).toBeInTheDocument();
   });
 
   it('does not match on UTC offset', async () => {

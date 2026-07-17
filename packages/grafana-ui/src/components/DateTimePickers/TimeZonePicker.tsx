@@ -8,8 +8,14 @@ import { Select } from '../Select/Select';
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
-import { getTimeZonesAt, type TimeZoneInfo as EasyTzInfo } from './TimeZonePicker/easytz';
-import { findTimeZoneAt, guessBrowserTimeZone, offsetToMinutes } from './TimeZonePicker/timeZoneUtils';
+import {
+  type CanonicalTimeZoneInfo,
+  canonicalZoneName,
+  findTimeZoneAt,
+  getCanonicalTimeZonesAt,
+  guessBrowserTimeZone,
+  offsetToMinutes,
+} from './TimeZonePicker/timeZoneUtils';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -84,7 +90,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     const now = Date.now();
     const groups = new Map<string, SelectableZone[]>();
 
-    const pushOption = (group: string, info: TimeZoneInfo, aliasOf?: string) => {
+    const pushOption = (group: string, info: TimeZoneInfo, legacyName?: string) => {
       const name = getTimeZoneTitle(info);
       const options = groups.get(group) ?? [];
 
@@ -92,7 +98,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
         label: name,
         value: info.zone,
         info,
-        searchIndex: getSearchIndex(name, info, aliasOf),
+        searchIndex: getSearchIndex(name, info, legacyName),
       });
 
       groups.set(group, options);
@@ -112,10 +118,24 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
       pushOption('', getInternalTimeZoneInfo(zone, now));
     }
 
-    for (const tz of getTimeZonesAt(now)) {
+    // Zones are presented under their canonical IANA id (e.g. Asia/Kolkata),
+    // even when the runtime lists a legacy spelling (Chrome's ICU still
+    // returns Asia/Calcutta). Intl accepts either spelling as input, so the
+    // canonical id is safe to use as the option value everywhere.
+    for (const tz of getCanonicalTimeZonesAt(now)) {
       const delimiter = tz.name.indexOf('/');
       const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      pushOption(group, toTimeZoneInfo(tz), tz.aliasOf);
+      pushOption(group, toTimeZoneInfo(tz), tz.legacyName);
+    }
+
+    // Canonical renames can knock options out of alphabetical order (e.g.
+    // Chrome lists the zone where Calcutta sorts, but it displays as
+    // Kolkata), so re-sort every region group. The label-less internal group
+    // keeps its fixed Default / Browser Time / UTC order.
+    for (const [label, options] of groups) {
+      if (label !== '') {
+        options.sort((a, b) => (a.value ?? '').localeCompare(b.value ?? ''));
+      }
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
@@ -133,7 +153,10 @@ const useSelectedTimeZone = (
       return undefined;
     }
 
-    const tz = timeZone?.toLowerCase() ?? '';
+    // Options are keyed by canonical IANA ids, but the incoming value may use
+    // a legacy spelling (e.g. Asia/Calcutta persisted by an older Grafana or
+    // returned by Chrome's Intl).
+    const tz = canonicalZoneName(timeZone, Date.now()).toLowerCase();
 
     const group = groups.find((group) => {
       if (!group.label) {
@@ -172,27 +195,27 @@ const useFilterBySearchIndex = () => {
   }, []);
 };
 
-const getSearchIndex = (label: string, info: TimeZoneInfo, aliasOf?: string): string => {
+const getSearchIndex = (label: string, info: TimeZoneInfo, legacyName?: string): string => {
   const parts: string[] = [info.zone.toLowerCase(), info.abbreviation.toLowerCase()];
 
   if (label !== info.zone) {
     parts.push(label.toLowerCase());
   }
 
-  // Make the zone findable under its alternate spelling too
-  // (e.g. Asia/Calcutta is also searchable as "kolkata").
-  if (aliasOf) {
-    parts.push(aliasOf.toLowerCase());
+  // Make the zone findable under its legacy spelling too
+  // (e.g. Asia/Kolkata is also searchable as "calcutta").
+  if (legacyName) {
+    parts.push(legacyName.toLowerCase());
   }
 
   return parts.join('|');
 };
 
 /**
- * Maps an easy-tz catalog entry to Grafana's TimeZoneInfo shape. Country data
+ * Maps a canonical catalog entry to Grafana's TimeZoneInfo shape. Country data
  * is intentionally omitted; the picker no longer supports searching by country.
  */
-const toTimeZoneInfo = (tz: EasyTzInfo): TimeZoneInfo => ({
+const toTimeZoneInfo = (tz: CanonicalTimeZoneInfo): TimeZoneInfo => ({
   name: tz.name,
   ianaName: tz.name,
   zone: tz.name,
