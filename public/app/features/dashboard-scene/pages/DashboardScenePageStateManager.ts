@@ -376,6 +376,13 @@ abstract class DashboardScenePageStateManagerBase<T>
     provisioningPreview: ProvisioningPreview
   ) {
     if (dryRun.apiVersion.split('/')[1].startsWith('v2')) {
+      // Record the ref the file was actually loaded from (absent on default-branch fallback) so
+      // consumers like the managed badge source link can target it, mirroring the v1 branch below.
+      const v2Anno = (dryRun.metadata.annotations ??= {});
+      if (provisioningPreview.ref) {
+        v2Anno[AnnoKeySourcePath] = path + '#' + provisioningPreview.ref;
+      }
+
       return {
         ...dryRun,
         kind: 'DashboardWithAccessInfo',

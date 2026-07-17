@@ -2570,6 +2570,34 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         v2ProvisionedDashboardResource.resource.dryRun.spec
       );
     });
+
+    it('should append the loaded ref to the sourcePath annotation for v2 previews', async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(v2ProvisionedDashboardResource)));
+
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        value: { ...originalLocation, search: '?ref=my-ref' },
+        writable: true,
+      });
+
+      try {
+        const loader = new UnifiedDashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
+
+        expect(loader.state.dashboard!.getPath()).toBe('blah-blah#my-ref');
+      } finally {
+        Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
+      }
+    });
+
+    it('should keep the sourcePath annotation unchanged for v2 previews without a ref', async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(v2ProvisionedDashboardResource)));
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
+
+      expect(loader.state.dashboard!.getPath()).toBe('v2dashboards/new-dashboard-2025-04-09-nTqgq.json');
+    });
   });
 
   describe('New dashboards', () => {
