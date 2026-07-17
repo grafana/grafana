@@ -111,16 +111,18 @@ export function ConfigForm({ data }: ConfigFormProps) {
     }
   }, [connectionWebhookDisabled, setValue]);
 
-  const emailForcedDisabled = useRef(false);
+  const preEmailWebhookDisabled = useRef<boolean | null>(null);
   useEffect(() => {
     if (emailWebhookDisabled) {
-      emailForcedDisabled.current = true;
+      if (preEmailWebhookDisabled.current === null) {
+        preEmailWebhookDisabled.current = Boolean(getValues('webhook.disabled'));
+      }
       setValue('webhook.disabled', true);
-    } else if (emailForcedDisabled.current) {
-      emailForcedDisabled.current = false;
-      setValue('webhook.disabled', false);
+    } else if (preEmailWebhookDisabled.current !== null) {
+      setValue('webhook.disabled', preEmailWebhookDisabled.current);
+      preEmailWebhookDisabled.current = null;
     }
-  }, [emailWebhookDisabled, setValue]);
+  }, [emailWebhookDisabled, setValue, getValues]);
 
   const {
     data: refsData,

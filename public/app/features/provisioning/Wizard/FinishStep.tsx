@@ -24,6 +24,7 @@ export const FinishStep = memo(function FinishStep() {
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
@@ -60,16 +61,18 @@ export const FinishStep = memo(function FinishStep() {
     }
   }, [connectionWebhookDisabled, setValue]);
 
-  const emailForcedDisabled = useRef(false);
+  const preEmailWebhookDisabled = useRef<boolean | null>(null);
   useEffect(() => {
     if (emailWebhookDisabled) {
-      emailForcedDisabled.current = true;
+      if (preEmailWebhookDisabled.current === null) {
+        preEmailWebhookDisabled.current = Boolean(getValues('repository.webhook.disabled'));
+      }
       setValue('repository.webhook.disabled', true);
-    } else if (emailForcedDisabled.current) {
-      emailForcedDisabled.current = false;
-      setValue('repository.webhook.disabled', false);
+    } else if (preEmailWebhookDisabled.current !== null) {
+      setValue('repository.webhook.disabled', preEmailWebhookDisabled.current);
+      preEmailWebhookDisabled.current = null;
     }
-  }, [emailWebhookDisabled, setValue]);
+  }, [emailWebhookDisabled, setValue, getValues]);
 
   useEffect(() => {
     if (!hasStepError) {
