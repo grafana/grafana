@@ -24,8 +24,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 		},
 	})
 	t.Run("should fail to update permissions for provisioned nested folder", func(t *testing.T) {
-		helper.RequireRepoFolderCount(t, repoName, 3)
-		provisionedFolders := helper.ListRepoFolders(t, repoName)
+		provisionedFolders := helper.RequireRepoFolderCount(t, repoName, 3)
 
 		permissionsPayload := map[string]interface{}{
 			"items": []map[string]interface{}{

@@ -68,10 +68,10 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		},
 	})
 
-	helper.RequireRepoDashboardCount(t, repo, 3)
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 3)
 	helper.RequireRepoFolderCount(t, repo, 2)
 
-	helper.ValidateManagedDashboardsFolderMetadata(t, repo, helper.ListRepoDashboards(t, repo))
+	helper.ValidateManagedDashboardsFolderMetadata(t, repo, dashboards)
 
 	t.Run("delete individual dashboard file on configured branch should succeed", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
@@ -153,11 +153,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		},
 	})
 
-	helper.RequireRepoDashboardCount(t, repo, 1)
+	movedDashboards := helper.RequireRepoDashboardCount(t, repo, 1)
 	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Validate the dashboard metadata
-	helper.ValidateManagedDashboardsFolderMetadata(t, repo, helper.ListRepoDashboards(t, repo))
+	helper.ValidateManagedDashboardsFolderMetadata(t, repo, movedDashboards)
 
 	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
 	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file

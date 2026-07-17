@@ -980,11 +980,6 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	}
 }
 
-// countManagedResources counts resources managed by repoName.
-func countManagedResources(items []unstructured.Unstructured, repoName string) int {
-	return len(filterManagedResources(items, repoName))
-}
-
 // filterManagedResources returns the resources managed by repoName.
 func filterManagedResources(items []unstructured.Unstructured, repoName string) []unstructured.Unstructured {
 	var managed []unstructured.Unstructured
@@ -1109,18 +1104,20 @@ func (h *ProvisioningTestHelper) WaitForConditionReason(t *testing.T, repoName s
 // default wait timeout elapses. Polling is required because SyncAndWait only
 // waits for the sync job resource to complete; the dashboards-list API may
 // not yet reflect newly-created/deleted resources at that instant.
-func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
+func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) []unstructured.Unstructured {
 	t.Helper()
+	var managed []unstructured.Unstructured
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list dashboards") {
 			return
 		}
 
-		count := countManagedResources(dashboards.Items, repoName)
-		assert.Equal(c, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+		managed = filterManagedResources(dashboards.Items, repoName)
+		assert.Equal(c, expectedCount, len(managed), "unexpected number of dashboards managed by repo %s", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected %d dashboard(s) managed by repo %s", expectedCount, repoName)
+	return managed
 }
 
 // RequireRepoFolderCount polls the folders list until the number of folders
@@ -1128,18 +1125,20 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 // timeout elapses. Like the dashboard variant, this avoids races where the
 // sync job has completed but the folders-list API has not yet observed the
 // newly-created folders or their grafana.app/managerId annotation.
-func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName string, expectedCount int) {
+func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName string, expectedCount int) []unstructured.Unstructured {
 	t.Helper()
+	var managed []unstructured.Unstructured
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
 
-		count := countManagedResources(folders.Items, repoName)
-		assert.Equal(c, expectedCount, count, "unexpected number of folders managed by repo %s", repoName)
+		managed = filterManagedResources(folders.Items, repoName)
+		assert.Equal(c, expectedCount, len(managed), "unexpected number of folders managed by repo %s", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
+	return managed
 }
 
 // RequireSingleRepoFolder polls until exactly one folder is managed by the

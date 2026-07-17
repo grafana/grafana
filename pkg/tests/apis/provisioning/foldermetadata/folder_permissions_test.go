@@ -19,8 +19,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 		},
 	})
 	t.Run("should succeed updating permissions for provisioned nested folder when flag is enabled", func(t *testing.T) {
-		helper.RequireRepoFolderCount(t, repoName, 3) // root, folder, subfolder
-		provisionedFolders := helper.ListRepoFolders(t, repoName)
+		provisionedFolders := helper.RequireRepoFolderCount(t, repoName, 3) // root, folder, subfolder
 
 		// Test that permission updates succeed for all provisioned folders when the flag is enabled
 		for _, folder := range provisionedFolders {
