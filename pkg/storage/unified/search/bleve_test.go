@@ -684,8 +684,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				{Field: "title", Desc: false},
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"region": {
-					Field: "labels.region",
+				"tags": {
+					Field: resource.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
@@ -710,23 +710,21 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 
 		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
 
-		facet, ok := rsp.Facet["region"]
+		facet, ok := rsp.Facet["tags"]
 		require.True(t, ok)
 		disp, err := json.MarshalIndent(facet, "", "  ")
 		require.NoError(t, err)
-		// fmt.Printf("%s\n", disp)
-		// NOTE, the west values come from *both* dashboards and folders
 		require.JSONEq(t, `{
-			"field": "labels.region",
-			"total": 3,
+			"field": "tags",
+			"total": 4,
 			"missing": 2,
 			"terms": [
 				{
-					"term": "west",
-					"count": 2
+					"term": "aa",
+					"count": 3
 				},
 				{
-					"term": "east",
+					"term": "bb",
 					"count": 1
 				}
 			]
@@ -748,8 +746,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				{Field: "title", Desc: false},
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"region": {
-					Field: "labels.region",
+				"tags": {
+					Field: resource.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
@@ -777,8 +775,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				{Field: "title", Desc: false},
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"region": {
-					Field: "labels.region",
+				"tags": {
+					Field: resource.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
@@ -805,8 +803,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				{Field: "title", Desc: false},
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"region": {
-					Field: "labels.region",
+				"tags": {
+					Field: resource.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
@@ -871,7 +869,10 @@ func TestGetSortFields(t *testing.T) {
 }
 
 func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
-	idx := &bleveIndex{fields: resource.StandardSearchFields()}
+	idx := &bleveIndex{
+		fields:                  resource.StandardSearchFields(),
+		facetFieldByRequestName: facetFieldsForMapping(nil, "", ""),
+	}
 
 	t.Run("sorts match-all by title then name", func(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
@@ -907,6 +908,32 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, resource.SEARCH_FIELD_NAME, nameSort.Field)
 		assert.False(t, nameSort.Desc)
+	})
+
+	t.Run("uses declared keyword facet fields", func(t *testing.T) {
+		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   10,
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
+			},
+		}, nil, false)
+		require.Nil(t, errResult)
+		require.Contains(t, searchReq.Facets, "tagValues")
+		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
+	})
+
+	t.Run("rejects fields without facet capability", func(t *testing.T) {
+		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   10,
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+				"region": {Field: "labels.region", Limit: 10},
+			},
+		}, nil, false)
+		require.Nil(t, searchReq)
+		require.NotNil(t, errResult)
+		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
 	})
 }
 
