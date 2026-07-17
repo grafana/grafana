@@ -80,6 +80,9 @@ func NewIngester(opts IngesterOptions) (*Ingester, error) {
 	if decls == nil {
 		decls = DefaultDeclarations()
 	}
+	if err := decls.Validate(); err != nil {
+		return nil, err
+	}
 	now := opts.Now
 	if now == nil {
 		now = time.Now
