@@ -271,6 +271,12 @@ export function SaveProvisionedDashboardForm({
     [setValue, dashboard]
   );
 
+  const handleSaveAtRoot = useCallback(() => {
+    const { filename } = splitPath(getValues('path'));
+    setValue('path', filename);
+    selectFolder(undefined, undefined);
+  }, [getValues, setValue, selectFolder]);
+
   const handleCreateFolder = useCallback(async () => {
     if (isCreatingFolderRef.current) {
       return;
@@ -480,6 +486,21 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
+              {isFolderless && (
+                <div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fill="text"
+                    onClick={handleSaveAtRoot}
+                    disabled={isCreatingFolder}
+                  >
+                    <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.no-folder-root">
+                      No folder (repository root)
+                    </Trans>
+                  </Button>
+                </div>
+              )}
               {isFolderless && workflow === 'write' && (
                 <>
                   {!showNewFolderForm && (
@@ -617,12 +638,14 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
 
 // Update the URL params without reloading the page
 function updateURLParams(param: string, value?: string) {
-  // only check undefine and null, empty string = root folder, we still want to update the URL
-  if (value === undefined || value === null) {
-    return;
-  }
   const url = new URL(window.location.href);
-  url.searchParams.set(param, value);
+  if (value === undefined || value === null) {
+    // No folder selected: remove the param so the URL stops pointing at the old folder
+    url.searchParams.delete(param);
+  } else {
+    // Empty string = root folder, still a real value to set
+    url.searchParams.set(param, value);
+  }
   window.history.replaceState({}, '', url);
 }
 
