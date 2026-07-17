@@ -94,7 +94,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
       // Filtering matches against the zone id, abbreviation, city label, and
       // the legacy spelling (e.g. Asia/Kolkata is also searchable as
       // "calcutta"). Country search is no longer supported.
-      const searchIndex = [zone, info.abbreviation, label !== zone ? label : '', legacyName ?? '']
+      const searchIndex = [zone, info.abbreviation, label !== zone ? label : '', legacyName]
         .filter(Boolean)
         .join('|')
         .toLowerCase();

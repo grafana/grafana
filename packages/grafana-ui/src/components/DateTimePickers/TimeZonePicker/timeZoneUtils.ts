@@ -8,7 +8,8 @@ export { getTimeZonesAt };
 // reference, so a WeakMap keyed on that array caches the name lookup.
 const indexCache = new WeakMap<EasyTzInfo[], Map<string, EasyTzInfo>>();
 
-const getZoneIndex = (timestamp: number): Map<string, EasyTzInfo> => {
+/** Looks up a zone by either its canonical id or its legacy spelling. */
+export const findTimeZoneAt = (zone: string, timestamp: number): EasyTzInfo | undefined => {
   const list = getTimeZonesAt(timestamp);
   let byName = indexCache.get(list);
 
@@ -19,12 +20,8 @@ const getZoneIndex = (timestamp: number): Map<string, EasyTzInfo> => {
     indexCache.set(list, byName);
   }
 
-  return byName;
+  return byName.get(zone);
 };
-
-/** Looks up a zone by either its canonical id or its legacy spelling. */
-export const findTimeZoneAt = (zone: string, timestamp: number): EasyTzInfo | undefined =>
-  getZoneIndex(timestamp).get(zone);
 
 /**
  * Returns the canonical IANA id for a zone (e.g. Asia/Calcutta -> Asia/Kolkata).
