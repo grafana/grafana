@@ -203,7 +203,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.4 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.292.1 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.292.2 // indirect
 	github.com/grafana/grafana/apps/advisor v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // indirect
@@ -229,8 +229,8 @@ require (
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // indirect
-	github.com/grafana/otel-profiling-go v0.5.1 // indirect
-	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
+	github.com/grafana/otel-profiling-go v0.6.0 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.11 // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
@@ -244,7 +244,7 @@ require (
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/hashicorp/go-msgpack/v2 v2.1.5 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hashicorp/go-plugin v1.7.0 // indirect
+	github.com/hashicorp/go-plugin v1.8.0 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
@@ -256,7 +256,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v5 v5.10.0 // indirect
-	github.com/jaegertracing/jaeger-idl v0.6.0 // indirect
+	github.com/jaegertracing/jaeger-idl v0.9.0 // indirect
 	github.com/jessevdk/go-flags v1.6.1 // indirect
 	github.com/jhump/protoreflect v1.17.0 // indirect
 	github.com/jmespath-community/go-jmespath v1.1.1 // indirect
@@ -271,9 +271,9 @@ require (
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
-	github.com/mattn/go-runewidth v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.24 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/mdlayher/vsock v1.2.1 // indirect
@@ -292,14 +292,14 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
-	github.com/oasdiff/yaml v0.1.0 // indirect
-	github.com/oasdiff/yaml3 v0.0.13 // indirect
+	github.com/oasdiff/yaml v0.1.1 // indirect
+	github.com/oasdiff/yaml3 v0.0.14 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
-	github.com/olekukonko/errors v1.2.0 // indirect
-	github.com/olekukonko/ll v0.1.6 // indirect
+	github.com/olekukonko/errors v1.3.0 // indirect
+	github.com/olekukonko/ll v0.1.8 // indirect
 	github.com/olekukonko/tablewriter v1.1.4 // indirect
 	github.com/open-feature/go-sdk v1.17.2 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
@@ -308,7 +308,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pgvector/pgvector-go v0.3.0 // indirect
-	github.com/pierrec/lz4/v4 v4.1.26 // indirect
+	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25 // indirect
@@ -351,8 +351,8 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.69.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.69.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect
-	go.opentelemetry.io/contrib/propagators/jaeger v1.43.0 // indirect
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.44.0 // indirect
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.1 // indirect
 	go.opentelemetry.io/otel v1.44.0 // indirect
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.19.0 // indirect

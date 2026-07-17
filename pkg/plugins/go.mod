@@ -10,10 +10,10 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2
-	github.com/grafana/grafana-plugin-sdk-go v0.292.1
+	github.com/grafana/grafana-plugin-sdk-go v0.292.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260424202308-770920975880
 	github.com/hashicorp/go-hclog v1.6.3
-	github.com/hashicorp/go-plugin v1.7.0
+	github.com/hashicorp/go-plugin v1.8.0
 	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.5.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.69.0
@@ -71,22 +71,22 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20260715184607-1dffa9543b9f // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
-	github.com/grafana/otel-profiling-go v0.5.1 // indirect
-	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
+	github.com/grafana/otel-profiling-go v0.6.0 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.11 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/jaegertracing/jaeger-idl v0.6.0 // indirect
+	github.com/jaegertracing/jaeger-idl v0.9.0 // indirect
 	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
-	github.com/mattn/go-runewidth v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.24 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/moby/api v1.54.2 // indirect
 	github.com/moby/moby/client v0.4.1 // indirect
@@ -95,13 +95,13 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
-	github.com/olekukonko/errors v1.2.0 // indirect
-	github.com/olekukonko/ll v0.1.6 // indirect
+	github.com/olekukonko/errors v1.3.0 // indirect
+	github.com/olekukonko/ll v0.1.8 // indirect
 	github.com/olekukonko/tablewriter v1.1.4 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pierrec/lz4/v4 v4.1.26 // indirect
+	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
@@ -112,8 +112,8 @@ require (
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.69.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect
-	go.opentelemetry.io/contrib/propagators/jaeger v1.43.0 // indirect
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.44.0 // indirect
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.44.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.44.0 // indirect
 	go.opentelemetry.io/otel/metric v1.44.0 // indirect

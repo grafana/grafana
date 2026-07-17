@@ -111,12 +111,12 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.292.1 // @grafana/grafana-catalog
+	github.com/grafana/grafana-plugin-sdk-go v0.292.2 // @grafana/grafana-catalog
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
 	github.com/grafana/loki/v3 v3.7.3 // @grafana/observability-logs
 	github.com/grafana/nanogit/gittest v1.4.0 // @grafana/grafana-git-ui-sync-team
-	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
-	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
+	github.com/grafana/otel-profiling-go v0.6.0 // @grafana/grafana-backend-group
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.11 // @grafana/data-sources-plugins
 	github.com/grafana/schemads v0.2.2 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
@@ -125,7 +125,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // @grafana/identity-access-team
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/grafana-catalog
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
-	github.com/hashicorp/go-plugin v1.7.0 // @grafana/grafana-catalog
+	github.com/hashicorp/go-plugin v1.8.0 // @grafana/grafana-catalog
 	github.com/hashicorp/go-version v1.9.0 // @grafana/grafana-backend-group
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-backend
 	github.com/hashicorp/hcl/v2 v2.24.0 // @grafana/alerting-backend
@@ -191,8 +191,8 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.69.0 // @grafana/grafana-catalog
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.69.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // @grafana/sharing-squad
-	go.opentelemetry.io/contrib/propagators/jaeger v1.43.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/contrib/propagators/jaeger v1.44.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.1 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel v1.44.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.44.0 // @grafana/grafana-backend-group
@@ -392,7 +392,7 @@ require (
 	github.com/blevesearch/zapx/v15 v15.4.3 // indirect
 	github.com/blevesearch/zapx/v16 v16.3.4 // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
-	github.com/buger/jsonparser v1.1.2 // indirect
+	github.com/buger/jsonparser v1.2.0 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/centrifugal/protocol v0.17.0 // indirect
@@ -427,7 +427,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect; @grafana/observability-traces-and-profiling
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/edsrzf/mmap-go v1.2.1-0.20241212181136-fad1cd13edbd // indirect
-	github.com/elazarl/goproxy v1.8.3 // indirect
+	github.com/elazarl/goproxy v1.8.4 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
@@ -506,7 +506,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/jaegertracing/jaeger-idl v0.6.0 // indirect
+	github.com/jaegertracing/jaeger-idl v0.9.0 // indirect
 	github.com/jessevdk/go-flags v1.6.1 // indirect
 	github.com/jhump/protoreflect v1.17.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -526,13 +526,13 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 // indirect
 	github.com/magefile/mage v1.17.2 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
-	github.com/mailru/easyjson v0.9.1 // indirect
+	github.com/mailru/easyjson v0.9.2 // indirect
 	github.com/matryer/is v1.4.1 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
-	github.com/mattn/go-runewidth v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.24 // indirect
 	github.com/maypok86/otter v1.2.4 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/mdlayher/vsock v1.2.1 // indirect
@@ -572,13 +572,13 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
-	github.com/oasdiff/yaml v0.1.0 // indirect
-	github.com/oasdiff/yaml3 v0.0.13 // indirect
+	github.com/oasdiff/yaml v0.1.1 // indirect
+	github.com/oasdiff/yaml3 v0.0.14 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
-	github.com/olekukonko/errors v1.2.0 // indirect
-	github.com/olekukonko/ll v0.1.6 // indirect
+	github.com/olekukonko/errors v1.3.0 // indirect
+	github.com/olekukonko/ll v0.1.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.39.1 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.150.0 // indirect
@@ -593,7 +593,7 @@ require (
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/phpdave11/gofpdi v1.0.14 // indirect
-	github.com/pierrec/lz4/v4 v4.1.26 // indirect
+	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/pires/go-proxyproto v0.11.0 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
