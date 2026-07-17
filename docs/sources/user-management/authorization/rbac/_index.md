@@ -4,7 +4,7 @@ aliases:
   - ../../enterprise/access-control/about-rbac/
   - ../../enterprise/access-control/roles/
   - ../user-management/authorization/rbac/
-  - ../../../administration/roles-and-permissions/access-control/
+  - ../../administration/roles-and-permissions/access-control/
 description: Role-based access control (RBAC) provides a standardized way of granting,
   changing, and revoking access so that users can view and modify Grafana resources,
   such as users and reports.
