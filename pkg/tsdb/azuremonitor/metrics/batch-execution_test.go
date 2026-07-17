@@ -318,11 +318,11 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		assert.Contains(t, resp.Responses, "A")
 	})
 
-	t.Run("batch service missing: falls back to legacy instead of failing all queries", func(t *testing.T) {
-		// Regression: with batch mode on but no batch metrics service configured
-		// (e.g. a customized-cloud datasource without a metricsDataPlane route),
-		// executeBatchTimeSeriesQuery used to return a top-level error, failing
-		// the whole QueryData call. It must fall back to the legacy ARM path.
+	t.Run("batch service missing: fails the request with a downstream configuration error", func(t *testing.T) {
+		// With batch mode on but no batch metrics service configured (e.g. a
+		// customized-cloud datasource without a metricsDataPlane route), the
+		// request must fail with a downstream error prompting the user to fix
+		// their cloud configuration rather than silently using another endpoint.
 		armResponse := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -348,10 +348,10 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
 		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
-		require.NoError(t, err, "missing batch service must not fail the whole QueryData call")
-		require.Contains(t, resp.Responses, "A")
-		assert.NoError(t, resp.Responses["A"].Error)
-		assert.NotEmpty(t, resp.Responses["A"].Frames)
+		require.Error(t, err, "missing batch service must fail the request")
+		assert.Nil(t, resp, "no partial response should be returned when the batch service is missing")
+		assert.True(t, backend.IsDownstreamError(err), "a missing cloud configuration route is a downstream error")
+		assert.Contains(t, err.Error(), "cloud configuration")
 	})
 
 	t.Run("query without resources is not silently dropped by the batch path", func(t *testing.T) {

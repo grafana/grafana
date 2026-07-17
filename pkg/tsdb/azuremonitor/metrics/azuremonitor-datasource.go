@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -103,12 +104,15 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 		// The batch data-plane service only exists when the datasource has a
 		// metrics data-plane route (e.g. metrics.monitor.azure.com, or .cn for
 		// China); customized-cloud configs must supply the metricsDataPlane
-		// route themselves. When it is missing, fall back to the legacy ARM
-		// endpoint rather than failing every query in the request.
-		if svc, ok := dsInfo.Services[types.RouteAzureMonitorBatchMetrics]; ok {
-			return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client, svc.HTTPClient, svc.URL)
+		// route themselves. When it is missing we cannot serve batch queries, so
+		// fail the request and prompt the user to fix their cloud configuration
+		// rather than silently returning results from a different endpoint.
+		svc, ok := dsInfo.Services[types.RouteAzureMonitorBatchMetrics]
+		if !ok {
+			e.Logger.Error("Azure Monitor datasource has batchAPIEnabled=true but no batch metrics service is configured")
+			return nil, backend.DownstreamError(errors.New("the Azure Monitor metrics batch service is not configured; please validate your Azure cloud configuration includes the metrics data plane route"))
 		}
-		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but no batch metrics service is configured; falling back to the legacy ARM metrics endpoint")
+		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client, svc.HTTPClient, svc.URL)
 	}
 	if dsInfo.Settings.BatchAPIEnabled && !batchFlagEnabled {
 		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but the azureMonitorBatchAPI feature toggle is off; falling back to the legacy ARM metrics endpoint")
