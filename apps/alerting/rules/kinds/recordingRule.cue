@@ -11,7 +11,8 @@ recordingRuleKind: {
 
 recordingRulev0alpha1: recordingRuleKind & {
 	schema: {
-		spec: v0alpha1.#RecordingRuleSpec
+		spec:   v0alpha1.#RecordingRuleSpec
+		status: v0alpha1.#RecordingRuleStatus
 	}
 	validation: {
 		operations: [
