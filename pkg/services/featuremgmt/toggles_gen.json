@@ -2825,6 +2825,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.newTextPanel",
+        "resourceVersion": "1784315527854",
+        "creationTimestamp": "2026-07-17T19:10:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-17 19:12:07.854963 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the new text panel",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.onDemandDiagnostics",
         "resourceVersion": "1782469062023",
         "creationTimestamp": "2026-06-26T10:14:02Z",

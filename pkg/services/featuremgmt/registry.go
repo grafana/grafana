@@ -2049,6 +2049,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.newTextPanel",
+			Description: "Enables the new text panel",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDatavizSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
