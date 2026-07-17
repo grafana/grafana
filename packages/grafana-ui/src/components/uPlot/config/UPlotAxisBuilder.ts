@@ -94,7 +94,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
 
-    const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+    const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.22)' : 'rgba(0, 10, 23, 0.22)';
 
     // TODO: this is pretty flimsy now that scaleKey is composed from multiple parts :/
     if (isBooleanUnit(scaleKey)) {
