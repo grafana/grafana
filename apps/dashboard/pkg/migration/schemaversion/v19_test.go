@@ -248,6 +248,40 @@ func TestV19(t *testing.T) {
 			},
 		},
 		{
+			name: "panel link URL that already has a query string appends with & not ?",
+			input: map[string]interface{}{
+				"title":         "V19 Existing Query String Links Migration Test Dashboard",
+				"schemaVersion": 18,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"links": []interface{}{
+							map[string]interface{}{
+								"url":      "http://example.com/d/abc?orgId=1",
+								"keepTime": true,
+								"title":    "Existing Query Link",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V19 Existing Query String Links Migration Test Dashboard",
+				"schemaVersion": 19,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"links": []interface{}{
+							map[string]interface{}{
+								"url":   "http://example.com/d/abc?orgId=1&$__url_time_range",
+								"title": "Existing Query Link",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "panel with no links remains unchanged",
 			input: map[string]interface{}{
 				"title":         "V19 No Links Migration Test Dashboard",

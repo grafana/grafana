@@ -50,7 +50,7 @@ func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service, exchanger au
 	}
 
 	nsMapper := request.GetNamespaceMapper(cfg)
-	restCfg := buildRESTConfig(url, exchanger, nsMapper, cfg.Env == setting.Dev)
+	restCfg := buildRESTConfig(url, exchanger, nsMapper, cfg.AnnotationAppPlatform.TLSClientConfig)
 
 	return &annotationAPIClient{
 		k8sClient: client.NewK8sHandler(
@@ -239,13 +239,11 @@ func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) 
 	return tc, nil
 }
 
-func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, allowInsecure bool) *rest.Config {
+func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, tlsConfig rest.TLSClientConfig) *rest.Config {
 	return &rest.Config{
-		Host:          url,
-		WrapTransport: newBearerTokenExchangeWrapper(exchanger, nsMapper),
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: allowInsecure,
-		},
+		Host:            url,
+		WrapTransport:   newBearerTokenExchangeWrapper(exchanger, nsMapper),
+		TLSClientConfig: tlsConfig,
 	}
 }
 

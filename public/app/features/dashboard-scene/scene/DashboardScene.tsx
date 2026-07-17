@@ -187,6 +187,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
+  /**
+   * What initiated the current edit session, e.g. the assistant building a dashboard for the user
+   */
+  private _editSessionSource?: 'user' | 'assistant';
+
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
@@ -231,7 +236,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (isNew) {
-      this.onEnterEditMode();
+      // New dashboards enter edit mode on activation, before any caller can tag the
+      // session, so the initiator is carried in the url (set by the assistant when it
+      // opens the editor to build a dashboard itself)
+      const editSource = locationService.getSearchObject().editSource;
+      this.onEnterEditMode(editSource === 'assistant' ? 'assistant' : 'user');
       this.setState({ isDirty: true });
     }
 
@@ -353,6 +362,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
     const wasEditing = this.state.isEditing;
 
+    this._editSessionSource = source;
+
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
     this._initialUrlState = locationService.getLocation();
@@ -369,6 +380,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
     }
   };
+
+  public getEditSessionSource() {
+    return this._editSessionSource;
+  }
 
   /**
    * Activate the edit pane if it is not already active (e.g. not rendered), so programmatic
