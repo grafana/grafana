@@ -142,6 +142,16 @@ func TestNewInstanceSettings(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "rejects customized cloud whose batch metrics route URL is not absolute",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Azure Monitor Batch Metrics":{"URL":"metrics.monitor.azure.us"}},"azureAuthType":"clientsecret"}`),
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+				ID:                      51,
+			},
+			expectedModel: nil,
+			Err:           require.Error,
+		},
 	}
 
 	for _, tt := range tests {

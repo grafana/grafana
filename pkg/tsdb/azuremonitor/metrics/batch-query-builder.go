@@ -79,14 +79,15 @@ const maxBatchSize = 50
 // to the correct RefID. Constructing a Batch outside createBatches must
 // preserve this invariant to avoid silently dropping frames.
 type Batch struct {
-	Key         batchGroupKey
-	ResourceIDs []string
-	Queries     []*types.AzureMonitorQuery
+	Key          batchGroupKey
+	ResourceIDs  []string
+	Queries      []*types.AzureMonitorQuery
+	DataPlaneURL string
 }
 
 // createBatches splits each group into one or more Batch objects so that no
 // batch contains more than maxBatchSize resource IDs.
-func createBatches(groups []BatchQueryGroup) []Batch {
+func createBatches(groups []BatchQueryGroup, dataPlaneURL string) []Batch {
 	var batches []Batch
 	for _, group := range groups {
 		ids := resourceIDsForGroup(group)
@@ -110,9 +111,10 @@ func createBatches(groups []BatchQueryGroup) []Batch {
 			}
 
 			batches = append(batches, Batch{
-				Key:         group.Key,
-				ResourceIDs: chunk,
-				Queries:     chunkQueries,
+				Key:          group.Key,
+				ResourceIDs:  chunk,
+				Queries:      chunkQueries,
+				DataPlaneURL: dataPlaneURL,
 			})
 		}
 	}

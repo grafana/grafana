@@ -211,7 +211,7 @@ func TestCreateBatches(t *testing.T) {
 		q := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil,
 			makeResources("/sub/rg/vm1", "/sub/rg/vm2"))
 		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q})
-		batches := createBatches(groups)
+		batches := createBatches(groups, "https://metrics.monitor.azure.com")
 		require.Len(t, batches, 1)
 		assert.Len(t, batches[0].ResourceIDs, 2)
 		assert.Len(t, batches[0].Queries, 1)
@@ -224,7 +224,7 @@ func TestCreateBatches(t *testing.T) {
 		}
 		q := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil,
 			makeResources(ids...))
-		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q}))
+		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q}), "https://metrics.monitor.azure.com")
 		require.Len(t, batches, 1)
 		assert.Len(t, batches[0].ResourceIDs, 50)
 	})
@@ -236,7 +236,7 @@ func TestCreateBatches(t *testing.T) {
 		}
 		q := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil,
 			makeResources(ids...))
-		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q}))
+		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q}), "https://metrics.monitor.azure.com")
 		require.Len(t, batches, 2)
 		assert.Len(t, batches[0].ResourceIDs, 50)
 		assert.Len(t, batches[1].ResourceIDs, 1)
@@ -247,7 +247,7 @@ func TestCreateBatches(t *testing.T) {
 			makeResources("/sub/rg/vm1"))
 		q2 := makeQuery("B", "sub1", "eastus", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil,
 			makeResources("/sub/rg/vm2"))
-		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2}))
+		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2}), "https://metrics.monitor.azure.com")
 		require.Len(t, batches, 2)
 		assert.Equal(t, "westus2", batches[0].Key.Region)
 		assert.Equal(t, "eastus", batches[1].Key.Region)
@@ -264,14 +264,14 @@ func TestCreateBatches(t *testing.T) {
 			makeResources(ids1...))
 		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil,
 			makeResources("/sub/rg/vm50"))
-		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2}))
+		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2}), "https://metrics.monitor.azure.com")
 		require.Len(t, batches, 2)
 		assert.Equal(t, []*types.AzureMonitorQuery{q1}, batches[0].Queries)
 		assert.Equal(t, []*types.AzureMonitorQuery{q2}, batches[1].Queries)
 	})
 
 	t.Run("empty groups produce no batches", func(t *testing.T) {
-		batches := createBatches(nil)
+		batches := createBatches(nil, "https://metrics.monitor.azure.com")
 		assert.Empty(t, batches)
 	})
 }

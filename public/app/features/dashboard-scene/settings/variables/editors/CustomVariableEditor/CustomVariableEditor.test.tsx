@@ -85,7 +85,7 @@ describe('CustomVariableEditor', () => {
       expect(elements.customAllValueInput().value).toBe('all');
     });
 
-    it('should update the variable state when some input values change ("Multi-value", "Allow custom values" & "Include All option")', () => {
+    it('should update the variable state when some input values change ("Multi-value", "Allow custom values" & "Include All value")', () => {
       const { variable, onRunQuery } = setup({
         query: 'test, test2',
         value: 'test',

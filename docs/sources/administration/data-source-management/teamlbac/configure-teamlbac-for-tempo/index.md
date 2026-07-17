@@ -1,6 +1,6 @@
 ---
-title: "Configure Team LBAC for Tempo or Cloud Traces"
-description: "Use label-based access control (LBAC) to restrict Cloud Traces data by team and attribute rules."
+title: 'Configure Team LBAC for Tempo or Cloud Traces'
+description: 'Use label-based access control (LBAC) to restrict Cloud Traces data by team and attribute rules.'
 keywords:
   - tempo
   - datasource
@@ -10,24 +10,22 @@ labels:
     - cloud
 title: Configure team LBAC for data sources for Tempo
 weight: 350
-_build:
-  list: false
-noindex: true
 ---
 
 # Configure team label-based access control for Tempo or Cloud Traces
 
-{{< docs/private-preview product="Label-based access control for traces" >}}
+{{< docs/public-preview product="Label-based access control for traces" >}}
 
 Team label-based access control (LBAC) for Cloud Traces or Tempo lets you restrict which spans teams can access by defining rules using trace attributes. LBAC provides fine-grained, team-based access control within a single tenant and mirrors the experience used for logs and metrics LBAC in Grafana Cloud.
 
+{{< admonition type="note" >}}
 Unlike logs and metrics, which also support data source-level LBAC through cloud access policies, traces LBAC is currently available only at the team level.
+{{< /admonition >}}
 
 Grafana uses the term LBAC as an umbrella term for label-based access control for all data sources.
 Traces use **attributes**, not labels, for access control, but the Grafana UI surfaces this functionality as LBAC for consistency.
 
 This feature only applies to Grafana Cloud Traces, specifically, the Cloud-provisioned tracing data source.
-If you want to use this feature with a Tempo data source, contact Grafana Support to make sure that this is enabled in your organization.
 
 ## How LBAC works
 
