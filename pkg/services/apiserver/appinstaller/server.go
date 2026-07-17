@@ -39,10 +39,10 @@ type serverWrapper struct {
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
 	log := logging.FromContext(s.ctx)
 	group := s.installer.ManifestData().Group
-	served := make([]schema.GroupVersion, 0, len(apiGroupInfo.VersionedResourcesStorageMap))
-	for ver := range apiGroupInfo.VersionedResourcesStorageMap {
-		served = append(served, schema.GroupVersion{Group: group, Version: ver})
-	}
+	// Derive served versions from the scheme so this matches the classic builder
+	// path (builder/helper.go) and the "registered in the apiserver scheme"
+	// semantic that ValidateServedVersions enforces.
+	served := apiGroupInfo.Scheme.PrioritizedVersionsForGroup(group)
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
 		for storagePath, restStorage := range storageMap {
 			legacyProvider, dualWriteSupported := s.installer.(LegacyStorageProvider)
@@ -65,12 +65,18 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				if unifiedStorage, ok := storage.(grafanarest.Storage); ok {
 					log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
 					legacyStorage := legacyProvider.GetLegacyStorage(gr.WithVersion(v))
-					if legacyStorage == nil {
-						log.Debug("Skipping dual writer; no legacy storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
-					} else if err := s.dualWriteService.ValidateServedVersions(s.ctx, gr, served); err != nil {
-						// Fall back to legacy if unified would serve an unregistered apiVersion.
+					// Validate served versions regardless of whether legacy storage exists:
+					// unified must never serve an apiVersion the scheme never registered.
+					// Without a legacy fallback there is nothing safe to serve, so refuse
+					// to install rather than expose the migrated data.
+					if err := s.dualWriteService.ValidateServedVersions(s.ctx, gr, served); err != nil {
+						if legacyStorage == nil {
+							return fmt.Errorf("cannot serve %q from unified storage: %w", gr.String(), err)
+						}
 						log.Warn("serving legacy storage", "resource", gr.String(), "error", err)
 						storage = legacyStorage
+					} else if legacyStorage == nil {
+						log.Debug("Skipping dual writer; no legacy storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
 					} else {
 						storage, err = NewDualWriter(
 							gr,

@@ -302,8 +302,7 @@ func InstallAPIs(
 			if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
 				builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 			}
-			// Fall back to legacy if unified would serve an apiVersion the scheme never
-			// registered (see the preferences v1 incident).
+			// Fall back to legacy if unified would serve an apiVersion the scheme never registered.
 			served := scheme.PrioritizedVersionsForGroup(gr.Group)
 			if err := dualWriteService.ValidateServedVersions(context.Background(), gr, served); err != nil {
 				klog.Warningf("serving legacy storage: %v", err)
