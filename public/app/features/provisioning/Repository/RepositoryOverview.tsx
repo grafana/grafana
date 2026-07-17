@@ -250,7 +250,7 @@ function getWebhookURL(repo: Repository) {
   }
   if (spec?.type === 'bitbucket' && status?.webhook?.uuid && spec.bitbucket?.url) {
     return textUtil.sanitizeUrl(
-      `${spec.bitbucket.url}/admin/webhooks/${encodeURIComponent(status.webhook.uuid.replace(/[{}]/g, ''))}/edit`
+      `${spec.bitbucket.url}/admin/webhooks/${encodeURIComponent(status.webhook.uuid)}/edit`
     );
   }
   return undefined;

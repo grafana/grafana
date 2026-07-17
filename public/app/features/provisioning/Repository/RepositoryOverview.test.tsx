@@ -94,7 +94,7 @@ describe('RepositoryOverview', () => {
 
       expect(screen.getByRole('link', { name: 'View Webhook' })).toHaveAttribute(
         'href',
-        'https://bitbucket.org/org/repo/admin/webhooks/9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0/edit'
+        'https://bitbucket.org/org/repo/admin/webhooks/%7B9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0%7D/edit'
       );
     });
 
