@@ -22,7 +22,8 @@ import { collectUnsubs, str } from './utils';
  *   - discarded: connections_new_datasource_cancelled — user clicks Cancel on the new datasource page
  *   - discarded: connections_datasource_deleted — user deletes the datasource before completing setup
  *   - abandoned: connections_datasource_config_page_left — user navigates away from the config page without testing
- *   - abandoned: connections_new_datasource_page_left — user navigates away from the catalog page without picking a plugin
+ *   - abandoned: connections_new_datasource_page_left — user navigates away from the catalog without picking a plugin
+ *     (ignored once a plugin has been selected — unmount is expected when navigating to the config page)
  *   - timeout: 1 hour — no end condition fires (generous to account for reading docs mid-setup)
  *
  * Silent interactions added by this journey:
@@ -83,6 +84,19 @@ registerJourneyTriggers('datasource_configure', (tracker) => {
 onJourneyInstance('datasource_configure', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
+  // Choosing a plugin unmounts NewDataSourcePage (which emits page_left). Latch
+  // selection so that expected navigation to the config page is not treated as
+  // abandonment. For catalog-start, startJourney runs mid-dispatch of
+  // grafana_ds_add_datasource_clicked; Echo's live Set iteration delivers that
+  // same event to this subscriber so the latch is set before page_left fires.
+  let typeSelected = false;
+
+  add(
+    onInteraction('grafana_ds_add_datasource_clicked', () => {
+      typeSelected = true;
+    })
+  );
+
   // User saved datasource config
   add(
     onInteraction('connections_datasources_ds_configured', () => {
@@ -124,10 +138,13 @@ onJourneyInstance('datasource_configure', (handle) => {
     })
   );
 
-  // User navigated away from the catalog page without picking a plugin
+  // User left the catalog without picking a plugin. If a type was already
+  // selected, unmount is the handoff to the config page — keep the journey open.
   add(
     onInteraction('connections_new_datasource_page_left', () => {
-      handle.end('abandoned');
+      if (!typeSelected) {
+        handle.end('abandoned');
+      }
     })
   );
 

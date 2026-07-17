@@ -270,6 +270,33 @@ describe('datasourceConfigure journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledWith('abandoned');
   });
 
+  it('should not abandon when catalog unmount follows a plugin selection (continues to config)', () => {
+    loadWiring();
+
+    // List/page_view start, then pick a type — NewDataSourcePage unmounts as we
+    // navigate to the edit page. That page_left must not end the journey.
+    simulateInteraction('connections_new_datasource_page_view', {});
+    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+    simulateInteraction('grafana_ds_add_datasource_clicked', { plugin_id: 'prometheus' });
+    simulateInteraction('connections_new_datasource_page_left', {});
+
+    expect(mockHandle.end).not.toHaveBeenCalled();
+  });
+
+  it('should not abandon when journey started from catalog pick and catalog then unmounts', () => {
+    loadWiring();
+
+    // Catalog-start path: grafana_ds_add_datasource_clicked starts the journey,
+    // then NewDataSourcePage unmounts on navigation to config.
+    simulateInteraction('grafana_ds_add_datasource_clicked', {
+      plugin_id: 'prometheus',
+      datasource_uid: 'ds-uid-1',
+    });
+    simulateInteraction('connections_new_datasource_page_left', {});
+
+    expect(mockHandle.end).not.toHaveBeenCalled();
+  });
+
   it('should ignore unrelated interactions', () => {
     loadWiring();
 

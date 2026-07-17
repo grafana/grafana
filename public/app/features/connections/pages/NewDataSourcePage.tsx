@@ -7,9 +7,9 @@ import { NewDataSource } from 'app/features/datasources/components/NewDataSource
 
 export function NewDataSourcePage() {
   // CUJ-only signals: page_view starts datasource_configure when the user lands
-  // here directly; page_left ends it as abandoned if they navigate away without
-  // picking a plugin. Mirrors the EditDataSource page-leave handler so a journey
-  // started here always has a terminating event.
+  // here directly; page_left is emitted on every unmount. The journey wiring
+  // treats page_left as abandoned only when no plugin was selected yet — picking
+  // a type also unmounts this page while navigating to the config screen.
   useEffect(() => {
     reportInteraction('connections_new_datasource_page_view', {}, { silent: true });
     return () => {

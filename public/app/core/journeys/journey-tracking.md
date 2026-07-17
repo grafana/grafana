@@ -282,22 +282,23 @@ User opens a panel in edit mode and configures queries, transformations, or visu
 
 User adds and configures a new datasource until a successful connection test.
 
-| Event           | Trigger                                                      | Action                                          |
-| --------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| Start           | `connections_datasource_list_add_datasource_clicked`         | Journey starts (from list page)                 |
-| Start           | `connections_new_datasource_page_view` (no active journey)   | Journey starts (direct nav)                     |
-| Start           | `grafana_ds_add_datasource_clicked` (no active journey)      | Journey starts (catalog pick)                   |
-| Step            | `grafana_ds_add_datasource_clicked` (journey already active) | `select_type` step                              |
-| Step            | `connections_datasources_ds_configured`                      | `save_config` step                              |
-| Step            | `grafana_ds_test_datasource_clicked` (success=false)         | `test_failed` step (repeatable)                 |
-| End (success)   | `grafana_ds_test_datasource_clicked` (success=true)          | Test passed                                     |
-| End (discarded) | `connections_new_datasource_cancelled`                       | User clicked Cancel                             |
-| End (discarded) | `connections_datasource_deleted`                             | User deleted datasource before completing setup |
-| End (abandoned) | `connections_datasource_config_page_left`                    | User navigated away without testing             |
+| Event           | Trigger                                                       | Action                                          |
+| --------------- | ------------------------------------------------------------- | ----------------------------------------------- |
+| Start           | `connections_datasource_list_add_datasource_clicked`          | Journey starts (from list page)                 |
+| Start           | `connections_new_datasource_page_view` (no active journey)    | Journey starts (direct nav)                     |
+| Start           | `grafana_ds_add_datasource_clicked` (no active journey)       | Journey starts (catalog pick)                   |
+| Step            | `grafana_ds_add_datasource_clicked` (journey already active)  | `select_type` step                              |
+| Step            | `connections_datasources_ds_configured`                       | `save_config` step                              |
+| Step            | `grafana_ds_test_datasource_clicked` (success=false)          | `test_failed` step (repeatable)                 |
+| End (success)   | `grafana_ds_test_datasource_clicked` (success=true)           | Test passed                                     |
+| End (discarded) | `connections_new_datasource_cancelled`                        | User clicked Cancel                             |
+| End (discarded) | `connections_datasource_deleted`                              | User deleted datasource before completing setup |
+| End (abandoned) | `connections_datasource_config_page_left`                     | User navigated away without testing             |
+| End (abandoned) | `connections_new_datasource_page_left` (no type selected yet) | User left the catalog without picking a plugin  |
 
-**Silent interactions added by this journey:** `connections_new_datasource_cancelled`, `connections_datasource_deleted`, `connections_datasource_config_page_left`, `connections_new_datasource_page_view`.
+**Silent interactions added by this journey:** `connections_new_datasource_cancelled`, `connections_datasource_deleted`, `connections_datasource_config_page_left`, `connections_new_datasource_page_view`, `connections_new_datasource_page_left`.
 
-**Key behavior:** The same event (`grafana_ds_test_datasource_clicked`) is either a `test_failed` step or a `success` end depending on the `success` property - this is the classic "dual-meaning event" case that drove the hybrid design choice. 1-hour timeout tolerates reading docs mid-setup.
+**Key behavior:** The same event (`grafana_ds_test_datasource_clicked`) is either a `test_failed` step or a `success` end depending on the `success` property - this is the classic "dual-meaning event" case that drove the hybrid design choice. `connections_new_datasource_page_left` is ignored after a plugin is selected, because choosing a type unmounts the catalog while navigating to the config page. 1-hour timeout tolerates reading docs mid-setup.
 
 ### explore_to_dashboard
 
