@@ -75,4 +75,57 @@ describe('buildColumnsWithMeta', () => {
     expect(fieldNameMeta['service']).toMatchObject({ active: false, index: undefined, percentOfLinesWithLabel: 100 });
     expect(fieldNameMeta['backend']).toMatchObject({ active: true, index: 0, percentOfLinesWithLabel: 50 });
   });
+
+  it('keys columns by field.name when config.displayName differs (e.g. CloudWatch Logs)', () => {
+    // CloudWatch sets config.displayName "Time" on the time field; previously we keyed the
+    // meta store by getFieldDisplayName and then looked up by field.name — crashing on .type.
+    const frameWithDisplayNames = toDataFrame({
+      meta: {
+        type: DataFrameType.LogLines,
+      },
+      fields: [
+        {
+          name: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          type: FieldType.time,
+          values: [1, 2],
+          config: { displayName: 'Time' },
+        },
+        {
+          name: LOGS_DATAPLANE_BODY_NAME,
+          type: FieldType.string,
+          values: ['log 1', 'log 2'],
+          config: { displayName: 'Line' },
+        },
+        { name: 'service', type: FieldType.string, values: ['svc-a', 'svc-b'] },
+      ],
+    });
+    const logsFrame = parseLogsFrame(frameWithDisplayNames) as LogsFrame;
+
+    const fieldNameMeta = buildColumnsWithMeta(
+      {
+        severityField: logsFrame.severityField,
+        extraFields: logsFrame.extraFields,
+        timeField: logsFrame.timeField,
+        bodyField: logsFrame.bodyField,
+      },
+      frameWithDisplayNames,
+      [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME]
+    );
+
+    expect(fieldNameMeta[LOGS_DATAPLANE_TIMESTAMP_NAME]).toMatchObject({
+      active: true,
+      index: 0,
+      type: 'TIME_FIELD',
+      percentOfLinesWithLabel: 100,
+    });
+    expect(fieldNameMeta[LOGS_DATAPLANE_BODY_NAME]).toMatchObject({
+      active: true,
+      index: 1,
+      type: 'BODY_FIELD',
+      percentOfLinesWithLabel: 100,
+    });
+    // Display names must not be used as store keys (would crash when setting .type)
+    expect(fieldNameMeta['Time']).toBeUndefined();
+    expect(fieldNameMeta['Line']).toBeUndefined();
+  });
 });

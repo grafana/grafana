@@ -1,4 +1,4 @@
-import { type DataFrame, type FieldWithIndex, getFieldDisplayName } from '@grafana/data';
+import { type DataFrame, type FieldWithIndex } from '@grafana/data';
 import { type FieldNameMeta, type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 
@@ -42,7 +42,10 @@ export const buildColumnsWithMeta = (
   if (dataFrame.fields.length && numberOfLogLines) {
     // Iterate through all of fields
     dataFrame.fields.forEach((field) => {
-      const fieldName = getFieldDisplayName(field);
+      // Key by field.name (not displayName) so lookups stay consistent with displayedFields,
+      // organizeFields, and Explore's LogsTableWrap — config.displayName (e.g. CloudWatch "Time")
+      // must not change the store key.
+      const fieldName = field.name;
       // Count the valid values
       const countOfValues = field.values.reduce((acc: number, value) => {
         if (value !== undefined && value !== null) {
@@ -72,7 +75,7 @@ export const buildColumnsWithMeta = (
 
   // Normalize the other fields
   otherFields.forEach((field) => {
-    const fieldName = getFieldDisplayName(field);
+    const fieldName = field.name;
     const isActive = pendingLabelState[fieldName]?.active;
     const index = pendingLabelState[fieldName]?.index;
     if (isActive && index !== undefined) {
@@ -101,8 +104,8 @@ export const buildColumnsWithMeta = (
       pendingLabelState[fieldName].active = true;
       pendingLabelState[fieldName].index = idx;
     } else if (fieldName === LOG_LINE_BODY_FIELD_NAME && logsFrameFields?.bodyField?.name) {
-      pendingLabelState[logsFrameFields.bodyField?.name].active = true;
-      pendingLabelState[logsFrameFields.bodyField?.name].index = idx;
+      pendingLabelState[logsFrameFields.bodyField.name].active = true;
+      pendingLabelState[logsFrameFields.bodyField.name].index = idx;
     } else {
       console.error(`Unknown field ${fieldName}`, { pendingLabelState, displayedFields });
     }
@@ -110,19 +113,25 @@ export const buildColumnsWithMeta = (
 
   // If nothing is selected, then select the default columns
   if (displayedFields.length === 0) {
-    if (logsFrameFields?.bodyField?.name) {
+    if (logsFrameFields?.bodyField?.name && pendingLabelState[logsFrameFields.bodyField.name]) {
       pendingLabelState[logsFrameFields.bodyField.name].index = 1;
       pendingLabelState[logsFrameFields.bodyField.name].active = true;
     }
-    if (logsFrameFields?.timeField?.name) {
+    if (logsFrameFields?.timeField?.name && pendingLabelState[logsFrameFields.timeField.name]) {
       pendingLabelState[logsFrameFields.timeField.name].index = 0;
       pendingLabelState[logsFrameFields.timeField.name].active = true;
     }
   }
 
   if (logsFrameFields?.bodyField?.name && logsFrameFields?.timeField?.name) {
-    pendingLabelState[logsFrameFields.bodyField.name].type = 'BODY_FIELD';
-    pendingLabelState[logsFrameFields.timeField.name].type = 'TIME_FIELD';
+    const bodyKey = logsFrameFields.bodyField.name;
+    const timeKey = logsFrameFields.timeField.name;
+    if (pendingLabelState[bodyKey]) {
+      pendingLabelState[bodyKey].type = 'BODY_FIELD';
+    }
+    if (pendingLabelState[timeKey]) {
+      pendingLabelState[timeKey].type = 'TIME_FIELD';
+    }
   }
 
   return pendingLabelState;

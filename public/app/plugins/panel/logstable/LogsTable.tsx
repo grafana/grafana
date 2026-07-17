@@ -6,6 +6,7 @@ import {
   CoreApp,
   type DataFrame,
   type FieldConfigSource,
+  getFieldDisplayName,
   type GrafanaTheme2,
   LoadingState,
   LogsSortOrder,
@@ -87,6 +88,9 @@ export const LogsTable = ({
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const levelFieldName = logsFrame?.severityField?.name ?? detectLevelField(logsFrame) ?? DATAPLANE_SEVERITY_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
+  // TableNG matches sortBy.displayName against getDisplayName(field), which follows config.displayName
+  // (e.g. CloudWatch sets displayName "Time" on @timestamp). Keep raw timeFieldName for field transforms.
+  const timeFieldDisplayName = logsFrame?.timeField ? getFieldDisplayName(logsFrame.timeField) : timeFieldName;
   const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
 
@@ -102,10 +106,10 @@ export const LogsTable = ({
   // Callbacks
   const handleTableOptionsChange = useCallback(
     (newOptions: Options) => {
-      const pendingOptions = onSortOrderChange(newOptions, options.sortOrder, timeFieldName);
+      const pendingOptions = onSortOrderChange(newOptions, options.sortOrder, timeFieldDisplayName);
       onLogsTableOptionsChange?.(pendingOptions);
     },
-    [onLogsTableOptionsChange, options.sortOrder, timeFieldName]
+    [onLogsTableOptionsChange, options.sortOrder, timeFieldDisplayName]
   );
 
   const handleLogsTableOptionsChange = useCallback(
@@ -246,14 +250,17 @@ export const LogsTable = ({
     () => ({
       sortOrder: options.sortOrder ?? LogsSortOrder.Descending,
       sortBy: [
-        { displayName: timeFieldName, desc: options.sortOrder ? options.sortOrder === LogsSortOrder.Descending : true },
+        {
+          displayName: timeFieldDisplayName,
+          desc: options.sortOrder ? options.sortOrder === LogsSortOrder.Descending : true,
+        },
       ],
       fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
       logDetailsWidth: options.logDetailsWidth ? options.logDetailsWidth : getDefaultLogDetailsWidth(),
       ...options,
       wrapText,
     }),
-    [options, timeFieldName, wrapText]
+    [options, timeFieldDisplayName, wrapText]
   );
 
   const logRows = useMemo(() => {
