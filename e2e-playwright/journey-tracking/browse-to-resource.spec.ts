@@ -1,3 +1,4 @@
+import { openCommandPalette } from './commandPalette';
 import { test, expect } from './fixture';
 
 test.use({
@@ -227,12 +228,8 @@ test.describe('browse_to_resource journey tracking', { tag: ['@journey-tracking'
     await journeyRecorder.waitForJourneyStart('browse_to_resource');
 
     // Open command palette while browse journey is active
-    const modKey = process.platform === 'darwin' ? 'Meta' : 'Control';
-    await page.keyboard.press(`${modKey}+k`);
-
-    // Wait briefly for the palette to appear (kbar search input has role="combobox")
-    const commandPaletteInput = page.getByPlaceholder('Search or jump to...');
-    await expect(commandPaletteInput).toBeVisible({ timeout: 3000 });
+    await openCommandPalette(page);
+    const commandPaletteInput = page.getByRole('combobox');
 
     // Close the command palette without selecting anything
     await page.keyboard.press('Escape');

@@ -1,3 +1,4 @@
+import { openCommandPalette } from './commandPalette';
 import { test, expect } from './fixture';
 
 test.use({
@@ -12,13 +13,8 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Open the command palette via keyboard shortcut
-    const modKey = process.platform === 'darwin' ? 'Meta' : 'Control';
-    await page.keyboard.press(`${modKey}+k`);
-
-    // Wait for the search input to appear (the combobox role input inside the palette)
+    await openCommandPalette(page);
     const searchInput = page.getByRole('combobox');
-    await expect(searchInput).toBeVisible();
 
     // Verify journey started from command_palette_opened interaction
     await journeyRecorder.waitForJourneyStart('search_to_resource');
@@ -63,12 +59,7 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Open the command palette
-    const modKey = process.platform === 'darwin' ? 'Meta' : 'Control';
-    await page.keyboard.press(`${modKey}+k`);
-
-    const searchInput = page.getByRole('combobox');
-    await expect(searchInput).toBeVisible();
+    await openCommandPalette(page);
 
     await journeyRecorder.waitForJourneyStart('search_to_resource');
 
@@ -86,12 +77,8 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Open the command palette
-    const modKey = process.platform === 'darwin' ? 'Meta' : 'Control';
-    await page.keyboard.press(`${modKey}+k`);
-
+    await openCommandPalette(page);
     const searchInput = page.getByRole('combobox');
-    await expect(searchInput).toBeVisible();
 
     await journeyRecorder.waitForJourneyStart('search_to_resource');
 
