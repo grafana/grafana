@@ -262,7 +262,7 @@ type fakeSearchBackend struct {
 func (f *fakeSearchBackend) LoadOpenIndexStats(time.Time, time.Duration) ([]ResourceStats, error) {
 	return nil, nil
 }
-func (f *fakeSearchBackend) WriteOpenIndexStats(time.Time) error        { return nil }
+func (f *fakeSearchBackend) WriteOpenIndexStats(time.Time) error       { return nil }
 func (f *fakeSearchBackend) GetIndex(NamespacedResource) ResourceIndex { return f.idx }
 func (f *fakeSearchBackend) TotalDocs() int64                          { return 0 }
 func (f *fakeSearchBackend) GetOpenIndexes() []NamespacedResource      { return nil }
