@@ -197,27 +197,6 @@ type WebhookRepository interface {
 	SubscribedEvents() []string
 }
 
-// WebhookConfig is the provider-agnostic representation of a git provider webhook.
-// Each provider implements it with its own struct holding the common fields
-// plus any provider-specific ones.
-type WebhookConfig interface {
-	GetID() int64
-	GetURL() string
-	GetEvents() []string
-	GetSecret() string
-	SetURL(url string)
-	SetEvents(events []string)
-	SetSecret(secret string)
-}
-
-//go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
-type WebhookClient interface {
-	CreateWebhook(ctx context.Context, url string, events []string, secret string) (WebhookConfig, error)
-	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
-	EditWebhook(ctx context.Context, hook WebhookConfig) error
-	DeleteWebhook(ctx context.Context, webhookID int64) error
-}
-
 type FileAction string
 
 const (
