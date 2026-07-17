@@ -1,8 +1,9 @@
 // Vendored from the easy-tz library ("07-baked-rules" dist build), converted
 // from the published index.mjs + index.d.ts into a single TypeScript module:
-// https://github.com/leeoniya/easy-tz/tree/1b8de57d6d6500eec281ff9b642594549f178bde/dist/07-baked-rules
+// https://github.com/leeoniya/easy-tz/tree/1f3e605aa148852aeb6709c4973ffe79e4ea7b6a/dist/07-baked-rules
 //
-// It lists every IANA zone the runtime supports with a DST-correct
+// It lists every IANA zone the runtime supports — plus curated canonical ids
+// when the runtime only lists a legacy spelling — with a DST-correct
 // abbreviation and UTC offset, using pre-baked transition rules instead of
 // moment-timezone's bundled tz database. Keep edits minimal to ease future
 // syncs with upstream.
@@ -54,8 +55,52 @@ interface IrregularClass {
 
 type ScheduleClass = StaticClass | RulesClass | IrregularClass;
 
+// shared/zoneLinks.ts
+const zoneLinkPairs: Array<[canonical: string, alias: string]> = [
+  ['Africa/Asmara', 'Africa/Asmera'],
+  ['America/Argentina/Buenos_Aires', 'America/Buenos_Aires'],
+  ['America/Argentina/Catamarca', 'America/Catamarca'],
+  ['America/Argentina/Cordoba', 'America/Cordoba'],
+  ['America/Argentina/Jujuy', 'America/Jujuy'],
+  ['America/Argentina/Mendoza', 'America/Mendoza'],
+  ['America/Atikokan', 'America/Coral_Harbour'],
+  ['America/Indiana/Indianapolis', 'America/Indianapolis'],
+  ['America/Kentucky/Louisville', 'America/Louisville'],
+  ['America/Nuuk', 'America/Godthab'],
+  ['Asia/Ho_Chi_Minh', 'Asia/Saigon'],
+  ['Asia/Kathmandu', 'Asia/Katmandu'],
+  ['Asia/Kolkata', 'Asia/Calcutta'],
+  ['Asia/Ulaanbaatar', 'Asia/Choibalsan'],
+  ['Asia/Yangon', 'Asia/Rangoon'],
+  ['Atlantic/Faroe', 'Atlantic/Faeroe'],
+  ['Europe/Kyiv', 'Europe/Kiev'],
+  ['Pacific/Chuuk', 'Pacific/Truk'],
+  ['Pacific/Kanton', 'Pacific/Enderbury'],
+  ['Pacific/Pohnpei', 'Pacific/Ponape'],
+];
+
+const zoneLinks = new Map<string, string>();
+const aliasOfZone = new Map<string, string>();
+for (const [canonical, alias] of zoneLinkPairs) {
+  zoneLinks.set(canonical, alias);
+  zoneLinks.set(alias, canonical);
+  aliasOfZone.set(alias, canonical);
+}
+
+function makeInfo(name: string, abbr: string, offset: string): TimeZoneInfo {
+  const aliasOf = aliasOfZone.get(name);
+  return aliasOf === undefined ? { name, abbr, offset } : { name, abbr, offset, aliasOf };
+}
+
 // shared/zones.ts
-const zones = Intl.supportedValuesOf('timeZone');
+const runtimeZones = Intl.supportedValuesOf('timeZone');
+const zones = (() => {
+  const set = new Set(runtimeZones);
+  for (const [canonical] of zoneLinkPairs) {
+    set.add(canonical);
+  }
+  return set.size === runtimeZones.length ? runtimeZones : [...set].sort();
+})();
 
 // shared/decode.ts
 function decodeZone(prefixes: string[], z: string): string {
@@ -126,43 +171,6 @@ const I =
   '3Casablanca;3El_Aaiun~0,4328,7688~GMT+1,GMT,GMT+1~60,0,60|1Gaza;1Hebron~0,8256,28412~EET,EEST,EET~120,180,120';
 const scheduleClasses = decodeSchedule(P, S, R, I);
 
-// shared/zoneLinks.ts
-const zoneLinkPairs: Array<[canonical: string, alias: string]> = [
-  ['Africa/Asmara', 'Africa/Asmera'],
-  ['America/Argentina/Buenos_Aires', 'America/Buenos_Aires'],
-  ['America/Argentina/Catamarca', 'America/Catamarca'],
-  ['America/Argentina/Cordoba', 'America/Cordoba'],
-  ['America/Argentina/Jujuy', 'America/Jujuy'],
-  ['America/Argentina/Mendoza', 'America/Mendoza'],
-  ['America/Atikokan', 'America/Coral_Harbour'],
-  ['America/Indiana/Indianapolis', 'America/Indianapolis'],
-  ['America/Kentucky/Louisville', 'America/Louisville'],
-  ['America/Nuuk', 'America/Godthab'],
-  ['Asia/Ho_Chi_Minh', 'Asia/Saigon'],
-  ['Asia/Kathmandu', 'Asia/Katmandu'],
-  ['Asia/Kolkata', 'Asia/Calcutta'],
-  ['Asia/Ulaanbaatar', 'Asia/Choibalsan'],
-  ['Asia/Yangon', 'Asia/Rangoon'],
-  ['Atlantic/Faroe', 'Atlantic/Faeroe'],
-  ['Europe/Kyiv', 'Europe/Kiev'],
-  ['Pacific/Chuuk', 'Pacific/Truk'],
-  ['Pacific/Kanton', 'Pacific/Enderbury'],
-  ['Pacific/Pohnpei', 'Pacific/Ponape'],
-];
-
-const zoneLinks = new Map<string, string>();
-const aliasOfZone = new Map<string, string>();
-for (const [canonical, alias] of zoneLinkPairs) {
-  zoneLinks.set(canonical, alias);
-  zoneLinks.set(alias, canonical);
-  aliasOfZone.set(alias, canonical);
-}
-
-function makeInfo(name: string, abbr: string, offset: string): TimeZoneInfo {
-  const aliasOf = aliasOfZone.get(name);
-  return aliasOf === undefined ? { name, abbr, offset } : { name, abbr, offset, aliasOf };
-}
-
 // shared/rules.ts
 function buildScheduleIndex(zoneList: string[], classes: ScheduleClass[]): number[] {
   const idxOf = new Map<string, number>();
@@ -215,8 +223,8 @@ function resolveClass(cls: ScheduleClass, ts: number, yearStart: number, stepMs:
 // shared/fmt.ts
 function formatOffsetMinutes(min: number): string {
   const sign = min < 0 ? '-' : '+';
-  const abs = Math.abs(min);
-  const hh = String(Math.floor(abs / 60)).padStart(2, '0');
+  const abs = min < 0 ? -min : min;
+  const hh = String((abs / 60) | 0).padStart(2, '0');
   const mm = String(abs % 60).padStart(2, '0');
   return `${sign}${hh}:${mm}`;
 }

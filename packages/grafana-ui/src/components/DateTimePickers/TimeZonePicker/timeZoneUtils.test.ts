@@ -23,15 +23,15 @@ describe('findTimeZoneAt', () => {
     expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ abbr: 'IST', offset: '+05:30' });
   });
 
-  it('resolves both spellings of a zone to the same entry', () => {
-    // Node's ICU (like Chrome's) lists the legacy Asia/Calcutta and not
-    // Asia/Kolkata; both spellings must resolve to that entry.
-    const byCanonical = findTimeZoneAt('Asia/Kolkata', JUL);
-    const byLegacy = findTimeZoneAt('Asia/Calcutta', JUL);
-
-    expect(byCanonical).toBeDefined();
-    expect(byCanonical).toBe(byLegacy);
-    expect(byCanonical).toMatchObject({ name: 'Asia/Calcutta', aliasOf: 'Asia/Kolkata', abbr: 'IST' });
+  it('resolves both spellings of a zone', () => {
+    // Node's ICU (like Chrome's) lists the legacy Asia/Calcutta; easy-tz adds
+    // the canonical Asia/Kolkata as its own entry, so both spellings resolve.
+    expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ name: 'Asia/Kolkata', abbr: 'IST' });
+    expect(findTimeZoneAt('Asia/Calcutta', JUL)).toMatchObject({
+      name: 'Asia/Calcutta',
+      aliasOf: 'Asia/Kolkata',
+      abbr: 'IST',
+    });
   });
 
   it('memoizes per hour bucket', () => {

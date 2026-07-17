@@ -13,17 +13,9 @@ const getZoneIndex = (timestamp: number): Map<string, EasyTzInfo> => {
   let byName = indexCache.get(list);
 
   if (!byName) {
+    // The list contains both canonical ids and legacy spellings as entries,
+    // so indexing by name alone covers lookups under either.
     byName = new Map(list.map((tz) => [tz.name, tz]));
-
-    // Also index legacy-spelling entries under their canonical id (e.g.
-    // Asia/Calcutta under Asia/Kolkata). Entries actually named by the
-    // canonical id (indexed above) win, in case the runtime lists both.
-    for (const tz of list) {
-      if (tz.aliasOf !== undefined && !byName.has(tz.aliasOf)) {
-        byName.set(tz.aliasOf, tz);
-      }
-    }
-
     indexCache.set(list, byName);
   }
 

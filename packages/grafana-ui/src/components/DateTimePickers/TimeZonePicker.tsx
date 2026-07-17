@@ -115,29 +115,27 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
       pushOption('', zone, getInternalTimeZoneInfo(zone, now));
     }
 
-    // Zones are presented under their canonical IANA id (e.g. Asia/Kolkata),
-    // even when the runtime lists a legacy spelling (Chrome's ICU still
-    // returns Asia/Calcutta). Intl accepts either spelling as input, so the
-    // canonical id is safe to use as the option value everywhere. Renamed
-    // zones land out of the runtime's alphabetical order, hence the sorted
-    // copy (of references; entries are shared with the hour-bucket memo).
-    const zones = [...getTimeZonesAt(now)].sort((a, b) =>
-      (a.aliasOf ?? a.name).localeCompare(b.aliasOf ?? b.name)
-    );
+    const zones = getTimeZonesAt(now);
+
+    // Legacy spelling entries are skipped as options below, but make the
+    // canonical option searchable under the legacy name too (e.g.
+    // Asia/Kolkata is also searchable as "calcutta").
+    const legacyNames = new Map<string, string>();
 
     for (const tz of zones) {
-      // Skip a legacy-spelling entry when the runtime also lists the
-      // canonical id itself (e.g. Asia/Choibalsan alongside Asia/Ulaanbaatar
-      // on older tz databases); the index maps the canonical id to its own
-      // entry in that case.
-      if (tz.aliasOf !== undefined && findTimeZoneAt(tz.aliasOf, now) !== tz) {
+      if (tz.aliasOf !== undefined) {
+        legacyNames.set(tz.aliasOf, tz.name);
+      }
+    }
+
+    for (const tz of zones) {
+      if (tz.aliasOf !== undefined) {
         continue;
       }
 
-      const name = tz.aliasOf ?? tz.name;
-      const delimiter = name.indexOf('/');
-      const group = delimiter === -1 ? '' : name.slice(0, delimiter);
-      pushOption(group, name, { name, ianaName: name, abbreviation: tz.abbr }, tz.aliasOf !== undefined ? tz.name : undefined);
+      const delimiter = tz.name.indexOf('/');
+      const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
+      pushOption(group, tz.name, { name: tz.name, ianaName: tz.name, abbreviation: tz.abbr }, legacyNames.get(tz.name));
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
