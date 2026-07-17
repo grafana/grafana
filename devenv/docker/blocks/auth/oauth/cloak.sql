@@ -2068,7 +2068,7 @@ da61fbc2-7533-4bc1-b0c4-357db9f108e4	28d2466c-5af6-4786-a8a2-c25d6cb4833f	allowe
 13ec6e6a-b4a9-4ca6-bee5-fe6d7df07bd4	588cf9d4-1fb1-43d5-b454-9f9239d1dda7	allow-default-scopes	true
 9e4f8b41-d2e6-4b67-9784-f319b804b66b	bf743b0a-d8f9-4635-bcbe-e1c8b92075e2	host-sending-registration-request-must-match	true
 4ca659f4-e9cf-45ff-a891-42b973fee220	bf743b0a-d8f9-4635-bcbe-e1c8b92075e2	client-uris-must-match	true
-69a74c94-26ec-40d1-8859-c3077a84c374	ec24e563-c82e-4a0f-89db-6c2b75e5383a	secret	R0msuv6OjhKyzluLnbkkgkM1s0Mi5aK0Ck-3o-kbGMwsE2TPdzsoH-9Z_P2OEmJ6dqppkp9H8eZE9pdC8uDJHA
+69a74c94-26ec-40d1-8859-c3077a84c374	ec24e563-c82e-4a0f-89db-6c2b75e5383a	secret	dev-only-placeholder-secret-do-not-use-in-production
 19b2af74-0667-4ade-993e-d734eb465a16	ec24e563-c82e-4a0f-89db-6c2b75e5383a	algorithm	HS256
 b2a0d967-1111-4c79-9273-e05450fe26c5	ec24e563-c82e-4a0f-89db-6c2b75e5383a	priority	-100
 63fba7e3-ad5f-475b-a367-8c0af5302b0b	ec24e563-c82e-4a0f-89db-6c2b75e5383a	kid	e19299b5-a2bc-45d4-bd71-2beeaab7dfbf
