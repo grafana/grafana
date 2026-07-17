@@ -16,4 +16,10 @@ RUN     pip3 install --require-hashes --no-cache-dir -r /tmp/requirements.txt
 
 ADD     start_container /usr/bin/start_container
 RUN     chmod +x /usr/bin/start_container
+
+# Create a non-root user and fix ownership of required paths
+RUN     useradd --system --no-create-home --shell /usr/sbin/nologin collectd \
+        && chown -R collectd:collectd /etc/collectd
+
+USER    collectd
 CMD     start_container
