@@ -7,8 +7,8 @@ package v0alpha1
 // WebhookStatusApplyConfiguration represents a declarative configuration of the WebhookStatus type for use
 // with apply.
 type WebhookStatusApplyConfiguration struct {
-	ID *int64 `json:"id,omitempty"`
-	// TODO: consolidate ID and UUID into a single string identifier in the next version.
+	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
+	ID               *int64   `json:"id,omitempty"`
 	UUID             *string  `json:"uuid,omitempty"`
 	URL              *string  `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
