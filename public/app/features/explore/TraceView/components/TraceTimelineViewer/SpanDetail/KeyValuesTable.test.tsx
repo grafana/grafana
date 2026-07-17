@@ -39,8 +39,22 @@ describe('LinkValue', () => {
     };
     const childrenText = 'childrenTextValue';
     render(<LinkValue link={link}>{childrenText}</LinkValue>);
-    expect(screen.getByRole('link', { name: 'titleValue' })).toBeInTheDocument();
+    const linkEl = screen.getByRole('link', { name: 'titleValue' });
+    expect(linkEl).toBeInTheDocument();
     expect(screen.getByText(/^childrenTextValue$/)).toBeInTheDocument();
+    expect(linkEl.querySelector('svg')).toBeInTheDocument();
+    expect(linkEl.firstChild).toBe(linkEl.querySelector('svg'));
+  });
+
+  it('renders a custom icon to the left of the value', () => {
+    const link = {
+      title: 'titleValue',
+      path: 'hrefValue',
+      icon: 'asserts' as const,
+    };
+    render(<LinkValue link={link}>childrenTextValue</LinkValue>);
+    const linkEl = screen.getByRole('link', { name: 'titleValue' });
+    expect(linkEl.firstChild).toBe(linkEl.querySelector('svg'));
   });
 });
 
@@ -73,11 +87,15 @@ describe('KeyValuesTable tests', () => {
               {
                 path: `http://example.com/?kind=${encodeURIComponent(array[i].value)}`,
                 title: `More info about ${array[i].value}`,
+                icon: 'asserts',
               },
             ]
           : [],
     } as KeyValuesTableProps);
 
+    const link = screen.getByRole('link', { name: 'More info about client' });
+    expect(link).toBeInTheDocument();
+    expect(link.firstChild).toBe(link.querySelector('svg'));
     expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
   });
 
