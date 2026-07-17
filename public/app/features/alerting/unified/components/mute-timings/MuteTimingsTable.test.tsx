@@ -131,7 +131,9 @@ describe('MuteTimingsTable', () => {
       await user.click(await screen.findByRole('button', { name: /delete/i }));
 
       expect(await screen.findByRole('dialog', { name: /something went wrong/i })).toBeInTheDocument();
-      expect(screen.getByText(/time interval is used/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/still used by one or more notification policies or alert rules/i)
+      ).toBeInTheDocument();
     });
 
     it('shows empty state when no mute timings are configured', async () => {

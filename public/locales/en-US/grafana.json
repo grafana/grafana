@@ -1164,7 +1164,8 @@
       "api-machinery": {
         "with-causes": "{{-baseMessage}}: {{-causes}}"
       },
-      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}",
+      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules."
     },
     "evaluate-every-validation-options": {
       "message": {
