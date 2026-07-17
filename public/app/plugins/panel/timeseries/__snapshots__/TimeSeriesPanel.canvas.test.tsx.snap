@@ -666,7 +666,7 @@ exports[`TimeSeriesPanel (canvas) Annotations region annotations 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axis X Axis: defaults 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes X Axis: defaults 1`] = `
 [
   {
     "props": {
@@ -1351,7 +1351,7 @@ exports[`TimeSeriesPanel (canvas) Axis X Axis: defaults 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axis Y Axis placement: bottom 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom 1`] = `
 [
   {
     "props": {
@@ -2719,7 +2719,7 @@ exports[`TimeSeriesPanel (canvas) Axis Y Axis placement: bottom 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axis Y Axis placement: hidden 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: hidden 1`] = `
 [
   {
     "props": {
@@ -2733,7 +2733,7 @@ exports[`TimeSeriesPanel (canvas) Axis Y Axis placement: hidden 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axis Y Axis placement: right 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right 1`] = `
 [
   {
     "props": {
@@ -3418,7 +3418,7 @@ exports[`TimeSeriesPanel (canvas) Axis Y Axis placement: right 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axis Y Axis placement: top 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top 1`] = `
 [
   {
     "props": {
@@ -4792,7 +4792,7 @@ exports[`TimeSeriesPanel (canvas) Axis Y Axis placement: top 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axis Y Axis: soft min/max 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max 1`] = `
 [
   {
     "props": {
