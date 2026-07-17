@@ -1207,7 +1207,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator(nil, tt.perfEnabled)
+			v := NewAdmissionValidator(nil, func(context.Context) bool { return tt.perfEnabled })
 
 			var obj runtime.Object
 			if tt.obj != nil {

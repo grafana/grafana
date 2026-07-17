@@ -245,6 +245,36 @@ func TestIngesterBufferFull(t *testing.T) {
 	})
 }
 
+func TestIngesterMergeBackHonorsBufferCap(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, store *Store) {
+		ing, err := NewIngester(IngesterOptions{
+			Store:              store,
+			Leases:             newTestLeases(t),
+			Reg:                prometheus.NewRegistry(),
+			Now:                fixedNow("2026-06-23"),
+			MaxBufferedObjects: 1,
+		})
+		require.NoError(t, err)
+
+		a := objectRefFromKey(dashKey("a"))
+		b := objectRefFromKey(dashKey("b"))
+
+		// A new object rebuffered into an empty buffer is accepted.
+		ing.mergeBack(a, map[string]uint64{"views": 2})
+		require.Len(t, ing.buffer, 1)
+
+		// A second distinct object exceeds the cap and is dropped, with its
+		// deltas counted as dropped events.
+		ing.mergeBack(b, map[string]uint64{"views": 3, "queries": 1})
+		require.Len(t, ing.buffer, 1)
+		require.Equal(t, float64(4), testutil.ToFloat64(ing.metrics.droppedEvents.WithLabelValues(reasonBufferFull)))
+
+		// Already-buffered objects can still accumulate even when full.
+		ing.mergeBack(a, map[string]uint64{"views": 5})
+		require.Equal(t, uint64(7), ing.buffer[a]["views"])
+	})
+}
+
 func TestIngesterGetResourceDailyStats(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, store *Store) {
 		ctx := context.Background()
