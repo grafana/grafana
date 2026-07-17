@@ -388,10 +388,17 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		case "folder":
 			req.FolderValues = f.Values
 		default:
-			group := MetadataFilterGroup{JSONs: make([]string, 0, len(f.Values))}
+			// An empty group would render as "AND ()" — invalid SQL.
+			if len(f.Values) == 0 {
+				continue
+			}
+			// Writers store metadata values as scalars (embed extractor) or
+			// arrays (external collections); match either shape per value.
+			group := MetadataFilterGroup{JSONs: make([]string, 0, 2*len(f.Values))}
 			for _, v := range f.Values {
-				j, _ := json.Marshal(map[string][]string{f.Field: {v}})
-				group.JSONs = append(group.JSONs, string(j))
+				s, _ := json.Marshal(map[string]string{f.Field: v})
+				a, _ := json.Marshal(map[string][]string{f.Field: {v}})
+				group.JSONs = append(group.JSONs, string(s), string(a))
 			}
 			req.MetadataFilterGroups = append(req.MetadataFilterGroups, group)
 		}

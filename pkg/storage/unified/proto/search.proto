@@ -298,10 +298,11 @@ message HybridSearchRequest {
   // Top-k: maximum results. Defaults to 50 when zero, capped at 200.
   int64 limit = 4;
 
-  // Exact-match filters, IN semantics for multiple values. Supported
-  // keys: "uid" and "folder" (all kinds), "datasource_uid" and
-  // "language" (dashboards). Every key is enforced natively by BOTH
-  // legs. Any other key fails the request.
+  // Exact-match filters, IN semantics for multiple values, each key at
+  // most once. Supported keys: "uid" and "folder" (all kinds),
+  // "datasource_uid" and "language" (dashboards; language values:
+  // promql, logql, traceql, sql). Every key is enforced natively by
+  // BOTH legs. Any other key or language fails the request.
   repeated Requirement filters = 5;
 }
 

@@ -259,7 +259,9 @@ var languageToDSTypes = map[string][]string{
 	"promql":  {"prometheus"},
 	"logql":   {"loki"},
 	"traceql": {"tempo"},
-	"sql":     {"mysql", "postgres", "mssql"},
+	// "postgres" is the legacy alias; current dashboards carry the full
+	// plugin id.
+	"sql": {"mysql", "postgres", "grafana-postgresql-datasource", "mssql"},
 }
 
 // validateHybridSearchRequest returns nil when valid, otherwise a
@@ -281,12 +283,31 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) *resourcep
 	if len(req.SemanticQuery) > 1000 {
 		return bad("semantic_query exceeds maximum length of 1000 bytes")
 	}
+	if req.SemanticQuery != "" && strings.TrimSpace(req.SemanticQuery) == "" {
+		return bad("semantic_query must not be whitespace")
+	}
+	// Duplicate keys would diverge between legs: the lexical leg ANDs
+	// repeated requirements while the vector backend keeps the last one.
+	seen := make(map[string]struct{}, len(req.Filters))
 	for _, f := range req.Filters {
 		if _, ok := hybridFilterKeys[f.Key]; !ok {
 			return bad(fmt.Sprintf("unsupported filter key %q", f.Key))
 		}
+		if _, dup := seen[f.Key]; dup {
+			return bad(fmt.Sprintf("duplicate filter key %q", f.Key))
+		}
+		seen[f.Key] = struct{}{}
 		if len(f.Values) == 0 {
 			return bad(fmt.Sprintf("filter %q has no values", f.Key))
+		}
+		// Unknown languages would leave the lexical leg unfiltered while
+		// the semantic leg matches nothing — reject instead.
+		if f.Key == "language" {
+			for _, v := range f.Values {
+				if _, ok := languageToDSTypes[v]; !ok {
+					return bad(fmt.Sprintf("unsupported language %q", v))
+				}
+			}
 		}
 	}
 	return nil
@@ -321,9 +342,9 @@ func hybridLexicalRequest(req *resourcepb.HybridSearchRequest, depth int) *resou
 			for _, v := range f.Values {
 				types = append(types, languageToDSTypes[v]...)
 			}
-			if len(types) > 0 {
-				add("ds_types", types)
-			}
+			// Per-kind fields live under the "fields." sub-document in the
+			// index, unlike top-level name/folder/reference fields.
+			add(SEARCH_FIELD_PREFIX+"ds_types", types)
 		}
 	}
 	return out
@@ -333,12 +354,37 @@ func hybridLexicalRequest(req *resourcepb.HybridSearchRequest, depth int) *resou
 // uid/folder are first-class columns; the rest are metadata containment
 // against the embed extractor's keys (datasourceUid, language — see
 // search/embed/dashboard/extractor.go).
+// expandRootFolder mirrors the lexical leg's root-folder handling (see
+// bleve.go's folder requirement rewrite): stored rows carry either the
+// legacy "" or the canonical "general" sentinel, so filtering by one
+// must match both.
+func expandRootFolder(values []string) []string {
+	hasEmpty, hasGeneral := false, false
+	for _, v := range values {
+		switch v {
+		case "":
+			hasEmpty = true
+		case "general":
+			hasGeneral = true
+		}
+	}
+	if hasEmpty == hasGeneral {
+		return values
+	}
+	if hasEmpty {
+		return append(append(make([]string, 0, len(values)+1), values...), "general")
+	}
+	return append(append(make([]string, 0, len(values)+1), values...), "")
+}
+
 func hybridVectorFilters(reqs []*resourcepb.Requirement) []vector.SearchFilter {
 	out := make([]vector.SearchFilter, 0, len(reqs))
 	for _, f := range reqs {
 		switch f.Key {
-		case "uid", "folder":
+		case "uid":
 			out = append(out, vector.SearchFilter{Field: f.Key, Values: f.Values})
+		case "folder":
+			out = append(out, vector.SearchFilter{Field: f.Key, Values: expandRootFolder(f.Values)})
 		case "datasource_uid":
 			out = append(out, vector.SearchFilter{Field: "datasourceUid", Values: f.Values})
 		case "language":

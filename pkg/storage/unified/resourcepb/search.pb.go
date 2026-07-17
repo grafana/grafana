@@ -871,10 +871,11 @@ type HybridSearchRequest struct {
 	SemanticQuery string `protobuf:"bytes,3,opt,name=semantic_query,json=semanticQuery,proto3" json:"semantic_query,omitempty"`
 	// Top-k: maximum results. Defaults to 50 when zero, capped at 200.
 	Limit int64 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
-	// Exact-match filters, IN semantics for multiple values. Supported
-	// keys: "uid" and "folder" (all kinds), "datasource_uid" and
-	// "language" (dashboards). Every key is enforced natively by BOTH
-	// legs. Any other key fails the request.
+	// Exact-match filters, IN semantics for multiple values, each key at
+	// most once. Supported keys: "uid" and "folder" (all kinds),
+	// "datasource_uid" and "language" (dashboards; language values:
+	// promql, logql, traceql, sql). Every key is enforced natively by
+	// BOTH legs. Any other key or language fails the request.
 	Filters       []*Requirement `protobuf:"bytes,5,rep,name=filters,proto3" json:"filters,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

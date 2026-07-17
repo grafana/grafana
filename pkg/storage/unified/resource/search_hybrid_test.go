@@ -187,6 +187,26 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 	require.NotNil(t, validateHybridSearchRequest(r)) // no values
 
 	r = valid()
+	r.SemanticQuery = "   "
+	resp = validateHybridSearchRequest(r)
+	require.NotNil(t, resp) // whitespace-only semantic_query
+
+	r = valid()
+	r.Filters = []*resourcepb.Requirement{
+		{Key: "uid", Operator: "in", Values: []string{"u1"}},
+		{Key: "uid", Operator: "in", Values: []string{"u2"}},
+	}
+	resp = validateHybridSearchRequest(r)
+	require.NotNil(t, resp) // duplicate keys diverge between legs
+	assert.Contains(t, resp.Error.Message, "duplicate")
+
+	r = valid()
+	r.Filters = []*resourcepb.Requirement{{Key: "language", Operator: "in", Values: []string{"promql", "cypher"}}}
+	resp = validateHybridSearchRequest(r)
+	require.NotNil(t, resp) // unknown language would leave the lexical leg unfiltered
+	assert.Contains(t, resp.Error.Message, "cypher")
+
+	r = valid()
 	r.Filters = []*resourcepb.Requirement{
 		{Key: "uid", Operator: "in", Values: []string{"u"}},
 		{Key: "folder", Operator: "in", Values: []string{"f"}},
@@ -220,20 +240,8 @@ func TestHybridLexicalRequest(t *testing.T) {
 	assert.Equal(t, SEARCH_FIELD_FOLDER, out.Options.Fields[1].Key)
 	assert.Equal(t, "reference.DataSource", out.Options.Fields[2].Key)
 	assert.Equal(t, []string{"ds1"}, out.Options.Fields[2].Values)
-	assert.Equal(t, "ds_types", out.Options.Fields[3].Key)
+	assert.Equal(t, SEARCH_FIELD_PREFIX+"ds_types", out.Options.Fields[3].Key)
 	assert.ElementsMatch(t, []string{"prometheus", "loki"}, out.Options.Fields[3].Values)
-}
-
-func TestHybridLexicalRequest_UnknownLanguageAddsNoRequirement(t *testing.T) {
-	req := &resourcepb.HybridSearchRequest{
-		Key:   hybridKey(),
-		Query: "q",
-		Filters: []*resourcepb.Requirement{
-			{Key: "language", Operator: "in", Values: []string{"cypher"}},
-		},
-	}
-	out := hybridLexicalRequest(req, 10)
-	assert.Empty(t, out.Options.Fields)
 }
 
 func TestHybridVectorFilters(t *testing.T) {
@@ -248,6 +256,27 @@ func TestHybridVectorFilters(t *testing.T) {
 	assert.Equal(t, vector.SearchFilter{Field: "folder", Values: []string{"f1"}}, filters[1])
 	assert.Equal(t, vector.SearchFilter{Field: "datasourceUid", Values: []string{"ds1", "ds2"}}, filters[2])
 	assert.Equal(t, vector.SearchFilter{Field: "language", Values: []string{"promql"}}, filters[3])
+}
+
+func TestHybridVectorFilters_RootFolderSentinels(t *testing.T) {
+	// filtering by either root sentinel must match rows stored with the other
+	f := hybridVectorFilters([]*resourcepb.Requirement{
+		{Key: "folder", Operator: "in", Values: []string{"general"}},
+	})
+	require.Len(t, f, 1)
+	assert.ElementsMatch(t, []string{"general", ""}, f[0].Values)
+
+	f = hybridVectorFilters([]*resourcepb.Requirement{
+		{Key: "folder", Operator: "in", Values: []string{"", "f1"}},
+	})
+	require.Len(t, f, 1)
+	assert.ElementsMatch(t, []string{"", "f1", "general"}, f[0].Values)
+
+	f = hybridVectorFilters([]*resourcepb.Requirement{
+		{Key: "folder", Operator: "in", Values: []string{"f1"}},
+	})
+	require.Len(t, f, 1)
+	assert.Equal(t, []string{"f1"}, f[0].Values)
 }
 
 func TestHybridFetchDepth(t *testing.T) {
