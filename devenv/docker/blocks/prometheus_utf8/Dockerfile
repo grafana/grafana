@@ -12,4 +12,5 @@ FROM scratch
 WORKDIR /
 EXPOSE 9112
 COPY --from=builder /main /main
+USER 65532
 ENTRYPOINT ["/main"]
