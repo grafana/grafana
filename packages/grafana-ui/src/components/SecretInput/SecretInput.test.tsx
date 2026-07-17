@@ -63,8 +63,23 @@ describe('<SecretInput />', () => {
     expect(input).toHaveValue('Foo');
   });
 
-  it('should toggle the visibility of the secret between password and text', async () => {
+  it('should not render a visibility toggle by default', () => {
     render(<SecretInput isConfigured={false} onChange={() => {}} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />);
+
+    expect(screen.getByPlaceholderText(PLACEHOLDER_TEXT)).toHaveAttribute('type', 'password');
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('should toggle the visibility of the secret between password and text', async () => {
+    render(
+      <SecretInput
+        revealable={true}
+        isConfigured={false}
+        onChange={() => {}}
+        onReset={() => {}}
+        placeholder={PLACEHOLDER_TEXT}
+      />
+    );
 
     const input = screen.getByPlaceholderText(PLACEHOLDER_TEXT);
 
@@ -85,10 +100,49 @@ describe('<SecretInput />', () => {
     expect(toggle).not.toBeChecked();
   });
 
+  it('should show the loading spinner instead of the visibility toggle while loading', () => {
+    render(
+      <SecretInput
+        revealable={true}
+        loading={true}
+        isConfigured={false}
+        onChange={() => {}}
+        onReset={() => {}}
+        placeholder={PLACEHOLDER_TEXT}
+      />
+    );
+
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('should not render a visibility toggle when the secret is configured', () => {
+    render(
+      <SecretInput
+        revealable={true}
+        isConfigured={true}
+        onChange={() => {}}
+        onReset={() => {}}
+        placeholder={PLACEHOLDER_TEXT}
+      />
+    );
+
+    expect(screen.getByPlaceholderText(PLACEHOLDER_TEXT)).toBeDisabled();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
   it('should allow pasting a value after the secret is revealed', async () => {
     const onChange = jest.fn();
 
-    render(<SecretInput isConfigured={false} onChange={onChange} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />);
+    render(
+      <SecretInput
+        revealable={true}
+        isConfigured={false}
+        onChange={onChange}
+        onReset={() => {}}
+        placeholder={PLACEHOLDER_TEXT}
+      />
+    );
 
     const input = screen.getByPlaceholderText(PLACEHOLDER_TEXT);
 
