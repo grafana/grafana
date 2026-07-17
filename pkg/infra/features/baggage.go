@@ -18,7 +18,7 @@ const (
 // populates these baggage members on every proxied request, so MT services get
 // a full per-tenant eval context with no extra metadata API calls. namespace is
 // used as the targeting key.
-func InstanceContextFromBaggage(ctx context.Context) openfeature.EvaluationContext {
+func EvaluationContextFromBaggage(ctx context.Context) openfeature.EvaluationContext {
 	bag := baggage.FromContext(ctx)
 
 	contextAtributes := map[string]any{}
