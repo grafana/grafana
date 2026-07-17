@@ -69,4 +69,22 @@ describe('LegendTableItem', () => {
     await userEvent.click(screen.getByRole('button'));
     expect(onLabelClick).not.toHaveBeenCalled();
   });
+
+  describe('overflow', () => {
+    it('keeps the label on a single line (nowrap) by default', () => {
+      renderInTable();
+      expect(screen.getByRole('button')).toHaveStyle({ whiteSpace: 'nowrap' });
+    });
+
+    it('keeps the label on a single line (nowrap) when overflow is "ellipsis"', () => {
+      renderInTable({ overflow: 'ellipsis' });
+      expect(screen.getByRole('button')).toHaveStyle({ whiteSpace: 'nowrap' });
+    });
+
+    it('allows the label to wrap (normal) when overflow is "wrap"', () => {
+      renderInTable({ overflow: 'wrap' });
+      expect(screen.getByRole('button')).toHaveStyle({ whiteSpace: 'normal' });
+      expect(screen.getByRole('button')).toHaveStyle({ overflowWrap: 'break-word' });
+    });
+  });
 });

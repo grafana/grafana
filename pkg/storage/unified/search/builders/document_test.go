@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -78,9 +79,10 @@ func TestTeamSearchBuilder(t *testing.T) {
 	doSnapshotTests(t, info.Builder, "team", &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "iam.grafana.app",
-		Resource:  "searchTeams",
+		Resource:  "teams",
 	}, []string{
 		"with-email-and-external-uid",
+		"with-members-and-groups",
 	})
 }
 
@@ -207,4 +209,27 @@ func TestBuildSelectableFields(t *testing.T) {
 	user := &iamv0.User{}
 	_, err = BuildSelectableFields(user, iamv0.TeamBindingKind())
 	require.Error(t, err)
+}
+
+func TestUserDocumentBuilder_Created(t *testing.T) {
+	info, err := GetUserBuilder()
+	require.NoError(t, err)
+
+	value := []byte(`{
+		"apiVersion": "iam.grafana.app/v0alpha1",
+		"kind": "User",
+		"metadata": {
+			"name": "uid-1",
+			"creationTimestamp": "2024-01-02T03:04:05Z"
+		},
+		"spec": {"login": "jdoe", "email": "jdoe@example.com", "role": "Admin"}
+	}`)
+
+	doc, err := info.Builder.BuildDocument(context.Background(),
+		&resourcepb.ResourceKey{Namespace: "default", Group: "iam.grafana.app", Resource: "users", Name: "uid-1"},
+		1, value)
+	require.NoError(t, err)
+
+	// The creation timestamp is carried on the standard created field.
+	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli(), doc.Created)
 }

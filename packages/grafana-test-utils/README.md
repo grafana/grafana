@@ -36,7 +36,7 @@ jest.mock('@grafana/ui/src/utils/measureText', () =>
 );
 
 beforeEach(() => {
-  applyDefaultUPlotAxisMeasureTextMock(uPlotAxisMeasureText as jest.MockedFunction<typeof uPlotAxisMeasureText>);
+  applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
 });
 ```
 

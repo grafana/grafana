@@ -46,6 +46,13 @@ const (
 	// graph resolves; enterprise overwrites it with the real implementation.
 	IAMRolesSyncer = accesscontrol.IAMRolesSyncerServiceName
 
+	// GlobalRoleSeeder is the module name for the GlobalRole management
+	// service. OSS registers an always-disabled noop; enterprise overwrites it
+	// with the real implementation, which (when elected leader) seeds the
+	// fixed-role GlobalRoles and then aggregates the basic roles under a single
+	// lease.
+	GlobalRoleSeeder = accesscontrol.GlobalRoleSeederServiceName
+
 	// SQLStore is the module name for the SQLStore background service.
 	// It is the root of the dependency graph so that the database engine is
 	// closed last during shutdown, after every other service has stopped.
@@ -67,7 +74,8 @@ func dependencyMap() map[string][]string {
 		FixedRolesLoader:   {PluginInstaller, IAMRolesSyncer},
 		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
 		InstallSync:        {Provisioning},
-		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
+		GlobalRoleSeeder:   {GrafanaAPIServer},
+		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
 		BackgroundServices: {Core},
 	}
 }

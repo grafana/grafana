@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -54,8 +53,8 @@ var (
 	ErrInhibitionRuleInvalid  = errutil.BadRequest("alerting.notifications.inhibition-rules.invalidFormat").MustTemplate("Invalid format of the submitted inhibition rule", errutil.WithPublic("Inhibition rule is in invalid format. Correct the payload and try again."))
 	ErrInhibitionRuleNotFound = errutil.NotFound("alerting.notifications.inhibition-rules.notFound")
 	ErrInhibitionRuleOrigin   = errutil.BadRequest("alerting.notifications.inhibition-rules.originInvalid").MustTemplate(
-		"Inhibition Rule '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
-		errutil.WithPublic("Inhibition Rule '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+		"Inhibition Rule '{{ .Public.UID }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Inhibition Rule '{{ .Public.UID }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
 )
 
@@ -67,8 +66,6 @@ var (
 		"Invalid format of the submitted route: {{.Public.Error}}.",
 		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
 	)
-
-	ErrMultipleRoutesNotSupported = errutil.NotImplemented("alerting.notifications.routes.multipleNotSupported", errutil.WithPublicMessage(fmt.Sprintf("Multiple routes are not supported, see feature toggle %q", featuremgmt.FlagAlertingMultiplePolicies)))
 
 	ErrRouteVersionConflict = errutil.Conflict("alerting.notifications.routes.conflict").MustTemplate(
 		"Provided version '{{ .Public.Version }}' of route '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
@@ -149,8 +146,8 @@ func MakeErrInhibitionRuleInvalid(err error) error {
 	return ErrInhibitionRuleInvalid.Build(data)
 }
 
-func MakeErrInhibitionRuleOrigin(name, action string) error {
+func MakeErrInhibitionRuleOrigin(uid, action string) error {
 	return ErrInhibitionRuleOrigin.Build(errutil.TemplateData{
-		Public: map[string]interface{}{"Action": action, "Name": name},
+		Public: map[string]interface{}{"Action": action, "UID": uid},
 	})
 }

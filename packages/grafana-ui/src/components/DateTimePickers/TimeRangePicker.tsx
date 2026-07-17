@@ -70,10 +70,6 @@ export interface TimeRangePickerProps {
   weekStart?: WeekStart;
 }
 
-export interface State {
-  isOpen: boolean;
-}
-
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangepicker--docs
  */
@@ -337,6 +333,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 const getLabelStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     container: css({
       display: 'flex',
@@ -345,7 +342,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
       columnGap: theme.spacing(0.75),
     }),
     utc: css({
-      color: theme.colors.warning.text,
+      color: visualRefreshEnabled ? theme.colors.tertiary.text : theme.colors.warning.text,
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
     }),

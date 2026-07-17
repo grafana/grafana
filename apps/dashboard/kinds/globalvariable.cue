@@ -14,14 +14,9 @@ globalVariableV2beta1: {
 	//   - global: spec.spec.name
 	//   - folder: spec.spec.name + "--" + folderUID
 	// - when metadata.name is provided, it must match the derived value.
-	//TODO:
-	// Adding selectableFields here causes the codegen to fail because it's a union parent path.
-	// Until grafana-app-sdk supports selectableFields through union parent paths, 
-	// we're not adding it here and patching the manifest.go file instead with 
-	// apps/dashboard/cuehack/patch_variable_selectable_fields.sh
-	//  selectableFields: [ 
-	// 	"spec.spec.name",
-	// ] 
+	selectableFields: [
+		"spec.spec.name",
+	]
 	validation: {
 		operations: ["CREATE", "UPDATE"]
 	}

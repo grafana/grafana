@@ -231,7 +231,7 @@ export function filterSpans(
   return filteredSpans ? new Set(spans.map((span: TraceSpan) => span.spanID)) : undefined;
 }
 
-export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
+function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return undefined;
   }
@@ -423,7 +423,7 @@ const getCriticalPathMatches = (spans: TraceSpan[], criticalPath: CriticalPathSe
   });
 };
 
-export const convertTimeFilter = (time: string) => {
+const convertTimeFilter = (time: string) => {
   if (time.includes('ns')) {
     return parseFloat(time.split('ns')[0]) / 1000;
   } else if (time.includes('us')) {

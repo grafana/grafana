@@ -223,14 +223,6 @@ export function calculateDimensions(
   };
 }
 
-export function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-  let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
-  return {
-    x: centerX + radius * Math.cos(radian),
-    y: centerY + radius * Math.sin(radian),
-  };
-}
-
 export function drawRadialArcPath(
   startAngle: number,
   endAngle: number,

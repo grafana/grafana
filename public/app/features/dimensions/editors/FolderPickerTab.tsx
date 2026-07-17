@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
+import { type Subscription } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, FilterInput, Combobox, useStyles2, type ComboboxOption } from '@grafana/ui';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { type FileElement, type GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { getGrafanaDatasource, type FileElement } from 'app/plugins/datasource/grafana/datasource';
 
 import { MediaType, ResourceFolderName } from '../types';
 
@@ -68,48 +68,66 @@ export const FolderPickerTab = (props: Props) => {
   useEffect(() => {
     // we don't want to load everything before picking a folder
     const folder = currentFolder?.value;
-    if (folder) {
-      const filter =
-        mediaType === MediaType.Icon
-          ? (item: FileElement) => item.name.endsWith('.svg')
-          : (item: FileElement) => item.name.endsWith('.png') || item.name.endsWith('.gif');
-
-      getDatasourceSrv()
-        .get('-- Grafana --')
-        .then((ds) => {
-          (ds as GrafanaDatasource).listFiles(folder, maxFiles).subscribe({
-            next: (frame) => {
-              const cards: ResourceItem[] = [];
-              frame.forEach((item) => {
-                if (filter(item)) {
-                  const idx = item.name.lastIndexOf('.');
-                  cards.push({
-                    value: `${folder}/${item.name}`,
-                    label: item.name,
-                    search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
-                    imgUrl: `${window.__grafana_public_path__}build/${folder}/${item.name}`,
-                  });
-                }
-              });
-              setDirectoryIndex(cards);
-              setFilteredIndex(cards);
-            },
-          });
-        });
+    if (!folder) {
+      return;
     }
+
+    const filter =
+      mediaType === MediaType.Icon
+        ? (item: FileElement) => item.name.endsWith('.svg')
+        : (item: FileElement) => item.name.endsWith('.png') || item.name.endsWith('.gif');
+
+    // Tear down on folder change so a slow previous-folder request can't repopulate the grid
+    // after we've already switched folders.
+    let cancelled = false;
+    let subscription: Subscription | undefined;
+    getGrafanaDatasource().then((ds) => {
+      if (cancelled) {
+        return;
+      }
+      subscription = ds.listFiles(folder, maxFiles).subscribe({
+        next: (frame) => {
+          const cards: ResourceItem[] = [];
+          frame.forEach((item) => {
+            if (filter(item)) {
+              const idx = item.name.lastIndexOf('.');
+              cards.push({
+                value: `${folder}/${item.name}`,
+                label: item.name,
+                search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
+                imgUrl: `${window.__grafana_public_path__}build/${folder}/${item.name}`,
+              });
+            }
+          });
+          setDirectoryIndex(cards);
+          setFilteredIndex(cards);
+        },
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      subscription?.unsubscribe();
+    };
   }, [mediaType, currentFolder, maxFiles]);
 
   return (
     <>
-      <Field>
+      <Field noMargin={false}>
         <Combobox
           options={folders}
-          onChange={setCurrentFolder}
+          onChange={(folder) => {
+            // Clear the grid immediately so it stays empty until the new folder's icons load,
+            // rather than showing the previous folder's icons during the request.
+            setDirectoryIndex([]);
+            setFilteredIndex([]);
+            setCurrentFolder(folder);
+          }}
           value={currentFolder}
           aria-label={t('dimensions.folder-picker-tab.label-folder', 'Folder')}
         />
       </Field>
-      <Field>
+      <Field noMargin={false}>
         <FilterInput
           value={searchQuery ?? ''}
           placeholder={t('dimensions.folder-picker-tab.placeholder-search', 'Search')}

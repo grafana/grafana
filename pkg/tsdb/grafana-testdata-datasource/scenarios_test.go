@@ -175,6 +175,145 @@ func TestTestdataScenarios(t *testing.T) {
 			require.True(t, maxNil)
 		})
 	})
+
+	t.Run("flaky query", func(t *testing.T) {
+		s := &Service{}
+		from := time.Now()
+		to := from.Add(5 * time.Minute)
+
+		makeReq := func(probability float64) *backend.QueryDataRequest {
+			return &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries: []backend.DataQuery{
+					{
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: from,
+							To:   to,
+						},
+						Interval:      100 * time.Millisecond,
+						MaxDataPoints: 100,
+						JSON: []byte(fmt.Sprintf(
+							`{"queryDelay":"0s","errorProbability":%v,"errorMessage":"test error","errorStatusCode":400,"errorSource":"downstream"}`,
+							probability,
+						)),
+					},
+				},
+			}
+		}
+
+		t.Run("returns error when probability is 100", func(t *testing.T) {
+			resp, err := s.handleFlakyQueryScenario(context.Background(), makeReq(100))
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses["A"]
+			require.True(t, exists)
+			require.Error(t, dResp.Error)
+			require.Equal(t, "test error", dResp.Error.Error())
+			require.Equal(t, backend.StatusBadRequest, dResp.Status)
+			require.Equal(t, backend.ErrorSourceDownstream, dResp.ErrorSource)
+			require.Empty(t, dResp.Frames)
+		})
+
+		t.Run("returns data when probability is 0", func(t *testing.T) {
+			resp, err := s.handleFlakyQueryScenario(context.Background(), makeReq(0))
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses["A"]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+			require.Len(t, dResp.Frames, 1)
+		})
+	})
+
+	t.Run("errors and notices", func(t *testing.T) {
+		t.Run("Should attach one notice of each severity to the frame meta", func(t *testing.T) {
+			from := time.Now()
+			to := from.Add(5 * time.Minute)
+
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: from,
+					To:   to,
+				},
+				Interval:      100 * time.Millisecond,
+				MaxDataPoints: 100,
+				JSON:          []byte(`{}`),
+			}
+
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
+
+			resp, err := s.handleErrorsAndNoticesScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.NotNil(t, frame.Meta)
+			require.Len(t, frame.Meta.Notices, 3)
+
+			severities := map[data.NoticeSeverity]string{}
+			for _, n := range frame.Meta.Notices {
+				severities[n.Severity] = n.Text
+				require.NotEmpty(t, n.Text)
+			}
+
+			require.Contains(t, severities, data.NoticeSeverityInfo)
+			require.Contains(t, severities, data.NoticeSeverityWarning)
+			require.Contains(t, severities, data.NoticeSeverityError)
+
+			// The error notice points the inspector at the error tab.
+			var errNotice *data.Notice
+			for i := range frame.Meta.Notices {
+				if frame.Meta.Notices[i].Severity == data.NoticeSeverityError {
+					errNotice = &frame.Meta.Notices[i]
+				}
+			}
+			require.NotNil(t, errNotice)
+			require.Equal(t, data.InspectTypeError, errNotice.Inspect)
+		})
+	})
+}
+
+func TestFlakyQueryDelay(t *testing.T) {
+	t.Run("returns 0 for non-positive base", func(t *testing.T) {
+		require.Equal(t, time.Duration(0), flakyQueryDelay(0, 100))
+		require.Equal(t, time.Duration(0), flakyQueryDelay(-time.Second, 100))
+	})
+
+	t.Run("returns base unchanged with 0 variability", func(t *testing.T) {
+		base := time.Second
+		for i := 0; i < 100; i++ {
+			require.Equal(t, base, flakyQueryDelay(base, 0))
+		}
+	})
+
+	t.Run("stays within +/- variability percentage of base", func(t *testing.T) {
+		base := time.Second
+		// 100% variability => uniform in [0, 2*base]
+		for i := 0; i < 1000; i++ {
+			delay := flakyQueryDelay(base, 100)
+			require.GreaterOrEqual(t, delay, time.Duration(0))
+			require.LessOrEqual(t, delay, 2*base)
+		}
+
+		// 50% variability => uniform in [0.5*base, 1.5*base]
+		for i := 0; i < 1000; i++ {
+			delay := flakyQueryDelay(base, 50)
+			require.GreaterOrEqual(t, delay, base/2)
+			require.LessOrEqual(t, delay, base+base/2)
+		}
+	})
 }
 
 func TestParseLabels(t *testing.T) {

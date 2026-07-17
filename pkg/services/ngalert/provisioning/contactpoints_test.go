@@ -283,7 +283,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		newCp.Name = newName
 
 		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
-			revision.RenameReceiverInRoutes(oldName, newName, false)
+			revision.RenameReceiverInRoutes(oldName, newName)
 			return nil
 		}
 
@@ -379,7 +379,8 @@ func TestIntegrationContactPointService(t *testing.T) {
 					require.Equal(t, newCp.UID, cps[0].UID)
 					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
 				} else {
-					require.Error(t, err, fmt.Sprintf("cannot change provenance from '%s' to '%s'", test.from, test.to))
+					require.Error(t, err)
+					require.Truef(t, validation.ErrProvenanceChangeNotAllowed.Base.Is(err), "expected ErrProvenanceChangeNotAllowed but got %s", err)
 				}
 			})
 		}
@@ -410,6 +411,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			settingsJSON  string
 			expectedValue string
 			name          string
+			expectedError string
 		}{
 			{
 				settingsJSON:  `{"recipient":"value_recipient","TOKEN":"some-other-token"}`,
@@ -417,12 +419,12 @@ func TestIntegrationContactPointService(t *testing.T) {
 				name:          "token key is uppercased",
 			},
 
-			// This test checks that if multiple token keys are present in the settings,
-			// the key with the exact matching name is used.
+			// This test checks that we reject a payload with multiple token keys in the settings
 			{
 				settingsJSON:  `{"recipient":"value_recipient","TOKEN":"some-other-token", "token": "second-token"}`,
 				expectedValue: "second-token",
 				name:          "multiple token keys",
+				expectedError: "duplicate keys found for secret field token",
 			},
 		}
 
@@ -435,7 +437,13 @@ func TestIntegrationContactPointService(t *testing.T) {
 				newCp.Settings = settings
 
 				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
-				require.NoError(t, err)
+				if tc.expectedError == "" {
+					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), tc.expectedError)
+					return
+				}
 
 				q := cpsQueryWithName(1, newCp.Name)
 				q.Decrypt = true
@@ -726,6 +734,66 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 				v, err := cp.Settings.GetPath(path...).Value()
 				assert.NoError(t, err)
 				assert.Nilf(t, v, "field %s is expected to be removed from the settings", field)
+			}
+		})
+	}
+}
+
+func TestRemoveSecretsForContactPoint_CaseInsensitive(t *testing.T) {
+	// Each case stores a secret under a non-canonical casing of the schema's
+	// secret field name and asserts that RemoveSecretsForContactPoint still
+	// extracts it into secureFields and strips it from settings.
+	cases := []struct {
+		name        string
+		integration string
+		field       string // canonical field name from the schema
+		storedKey   string // the differently-cased key actually stored in settings
+	}{
+		{
+			name:        "camelCase field stored uppercase",
+			integration: "opsgenie",
+			field:       "apiKey",
+			storedKey:   "APIKEY",
+		},
+		{
+			name:        "camelCase field stored lowercase",
+			integration: "opsgenie",
+			field:       "apiKey",
+			storedKey:   "apikey",
+		},
+		{
+			name:        "snake_case field stored uppercase",
+			integration: "webhook",
+			field:       "authorization_credentials",
+			storedKey:   "AUTHORIZATION_CREDENTIALS",
+		},
+		{
+			name:        "snake_case field stored mixed-case",
+			integration: "webhook",
+			field:       "authorization_credentials",
+			storedKey:   "Authorization_Credentials",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			settings, err := simplejson.NewJson(fmt.Appendf(nil, `{%q:"test-secret"}`, tc.storedKey))
+			require.NoError(t, err)
+			cp := definitions.EmbeddedContactPoint{
+				Name:     "case-insensitive-" + tc.integration,
+				Type:     tc.integration,
+				Settings: settings,
+			}
+
+			secureFields, err := RemoveSecretsForContactPoint(&cp)
+			require.NoError(t, err)
+
+			assert.Equal(t, "test-secret", secureFields[tc.field])
+
+			settingsMap, err := cp.Settings.Map()
+			require.NoError(t, err)
+			for k := range settingsMap {
+				assert.Falsef(t, strings.EqualFold(k, tc.field), "expected %s to be removed from settings but key %q remains", tc.field, k)
 			}
 		})
 	}
@@ -1926,4 +1994,21 @@ func TestValidateContactPointAllowedIntegrations(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateContactPoint_DuplicateSecrets(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	settings, err := simplejson.NewJson([]byte(`{"token":"value_token","TOKEN":"value_token_2"}`))
+	require.NoError(t, err)
+	contactPoint := &definitions.EmbeddedContactPoint{
+		Name:     "test-cp",
+		Type:     "slack",
+		Settings: settings,
+	}
+
+	err = ValidateContactPoint(context.Background(), contactPoint, decryptFn, nil)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "duplicate keys found for secret field")
 }

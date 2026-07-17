@@ -3,7 +3,6 @@ import { shuffle } from 'lodash';
 import { memo, useState, useEffect } from 'react';
 
 import { type GrafanaTheme2, type QueryEditorHelpProps } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { TextLink, useStyles2 } from '@grafana/ui';
 
 import type LokiLanguageProvider from '../LanguageProvider';
@@ -64,7 +63,6 @@ export default memo(function LokiCheatSheet({ datasource, onClickExample }: Quer
       }
     };
 
-    reportInteraction('grafana_loki_cheatsheet_opened', {});
     timer = setTimeout(checkUserLabels, 1000);
 
     return () => clearTimeout(timer);
@@ -78,7 +76,6 @@ export default memo(function LokiCheatSheet({ datasource, onClickExample }: Quer
         key={expr}
         onClick={() => {
           onClickExample({ refId: 'A', expr });
-          reportInteraction('grafana_loki_cheatsheet_example_clicked', {});
         }}
       >
         <code>{expr}</code>

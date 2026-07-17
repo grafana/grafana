@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -32,12 +33,12 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 		return fmt.Errorf("get clients: %w", err)
 	}
 
-	for _, kind := range resources.SupportedProvisioningResources {
-		progress.SetMessage(ctx, fmt.Sprintf("remove unprovisioned %s", kind.Resource))
-		client, _, err := clients.ForResource(ctx, kind)
+	for _, supported := range clients.SupportedResources() {
+		client, gvr, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: supported.Group, Kind: supported.Kind})
 		if err != nil {
 			return fmt.Errorf("get resource client: %w", err)
 		}
+		progress.SetMessage(ctx, fmt.Sprintf("remove unprovisioned %s", gvr.Resource))
 
 		if err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 			gvk := item.GroupVersionKind()
@@ -51,9 +52,11 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 				return nil // Continue with next resource
 			}
 
-			manager, _ := meta.GetManagerProperties()
-			// Skip if resource is managed by any provisioning system
-			if manager.Identity != "" {
+			_, managed := meta.GetManagerProperties()
+			// Skip if resource is managed by any provisioning system. Use the managed
+			// flag rather than a non-empty identity: classic shim kinds are reported as
+			// managed without an identity and would otherwise be deleted as orphans.
+			if managed {
 				resultBuilder.WithAction(repository.FileActionIgnored)
 				progress.Record(ctx, resultBuilder.Build())
 				return nil // Skip this resource

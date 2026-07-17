@@ -34,8 +34,9 @@ const height = 378;
 /** Minimal viewport for snapshots that only need a few cells drawn (smaller canvas event payloads). */
 const compactCanvas = { width: 260, height: 140 } as const;
 
+let uPlotInstance: InstanceType<typeof uPlot> | undefined;
 jest.mock('@grafana/ui/src/utils/measureText', () =>
-  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock()
+  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
 );
 
 /**
@@ -214,15 +215,18 @@ function createTinyDenseHeatmapFrameWithOrdinalY() {
 describe('HeatmapPanel (canvas)', () => {
   let prepConfigSpy: jest.SpyInstance;
   const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
-  let uPlotInstance: InstanceType<typeof uPlot> | undefined;
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
   let clearAxisEvents = true;
 
   const assertUPlotReady = async () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
-    await waitFor(() =>
-      expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
-    );
+
+    await waitFor(() => uPlotInstance?.status === 1);
+    await waitFor(() => {
+      return expect(
+        screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')
+      ).toBeVisible();
+    });
   };
 
   const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
@@ -236,7 +240,7 @@ describe('HeatmapPanel (canvas)', () => {
   };
 
   beforeEach(() => {
-    applyDefaultUPlotAxisMeasureTextMock(uPlotAxisMeasureText as jest.MockedFunction<typeof uPlotAxisMeasureText>);
+    applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
       const builder: UPlotConfigBuilder = realPrepConfig(opts);

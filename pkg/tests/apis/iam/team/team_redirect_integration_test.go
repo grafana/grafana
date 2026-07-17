@@ -195,6 +195,7 @@ func setupTeamTestHelper(t *testing.T) *apis.K8sTestHelper {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesTeamsRedirect,
+			featuremgmt.FlagKubernetesUsersApi,
 		},
 	})
 
@@ -211,6 +212,12 @@ func setTeamK8sFeatureToggle(t *testing.T, enabled bool) {
 		},
 		featuremgmt.FlagKubernetesTeamsRedirect: {
 			Key:            featuremgmt.FlagKubernetesTeamsRedirect,
+			DefaultVariant: "default",
+			Variants:       map[string]any{"default": enabled},
+		},
+		// Gate also requires UsersApi for member enrichment.
+		featuremgmt.FlagKubernetesUsersApi: {
+			Key:            featuremgmt.FlagKubernetesUsersApi,
 			DefaultVariant: "default",
 			Variants:       map[string]any{"default": enabled},
 		},

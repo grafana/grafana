@@ -14,7 +14,6 @@ import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { initialConstantVariableModelState } from '../constant/reducer';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { changeVariableNameSucceeded } from '../editor/reducer';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
 import { toVariablePayload } from '../utils';
@@ -475,25 +474,6 @@ describe('sharedReducer', () => {
     });
   });
 
-  describe('when changeVariableNameSucceeded is dispatched', () => {
-    it('then state should be correct', () => {
-      const adapter = createQueryVariableAdapter();
-      const { initialState } = getVariableTestContext(adapter);
-      const newName = 'A new name';
-      const payload = toVariablePayload({ id: '0', type: 'query' }, { newName });
-      reducerTester<VariablesState>()
-        .givenReducer(sharedReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeVariableNameSucceeded(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          '0': {
-            ...initialState[0],
-            name: 'A new name',
-          },
-        });
-    });
-  });
-
   describe('when changeVariableType is dispatched', () => {
     it('then state should be correct', () => {
       const queryAdapter = createQueryVariableAdapter();
@@ -506,7 +486,9 @@ describe('sharedReducer', () => {
 
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(queryAdapterState))
-        .whenActionIsDispatched(changeVariableNameSucceeded(toVariablePayload(identifier, { newName: 'test' })))
+        .whenActionIsDispatched(
+          changeVariableProp(toVariablePayload(identifier, { propName: 'name', propValue: 'test' }))
+        )
         .whenActionIsDispatched(
           changeVariableProp(toVariablePayload(identifier, { propName: 'description', propValue: 'new description' }))
         )

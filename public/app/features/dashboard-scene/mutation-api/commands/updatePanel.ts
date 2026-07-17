@@ -23,7 +23,7 @@ import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads, type PanelQueryKind, type TransformationKind } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
-export const updatePanelPayloadSchema = payloads.updatePanel;
+const updatePanelPayloadSchema = payloads.updatePanel;
 
 export type UpdatePanelPayload = z.infer<typeof updatePanelPayloadSchema>;
 

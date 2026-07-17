@@ -8,7 +8,7 @@ import {
 import { Trans } from '@grafana/i18n';
 import { Field, Icon, Label, SecretTextArea, Tooltip, Stack } from '@grafana/ui';
 
-export interface Props<T extends DataSourceJsonData, S> {
+interface Props<T extends DataSourceJsonData, S> {
   editorProps: DataSourcePluginOptionsEditorProps<T, S>;
   showCACert?: boolean;
   showKeyPair?: boolean;

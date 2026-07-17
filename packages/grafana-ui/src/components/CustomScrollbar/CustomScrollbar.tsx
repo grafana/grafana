@@ -154,8 +154,6 @@ export const CustomScrollbar = ({
   );
 };
 
-export default CustomScrollbar;
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     customScrollbar: css({

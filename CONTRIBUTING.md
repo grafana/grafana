@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to Grafana! We welcome all people who want to contribute in a healthy and constructive manner within our community. To help us create a safe and positive community experience for all, we require all participants to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program]([https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement](https://grafana.com/community/champions/) as you start to contribute. It's designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
+This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program](https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement) as you start to contribute. It's designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
 
 > **Help us improve!** We'd love to hear about your contributor experience. Take a moment to share your feedback in our [Open Source Contributor Experience Survey](https://gra.fan/ome). Your input helps us make contributing to Grafana better for everyone.
 
@@ -11,13 +11,13 @@ Whether you're a new contributor or a seasoned veteran, we hope these resources 
 #### Interact and be heard
 
 - **Forums:** Do you have a problem, question, or curiosity? Visit our [forums](https://gra.fan/fromgithubtoforums) for a reservoir of knowledge, submit your own questions and answers!
-- **Meetups:** Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](http://www.grafana.com/g/communityengcamp-githubtomeetup)!
+- **Meetups:** Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](https://www.grafana.com/g/communityengcamp-githubtomeetup)!
 - **Community Slack:** Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://gra.fan/githubtoslack).
 
 #### Learn
 
-- **YouTube:** From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](http://www.grafana.com/g/communityengcamp-githubtoyoutube) has what you need to get started!
-- **Meetups:** Join a [group near you](http://www.grafana.com/g/communityengcamp-githubtomeetup) to learn from local experts and ask questions in real time.
+- **YouTube:** From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](https://www.grafana.com/g/communityengcamp-githubtoyoutube) has what you need to get started!
+- **Meetups:** Join a [group near you](https://www.grafana.com/g/communityengcamp-githubtomeetup) to learn from local experts and ask questions in real time.
 
 #### Make technical contributions
 
@@ -25,7 +25,7 @@ Whether you're a new contributor or a seasoned veteran, we hope these resources 
 
 #### Share your story
 
-- **Meetups and blogs:** We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](http://www.grafana.com/g/communityengcamp-githubtocca), and we’ll connect with you on next steps if accepted.
+- **Meetups and blogs:** We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](https://www.grafana.com/g/communityengcamp-githubtocca), and we’ll connect with you on next steps if accepted.
 
 ## Choose the right channel
 
@@ -40,7 +40,7 @@ Use the right place to ask questions, report problems, and propose changes.
 
 We welcome your technical contributions! You can contribute in several ways:
 
-### Contribute Code to Grafana
+### Contribute code to Grafana
 
 **What you will need:**
 
@@ -54,6 +54,12 @@ We welcome your technical contributions! You can contribute in several ways:
 1. Prepare a clear, descriptive pull request ([how-to guide](contribute/create-pull-request.md)).
 1. Ensure you include and run the appropriate tests as part of your pull request.
 1. Commit and push your changes. If you encounter merge conflicts, you may rebase your branch onto the main branch.
+
+## Submit a pull request
+
+Effective June 22, 2026, all Grafana Labs repositories [require signed commits](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-signed-commits). To learn how to enable commit verification, refer to [about commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) and refer to this page to learn about [checking your commit signature verification status](https://docs.github.com/en/authentication/troubleshooting-commit-signature-verification/checking-your-commit-and-tag-signature-verification-status).
+
+**NOTE** Unsigned commits and pull requests will be rejected and closed. This includes pull requests that have been authored by Agents.
 
 ### Develop a Plugin
 

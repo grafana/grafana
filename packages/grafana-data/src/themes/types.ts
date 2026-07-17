@@ -34,7 +34,12 @@ export interface GrafanaTheme2 {
   /** @deprecated Will be removed in a future version */
   v1: GrafanaTheme;
   /** feature flags that might impact component looks */
-  flags: {};
+  flags: {
+    /**
+     * @internal
+     */
+    visualDesignRefresh?: boolean;
+  };
 }
 
 export const ThemeRichColorInputSchema = z.object({
@@ -56,15 +61,10 @@ export const ThemeRichColorInputSchema = z.object({
   contrastText: z.string().optional(),
 });
 
-export const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
+const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
 
 /** @alpha */
 export type ThemeRichColor = z.infer<typeof ThemeRichColorSchema>;
-
-/** @internal */
-export type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
 
 /** @internal */
 export type DeepRequired<T> = Required<{

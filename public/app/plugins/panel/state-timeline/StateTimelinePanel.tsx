@@ -20,7 +20,7 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getFilterByGroupedLabels, getTimezones } from '../timeseries/utils';

@@ -692,8 +692,8 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationPanelFilter(ref commo
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int64",
+										Type:    []string{"number"},
+										Format:  "double",
 									},
 								},
 							},
@@ -2099,6 +2099,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardFieldColor(ref common.Reference
 					"fixedColor": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The fixed color value for fixed or shades color modes.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"gradientColorTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

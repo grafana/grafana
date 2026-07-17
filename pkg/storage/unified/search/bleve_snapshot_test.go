@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -612,7 +612,7 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(context.Background(), ns, 10, nil, "rebuild",
+	idx, err := be.BuildIndex(context.Background(), ns, 10, "rebuild",
 		func(resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
@@ -645,7 +645,7 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(context.Background(), ns, 10, nil, "rebuild",
+	idx, err := be.BuildIndex(context.Background(), ns, 10, "rebuild",
 		func(index resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
@@ -671,7 +671,7 @@ func TestBuildIndex_RebuildLeaderUploads(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(t.Context(), ns, 10, nil, "rebuild",
+	idx, err := be.BuildIndex(t.Context(), ns, 10, "rebuild",
 		func(index resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 7, nil
@@ -701,7 +701,7 @@ func TestBuildIndex_RebuildLeaderLockLostDuringBuild(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(t.Context(), ns, 10, nil, "rebuild",
+	idx, err := be.BuildIndex(t.Context(), ns, 10, "rebuild",
 		func(resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			store.signalLockLost()
@@ -742,7 +742,7 @@ func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
 	}
 	resultCh := make(chan buildResult, 1)
 	go func() {
-		idx, err := be.BuildIndex(ctx, ns, 10, nil, "rebuild",
+		idx, err := be.BuildIndex(ctx, ns, 10, "rebuild",
 			func(resource.ResourceIndex) (int64, error) {
 				builderCalled.Add(1)
 				return 1, nil
@@ -794,7 +794,7 @@ func TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait(t *testing.T) {
 	}
 	resultCh := make(chan buildResult, 1)
 	go func() {
-		idx, err := be.BuildIndex(ctx, ns, 10, nil, "rebuild",
+		idx, err := be.BuildIndex(ctx, ns, 10, "rebuild",
 			func(resource.ResourceIndex) (int64, error) { return 1, nil },
 			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
 		resultCh <- buildResult{idx: idx, err: err}
@@ -830,7 +830,7 @@ func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(context.Background(), ns, 10, nil, "rebuild",
+	idx, err := be.BuildIndex(context.Background(), ns, 10, "rebuild",
 		func(resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
@@ -853,7 +853,7 @@ func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
 		MaxIndexAge: 24 * time.Hour,
 	})
 
-	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 1, nil, "test",
+	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 1, "test",
 		func(resource.ResourceIndex) (int64, error) { return 1, nil },
 		nil, false, time.Time{}, 0)
 	require.NoError(t, err)
@@ -904,6 +904,42 @@ func TestShouldUpload(t *testing.T) {
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("skips when mutation count is below threshold and snapshot is still fresh", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("uploads when mutation count is below threshold but snapshot is stale", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-5*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	t.Run("skips stale snapshot when upload interval has not elapsed", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 2 * time.Hour, UploadInterval: 4 * time.Hour, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -966,7 +1002,7 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))
@@ -999,7 +1035,7 @@ func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
 			beA.Stop()
 		}
 	})
-	idxA, err := beA.BuildIndex(ctx, key, 10, nil, "startup", func(index resource.ResourceIndex) (int64, error) {
+	idxA, err := beA.BuildIndex(ctx, key, 10, "startup", func(index resource.ResourceIndex) (int64, error) {
 		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
 			{
 				Action: resource.ActionIndex,
@@ -1048,7 +1084,7 @@ func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
 	beB, metricsB := newConfiguredSnapshotBackend(t, bucketURL)
 	t.Cleanup(beB.Stop)
 	var builderCalled atomic.Bool
-	idxB, err := beB.BuildIndex(ctx, key, 10, nil, "startup", func(resource.ResourceIndex) (int64, error) {
+	idxB, err := beB.BuildIndex(ctx, key, 10, "startup", func(resource.ResourceIndex) (int64, error) {
 		builderCalled.Store(true)
 		return 0, fmt.Errorf("builder should not be called when a remote snapshot is available")
 	}, nil, false, time.Time{}, 0)
@@ -1081,7 +1117,7 @@ func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend
 	cfg.IndexSnapshotBucketURL = bucketURL
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
 	require.NoError(t, err)
 	be, ok := opts.Backend.(*bleveBackend)
 	require.True(t, ok)
@@ -1111,8 +1147,12 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	snapshotDir := filepath.Join(t.TempDir(), "snapshot")
 	require.NoError(t, writeFakeSnapshot(snapshotDir, &meta))
-	_, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
+	uploadedKey, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
 	require.NoError(t, err)
+	// UploadIndexSnapshot derives the persisted UploadTimestamp from a freshly
+	// generated ULID, not from the caller's meta. Use that as the expected value
+	// so the assertion below is exact and not subject to scheduling delays.
+	expectedUploadedAt := ulid.Time(uploadedKey.Time())
 
 	// Fresh backend pointing at the same bucket should download instead of building.
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
@@ -1130,7 +1170,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	t.Cleanup(be.Stop)
 
 	var builderCalled atomic.Bool
-	idx, err := be.BuildIndex(ctx, key, 10, nil, "startup", func(resource.ResourceIndex) (int64, error) {
+	idx, err := be.BuildIndex(ctx, key, 10, "startup", func(resource.ResourceIndex) (int64, error) {
 		builderCalled.Store(true)
 		return 0, nil
 	}, nil, false, time.Time{}, 0)
@@ -1147,7 +1187,8 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	trackedAt, tracked := be.getUploadTracking(key)
 	require.True(t, tracked)
-	assert.WithinDuration(t, meta.UploadTimestamp, trackedAt, time.Second)
+	assert.True(t, expectedUploadedAt.Equal(trackedAt),
+		"trackedAt %s should equal manifest UploadTimestamp %s", trackedAt, expectedUploadedAt)
 
 	mutationCount, err := readSnapshotMutationCount(bi.index)
 	require.NoError(t, err)
@@ -1592,7 +1633,7 @@ func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra f
 		MaxIndexAge: 24 * time.Hour,
 	})
 	builderCalled := &atomic.Int32{}
-	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, nil, "startup",
+	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, "startup",
 		func(resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			if builderExtra != nil {
@@ -1687,7 +1728,7 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, nil, "startup",
+	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, "startup",
 		func(resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
@@ -1724,7 +1765,7 @@ func TestBuildIndex_ColdStartContextCancelPropagates(t *testing.T) {
 	}()
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(ctx, newTestNsResource(), 10, nil, "startup",
+	idx, err := be.BuildIndex(ctx, newTestNsResource(), 10, "startup",
 		func(resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil

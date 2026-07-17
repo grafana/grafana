@@ -86,6 +86,8 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			cfg.Spec.Git, "Git config only valid when type is git"))
 	}
 
+	list = append(list, validateWorkflowOptions(cfg)...)
+
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
 		case provisioning.WriteWorkflow: // valid; no fall thru
@@ -143,18 +145,52 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	return list
 }
 
+// validateWorkflowOptions rejects branch, commit and pull request options on repository
+// types that cannot use them. These options are only meaningful for the branch workflow
+// (git-only), and pull requests additionally require a hosting provider. Rejecting them
+// avoids silently storing configuration that can never take effect.
+func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
+	var list field.ErrorList
+
+	switch cfg.Spec.Type {
+	case provisioning.LocalRepositoryType:
+		// Local repositories support neither the branch workflow nor pull requests.
+		if cfg.Spec.Branch != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "branch"),
+				cfg.Spec.Branch, "branch options are not supported on local repositories"))
+		}
+		if cfg.Spec.Commit != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "commit"),
+				cfg.Spec.Commit, "commit options are not supported on local repositories"))
+		}
+		if cfg.Spec.PullRequest != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
+				cfg.Spec.PullRequest, "pull request options are not supported on local repositories"))
+		}
+	case provisioning.GitRepositoryType:
+		// Plain git supports the branch workflow but cannot open pull requests.
+		if cfg.Spec.PullRequest != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
+				cfg.Spec.PullRequest, "pull request options are not supported on git repositories"))
+		}
+	default:
+		// Hosting providers (github, githubEnterprise, bitbucket, gitlab) support all options.
+	}
+
+	return list
+}
+
 func (v *RepositoryValidator) validateDashboardPreviews(cfg *provisioning.Repository) field.ErrorList {
 	if v.allowImageRendering {
 		return nil
 	}
-	if cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
+	// Mirror the runtime accessor so validation covers every provider (GitHub reads
+	// its own config; others read PullRequest) and can never drift from it.
+	if cfg.ShouldGenerateDashboardPreviews() {
 		return field.ErrorList{field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-			cfg.Spec.GitHub.GenerateDashboardPreviews, "image rendering is not enabled")}
+			true, "image rendering is not enabled")}
 	}
-	if cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews {
-		return field.ErrorList{field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-			cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews, "image rendering is not enabled")}
-	}
+
 	return nil
 }
 
@@ -255,6 +291,14 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	// Copy previous values if they exist
 	if a.GetOldObject() != nil {
 		if oldRepo, ok := a.GetOldObject().(*provisioning.Repository); ok {
+			if a.GetOperation() == admission.Update && RequiresNewTokenForURLChange(r, oldRepo) {
+				return invalidRepositoryError(a.GetName(), field.ErrorList{
+					field.Forbidden(
+						field.NewPath("secure", "token"),
+						"a new token is required when changing the repository URL",
+					),
+				})
+			}
 			CopySecureValues(r, oldRepo)
 		}
 	}

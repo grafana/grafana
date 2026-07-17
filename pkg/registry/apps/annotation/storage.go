@@ -3,6 +3,7 @@ package annotation
 import (
 	"context"
 	"errors"
+	"time"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
@@ -38,7 +39,23 @@ type ListOptions struct {
 	TagsMatchAny   bool
 	Scopes         []string
 	ScopesMatchAny bool
+
+	// LegacyID filters by the legacy numeric ID
+	LegacyID int64
+
+	// Deleted controls whether soft-deleted annotations (tombstones) are returned.
+	Deleted DeletedFilter
 }
+
+// DeletedFilter controls whether soft-deleted annotations (tombstones) are
+// included in a list.
+type DeletedFilter int
+
+const (
+	DeletedExclude DeletedFilter = iota // live only (zero value)
+	DeletedInclude                      // live and tombstones
+	DeletedOnly                         // tombstones only
+)
 
 type AnnotationList struct {
 	Items    []annotationV0.Annotation
@@ -46,7 +63,7 @@ type AnnotationList struct {
 }
 
 type LifecycleManager interface {
-	Cleanup(ctx context.Context) (int64, error)
+	Cleanup(ctx context.Context, before time.Time) (int64, error)
 }
 
 type TagProvider interface {

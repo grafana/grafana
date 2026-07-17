@@ -15,6 +15,9 @@ const (
 	// defaultRetentionTTL is the default retention period for annotations
 	// TODO: determine appropriate default TTL
 	defaultRetentionTTL = 90 * 24 * time.Hour
+	// defaultMaxScopeCount caps how many scopes can be attached to a single
+	// annotation. 0 means no scopes are allowed.
+	defaultMaxScopeCount = 5
 )
 
 // Config holds the store backend configuration for the annotation app.
@@ -38,6 +41,15 @@ type Config struct {
 	PostgresTagCacheTTL      time.Duration
 	PostgresTagCacheSize     int
 
+	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
+	// for new annotations and persisted in the store.
+	EnableLegacyID bool
+
+	// MaxScopeCount caps how many scopes can be attached to a single
+	// annotation. 0 means no scopes are allowed. Negative values are
+	// rejected by the settings loader.
+	MaxScopeCount int
+
 	// CleanupSettings configures annotation pruning for the SQL backend's LifecycleManager.
 	// Zero value (all limits unset) disables cleanup. Not used by memory or gRPC backends.
 	CleanupSettings annotations.CleanupSettings
@@ -46,9 +58,12 @@ type Config struct {
 func (c *Config) AddFlags(flags *pflag.FlagSet) {
 	// TODO: add cleanup flags when the SQL backend is supported in MT.
 	flags.StringVar(&c.StoreBackend, "annotation.store-backend", "memory", "Annotation store backend: memory, grpc, postgres, legacy-sql")
+	flags.BoolVar(&c.EnableLegacyID, "annotation.enable-legacy-id", false, "Generate and persist grafana.app/legacyID labels for legacy API compatibility")
 
 	// General lifecycle flags
 	flags.DurationVar(&c.RetentionTTL, "annotation.retention-ttl", defaultRetentionTTL, "Retention TTL for annotations (old data will be cleaned up)")
+
+	flags.IntVar(&c.MaxScopeCount, "annotation.max-scope-count", defaultMaxScopeCount, "Maximum number of scopes that can be attached to a single annotation")
 
 	// gRPC flags
 	flags.StringVar(&c.GRPCAddress, "annotation.grpc-address", "", "gRPC server address for the annotation store")
@@ -72,8 +87,10 @@ func newConfigFromSettings(cfg *setting.Cfg) Config {
 	}
 
 	return Config{
-		StoreBackend: cfg.AnnotationAppPlatform.StoreBackend,
-		RetentionTTL: retentionTTL,
+		StoreBackend:   cfg.AnnotationAppPlatform.StoreBackend,
+		RetentionTTL:   retentionTTL,
+		EnableLegacyID: cfg.AnnotationAppPlatform.EnableLegacyID,
+		MaxScopeCount:  cfg.AnnotationAppPlatform.MaxScopeCount,
 
 		GRPCAddress:       cfg.AnnotationAppPlatform.GRPCAddress,
 		GRPCUseTLS:        cfg.AnnotationAppPlatform.GRPCUseTLS,

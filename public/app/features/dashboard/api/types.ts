@@ -1,6 +1,6 @@
 import { type UrlQueryMap } from '@grafana/data';
 import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type ListOptions, type Resource, type ResourceList } from 'app/features/apiserver/types';
+import { type ListOptions, type Resource, type ResourceList, type TableResponse } from 'app/features/apiserver/types';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { type AnnotationsPermissions, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -38,9 +38,11 @@ export interface DashboardAPI<G, T> {
   getDashboardHistoryVersions(uid: string, versions: number[]): Promise<Array<Resource<T>>>;
   /** Restore a dashboard to a previous version */
   restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO>;
-  /** List all deleted dashboards */
-  listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<ResourceList<T>>;
-  /**  Restore a deleted dashboard by re-creating it */
+  /** List all deleted dashboards (table format — metadata only, no spec) */
+  listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse>;
+  /** Get a single dashboard resource by name */
+  getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<T>>;
+  /** Restore a deleted dashboard by re-creating it */
   restoreDashboard(dashboard: Resource<T>): Promise<Resource<T>>;
 }
 

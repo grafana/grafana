@@ -17,7 +17,6 @@ import {
 import { type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
-import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -25,10 +24,10 @@ import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { removeRepeatLocalVariableFromSet } from '../../utils/clone';
+import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import { getDashboardSceneFor, interpolateSectionTitle } from '../../utils/utils';
+import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -141,7 +140,8 @@ export class TabItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
+    const siblings = this.parent ? this.getParentLayout().getTabsIncludingRepeats() : [];
+    return getSlugForRowOrTab(this, siblings);
   }
 
   public isCurrentTab() {
@@ -215,7 +215,11 @@ export class TabItem
   // panelIdGenerator is a shared sequential counter created by the parent layout
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
   public duplicate(panelIdGenerator?: PanelIdGenerator): TabItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
+    return this.clone({
+      key: undefined,
+      layout: this.getLayout().duplicate(panelIdGenerator),
+      $variables: cloneSectionVariableSet(this.state.$variables),
+    });
   }
 
   public onChangeTitle(title: string) {

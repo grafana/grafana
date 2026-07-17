@@ -120,6 +120,7 @@ roles:
       - action: 'users:write'
         scope: 'users:*'
       - action: 'users:create'
+      # NOTE: the `datasources:query` action implies `datasources:read`
       # Optional `datasourceType` for scopes `datasources:uid:<DATASOURCE_UID>`.
       # If you omit it, Grafana resolves the plugin type from the data source when this file is provisioned.
       # It is required if there are two datasources with the same uid.
