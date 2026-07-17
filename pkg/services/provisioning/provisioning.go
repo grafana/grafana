@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/grafana/dskit/services"
 
@@ -46,6 +47,16 @@ import (
 )
 
 const ServiceName = "provisioning"
+
+// Dashboard provisioning can transiently fail at startup when the folder API is
+// not yet available (e.g. an aggregated folder.grafana.app that is still coming
+// up). Retry a bounded number of times before falling back to the allow-list, so
+// a brief folder outage does not silently leave dashboards unprovisioned until
+// the next restart.
+const (
+	defaultDashboardProvisionRetries      = 5
+	defaultDashboardProvisionRetryBackoff = 15 * time.Second
+)
 
 func ProvideService(
 	ac accesscontrol.AccessControl,
@@ -101,6 +112,9 @@ func ProvideService(
 		dual:                         dual,
 		serverLock:                   serverLockService,
 		routesPermissions:            routesPermissions,
+
+		dashboardProvisionRetries:      defaultDashboardProvisionRetries,
+		dashboardProvisionRetryBackoff: defaultDashboardProvisionRetryBackoff,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -136,7 +150,7 @@ func (ps *ProvisioningServiceImpl) starting(ctx context.Context) error {
 		return err
 	}
 
-	if err := ps.ProvisionDashboards(ctx); err != nil {
+	if err := ps.provisionDashboardsWithRetry(ctx); err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
 		// Consider the allow list of errors for which running the provisioning service should not
 		// fail. For now this includes only dashboards.ErrGetOrCreateFolder.
@@ -145,6 +159,30 @@ func (ps *ProvisioningServiceImpl) starting(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// provisionDashboardsWithRetry retries dashboard provisioning while it fails
+// because the folder API is transiently unavailable (ErrGetOrCreateFolder). Any
+// other error returns immediately. The final ErrGetOrCreateFolder is returned to
+// the caller, which allow-lists it so a persistent outage does not block startup.
+func (ps *ProvisioningServiceImpl) provisionDashboardsWithRetry(ctx context.Context) error {
+	var err error
+	for attempt := 0; ; attempt++ {
+		err = ps.ProvisionDashboards(ctx)
+		if err == nil || !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
+			return err
+		}
+		if attempt >= ps.dashboardProvisionRetries {
+			return err
+		}
+		ps.log.Warn("Failed to provision dashboards, folder API unavailable; retrying",
+			"attempt", attempt+1, "maxRetries", ps.dashboardProvisionRetries, "error", err)
+		select {
+		case <-ctx.Done():
+			return err
+		case <-time.After(ps.dashboardProvisionRetryBackoff):
+		}
+	}
 }
 
 func (ps *ProvisioningServiceImpl) running(ctx context.Context) error {
@@ -205,6 +243,9 @@ func newProvisioningServiceImpl(
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
 		migratePrometheusType:   migratePrometheusType,
+
+		dashboardProvisionRetries:      defaultDashboardProvisionRetries,
+		dashboardProvisionRetryBackoff: defaultDashboardProvisionRetryBackoff,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -249,6 +290,9 @@ type ProvisioningServiceImpl struct {
 	dual                         dualwrite.Service
 	serverLock                   *serverlock.ServerLockService
 	migratePrometheusType        func(context.Context) error
+
+	dashboardProvisionRetries      int
+	dashboardProvisionRetryBackoff time.Duration
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
