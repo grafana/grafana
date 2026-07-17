@@ -1142,6 +1142,47 @@ func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName s
 		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
 }
 
+// RequireSingleRepoFolder polls until exactly one folder is managed by the
+// given repo and returns it. Poll-and-return in one step so callers never
+// index into a separately fetched list that may transiently be empty.
+func (h *ProvisioningTestHelper) RequireSingleRepoFolder(t *testing.T, repoName string) *unstructured.Unstructured {
+	t.Helper()
+	var folder unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		managed := filterManagedResources(folders.Items, repoName)
+		if !assert.Len(c, managed, 1, "expected exactly one folder managed by repo %s", repoName) {
+			return
+		}
+		folder = managed[0]
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected exactly one folder managed by repo %s", repoName)
+	return &folder
+}
+
+// RequireSingleRepoDashboard polls until exactly one dashboard is managed by
+// the given repo and returns it.
+func (h *ProvisioningTestHelper) RequireSingleRepoDashboard(t *testing.T, repoName string) *unstructured.Unstructured {
+	t.Helper()
+	var dashboard unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		managed := filterManagedResources(dashboards.Items, repoName)
+		if !assert.Len(c, managed, 1, "expected exactly one dashboard managed by repo %s", repoName) {
+			return
+		}
+		dashboard = managed[0]
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected exactly one dashboard managed by repo %s", repoName)
+	return &dashboard
+}
+
 // TriggerConnectionReconciliation forces the controller to re-process a connection
 // by touching its status (aging the health timestamp by 1ms). A merge patch on the
 // status subresource carries no resourceVersion, so it never conflicts with

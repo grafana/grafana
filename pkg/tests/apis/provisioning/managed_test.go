@@ -35,7 +35,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	helper.RequireRepoFolderCount(t, repoName, 1)
 
 	// Find the managed folder created by the repo sync.
-	managedFolderName := helper.ListRepoFolders(t, repoName)[0].GetName()
+	managedFolderName := helper.RequireSingleRepoFolder(t, repoName).GetName()
 	t.Logf("Managed folder: %s (managed by repo %s)", managedFolderName, repoName)
 
 	t.Run("reject unmanaged dashboard in managed folder", func(t *testing.T) {

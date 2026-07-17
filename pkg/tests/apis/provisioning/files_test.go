@@ -888,7 +888,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	helper.RequireRepoDashboardCount(t, repo, 1)
 	helper.RequireRepoFolderCount(t, repo, 0)
 
-	dashboardUID := helper.ListRepoDashboards(t, repo)[0].GetName()
+	dashboardUID := helper.RequireSingleRepoDashboard(t, repo).GetName()
 
 	// Grant permissions to Editor user for all dashboards using wildcard
 	// The access checker checks resource-level permissions, so we need to grant them

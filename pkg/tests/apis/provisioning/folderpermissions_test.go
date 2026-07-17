@@ -61,7 +61,7 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("should update permissions when folder is released", func(t *testing.T) {
-		managedFolderName := helper.ListRepoFolders(t, repo)[0].GetName()
+		managedFolderName := helper.RequireSingleRepoFolder(t, repo).GetName()
 
 		helper.ReleaseAndDeleteRepository(t, repo)
 		common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")

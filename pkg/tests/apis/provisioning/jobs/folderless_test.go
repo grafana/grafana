@@ -48,7 +48,7 @@ func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 		"folderless must not create a wrapper folder named after the repository")
 
 	// The single folder is the top-level folder derived from the subdirectory.
-	subFolder := helper.ListRepoFolders(t, repo)[0]
+	subFolder := helper.RequireSingleRepoFolder(t, repo)
 	require.NotEqual(t, repo, subFolder.GetName(), "the folder must not be the repo wrapper folder")
 	require.Empty(t, subFolder.GetAnnotations()[utils.AnnoKeyFolder],
 		"the subdirectory folder must be at the top level (no parent)")

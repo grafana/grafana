@@ -34,7 +34,7 @@ func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
 	helper.RequireRepoFolderCount(t, "test-repo", 1)
 
 	t.Run("should fail to set ownerReferences on provisioned folder via patch", func(t *testing.T) {
-		managedFolder := helper.ListRepoFolders(t, "test-repo")[0]
+		managedFolder := helper.RequireSingleRepoFolder(t, "test-repo")
 
 		_, err := helper.Folders.Resource.Patch(t.Context(), managedFolder.GetName(), types.JSONPatchType, ownerRefsPatch, metav1.PatchOptions{})
 		require.Error(t, err, "should fail to set ownerReferences on managed folder")
@@ -43,7 +43,7 @@ func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
 	})
 
 	t.Run("should fail to set ownerReferences on provisioned folder via update", func(t *testing.T) {
-		managedFolder := helper.ListRepoFolders(t, "test-repo")[0].DeepCopy()
+		managedFolder := helper.RequireSingleRepoFolder(t, "test-repo").DeepCopy()
 		managedFolder.SetOwnerReferences([]metav1.OwnerReference{{
 			APIVersion: "iam.grafana.app/v0alpha1",
 			Kind:       "Team",
@@ -70,7 +70,7 @@ func TestIntegrationFolderOwnerRefs_UnprovisionedFolders(t *testing.T) {
 	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("should set ownerReferences when folder is released", func(t *testing.T) {
-		managedFolderName := helper.ListRepoFolders(t, repo)[0].GetName()
+		managedFolderName := helper.RequireSingleRepoFolder(t, repo).GetName()
 
 		helper.ReleaseAndDeleteRepository(t, repo)
 		common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
