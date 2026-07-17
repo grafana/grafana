@@ -716,6 +716,8 @@ require (
 
 require gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
 
+require github.com/ktrysmt/go-bitbucket v0.10.0 // @grafana/grafana-app-platform-squad
+
 require github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
 
 replace (

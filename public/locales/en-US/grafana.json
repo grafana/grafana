@@ -6265,7 +6265,6 @@
       }
     },
     "source-link": {
-      "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
     },
     "support-snapshot-service": {
@@ -8809,6 +8808,8 @@
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
     "span-bar-row": {
+      "summary-count-aria_one": "{{count}} aggregated span",
+      "summary-count-aria_other": "{{count}} aggregated spans",
       "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
     "span-detail": {
@@ -8847,6 +8848,11 @@
     },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
+    },
+    "summary-span": {
+      "stat-max": "Max",
+      "stat-median": "Median",
+      "stat-min": "Min"
     },
     "supplementary-result-error": {
       "show-details": "Show details"
@@ -12195,6 +12201,10 @@
     "reporting": {
       "title": "Reporting"
     },
+    "saved-queries": {
+      "subtitle": "Reusable queries you can use across panels and Explore",
+      "title": "Saved queries"
+    },
     "scenes": {
       "title": "Scenes"
     },
@@ -13180,6 +13190,9 @@
   "provisioning": {
     "bitbucket": {
       "branch-required": "Branch is required",
+      "email-description": "The Atlassian account email used to authenticate the Bitbucket API. Required to enable webhooks.",
+      "email-invalid": "Enter a valid email address",
+      "email-label": "Atlassian account email",
       "permissions": {
         "pull-requests-label": "Pull requests",
         "pull-requests-read-write": "Read and write",
@@ -13619,9 +13632,11 @@
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
       "kubectl": "Managed by: Kubectl",
+      "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "terraform": "Managed by: Terraform"
+      "terraform": "Managed by: Terraform",
+      "view-source-file": "View source file"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
@@ -13987,9 +14002,6 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
-    "source-link": {
-      "title": "Source ({{provider}})"
-    },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",
@@ -14050,9 +14062,6 @@
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
-    "view-repository-button": {
-      "label": "View repository"
-    },
     "warning-title-default": "Warning",
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
@@ -14060,6 +14069,8 @@
     },
     "webhook-section": {
       "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-email": "Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.",
+      "description-webhook-disabled-email-step": "Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.",
       "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",

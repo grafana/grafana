@@ -29,6 +29,10 @@ func (r *mutableStatusReader) GetStorageMode(_ context.Context, _ schema.GroupRe
 	return r.mode, nil
 }
 
+func (r *mutableStatusReader) GetFloorVersion(_ schema.GroupResource) (string, bool) {
+	return "", false
+}
+
 func (r *mutableStatusReader) setMode(m unifiedmigrations.StorageMode) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

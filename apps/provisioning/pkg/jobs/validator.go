@@ -346,17 +346,23 @@ func validateMoveJobOptions(opts *provisioning.MoveJobOptions) field.ErrorList {
 	return list
 }
 
+// PerfTestingEnabledFunc reports whether the synthetic "test" job type is enabled
+// for the request in ctx. It is injected so this package need not depend on the
+// feature flag implementation, which lives in the main Grafana module.
+type PerfTestingEnabledFunc func(ctx context.Context) bool
+
 // AdmissionValidator handles validation for Job resources during admission
 type AdmissionValidator struct {
 	// supportedResources is the configured set of resource types provisioning can manage,
 	// used to validate export-style (push and migrate) job options.
 	supportedResources []provisioning.SupportedResource
-	perfTestingEnabled bool
+	perfTestingEnabled PerfTestingEnabledFunc
 }
 
 // NewAdmissionValidator creates a new job admission validator. supportedResources is the
-// configured set of resource types provisioning can manage.
-func NewAdmissionValidator(supportedResources []provisioning.SupportedResource, perfTestingEnabled bool) *AdmissionValidator {
+// configured set of resource types provisioning can manage. perfTestingEnabled gates
+// whether synthetic "test" jobs are allowed.
+func NewAdmissionValidator(supportedResources []provisioning.SupportedResource, perfTestingEnabled PerfTestingEnabledFunc) *AdmissionValidator {
 	return &AdmissionValidator{supportedResources: supportedResources, perfTestingEnabled: perfTestingEnabled}
 }
 
@@ -382,7 +388,7 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return err
 	}
 
-	if job.Spec.Action == provisioning.JobActionTest && !v.perfTestingEnabled {
+	if job.Spec.Action == provisioning.JobActionTest && (v.perfTestingEnabled == nil || !v.perfTestingEnabled(ctx)) {
 		return apierrors.NewInvalid(
 			provisioning.JobResourceInfo.GroupVersionKind().GroupKind(),
 			job.Name,
