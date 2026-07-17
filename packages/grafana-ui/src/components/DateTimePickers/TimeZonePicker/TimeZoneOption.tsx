@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { type PropsWithChildren, type RefCallback, type JSX } from 'react';
-import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,8 +18,6 @@ interface Props {
   innerRef: RefCallback<HTMLDivElement>;
   data: SelectableZone;
 }
-
-const offsetClassName = 'tz-utc-offset';
 
 export interface TimeZoneOptionInfo {
   /** display name; the canonical IANA id, or e.g. 'Default' for internal zones */
@@ -42,24 +39,18 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (typeof data.value !== 'string') {
-    return null;
-  }
-
-  const timeZoneInfo = data.info;
-
   return (
     <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
       <div className={cx(styles.leftColumn, styles.row)}>
         <div className={cx(styles.leftColumn, styles.wideRow)}>
           <TimeZoneTitle title={children} />
           <div className={styles.spacer} />
-          <TimeZoneDescription info={timeZoneInfo} />
+          <TimeZoneDescription info={data.info} />
         </div>
         <div className={styles.rightColumn}>
           {/* info.ianaName is used over data.value since internal zones like
               'Default' carry a value that is not a concrete IANA zone */}
-          <TimeZoneOffset timeZone={timeZoneInfo.ianaName} timestamp={timestamp} className={offsetClassName} />
+          <TimeZoneOffset timeZone={data.info.ianaName} timestamp={timestamp} />
           {isSelected && (
             <span>
               <Icon name="check" />
@@ -71,17 +62,11 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   );
 };
 
-export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => {
+export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const styles = useStyles2(getStyles);
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
-
-  if (typeof data.value !== 'string') {
-    return null;
-  }
-
-  const timeZoneInfo = data.info;
 
   return (
     <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
@@ -100,12 +85,12 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
         </div>
         <div className={styles.row}>
           <div className={styles.leftColumn}>
-            <TimeZoneDescription info={timeZoneInfo} />
+            <TimeZoneDescription info={data.info} />
           </div>
           <div className={styles.rightColumn}>
             {/* info.ianaName is used over data.value since internal zones like
                 'Default' carry a value that is not a concrete IANA zone */}
-            <TimeZoneOffset timeZone={timeZoneInfo.ianaName} timestamp={timestamp} className={offsetClassName} />
+            <TimeZoneOffset timeZone={data.info.ianaName} timestamp={timestamp} />
           </div>
         </div>
       </div>
