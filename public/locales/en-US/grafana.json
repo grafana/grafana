@@ -10977,9 +10977,9 @@
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
         "popular-solutions": "Popular solutions",
-        "solution-cloud-provider": "Cloud Provider",
-        "solution-infrastructure": "Infrastructure",
+        "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
+        "solution-synthetics": "Synthetic Monitoring",
         "title": "No data flowing yet"
       },
       "pause": "Pause",

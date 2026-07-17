@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type IconName, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 
@@ -26,16 +26,16 @@ function getPopularSolutions(): PopularSolution[] {
       href: locationUtil.assureBaseUrl(createBridgeURL(KUBERNETES_APP_ID, '/home')),
     },
     {
-      id: 'infrastructure',
-      label: t('home.recommendations.no-data.solution-infrastructure', 'Infrastructure'),
-      icon: 'layer-group',
-      href: locationUtil.assureBaseUrl('/connections/infrastructure'),
+      id: 'synthetics',
+      label: t('home.recommendations.no-data.solution-synthetics', 'Synthetic Monitoring'),
+      icon: 'globe',
+      href: locationUtil.assureBaseUrl(createBridgeURL('grafana-synthetic-monitoring-app', '/home')),
     },
     {
-      id: 'cloud-provider',
-      label: t('home.recommendations.no-data.solution-cloud-provider', 'Cloud Provider'),
-      icon: 'cloud',
-      href: locationUtil.assureBaseUrl('/plugins/grafana-csp-app/'),
+      id: 'k6',
+      label: t('home.recommendations.no-data.solution-k6', 'k6'),
+      icon: 'k6',
+      href: locationUtil.assureBaseUrl(createBridgeURL('grafana-k6-app', '')),
     },
   ];
 }
@@ -45,15 +45,13 @@ export function NoDataCard() {
   const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" justifyContent="space-between" gap={2} flex={1} data-testid="recommendation-no-data">
+    <Stack direction="column" justifyContent="space-between" flex={1} data-testid="recommendation-no-data">
       <Stack direction="column" gap={2}>
-        <div className={styles.badge}>
-          <Text variant="bodySmall" color="secondary">
-            <span className={styles.uppercase}>
-              <Trans i18nKey="home.recommendations.no-data.badge">No solution enabled</Trans>
-            </span>
-          </Text>
-        </div>
+        <Badge
+          className={styles.badge}
+          color="darkgrey"
+          text={t('home.recommendations.no-data.badge', 'No solution enabled')}
+        />
 
         <Text element="h3" variant="h3" color="primary">
           <Trans i18nKey="home.recommendations.no-data.title">No data flowing yet</Trans>
@@ -68,9 +66,7 @@ export function NoDataCard() {
 
         <Stack direction="column" gap={1}>
           <Text variant="bodySmall" color="secondary">
-            <span className={styles.uppercase}>
-              <Trans i18nKey="home.recommendations.no-data.popular-solutions">Popular solutions</Trans>
-            </span>
+            <Trans i18nKey="home.recommendations.no-data.popular-solutions">Popular solutions</Trans>
           </Text>
 
           <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
@@ -92,19 +88,21 @@ export function NoDataCard() {
         </Stack>
       </Stack>
 
-      <Stack direction="row" alignItems="center">
-        <LinkButton
-          variant="secondary"
-          size="md"
-          fill="solid"
-          icon="arrow-right"
-          iconPlacement="right"
-          href={locationUtil.assureBaseUrl(CONNECTIONS_ROUTES.AddNewConnection)}
-          onClick={() => noDataCtaClicked({ cta: 'connect_data_source' })}
-        >
-          <Trans i18nKey="home.recommendations.no-data.connect">Connect a data source</Trans>
-        </LinkButton>
-      </Stack>
+      <div className={styles.cta}>
+        <Stack direction="row" alignItems="center">
+          <LinkButton
+            variant="secondary"
+            size="md"
+            fill="solid"
+            icon="arrow-right"
+            iconPlacement="right"
+            href={locationUtil.assureBaseUrl(CONNECTIONS_ROUTES.AddNewConnection)}
+            onClick={() => noDataCtaClicked({ cta: 'connect_data_source' })}
+          >
+            <Trans i18nKey="home.recommendations.no-data.connect">Connect a data source</Trans>
+          </LinkButton>
+        </Stack>
+      </div>
     </Stack>
   );
 }
@@ -112,18 +110,12 @@ export function NoDataCard() {
 const getStyles = (theme: GrafanaTheme2) => ({
   badge: css({
     alignSelf: 'flex-start',
-    background: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
-    padding: theme.spacing(0.75, 1.5),
-  }),
-  uppercase: css({
-    textTransform: 'uppercase',
-    letterSpacing: theme.spacing(0.125),
-    opacity: 0.75,
   }),
   pill: css({
     borderRadius: theme.shape.radius.pill,
     border: `1px solid ${theme.colors.border.medium}`,
+  }),
+  cta: css({
+    marginTop: theme.spacing(2),
   }),
 });

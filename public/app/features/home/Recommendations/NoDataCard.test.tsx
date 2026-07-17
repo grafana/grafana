@@ -27,8 +27,11 @@ describe('NoDataCard', () => {
       'href',
       '/a/grafana-k8s-app/home'
     );
-    expect(screen.getByRole('link', { name: 'Infrastructure' })).toHaveAttribute('href', '/connections/infrastructure');
-    expect(screen.getByRole('link', { name: 'Cloud Provider' })).toHaveAttribute('href', '/plugins/grafana-csp-app/');
+    expect(screen.getByRole('link', { name: 'Synthetic Monitoring' })).toHaveAttribute(
+      'href',
+      '/a/grafana-synthetic-monitoring-app/home'
+    );
+    expect(screen.getByRole('link', { name: 'k6' })).toHaveAttribute('href', '/a/grafana-k6-app');
   });
 
   it('links the connect CTA to add-new-connection', () => {
