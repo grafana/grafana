@@ -11,7 +11,7 @@ const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Assista
 export const ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS = 3000;
 
 /** An AlertManager-style alert, matching the payload the Assistant's from-alert endpoint accepts. */
-export interface AssistantAlert {
+interface AssistantAlert {
   labels: Record<string, string>;
   annotations?: Record<string, string>;
   status?: string;
@@ -43,23 +43,35 @@ interface AssistantDataResponse {
 }
 
 function unwrapAssistantDataResponse(response: unknown): AssistantInvestigation {
+  if (typeof response !== 'object' || response === null || !('data' in response)) {
+    throw new Error('Invalid Assistant investigation response');
+  }
+
+  const data = response.data;
   if (
-    typeof response !== 'object' ||
-    response === null ||
-    !('data' in response) ||
-    typeof response.data !== 'object' ||
-    response.data === null ||
-    !('id' in response.data) ||
-    typeof response.data.id !== 'string' ||
-    !('title' in response.data) ||
-    typeof response.data.title !== 'string' ||
-    !('state' in response.data) ||
-    typeof response.data.state !== 'string'
+    typeof data !== 'object' ||
+    data === null ||
+    !('id' in data) ||
+    typeof data.id !== 'string' ||
+    !('title' in data) ||
+    typeof data.title !== 'string' ||
+    !('state' in data) ||
+    typeof data.state !== 'string'
   ) {
     throw new Error('Invalid Assistant investigation response');
   }
 
-  return response.data;
+  const investigation: AssistantInvestigation = {
+    id: data.id,
+    title: data.title,
+    state: data.state,
+  };
+
+  if ('chatId' in data && typeof data.chatId === 'string') {
+    investigation.chatId = data.chatId;
+  }
+
+  return investigation;
 }
 
 const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'running', 'in_progress', 'in-progress']);
