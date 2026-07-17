@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../user-management/authorization/
-  - ../../administration/roles-and-permissions/
+  - ../administration/roles-and-permissions/
 labels:
   products:
     - enterprise

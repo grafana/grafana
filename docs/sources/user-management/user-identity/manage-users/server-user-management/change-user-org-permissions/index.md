@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../manage-users-and-permissions/manage-server-users/change-user-org-permissions/
-  - ../../../../../administration/user-management/server-user-management/change-user-org-permissions/
+  - ../../../../administration/user-management/server-user-management/change-user-org-permissions/
 labels:
   products:
     - enterprise

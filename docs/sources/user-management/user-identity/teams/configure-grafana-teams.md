@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../../../administration/team-management/configure-grafana-teams/
+  - ../../../administration/team-management/configure-grafana-teams/
 description: Learn how to configure Grafana Teams
 labels:
   products:

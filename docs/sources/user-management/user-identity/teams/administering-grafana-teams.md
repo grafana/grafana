@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../../../administration/team-management/administering-grafana-teams/
+  - ../../../administration/team-management/administering-grafana-teams/
 description: Learn how to administer Grafana Teams.
 labels:
   products:

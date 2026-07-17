@@ -2,7 +2,7 @@
 aliases:
   - ../change-your-password/
   - ../manage-user-preferences/
-  - ../../../administration/user-management/user-preferences/
+  - ../../administration/user-management/user-preferences/
 description: Learn how to update your user preferences and switch organizations
 keywords:
   - password

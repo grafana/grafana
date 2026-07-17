@@ -3,7 +3,7 @@ aliases:
   - ../../../configure-access/configure-authentication/saml/configure-saml-with-azuread/ # /docs/grafana/next/user-management/authentication/saml/configure-saml-with-entraid/
   - ../../../configure-security/configure-authentication/user-management/authentication/saml/configure-saml-with-entraid/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/user-management/authentication/saml/configure-saml-with-entraid/
   - ../../../configure-security/configure-authentication/saml/configure-saml-with-azuread/ # /docs/grafana/next/user-management/authentication/saml/configure-saml-with-azuread/
-  - ../../../../setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-entraid/
+  - ../../../setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-entraid/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

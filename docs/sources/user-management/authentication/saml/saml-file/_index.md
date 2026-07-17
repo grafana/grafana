@@ -10,7 +10,7 @@ aliases:
   - ../../../enterprise/saml/troubleshoot-saml/ # /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
   - ../../configure-security/user-management/authentication/saml/ # /docs/grafana/next/setup-grafana/configure-security/user-management/authentication/saml/
   - ../../configure-security/configure-authentication/saml/ # /docs/grafana/next/user-management/authentication/saml/
-  - ../../../../setup-grafana/configure-access/configure-authentication/saml/saml-file/
+  - ../../../setup-grafana/configure-access/configure-authentication/saml/saml-file/
 description: Learn how to configure SAML authentication in Grafana's configuration file.
 labels:
   products:

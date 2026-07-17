@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../enterprise/usage-insights/export-logs/
-  - ../../../setup-grafana/configure-security/export-logs/
+  - ../../setup-grafana/configure-security/export-logs/
 description: Export logs of usage insights
 keywords:
   - grafana

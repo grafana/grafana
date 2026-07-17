@@ -4,7 +4,7 @@ aliases:
   - ../manage-users/server-admin/
   - ../manage-users/server-admin/server-admin-manage-orgs/
   - manage-organizations/
-  - ../../../administration/organization-management/
+  - ../../administration/organization-management/
 description: Describes how to use organizations to isolate dashboard to users and
   teams.
 keywords:

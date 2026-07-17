@@ -3,7 +3,7 @@ aliases:
   - ../../../auth/google/ # /docs/grafana/next/auth/google/
   - ../../configure-security/setup-grafana/configure-security/configure-authentication/google/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/google/
   - ../../configure-security/configure-authentication/google/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/google/
-  - ../../../setup-grafana/configure-access/configure-authentication/google/
+  - ../../setup-grafana/configure-access/configure-authentication/google/
 description: Grafana Google OAuth Guide
 labels:
   products:

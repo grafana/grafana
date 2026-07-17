@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../enterprise/access-control/troubleshooting/
-  - ../../../../administration/roles-and-permissions/access-control/troubleshooting/
+  - ../../../administration/roles-and-permissions/access-control/troubleshooting/
 description: RBAC troubleshooting guide.
 labels:
   products:

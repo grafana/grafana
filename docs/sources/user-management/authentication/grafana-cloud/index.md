@@ -3,7 +3,7 @@ aliases:
   - ../../../auth/grafana-cloud/ # /docs/grafana/next/auth/grafana-cloud/
   - ../../configure-security/setup-grafana/configure-security/configure-authentication/grafana-cloud/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/grafana-cloud/
   - ../../configure-security/configure-authentication/grafana-cloud/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/grafana-cloud/
-  - ../../../setup-grafana/configure-access/configure-authentication/grafana-cloud/
+  - ../../setup-grafana/configure-access/configure-authentication/grafana-cloud/
 description: Grafana Cloud Authentication
 labels:
   products:

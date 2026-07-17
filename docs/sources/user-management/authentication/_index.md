@@ -5,7 +5,7 @@ aliases:
   - ../user-management/authentication/
   - ../setup-grafana/configure-security/configure-authentication/
   - ../administration/user-management/authentication/
-  - ../../setup-grafana/configure-access/configure-authentication/
+  - ../setup-grafana/configure-access/configure-authentication/
 description: Learn about all the ways in which you can configure Grafana to authenticate users.
 labels:
   products:

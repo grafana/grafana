@@ -2,7 +2,7 @@
 aliases:
   - ../../../enterprise/access-control/rbac-provisioning/
   - rbac-provisioning/
-  - ../../../../administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+  - ../../../administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
 description: Learn about RBAC Grafana provisioning and view an example YAML provisioning
   file that configures Grafana role assignments.
 labels:

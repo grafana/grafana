@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../configure-security/configure-authentication/saml/configure-saml-with-okta/ # /docs/grafana/next/user-management/authentication/saml/configure-saml-with-okta/
-  - ../../../../setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/
+  - ../../../setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

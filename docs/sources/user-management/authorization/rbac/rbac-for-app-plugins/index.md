@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../enterprise/access-control/rbac-for-app-plugins/
-  - ../../../../administration/roles-and-permissions/access-control/rbac-for-app-plugins/
+  - ../../../administration/roles-and-permissions/access-control/rbac-for-app-plugins/
 description: Learn about how to configure access to app plugins using RBAC
 labels:
   products:

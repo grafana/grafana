@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../enterprise/access-control/rbac-provisioning/rbac-terraform-provisioning/
-  - ../../../../administration/roles-and-permissions/access-control/rbac-terraform-provisioning/
+  - ../../../administration/roles-and-permissions/access-control/rbac-terraform-provisioning/
 description: Learn about RBAC Terraform provisioning and view an example of provisioning
   configuration for Grafana roles and role assignments.
 labels:

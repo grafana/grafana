@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../enterprise/access-control/configure-rbac/
-  - ../../../../administration/roles-and-permissions/access-control/configure-rbac/
+  - ../../../administration/roles-and-permissions/access-control/configure-rbac/
 description: Learn how to configure RBAC.
 labels:
   products:

@@ -7,7 +7,7 @@ aliases:
   - ../manage-users-and-permissions/manage-org-users/manage-pending-invites/
   - ../manage-users-and-permissions/manage-org-users/remove-user-from-org/
   - ../manage-users-and-permissions/manage-org-users/view-list-org-users/
-  - ../../../../administration/user-management/manage-org-users/
+  - ../../../administration/user-management/manage-org-users/
 labels:
   products:
     - enterprise

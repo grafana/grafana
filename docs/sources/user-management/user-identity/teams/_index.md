@@ -5,7 +5,7 @@ aliases:
   - ../manage-users/create-or-remove-team/
   - ../manage-users/manage-teams/
   - manage-users-and-permissions/manage-teams/
-  - ../../../administration/team-management/
+  - ../../administration/team-management/
 description: This document introduces Grafana Teams and Teams concepts.
 labels:
   products:

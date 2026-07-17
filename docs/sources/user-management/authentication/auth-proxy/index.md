@@ -4,7 +4,7 @@ aliases:
   - ../../../tutorials/authproxy/ # /docs/grafana/next/tutorials/authproxy/
   - ../../configure-security/setup-grafana/configure-security/configure-authentication/authproxy/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/authproxy/
   - ../../configure-security/configure-authentication/auth-proxy/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/auth-proxy/
-  - ../../../setup-grafana/configure-access/configure-authentication/auth-proxy/
+  - ../../setup-grafana/configure-access/configure-authentication/auth-proxy/
 description: Grafana Auth Proxy Guide
 keywords:
   - grafana

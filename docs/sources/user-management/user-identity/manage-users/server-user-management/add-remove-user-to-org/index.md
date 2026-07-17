@@ -2,7 +2,7 @@
 aliases:
   - ../../manage-users-and-permissions/manage-server-users/add-remove-user-to-org/
   - ../../manage-users-and-permissions/manage-server-users/add-user-to-org/
-  - ../../../../../administration/user-management/server-user-management/add-remove-user-to-org/
+  - ../../../../administration/user-management/server-user-management/add-remove-user-to-org/
 description: Describes how a Grafana server administrator can add or remove users
   in an organization
 labels:

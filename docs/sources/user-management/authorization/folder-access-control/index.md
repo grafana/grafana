@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../user-management/authorization/folder-access-control/
-  - ../../../administration/roles-and-permissions/folder-access-control/
+  - ../../administration/roles-and-permissions/folder-access-control/
 description: Learn how to use folders to organize and control access to dashboards, alert rules, SLOs, and other resources in Grafana.
 labels:
   products:

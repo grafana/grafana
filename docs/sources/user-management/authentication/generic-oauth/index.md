@@ -3,7 +3,7 @@ aliases:
   - ../../../auth/generic-oauth/ # /docs/grafana/next/auth/generic-oauth/
   - ../../configure-security/setup-grafana/configure-security/configure-authentication/generic-oauth/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/generic-oauth/
   - ../../configure-security/configure-authentication/generic-oauth/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/generic-oauth/
-  - ../../../setup-grafana/configure-access/configure-authentication/generic-oauth/
+  - ../../setup-grafana/configure-access/configure-authentication/generic-oauth/
 description: Configure Generic OAuth authentication
 keywords:
   - grafana

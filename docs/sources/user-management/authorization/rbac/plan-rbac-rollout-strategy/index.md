@@ -2,7 +2,7 @@
 aliases:
   - ../../../enterprise/access-control/plan-rbac-rollout-strategy/
   - ../../../enterprise/access-control/usage-scenarios/
-  - ../../../../administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
+  - ../../../administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
 description: Plan your RBAC rollout strategy before you begin assigning roles to users
   and teams.
 labels:
