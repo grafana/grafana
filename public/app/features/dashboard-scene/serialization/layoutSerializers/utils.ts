@@ -85,7 +85,10 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     pluginId: panel.spec.vizConfig.group,
     options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
-    pluginVersion: panel.spec.vizConfig.version,
+    // An empty/absent version means the caller didn't pin one (it's optional in
+    // the spec); leave pluginVersion undefined so the panel uses the running
+    // plugin's current version rather than migrating against a bogus value.
+    pluginVersion: panel.spec.vizConfig.version || undefined,
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
