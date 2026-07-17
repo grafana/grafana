@@ -2,7 +2,6 @@ package maxfilesize
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,11 +25,10 @@ func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
 
 	const repo = "max-file-size-raw-read"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	smallReadme := []byte("# small README\n")
@@ -88,15 +86,13 @@ func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
 // rejected before the resource is parsed or persisted.
 func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "max-file-size-write"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	// A minimal but well-formed dashboard JSON, padded to exceed the cap.
@@ -119,7 +115,7 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 		SubResource("files", "huge.json").
 		Body(oversized).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx).StatusCode(&statusCode)
+		Do(t.Context()).StatusCode(&statusCode)
 
 	require.Error(t, result.Error(), "oversized POST should be rejected")
 	require.Equal(t, http.StatusRequestEntityTooLarge, statusCode,
@@ -138,11 +134,10 @@ func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 
 	const repo = "max-file-size-pull"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	smallDashboard := common.DashboardJSON("small-dash", "Small Dashboard", 1)
