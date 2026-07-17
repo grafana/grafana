@@ -18,7 +18,7 @@ import {
   useDataLinksContext,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { getTracesToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv, useAppPluginInstalled } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -152,7 +152,10 @@ export function TraceView(props: Props) {
   );
 
   const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
-  const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
+  const tracesToLogsOptions = useMemo(
+    () => getTracesToLogsOptions(instanceSettings?.jsonData),
+    [instanceSettings?.jsonData]
+  );
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
   const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
@@ -166,7 +169,7 @@ export function TraceView(props: Props) {
       createSpanLinkFromProps ??
       createSpanLinkFactory({
         splitOpenFn: props.splitOpenFn!,
-        traceToLogsOptions,
+        tracesToLogsOptions,
         traceToMetricsOptions,
         traceToProfilesOptions,
         dataFrame: props.dataFrames[0],
@@ -176,7 +179,7 @@ export function TraceView(props: Props) {
       }),
     [
       props.splitOpenFn,
-      traceToLogsOptions,
+      tracesToLogsOptions,
       traceToMetricsOptions,
       traceToProfilesOptions,
       props.dataFrames,

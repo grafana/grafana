@@ -39,7 +39,7 @@ import { type Trace, type TraceSpan, type TraceSpanReference } from './component
  */
 export function createSpanLinkFactory({
   splitOpenFn,
-  traceToLogsOptions,
+  tracesToLogsOptions,
   traceToMetricsOptions,
   traceToProfilesOptions,
   dataFrame,
@@ -48,7 +48,7 @@ export function createSpanLinkFactory({
   dataLinkPostProcessor,
 }: {
   splitOpenFn: SplitOpen;
-  traceToLogsOptions?: TraceToLogsOptionsV2;
+  tracesToLogsOptions?: TraceToLogsOptionsV2[];
   traceToMetricsOptions?: TraceToMetricsOptions;
   traceToProfilesOptions?: TraceToProfilesOptions;
   dataFrame?: DataFrame;
@@ -67,7 +67,7 @@ export function createSpanLinkFactory({
     splitOpenFn,
     // We need this to make the types happy but for this branch of code it does not matter which field we supply.
     dataFrame.fields[0],
-    traceToLogsOptions,
+    tracesToLogsOptions,
     traceToMetricsOptions,
     createFocusSpanLink,
     scopedVars,
@@ -149,18 +149,26 @@ const feO11yTagKey = 'gf.feo11y.app.id';
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   field: Field,
-  traceToLogsOptions?: TraceToLogsOptionsV2,
+  tracesToLogsOptions: TraceToLogsOptionsV2[] = [],
   traceToMetricsOptions?: TraceToMetricsOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
   scopedVars?: ScopedVars,
   dataFrame?: DataFrame,
   dataLinkPostProcessor?: DataLinkPostProcessor
 ) {
-  let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-  if (traceToLogsOptions?.datasourceUid) {
-    logsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
-  }
-  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
+  const traceToLogsDestinations = tracesToLogsOptions.map((options) => {
+    const datasource = options.datasourceUid
+      ? getDatasourceSrv().getInstanceSettings(options.datasourceUid)
+      : undefined;
+    return { datasource, options };
+  });
+  const hasMultipleLogsDestinations = traceToLogsDestinations.filter(({ datasource }) => datasource).length > 1;
+  const defaultTitleCounts = traceToLogsDestinations.reduce((counts, { datasource, options }) => {
+    if (datasource && !options.name) {
+      counts.set(datasource.name, (counts.get(datasource.name) ?? 0) + 1);
+    }
+    return counts;
+  }, new Map<string, number>());
 
   let metricsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToMetricsOptions?.datasourceUid) {
@@ -173,42 +181,53 @@ function legacyCreateSpanLinkFactory(
       ...scopedVarsFromSpan(span),
     };
     const links: SpanLinkDef[] = [];
-    let query: DataQuery | undefined;
-    let tags = '';
+    const defaultTitleOccurrences = new Map<string, number>();
 
     // TODO: This should eventually move into specific data sources and added to the data frame as we no longer use the
     //  deprecated blob format and we can map the link easily in data frame.
-    if (logsDataSourceSettings && traceToLogsOptions) {
-      const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
-      const tagsToUse =
-        traceToLogsOptions.tags && traceToLogsOptions.tags.length > 0 ? traceToLogsOptions.tags : defaultKeys;
+    for (const { datasource: logsDataSourceSettings, options } of traceToLogsDestinations) {
+      if (!logsDataSourceSettings) {
+        continue;
+      }
+
+      let defaultTitle = logsDataSourceSettings.name;
+      if (!options.name && (defaultTitleCounts.get(logsDataSourceSettings.name) ?? 0) > 1) {
+        const occurrence = (defaultTitleOccurrences.get(logsDataSourceSettings.name) ?? 0) + 1;
+        defaultTitleOccurrences.set(logsDataSourceSettings.name, occurrence);
+        defaultTitle = `${logsDataSourceSettings.name} (${occurrence})`;
+      }
+
+      let query: DataQuery | undefined;
+      let tags = '';
+      const customQuery = options.customQuery ? options.query : undefined;
+      const tagsToUse = options.tags && options.tags.length > 0 ? options.tags : defaultKeys;
       switch (logsDataSourceSettings?.type) {
         case 'loki':
           tags = getFormattedTags(span, tagsToUse);
-          query = getQueryForLoki(span, traceToLogsOptions, tags, customQuery);
+          query = getQueryForLoki(span, options, tags, customQuery);
           break;
         case 'grafana-splunk-datasource':
           tags = getFormattedTags(span, tagsToUse, { joinBy: ' ' });
-          query = getQueryForSplunk(span, traceToLogsOptions, tags, customQuery);
+          query = getQueryForSplunk(span, options, tags, customQuery);
           break;
         case 'elasticsearch':
         case 'grafana-opensearch-datasource':
           tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':', joinBy: ' AND ' });
-          query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
+          query = getQueryForElasticsearchOrOpensearch(span, options, tags, customQuery);
           break;
         case 'grafana-falconlogscale-datasource':
           tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
-          query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
+          query = getQueryForFalconLogScale(span, options, tags, customQuery);
           break;
         case 'googlecloud-logging-datasource':
           tags = getFormattedTags(span, tagsToUse, { joinBy: ' AND ' });
-          query = getQueryForGoogleCloudLogging(span, traceToLogsOptions, tags, customQuery);
+          query = getQueryForGoogleCloudLogging(span, options, tags, customQuery);
           break;
         case 'victoriametrics-logs-datasource':
           // Build tag selector using strict equality (":=") required by LogsQL
           // See https://docs.victoriametrics.com/victorialogs/logsql/#exact-filter
           tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':=', joinBy: ' AND ' });
-          query = getQueryForVictoriaLogs(span, traceToLogsOptions, tags, customQuery);
+          query = getQueryForVictoriaLogs(span, options, tags, customQuery);
           break;
       }
 
@@ -225,14 +244,10 @@ function legacyCreateSpanLinkFactory(
             range: getTimeRangeFromSpan(
               span,
               {
-                startMs: traceToLogsOptions.spanStartTimeShift
-                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-                  : 0,
-                endMs: traceToLogsOptions.spanEndTimeShift
-                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-                  : 0,
+                startMs: options.spanStartTimeShift ? rangeUtil.intervalToMs(options.spanStartTimeShift) : 0,
+                endMs: options.spanEndTimeShift ? rangeUtil.intervalToMs(options.spanEndTimeShift) : 0,
               },
-              isSplunkDS
+              logsDataSourceSettings.type === 'grafana-splunk-datasource'
             ),
           },
         };
@@ -274,7 +289,11 @@ function legacyCreateSpanLinkFactory(
           links.push({
             href: link.href,
             linkModel: link,
-            title: t('explore.legacy-create-span-link-factory.title.related-logs', 'Related logs'),
+            title:
+              options.name ||
+              (hasMultipleLogsDestinations
+                ? defaultTitle
+                : t('explore.legacy-create-span-link-factory.title.logs-for-this-span', 'Logs for this span')),
             onClick: link.onClick,
             content: (
               <Icon

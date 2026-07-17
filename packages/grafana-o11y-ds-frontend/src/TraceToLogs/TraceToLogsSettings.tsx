@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import * as React from 'react';
 
 import {
   type DataSourceJsonData,
   type DataSourceInstanceSettings,
   type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input, InlineSwitch, useStyles2 } from '@grafana/ui';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';
 
@@ -34,6 +35,7 @@ export interface TraceToLogsOptions {
 }
 
 export interface TraceToLogsOptionsV2 {
+  name?: string;
   datasourceUid?: string;
   tags?: TraceToLogsTag[];
   spanStartTimeShift?: string;
@@ -47,6 +49,7 @@ export interface TraceToLogsOptionsV2 {
 export interface TraceToLogsData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
   tracesToLogsV2?: TraceToLogsOptionsV2;
+  tracesToLogsV3?: TraceToLogsOptionsV2[];
 }
 
 /**
@@ -54,6 +57,9 @@ export interface TraceToLogsData extends DataSourceJsonData {
  * version to new and returning that.
  */
 export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOptionsV2 | undefined {
+  if (data?.tracesToLogsV3?.length) {
+    return data.tracesToLogsV3[0];
+  }
   if (data?.tracesToLogsV2) {
     return data.tracesToLogsV2;
   }
@@ -74,9 +80,19 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
   return traceToLogs;
 }
 
+export function getTracesToLogsOptions(data?: TraceToLogsData): TraceToLogsOptionsV2[] {
+  if (data?.tracesToLogsV3?.length) {
+    return data.tracesToLogsV3;
+  }
+
+  const traceToLogs = getTraceToLogsOptions(data);
+  return traceToLogs ? [traceToLogs] : [];
+}
+
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
+  const styles = useStyles2(getStyles);
   const supportedDataSourceTypes = [
     'loki',
     'elasticsearch',
@@ -87,33 +103,129 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     'victoriametrics-logs-datasource', // external
   ];
 
-  const traceToLogs = useMemo(
-    (): TraceToLogsOptionsV2 => getTraceToLogsOptions(options.jsonData) || { customQuery: false },
-    [options.jsonData]
-  );
-  const { query = '', tags, customQuery } = traceToLogs;
+  const tracesToLogs = useMemo(() => getTracesToLogsOptions(options.jsonData), [options.jsonData]);
+  const nextDestinationId = useRef(0);
+  const createDestinationId = useCallback(() => String(nextDestinationId.current++), []);
+  const destinationIds = useRef(tracesToLogs.map(createDestinationId));
 
   const updateTracesToLogs = useCallback(
-    (value: Partial<TraceToLogsOptionsV2>) => {
-      // Cannot use updateDatasourcePluginJsonDataOption here as we need to update 2 keys, and they would overwrite each
-      // other as updateDatasourcePluginJsonDataOption isn't synchronized
+    (value: TraceToLogsOptionsV2[]) => {
       onOptionsChange({
         ...options,
         jsonData: {
           ...options.jsonData,
-          tracesToLogsV2: {
-            ...traceToLogs,
-            ...value,
-          },
+          tracesToLogsV3: value,
           tracesToLogs: undefined,
+          // Older Grafana versions can continue using the first configured destination.
+          tracesToLogsV2: value[0],
         },
       });
     },
-    [onOptionsChange, options, traceToLogs]
+    [onOptionsChange, options]
+  );
+
+  const updateLink = useCallback(
+    (index: number, value: Partial<TraceToLogsOptionsV2>) => {
+      const updated = tracesToLogs.map((link, linkIndex) => (linkIndex === index ? { ...link, ...value } : link));
+      updateTracesToLogs(updated);
+    },
+    [tracesToLogs, updateTracesToLogs]
+  );
+
+  const addDestination = useCallback(() => {
+    destinationIds.current.push(createDestinationId());
+    updateTracesToLogs([...tracesToLogs, { customQuery: false }]);
+  }, [createDestinationId, tracesToLogs, updateTracesToLogs]);
+
+  const removeDestination = useCallback(
+    (index: number) => {
+      destinationIds.current = destinationIds.current.filter((_, destinationIndex) => destinationIndex !== index);
+      updateTracesToLogs(tracesToLogs.filter((_, destinationIndex) => destinationIndex !== index));
+    },
+    [tracesToLogs, updateTracesToLogs]
   );
 
   return (
-    <div className={css({ width: '100%' })}>
+    <div className={styles.wrapper}>
+      {tracesToLogs.map((traceToLogs, index) => (
+        <div
+          key={destinationIds.current[index]}
+          className={styles.destination}
+          role="group"
+          aria-label={traceToLogs.name || `Logs destination ${index + 1}`}
+        >
+          <InlineFieldRow>
+            <InlineField
+              tooltip="Label shown for this destination in the trace view"
+              label="Link label"
+              labelWidth={26}
+            >
+              <Input
+                aria-label={`Link ${index + 1} label`}
+                value={traceToLogs.name ?? ''}
+                width={40}
+                placeholder={`Logs destination ${index + 1}`}
+                onChange={(event) => updateLink(index, { name: event.currentTarget.value })}
+              />
+            </InlineField>
+          </InlineFieldRow>
+
+          <TraceToLogsLinkSettings
+            index={index}
+            traceToLogs={traceToLogs}
+            supportedDataSourceTypes={supportedDataSourceTypes}
+            onChange={(value) => updateLink(index, value)}
+          />
+
+          <Button
+            variant="destructive"
+            fill="text"
+            icon="trash-alt"
+            type="button"
+            aria-label={`Remove destination ${index + 1}`}
+            onClick={() => removeDestination(index)}
+          >
+            Remove destination
+          </Button>
+        </div>
+      ))}
+
+      <Button variant="secondary" icon="plus" type="button" onClick={addDestination}>
+        Add logs destination
+      </Button>
+    </div>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    width: '100%',
+  }),
+  destination: css({
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    marginBottom: theme.spacing(2),
+    padding: theme.spacing(2),
+  }),
+});
+
+interface TraceToLogsLinkSettingsProps {
+  index: number;
+  traceToLogs: TraceToLogsOptionsV2;
+  supportedDataSourceTypes: string[];
+  onChange: (value: Partial<TraceToLogsOptionsV2>) => void;
+}
+
+function TraceToLogsLinkSettings({
+  index,
+  traceToLogs,
+  supportedDataSourceTypes,
+  onChange,
+}: TraceToLogsLinkSettingsProps) {
+  const { query = '', tags, customQuery } = traceToLogs;
+
+  return (
+    <>
       <InlineFieldRow>
         <InlineField
           tooltip="The logs data source the trace is going to navigate to"
@@ -121,17 +233,17 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           labelWidth={26}
         >
           <DataSourcePicker
-            inputId="trace-to-logs-data-source-picker"
+            inputId={`trace-to-logs-data-source-picker-${index}`}
             filter={(ds) => supportedDataSourceTypes.includes(ds.type)}
             current={traceToLogs.datasourceUid}
             noDefault={true}
             width={40}
             onChange={(ds: DataSourceInstanceSettings) =>
-              updateTracesToLogs({
+              onChange({
                 datasourceUid: ds.uid,
               })
             }
-            onClear={() => updateTracesToLogs({ datasourceUid: undefined })}
+            onClear={() => onChange({ datasourceUid: undefined })}
           />
         </InlineField>
       </InlineFieldRow>
@@ -139,10 +251,11 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <IntervalInput
           label={getTimeShiftLabel('start')}
+          ariaLabel={`${getTimeShiftLabel('start')} for ${traceToLogs.name || `logs destination ${index + 1}`}`}
           tooltip={getTimeShiftTooltip('start', '0')}
           value={traceToLogs.spanStartTimeShift || ''}
           onChange={(val) => {
-            updateTracesToLogs({ spanStartTimeShift: val });
+            onChange({ spanStartTimeShift: val });
           }}
           isInvalidError={invalidTimeShiftError}
         />
@@ -151,10 +264,11 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <IntervalInput
           label={getTimeShiftLabel('end')}
+          ariaLabel={`${getTimeShiftLabel('end')} for ${traceToLogs.name || `logs destination ${index + 1}`}`}
           tooltip={getTimeShiftTooltip('end', '0')}
           value={traceToLogs.spanEndTimeShift || ''}
           onChange={(val) => {
-            updateTracesToLogs({ spanEndTimeShift: val });
+            onChange({ spanEndTimeShift: val });
           }}
           isInvalidError={invalidTimeShiftError}
         />
@@ -166,23 +280,23 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           label="Tags"
           labelWidth={26}
         >
-          <TagMappingInput values={tags ?? []} onChange={(v) => updateTracesToLogs({ tags: v })} />
+          <TagMappingInput values={tags ?? []} onChange={(v) => onChange({ tags: v })} />
         </InlineField>
       </InlineFieldRow>
 
       <IdFilter
         disabled={customQuery}
         type={'trace'}
-        id={'filterByTraceID'}
+        id={`filterByTraceID-${index}`}
         value={Boolean(traceToLogs.filterByTraceID)}
-        onChange={(val) => updateTracesToLogs({ filterByTraceID: val })}
+        onChange={(val) => onChange({ filterByTraceID: val })}
       />
       <IdFilter
         disabled={customQuery}
         type={'span'}
-        id={'filterBySpanID'}
+        id={`filterBySpanID-${index}`}
         value={Boolean(traceToLogs.filterBySpanID)}
-        onChange={(val) => updateTracesToLogs({ filterBySpanID: val })}
+        onChange={(val) => onChange({ filterBySpanID: val })}
       />
 
       <InlineFieldRow>
@@ -192,10 +306,10 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           labelWidth={26}
         >
           <InlineSwitch
-            id={'customQuerySwitch'}
+            id={`customQuerySwitch-${index}`}
             value={customQuery}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
-              updateTracesToLogs({ customQuery: event.currentTarget.checked })
+              onChange({ customQuery: event.currentTarget.checked })
             }
           />
         </InlineField>
@@ -213,11 +327,11 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
             type="text"
             allowFullScreen
             value={query}
-            onChange={(e) => updateTracesToLogs({ query: e.currentTarget.value })}
+            onChange={(e) => onChange({ query: e.currentTarget.value })}
           />
         </InlineField>
       )}
-    </div>
+    </>
   );
 }
 

@@ -8533,7 +8533,7 @@
         "tags": "Tags"
       },
       "title": {
-        "related-logs": "Related logs",
+        "logs-for-this-span": "Logs for this span",
         "session-for-this-span": "Session for this span"
       },
       "title-explore-metrics-for-this-span": "Explore metrics for this span",
@@ -8848,6 +8848,9 @@
     },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
+    },
+    "span-links-menu": {
+      "aria-label": "Span links"
     },
     "summary-span": {
       "stat-max": "Max",

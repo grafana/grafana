@@ -1,10 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
+import { getTracesToLogsOptions, type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
 
 const defaultOptionsOldFormat: DataSourceSettings<TraceToLogsData> = {
   jsonData: {
@@ -32,6 +32,24 @@ const defaultOptionsNewFormat: DataSourceSettings<TraceToLogsData> = {
       customQuery: true,
       query: '{${__tags}}',
     },
+  },
+} as unknown as DataSourceSettings<TraceToLogsData>;
+
+const defaultOptionsMultipleDestinations: DataSourceSettings<TraceToLogsData> = {
+  jsonData: {
+    tracesToLogsV3: [
+      {
+        name: 'Application logs',
+        datasourceUid: 'loki1_uid',
+        customQuery: false,
+      },
+      {
+        name: 'Audit logs',
+        datasourceUid: 'loki2_uid',
+        customQuery: true,
+        query: '{cluster="audit"}',
+      },
+    ],
   },
 } as unknown as DataSourceSettings<TraceToLogsData>;
 
@@ -64,6 +82,47 @@ describe('TraceToLogsSettings', () => {
     expect(() =>
       render(<TraceToLogsSettings options={defaultOptionsNewFormat} onOptionsChange={() => {}} />)
     ).not.toThrow();
+  });
+
+  it('renders multiple destinations with their trace view labels', () => {
+    render(<TraceToLogsSettings options={defaultOptionsMultipleDestinations} onOptionsChange={() => {}} />);
+
+    expect(screen.getByDisplayValue('Application logs')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Audit logs')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Remove destination/ })).toHaveLength(2);
+    expect(screen.getByRole('group', { name: 'Application logs' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Audit logs' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Span start time shift for Application logs')).toBeInTheDocument();
+    expect(screen.getByLabelText('Span start time shift for Audit logs')).toBeInTheDocument();
+  });
+
+  it('returns legacy configuration as a single destination', () => {
+    expect(getTracesToLogsOptions(defaultOptionsOldFormat.jsonData)).toEqual([
+      {
+        customQuery: false,
+        datasourceUid: 'loki1_uid',
+        filterBySpanID: true,
+        filterByTraceID: true,
+        spanEndTimeShift: '1m',
+        spanStartTimeShift: '1m',
+        tags: [{ key: 'someTag' }],
+      },
+    ]);
+  });
+
+  it('returns V2 configuration as a single destination', () => {
+    expect(getTracesToLogsOptions(defaultOptionsNewFormat.jsonData)).toEqual([
+      defaultOptionsNewFormat.jsonData.tracesToLogsV2,
+    ]);
+  });
+
+  it('falls back to V2 configuration when V3 is empty', () => {
+    expect(
+      getTracesToLogsOptions({
+        ...defaultOptionsNewFormat.jsonData,
+        tracesToLogsV3: [],
+      })
+    ).toEqual([defaultOptionsNewFormat.jsonData.tracesToLogsV2]);
   });
 
   it('should render and transform data from old format correctly', () => {
@@ -115,8 +174,74 @@ describe('TraceToLogsSettings', () => {
               },
             ],
           },
+          tracesToLogsV3: [
+            {
+              customQuery: false,
+              datasourceUid: 'loki1_uid',
+              filterBySpanID: true,
+              filterByTraceID: false,
+              spanEndTimeShift: '1m',
+              spanStartTimeShift: '1m',
+              tags: [
+                {
+                  key: 'someTag',
+                },
+              ],
+            },
+          ],
         },
       },
     ]);
+  });
+
+  it('adds another destination without changing the existing configuration', async () => {
+    const changeMock = jest.fn();
+    render(<TraceToLogsSettings options={defaultOptionsNewFormat} onOptionsChange={changeMock} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add logs destination' }));
+
+    expect(changeMock).toHaveBeenCalledWith({
+      jsonData: {
+        tracesToLogs: undefined,
+        tracesToLogsV2: defaultOptionsNewFormat.jsonData.tracesToLogsV2,
+        tracesToLogsV3: [defaultOptionsNewFormat.jsonData.tracesToLogsV2, { customQuery: false }],
+      },
+    });
+  });
+
+  it('updates a destination other than the first one', () => {
+    const changeMock = jest.fn();
+    render(<TraceToLogsSettings options={defaultOptionsMultipleDestinations} onOptionsChange={changeMock} />);
+
+    fireEvent.change(screen.getByLabelText('Link 2 label'), { target: { value: 'Security logs' } });
+
+    expect(changeMock).toHaveBeenCalledWith({
+      jsonData: {
+        tracesToLogs: undefined,
+        tracesToLogsV2: defaultOptionsMultipleDestinations.jsonData.tracesToLogsV3![0],
+        tracesToLogsV3: [
+          defaultOptionsMultipleDestinations.jsonData.tracesToLogsV3![0],
+          {
+            ...defaultOptionsMultipleDestinations.jsonData.tracesToLogsV3![1],
+            name: 'Security logs',
+          },
+        ],
+      },
+    });
+  });
+
+  it('removes the selected destination', async () => {
+    const changeMock = jest.fn();
+    render(<TraceToLogsSettings options={defaultOptionsMultipleDestinations} onOptionsChange={changeMock} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove destination 1' }));
+
+    expect(changeMock).toHaveBeenCalledWith({
+      jsonData: {
+        tracesToLogs: undefined,
+        tracesToLogsV2: defaultOptionsMultipleDestinations.jsonData.tracesToLogsV3![1],
+        tracesToLogsV3: [defaultOptionsMultipleDestinations.jsonData.tracesToLogsV3![1]],
+      },
+    });
   });
 });

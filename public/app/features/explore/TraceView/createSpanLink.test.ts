@@ -79,7 +79,13 @@ describe('createSpanLinkFactory', () => {
   describe('should return loki link', () => {
     beforeAll(() => {
       setDataSourceSrv({
-        getInstanceSettings() {
+        getInstanceSettings(uid: string) {
+          if (uid === 'missing-loki') {
+            return undefined;
+          }
+          if (uid === 'application-loki' || uid === 'audit-loki') {
+            return { uid, name: uid, type: 'loki' } as unknown as DataSourceInstanceSettings;
+          }
           return { uid: 'loki1_uid', name: 'loki1', type: 'loki' } as unknown as DataSourceInstanceSettings;
         },
       } as unknown as DataSourceSrv);
@@ -100,6 +106,105 @@ describe('createSpanLinkFactory', () => {
           '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\", service_namespace=\\"namespace1\\"}","refId":"","datasource":{"uid":"loki1_uid"}}]}'
         )}`
       );
+    });
+
+    it('creates distinguishable links for multiple logs destinations', () => {
+      const createLink = createSpanLinkFactory({
+        splitOpenFn: jest.fn(),
+        tracesToLogsOptions: [
+          {
+            name: 'Application logs',
+            customQuery: false,
+            datasourceUid: 'application-loki',
+          },
+          {
+            name: 'Audit logs',
+            customQuery: false,
+            datasourceUid: 'audit-loki',
+          },
+        ],
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+      });
+
+      const links = createLink!(createTraceSpan());
+
+      expect(links).toHaveLength(2);
+      expect(links?.map(({ title, type }) => ({ title, type }))).toEqual([
+        { title: 'Application logs', type: SpanLinkType.Logs },
+        { title: 'Audit logs', type: SpanLinkType.Logs },
+      ]);
+      expect(decodeURIComponent(links![0].href)).toContain('"datasource":"application-loki"');
+      expect(decodeURIComponent(links![1].href)).toContain('"datasource":"audit-loki"');
+    });
+
+    it('uses datasource names when multiple destinations do not have labels', () => {
+      const createLink = createSpanLinkFactory({
+        splitOpenFn: jest.fn(),
+        tracesToLogsOptions: [
+          {
+            customQuery: false,
+            datasourceUid: 'application-loki',
+          },
+          {
+            customQuery: false,
+            datasourceUid: 'audit-loki',
+          },
+        ],
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+      });
+
+      const links = createLink!(createTraceSpan());
+
+      expect(links?.map(({ title }) => title)).toEqual(['application-loki', 'audit-loki']);
+    });
+
+    it('distinguishes unnamed destinations that use the same datasource', () => {
+      const createLink = createSpanLinkFactory({
+        splitOpenFn: jest.fn(),
+        tracesToLogsOptions: [
+          {
+            customQuery: false,
+            datasourceUid: 'application-loki',
+          },
+          {
+            customQuery: false,
+            datasourceUid: 'application-loki',
+          },
+        ],
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+      });
+
+      const links = createLink!(createTraceSpan());
+
+      expect(links?.map(({ title }) => title)).toEqual(['application-loki (1)', 'application-loki (2)']);
+    });
+
+    it('skips destinations whose datasource cannot be resolved', () => {
+      const createLink = createSpanLinkFactory({
+        splitOpenFn: jest.fn(),
+        tracesToLogsOptions: [
+          {
+            name: 'Application logs',
+            customQuery: false,
+            datasourceUid: 'application-loki',
+          },
+          {
+            name: 'Missing logs',
+            customQuery: false,
+            datasourceUid: 'missing-loki',
+          },
+        ],
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+      });
+
+      const links = createLink!(createTraceSpan());
+
+      expect(links).toHaveLength(1);
+      expect(links?.[0].title).toBe('Application logs');
     });
 
     it('with tags that passed in and without tags that are not in the span', () => {
@@ -1658,11 +1763,13 @@ function setupSpanLinkFactory(
   const splitOpenFn = jest.fn();
   return createSpanLinkFactory({
     splitOpenFn,
-    traceToLogsOptions: {
-      customQuery: false,
-      datasourceUid,
-      ...options,
-    },
+    tracesToLogsOptions: [
+      {
+        customQuery: false,
+        datasourceUid,
+        ...options,
+      },
+    ],
     traceToProfilesOptions: {
       customQuery: false,
       datasourceUid: 'pyroscopeUid',

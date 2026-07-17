@@ -72,6 +72,29 @@ describe('SpanDetailLinkButtons', () => {
     expect(screen.getByText('Related logs')).toBeInTheDocument();
   });
 
+  it('uses destination labels for multiple log link buttons', () => {
+    createSpanLink.mockReturnValue([
+      { type: SpanLinkType.Logs, href: '/application-logs', title: 'Application logs' },
+      { type: SpanLinkType.Logs, href: '/audit-logs', title: 'Audit logs' },
+    ]);
+
+    render(
+      <SpanDetailLinkButtons
+        span={span}
+        createSpanLink={createSpanLink}
+        datasourceType="test"
+        datasourceUid="test-datasource-uid"
+        traceToProfilesOptions={undefined}
+        timeRange={timeRange}
+        app={CoreApp.Explore}
+      />
+    );
+
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByText('Application logs')).toBeInTheDocument();
+    expect(screen.getByText('Audit logs')).toBeInTheDocument();
+  });
+
   describe('logs link CTA copy', () => {
     it.each([
       {
@@ -101,9 +124,17 @@ describe('SpanDetailLinkButtons', () => {
         },
         expectedCTA: 'Logs for this span',
       },
-    ])('$name', ({ settings, expectedCTA }) => {
+      {
+        name: 'shows the destination label when it is configured',
+        settings: {
+          jsonData: { tracesToLogsV3: [{ name: 'Application logs', customQuery: false }] },
+        },
+        linkTitle: 'Application logs',
+        expectedCTA: 'Application logs',
+      },
+    ])('$name', ({ settings, linkTitle = 'Logs', expectedCTA }) => {
       (useDataSourceInstanceSettings as jest.Mock).mockReturnValue({ isLoading: false, settings });
-      createSpanLink.mockReturnValue([{ type: SpanLinkType.Logs, href: '/logs', title: 'Logs' }]);
+      createSpanLink.mockReturnValue([{ type: SpanLinkType.Logs, href: '/logs', title: linkTitle }]);
 
       render(
         <SpanDetailLinkButtons

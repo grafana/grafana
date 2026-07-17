@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, MenuItem, Icon, ContextMenu, useTheme2 } from '@grafana/ui';
 
@@ -61,6 +62,7 @@ export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) 
   return (
     <div data-testid="SpanLinksMenu" className={styles.wrapper}>
       <button
+        aria-label={t('explore.span-links-menu.aria-label', 'Span links')}
         onClick={(e) => {
           setIsMenuOpen(true);
           setMenuPosition({
