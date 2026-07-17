@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import path from 'path';
 
 import { type Variant, PACKAGE_ROOT, ALLOWED_GENERATE_COMMANDS } from './variants.ts';
@@ -18,10 +18,11 @@ export function getFilesToFormat(variant: Variant, groupName: string, version: s
 
 function runOrWarn(label: string, command: string, cwd: string) {
   console.log(`🧹 Running ${label} on generated/modified files...`);
-  try {
-    execSync(command, { cwd });
-  } catch (e) {
-    console.warn(`⚠️ Warning: ${label} encountered issues: ${e instanceof Error ? e.message : e}`);
+  const [cmd, ...args] = command.split(' ').filter(Boolean);
+  const result = spawnSync(cmd, args, { cwd, stdio: 'pipe', shell: false });
+  if (result.error || result.status !== 0) {
+    const detail = result.error?.message ?? result.stderr?.toString() ?? `exit code ${result.status}`;
+    console.warn(`⚠️ Warning: ${label} encountered issues: ${detail}`);
   }
 }
 
@@ -39,11 +40,16 @@ export function runGenerateApis(basePath: string, variant: Variant) {
     throw new Error(`Refusing to run disallowed generate command: "${variant.generateCommand}"`);
   }
   console.log(`⏳ Running ${variant.generateCommand} to generate endpoints...`);
-  try {
-    execSync(variant.generateCommand, { stdio: 'inherit', cwd: basePath });
-    console.log('✅ API endpoints generated successfully!');
-  } catch (e) {
-    console.error(`❌ Failed to generate API endpoints: ${e instanceof Error ? e.message : e}`);
-    throw e;
+  const [cmd, ...args] = variant.generateCommand.split(' ').filter(Boolean);
+  const result = spawnSync(cmd, args, { stdio: 'inherit', cwd: basePath, shell: false });
+  if (result.error) {
+    console.error(`❌ Failed to generate API endpoints: ${result.error.message}`);
+    throw result.error;
   }
+  if (result.status !== 0) {
+    const err = new Error(`Command exited with code ${result.status}`);
+    console.error(`❌ Failed to generate API endpoints: ${err.message}`);
+    throw err;
+  }
+  console.log('✅ API endpoints generated successfully!');
 }
