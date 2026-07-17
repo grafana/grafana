@@ -1,9 +1,7 @@
 import { type DataFrame, DataFrameType, type DataTransformerConfig, type Field, FieldType } from '@grafana/data';
 
 export function extractLogsFieldsTransform(dataFrame: DataFrame): DataTransformerConfig[] {
-  // Fields may already have been extracted upstream (e.g. via an "Extract fields"
-  // transformation in the panel's transformations). Re-extracting would duplicate
-  // the parsed columns, so skip by returning no transforms.
+  // Fields may already have been extracted upstream, if so: skip by returning no transforms
   if (dataFrame?.meta?.custom?.extracted) {
     return [];
   }
