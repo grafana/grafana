@@ -9,12 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// RouteResource is the resource segment of the namespaced search routes
-// (/search, /search/alertrules, /search/recordingrules), as seen by the
-// apiserver authorizer.
+// RouteResource is the resource segment of the namespaced search route
+// (/search), as seen by the apiserver authorizer.
 const RouteResource = "search"
 
-// Authorize gates the rule search routes on rule-read access, consistent with
+// Authorize gates the rule search route on rule-read access, consistent with
 // listing rules. Per-folder/per-rule access is still enforced by each backend
 // (the provisioning service for legacy, the access client for unified), so this
 // is the coarse route-level check.

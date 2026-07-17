@@ -828,7 +828,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG, clientGenerator)
+	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG, resourceClient, dualwriteService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1589,7 +1589,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG, clientGenerator)
+	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG, resourceClient, dualwriteService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}

@@ -1,11 +1,12 @@
 package search
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,12 +28,16 @@ const (
 	// and filters the full rule set in memory before paginating, so an unbounded
 	// limit would let a single request materialize an entire tenant's rules.
 	maxLimit = 1000
+	// maxBodyBytes bounds the search request body. The where tree is small; this
+	// guards against a client streaming an unbounded body into the decoder.
+	maxBodyBytes = 1 << 20 // 1 MiB
 )
 
-// Handler serves the rule search custom routes. It builds a ResourceSearchRequest
-// from the query string and delegates to a dual-writer-aware search client that
-// routes to the legacy or unified backend based on the resource's storage mode.
-// One router per kind is held because the dual-writer mode is per resource.
+// Handler serves the rule search custom route. It decodes the SearchQuery POST
+// body into a ResourceSearchRequest and delegates to a dual-writer-aware search
+// client that routes to the legacy or unified backend based on the resource's
+// storage mode. One router per kind is held because the dual-writer mode is per
+// resource.
 type Handler struct {
 	alertRules     resourcepb.ResourceIndexClient
 	recordingRules resourcepb.ResourceIndexClient
@@ -51,57 +56,64 @@ func (h *Handler) clientFor(primary schema.GroupResource) resourcepb.ResourceInd
 	return h.alertRules
 }
 
-func (h *Handler) SearchAlertRules(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
-	resp, next, err := h.run(ctx, req, alertrule.ResourceInfo.GroupResource(), nil)
-	if err != nil {
-		return err
-	}
-	return writeJSON(w, &model.GetSearchAlertRulesResponse{
-		TypeMeta:                listTypeMeta,
-		ListMeta:                metav1.ListMeta{Continue: next},
-		GetSearchAlertRulesBody: model.GetSearchAlertRulesBody{Items: h.parseAlertRuleHits(resp)},
-	})
-}
-
-func (h *Handler) SearchRecordingRules(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
-	resp, next, err := h.run(ctx, req, recordingrule.ResourceInfo.GroupResource(), nil)
-	if err != nil {
-		return err
-	}
-	return writeJSON(w, &model.GetSearchRecordingRulesResponse{
-		TypeMeta:                    listTypeMeta,
-		ListMeta:                    metav1.ListMeta{Continue: next},
-		GetSearchRecordingRulesBody: model.GetSearchRecordingRulesBody{Items: h.parseRecordingRuleHits(resp)},
-	})
-}
-
+// SearchRules serves POST /search. It searches alert rules with recording rules
+// federated so a single call returns both kinds; a "type" filter leaf in the
+// where tree narrows the result to one kind.
 func (h *Handler) SearchRules(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
-	// Cross-kind: search alert rules with recording rules federated. A type
-	// query param can still narrow to a single kind.
-	primary := alertrule.ResourceInfo.GroupResource()
-	federated := []schema.GroupResource{recordingrule.ResourceInfo.GroupResource()}
-	switch req.URL.Query().Get("type") {
-	case "alertrule":
-		federated = nil
-	case "recordingrule":
-		primary = recordingrule.ResourceInfo.GroupResource()
-		federated = nil
+	body, err := decodeSearchQuery(req)
+	if err != nil {
+		return apierrors.NewBadRequest(err.Error())
 	}
-	resp, next, err := h.run(ctx, req, primary, federated)
+
+	primary, federated := kindSelection(body)
+	resp, next, err := h.run(ctx, body, req.ResourceIdentifier.Namespace, primary, federated)
 	if err != nil {
 		return err
 	}
-	return writeJSON(w, &model.GetSearchRulesResponse{
-		TypeMeta:           listTypeMeta,
-		ListMeta:           metav1.ListMeta{Continue: next},
-		GetSearchRulesBody: model.GetSearchRulesBody{Items: h.parseRuleHits(resp)},
-	})
+
+	out := &model.CreateSearchRulesResponse{
+		TypeMeta: searchResultsTypeMeta,
+		CreateSearchRulesBody: model.CreateSearchRulesBody{
+			Metadata: h.metadata(resp, next),
+			Items:    h.parseHits(resp),
+		},
+	}
+	return writeJSON(w, out)
+}
+
+// decodeSearchQuery reads and parses the SearchQuery POST body. An empty body is
+// treated as an empty query (match everything) so a bare POST /search lists
+// rules, mirroring an unfiltered list.
+func decodeSearchQuery(req *app.CustomRouteRequest) (model.CreateSearchRulesRequestBody, error) {
+	var body model.CreateSearchRulesRequestBody
+	if req.Body == nil {
+		return body, nil
+	}
+	// The reader owns the body: close it so the runner can release the
+	// underlying connection even when the handler consumes only part of it.
+	defer func() { _ = req.Body.Close() }()
+	raw, err := io.ReadAll(io.LimitReader(req.Body, maxBodyBytes+1))
+	if err != nil {
+		return body, fmt.Errorf("reading search request body: %w", err)
+	}
+	if int64(len(raw)) > maxBodyBytes {
+		return body, fmt.Errorf("search request body exceeds %d bytes", maxBodyBytes)
+	}
+	if len(raw) == 0 {
+		return body, nil
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&body); err != nil {
+		return body, fmt.Errorf("invalid search request body: %w", err)
+	}
+	return body, nil
 }
 
 // run builds the search request, dispatches to the mode-routed client for the
 // primary kind, and computes the next page token.
-func (h *Handler) run(ctx context.Context, req *app.CustomRouteRequest, primary schema.GroupResource, federated []schema.GroupResource) (*resourcepb.ResourceSearchResponse, string, error) {
-	searchReq, offset, err := buildSearchRequest(req.URL.Query(), req.ResourceIdentifier.Namespace, primary, federated)
+func (h *Handler) run(ctx context.Context, body model.CreateSearchRulesRequestBody, namespace string, primary schema.GroupResource, federated []schema.GroupResource) (*resourcepb.ResourceSearchResponse, string, error) {
+	searchReq, offset, err := buildSearchRequest(body, namespace, primary, federated)
 	if err != nil {
 		return nil, "", apierrors.NewBadRequest(err.Error())
 	}
@@ -112,11 +124,54 @@ func (h *Handler) run(ctx context.Context, req *app.CustomRouteRequest, primary 
 	if resp.Error != nil {
 		return nil, "", apierrors.NewInternalError(errorFromResult(resp.Error))
 	}
+	// The continue token is a numeric offset into a single, stably-ordered
+	// result set. This is correct only because each backend paginates one
+	// globally-ordered set: the legacy backend sorts and paginates the merged
+	// alert+recording rows itself, and the unified backend applies one ordering
+	// across the federated kinds. If a backend ever returns a differently
+	// ordered set between pages, offset paging would skip or duplicate rows.
 	next := ""
 	if rows := rowCount(resp); offset+rows < resp.TotalHits {
 		next = strconv.FormatInt(offset+rows, 10)
 	}
 	return resp, next, nil
+}
+
+// kindSelection decides which kind is primary and which are federated. By
+// default alert rules are primary with recording rules federated so both kinds
+// are searched. A "type" filter leaf narrows to a single kind: the query then
+// targets that kind alone with no federation.
+func kindSelection(body model.CreateSearchRulesRequestBody) (schema.GroupResource, []schema.GroupResource) {
+	alert := alertrule.ResourceInfo.GroupResource()
+	recording := recordingrule.ResourceInfo.GroupResource()
+	switch typeFilterValue(body.Where) {
+	case "alertrule":
+		return alert, nil
+	case "recordingrule":
+		return recording, nil
+	default:
+		return alert, []schema.GroupResource{recording}
+	}
+}
+
+// typeFilterValue returns the value of a "type" filter leaf, or "" when the
+// where tree has none. A type filter is validated (In operator, single valid
+// kind) before it reaches here, so a present leaf always narrows to one kind.
+func typeFilterValue(where *model.CreateSearchRulesRequestSearchWhereNode) string {
+	if where == nil {
+		return ""
+	}
+	if leaf := where.Filter; leaf != nil {
+		if leaf.Field == fieldType && leaf.Operator == model.CreateSearchRulesRequestSearchFilterLeafOperatorIn && len(leaf.Values) == 1 {
+			return leaf.Values[0]
+		}
+	}
+	for i := range where.And {
+		if v := typeFilterValue(&where.And[i]); v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func rowCount(resp *resourcepb.ResourceSearchResponse) int64 {
@@ -126,78 +181,22 @@ func rowCount(resp *resourcepb.ResourceSearchResponse) int64 {
 	return int64(len(resp.Results.Rows))
 }
 
-var listTypeMeta = metav1.TypeMeta{APIVersion: model.GroupVersion.String(), Kind: "RuleSearchResults"}
+func (h *Handler) metadata(resp *resourcepb.ResourceSearchResponse, next string) model.CreateSearchRulesSearchResultsMetadata {
+	meta := model.CreateSearchRulesSearchResultsMetadata{}
+	if next != "" {
+		meta.Continue = &next
+	}
+	if resp != nil {
+		total := resp.TotalHits
+		meta.TotalHits = &total
+	}
+	return meta
+}
+
+var searchResultsTypeMeta = metav1.TypeMeta{APIVersion: model.GroupVersion.String(), Kind: "RuleSearchResults"}
 
 func resourceKey(namespace string, gr schema.GroupResource) *resourcepb.ResourceKey {
 	return &resourcepb.ResourceKey{Namespace: namespace, Group: gr.Group, Resource: gr.Resource}
-}
-
-func buildSearchRequest(q url.Values, namespace string, primary schema.GroupResource, federated []schema.GroupResource) (*resourcepb.ResourceSearchRequest, int64, error) {
-	limit := int64(defaultLimit)
-	if v := q.Get("limit"); v != "" {
-		n, err := strconv.ParseInt(v, 10, 64)
-		if err != nil || n <= 0 {
-			return nil, 0, fmt.Errorf("invalid limit %q: must be a positive integer", v)
-		}
-		limit = n
-	}
-	if limit > maxLimit {
-		limit = maxLimit
-	}
-	var offset int64
-	if v := q.Get("continueToken"); v != "" {
-		n, err := strconv.ParseInt(v, 10, 64)
-		if err != nil || n < 0 {
-			return nil, 0, fmt.Errorf("invalid continueToken %q", v)
-		}
-		offset = n
-	}
-
-	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Key: resourceKey(namespace, primary)},
-		Query:   q.Get("q"),
-		Limit:   limit,
-		Offset:  offset,
-	}
-	for _, gr := range federated {
-		req.Federated = append(req.Federated, resourceKey(namespace, gr))
-	}
-
-	add := func(field string, values ...string) {
-		vals := nonEmpty(values)
-		if len(vals) > 0 {
-			req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: field, Operator: "in", Values: vals})
-		}
-	}
-	add(fieldName, q["names"]...)
-	add(fieldFolder, q["folders"]...)
-	add(fieldDatasourceUIDs, q["datasourceUIDs"]...)
-	add(fieldDashboardUID, q.Get("dashboardUID"))
-	add(fieldPanelID, q.Get("panelID"))
-	add(fieldReceiver, q.Get("receiver"))
-	add(fieldNotificationType, q.Get("notificationType"))
-	add(fieldRoutingTree, q.Get("routingTree"))
-	add(fieldMetric, q.Get("metric"))
-	add(fieldTargetDatasourceUID, q.Get("targetDatasourceUID"))
-	if v := q.Get("paused"); v != "" {
-		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: fieldPaused, Operator: "=", Values: []string{v}})
-	}
-	// Group is a controlled metadata label, matched via the label selector.
-	if groups := nonEmpty(q["groups"]); len(groups) > 0 {
-		req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{Key: model.GroupLabelKey, Operator: "in", Values: groups})
-	}
-	// Rule labels are matched against the indexed labels field as flattened
-	// "key"/"key=value" terms.
-	for _, l := range q["labels"] {
-		if l != "" {
-			req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(parseLabelMatcher(l)))
-		}
-	}
-	if s := q.Get("sort"); s != "" {
-		desc := s[0] == '-'
-		req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: trimSortPrefix(s), Desc: desc}}
-	}
-	return req, offset, nil
 }
 
 // rowReader reads cells from a search result table by column name.
@@ -274,116 +273,67 @@ func (r rowReader) datasourceUIDs() []string {
 	return out
 }
 
-func (h *Handler) parseAlertRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchAlertRulesAlertRuleHit {
+// parseHits builds the result items. Each hit carries its resource identity
+// (group/resource/kind/name) and the per-kind field payload. A row's kind is
+// discriminated by its type column, so a federated (cross-kind) response mixes
+// both kinds in one list.
+func (h *Handler) parseHits(resp *resourcepb.ResourceSearchResponse) []model.CreateSearchRulesSearchResultHit {
 	rows := h.newRowReaders(resp)
-	hits := make([]model.GetSearchAlertRulesAlertRuleHit, 0, len(rows))
+	hits := make([]model.CreateSearchRulesSearchResultHit, 0, len(rows))
 	for _, r := range rows {
-		hits = append(hits, model.GetSearchAlertRulesAlertRuleHit{
-			Type:             model.GetSearchAlertRulesRuleSearchType(r.str(fieldType)),
-			Name:             r.row.Key.GetName(),
-			Title:            r.str(fieldTitle),
-			Folder:           r.str(fieldFolder),
-			Group:            r.strPtr(fieldGroup),
-			Interval:         r.strPtr(fieldInterval),
-			Paused:           r.boolPtr(fieldPaused),
-			Labels:           r.jsonMap(fieldLabels),
-			DatasourceUIDs:   r.datasourceUIDs(),
-			Annotations:      r.jsonMap(fieldAnnotations),
-			For:              r.strPtr(fieldFor),
-			KeepFiringFor:    r.strPtr(fieldKeepFiringFor),
-			DashboardUID:     r.strPtr(fieldDashboardUID),
-			PanelID:          r.int64Ptr(fieldPanelID),
-			Receiver:         r.strPtr(fieldReceiver),
-			NotificationType: r.strPtr(fieldNotificationType),
-			RoutingTree:      r.strPtr(fieldRoutingTree),
+		// Score is intentionally left unset: the legacy backend does not compute
+		// relevance, and until both backends populate it consistently we omit it
+		// rather than return a score for unified hits only.
+		hits = append(hits, model.CreateSearchRulesSearchResultHit{
+			Resource: r.resource(),
+			Fields:   r.fields(),
 		})
 	}
 	return hits
 }
 
-func (h *Handler) parseRecordingRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRecordingRulesRecordingRuleHit {
-	rows := h.newRowReaders(resp)
-	hits := make([]model.GetSearchRecordingRulesRecordingRuleHit, 0, len(rows))
-	for _, r := range rows {
-		hits = append(hits, model.GetSearchRecordingRulesRecordingRuleHit{
-			Type:                model.GetSearchRecordingRulesRuleSearchType(r.str(fieldType)),
-			Name:                r.row.Key.GetName(),
-			Title:               r.str(fieldTitle),
-			Folder:              r.str(fieldFolder),
-			Group:               r.strPtr(fieldGroup),
-			Interval:            r.strPtr(fieldInterval),
-			Paused:              r.boolPtr(fieldPaused),
-			Labels:              r.jsonMap(fieldLabels),
-			DatasourceUIDs:      r.datasourceUIDs(),
-			Metric:              r.strPtr(fieldMetric),
-			TargetDatasourceUID: r.strPtr(fieldTargetDatasourceUID),
-		})
+// resource reports the identity of a hit. The kind is derived from the type
+// column so federated results carry the correct kind per row.
+func (r rowReader) resource() model.CreateSearchRulesSearchResultResource {
+	info := alertrule.ResourceInfo
+	if r.str(fieldType) == "recordingrule" {
+		info = recordingrule.ResourceInfo
 	}
-	return hits
+	gr := info.GroupResource()
+	return model.CreateSearchRulesSearchResultResource{
+		Group:    gr.Group,
+		Resource: gr.Resource,
+		Kind:     info.GroupVersionKind().Kind,
+		Name:     r.row.Key.GetName(),
+	}
 }
 
-// parseRuleHits builds the cross-kind union, discriminating each row by its
-// type column into the matching variant.
-func (h *Handler) parseRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRulesRuleHit {
-	rows := h.newRowReaders(resp)
-	hits := make([]model.GetSearchRulesRuleHit, 0, len(rows))
-	for _, r := range rows {
-		hit := model.GetSearchRulesRuleHit{}
-		if r.str(fieldType) == "recordingrule" {
-			hit.RecordingRuleHit = &model.GetSearchRulesRecordingRuleHit{
-				Type:                model.GetSearchRulesRuleSearchTypeRecordingRule,
-				Name:                r.row.Key.GetName(),
-				Title:               r.str(fieldTitle),
-				Folder:              r.str(fieldFolder),
-				Group:               r.strPtr(fieldGroup),
-				Interval:            r.strPtr(fieldInterval),
-				Paused:              r.boolPtr(fieldPaused),
-				Labels:              r.jsonMap(fieldLabels),
-				DatasourceUIDs:      r.datasourceUIDs(),
-				Metric:              r.strPtr(fieldMetric),
-				TargetDatasourceUID: r.strPtr(fieldTargetDatasourceUID),
-			}
-		} else {
-			hit.AlertRuleHit = &model.GetSearchRulesAlertRuleHit{
-				Type:             model.GetSearchRulesRuleSearchTypeAlertRule,
-				Name:             r.row.Key.GetName(),
-				Title:            r.str(fieldTitle),
-				Folder:           r.str(fieldFolder),
-				Group:            r.strPtr(fieldGroup),
-				Interval:         r.strPtr(fieldInterval),
-				Paused:           r.boolPtr(fieldPaused),
-				Labels:           r.jsonMap(fieldLabels),
-				DatasourceUIDs:   r.datasourceUIDs(),
-				Annotations:      r.jsonMap(fieldAnnotations),
-				For:              r.strPtr(fieldFor),
-				KeepFiringFor:    r.strPtr(fieldKeepFiringFor),
-				DashboardUID:     r.strPtr(fieldDashboardUID),
-				PanelID:          r.int64Ptr(fieldPanelID),
-				Receiver:         r.strPtr(fieldReceiver),
-				NotificationType: r.strPtr(fieldNotificationType),
-				RoutingTree:      r.strPtr(fieldRoutingTree),
-			}
-		}
-		hits = append(hits, hit)
+// fields populates the per-kind field payload. Only the fields relevant to the
+// row's kind are set; the union type leaves the rest nil.
+func (r rowReader) fields() model.CreateSearchRulesRuleSearchHitFields {
+	f := model.CreateSearchRulesRuleSearchHitFields{
+		Title:          r.strPtr(fieldTitle),
+		Folder:         r.strPtr(fieldFolder),
+		Type:           r.strPtr(fieldType),
+		Interval:       r.strPtr(fieldInterval),
+		Paused:         r.boolPtr(fieldPaused),
+		Labels:         r.jsonMap(fieldLabels),
+		DatasourceUIDs: r.datasourceUIDs(),
 	}
-	return hits
-}
-
-func nonEmpty(values []string) []string {
-	out := make([]string, 0, len(values))
-	for _, v := range values {
-		if v != "" {
-			out = append(out, v)
-		}
+	if r.str(fieldType) == "recordingrule" {
+		f.Metric = r.strPtr(fieldMetric)
+		f.TargetDatasourceUID = r.strPtr(fieldTargetDatasourceUID)
+		return f
 	}
-	return out
-}
-
-func trimSortPrefix(s string) string {
-	if len(s) > 0 && s[0] == '-' {
-		return s[1:]
-	}
-	return s
+	f.Annotations = r.jsonMap(fieldAnnotations)
+	f.For = r.strPtr(fieldFor)
+	f.KeepFiringFor = r.strPtr(fieldKeepFiringFor)
+	f.DashboardUID = r.strPtr(fieldDashboardUID)
+	f.PanelID = r.int64Ptr(fieldPanelID)
+	f.Receiver = r.strPtr(fieldReceiver)
+	f.NotificationType = r.strPtr(fieldNotificationType)
+	f.RoutingTree = r.strPtr(fieldRoutingTree)
+	return f
 }
 
 func errorFromResult(e *resourcepb.ErrorResult) error {
