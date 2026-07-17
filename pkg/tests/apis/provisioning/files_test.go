@@ -84,9 +84,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 
 		// Verify the dashboard is removed from Grafana
 		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json
-		_, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
-		require.Error(t, err, "dashboard should be deleted from Grafana")
-		require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted dashboard")
+		helper.RequireDashboardsNotFound(t, allPanelsUID)
 	})
 
 	t.Run("delete individual dashboard file on branch should succeed", func(t *testing.T) {

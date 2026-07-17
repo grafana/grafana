@@ -1012,9 +1012,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	require.Equal(t, status.Message, "Dry run failed: Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 
 	const invalidSchemaUid = "invalid-schema-uid"
-	_, err = helper.DashboardsV1.Resource.Get(t.Context(), invalidSchemaUid, metav1.GetOptions{})
-	require.Error(t, err, "invalid dashboard shouldn't exist")
-	require.True(t, apierrors.IsNotFound(err))
+	helper.RequireDashboardsNotFound(t, invalidSchemaUid)
 
 	helper.DebugState(t, repo, "BEFORE PULL JOB WITH INVALID SCHEMA")
 
@@ -1032,9 +1030,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	assert.Equal(t, job.Status.Message, "completed with errors")
 	assert.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 
-	_, err = helper.DashboardsV1.Resource.Get(t.Context(), invalidSchemaUid, metav1.GetOptions{})
-	require.Error(t, err, "invalid dashboard shouldn't have been created")
-	require.True(t, apierrors.IsNotFound(err))
+	helper.RequireDashboardsNotFound(t, invalidSchemaUid)
 
 	err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}, "files", "invalid-dashboard-schema.json")
 	require.NoError(t, err, "should delete the resource file")
@@ -1710,9 +1706,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 
 	// The dashboard shouldn't exist yet
 	const allPanels = "n1jR8vnnz"
-	_, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanels, metav1.GetOptions{})
-	require.Error(t, err, "no all-panels dashboard should exist")
-	require.True(t, apierrors.IsNotFound(err))
+	helper.RequireDashboardsNotFound(t, allPanels)
 
 	const repo = "local-tmp"
 	// Set up the repository and the file to import.
@@ -1766,9 +1760,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	err = helper.DashboardsV1.Resource.Delete(t.Context(), allPanels, metav1.DeleteOptions{})
 	require.NoError(t, err, "user can delete")
 
-	_, err = helper.DashboardsV1.Resource.Get(t.Context(), allPanels, metav1.GetOptions{})
-	require.Error(t, err, "should delete the internal resource")
-	require.True(t, apierrors.IsNotFound(err))
+	helper.RequireDashboardsNotFound(t, allPanels)
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.T) {
@@ -1845,9 +1837,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 
 		helper.WaitForRepositoryDeleted(t, repo)
 
-		_, err = helper.DashboardsV1.Resource.Get(t.Context(), "finalizer-remove-classic-uid", metav1.GetOptions{})
-		require.Error(t, err, "classic dashboard should be deleted by remove-orphan-resources finalizer")
-		require.True(t, apierrors.IsNotFound(err))
+		helper.RequireDashboardsNotFound(t, "finalizer-remove-classic-uid")
 	})
 
 	t.Run("release-orphan-resources finalizer releases classic dashboards", func(t *testing.T) {
