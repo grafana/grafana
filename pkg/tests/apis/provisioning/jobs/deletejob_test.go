@@ -270,9 +270,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			// Verify folder was created in Grafana as a Folder resource.
 			// Folder names are generated with suffixes, so resolve the folder
 			// through the dashboard that lives inside it.
-			helper.RequireDashboards(t, "folder-dash")
-			dash, err := helper.DashboardsV1.Resource.Get(t.Context(), "folder-dash", metav1.GetOptions{})
-			require.NoError(t, err)
+			dash := helper.RequireDashboards(t, "folder-dash")[0]
 			testFolderName := dash.GetAnnotations()[utils.AnnoKeyFolder]
 			require.True(t, strings.HasPrefix(testFolderName, "test-folder"), "test-folder should exist as a Folder resource")
 
@@ -295,7 +293,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			// FIXME: use helpers
 			// Verify folder is deleted from Grafana
-			_, err = helper.Folders.Resource.Get(t.Context(), testFolderName, metav1.GetOptions{})
+			_, err := helper.Folders.Resource.Get(t.Context(), testFolderName, metav1.GetOptions{})
 			require.Error(t, err, "folder should be deleted from Grafana")
 			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 

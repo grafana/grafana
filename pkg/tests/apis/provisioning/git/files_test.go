@@ -54,9 +54,7 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 		// Trigger sync and verify dashboard is created
 		helper.SyncAndWait(t, repoName)
 
-		helper.RequireDashboards(t, "test-dashboard-1")
-		dash, err := helper.DashboardsV1.Resource.Get(t.Context(), "test-dashboard-1", metav1.GetOptions{})
-		require.NoError(t, err)
+		dash := helper.RequireDashboards(t, "test-dashboard-1")[0]
 		require.Equal(t, repoName, dash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
 

@@ -1008,40 +1008,54 @@ func (h *ProvisioningTestHelper) ListRepoFolders(t *testing.T, repoName string) 
 	return filterManagedResources(folders.Items, repoName)
 }
 
-// RequireDashboards polls until every named dashboard exists, regardless of manager.
-func (h *ProvisioningTestHelper) RequireDashboards(t *testing.T, names ...string) {
+// RequireDashboards polls until every named dashboard exists, regardless of
+// manager, and returns them in the same order as names.
+func (h *ProvisioningTestHelper) RequireDashboards(t *testing.T, names ...string) []unstructured.Unstructured {
 	t.Helper()
+	matched := make([]unstructured.Unstructured, len(names))
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list dashboards") {
 			return
 		}
-		var found []string
+		byName := make(map[string]unstructured.Unstructured, len(dashboards.Items))
 		for _, d := range dashboards.Items {
-			found = append(found, d.GetName())
+			byName[d.GetName()] = d
 		}
-		for _, name := range names {
-			assert.Contains(c, found, name, "expected dashboard %q to exist", name)
+		for i, name := range names {
+			d, ok := byName[name]
+			if !assert.True(c, ok, "expected dashboard %q to exist", name) {
+				continue
+			}
+			matched[i] = d
 		}
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected dashboards %v to exist", names)
+	return matched
 }
 
-// RequireFolders polls until every named folder exists, regardless of manager.
-func (h *ProvisioningTestHelper) RequireFolders(t *testing.T, names ...string) {
+// RequireFolders polls until every named folder exists, regardless of manager,
+// and returns them in the same order as names.
+func (h *ProvisioningTestHelper) RequireFolders(t *testing.T, names ...string) []unstructured.Unstructured {
 	t.Helper()
+	matched := make([]unstructured.Unstructured, len(names))
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
-		var found []string
+		byName := make(map[string]unstructured.Unstructured, len(folders.Items))
 		for _, f := range folders.Items {
-			found = append(found, f.GetName())
+			byName[f.GetName()] = f
 		}
-		for _, name := range names {
-			assert.Contains(c, found, name, "expected folder %q to exist", name)
+		for i, name := range names {
+			f, ok := byName[name]
+			if !assert.True(c, ok, "expected folder %q to exist", name) {
+				continue
+			}
+			matched[i] = f
 		}
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected folders %v to exist", names)
+	return matched
 }
 
 // WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
