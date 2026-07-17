@@ -95,7 +95,6 @@ type ControllerConfig struct {
 // dashboards_server_url =
 // folders_server_url =
 // aggregated_server_url =
-// folders_api_version =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =

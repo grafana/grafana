@@ -41,6 +41,14 @@ const scenarios: Scenario[] = [
   },
 ];
 
+test.use({
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
+  },
+});
+
 test.describe('plugin-e2e-api-tests admin', { tag: ['@plugins'] }, () => {
   for (const scenario of scenarios) {
     test(`annotation query data with ${scenario.name}`, async ({ annotationEditPage, page }) => {

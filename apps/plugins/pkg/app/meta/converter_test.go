@@ -38,6 +38,13 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		}
 	})
 
+	t.Run("blanks unsubstituted version/updated placeholders", func(t *testing.T) {
+		jsonData := plugins.JSONData{ID: "test", Name: "Test", Info: plugins.Info{Version: "%VERSION%", Updated: "%TODAY%"}}
+		meta := jsonDataToMetaJSONData(jsonData)
+		assert.Empty(t, meta.Info.Version)
+		assert.Empty(t, meta.Info.Updated)
+	})
+
 	t.Run("converts categories", func(t *testing.T) {
 		testCases := []string{
 			"tsdb",
@@ -646,6 +653,22 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
 		require.NoError(t, err)
 		assert.Equal(t, "9.9.9", meta.PluginJson.Info.Version)
+	})
+
+	t.Run("treats a %VERSION% placeholder as empty and falls back to the gcom version", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug:          "test-plugin",
+			Version:             "2.3.4",
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Info: pluginsv0alpha1.MetaInfo{Version: "%VERSION%", Updated: "%TODAY%"}}},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest:            grafanaComPluginManifest{Files: map[string]string{}},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
+		require.NoError(t, err)
+		assert.Equal(t, "2.3.4", meta.PluginJson.Info.Version)
+		assert.Empty(t, meta.PluginJson.Info.Updated)
 	})
 
 	t.Run("converts all signature types", func(t *testing.T) {

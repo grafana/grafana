@@ -20,7 +20,8 @@ import {
   type SupplementaryQueryType,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import {
@@ -334,8 +335,8 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
         if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
           // Skip automatic import if explicitly requested (e.g., query library replacement)
           if (!options?.skipAutoImport) {
-            const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
-            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+            const queryDatasource = await getDataSourceInstance(oldQuery.datasource);
+            const targetDS = await getDataSourceInstance({ uid: newQuery.datasource?.uid });
             await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
             queriesImported = true;
           }
@@ -398,7 +399,7 @@ export const importQueries = (
       const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
       const groupedImportableQueries = await Promise.all(
         Object.keys(groupedQueries).map(async (key: string) => {
-          const queryDatasource = await getDataSourceSrv().get({ uid: key });
+          const queryDatasource = await getDataSourceInstance({ uid: key });
           return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
         })
       );
@@ -500,11 +501,18 @@ async function handleHistory(
   Always write to local storage. If query history is enabled, we will use local storage for autocomplete only (and want to hide errors)
   If query history is disabled, we will use local storage for query history as well, and will want to show errors
   */
-    dispatch(addHistoryItem(true, datasource.uid, datasource.name, filteredQueries, config.queryHistoryEnabled));
-    if (config.queryHistoryEnabled) {
-      // write to remote if flag enabled
-      dispatch(addHistoryItem(false, datasource.uid, datasource.name, filteredQueries, false));
-    }
+    // Kick off both writes synchronously, then await them before refreshing below. Adding to
+    // history resolves the data source asynchronously, so a non-awaited write can land after
+    // loadRichHistory has already read stale storage.
+    const localWrite = dispatch(
+      addHistoryItem(true, datasource.uid, datasource.name, filteredQueries, config.queryHistoryEnabled)
+    );
+    // write to remote if flag enabled
+    const remoteWrite = config.queryHistoryEnabled
+      ? dispatch(addHistoryItem(false, datasource.uid, datasource.name, filteredQueries, false))
+      : undefined;
+    await localWrite;
+    await remoteWrite;
 
     // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
     // used filters. Instead, we refresh the query history list.
@@ -808,7 +816,7 @@ const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars
 
   return await Promise.all(
     Object.values(sets).map(async (targets) => {
-      const datasource = await getDataSourceSrv().get(targets[0].datasource, scopedVars);
+      const datasource = await getDataSourceInstance(targets[0].datasource, scopedVars);
       return {
         datasource,
         targets,

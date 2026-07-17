@@ -1,6 +1,6 @@
 import { advanceTo, clear } from 'jest-date-mock';
 
-import { dateTime } from '@grafana/data';
+import { dateTime, type DataQueryRequest } from '@grafana/data';
 import {
   SceneCanvasText,
   SceneFlexItem,
@@ -77,6 +77,27 @@ describe('PanelTimeRange', () => {
     buildAndActivateSceneFor(panelTime);
 
     expect(panelTime.state.timeInfo).toBe('Last 1 hour + compared to day before');
+  });
+
+  it('should apply time comparison relative to the time-shifted panel range', () => {
+    // Composition order: time shift first, then compare offset from the shifted range.
+    // Dashboard now-6h→now at 19:00, shift 2h → primary 11:00–17:00; compare 1d → 11:00–17:00 previous day.
+    const panelTime = new PanelTimeRange({ timeShift: '2h', compareWith: '1d' });
+
+    buildAndActivateSceneFor(panelTime);
+
+    expect(panelTime.state.value.from.toISOString()).toBe('2019-02-11T11:00:00.000Z');
+    expect(panelTime.state.value.to.toISOString()).toBe('2019-02-11T17:00:00.000Z');
+    expect(panelTime.state.timeInfo).toBe('Timeshift -2h + compared to day before');
+
+    const extraQueries = panelTime.getExtraQueries({
+      targets: [{ refId: 'A' }],
+      range: panelTime.state.value,
+    } as DataQueryRequest);
+
+    expect(extraQueries).toHaveLength(1);
+    expect(extraQueries[0].req.range.from.toISOString()).toBe('2019-02-10T11:00:00.000Z');
+    expect(extraQueries[0].req.range.to.toISOString()).toBe('2019-02-10T17:00:00.000Z');
   });
 
   it('should update timeInfo when timeShift and timeFrom are variable expressions', async () => {

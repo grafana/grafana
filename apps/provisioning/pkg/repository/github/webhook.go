@@ -144,6 +144,10 @@ func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumb
 	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
 }
 
+func (r *githubWebhookRepository) MergeBase(ctx context.Context, headRef string) (string, error) {
+	return r.Client().MergeBase(ctx, r.Config().Branch(), headRef)
+}
+
 func normalizeGitHubAction(action string) repository.PullRequestAction {
 	if action == "synchronize" {
 		return repository.PullRequestActionUpdated
