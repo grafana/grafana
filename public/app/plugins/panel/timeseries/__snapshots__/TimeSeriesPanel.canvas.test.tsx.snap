@@ -7038,6 +7038,24 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: hue canvas 1`] = `
 [
   {
     "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 8,
+      "y1": 357,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 8,
+      "y1": 357,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
       "x": 0.5,
       "y": 0.5,
     },
@@ -7281,6 +7299,15 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: opacity canvas 1`] = `
 [
   {
     "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 8,
+      "y1": 357,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
       "x": 0.5,
       "y": 0.5,
     },
@@ -7500,6 +7527,24 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: opacity canvas 1`] = `
 
 exports[`TimeSeriesPanel (canvas) Options gradientMode: scheme canvas 1`] = `
 [
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 357,
+      "y1": 137,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 357,
+      "y1": 137,
+    },
+    "type": "createLinearGradient",
+  },
   {
     "props": {
       "x": 0.5,
