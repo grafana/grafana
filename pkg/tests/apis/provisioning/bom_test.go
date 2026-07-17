@@ -231,14 +231,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		require.NoError(t, err)
 
 		// Wait for repository to be deleted (finalizer has completed)
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err = helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-			if err == nil {
-				collect.Errorf("repository should be deleted")
-				return
-			}
-			// Repository not found - good!
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted")
+		helper.WaitForRepositoryDeleted(t, repoName)
 
 		// Verify dashboard STILL EXISTS (released, not deleted)
 		dashboard, err = helper.DashboardsV1.Resource.Get(t.Context(), "bom-deletion-test", metav1.GetOptions{})

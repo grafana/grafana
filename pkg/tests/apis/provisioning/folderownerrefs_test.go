@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,26 +34,16 @@ func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
 	helper.RequireRepoFolderCount(t, "test-repo", 1)
 
 	t.Run("should fail to set ownerReferences on provisioned folder via patch", func(t *testing.T) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, folders.Items, 1)
+		managedFolder := helper.ListRepoFolders(t, "test-repo")[0]
 
-		managedFolder := folders.Items[0]
-		require.Contains(t, managedFolder.GetAnnotations(), utils.AnnoKeyManagerKind, "folder should be managed")
-		require.Contains(t, managedFolder.GetAnnotations(), utils.AnnoKeyManagerIdentity, "folder should be managed")
-
-		_, err = helper.Folders.Resource.Patch(t.Context(), managedFolder.GetName(), types.JSONPatchType, ownerRefsPatch, metav1.PatchOptions{})
+		_, err := helper.Folders.Resource.Patch(t.Context(), managedFolder.GetName(), types.JSONPatchType, ownerRefsPatch, metav1.PatchOptions{})
 		require.Error(t, err, "should fail to set ownerReferences on managed folder")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden status error, got: %v", err)
 		require.Contains(t, err.Error(), "cannot set owner references on folders managed by a repository")
 	})
 
 	t.Run("should fail to set ownerReferences on provisioned folder via update", func(t *testing.T) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, folders.Items, 1)
-
-		managedFolder := folders.Items[0].DeepCopy()
+		managedFolder := helper.ListRepoFolders(t, "test-repo")[0].DeepCopy()
 		managedFolder.SetOwnerReferences([]metav1.OwnerReference{{
 			APIVersion: "iam.grafana.app/v0alpha1",
 			Kind:       "Team",
@@ -62,7 +51,7 @@ func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
 			UID:        "00000000-0000-0000-0000-000000000001",
 		}})
 
-		_, err = helper.Folders.Resource.Update(t.Context(), managedFolder, metav1.UpdateOptions{})
+		_, err := helper.Folders.Resource.Update(t.Context(), managedFolder, metav1.UpdateOptions{})
 		require.Error(t, err, "should fail to set ownerReferences on managed folder via update")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden status error, got: %v", err)
 		require.Contains(t, err.Error(), "cannot set owner references on folders managed by a repository")
@@ -81,14 +70,9 @@ func TestIntegrationFolderOwnerRefs_UnprovisionedFolders(t *testing.T) {
 	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("should set ownerReferences when folder is released", func(t *testing.T) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, folders.Items, 1)
-		managedFolderName := folders.Items[0].GetName()
-		require.Contains(t, folders.Items[0].GetAnnotations(), utils.AnnoKeyManagerKind, "folder should be managed")
-		require.Contains(t, folders.Items[0].GetAnnotations(), utils.AnnoKeyManagerIdentity, "folder should be managed")
+		managedFolderName := helper.ListRepoFolders(t, repo)[0].GetName()
 
-		_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
+		_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
 		{
 			"op": "replace",
 			"path": "/metadata/finalizers",

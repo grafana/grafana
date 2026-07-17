@@ -1118,19 +1118,9 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
-	found, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err, "can list values")
+	helper.RequireDashboards(t, "adg5vbj", "admfz74", "adn5mxb")
 
-	names := make([]string, 0, len(found.Items))
-	for _, v := range found.Items {
-		names = append(names, v.GetName())
-	}
-	require.Len(t, names, 3, "should have three dashboards")
-	assert.Contains(t, names, "adg5vbj", "should contain dashboard.json's contents")
-	assert.Contains(t, names, "admfz74", "should contain dashboard2.yaml's contents")
-	assert.Contains(t, names, "adn5mxb", "should contain dashboard2.yaml's contents")
-
-	err = helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
+	err := helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
 
 	common.WaitForResourcesDeleted(t, helper.DashboardsV1.Resource, "dashboards")

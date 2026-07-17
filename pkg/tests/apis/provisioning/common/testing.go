@@ -982,14 +982,35 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 
 // countManagedResources counts resources managed by repoName.
 func countManagedResources(items []unstructured.Unstructured, repoName string) int {
-	var count int
+	return len(filterManagedResources(items, repoName))
+}
+
+// filterManagedResources returns the resources managed by repoName.
+func filterManagedResources(items []unstructured.Unstructured, repoName string) []unstructured.Unstructured {
+	var managed []unstructured.Unstructured
 	for i := range items {
 		annotations := items[i].GetAnnotations()
 		if annotations["grafana.app/managedBy"] == "repo" && annotations["grafana.app/managerId"] == repoName {
-			count++
+			managed = append(managed, items[i])
 		}
 	}
-	return count
+	return managed
+}
+
+// ListRepoDashboards lists dashboards and returns only those managed by the given repo.
+func (h *ProvisioningTestHelper) ListRepoDashboards(t *testing.T, repoName string) []unstructured.Unstructured {
+	t.Helper()
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list dashboards")
+	return filterManagedResources(dashboards.Items, repoName)
+}
+
+// ListRepoFolders lists folders and returns only those managed by the given repo.
+func (h *ProvisioningTestHelper) ListRepoFolders(t *testing.T, repoName string) []unstructured.Unstructured {
+	t.Helper()
+	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list folders")
+	return filterManagedResources(folders.Items, repoName)
 }
 
 // RequireDashboards polls until every named dashboard exists, regardless of manager.

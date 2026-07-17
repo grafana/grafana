@@ -65,12 +65,10 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.NoError(t, err, "nested files should still exist")
 
 		// Verify dashboard still exists in Grafana after sync
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
+		helper.RequireRepoDashboardCount(t, repo, 3)
 		// Verify that dashboards have the correct source paths
 		foundPaths := make(map[string]bool)
-		for _, dashboard := range dashboards.Items {
+		for _, dashboard := range helper.ListRepoDashboards(t, repo) {
 			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
 			foundPaths[sourcePath] = true
 		}
@@ -115,13 +113,11 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		// Verify dashboards still exist in Grafana after sync
 		// Note: Since dashboard1.json was moved in the previous test, we now expect all 3 dashboards
 		// to be accessible from their moved locations (dashboard1 from moved/, dashboard2 and dashboard3 from archived/)
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
+		helper.RequireRepoDashboardCount(t, repo, 3)
 
 		// Verify that dashboards have the correct source paths after cumulative moves
 		foundPaths := make(map[string]bool)
-		for _, dashboard := range dashboards.Items {
+		for _, dashboard := range helper.ListRepoDashboards(t, repo) {
 			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
 			foundPaths[sourcePath] = true
 		}

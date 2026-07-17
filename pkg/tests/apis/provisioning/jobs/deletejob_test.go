@@ -80,11 +80,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		require.Error(t, err, "file should be deleted from repository")
 		require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
-		// FIXME: create a helper to verify grafana resources
 		// Verify dashboard is removed from Grafana after sync
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Equal(t, 2, len(dashboards.Items), "should have 2 dashboards after delete")
+		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Verify other files still exist
 		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "dashboard2.json")
@@ -113,9 +110,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(err))
 
 		// Verify all dashboards are removed from Grafana after sync
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Equal(t, 0, len(dashboards.Items), "should have 0 dashboards after deleting all")
+		helper.RequireRepoDashboardCount(t, repo, 0)
 	})
 
 	t.Run("delete by resource reference", func(t *testing.T) {
@@ -151,14 +146,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify the new resources are created
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, len(dashboards.Items), 3, "should have at least 3 dashboards after adding test resources")
-
-		// Debug: print the actual dashboard names/UIDs to verify they match our expectations
-		for i, dashboard := range dashboards.Items {
-			t.Logf("Dashboard %d: name=%s, UID=%s", i+1, dashboard.GetName(), dashboard.GetUID())
-		}
+		helper.RequireRepoDashboardCount(t, repo, 3)
 
 		t.Run("delete single dashboard by resource reference", func(t *testing.T) {
 			spec := provisioning.JobSpec{
@@ -178,14 +166,12 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			// FIXME: use helpers
 			// Verify corresponding file is deleted from repository
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "resource-test-1.json")
+			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "resource-test-1.json")
 			require.Error(t, err, "file should be deleted from repository")
 			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
 			// Verify dashboard is removed from Grafana (check count like other successful tests)
-			dashboards, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(t, err)
-			require.Equal(t, 2, len(dashboards.Items), "should have 2 dashboards after deleting 1 from 3")
+			helper.RequireRepoDashboardCount(t, repo, 2)
 
 			// Verify other resources still exist
 			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "resource-test-2.json")
@@ -216,7 +202,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			// FIXME: use helpers
 			// Verify both dashboards are removed from Grafana
-			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "resourceref2", metav1.GetOptions{})
+			_, err := helper.DashboardsV1.Resource.Get(t.Context(), "resourceref2", metav1.GetOptions{})
 			require.Error(t, err, "text-options dashboard should be deleted")
 			require.True(t, apierrors.IsNotFound(err))
 
@@ -232,9 +218,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			require.Error(t, err, "nested/resource-test-3.json should be deleted")
 
 			// Verify specific dashboards are removed from Grafana
-			dashboards, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(t, err)
-			require.Equal(t, 0, len(dashboards.Items), "should have 0 dashboards after deleting 2 more (2 -> 0)")
+			helper.RequireRepoDashboardCount(t, repo, 0)
 		})
 
 		t.Run("mixed deletion - paths and resources", func(t *testing.T) {
@@ -272,7 +256,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			// FIXME: use the helpers
 			// Verify both targeted resources are deleted from Grafana
-			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "resourceref1", metav1.GetOptions{})
+			_, err := helper.DashboardsV1.Resource.Get(t.Context(), "resourceref1", metav1.GetOptions{})
 			require.Error(t, err, "dashboard deleted by path should be removed")
 
 			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "resourceref2", metav1.GetOptions{})
@@ -310,11 +294,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			helper.SyncAndWait(t, repo, nil)
 
 			// Verify folder was created in Grafana as a Folder resource
-			folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(t, err)
-
 			var testFolder *unstructured.Unstructured
-			for _, folder := range folders.Items {
+			for _, folder := range helper.ListRepoFolders(t, repo) {
 				// Folder names are generated with suffixes, so check if it starts with "test-folder"
 				if strings.HasPrefix(folder.GetName(), "test-folder") {
 					testFolder = &folder
@@ -325,7 +306,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			testFolderName := testFolder.GetName()
 
 			// Verify dashboard inside the folder exists
-			_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "test-folder", "dashboard-in-folder.json")
+			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "test-folder", "dashboard-in-folder.json")
 			require.NoError(t, err, "dashboard inside folder should exist")
 
 			spec := provisioning.JobSpec{

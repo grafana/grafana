@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,34 +68,10 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		},
 	})
 
-	var dashboards *unstructured.UnstructuredList
-	var folders *unstructured.UnstructuredList
-	var err error
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 3 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
-			return
-		}
-		folders, err = helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list folders: error: %s", err.Error())
-			return
-		}
-		if len(folders.Items) != 2 {
-			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
-			return
-		}
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 2)
 
-		assert.Len(collect, dashboards.Items, 3)
-		assert.Len(collect, folders.Items, 2)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
-
-	helper.ValidateManagedDashboardsFolderMetadata(t, repo, dashboards.Items)
+	helper.ValidateManagedDashboardsFolderMetadata(t, repo, helper.ListRepoDashboards(t, repo))
 
 	t.Run("delete individual dashboard file on configured branch should succeed", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
@@ -183,11 +158,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Validate the dashboard metadata
-	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 1, len(dashboards.Items))
-
-	helper.ValidateManagedDashboardsFolderMetadata(t, repo, dashboards.Items)
+	helper.ValidateManagedDashboardsFolderMetadata(t, repo, helper.ListRepoDashboards(t, repo))
 
 	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
 	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
@@ -429,40 +400,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		},
 	})
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 2 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
-			return
-		}
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list folders: error: %s", err.Error())
-			return
-		}
-		if len(folders.Items) != 2 {
-			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
-			return
-		}
-
-		assert.Len(collect, dashboards.Items, 2)
-		assert.Len(collect, folders.Items, 2)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
-
-	allDashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	for _, dashboard := range allDashboards.Items {
-		annotations := dashboard.GetAnnotations()
-		// Expect to be managed by repo1 or repo2
-		managerID := annotations["grafana.app/managerId"]
-		if managerID != repo1 && managerID != repo2 {
-			t.Fatalf("dashboard %s is not managed by repo1 or repo2", dashboard.GetName())
-		}
-	}
+	helper.RequireRepoDashboardCount(t, repo1, 1)
+	helper.RequireRepoFolderCount(t, repo1, 1)
+	helper.RequireRepoDashboardCount(t, repo2, 1)
+	helper.RequireRepoFolderCount(t, repo2, 1)
 
 	t.Run("CREATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		// Try to create a dashboard in repo2 that has the same UID as the one in repo1
@@ -954,21 +895,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	helper.RequireRepoDashboardCount(t, repo, 1)
 	helper.RequireRepoFolderCount(t, repo, 0)
 
-	// Wait for initial sync to complete
-	var dashboardUID string
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 1 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 1)
-			return
-		}
-		assert.Len(collect, dashboards.Items, 1)
-		dashboardUID = dashboards.Items[0].GetName()
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards after sync")
+	dashboardUID := helper.ListRepoDashboards(t, repo)[0].GetName()
 
 	// Grant permissions to Editor user for all dashboards using wildcard
 	// The access checker checks resource-level permissions, so we need to grant them
@@ -1355,18 +1282,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 		// Wait for dashboard to be created
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(collect, err, "should list dashboards")
-			found := false
-			for _, dash := range dashboards.Items {
-				if dash.GetName() == "security-test-dashboard" {
-					found = true
-					break
-				}
-			}
-			assert.True(collect, found, "security-test-dashboard should exist")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be created")
+		helper.RequireDashboards(t, "security-test-dashboard")
 
 		// Now try to update the dashboard as Editor, but claim it's in a different folder
 		// The file is at path "security-test.json" (root level, no folder)

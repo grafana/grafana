@@ -6,10 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -26,21 +23,8 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 		},
 	})
 	t.Run("should succeed updating permissions for provisioned nested folder when flag is enabled", func(t *testing.T) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
 		helper.RequireRepoFolderCount(t, repoName, 3) // root, folder, subfolder
-
-		// Find all folders managed by provisioning
-		var provisionedFolders []*unstructured.Unstructured
-		for i := range folders.Items {
-			annotations := folders.Items[i].GetAnnotations()
-			if _, hasManagerKind := annotations[utils.AnnoKeyManagerKind]; hasManagerKind {
-				if _, hasManagerIdentity := annotations[utils.AnnoKeyManagerIdentity]; hasManagerIdentity {
-					provisionedFolders = append(provisionedFolders, &folders.Items[i])
-				}
-			}
-		}
-		require.Greater(t, len(provisionedFolders), 0, "should have at least one provisioned folder")
+		provisionedFolders := helper.ListRepoFolders(t, repoName)
 
 		permissionsPayload := map[string]interface{}{
 			"items": []map[string]interface{}{

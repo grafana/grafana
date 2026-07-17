@@ -56,22 +56,10 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 		// Trigger sync and verify dashboard is created
 		helper.SyncAndWait(t, repoName)
 
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-
-			found := false
-			for _, dash := range dashboards.Items {
-				if dash.GetName() == "test-dashboard-1" {
-					found = true
-					assert.Equal(collect, repoName, dash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
-					break
-				}
-			}
-			assert.True(collect, found, "dashboard should be synced to Grafana")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should appear after sync")
+		helper.RequireDashboards(t, "test-dashboard-1")
+		dash, err := helper.DashboardsV1.Resource.Get(t.Context(), "test-dashboard-1", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, repoName, dash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
 
 	t.Run("create file on new branch", func(t *testing.T) {
