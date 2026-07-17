@@ -319,6 +319,16 @@ describe('pinning helpers', () => {
       expect(entries[0].line?.ancestors).toEqual(['Dashboards']);
     });
 
+    it('resolves a top-level parent section to a quick-link breadcrumb, not an expandable section', () => {
+      // A parent's children are individually pinnable, so pinning the parent is a plain quick-link
+      // (only Starred, whose children aren't pinnable, renders as an expandable section).
+      const entries = getPinnedEntries(tree, ['/dashboards']);
+      expect(entries).toHaveLength(1);
+      expect(entries[0].section).toBeUndefined();
+      expect(entries[0].line?.item.text).toBe('Dashboards');
+      expect(entries[0].line?.ancestors).toEqual([]);
+    });
+
     it('keeps the stored order and skips urls that match no nav item', () => {
       const entries = getPinnedEntries(tree, ['/admin/settings', '/nope', '/explore']);
       expect(entries.map((e) => e.url)).toEqual(['/admin/settings', '/explore']);
