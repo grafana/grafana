@@ -62,7 +62,7 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    width: '500px',
+    width: '720px',
     margin: theme.spacing(8, 'auto'),
   }),
 });
