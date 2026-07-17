@@ -1209,6 +1209,7 @@ export type AlertRuleSpec = {
   title: string;
   trigger: AlertRuleIntervalTrigger;
 };
+export type AlertRuleAlertRuleHealth = 'Unknown' | 'OK' | 'Paused' | 'Error' | 'NoData' | 'NotScheduled';
 export type AlertRuleOperatorState = {
   /** descriptiveState is an optional more descriptive state field which has no requirements on format */
   descriptiveState?: string;
@@ -1222,16 +1223,24 @@ export type AlertRuleOperatorState = {
     It is limited to three possible states for machine evaluation. */
   state: 'success' | 'in_progress' | 'failed';
 };
+export type AlertRuleAlertRuleState = 'Inactive' | 'Healthy' | 'Firing' | 'Pending' | 'Recovering';
+export type AlertRuleAlertRuleStateReason = 'Evaluated' | 'KeepLast';
 export type AlertRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
     [key: string]: any;
   };
+  evaluationDuration?: number;
+  health?: AlertRuleAlertRuleHealth;
+  lastError?: string;
+  lastEvaluationTime?: string;
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
     [key: string]: AlertRuleOperatorState;
   };
+  state?: AlertRuleAlertRuleState;
+  stateReason?: AlertRuleAlertRuleStateReason;
 };
 export type AlertRule = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1445,6 +1454,7 @@ export type RecordingRuleSpec = {
   title: string;
   trigger: RecordingRuleIntervalTrigger;
 };
+export type RecordingRuleRecordingRuleHealth = 'Unknown' | 'Recording' | 'Paused' | 'Error' | 'NoData' | 'NotScheduled';
 export type RecordingRuleOperatorState = {
   /** descriptiveState is an optional more descriptive state field which has no requirements on format */
   descriptiveState?: string;
@@ -1463,6 +1473,10 @@ export type RecordingRuleStatus = {
   additionalFields?: {
     [key: string]: any;
   };
+  evaluationDuration?: number;
+  health?: RecordingRuleRecordingRuleHealth;
+  lastError?: string;
+  lastEvaluationTime?: string;
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
