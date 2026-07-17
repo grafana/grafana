@@ -1,8 +1,7 @@
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen } from 'test/test-utils';
 
-import { type RepoType } from '../types';
-import { type WizardFormData } from '../types';
+import { type RepoType, type WizardFormData } from '../types';
 
 import { RepositoryTokenInput } from './RepositoryTokenInput';
 

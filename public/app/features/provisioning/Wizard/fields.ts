@@ -1,5 +1,4 @@
 import { t } from '@grafana/i18n';
-
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 import { type RepositoryFormData } from '../types';
