@@ -1,13 +1,16 @@
 import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent, dateTime, store } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { InspectTab } from 'app/features/inspector/types';
-import { AccessControlAction } from 'app/types/accessControl';
+import { dispatch } from 'app/store/store';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
@@ -23,6 +26,7 @@ import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { AccessControlAction } from 'app/types/accessControl';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -138,6 +142,17 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(vizPanel), 'keyboard');
       scene.copyPanel(vizPanel);
+      const panelName = vizPanel.state.title || '';
+      dispatch(
+        notifyApp(
+          createSuccessNotification(
+            t('panel.header-menu.panel-copy-success', 'Panel {{panelName}} copied to clipboard', {
+              panelName,
+              interpolation: { escapeValue: false },
+            })
+          )
+        )
+      );
     }),
   });
 

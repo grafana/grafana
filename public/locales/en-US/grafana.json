@@ -12557,7 +12557,8 @@
       "styles": "Styles",
       "time-settings": "Time settings",
       "unlink-library-panel": "Unlink library panel",
-      "view": "View"
+      "view": "View",
+      "panel-copy-success": "Panel {{panelName}} copied to clipboard"
     },
     "panel-data-error-view": {
       "missing-value": {
