@@ -978,7 +978,7 @@ const (
 	// Controls whether the frontend blocks calls to legacy /api/ endpoints
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 
-	// FlagOfrepBulkFlagEvalFiltering
+	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
-	FlagOfrepBulkFlagEvalFiltering = "ofrep.bulkFlagEvalFiltering"
+	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
 )

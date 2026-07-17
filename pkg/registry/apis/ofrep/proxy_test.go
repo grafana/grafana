@@ -158,7 +158,7 @@ func TestProxyAllFlagReq_Filtering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupOpenFeatureFlag(t, featuremgmt.FlagOfrepBulkFlagEvalFiltering, tt.filteringOn)
+			setupOpenFeatureFlag(t, featuremgmt.FlagFeaturesBulkFlagEvalFiltering, tt.filteringOn)
 			b := newBulkEvalBuilder(t, tt.upstreamFlags, tt.upstreamStatus)
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags", strings.NewReader(`{}`))

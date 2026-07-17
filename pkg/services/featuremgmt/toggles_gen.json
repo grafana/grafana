@@ -2436,6 +2436,20 @@
     },
     {
       "metadata": {
+        "name": "features.bulkFlagEvalFiltering",
+        "resourceVersion": "1784293594749",
+        "creationTimestamp": "2026-07-17T13:06:34Z"
+      },
+      "spec": {
+        "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "feedbackButton",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-12-02T17:08:15Z",
@@ -4211,6 +4225,7 @@
         "name": "ofrep.bulkFlagEvalFiltering",
         "resourceVersion": "1783006061209",
         "creationTimestamp": "2026-07-02T15:25:13Z",
+        "deletionTimestamp": "2026-07-17T13:06:34Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-07-02 15:27:41.20966 +0000 UTC"
         }

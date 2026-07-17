@@ -2,7 +2,7 @@ package ofrep
 
 import (
 	"context"
-	"strings"
+	"strconv"
 
 	"github.com/open-feature/go-sdk/openfeature"
 
@@ -20,18 +20,19 @@ func isPublic(metadata map[string]any) bool {
 	case bool:
 		return val
 	case string:
-		return strings.EqualFold(val, "true")
+		b, _ := strconv.ParseBool(val)
+		return b
 	default:
 		return false
 	}
 }
 
-// bulkFlagEvalFilteringEnabled reads the ofrep.bulkFlagEvalFiltering flag.
+// bulkFlagEvalFilteringEnabled reads the features.bulkFlagEvalFiltering flag.
 // It gates only authed bulk filtering while unauth is always filtered to public flags.
 func bulkFlagEvalFilteringEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(
 		ctx,
-		featuremgmt.FlagOfrepBulkFlagEvalFiltering,
+		featuremgmt.FlagFeaturesBulkFlagEvalFiltering,
 		false,
 		openfeature.TransactionContext(ctx),
 	)
