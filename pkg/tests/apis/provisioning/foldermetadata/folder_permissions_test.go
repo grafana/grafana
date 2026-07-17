@@ -28,7 +28,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 	t.Run("should succeed updating permissions for provisioned nested folder when flag is enabled", func(t *testing.T) {
 		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err)
-		require.GreaterOrEqual(t, len(folders.Items), 2, "should have 2 folders (root and nested)")
+		helper.RequireRepoFolderCount(t, repoName, 3) // root, folder, subfolder
 
 		// Find all folders managed by provisioning
 		var provisionedFolders []*unstructured.Unstructured
