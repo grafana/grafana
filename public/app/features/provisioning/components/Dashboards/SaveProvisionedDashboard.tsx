@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
@@ -24,14 +24,28 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
     useProvisionedDashboardData(dashboard, saveAsCopy);
   const [saveToDatabase, setSaveToDatabase] = useState(false);
+  const gitFolderUidRef = useRef<string | undefined>(undefined);
 
   const canSaveToDatabaseInstead = repository?.target === 'folderless' && (isNew || !!saveAsCopy);
 
-  if (canSaveToDatabaseInstead && saveToDatabase) {
+  const handleSwitchToDatabase = () => {
+    gitFolderUidRef.current = dashboard.state.meta.folderUid;
+    setSaveToDatabase(true);
+  };
+
+  const handleSwitchToGit = () => {
+    // Restore the git-flow folder so the repository resolves again after database folder picks
+    dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: gitFolderUidRef.current } });
+    setSaveToDatabase(false);
+  };
+
+  // Latched on saveToDatabase alone: folder picks in the database form can make the repository
+  // stop resolving, and that must not collapse this branch into the provisioning error gate
+  if (saveToDatabase) {
     return (
       <Stack direction="column" gap={2}>
         <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />
-        <SwitchSaveTargetButton onClick={() => setSaveToDatabase(false)}>
+        <SwitchSaveTargetButton onClick={handleSwitchToGit}>
           <Trans i18nKey="dashboard-scene.save-provisioned-dashboard.save-to-git">Save to Git repository instead</Trans>
         </SwitchSaveTargetButton>
       </Stack>
@@ -58,7 +72,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
           saveAsCopy={saveAsCopy}
         />
         {canSaveToDatabaseInstead && (
-          <SwitchSaveTargetButton onClick={() => setSaveToDatabase(true)}>
+          <SwitchSaveTargetButton onClick={handleSwitchToDatabase}>
             <Trans i18nKey="dashboard-scene.save-provisioned-dashboard.save-to-database">
               Save to Grafana database instead
             </Trans>

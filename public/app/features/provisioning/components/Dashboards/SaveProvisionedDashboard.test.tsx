@@ -23,6 +23,13 @@ jest.mock('app/features/dashboard-scene/saving/SaveDashboardAsForm', () => ({
 
 const mockUseProvisionedDashboardData = jest.mocked(useProvisionedDashboardData);
 
+function createDashboard(folderUid?: string) {
+  return {
+    state: { meta: { folderUid } },
+    setState: jest.fn(),
+  } as unknown as DashboardScene;
+}
+
 function setup(
   overrides: Partial<ReturnType<typeof useProvisionedDashboardData>> = {},
   props: Partial<SaveProvisionedDashboardProps> = {}
@@ -52,14 +59,14 @@ function setup(
     ...overrides,
   } as unknown as ReturnType<typeof useProvisionedDashboardData>);
 
-  return render(
-    <SaveProvisionedDashboard
-      dashboard={{} as DashboardScene}
-      drawer={{ onClose: jest.fn() } as unknown as SaveDashboardDrawer}
-      changeInfo={{} as unknown as DashboardChangeInfo}
-      {...props}
-    />
-  );
+  const renderProps: SaveProvisionedDashboardProps = {
+    dashboard: createDashboard(),
+    drawer: { onClose: jest.fn() } as unknown as SaveDashboardDrawer,
+    changeInfo: {} as unknown as DashboardChangeInfo,
+    ...props,
+  };
+
+  return { ...render(<SaveProvisionedDashboard {...renderProps} />), props: renderProps };
 }
 
 describe('SaveProvisionedDashboard', () => {
@@ -101,5 +108,40 @@ describe('SaveProvisionedDashboard', () => {
     setup({ isNew: false }, { saveAsCopy: true });
 
     expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
+  });
+
+  it('keeps the database form when the repository stops resolving after a folder pick', async () => {
+    const { user, rerender, props } = setup();
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // Picking a database folder in the swapped-in form makes the folderless repo stop resolving
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: true,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Error,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    expect(screen.getByTestId('database-form')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /git repository/i })).toBeInTheDocument();
+  });
+
+  it('restores the git-flow folder when switching back from the database form', async () => {
+    const dashboard = createDashboard('git-folder-uid');
+    const { user } = setup({}, { dashboard });
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // Simulate the database form pointing the dashboard meta at a plain database folder
+    dashboard.state.meta.folderUid = 'db-folder-uid';
+
+    await user.click(screen.getByRole('button', { name: /git repository/i }));
+
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid' } });
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
   });
 });
