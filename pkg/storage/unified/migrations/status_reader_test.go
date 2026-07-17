@@ -71,6 +71,11 @@ func TestMigrationStatusReader_GetFloorVersion(t *testing.T) {
 	floorGR := schema.GroupResource{Resource: "dashboards", Group: "dashboard.grafana.app"}
 	emptyGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	unknownGR := schema.GroupResource{Resource: "unknown", Group: "unknown.grafana.app"}
+	// datasource migration registers a single primary group; dual writing addresses
+	// each plugin under its own subgroup (e.g. "prometheus.datasource.grafana.app").
+	dsGR := schema.GroupResource{Resource: "datasources", Group: "datasource.grafana.app"}
+	dsPluginGR := schema.GroupResource{Resource: "datasources", Group: "prometheus.datasource.grafana.app"}
+	dsWrongResourceGR := schema.GroupResource{Resource: "other", Group: "prometheus.datasource.grafana.app"}
 
 	registry := NewMigrationRegistry()
 	registry.Register(MigrationDefinition{
@@ -88,6 +93,11 @@ func TestMigrationStatusReader_GetFloorVersion(t *testing.T) {
 		MigrationID: "playlists migration",
 		Resources:   []ResourceInfo{{GroupResource: emptyGR}},
 	})
+	registry.Register(MigrationDefinition{
+		ID:          "datasources",
+		MigrationID: "datasources migration",
+		Resources:   []ResourceInfo{{GroupResource: dsGR, FloorVersion: "v0alpha1"}},
+	})
 
 	reader := newTestStatusReader(t, &setting.Cfg{}, registry)
 
@@ -101,6 +111,9 @@ func TestMigrationStatusReader_GetFloorVersion(t *testing.T) {
 		{name: "floor version returned", gr: floorGR, wantVersion: "v0alpha1", wantOK: true},
 		{name: "empty floor version skipped", gr: emptyGR, wantOK: false},
 		{name: "unregistered resource skipped", gr: unknownGR, wantOK: false},
+		{name: "primary datasource group returned", gr: dsGR, wantVersion: "v0alpha1", wantOK: true},
+		{name: "plugin datasource subgroup returned", gr: dsPluginGR, wantVersion: "v0alpha1", wantOK: true},
+		{name: "plugin subgroup with mismatched resource skipped", gr: dsWrongResourceGR, wantOK: false},
 	}
 
 	for _, tt := range tests {
