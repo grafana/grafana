@@ -1,6 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 
 export const trackInfluxDBConfigV1QueryLanguageSelection = (props: { version: string }) => {
+  reportInteraction('influxdb-configv1-query-language-dropdown', props);
 };
 
 // Flux Database Fields
