@@ -291,6 +291,23 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
+            {gitFields.emailConfig && (
+              <Field
+                noMargin
+                label={gitFields.emailConfig.label}
+                required={gitFields.emailConfig.required}
+                error={errors?.email?.message}
+                invalid={!!errors?.email}
+                description={gitFields.emailConfig.description}
+              >
+                <Input
+                  {...register('email', {
+                    required: gitFields.emailConfig.validation?.required,
+                  })}
+                  placeholder={gitFields.emailConfig.placeholder}
+                />
+              </Field>
+            )}
             {hasTokenInstructions && <TokenPermissionsInfo type={type} url={watch('url')} />}
             <Field
               noMargin
