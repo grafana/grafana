@@ -17,6 +17,7 @@ import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../../utils/misc';
 
 import { InstanceLocation } from './InstanceDetailsDrawer';
+import { StartInvestigationButton } from './StartInvestigationButton';
 
 type StateTextState = 'normal' | 'firing' | 'pending' | 'recovering' | 'unknown';
 type StateTextHealth = 'ok' | 'nodata' | 'error';
@@ -186,6 +187,18 @@ export function InstanceDetailsDrawerTitle({
             </Stack>
           )}
         </Stack>
+        {!hideActions && (
+          <Box marginTop={0.5}>
+            <Stack direction="row" justifyContent="flex-end">
+              <StartInvestigationButton
+                instanceLabels={instanceLabels}
+                commonLabels={commonLabels}
+                rule={rule}
+                alertState={alertState}
+              />
+            </Stack>
+          </Box>
+        )}
       </Stack>
       <Box>
         {Object.keys(instanceLabels).length > 0 ? (

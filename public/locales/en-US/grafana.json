@@ -3626,9 +3626,16 @@
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
+        "investigation-failed": "Could not start the investigation. Try again.",
+        "investigation-running": "Generating investigation report…",
+        "investigation-starting": "Starting…",
+        "investigation-watch-live": "Watch live in assistant workspace",
+        "open-investigation": "Open full investigation report",
         "section-silence": "Silence",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences"
+        "silence-no-permission": "You do not have permission to create silences",
+        "start-investigation": "Start investigation",
+        "start-investigation-tooltip": "Assistant will draft it in your workspace"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
