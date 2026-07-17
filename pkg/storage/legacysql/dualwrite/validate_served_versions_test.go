@@ -15,17 +15,17 @@ import (
 
 // versionedStatusReader is a configurable MigrationStatusReader for validation tests.
 type versionedStatusReader struct {
-	mode          unifiedmigrations.StorageMode
-	targetVersion string
-	hasTarget     bool
+	mode         unifiedmigrations.StorageMode
+	floorVersion string
+	hasFloor     bool
 }
 
 func (r *versionedStatusReader) GetStorageMode(_ context.Context, _ schema.GroupResource) (unifiedmigrations.StorageMode, error) {
 	return r.mode, nil
 }
 
-func (r *versionedStatusReader) GetTargetVersion(_ schema.GroupResource) (string, bool) {
-	return r.targetVersion, r.hasTarget
+func (r *versionedStatusReader) GetFloorVersion(_ schema.GroupResource) (string, bool) {
+	return r.floorVersion, r.hasFloor
 }
 
 func TestValidateServedVersions(t *testing.T) {
@@ -41,29 +41,29 @@ func TestValidateServedVersions(t *testing.T) {
 	}
 
 	t.Run("legacy mode never validates", func(t *testing.T) {
-		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeLegacy, targetVersion: "v1", hasTarget: true})
+		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeLegacy, floorVersion: "v1", hasFloor: true})
 		require.NoError(t, svc.ValidateServedVersions(context.Background(), gr, onlyV1alpha1))
 	})
 
-	t.Run("target version served in unified mode", func(t *testing.T) {
-		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeUnified, targetVersion: "v1", hasTarget: true})
+	t.Run("floor version served in unified mode", func(t *testing.T) {
+		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeUnified, floorVersion: "v1", hasFloor: true})
 		require.NoError(t, svc.ValidateServedVersions(context.Background(), gr, v1))
 	})
 
-	t.Run("target version not served in unified mode returns error", func(t *testing.T) {
-		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeUnified, targetVersion: "v1", hasTarget: true})
+	t.Run("floor version not served in unified mode returns error", func(t *testing.T) {
+		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeUnified, floorVersion: "v1", hasFloor: true})
 		err := svc.ValidateServedVersions(context.Background(), gr, onlyV1alpha1)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "v1")
 	})
 
-	t.Run("target version not served in dual-write mode also returns error", func(t *testing.T) {
-		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeDualWrite, targetVersion: "v1", hasTarget: true})
+	t.Run("floor version not served in dual-write mode also returns error", func(t *testing.T) {
+		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeDualWrite, floorVersion: "v1", hasFloor: true})
 		require.Error(t, svc.ValidateServedVersions(context.Background(), gr, onlyV1alpha1))
 	})
 
-	t.Run("dynamic or undeclared target version is skipped", func(t *testing.T) {
-		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeUnified, hasTarget: false})
+	t.Run("undeclared floor version is skipped", func(t *testing.T) {
+		svc := newSvc(&versionedStatusReader{mode: unifiedmigrations.StorageModeUnified, hasFloor: false})
 		require.NoError(t, svc.ValidateServedVersions(context.Background(), gr, onlyV1alpha1))
 	})
 

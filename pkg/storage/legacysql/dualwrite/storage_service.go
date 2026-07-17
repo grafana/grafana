@@ -76,24 +76,25 @@ func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage
 	}
 }
 
-// ValidateServedVersions guards against serving unified storage under a migrated
-// apiVersion the apiserver never registered.
+// ValidateServedVersions guards against serving unified storage while migrated data
+// carries an apiVersion the apiserver no longer registers. served must be the versions
+// for this specific resource, not the whole group.
 func (m *storageService) ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error {
 	if m.getStorageMode(ctx, gr) == unifiedmigrations.StorageModeLegacy || m.statusReader == nil {
 		return nil
 	}
-	target, ok := m.statusReader.GetTargetVersion(gr)
+	floor, ok := m.statusReader.GetFloorVersion(gr)
 	if !ok {
 		return nil
 	}
 	for _, gv := range served {
-		if gv.Version == target {
+		if gv.Version == floor {
 			return nil
 		}
 	}
 	return fmt.Errorf(
-		"resource %q is served from unified storage under apiVersion %q, but that version is not registered in the apiserver scheme (served versions: %v)",
-		gr.String(), target, servedVersionStrings(served),
+		"resource %q may hold unified-storage objects at apiVersion %q, but that version is not registered for the resource in the apiserver scheme (served versions: %v)",
+		gr.String(), floor, servedVersionStrings(served),
 	)
 }
 

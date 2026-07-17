@@ -454,7 +454,7 @@ func (f *failingStatusReader) GetStorageMode(_ context.Context, _ schema.GroupRe
 	return f.mode, f.err
 }
 
-func (f *failingStatusReader) GetTargetVersion(_ schema.GroupResource) (string, bool) {
+func (f *failingStatusReader) GetFloorVersion(_ schema.GroupResource) (string, bool) {
 	return "", false
 }
 
@@ -467,6 +467,6 @@ func (s *switchableStatusReader) GetStorageMode(_ context.Context, _ schema.Grou
 	return s.mode, nil
 }
 
-func (s *switchableStatusReader) GetTargetVersion(_ schema.GroupResource) (string, bool) {
+func (s *switchableStatusReader) GetFloorVersion(_ schema.GroupResource) (string, bool) {
 	return "", false
 }

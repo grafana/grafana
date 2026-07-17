@@ -17,8 +17,8 @@ func PreferencesMigration(migrator legacy.PreferencesMigrator) migrations.Migrat
 		Resources: []migrations.ResourceInfo{
 			{
 				GroupResource: preferencesGR,
-				LockTables:    []string{"preferences", "user", "team"},
-				TargetVersion: preferencesV1.APIVersion,
+				LockTables:   []string{"preferences", "user", "team"},
+				FloorVersion: preferencesV1.APIVersion,
 			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{

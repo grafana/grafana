@@ -29,7 +29,7 @@ func (r *mutableStatusReader) GetStorageMode(_ context.Context, _ schema.GroupRe
 	return r.mode, nil
 }
 
-func (r *mutableStatusReader) GetTargetVersion(_ schema.GroupResource) (string, bool) {
+func (r *mutableStatusReader) GetFloorVersion(_ schema.GroupResource) (string, bool) {
 	return "", false
 }
 

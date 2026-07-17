@@ -40,7 +40,7 @@ func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schem
 	return mode, nil
 }
 
-func (f *fakeMigrationStatusReader) GetTargetVersion(gr schema.GroupResource) (string, bool) {
+func (f *fakeMigrationStatusReader) GetFloorVersion(gr schema.GroupResource) (string, bool) {
 	return "", false
 }
 

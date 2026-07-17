@@ -17,7 +17,7 @@ func QueryCacheConfigMigration(m migrator.QueryCacheConfigMigrator) migrations.M
 			{
 				GroupResource: gr,
 				LockTables:    []string{"data_source_cache", "data_source"},
-				TargetVersion: migrator.APIVersion,
+				FloorVersion:  migrator.APIVersion,
 			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{

@@ -60,7 +60,7 @@ func (m StorageMode) String() string {
 type MigrationStatusReader interface {
 	GetStorageMode(ctx context.Context, gr schema.GroupResource) (StorageMode, error)
 
-	// GetTargetVersion returns the static apiVersion (e.g. "v1") the migrator writes for
-	// a resource. ok is false when no migration is declared or the version is dynamic.
-	GetTargetVersion(gr schema.GroupResource) (version string, ok bool)
+	// GetFloorVersion returns the oldest apiVersion that may exist in unified storage for a
+	// resource. ok is false when no migration declares a floor, so the guard cannot validate it.
+	GetFloorVersion(gr schema.GroupResource) (version string, ok bool)
 }

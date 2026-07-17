@@ -66,9 +66,9 @@ func TestMigrationStatusReader_FindDefinition(t *testing.T) {
 	}
 }
 
-func TestMigrationStatusReader_GetTargetVersion(t *testing.T) {
+func TestMigrationStatusReader_GetFloorVersion(t *testing.T) {
 	staticGR := schema.GroupResource{Resource: "preferences", Group: "preferences.grafana.app"}
-	dynamicGR := schema.GroupResource{Resource: "dashboards", Group: "dashboard.grafana.app"}
+	floorGR := schema.GroupResource{Resource: "dashboards", Group: "dashboard.grafana.app"}
 	emptyGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	unknownGR := schema.GroupResource{Resource: "unknown", Group: "unknown.grafana.app"}
 
@@ -76,12 +76,12 @@ func TestMigrationStatusReader_GetTargetVersion(t *testing.T) {
 	registry.Register(MigrationDefinition{
 		ID:          "preferences",
 		MigrationID: "preferences migration",
-		Resources:   []ResourceInfo{{GroupResource: staticGR, TargetVersion: "v1"}},
+		Resources:   []ResourceInfo{{GroupResource: staticGR, FloorVersion: "v1"}},
 	})
 	registry.Register(MigrationDefinition{
 		ID:          "dashboards",
 		MigrationID: "dashboards migration",
-		Resources:   []ResourceInfo{{GroupResource: dynamicGR, TargetVersion: DynamicTargetVersion}},
+		Resources:   []ResourceInfo{{GroupResource: floorGR, FloorVersion: "v0alpha1"}},
 	})
 	registry.Register(MigrationDefinition{
 		ID:          "playlists",
@@ -98,14 +98,14 @@ func TestMigrationStatusReader_GetTargetVersion(t *testing.T) {
 		wantOK      bool
 	}{
 		{name: "static version returned", gr: staticGR, wantVersion: "v1", wantOK: true},
-		{name: "dynamic version skipped", gr: dynamicGR, wantOK: false},
-		{name: "empty target version skipped", gr: emptyGR, wantOK: false},
+		{name: "floor version returned", gr: floorGR, wantVersion: "v0alpha1", wantOK: true},
+		{name: "empty floor version skipped", gr: emptyGR, wantOK: false},
 		{name: "unregistered resource skipped", gr: unknownGR, wantOK: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			version, ok := reader.GetTargetVersion(tt.gr)
+			version, ok := reader.GetFloorVersion(tt.gr)
 			require.Equal(t, tt.wantOK, ok)
 			require.Equal(t, tt.wantVersion, version)
 		})

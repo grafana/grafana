@@ -276,6 +276,19 @@ func SetupConfig(
 	return nil
 }
 
+// servedVersionsForResource returns the versions the scheme registers for this resource's
+// kind, falling back to the group's prioritized versions if the kind cannot be resolved.
+func servedVersionsForResource(scheme *runtime.Scheme, gr schema.GroupResource, storage grafanarest.Storage) []schema.GroupVersion {
+	if gvks, _, err := scheme.ObjectKinds(storage.New()); err == nil {
+		for _, gvk := range gvks {
+			if gvk.Group == gr.Group {
+				return scheme.VersionsForGroupKind(gvk.GroupKind())
+			}
+		}
+	}
+	return scheme.PrioritizedVersionsForGroup(gr.Group)
+}
+
 func InstallAPIs(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
@@ -302,10 +315,14 @@ func InstallAPIs(
 			if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
 				builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 			}
-			// Fall back to legacy if unified would serve an apiVersion the scheme never registered.
-			served := scheme.PrioritizedVersionsForGroup(gr.Group)
+			// unified must never serve an apiVersion the scheme never registered; with no
+			// legacy fallback there is nothing safe to serve, so refuse to install.
+			served := servedVersionsForResource(scheme, gr, storage)
 			if err := dualWriteService.ValidateServedVersions(context.Background(), gr, served); err != nil {
-				klog.Warningf("serving legacy storage: %v", err)
+				if legacy == nil {
+					return nil, fmt.Errorf("cannot serve %q from unified storage: %w", gr.String(), err)
+				}
+				klog.Warningf("serving legacy storage for %q: %v", gr.String(), err)
 				return legacy, nil
 			}
 			return dualWriteService.NewStorage(gr, legacy, storage)
