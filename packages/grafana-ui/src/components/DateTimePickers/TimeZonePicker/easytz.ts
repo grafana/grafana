@@ -1,12 +1,12 @@
 // Vendored from the easy-tz library ("07-baked-rules" dist build), converted
 // from the published index.mjs + index.d.ts into a single TypeScript module:
-// https://github.com/leeoniya/easy-tz/tree/1f3e605aa148852aeb6709c4973ffe79e4ea7b6a/dist/07-baked-rules
+// https://github.com/leeoniya/easy-tz/tree/97e8c1695bc2bda4d4fe976085fc90bcad9adfde/dist/07-baked-rules
 //
-// It lists every IANA zone the runtime supports — plus curated canonical ids
-// when the runtime only lists a legacy spelling — with a DST-correct
-// abbreviation and UTC offset, using pre-baked transition rules instead of
-// moment-timezone's bundled tz database. Keep edits minimal to ease future
-// syncs with upstream.
+// It lists every IANA zone the runtime supports — plus both spellings of the
+// curated canonical/legacy zone pairs, regardless of which one the runtime
+// lists — with a DST-correct abbreviation and UTC offset, using pre-baked
+// transition rules instead of moment-timezone's bundled tz database. Keep
+// edits minimal to ease future syncs with upstream.
 
 export interface TimeZoneInfo {
   /** IANA zone id, e.g. "America/New_York" */
@@ -96,8 +96,9 @@ function makeInfo(name: string, abbr: string, offset: string): TimeZoneInfo {
 const runtimeZones = Intl.supportedValuesOf('timeZone');
 const zones = (() => {
   const set = new Set(runtimeZones);
-  for (const [canonical] of zoneLinkPairs) {
+  for (const [canonical, alias] of zoneLinkPairs) {
     set.add(canonical);
+    set.add(alias);
   }
   return set.size === runtimeZones.length ? runtimeZones : [...set].sort();
 })();

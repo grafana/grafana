@@ -194,7 +194,7 @@ const getInternalTimeZoneInfo = (zone: TimeZone, timestamp: number): TimeZoneOpt
 
   return {
     name: internalZoneNames[zone] ?? zone,
-    ianaName: tz ? (tz.aliasOf ?? tz.name) : resolved,
+    ianaName: tz?.name ?? resolved,
     // The runtime's zone list may not contain a plain UTC entry.
     abbreviation: resolved === 'UTC' ? 'UTC, GMT' : (tz?.abbr ?? ''),
   };

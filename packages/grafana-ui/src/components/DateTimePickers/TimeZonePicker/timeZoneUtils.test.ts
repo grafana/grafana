@@ -23,15 +23,12 @@ describe('findTimeZoneAt', () => {
     expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ abbr: 'IST', offset: '+05:30' });
   });
 
-  it('resolves both spellings of a zone', () => {
-    // Node's ICU (like Chrome's) lists the legacy Asia/Calcutta; easy-tz adds
-    // the canonical Asia/Kolkata as its own entry, so both spellings resolve.
+  it('resolves a legacy spelling to the canonical entry', () => {
+    // easy-tz includes both spellings of its curated canonical/legacy pairs
+    // regardless of which one the runtime's ICU lists; the lookup returns the
+    // canonical entry for both.
     expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ name: 'Asia/Kolkata', abbr: 'IST' });
-    expect(findTimeZoneAt('Asia/Calcutta', JUL)).toMatchObject({
-      name: 'Asia/Calcutta',
-      aliasOf: 'Asia/Kolkata',
-      abbr: 'IST',
-    });
+    expect(findTimeZoneAt('Asia/Calcutta', JUL)).toBe(findTimeZoneAt('Asia/Kolkata', JUL));
   });
 
   it('memoizes per hour bucket', () => {
@@ -45,8 +42,6 @@ describe('findTimeZoneAt', () => {
 });
 
 describe('canonicalZoneName', () => {
-  // Node's ICU (like Chrome's) lists these zones under their legacy spelling,
-  // which is what makes the aliasOf-derived mapping available.
   it('maps legacy spellings to their canonical IANA id', () => {
     expect(canonicalZoneName('Asia/Calcutta', JAN)).toBe('Asia/Kolkata');
     expect(canonicalZoneName('Europe/Kiev', JAN)).toBe('Europe/Kyiv');
@@ -78,9 +73,10 @@ describe('on runtimes that list only canonical zone ids (e.g. Firefox)', () => {
         const { formatUtcOffset } = await import('./TimeZoneOffset');
 
         // A dashboard saved on Chrome (or by an older, moment-based Grafana)
-        // may have persisted the legacy spelling; it must still resolve.
+        // may have persisted the legacy spelling; it must still resolve, and
+        // to the canonical entry.
         expect(utils.findTimeZoneAt('Asia/Calcutta', JAN)).toMatchObject({
-          aliasOf: 'Asia/Kolkata',
+          name: 'Asia/Kolkata',
           abbr: 'IST',
           offset: '+05:30',
         });
