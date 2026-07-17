@@ -38,6 +38,8 @@ type serverWrapper struct {
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
 	group := s.installer.ManifestData().Group
+	// Prune first so servedForResource and the installed storage see the same set.
+	s.pruneDisabledResources(apiGroupInfo, group)
 	servedForResource := servedVersionsForResource(apiGroupInfo, group)
 
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
@@ -61,6 +63,24 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 // isSubresourcePath reports whether a storage path addresses a subresource (e.g. "shorturls/status").
 func isSubresourcePath(storagePath string) bool {
 	return strings.Contains(storagePath, "/")
+}
+
+// pruneDisabledResources drops storage paths for GVRs disabled via apiResourceConfig. It is the
+// single place resources are removed, keeping every later reader in sync with the installed set.
+func (s *serverWrapper) pruneDisabledResources(apiGroupInfo *genericapiserver.APIGroupInfo, group string) {
+	if s.apiResourceConfig == nil {
+		return
+	}
+	log := logging.FromContext(s.ctx)
+	for version, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
+		for storagePath := range storageMap {
+			gvr := schema.GroupVersionResource{Group: group, Version: version, Resource: resourceFromStoragePath(storagePath)}
+			if !s.apiResourceConfig.ResourceEnabled(gvr) {
+				log.Debug("Skipping storage for disabled resource", "gvr", gvr.String(), "storagePath", storagePath)
+				delete(storageMap, storagePath)
+			}
+		}
+	}
 }
 
 // servedVersionsForResource maps each resource to the group versions it is installed under.
@@ -94,12 +114,6 @@ func (s *serverWrapper) configureStoragePath(
 	gr := schema.GroupResource{
 		Group:    s.installer.ManifestData().Group,
 		Resource: resourceFromStoragePath(storagePath),
-	}
-	gvr := gr.WithVersion(v)
-	if s.apiResourceConfig != nil && !s.apiResourceConfig.ResourceEnabled(gvr) {
-		log.Debug("Skipping storage for disabled resource", "gvr", gvr.String(), "storagePath", storagePath)
-		delete(apiGroupInfo.VersionedResourcesStorageMap[v], storagePath)
-		return nil
 	}
 	storage := s.configureStorage(gr, dualWriteSupported, restStorage)
 	if dualWriteSupported {
