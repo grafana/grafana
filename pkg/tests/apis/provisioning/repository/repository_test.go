@@ -1111,12 +1111,16 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 	helper.CreateLocalRepo(t, testRepo)
 
-	helper.RequireRepoDashboardCount(t, repo, 3)
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 3)
 	helper.RequireRepoFolderCount(t, repo, 3)
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
-	helper.RequireDashboards(t, "adg5vbj", "admfz74", "adn5mxb")
+	names := make([]string, 0, len(dashboards))
+	for _, d := range dashboards {
+		names = append(names, d.GetName())
+	}
+	require.ElementsMatch(t, []string{"adg5vbj", "admfz74", "adn5mxb"}, names)
 
 	err := helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")

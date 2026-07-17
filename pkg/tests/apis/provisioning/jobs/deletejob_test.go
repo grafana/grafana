@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -267,17 +267,14 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			// Sync to create the folder and its contents
 			helper.SyncAndWait(t, repo, nil)
 
-			// Verify folder was created in Grafana as a Folder resource
-			var testFolder *unstructured.Unstructured
-			for _, folder := range helper.ListRepoFolders(t, repo) {
-				// Folder names are generated with suffixes, so check if it starts with "test-folder"
-				if strings.HasPrefix(folder.GetName(), "test-folder") {
-					testFolder = &folder
-					break
-				}
-			}
-			require.NotNil(t, testFolder, "test-folder should exist as a Folder resource")
-			testFolderName := testFolder.GetName()
+			// Verify folder was created in Grafana as a Folder resource.
+			// Folder names are generated with suffixes, so resolve the folder
+			// through the dashboard that lives inside it.
+			helper.RequireDashboards(t, "folder-dash")
+			dash, err := helper.DashboardsV1.Resource.Get(t.Context(), "folder-dash", metav1.GetOptions{})
+			require.NoError(t, err)
+			testFolderName := dash.GetAnnotations()[utils.AnnoKeyFolder]
+			require.True(t, strings.HasPrefix(testFolderName, "test-folder"), "test-folder should exist as a Folder resource")
 
 			// Verify dashboard inside the folder exists
 			helper.RequireRepoFileExists(t, repo, "test-folder", "dashboard-in-folder.json")
@@ -298,7 +295,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			// FIXME: use helpers
 			// Verify folder is deleted from Grafana
-			_, err := helper.Folders.Resource.Get(t.Context(), testFolderName, metav1.GetOptions{})
+			_, err = helper.Folders.Resource.Get(t.Context(), testFolderName, metav1.GetOptions{})
 			require.Error(t, err, "folder should be deleted from Grafana")
 			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
