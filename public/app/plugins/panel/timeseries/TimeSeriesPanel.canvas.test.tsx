@@ -331,7 +331,7 @@ describe('TimeSeriesPanel (canvas)', () => {
     });
   });
 
-  describe('Axis', () => {
+  describe('Axes', () => {
     it.each<CanvasCase>([
       // Auto resolves to Left, and Left is the default placement, so both are covered by `X Axis: defaults`.
       ...Object.values(AxisPlacement)
