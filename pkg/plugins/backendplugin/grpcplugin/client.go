@@ -3,6 +3,7 @@ package grpcplugin
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 
 	"github.com/hashicorp/go-hclog"
@@ -91,9 +92,9 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		logger.Debug("Using runner mode", "os", runtime.GOOS, "executablePath", executablePath)
 	} else {
 		logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
-		// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
-		// nolint:gosec
-		cfg.Cmd = exec.Command(executablePath, descriptor.executableArgs...)
+		// filepath.Clean removes any path traversal sequences before the path is used in exec.Command.
+		// The dynamic part of executablePath comes from the plugin definition, not from user input.
+		cfg.Cmd = exec.Command(filepath.Clean(executablePath), descriptor.executableArgs...) //nolint:gosec
 		cfg.Cmd.Env = env
 	}
 
