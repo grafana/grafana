@@ -2909,7 +2909,7 @@ var (
 		},
 		{
 			Name:         "grafana.useDefaultScopesEndpoint",
-			Description:  "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+			Description:  "Use the find default scope endpoint to seed the initial scope selection when none is set.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			HideFromDocs: true,
