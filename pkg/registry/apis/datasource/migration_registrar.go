@@ -17,7 +17,12 @@ func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.Migr
 		ID:          "datasource",
 		MigrationID: "datasources migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: gr, LockTables: []string{"data_source"}},
+			{
+				GroupResource: gr,
+				LockTables:    []string{"data_source"},
+				// Per-plugin group (see ResourceGroupsFunc), v0alpha1 floor.
+				TargetVersion: migrations.DynamicTargetVersion,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			gr: dsMigrator.MigrateDataSources,

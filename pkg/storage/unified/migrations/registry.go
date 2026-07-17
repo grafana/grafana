@@ -26,12 +26,27 @@ type ValidatorFactory func(client resourcepb.ResourceIndexClient, driverName str
 // MigratorFunc is the signature for resource migration functions.
 type MigratorFunc = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 
+// DynamicTargetVersion is the sentinel TargetVersion for resources whose written
+// apiVersion is resolved per object (dashboards: per-row api_version; datasources:
+// per-plugin group). Gate these on the migrator's floor version, not this value.
+const DynamicTargetVersion = "*"
+
 // ResourceInfo extends GroupResource with additional metadata needed for migration.
 type ResourceInfo struct {
 	schema.GroupResource
 	// LockTables are the legacy database tables to lock during migration.
 	// This must include every table the migrator reads from.
 	LockTables []string
+	// TargetVersion is the apiVersion (version part only, e.g. "v1") the migrator
+	// writes. Per-resource because resources sharing one MigrationDefinition
+	// (folders and dashboards) may target different versions. Use
+	// DynamicTargetVersion when resolved per object.
+	TargetVersion string
+}
+
+// IsDynamicVersion reports whether the written apiVersion is resolved per object.
+func (ri ResourceInfo) IsDynamicVersion() bool {
+	return ri.TargetVersion == DynamicTargetVersion
 }
 
 // MigrationDefinition defines a resource migration.
