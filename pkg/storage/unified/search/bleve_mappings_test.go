@@ -135,10 +135,6 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 	}
 }
 
-// TestStandardCreatedUpdatedAreNumeric guards that the int64 standard fields
-// created and updated are stored as numbers and returned on retrieve: with a
-// keyword mapping bleve dropped the numeric value entirely. They are
-// retrieve-only (store, not index), so they are not queryable.
 func TestTagsFacetPreservesMultiWordValues(t *testing.T) {
 	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
@@ -162,6 +158,10 @@ func TestTagsFacetPreservesMultiWordValues(t *testing.T) {
 	assert.Equal(t, 1, terms[0].Count)
 }
 
+// TestStandardCreatedUpdatedAreNumeric guards that the int64 standard fields
+// created and updated are stored as numbers and returned on retrieve: with a
+// keyword mapping bleve dropped the numeric value entirely. They are
+// retrieve-only (store, not index), so they are not queryable.
 func TestStandardCreatedUpdatedAreNumeric(t *testing.T) {
 	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
