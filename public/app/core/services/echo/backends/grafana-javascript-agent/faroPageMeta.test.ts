@@ -39,7 +39,7 @@ describe('setupFaroPageMeta', () => {
   let setPage: jest.Mock;
   let getSession: jest.Mock;
   let faro: Faro;
-  let navigate: (location: { pathname: string }, action?: 'PUSH' | 'REPLACE' | 'POP') => void;
+  let navigate: (location: { pathname: string; state?: unknown }, action?: 'PUSH' | 'REPLACE' | 'POP') => void;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -50,7 +50,7 @@ describe('setupFaroPageMeta', () => {
 
     getLocationMock.mockReturnValue({ pathname: '/search' } as ReturnType<typeof locationService.getLocation>);
     getHistoryMock.mockReturnValue({
-      listen: (listener: (location: { pathname: string }, action: string) => void) => {
+      listen: (listener: (location: { pathname: string; state?: unknown }, action: string) => void) => {
         navigate = (location, action = 'PUSH') => listener(location, action);
         return () => {};
       },
@@ -125,14 +125,14 @@ describe('setupFaroPageMeta', () => {
     });
   });
 
-  it('does not shift the navigation chain when a REPLACE rewrites the current entry', () => {
+  it('does not shift the navigation chain when a flagged URL rewrite replaces the current entry', () => {
     setReferrer('');
 
     setupFaroPageMeta(faro);
     navigate({ pathname: '/d/abc/stale-slug' });
 
     // Slug normalization after the dashboard loads: the URL is replaced with the canonical slug.
-    navigate({ pathname: '/d/abc/canonical-slug' }, 'REPLACE');
+    navigate({ pathname: '/d/abc/canonical-slug', state: { urlRewrite: true } }, 'REPLACE');
 
     expect(setPage).toHaveBeenLastCalledWith({
       url: window.location.href,
@@ -145,6 +145,37 @@ describe('setupFaroPageMeta', () => {
     expect(setPage).toHaveBeenLastCalledWith({
       url: window.location.href,
       attributes: { previousUrl: '/d/abc/canonical-slug', sessionStart: String(SESSION_START) },
+    });
+  });
+
+  it('treats an unflagged REPLACE as a navigation (redirect round-trips)', () => {
+    setReferrer('');
+
+    setupFaroPageMeta(faro);
+    navigate({ pathname: '/alerting/new' });
+
+    // Saving replaces the editor with the list - a real transition, not a URL rewrite.
+    // Without the shift, previousUrl would be the pre-editor path: /search -> self-reference
+    // whenever the flow returns to where it started.
+    navigate({ pathname: '/alerting/list' }, 'REPLACE');
+
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { previousUrl: '/alerting/new', sessionStart: String(SESSION_START) },
+    });
+  });
+
+  it('keeps previousUrl absent when the landing page URL is rewritten (home-route resolution)', () => {
+    setReferrer('');
+    getLocationMock.mockReturnValue({ pathname: '/' } as ReturnType<typeof locationService.getLocation>);
+
+    setupFaroPageMeta(faro);
+    navigate({ pathname: '/d/home-dash/home', state: { urlRewrite: true } }, 'REPLACE');
+
+    // Still a landing page: no previousUrl means session entry point for the receiver.
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { sessionStart: String(SESSION_START) },
     });
   });
 

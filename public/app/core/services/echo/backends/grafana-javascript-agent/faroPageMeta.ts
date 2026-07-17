@@ -1,6 +1,7 @@
 import { type Faro } from '@grafana/faro-core';
 import { PersistentSessionsManager, VolatileSessionsManager } from '@grafana/faro-web-sdk';
 import { locationService } from '@grafana/runtime';
+import { isUrlRewrite } from 'app/core/navigation/urlRewrite';
 
 /**
  * Enriches the `meta` of every Faro signal (web-vitals, dashboard_render, errors, traces, ...)
@@ -75,19 +76,19 @@ export function setupFaroPageMeta(faro: Faro): () => void {
   // Landing page - emitted before any internal navigation.
   applyPageMeta();
 
-  // Subsequent history updates within the SPA. Only real route changes shift the chain:
-  // - REPLACE rewrites the current entry (slug normalization after a dashboard loads, scenes URL
-  //   sync, home-dashboard redirect) - the page must not become its own predecessor, so only
-  //   currentPath is updated.
-  // - PUSH/POP with an unchanged pathname is query-only churn (time range, variables).
-  // Either way we still re-emit so `page.url` tracks the full URL.
+  // Subsequent history updates within the SPA. A pathname change shifts the previous/current
+  // chain, with two exceptions that would otherwise make a page its own predecessor:
+  // - entries flagged via `markAsUrlRewrite` (slug normalization after a dashboard loads,
+  //   home-route resolution) - in-place URL corrections, not navigations. Unflagged REPLACEs
+  //   count as navigations: redirects (post-login, post-save) are real transitions.
+  // - same-pathname events, i.e. query-only churn (time range, variables).
+  // Every event still re-emits so `page.url` tracks the full URL.
   locationService.getHistory().listen((location, action) => {
-    if (action === 'REPLACE') {
-      currentPath = location.pathname;
-    } else if (location.pathname !== currentPath) {
+    const isRewrite = action === 'REPLACE' && isUrlRewrite(location.state);
+    if (!isRewrite && location.pathname !== currentPath) {
       previousPath = currentPath;
-      currentPath = location.pathname;
     }
+    currentPath = location.pathname;
     applyPageMeta();
   });
 
