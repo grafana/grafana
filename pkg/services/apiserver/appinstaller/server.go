@@ -41,22 +41,16 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 	servedForResource := servedVersionsForResource(apiGroupInfo, group)
 
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
-		// Configure top-level resources before subresources: a subresource inspects its
-		// parent's configured storage, and map iteration order is non-deterministic.
-		for storagePath, restStorage := range storageMap {
-			if isSubresourcePath(storagePath) {
-				continue
-			}
-			if err := s.configureStoragePath(apiGroupInfo, v, storagePath, restStorage, servedForResource); err != nil {
-				return err
-			}
-		}
-		for storagePath, restStorage := range storageMap {
-			if !isSubresourcePath(storagePath) {
-				continue
-			}
-			if err := s.configureStoragePath(apiGroupInfo, v, storagePath, restStorage, servedForResource); err != nil {
-				return err
+		// Configure top-level resources before their subresources: a subresource inspects
+		// its parent's configured storage, and map iteration order is non-deterministic.
+		for _, subresource := range [...]bool{false, true} {
+			for storagePath, restStorage := range storageMap {
+				if isSubresourcePath(storagePath) != subresource {
+					continue
+				}
+				if err := s.configureStoragePath(apiGroupInfo, v, storagePath, restStorage, servedForResource); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -72,20 +66,16 @@ func isSubresourcePath(storagePath string) bool {
 // servedVersionsForResource maps each resource to the group versions it is installed under.
 func servedVersionsForResource(apiGroupInfo *genericapiserver.APIGroupInfo, group string) map[string][]schema.GroupVersion {
 	served := make(map[string][]schema.GroupVersion)
-	seen := make(map[string]map[string]struct{})
 	for version, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
+		// Distinct resources within one version, deduping subresource paths that share a
+		// resource (e.g. "dashboards" and "dashboards/dto" both count once).
+		seen := make(map[string]struct{}, len(storageMap))
 		for storagePath := range storageMap {
-			resource, err := getResourceFromStoragePath(storagePath)
-			if err != nil {
+			resource := resourceFromStoragePath(storagePath)
+			if _, ok := seen[resource]; ok {
 				continue
 			}
-			if seen[resource] == nil {
-				seen[resource] = make(map[string]struct{})
-			}
-			if _, ok := seen[resource][version]; ok {
-				continue
-			}
-			seen[resource][version] = struct{}{}
+			seen[resource] = struct{}{}
 			served[resource] = append(served[resource], schema.GroupVersion{Group: group, Version: version})
 		}
 	}
@@ -101,13 +91,9 @@ func (s *serverWrapper) configureStoragePath(
 ) error {
 	log := logging.FromContext(s.ctx)
 	legacyProvider, dualWriteSupported := s.installer.(LegacyStorageProvider)
-	resource, err := getResourceFromStoragePath(storagePath)
-	if err != nil {
-		return err
-	}
 	gr := schema.GroupResource{
 		Group:    s.installer.ManifestData().Group,
-		Resource: resource,
+		Resource: resourceFromStoragePath(storagePath),
 	}
 	gvr := gr.WithVersion(v)
 	if s.apiResourceConfig != nil && !s.apiResourceConfig.ResourceEnabled(gvr) {
@@ -164,12 +150,11 @@ func (s *serverWrapper) configureStoragePath(
 	return nil
 }
 
-func getResourceFromStoragePath(storagePath string) (string, error) {
-	parts := strings.Split(storagePath, "/")
-	if len(parts) < 1 {
-		return "", fmt.Errorf("invalid storage path: %s", storagePath)
-	}
-	return parts[0], nil
+// resourceFromStoragePath returns the top-level resource of a storage path, dropping any
+// subresource suffix (e.g. "dashboards/status" → "dashboards").
+func resourceFromStoragePath(storagePath string) string {
+	resource, _, _ := strings.Cut(storagePath, "/")
+	return resource
 }
 
 func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSupported bool, storage genericrest.Storage) genericrest.Storage {
