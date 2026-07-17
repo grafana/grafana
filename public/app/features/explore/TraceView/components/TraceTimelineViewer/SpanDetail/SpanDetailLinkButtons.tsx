@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import {
   CoreApp,
   type GrafanaTheme2,
   type IconName,
+  type LinkModel,
   PluginExtensionPoints,
   type RawTimeRange,
   type TimeRange,
@@ -23,6 +24,7 @@ import { type SpanLinkDef, type SpanLinkFunc, type SpanLinkModel, SpanLinkType }
 import { type TraceSpan } from '../../types/trace';
 
 import { getLogsButtonCTA, LogsLinkButton } from './LogsLink';
+import { ShareSpanButton } from './ShareSpanButton';
 
 export type ProfilesButtonContext = {
   serviceName: string;
@@ -41,7 +43,7 @@ export type Props = {
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
   app: CoreApp;
-  shareButton?: React.ReactNode;
+  focusSpanLink: LinkModel;
 };
 
 /**
@@ -64,10 +66,16 @@ const MAX_LINKS = 3;
 
 const ABSOLUTE_LINK_PATTERN = /^https?:\/\//i;
 
-export const SpanDetailLinkButtons = (props: Props) => {
-  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, datasourceUid, app, shareButton } =
-    props;
-
+export const SpanDetailLinkButtons = ({
+  span,
+  createSpanLink,
+  traceToProfilesOptions,
+  timeRange,
+  datasourceType,
+  datasourceUid,
+  app,
+  focusSpanLink,
+}: Props) => {
   // Hooks must run unconditionally on every render, so fetch the plugin links up front.
   // The context only depends on props, and the fetched links are only consumed below when
   // a profiles link exists and we're in Explore.
@@ -78,10 +86,14 @@ export const SpanDetailLinkButtons = (props: Props) => {
     limitPerPlugin: 1,
   });
 
-  const { settings } = useDataSourceInstanceSettings(datasourceUid);
+  const { settings, isLoading } = useDataSourceInstanceSettings(datasourceUid);
 
   const links = useMemo(() => {
     let linkToProfiles: SpanLinkDef | undefined;
+
+    if (isLoading) {
+      return [];
+    }
 
     const links = (createSpanLink?.(span) || [])
       // Linked spans are shown in a separate section
@@ -149,11 +161,7 @@ export const SpanDetailLinkButtons = (props: Props) => {
     });
 
     return links;
-  }, [app, createSpanLink, datasourceType, datasourceUid, pluginLinks, settings, span]);
-
-  if (!links.length && !shareButton) {
-    return null;
-  }
+  }, [app, createSpanLink, datasourceType, datasourceUid, isLoading, pluginLinks, settings, span]);
 
   return (
     <span className={styles.linksContainer}>
@@ -168,7 +176,7 @@ export const SpanDetailLinkButtons = (props: Props) => {
           )
         )
       )}
-      {shareButton}
+      <ShareSpanButton focusSpanLink={focusSpanLink} />
     </span>
   );
 };
