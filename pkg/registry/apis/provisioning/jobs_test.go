@@ -466,6 +466,96 @@ func TestAuthorizeResourceJob(t *testing.T) {
 	})
 }
 
+func TestAuthorizeMigrateJob(t *testing.T) {
+	ctx := context.Background()
+	cfg := newTestRepo("my-repo", "default")
+	dashGVR := resources.DashboardResource
+	forbidden := apierrors.NewForbidden(schema.GroupResource{}, "", nil)
+
+	// A full migration (no explicit resource list) can delete every exportable
+	// resource, so it requires delete permission on all supported types.
+	t.Run("full migration authorized when delete on all supported is allowed", func(t *testing.T) {
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
+
+		err := c.authorizeMigrateJob(ctx, mockReader, cfg, spec)
+		require.NoError(t, err)
+	})
+
+	t.Run("full migration forbidden when delete on a supported resource is denied", func(t *testing.T) {
+		accessMock := auth.NewMockAccessChecker(t)
+		// Read/create (the export authorization) are allowed...
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
+		}), mock.Anything).Return(nil)
+		// ...but delete is denied, so the full migration is rejected.
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbDelete
+		}), mock.Anything).Return(forbidden)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
+
+		err := c.authorizeMigrateJob(ctx, mockReader, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+
+	// A selective migration only deletes the chosen resources, so the delete check
+	// is scoped to those resources' folders rather than a delete-all check.
+	t.Run("selective migration checks delete only on the chosen resources", func(t *testing.T) {
+		accessMock := auth.NewMockAccessChecker(t)
+		// Read/create for the export authorization.
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
+		}), mock.Anything).Return(nil)
+		// Delete is checked against the chosen dashboard's actual folder, proving
+		// the selective (subset) path runs instead of a root-level delete-all.
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbDelete
+		}), "folder-abc").Return(nil)
+
+		dynClient := &mockDynamic{}
+		dynClient.On("Get", mock.Anything, "my-dash", metav1.GetOptions{}, []string(nil)).
+			Return(makeUnstructured("my-dash", "folder-abc"), nil)
+
+		rc := resources.NewMockResourceClients(t)
+		rc.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+		rc.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
+			func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+				switch gvk.GroupKind() {
+				case resources.DashboardKind.GroupKind():
+					return dynClient, resources.DashboardResource, nil
+				case resources.FolderKind.GroupKind():
+					return nil, resources.FolderResource, nil
+				default:
+					return nil, schema.GroupVersionResource{}, fmt.Errorf("unexpected kind %v", gvk)
+				}
+			}).Maybe()
+		clientsMock := resources.NewMockClientFactory(t)
+		clientsMock.EXPECT().Clients(mock.Anything, mock.Anything).Return(rc, nil).Maybe()
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: clientsMock}
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionMigrate,
+			Migrate: &provisioning.MigrateJobOptions{
+				Resources: []provisioning.ResourceRef{
+					{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				},
+			},
+		}
+
+		err := c.authorizeMigrateJob(ctx, mockReader, cfg, spec)
+		require.NoError(t, err)
+	})
+}
+
 func TestAuthorizeDeleteJob(t *testing.T) {
 	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")
@@ -476,7 +566,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, &provisioning.DeleteJobOptions{})
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, nil)
 		require.NoError(t, err)
 	})
 
@@ -491,9 +581,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, &provisioning.DeleteJobOptions{
-			Paths: []string{"team-a/dashboard.json"},
-		})
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dashboard.json"}, nil)
 		require.NoError(t, err)
 	})
 
@@ -506,9 +594,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, &provisioning.DeleteJobOptions{
-			Paths: []string{"restricted/dashboard.json"},
-		})
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"restricted/dashboard.json"}, nil)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "authorize delete")
 	})
@@ -525,9 +611,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		mockReader.On("Config").Return(cfg).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, &provisioning.DeleteJobOptions{
-			Paths: []string{"team-a/"},
-		})
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/"}, nil)
 		require.NoError(t, err)
 	})
 
@@ -552,10 +636,8 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
 
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, &provisioning.DeleteJobOptions{
-			Resources: []provisioning.ResourceRef{
-				{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-			},
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
+			{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 		})
 		require.NoError(t, err)
 	})
@@ -575,10 +657,8 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
 
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, &provisioning.DeleteJobOptions{
-			Resources: []provisioning.ResourceRef{
-				{Name: "missing-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-			},
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
+			{Name: "missing-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 		})
 		require.NoError(t, err)
 	})
@@ -593,9 +673,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		mockReader.On("Read", mock.Anything, "team-b/dash2.json", "").Return(testDashboardFileInfo(), nil).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, &provisioning.DeleteJobOptions{
-			Paths: []string{"team-a/dash1.json", "team-b/dash2.json"},
-		})
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dash1.json", "team-b/dash2.json"}, nil)
 		require.Error(t, err)
 	})
 
@@ -603,9 +681,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockRepo := repository.NewMockConfigRepository(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockRepo, cfg, &provisioning.DeleteJobOptions{
-			Paths: []string{"dashboard.json"},
-		})
+		err := c.authorizeDeleteJob(ctx, mockRepo, cfg, []string{"dashboard.json"}, nil)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
 	})

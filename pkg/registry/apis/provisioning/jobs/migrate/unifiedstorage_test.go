@@ -400,14 +400,23 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		syncWorker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("selective migration to a branch deletes only the migrated resources", func(t *testing.T) {
+	t.Run("selective branch migration on a folder repo deletes only the migrated resources", func(t *testing.T) {
 		exportWorker := jobs.NewMockWorker(t)
 		syncWorker := jobs.NewMockWorker(t)
 		pr := jobs.NewMockJobProgressRecorder(t)
 		repo := repository.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
-		repo.On("Config").Return(gitInstanceRepo("main"))
+		// Selective migration is only valid on folder/folderless targets (instance
+		// requires migrating everything).
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
 		pr.On("Record", mock.Anything, mock.Anything).Return()
@@ -818,7 +827,7 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("skips namespace cleanup when Resources is set on instance-target repos", func(t *testing.T) {
+	t.Run("rejects a selective migration on instance-target repos", func(t *testing.T) {
 		exportWorker := jobs.NewMockWorker(t)
 		syncWorker := jobs.NewMockWorker(t)
 		pr := jobs.NewMockJobProgressRecorder(t)
@@ -841,11 +850,11 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 			return job.Spec.Pull != nil
 		}), pr).Return(nil)
 
-		// Cleaner.Clean must NOT be called for selective migrate; mockery would fail the
-		// test if it were, since we never registered an expectation for it.
-
+		// Instance repositories must migrate everything, so a subset is rejected and
+		// the namespace is never cleaned (no Clean expectation registered).
 		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
 		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
-		require.NoError(t, err)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "Instance repositories should only migrate all resources")
 	})
 }

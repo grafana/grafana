@@ -313,11 +313,13 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	}
 
 	switch spec.Action {
-	case provisioning.JobActionPush, provisioning.JobActionMigrate:
+	case provisioning.JobActionPush:
 		return c.authorizeResourceJob(ctx, repo, cfg, spec)
+	case provisioning.JobActionMigrate:
+		return c.authorizeMigrateJob(ctx, repo, cfg, spec)
 	case provisioning.JobActionDelete:
 		if spec.Delete != nil {
-			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete)
+			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete.Paths, spec.Delete.Resources)
 		}
 	case provisioning.JobActionMove:
 		if spec.Move != nil {
@@ -431,20 +433,37 @@ func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repositor
 	return authorizer.AuthorizeCreateAllSupported(ctx)
 }
 
+func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	err := c.authorizeResourceJob(ctx, repo, cfg, spec)
+	if err != nil {
+		return err
+	}
+
+	if len(spec.Migrate.Resources) > 0 {
+		return c.authorizeDeleteJob(ctx, repo, cfg, nil, spec.Migrate.Resources)
+	}
+
+	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
+	if err != nil {
+		return err
+	}
+	return authorizer.AuthorizeDeleteAllSupported(ctx)
+}
+
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
-func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.DeleteJobOptions) error {
+func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef) error {
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
 	}
 
-	for _, path := range opts.Paths {
+	for _, path := range paths {
 		if err := authorizer.AuthorizeDeleteByPath(ctx, path); err != nil {
 			return fmt.Errorf("authorize delete %q: %w", path, err)
 		}
 	}
 
-	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, opts.Resources, utils.VerbDelete, "delete")
+	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, resources, utils.VerbDelete, "delete")
 }
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.

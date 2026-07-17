@@ -127,23 +127,18 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 			}
 		}
 	default:
-		// Instance (and an unset target, which defaults to instance): the whole
-		// instance must be managed.
-		switch {
-		case branchMigration && selective:
-			// Selective branch: delete only the migrated resources; the rest of the
-			// unmanaged resources are not ours to remove.
-			if err := deleteMigratedResources(); err != nil {
-				return err
-			}
-		case !selective:
-			// Full migration: remove every remaining unmanaged resource — the
-			// leftovers the pull did not take over (default branch), or the exports
-			// that were never taken over (branch).
-			progress.SetMessage(ctx, "clean namespace")
-			if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
-				return fmt.Errorf("clean namespace: %w", err)
-			}
+		// Instance repositories require the whole instance to be managed, so
+		// migrating only a subset is not supported.
+		if selective {
+			return fmt.Errorf("received a subset of resources to migrate for instance target type. Instance repositories should only migrate all resources")
+		}
+
+		// A full instance migration always removes every remaining unmanaged
+		// resource, regardless of branch: the leftovers the pull did not take over
+		// (default branch), or the exports that were never taken over (branch).
+		progress.SetMessage(ctx, "clean namespace")
+		if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
+			return fmt.Errorf("clean namespace: %w", err)
 		}
 	}
 
