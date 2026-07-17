@@ -7,8 +7,8 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Authorization
-menuTitle: Authorization
+title: User authorization and permissions
+menuTitle: Authorization and permissions
 description: Assign roles and permissions to control what users and service accounts can access in Grafana.
 keywords:
   - RBAC
