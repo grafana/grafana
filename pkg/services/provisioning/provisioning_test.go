@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -113,6 +115,31 @@ func TestProvisioningServiceImpl(t *testing.T) {
 
 		// Provisioning should have been retried until it succeeded, so polling starts.
 		assert.Equal(t, 3, calls, "Provision should have been retried until it succeeded")
+		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
+	})
+
+	t.Run("Should retry transient gRPC search failures from unified storage", func(t *testing.T) {
+		serviceTest := setup(t)
+		serviceTest.service.dashboardProvisionRetries = 5
+
+		var calls int
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			calls++
+			if calls < 3 {
+				return fmt.Errorf("%w: %w", dashboards.ErrGetOrCreateFolder, status.Error(codes.Unavailable, "search unavailable"))
+			}
+			return nil
+		}
+
+		serviceTest.startService()
+		serviceTest.waitForPollChanges()
+
+		assert.Equal(t, 3, calls, "transient gRPC errors should be retried until success")
 		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
 
 		serviceTest.cancel()

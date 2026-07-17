@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -170,8 +172,18 @@ func isRetriableFolderError(err error) bool {
 	if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
 		return false
 	}
-	return apierrors.IsServiceUnavailable(err) || apierrors.IsServerTimeout(err) ||
-		apierrors.IsTimeout(err) || apierrors.IsTooManyRequests(err)
+	if apierrors.IsServiceUnavailable(err) || apierrors.IsServerTimeout(err) ||
+		apierrors.IsTimeout(err) || apierrors.IsTooManyRequests(err) {
+		return true
+	}
+	// Folder lookups over unified storage surface raw gRPC status errors from the
+	// search client that the Kubernetes apierrors predicates above do not match.
+	switch status.Code(err) {
+	case codes.Unavailable, codes.DeadlineExceeded, codes.ResourceExhausted:
+		return true
+	default:
+		return false
+	}
 }
 
 // provisionDashboardsWithRetry retries dashboard provisioning while it fails
