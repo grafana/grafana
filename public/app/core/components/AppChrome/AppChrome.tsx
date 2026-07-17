@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'clsx';
 import { Resizable } from 're-resizable';
-import { type PropsWithChildren, useEffect } from 'react';
+import { type PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -24,6 +25,9 @@ import {
 } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { FeatureControlFloating } from './FeatureControl/FeatureControlFloating';
+import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/FullscreenWorkspacePlatformBar';
+import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
+import { useFullscreenWorkspace } from './FullscreenWorkspace/useFullscreenWorkspace';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
@@ -45,6 +49,29 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
+
+  const { fullscreenWorkspaceActive, fullscreenWorkspaceFeatureFlagEnabled } = useFullscreenWorkspace();
+
+  // The DOM node exposed by the fullscreen workspace Platform tab; the shell registers it.
+  const [workspaceHost, setWorkspaceHost] = useState<HTMLElement | null>(null);
+
+  // Only used when the fullscreen workspace feature is enabled: the live page (`children`) is
+  // portaled into this one stable, detached node, so it mounts once and is never unmounted.
+  // `portalHostRef` reparents that node into whichever host is active (the default <main> or the
+  // workspace host), moving DOM without a remount/refetch. When the feature is disabled the page
+  // renders directly inside <main> instead (original behavior, no portal), so we don't create it.
+  const portalTargetRef = useRef<HTMLDivElement | null>(null);
+  if (fullscreenWorkspaceFeatureFlagEnabled && !portalTargetRef.current) {
+    portalTargetRef.current = document.createElement('div');
+    // Keep the portal wrapper out of the box tree so `children` stays a direct flex child of its
+    // host (<main> / workspace Platform tab) and the page's layout is unchanged.
+    portalTargetRef.current.style.display = 'contents';
+  }
+  const portalHostRef = useCallback((host: HTMLElement | null) => {
+    if (host && portalTargetRef.current) {
+      host.appendChild(portalTargetRef.current);
+    }
+  }, []);
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
@@ -89,10 +116,28 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
+  const fullscreenWorkspaceChrome = (
+    <div id={floatingUtils.BOUNDARY_ELEMENT_ID}>
+      <FullscreenWorkspaceShell workspaceHostRef={setWorkspaceHost} />
+      {workspaceHost &&
+        createPortal(
+          <>
+            {/* A slim bar (hamburger + breadcrumbs) sits above the live page inside the Platform tab */}
+            <FullscreenWorkspacePlatformBar />
+            {/* `display: contents` keeps this ref wrapper out of the box tree, so the portaled page
+                stays a direct flex child of the workspace host (like it is of <main> in normal mode)
+                and full-height pages (e.g. Explore) can fill the Platform tab instead of collapsing. */}
+            <div ref={portalHostRef} className={styles.portalHost} />
+          </>,
+          workspaceHost
+        )}
+    </div>
+  );
+
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
-  return (
+  const defaultChrome = (
     <div
       id={floatingUtils.BOUNDARY_ELEMENT_ID}
       className={classNames('main-view', {
@@ -150,8 +195,9 @@ export function AppChrome({ children }: Props) {
             })}
             id="pageContent"
             tabIndex={-1}
+            ref={fullscreenWorkspaceFeatureFlagEnabled ? portalHostRef : undefined}
           >
-            {children}
+            {!fullscreenWorkspaceFeatureFlagEnabled && children}
           </main>
           {!state.chromeless &&
             isExtensionSidebarOpen &&
@@ -182,6 +228,22 @@ export function AppChrome({ children }: Props) {
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
     </div>
+  );
+
+  if (!fullscreenWorkspaceFeatureFlagEnabled) {
+    return defaultChrome;
+  }
+
+  // With the fullscreen workspace feature flag enabled, we render either the fullscreen workspace
+  // chrome or the default chrome depending on whether the user entered workspace mode.
+  // `children` is rendered once into a stable detached node; `portalHostRef` reparents that node
+  // into whichever host is active (the default <main> or the workspace host / Platform tab), so
+  // toggling workspace mode moves the page's DOM without remounting it.
+  return (
+    <>
+      {fullscreenWorkspaceActive ? fullscreenWorkspaceChrome : defaultChrome}
+      {portalTargetRef.current && createPortal(children, portalTargetRef.current)}
+    </>
   );
 }
 
@@ -315,6 +377,9 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       left: 0,
       right: 0,
       zIndex: theme.zIndex.navbarFixed + 1,
+    }),
+    portalHost: css({
+      display: 'contents',
     }),
   };
 };

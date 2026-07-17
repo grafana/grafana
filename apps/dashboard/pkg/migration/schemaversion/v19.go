@@ -114,36 +114,41 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 		url = "/"
 	}
 
-	// Add query parameters
-	params := []string{}
-
+	// Append query parameters one at a time, mirroring the frontend's
+	// urlUtil.appendQueryToUrl: the separator depends on whether the URL already
+	// carries a query string, so a base URL like "d/abc?orgId=1" gets "&", not "?".
 	if GetBoolValue(link, "keepTime") {
-		params = append(params, "$__url_time_range")
+		url = appendQueryToURL(url, "$__url_time_range")
 	}
 
 	if GetBoolValue(link, "includeVars") {
-		params = append(params, "$__all_variables")
+		url = appendQueryToURL(url, "$__all_variables")
 	}
 
 	if customParams := GetStringValue(link, "params"); customParams != "" {
-		params = append(params, customParams)
-	}
-
-	// Append parameters to URL
-	paramUsed := false
-	for _, param := range params {
-		if param != "" {
-			if paramUsed {
-				url += "&"
-			} else {
-				url += "?"
-				paramUsed = true
-			}
-			url += param
-		}
+		url = appendQueryToURL(url, customParams)
 	}
 
 	return url
+}
+
+// appendQueryToURL appends a query fragment to url, choosing the separator the
+// same way the frontend's urlUtil.appendQueryToUrl does: "&" if url already has
+// a query string, "?" if it does not, and nothing if it ends in a bare "?".
+func appendQueryToURL(url, stringToAppend string) string {
+	if stringToAppend == "" {
+		return url
+	}
+
+	if pos := strings.Index(url, "?"); pos != -1 {
+		if len(url)-pos > 1 {
+			url += "&"
+		}
+	} else {
+		url += "?"
+	}
+
+	return url + stringToAppend
 }
 
 var reNonWordOrSpace = regexp.MustCompile(`[^a-z0-9_ ]+`)

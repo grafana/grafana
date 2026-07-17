@@ -14,6 +14,7 @@ declare module "@openfeature/core" {
     | "faroSessionReplay"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
+    | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "provisioning.gitConventions"
@@ -64,6 +65,7 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
+    | "assistant.fullscreenWorkspace"
     | "table.protoRowParser"
     | "grafana.queryVarEditorRedesign"
     | "table.refactorNested"
@@ -71,7 +73,8 @@ declare module "@openfeature/core" {
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
-    | "grafana.onDemandDiagnostics";
+    | "grafana.onDemandDiagnostics"
+    | "grafana.multiTenantNavTree";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

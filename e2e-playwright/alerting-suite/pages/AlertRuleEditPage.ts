@@ -128,6 +128,12 @@ export class AlertRuleEditPage {
 
   async save(): Promise<void> {
     await this.saveButton.click();
+    // Wait for the submit to actually settle (button re-enables, or disappears on navigation)
+    // instead of racing ahead of it the way a bare click does.
+    await expect(async () => {
+      const settled = (await this.saveButton.isHidden()) || !(await this.saveButton.isDisabled());
+      expect(settled).toBe(true);
+    }).toPass({ timeout: 30_000 });
   }
 
   protected get nameInput(): Locator {
