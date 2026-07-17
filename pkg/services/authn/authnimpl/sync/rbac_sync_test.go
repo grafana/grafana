@@ -312,7 +312,20 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			expectedCalled: true,
 		},
 		{
-			desc:    "should not call sync when authenticated with grafana com and has invalid role",
+			desc:    "should call sync and not block login when authenticated with grafana com and has none role",
+			module:  login.GrafanaComAuthModule,
+			stackID: "1",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
+			},
+			expectedErr:    nil,
+			expectedCalled: true,
+		},
+		{
+			desc:    "should not block login when authenticated with grafana com and has an unmapped role",
 			module:  login.GrafanaComAuthModule,
 			stackID: "1",
 			identity: &authn.Identity{
@@ -321,7 +334,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleType("something else")},
 			},
-			expectedErr:    errInvalidCloudRole,
+			expectedErr:    nil,
 			expectedCalled: false,
 		},
 		{
@@ -488,12 +501,49 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 			},
 		},
 		{
-			desc: "should return an error for not supported role",
+			desc: "should map None to no cloud roles and remove all others when support ticket roles are included",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
+			},
+			includeSupportTicketRoles: true,
+			expectedErr:               nil,
+			expectedRolesToAdd:        []string{},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudSupportTicketReader,
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+				accesscontrol.FixedCloudAdminRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+		},
+		{
+			desc: "should map None to no cloud roles and remove only base roles when support ticket roles are excluded",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
+			},
+			includeSupportTicketRoles: false,
+			expectedErr:               nil,
+			expectedRolesToAdd:        []string{},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudAdminRole,
+			},
+		},
+		{
+			desc: "should return an error for an unrecognized role",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleType("something else")},
 			},
 			includeSupportTicketRoles: true,
 			expectedErr:               errInvalidCloudRole,
