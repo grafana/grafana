@@ -9,8 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -182,15 +180,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			}
 			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
-			// FIXME: use helpers
 			// Verify both dashboards are removed from Grafana
-			_, err := helper.DashboardsV1.Resource.Get(t.Context(), "resourceref2", metav1.GetOptions{})
-			require.Error(t, err, "text-options dashboard should be deleted")
-			require.True(t, apierrors.IsNotFound(err))
-
-			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "resourceref3", metav1.GetOptions{})
-			require.Error(t, err, "timeline-demo dashboard should be deleted")
-			require.True(t, apierrors.IsNotFound(err))
+			helper.RequireDashboardsNotFound(t, "resourceref2", "resourceref3")
 
 			// Verify corresponding files are deleted from repository
 			helper.RequireRepoFileNotFound(t, repo, "resource-test-2.json")
@@ -233,17 +224,11 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
-			// FIXME: use the helpers
 			// Verify both targeted resources are deleted from Grafana
-			_, err := helper.DashboardsV1.Resource.Get(t.Context(), "resourceref1", metav1.GetOptions{})
-			require.Error(t, err, "dashboard deleted by path should be removed")
-
-			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "resourceref2", metav1.GetOptions{})
-			require.Error(t, err, "dashboard deleted by resource ref should be removed")
+			helper.RequireDashboardsNotFound(t, "resourceref1", "resourceref2")
 
 			// Verify the untargeted resource still exists
-			_, err = helper.DashboardsV1.Resource.Get(t.Context(), "resourceref3", metav1.GetOptions{})
-			require.NoError(t, err, "untargeted dashboard should still exist")
+			helper.RequireDashboards(t, "resourceref3")
 
 			// Verify files are properly deleted/preserved in repository
 			helper.RequireRepoFileNotFound(t, repo, "mixed-test-1.json")
@@ -292,11 +277,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			}
 			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
-			// FIXME: use helpers
 			// Verify folder is deleted from Grafana
-			_, err := helper.Folders.Resource.Get(t.Context(), testFolderName, metav1.GetOptions{})
-			require.Error(t, err, "folder should be deleted from Grafana")
-			require.True(t, apierrors.IsNotFound(err), "should be not found error")
+			helper.RequireFoldersNotFound(t, testFolderName)
 
 			// Verify folder contents are also deleted from repository
 			helper.RequireRepoFileNotFound(t, repo, "test-folder", "dashboard-in-folder.json")

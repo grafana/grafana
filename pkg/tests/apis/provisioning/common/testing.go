@@ -1058,6 +1058,28 @@ func (h *ProvisioningTestHelper) RequireFolders(t *testing.T, names ...string) [
 	return matched
 }
 
+// RequireDashboardsNotFound polls until every named dashboard is gone.
+func (h *ProvisioningTestHelper) RequireDashboardsNotFound(t *testing.T, names ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		for _, name := range names {
+			_, err := h.DashboardsV1.Resource.Get(t.Context(), name, metav1.GetOptions{})
+			assert.True(c, apierrors.IsNotFound(err), "expected dashboard %q to be not found, got: %v", name, err)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected dashboards %v to be deleted", names)
+}
+
+// RequireFoldersNotFound polls until every named folder is gone.
+func (h *ProvisioningTestHelper) RequireFoldersNotFound(t *testing.T, names ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		for _, name := range names {
+			_, err := h.Folders.Resource.Get(t.Context(), name, metav1.GetOptions{})
+			assert.True(c, apierrors.IsNotFound(err), "expected folder %q to be not found, got: %v", name, err)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected folders %v to be deleted", names)
+}
+
 // WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
 // matches the expected limit.
 func (h *ProvisioningTestHelper) WaitForResourceQuotaLimit(t *testing.T, repoName string, expectedLimit int64) {
