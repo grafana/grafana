@@ -2,6 +2,7 @@ package resource
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -143,4 +144,106 @@ func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
 	hits := lexicalHitsFromResponse(resp)
 	require.Len(t, hits, 1)
 	assert.Equal(t, lexicalHit{uid: "u1"}, hits[0])
+}
+
+func TestValidateHybridSearchRequest(t *testing.T) {
+	valid := func() *resourcepb.HybridSearchRequest {
+		return &resourcepb.HybridSearchRequest{Key: hybridKey(), Query: "q"}
+	}
+
+	assert.Nil(t, validateHybridSearchRequest(valid()))
+
+	r := valid()
+	r.Key = nil
+	require.NotNil(t, validateHybridSearchRequest(r))
+
+	r = valid()
+	r.Query = "  "
+	require.NotNil(t, validateHybridSearchRequest(r))
+
+	r = valid()
+	r.Query = strings.Repeat("x", 1001)
+	require.NotNil(t, validateHybridSearchRequest(r))
+
+	r = valid()
+	r.SemanticQuery = strings.Repeat("x", 1001)
+	require.NotNil(t, validateHybridSearchRequest(r))
+
+	r = valid()
+	r.Filters = []*resourcepb.Requirement{{Key: "tags", Operator: "in", Values: []string{"prod"}}}
+	resp := validateHybridSearchRequest(r)
+	require.NotNil(t, resp)
+	assert.Contains(t, resp.Error.Message, "tags")
+
+	r = valid()
+	r.Filters = []*resourcepb.Requirement{{Key: "uid", Operator: "in"}}
+	require.NotNil(t, validateHybridSearchRequest(r)) // no values
+
+	r = valid()
+	r.Filters = []*resourcepb.Requirement{
+		{Key: "uid", Operator: "in", Values: []string{"u"}},
+		{Key: "folder", Operator: "in", Values: []string{"f"}},
+		{Key: "datasource_uid", Operator: "in", Values: []string{"d"}},
+		{Key: "language", Operator: "in", Values: []string{"promql"}},
+	}
+	assert.Nil(t, validateHybridSearchRequest(r))
+}
+
+func TestHybridLexicalRequest(t *testing.T) {
+	req := &resourcepb.HybridSearchRequest{
+		Key:   hybridKey(),
+		Query: "cpu",
+		Filters: []*resourcepb.Requirement{
+			{Key: "uid", Operator: "in", Values: []string{"u1"}},
+			{Key: "folder", Operator: "in", Values: []string{"f1"}},
+			{Key: "datasource_uid", Operator: "in", Values: []string{"ds1"}},
+			{Key: "language", Operator: "in", Values: []string{"promql", "logql"}},
+		},
+	}
+	out := hybridLexicalRequest(req, 40)
+
+	assert.Equal(t, "cpu", out.Query)
+	assert.Equal(t, int64(40), out.Limit)
+	assert.Same(t, req.Key, out.Options.Key)
+	assert.Equal(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER}, out.Fields)
+
+	require.Len(t, out.Options.Fields, 4)
+	assert.Equal(t, SEARCH_FIELD_NAME, out.Options.Fields[0].Key)
+	assert.Equal(t, []string{"u1"}, out.Options.Fields[0].Values)
+	assert.Equal(t, SEARCH_FIELD_FOLDER, out.Options.Fields[1].Key)
+	assert.Equal(t, "reference.DataSource", out.Options.Fields[2].Key)
+	assert.Equal(t, []string{"ds1"}, out.Options.Fields[2].Values)
+	assert.Equal(t, "ds_types", out.Options.Fields[3].Key)
+	assert.ElementsMatch(t, []string{"prometheus", "loki"}, out.Options.Fields[3].Values)
+}
+
+func TestHybridLexicalRequest_UnknownLanguageAddsNoRequirement(t *testing.T) {
+	req := &resourcepb.HybridSearchRequest{
+		Key:   hybridKey(),
+		Query: "q",
+		Filters: []*resourcepb.Requirement{
+			{Key: "language", Operator: "in", Values: []string{"cypher"}},
+		},
+	}
+	out := hybridLexicalRequest(req, 10)
+	assert.Empty(t, out.Options.Fields)
+}
+
+func TestHybridVectorFilters(t *testing.T) {
+	filters := hybridVectorFilters([]*resourcepb.Requirement{
+		{Key: "uid", Operator: "in", Values: []string{"u1"}},
+		{Key: "folder", Operator: "in", Values: []string{"f1"}},
+		{Key: "datasource_uid", Operator: "in", Values: []string{"ds1", "ds2"}},
+		{Key: "language", Operator: "in", Values: []string{"promql"}},
+	})
+	require.Len(t, filters, 4)
+	assert.Equal(t, vector.SearchFilter{Field: "uid", Values: []string{"u1"}}, filters[0])
+	assert.Equal(t, vector.SearchFilter{Field: "folder", Values: []string{"f1"}}, filters[1])
+	assert.Equal(t, vector.SearchFilter{Field: "datasourceUid", Values: []string{"ds1", "ds2"}}, filters[2])
+	assert.Equal(t, vector.SearchFilter{Field: "language", Values: []string{"promql"}}, filters[3])
+}
+
+func TestHybridFetchDepth(t *testing.T) {
+	assert.Equal(t, 20, hybridFetchDepth(10))
+	assert.Equal(t, 200, hybridFetchDepth(150))
 }
