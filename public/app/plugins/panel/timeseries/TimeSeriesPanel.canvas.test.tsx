@@ -31,6 +31,7 @@ import {
   StackingMode,
   TooltipDisplayMode,
 } from '@grafana/schema';
+import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@grafana/test-utils/canvas';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
@@ -76,39 +77,15 @@ const height = 378;
 const compactCanvas = { width: 260, height: 140 } as const;
 
 /**
- * Without mocking measureText, the text width is always measured incorrectly, resulting in test behavior which does not match expected behavior in the browser.
- * uPlot Y/X axis layout uses `measureText` from @grafana/ui (not `useMeasure` on the panel).
- * jest-canvas-mock reports `TextMetrics.width === text.length`, which starves the Y axis and
- * clips tick labels. This mock provides deterministic, ~browser-like widths for axis sizing.
- * Override in a test: `uPlotAxisMeasureText.mockImplementationOnce(...)`; default is re-applied in `beforeEach`.
+ * uPlot Y/X axis layout uses `measureText` from @grafana/ui (not `useMeasure` on the panel), and
+ * jest-canvas-mock reports `TextMetrics.width === text.length`, which starves the Y axis and clips tick
+ * labels. The shared factory supplies deterministic ~browser-like widths (re-applied in `beforeEach`) and
+ * routes `getCanvasContext` to the uPlot instance's ctx so gradient-fill geometry lands in the snapshot.
  */
-jest.mock('../../../../../packages/grafana-ui/src/utils/measureText', () => {
-  const actual = jest.requireActual('../../../../../packages/grafana-ui/src/utils/measureText');
-  return { ...actual, measureText: jest.fn() };
-});
-
-/** Width scale matched roughly to 12px Inter. */
-function defaultAxisTextWidthForTests(text: string | null, fontSize: number): number {
-  const AXIS_TEXT_WIDTH_PER_CHAR = 7.2;
-  const w = (text?.length ?? 1) * AXIS_TEXT_WIDTH_PER_CHAR * (fontSize / 12);
-  return Math.max(8, w);
-}
-
-function applyDefaultUPlotAxisMeasureTextMock() {
-  (uPlotAxisMeasureText as jest.Mock).mockImplementation(
-    (text: string, fontSize: number, _fontWeight = 400) =>
-      ({ width: defaultAxisTextWidthForTests(text, fontSize) }) as ReturnType<CanvasRenderingContext2D['measureText']>
-  );
-}
-
-/**
- * Scrubs canvas events output to remove noop from snapshot output.
- */
-function scrubOutput(events: CanvasRenderingContext2DEvent[]): Array<Omit<CanvasRenderingContext2DEvent, 'transform'>> {
-  return events.map(({ transform, ...event }) =>
-    event.props.path ? { ...event, props: { ...event.props, path: scrubOutput(event.props.path) } } : event
-  );
-}
+let uPlotInstance: InstanceType<typeof uPlot> | undefined;
+jest.mock('@grafana/ui/src/utils/measureText', () =>
+  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
+);
 
 function createTimeSeriesFrame(overrides?: { timeValues?: number[]; values?: number[]; name?: string }) {
   const timeValues = overrides?.timeValues ?? [1000, 2000, 3000, 4000, 5000];
@@ -231,7 +208,6 @@ describe('TimeSeriesPanel (canvas)', () => {
   const { preparePlotConfigBuilder: realPreparePlotConfigBuilder } = jest.requireActual(
     'app/core/components/TimeSeries/utils'
   );
-  let uPlotInstance: InstanceType<typeof uPlot> | undefined;
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
   let clearAxisEvents = true;
 
@@ -244,18 +220,21 @@ describe('TimeSeriesPanel (canvas)', () => {
 
   const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     await assertUPlotReady();
-    expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchCanvasSnapshot(uPlotAxisEvents!, snapshotSize);
+    expect(removeCanvasTransforms(uPlotInstance!.ctx.__getEvents())).toMatchCanvasSnapshot(
+      uPlotAxisEvents!,
+      snapshotSize
+    );
   };
 
   const assertAxesOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     await assertUPlotReady();
-    expect(scrubOutput(uPlotAxisEvents!)).toMatchCanvasSnapshot([], snapshotSize);
+    expect(removeCanvasTransforms(uPlotAxisEvents!)).toMatchCanvasSnapshot([], snapshotSize);
   };
 
   type AssertCase = [string, (snapshotSize?: { width: number; height: number }) => Promise<void>];
 
   beforeEach(() => {
-    applyDefaultUPlotAxisMeasureTextMock();
+    applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     prepConfigSpy = jest
       .spyOn(timeSeriesUtils, 'preparePlotConfigBuilder')
       .mockImplementation((...args: Parameters<typeof realPreparePlotConfigBuilder>) => {
