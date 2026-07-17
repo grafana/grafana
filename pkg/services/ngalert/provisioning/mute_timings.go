@@ -306,9 +306,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
 		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
-		ruleKeys := slices.Collect(maps.Keys(ns))
-		svc.log.Error("Cannot delete time interval because it is used by notification policies", "timeInterval", existing.Name, "rulesUid", strings.Join(ruleKeysToUIDs(ruleKeys), ","))
-		return MakeErrTimeIntervalInUse(true, ruleKeys)
+		return svc.errTimeIntervalInUse(existing.Name, true, ns)
 	}
 
 	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(provenance), version, "delete"); err != nil {
@@ -322,9 +320,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 			return err
 		}
 		if len(keys) > 0 {
-			ruleKeys := slices.Collect(maps.Keys(keys))
-			svc.log.Error("Cannot delete time interval because it is used in rule's notification settings", "timeInterval", existing.Name, "rulesUid", strings.Join(ruleKeysToUIDs(ruleKeys), ","))
-			return MakeErrTimeIntervalInUse(false, ruleKeys)
+			return svc.errTimeIntervalInUse(existing.Name, false, keys)
 		}
 
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
@@ -334,12 +330,18 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	})
 }
 
-func ruleKeysToUIDs(keys []models.AlertRuleKey) []string {
-	uids := make([]string, 0, len(keys))
-	for _, key := range keys {
+func (svc *MuteTimingService) errTimeIntervalInUse(name string, usedByRoutes bool, rules map[models.AlertRuleKey]models.ContactPointRouting) error {
+	ruleKeys := slices.Collect(maps.Keys(rules))
+	uids := make([]string, 0, len(ruleKeys))
+	for _, key := range ruleKeys {
 		uids = append(uids, key.UID)
 	}
-	return uids
+	msg := "Cannot delete time interval because it is used in rule's notification settings"
+	if usedByRoutes {
+		msg = "Cannot delete time interval because it is used by notification policies"
+	}
+	svc.log.Error(msg, "timeInterval", name, "rulesUid", strings.Join(uids, ","))
+	return MakeErrTimeIntervalInUse(usedByRoutes, ruleKeys)
 }
 
 func isTimeIntervalInUseInRoutes(name string, route *v1.Route) bool {
