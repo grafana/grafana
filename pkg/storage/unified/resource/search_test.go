@@ -37,6 +37,11 @@ type MockResourceIndex struct {
 
 	buildInfo IndexBuildInfo
 	docCount  int64
+
+	// Optional configured results for the managed-object RPCs. When nil the
+	// methods return an error, matching the default "not expected" behaviour.
+	managedObjects *resourcepb.ListManagedObjectsResponse
+	managedCounts  []*resourcepb.CountManagedObjectsResponse_ResourceCount
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
@@ -52,6 +57,9 @@ func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *r
 }
 
 func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+	if m.managedCounts != nil {
+		return m.managedCounts, nil
+	}
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -60,6 +68,9 @@ func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
+	if m.managedObjects != nil {
+		return m.managedObjects, nil
+	}
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -81,9 +92,12 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
+	UnimplementedStorageBackend
 	resourceStats   []ResourceStats
 	lastImportTimes []ResourceLastImportTime
 	statsCalls      atomic.Int32
+	listStoredCalls atomic.Int32
+	listStoredErr   error
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -94,6 +108,33 @@ func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr Namespace
 		if stat.Count > int64(minCount) {
 			result = append(result, stat)
 		}
+	}
+	return result, nil
+}
+
+// ListStoredResources reports the distinct group/resource identities in the
+// namespace, derived from the configured resourceStats. It is the discovery
+// primitive the search server uses instead of counting via GetResourceStats.
+func (m *mockStorageBackend) ListStoredResources(_ context.Context, filter NamespacedResource) ([]NamespacedResource, error) {
+	m.listStoredCalls.Add(1)
+	if m.listStoredErr != nil {
+		return nil, m.listStoredErr
+	}
+	if filter.Namespace == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+	var result []NamespacedResource
+	for _, stat := range m.resourceStats {
+		if stat.Namespace != filter.Namespace {
+			continue
+		}
+		if filter.Group != "" && stat.Group != filter.Group {
+			continue
+		}
+		if filter.Resource != "" && stat.Resource != filter.Resource {
+			continue
+		}
+		result = append(result, stat.NamespacedResource)
 	}
 	return result, nil
 }
@@ -147,9 +188,8 @@ type mockSearchBackend struct {
 }
 
 type buildIndexCall struct {
-	key    NamespacedResource
-	size   int64
-	fields SearchableDocumentFields
+	key  NamespacedResource
+	size int64
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
@@ -166,7 +206,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	return m.cache[key]
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 
 	// Call the builder function (required by the contract)
@@ -186,9 +226,8 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
 	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-		key:    key,
-		size:   size,
-		fields: fields,
+		key:  key,
+		size: size,
 	})
 
 	return index, nil
@@ -1316,11 +1355,11 @@ func newBlockingSearchBackend(cache map[NamespacedResource]ResourceIndex) *block
 	}
 }
 
-func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
+func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
 	b.buildCalls.Add(1)
 	b.startedOnce.Do(func() { close(b.onStarted) })
 	<-b.proceed
-	return b.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
+	return b.mockSearchBackend.BuildIndex(ctx, key, size, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
 }
 
 // TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated verifies the

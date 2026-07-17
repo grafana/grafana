@@ -47,16 +47,6 @@
         "enabled": true,
         "dynamic": false,
         "properties": {
-          "createdAt": {
-            "enabled": true,
-            "dynamic": true,
-            "fields": [
-              {
-                "type": "number",
-                "store": true
-              }
-            ]
-          },
           "disabled": {
             "enabled": true,
             "dynamic": true,
@@ -88,7 +78,8 @@
               {
                 "type": "number",
                 "store": true,
-                "index": true
+                "index": true,
+                "docvalues": true
               }
             ]
           },

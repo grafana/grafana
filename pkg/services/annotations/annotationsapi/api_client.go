@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,36 +41,48 @@ type annotationAPIClient struct {
 	restClient *rest.RESTClient
 }
 
-// newAnnotationAPIClient returns nil when APIServerURL is empty (proxy disabled).
-func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service) (*annotationAPIClient, error) {
+// newAnnotationAPIClient returns a client for the new annotation API server.
+// It returns nil when APIServerURL is empty (proxy disabled).
+func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service, exchanger authnlib.TokenExchanger) *annotationAPIClient {
 	url := strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL)
 	if url == "" {
-		return nil, nil
+		return nil
 	}
 
-	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	token := strings.TrimSpace(grpcSection.Key("token").MustString(""))
-	tokenExchangeURL := strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString(""))
-
-	if token == "" || tokenExchangeURL == "" {
-		return nil, fmt.Errorf("annotation proxy: grpc_client_authentication token and token_exchange_url are required when api_server_url is set")
-	}
-
-	restCfg, err := buildRESTConfig(url, token, tokenExchangeURL, cfg.Env == setting.Dev)
-	if err != nil {
-		return nil, err
-	}
+	nsMapper := request.GetNamespaceMapper(cfg)
+	restCfg := buildRESTConfig(url, exchanger, nsMapper, cfg.AnnotationAppPlatform.TLSClientConfig)
 
 	return &annotationAPIClient{
 		k8sClient: client.NewK8sHandler(
-			request.GetNamespaceMapper(cfg),
+			nsMapper,
 			annotationV0.AnnotationKind().GroupVersionResource(),
 			func(_ context.Context) (*rest.Config, error) { return restCfg, nil },
 			userSvc,
 			nil,
 		),
 		restCfg: restCfg,
-	}, nil
+	}
+}
+
+// ProvideTokenExchanger returns a TokenExchanger for the annotation API server, or nil if the proxy is disabled.
+func ProvideTokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error) {
+	if strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL) == "" {
+		return nil, nil // proxy disabled
+	}
+
+	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	token := strings.TrimSpace(grpcSection.Key("token").MustString(""))
+	tokenExchangeURL := strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString(""))
+
+	if token == "" {
+		return nil, fmt.Errorf("annotation proxy: grpc_client_authentication token is required when api_server_url is set")
+	}
+
+	if tokenExchangeURL == "" {
+		return authnlib.NewStaticTokenExchanger(token), nil
+	}
+
+	return newTokenExchangeClient(token, tokenExchangeURL, cfg.Env == setting.Dev)
 }
 
 func (s *annotationAPIClient) Create(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
@@ -206,7 +219,7 @@ func (s *annotationAPIClient) getRESTClient() (*rest.RESTClient, error) {
 	return rc, nil
 }
 
-func buildRESTConfig(url, token, tokenExchangeURL string, allowInsecure bool) (*rest.Config, error) {
+func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) (authnlib.TokenExchanger, error) {
 	var exchangeOpts []authnlib.ExchangeClientOpts
 	if allowInsecure {
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
@@ -223,25 +236,33 @@ func buildRESTConfig(url, token, tokenExchangeURL string, allowInsecure bool) (*
 	if err != nil {
 		return nil, fmt.Errorf("annotation proxy: creating token exchange client: %w", err)
 	}
+	return tc, nil
+}
 
+func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, tlsConfig rest.TLSClientConfig) *rest.Config {
 	return &rest.Config{
-		Host:          url,
-		WrapTransport: newBearerTokenExchangeWrapper(tc),
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: allowInsecure,
-		},
-	}, nil
+		Host:            url,
+		WrapTransport:   newBearerTokenExchangeWrapper(exchanger, nsMapper),
+		TLSClientConfig: tlsConfig,
+	}
 }
 
 type bearerTokenExchangeRT struct {
 	exchanger authnlib.TokenExchanger
+	nsMapper  request.NamespaceMapper
 	next      http.RoundTripper
 }
 
 func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, error) {
-	resp, err := rt.exchanger.Exchange(req.Context(), authnlib.TokenExchangeRequest{
+	ctx := req.Context()
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("resolving requester for token exchange: %w", err)
+	}
+
+	resp, err := rt.exchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
 		Audiences: []string{annotationServerAudience},
-		Namespace: "*",
+		Namespace: rt.nsMapper(requester.GetOrgID()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("exchanging token: %w", err)
@@ -251,8 +272,8 @@ func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, e
 	return rt.next.RoundTrip(req)
 }
 
-func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger) func(http.RoundTripper) http.RoundTripper {
+func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper) func(http.RoundTripper) http.RoundTripper {
 	return func(rt http.RoundTripper) http.RoundTripper {
-		return &bearerTokenExchangeRT{exchanger: exchanger, next: rt}
+		return &bearerTokenExchangeRT{exchanger: exchanger, nsMapper: nsMapper, next: rt}
 	}
 }

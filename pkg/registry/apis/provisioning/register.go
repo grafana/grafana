@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
 	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -153,9 +155,17 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxFileSize                   int64
+	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
-	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
+	// controllerResyncInterval is the informer re-list interval for the
+	// repository, connection, and job controllers; historyExpiration is both the
+	// HistoricJob retention and the historic-job informer's resync;
+	// jobPollInterval is the job driver's fallback poll for new jobs. All fall
+	// back to their defaults when <=0 (see the controller post-start hook).
+	controllerResyncInterval time.Duration
+	historyExpiration        time.Duration
+	jobPollInterval          time.Duration
 
 	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
 	// Instead of an apiserver-backed informer, each controller's handler is driven
@@ -209,7 +219,6 @@ func NewAPIBuilder(
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
-	folderAPIVersion string,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
 ) (*APIBuilder, error) {
@@ -247,7 +256,7 @@ func NewAPIBuilder(
 		clients:                             clients,
 		supportedResources:                  supportedResources,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), folderAPIVersion), //nolint:staticcheck
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
 		resourceLister:                      resourceLister,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -263,7 +272,6 @@ func NewAPIBuilder(
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
-		folderAPIVersion:                    folderAPIVersion,
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
@@ -347,7 +355,6 @@ func RegisterAPIService(
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
-	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
 	maxFileSize := cfg.ProvisioningMaxFileSize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 
@@ -381,7 +388,6 @@ func RegisterAPIService(
 		false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
 		folderMetadataEnabled,
-		folderAPIVersion,
 		incrementalPolicy,
 		maxFileSize,
 	)
@@ -389,6 +395,10 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
+	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
+	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
+	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
@@ -423,7 +433,6 @@ func RegisterAPIService(
 		false, // useExclusivelyAccessCheckerForAuthz
 		quotaGetter,
 		folderMetadataEnabled,
-		folderAPIVersion,
 		incrementalPolicy,
 		maxFileSize,
 	)
@@ -431,6 +440,10 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
+	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
+	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
+	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
@@ -806,7 +819,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	connCombinedValidator := appadmission.NewCombinedValidator(connAdmissionValidator, connDeleteValidator)
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
-	// Jobs validator (no mutator needed)
+	// Jobs mutator and validator. The mutator attributes each job to the acting
+	// user at creation time (gated by the provisioning.userAttribution flag) and
+	// the validator enforces that the recorded author is immutable.
 	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
 		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
@@ -815,7 +830,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 			Disabled: !r.IsActive(),
 		})
 	}
-	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources))
+	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator(userAttributionEnabled))
+	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
@@ -885,11 +901,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -900,6 +916,20 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
+}
+
+// userAttributionEnabled reports whether Git Sync commits should be attributed
+// to the acting user. It lives here (rather than in apps/provisioning) because
+// the feature flag machinery is only available in the main Grafana module.
+func userAttributionEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx))
+}
+
+// performanceEnabled reports whether the synthetic "test" job type is enabled.
+// It is evaluated per request via OpenFeature (rather than captured once at
+// startup) so the flag behaves consistently with the other provisioning flags.
+func performanceEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
 }
 
 // Mutate delegates to the admission handler for resource-specific mutation
@@ -958,8 +988,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-			// Informer with resync interval used for health check and reconciliation
-			informerFactoryResyncInterval := 60 * time.Second
+			// Informer resync interval used for health check and reconciliation of
+			// the repository, connection, and job controllers. Configurable via
+			// [provisioning] resync_interval; <=0 falls back to the default.
+			informerFactoryResyncInterval := b.controllerResyncInterval
+			if informerFactoryResyncInterval <= 0 {
+				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
+			}
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
@@ -982,10 +1017,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				stageIfPossible,
 				metrics,
 				exportEnabled,
-				b.folderAPIVersion,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled) //nolint:staticcheck
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -1007,7 +1041,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				stageIfPossible,
 				metrics,
 				exportEnabled,
-				b.folderAPIVersion,
 			)
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -1022,12 +1055,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(b.folderAPIVersion))
+			fixMetadataWorker := fixfoldermetadata.NewWorker(b.clients)
 			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 
-			// All workers registered - export/migrate will check feature flag at runtime
-			workers := make([]jobs.Worker, 0, 8+len(b.extraWorkers))
+			// Synthetic load-testing worker; a no-op unless provisioning.performance is enabled.
+			perfTestWorker := perftest.NewWorker(performanceEnabled)
+
+			// All workers registered - export/migrate/perftest check their feature flag at runtime
+			workers := make([]jobs.Worker, 0, 9+len(b.extraWorkers))
 			workers = append(workers,
 				deleteResourcesWorker,
 				deleteWorker,
@@ -1035,6 +1071,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				fixMetadataWorker,
 				migrationWorker,
 				moveWorker,
+				perfTestWorker,
 				releaseResourcesWorker,
 				syncWorker,
 			)
@@ -1075,11 +1112,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// considered abandoned.
 			leaseRenewalInterval := jobClaimExpiry / 3
 
+			// Fallback poll for new jobs; the driver is also woken immediately by
+			// the job-create notification. Configurable via [provisioning]
+			// job_poll_interval; <=0 falls back to the default.
+			jobPollInterval := b.jobPollInterval
+			if jobPollInterval <= 0 {
+				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
+			}
+
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,                    // 3 drivers for now
 				20*time.Minute,       // Max time for each job
-				30*time.Second,       // Periodically look for new jobs
+				jobPollInterval,      // Periodically look for new jobs
 				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
@@ -1130,7 +1175,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.quotaGetter,
 				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
-				b.folderAPIVersion,
 				webhookSecretRotationInterval,
 			)
 			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
@@ -1180,15 +1224,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
-				// Create HistoryJobController for cleanup of old job history entries.
-				// Its resync interval is the history expiration, and cleanup is
-				// resync-driven.
-				historyJobExpiration := 10 * time.Minute
+				// Periodically clean up expired historic jobs. Cleanup is age-based and
+				// needs no live events: with NATS off the source is an apiserver
+				// informer (watch-fed cache replayed on resync), with NATS on it is a
+				// cron-style periodic re-list. Configurable via [provisioning]
+				// history_expiration; <=0 falls back to the default.
+				historyJobExpiration := b.historyExpiration
+				if historyJobExpiration <= 0 {
+					historyJobExpiration = setting.ProvisioningHistoryExpirationDefault
+				}
 				historyJobController := appcontroller.NewHistoryJobController(
 					b.GetClient(),
 					historyJobExpiration,
 				)
-				historySource := informer.NewHistoricJobDeltaSource(b.natsSubscriber, c, historyJobExpiration)
+				historySource := informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration)
 				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
 					return fmt.Errorf("add history job controller event handler: %w", err)
 				}

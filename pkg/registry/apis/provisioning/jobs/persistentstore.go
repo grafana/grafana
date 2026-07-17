@@ -534,13 +534,12 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
-	// Set up the provisioning identity for this namespace
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
-	}
-
+	// The job is created with the caller's identity so that the admission
+	// mutator can attribute it to the acting user (see AdmissionMutator).
+	// Unlike the other store operations, Insert does not switch to the
+	// provisioning identity: user-triggered flows keep the requesting user in
+	// context, while background callers (repository controller, webhooks)
+	// establish the provisioning identity themselves before calling Insert.
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
@@ -588,6 +587,11 @@ func generateJobName(job *provisioning.Job) {
 		}
 		// There may be multiple pull requests at the same time. They need different names.
 		job.Name = fmt.Sprintf("%s-pr-%d", job.Spec.Repository, pr)
+	case provisioning.JobActionTest:
+		// Test jobs exist to generate concurrent load, so many must be queued
+		// against the same repository at once. A unique suffix avoids the
+		// already-exists collision a deterministic name would cause.
+		job.Name = fmt.Sprintf("%s-test-%s", job.Spec.Repository, util.GenerateShortUID())
 	default:
 		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
 	}

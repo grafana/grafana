@@ -5,7 +5,12 @@ import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
 import { RichHistoryStarredTab, type RichHistoryStarredTabProps } from './RichHistoryStarredTab';
 
-jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [] }) }));
+jest.mock('../state/selectors', () => ({
+  ...jest.requireActual('../state/selectors'),
+  selectExploreDSMaps: jest
+    .fn()
+    .mockReturnValue({ dsToExplore: [{ datasource: { uid: 'active-ds-uid' } }], exploreToDS: [] }),
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -14,6 +19,18 @@ jest.mock('@grafana/runtime', () => ({
       getList: () => [],
     };
   },
+}));
+
+// Stable identity: a fresh array per render would re-trigger the component's
+// useAsync (which depends on the datasource list) on every render.
+const mockDataSourceItems = [{ name: 'active-ds', uid: 'active-ds-uid' }];
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: () => ({
+    isLoading: false,
+    items: mockDataSourceItems,
+  }),
 }));
 
 const setup = (propOverrides?: Partial<RichHistoryStarredTabProps>) => {
@@ -85,5 +102,73 @@ describe('RichHistoryStarredTab', () => {
     fireEvent.change(input, { target: { value: '|=' } });
 
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ search: '|=' }));
+  });
+
+  it('should show the loading message instead of cards while datasource instances are loading', async () => {
+    setup({
+      queries: [
+        {
+          id: '1',
+          createdAt: 1,
+          datasourceUid: 'active-ds-uid',
+          datasourceName: 'active-ds',
+          starred: true,
+          comment: 'starred query comment',
+          queries: [],
+        },
+      ],
+    });
+
+    // the datasource-instance fetch starts in a loading state, so the message
+    // must show before any cards
+    expect(screen.getByText('Loading results...')).toBeInTheDocument();
+    expect(screen.queryByText('starred query comment')).not.toBeInTheDocument();
+
+    // once instances resolve, cards render
+    expect(await screen.findByText('starred query comment')).toBeInTheDocument();
+  });
+
+  it('should initialize with the last used datasource filters when active datasources only is disabled', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({
+      updateFilters: updateFiltersSpy,
+      richHistorySettings: {
+        retentionPeriod: 7,
+        starredTabAsFirstTab: false,
+        activeDatasourcesOnly: false,
+        lastUsedDatasourceFilters: ['saved-ds'],
+      },
+    });
+    await screen.findByPlaceholderText(/search queries/i);
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ datasourceFilters: ['saved-ds'], starred: true })
+    );
+  });
+
+  it('should preserve cleared datasource filters when active datasources only is disabled', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    await screen.findByPlaceholderText(/search queries/i);
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ datasourceFilters: [], starred: true }));
+  });
+
+  it('should initialize with the active Explore datasource when active datasources only is enabled', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({
+      updateFilters: updateFiltersSpy,
+      richHistorySettings: {
+        retentionPeriod: 7,
+        starredTabAsFirstTab: false,
+        activeDatasourcesOnly: true,
+        lastUsedDatasourceFilters: ['saved-ds'],
+      },
+    });
+    await screen.findByPlaceholderText(/search queries/i);
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ datasourceFilters: ['active-ds'], starred: true })
+    );
   });
 });

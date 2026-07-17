@@ -50,7 +50,7 @@ type Reloadable interface {
 // than the database. This is useful for providers that are not configured in the database, but instead are configured
 // using the config file and/or environment variables. Used mostly for backwards compatibility.
 type FallbackStrategy interface {
-	IsMatch(provider string) bool
+	IsMatch(ctx context.Context, provider string) bool
 	// TODO: check if GetProviderConfig can return an error
 	GetProviderConfig(ctx context.Context, provider string) (map[string]any, error)
 }
