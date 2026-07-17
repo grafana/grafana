@@ -194,6 +194,27 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	t.Run("type accepts valid kind", func(t *testing.T) {
 		require.NoError(t, build(filterLeaf(fieldType, opIn, "recordingrule")))
 	})
+
+	// Fields declared in searchFields but not applied by the legacy in-memory
+	// filter pass must be rejected, not silently dropped on the SQL backend.
+	t.Run("rejects filter on legacy-unsupported fields", func(t *testing.T) {
+		for _, field := range []string{fieldTitle, fieldInterval, fieldFor, fieldKeepFiringFor, fieldAnnotations} {
+			require.Error(t, build(filterLeaf(field, opIn, "x")), "field %q", field)
+		}
+	})
+
+	// NotIn only round-trips negation on the labels field; on any other field
+	// the legacy backend ignores the operator and would invert the result.
+	t.Run("rejects NotIn on non-labels fields", func(t *testing.T) {
+		notIn := model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn
+		for _, field := range []string{fieldName, fieldFolder, fieldDatasourceUIDs, fieldReceiver, fieldMetric} {
+			require.Error(t, build(filterLeaf(field, notIn, "x")), "field %q", field)
+		}
+	})
+	t.Run("accepts NotIn on labels", func(t *testing.T) {
+		notIn := model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn
+		require.NoError(t, build(filterLeaf(fieldLabels, notIn, "team=a")))
+	})
 }
 
 // TestResultColumnsMatchCells guards the positional lockstep between the column

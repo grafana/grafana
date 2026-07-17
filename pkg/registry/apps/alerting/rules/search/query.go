@@ -22,6 +22,9 @@ import (
 // standard name/title/folder fields are included so identity and display fields
 // can be filtered too. A filter on any other field is rejected rather than
 // silently ignored, so a client learns its query targets an unindexed field.
+// Note: some entries here are further constrained by validateFilterLeaf (e.g.
+// the legacy backend cannot yet filter every indexed field, see
+// legacyUnsupportedFilterFields).
 var filterableFields = map[string]struct{}{
 	fieldName:                {},
 	fieldTitle:               {},
@@ -227,13 +230,39 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 	return nil
 }
 
+// legacyUnsupportedFilterFields are declared in the kinds' searchFields (so the
+// unified backend indexes and filters them) but the legacy backend's in-memory
+// filter pass (extractFilters) has no matcher for them. Because a single handler
+// serves both backends and the client cannot see the storage mode, filtering on
+// these is rejected rather than honored on one backend and silently dropped on
+// the other. Lifting a field out of this set requires adding its matcher to
+// extractFilters/legacy_search first.
+var legacyUnsupportedFilterFields = map[string]struct{}{
+	fieldTitle:         {},
+	fieldInterval:      {},
+	fieldFor:           {},
+	fieldKeepFiringFor: {},
+	fieldAnnotations:   {},
+}
+
 // validateFilterLeaf rejects filter leaves the backend cannot faithfully apply,
 // so a client learns its query was not honored instead of getting wrong results
 // with a 200. Scalar fields must carry a single value; type must narrow to one
-// valid kind via In; paused must be a boolean.
+// valid kind via In; paused must be a boolean; NotIn is only honored on labels;
+// and fields the legacy backend cannot filter are rejected outright.
 func validateFilterLeaf(leaf *model.CreateSearchRulesRequestSearchFilterLeaf) error {
 	if _, scalar := scalarFields[leaf.Field]; scalar && len(leaf.Values) != 1 {
 		return fmt.Errorf("filter on %q accepts exactly one value", leaf.Field)
+	}
+	if _, unsupported := legacyUnsupportedFilterFields[leaf.Field]; unsupported {
+		return fmt.Errorf("filtering on %q is not supported", leaf.Field)
+	}
+	// Only the labels field round-trips negation to the legacy backend
+	// (requirementToLabelMatchers reads the operator). Every other field's
+	// legacy matcher ignores the operator and would apply NotIn as an inclusive
+	// match, returning the opposite of what was requested. Reject it.
+	if leaf.Operator == model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn && leaf.Field != fieldLabels {
+		return fmt.Errorf("the NotIn operator is not supported on %q", leaf.Field)
 	}
 	switch leaf.Field {
 	case fieldType:
