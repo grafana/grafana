@@ -195,13 +195,13 @@ function renderTimeSeriesPanel(
   return render(<TimeSeriesPanel {...props} />);
 }
 
-type TestCase = [
-  string,
-  Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>?,
-  Partial<Options>?,
-  Partial<PanelProps<Options>>?,
-  { width: number; height: number }?,
-];
+interface CanvasCase {
+  name: string;
+  data?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>;
+  options?: Partial<Options>;
+  panelProps?: Partial<PanelProps<Options>>;
+  size?: { width: number; height: number };
+}
 
 describe('TimeSeriesPanel (canvas)', () => {
   let prepConfigSpy: jest.SpyInstance;
@@ -231,8 +231,6 @@ describe('TimeSeriesPanel (canvas)', () => {
     expect(removeCanvasTransforms(uPlotAxisEvents!)).toMatchCanvasSnapshot([], snapshotSize);
   };
 
-  type AssertCase = [string, (snapshotSize?: { width: number; height: number }) => Promise<void>];
-
   beforeEach(() => {
     applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     prepConfigSpy = jest
@@ -259,59 +257,40 @@ describe('TimeSeriesPanel (canvas)', () => {
   });
 
   describe('Options', () => {
-    describe.each([
-      ['defaults'],
-      // Line is the default draw style, covered by the `defaults` case above. Fixed color + a visible fill
-      // so the shape (bars/points) actually renders — with the default transparent fill they draw nothing.
+    it.each<CanvasCase>([
+      { name: 'defaults' },
+      // Line is the default draw style, covered by `defaults`. Fixed color + a visible fill so the shape
+      // (bars/points) actually renders — with the default transparent fill they draw nothing.
       ...Object.values(GraphDrawStyle)
         .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
-        .map(
-          (drawStyle): TestCase => [
-            `drawStyle: ${drawStyle}`,
-            undefined,
-            undefined,
-            customFieldConfig({ drawStyle, fillOpacity: 25 }, fixedBlue),
-          ]
-        ),
-      // Linear is the default interpolation, covered by the `defaults` case above.
+        .map((drawStyle) => ({
+          name: `drawStyle: ${drawStyle}`,
+          panelProps: customFieldConfig({ drawStyle, fillOpacity: 25 }, fixedBlue),
+        })),
+      // Linear is the default interpolation, covered by `defaults`.
       ...Object.values(LineInterpolation)
         .filter((lineInterpolation) => lineInterpolation !== LineInterpolation.Linear)
-        .map(
-          (lineInterpolation): TestCase => [
-            `lineInterpolation: ${lineInterpolation}`,
-            undefined,
-            undefined,
-            customFieldConfig({ lineInterpolation }),
-          ]
-        ),
-      // fillOpacity 0 (no fill) is the default, covered by the `defaults` case above. Fixed color so the fill
-      // is high-contrast and each opacity step reads clearly (pale to solid).
-      ...[25, 50, 80, 100].map(
-        (fillOpacity): TestCase => [
-          `fillOpacity: ${fillOpacity}`,
-          undefined,
-          undefined,
-          customFieldConfig({ fillOpacity }, fixedBlue),
-        ]
-      ),
+        .map((lineInterpolation) => ({
+          name: `lineInterpolation: ${lineInterpolation}`,
+          panelProps: customFieldConfig({ lineInterpolation }),
+        })),
+      // fillOpacity 0 (no fill) is the default. Fixed color so each opacity step reads clearly (pale to solid).
+      ...[25, 50, 80, 100].map((fillOpacity) => ({
+        name: `fillOpacity: ${fillOpacity}`,
+        panelProps: customFieldConfig({ fillOpacity }, fixedBlue),
+      })),
       // None is the default gradient mode, covered by `defaults`; Scheme is a separate explicit case below.
       ...Object.values(GraphGradientMode)
         .filter((gradientMode) => gradientMode !== GraphGradientMode.None && gradientMode !== GraphGradientMode.Scheme)
-        .map(
-          (gradientMode): TestCase => [
-            `gradientMode: ${gradientMode}`,
-            undefined,
-            undefined,
-            customFieldConfig({ gradientMode }),
-          ]
-        ),
+        .map((gradientMode) => ({
+          name: `gradientMode: ${gradientMode}`,
+          panelProps: customFieldConfig({ gradientMode }),
+        })),
       // Scheme gradients color the line by the field's threshold scale, so they require a color mode +
       // thresholds; without them uPlot's gradient builder throws.
-      [
-        'gradientMode: scheme',
-        undefined,
-        undefined,
-        customFieldConfig(
+      {
+        name: 'gradientMode: scheme',
+        panelProps: customFieldConfig(
           { gradientMode: GraphGradientMode.Scheme },
           {
             color: { mode: FieldColorModeId.Thresholds },
@@ -324,109 +303,73 @@ describe('TimeSeriesPanel (canvas)', () => {
             },
           }
         ),
-      ],
-      [
-        'stacking: normal',
-        { series: [createMultiSeriesFrame()] },
-        undefined,
-        { ...customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' } }), ...compactCanvas },
-        compactCanvas,
-      ],
-      [
-        'stacking: 100%',
-        { series: [createMultiSeriesFrame()] },
-        undefined,
-        { ...customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' } }), ...compactCanvas },
-        compactCanvas,
-      ],
+      },
+      {
+        name: 'stacking: normal',
+        data: { series: [createMultiSeriesFrame()] },
+        panelProps: { ...customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' } }), ...compactCanvas },
+        size: compactCanvas,
+      },
+      {
+        name: 'stacking: 100%',
+        data: { series: [createMultiSeriesFrame()] },
+        panelProps: {
+          ...customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' } }),
+          ...compactCanvas,
+        },
+        size: compactCanvas,
+      },
       // Width 1 is the default, so start at 3 and use bold, well-separated widths. Fixed color so the stroke
       // is high-contrast and each width is visibly distinct.
-      ...[3, 6, 10].map(
-        (lineWidth): TestCase => [
-          `lineWidth: ${lineWidth}`,
-          undefined,
-          undefined,
-          customFieldConfig({ lineWidth }, fixedBlue),
-        ]
-      ),
-    ] satisfies TestCase[])(
-      '%s',
-      (
-        _,
-        dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>,
-        optionsOverrides?: Partial<Options>,
-        panelPropsOverrides?: Partial<PanelProps<Options>>,
-        snapshotSize?: { width: number; height: number }
-      ) => {
-        it.each([['canvas', assertCanvasOutput]] satisfies AssertCase[])('%s', async (_, assertFn) => {
-          renderTimeSeriesPanel(dataOverrides, optionsOverrides, panelPropsOverrides);
-          await assertFn(snapshotSize);
-        });
-      }
-    );
+      ...[3, 6, 10].map((lineWidth) => ({
+        name: `lineWidth: ${lineWidth}`,
+        panelProps: customFieldConfig({ lineWidth }, fixedBlue),
+      })),
+    ])('$name', async ({ data, options, panelProps, size }) => {
+      renderTimeSeriesPanel(data, options, panelProps);
+      await assertCanvasOutput(size);
+    });
   });
 
   describe('Axes', () => {
-    describe.each([
+    it.each<CanvasCase>([
       // Auto resolves to Left, and Left is the default placement, so both are covered by `X Axis: defaults`.
       ...Object.values(AxisPlacement)
         .filter((axisPlacement) => axisPlacement !== AxisPlacement.Auto && axisPlacement !== AxisPlacement.Left)
-        .map(
-          (axisPlacement): TestCase => [
-            `Y Axis placement: ${axisPlacement}`,
-            undefined,
-            undefined,
-            customFieldConfig({ axisPlacement }),
-          ]
-        ),
-      ['Y Axis: soft min/max', undefined, undefined, customFieldConfig({}, { min: 0, max: 100 })],
-      ['X Axis: defaults'],
-    ] satisfies TestCase[])(
-      '%s',
-      (
-        _,
-        dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>,
-        optionsOverrides?: Partial<Options>,
-        panelPropsOverrides?: Partial<PanelProps<Options>>,
-        snapshotSize?: { width: number; height: number }
-      ) => {
-        it.each([['axes', assertAxesOutput]] satisfies AssertCase[])('%s', async (_, assertFn) => {
-          renderTimeSeriesPanel(dataOverrides, optionsOverrides, panelPropsOverrides);
-          await assertFn(snapshotSize);
-        });
-      }
-    );
+        .map((axisPlacement) => ({
+          name: `Y Axis placement: ${axisPlacement}`,
+          panelProps: customFieldConfig({ axisPlacement }),
+        })),
+      { name: 'Y Axis: soft min/max', panelProps: customFieldConfig({}, { min: 0, max: 100 }) },
+      { name: 'X Axis: defaults' },
+    ])('$name', async ({ data, options, panelProps, size }) => {
+      renderTimeSeriesPanel(data, options, panelProps);
+      await assertAxesOutput(size);
+    });
   });
 
   describe('Annotations', () => {
-    describe.each([
-      ['point annotations', { annotations: [createAnnotationFrame({ timeValues: [1000, 2000, 3000] })] }],
-      ['region annotations', { annotations: [createAnnotationFrame({ timeValues: [1500], timeEnd: [2500] })] }],
-    ] satisfies TestCase[])(
-      '%s',
-      (_, dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>) => {
-        it.each([['canvas', assertCanvasOutput]] satisfies AssertCase[])('%s', async (_, assertFn) => {
-          renderTimeSeriesPanel(dataOverrides);
-          await assertFn();
-        });
-      }
-    );
+    it.each<CanvasCase>([
+      { name: 'point annotations', data: { annotations: [createAnnotationFrame({ timeValues: [1000, 2000, 3000] })] } },
+      {
+        name: 'region annotations',
+        data: { annotations: [createAnnotationFrame({ timeValues: [1500], timeEnd: [2500] })] },
+      },
+    ])('$name', async ({ data }) => {
+      renderTimeSeriesPanel(data);
+      await assertCanvasOutput();
+    });
   });
 
   describe('Exemplars', () => {
     // Exemplars show up as marker elements drawn over the graph, not as part of the canvas itself, so they
     // won't appear in these canvas snapshots. So this snapshot looks the same as the `defaults` case. It just
     // checks that adding exemplar data doesn't change how the graph is drawn.
-    describe.each([
-      ['renders', { annotations: [createExemplarFrame({ timeValues: [1000, 2000, 3000], values: [10, 20, 15] })] }],
-    ] satisfies TestCase[])(
-      '%s',
-      (_, dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>) => {
-        it.each([['canvas', assertCanvasOutput]] satisfies AssertCase[])('%s', async (_, assertFn) => {
-          renderTimeSeriesPanel(dataOverrides);
-          await assertFn();
-        });
-      }
-    );
+    it('renders', async () => {
+      renderTimeSeriesPanel({
+        annotations: [createExemplarFrame({ timeValues: [1000, 2000, 3000], values: [10, 20, 15] })],
+      });
+      await assertCanvasOutput();
+    });
   });
 });
