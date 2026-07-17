@@ -1,8 +1,14 @@
+import { isFetchError } from '@grafana/runtime';
+
+import { createBridgeURL } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
 
 const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Assistant}/resources${path}`;
+
+/** How often to refresh investigation state while a report is still generating. */
+export const ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS = 3000;
 
 /** An AlertManager-style alert, matching the payload the Assistant's from-alert endpoint accepts. */
 export interface AssistantAlert {
@@ -25,15 +31,52 @@ export interface StartInvestigationFromAlertRequest {
 export interface AssistantInvestigation {
   id: string;
   title: string;
-  // "running" | "completed" | "failed" — kept a free string as the Assistant owns the enum.
+  // Assistant-owned enum; known values include pending / in_progress / completed / failed.
   state: string;
   chatId?: string;
 }
 
 // The Assistant API wraps handler results in { status, data }.
-interface FromAlertResponse {
+interface AssistantDataResponse {
   status: string;
   data: AssistantInvestigation;
+}
+
+function unwrapAssistantDataResponse(response: unknown): AssistantInvestigation {
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('data' in response) ||
+    typeof response.data !== 'object' ||
+    response.data === null ||
+    !('id' in response.data) ||
+    typeof response.data.id !== 'string' ||
+    !('title' in response.data) ||
+    typeof response.data.title !== 'string' ||
+    !('state' in response.data) ||
+    typeof response.data.state !== 'string'
+  ) {
+    throw new Error('Invalid Assistant investigation response');
+  }
+
+  return response.data;
+}
+
+const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'running', 'in_progress', 'in-progress']);
+
+/** True while the Assistant is still producing the report. */
+export function isAssistantInvestigationActive(state: string | undefined): boolean {
+  return !!state && ACTIVE_INVESTIGATION_STATES.has(state);
+}
+
+/** True when the investigation finished successfully. */
+export function isAssistantInvestigationCompleted(state: string | undefined): boolean {
+  return state === 'completed';
+}
+
+/** True when the investigation failed or was cancelled. */
+export function isAssistantInvestigationFailed(state: string | undefined): boolean {
+  return state === 'failed' || state === 'cancelled' || state === 'canceled';
 }
 
 export const assistantApi = alertingApi.injectEndpoints({
@@ -47,14 +90,60 @@ export const assistantApi = alertingApi.injectEndpoints({
         url: getProxyApiUrl('/api/v1/investigations/from-alert'),
         data: body,
         method: 'POST',
-        showErrorAlert: false,
+        notificationOptions: { showErrorAlert: false },
       }),
-      transformResponse: (response: FromAlertResponse) => response.data,
+      transformResponse: (response: AssistantDataResponse) => response.data,
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          // Lookup cache keys omit startsAt (set only at create time). Normalize so
+          // the drawer's lookup query sees this result immediately.
+          const lookupArg: StartInvestigationFromAlertRequest = {
+            ...arg,
+            alerts: arg.alerts.map(({ startsAt: _startsAt, ...alert }) => alert),
+          };
+          dispatch(assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', lookupArg, data));
+        } catch {
+          // Mutation error is surfaced via isError in the button UI.
+        }
+      },
+    }),
+
+    // Read-only: return the investigation already linked to this alert group, or null
+    // when none exists (404). Used when reopening the instance drawer.
+    lookupInvestigationFromAlert: build.query<AssistantInvestigation | null, StartInvestigationFromAlertRequest>({
+      async queryFn(body, _api, _extraOptions, baseQuery) {
+        const result = await baseQuery({
+          url: getProxyApiUrl('/api/v1/investigations/from-alert/lookup'),
+          data: body,
+          method: 'POST',
+          notificationOptions: { showErrorAlert: false },
+        });
+
+        if (result.error) {
+          if (isFetchError(result.error) && result.error.status === 404) {
+            return { data: null };
+          }
+          return { error: result.error };
+        }
+
+        return { data: unwrapAssistantDataResponse(result.data) };
+      },
+    }),
+
+    // Poll investigation row state (pending → in_progress → completed/failed).
+    getAssistantInvestigation: build.query<AssistantInvestigation, string>({
+      query: (investigationId) => ({
+        url: getProxyApiUrl(`/api/v1/investigations/${encodeURIComponent(investigationId)}`),
+        method: 'GET',
+        notificationOptions: { showErrorAlert: false },
+      }),
+      transformResponse: (response: AssistantDataResponse) => response.data,
     }),
   }),
 });
 
-/** Builds a link to the investigation's report in the Assistant workspace. */
+/** Builds a link to the investigation's report in the Assistant app. */
 export function getAssistantInvestigationUrl(investigationId: string): string {
-  return `/a/${SupportedPlugin.Assistant}/investigations/${investigationId}`;
+  return createBridgeURL(SupportedPlugin.Assistant, `/investigations/${encodeURIComponent(investigationId)}`);
 }

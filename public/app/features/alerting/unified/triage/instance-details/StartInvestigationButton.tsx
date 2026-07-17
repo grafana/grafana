@@ -1,12 +1,19 @@
+import { useEffect, useMemo, useState } from 'react';
+
 import { type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, LinkButton, Spinner, Stack, Text, Tooltip } from '@grafana/ui';
 import { GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import {
+  ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS,
   type StartInvestigationFromAlertRequest,
   assistantApi,
   getAssistantInvestigationUrl,
+  isAssistantInvestigationActive,
+  isAssistantInvestigationCompleted,
+  isAssistantInvestigationFailed,
 } from '../../api/assistantApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -23,8 +30,9 @@ interface StartInvestigationButtonProps {
  * for the firing alert instance they are looking at. Mirrors the three states of the
  * incident-sidebar treatment (not started / running / completed).
  *
- * The Assistant dedups by alert group, so pressing this repeatedly opens the existing
- * investigation rather than creating duplicates.
+ * The Assistant dedups by alert group (`groupLabels`), so pressing this repeatedly
+ * opens the existing investigation rather than creating duplicates. Reopening the
+ * drawer looks up that same link and polls until the report completes.
  */
 export function StartInvestigationButton({
   instanceLabels,
@@ -32,39 +40,72 @@ export function StartInvestigationButton({
   rule,
   alertState,
 }: StartInvestigationButtonProps) {
+  const featureEnabled = Boolean(config.featureToggles.alertingEnrichmentAssistantInvestigations);
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
-  const [startInvestigation, { isLoading, data: investigation, isError }] =
+
+  // Stable identity for RTK Query cache keys — omit startsAt (set only on create).
+  const requestBody = useMemo(
+    () => buildFromAlertRequest({ instanceLabels, commonLabels, rule, alertState }),
+    // Labels are plain objects from parents; stringify keeps the body stable across
+    // equivalent re-renders so lookup does not thrash.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(instanceLabels), JSON.stringify(commonLabels), rule?.uid, rule?.title, alertState]
+  );
+
+  const [startInvestigation, { isLoading: isStarting, data: startedInvestigation, isError: isStartError }] =
     assistantApi.useStartInvestigationFromAlertMutation();
 
-  // Only offered when the Assistant is available.
-  // TEMPORARY (local preview only): gate relaxed so the button renders without the
-  // Assistant plugin installed. Restore before committing:
-  //   if (!installed) {
-  //     return null;
-  //   }
-  void installed;
+  const { data: lookedUpInvestigation, isLoading: isLookingUp } = assistantApi.useLookupInvestigationFromAlertQuery(
+    requestBody,
+    { skip: !featureEnabled || !installed }
+  );
+
+  const knownId = startedInvestigation?.id ?? lookedUpInvestigation?.id;
+  const [shouldPoll, setShouldPoll] = useState(false);
+
+  const { data: polledInvestigation } = assistantApi.useGetAssistantInvestigationQuery(knownId ?? '', {
+    skip: !featureEnabled || !installed || !knownId,
+    pollingInterval: shouldPoll ? ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS : 0,
+  });
+
+  // Prefer the polled row (fresh state) over the create/lookup snapshots.
+  const investigation = polledInvestigation ?? startedInvestigation ?? lookedUpInvestigation ?? undefined;
+
+  useEffect(() => {
+    if (!knownId) {
+      setShouldPoll(false);
+      return;
+    }
+    // Until we have a state sample, assume still generating so reopen polls.
+    setShouldPoll(isAssistantInvestigationActive(investigation?.state ?? 'pending'));
+  }, [knownId, investigation?.state]);
+
+  if (!featureEnabled || !installed) {
+    return null;
+  }
 
   const handleStart = () => {
-    const generatorURL = rule?.uid ? `${window.location.origin}/alerting/grafana/${rule.uid}/view` : undefined;
-    const body: StartInvestigationFromAlertRequest = {
-      name: rule?.title,
-      alerts: [
-        {
-          labels: instanceLabels,
-          annotations: rule?.annotations,
-          status: alertState === GrafanaAlertState.Normal ? 'resolved' : 'firing',
-          startsAt: new Date().toISOString(),
-          generatorURL,
-        },
-      ],
-      commonLabels,
-      externalURL: window.location.origin,
-    };
-    startInvestigation(body);
+    const startsAt = new Date().toISOString();
+    startInvestigation({
+      ...requestBody,
+      alerts: requestBody.alerts.map((alert) => ({ ...alert, startsAt })),
+    });
   };
 
-  // Completed — link straight to the report in the Assistant workspace.
-  if (investigation && investigation.state === 'completed') {
+  if (isLookingUp && !investigation) {
+    return (
+      <Stack direction="row" alignItems="center" gap={1}>
+        <Spinner size="sm" inline />
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-checking">
+            Checking for investigation…
+          </Trans>
+        </Text>
+      </Stack>
+    );
+  }
+
+  if (investigation && isAssistantInvestigationCompleted(investigation.state)) {
     return (
       <LinkButton
         icon="file-alt"
@@ -82,9 +123,7 @@ export function StartInvestigationButton({
     );
   }
 
-  // Running — the Assistant is analyzing; offer a live link into the workspace.
-  const isRunning = investigation?.state === 'running' || investigation?.state === 'pending';
-  if (isRunning) {
+  if (investigation && isAssistantInvestigationActive(investigation.state)) {
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <Spinner size="sm" inline />
@@ -93,26 +132,24 @@ export function StartInvestigationButton({
             Generating investigation report…
           </Trans>
         </Text>
-        {investigation?.id && (
-          <LinkButton
-            icon="comment-alt"
-            variant="primary"
-            fill="text"
-            size="sm"
-            href={getAssistantInvestigationUrl(investigation.id)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-watch-live">
-              Watch live in assistant workspace
-            </Trans>
-          </LinkButton>
-        )}
+        <LinkButton
+          icon="comment-alt"
+          variant="primary"
+          fill="text"
+          size="sm"
+          href={getAssistantInvestigationUrl(investigation.id)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-watch-live">
+            Watch live in assistant workspace
+          </Trans>
+        </LinkButton>
       </Stack>
     );
   }
 
-  if (isLoading) {
+  if (isStarting) {
     return (
       <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" disabled>
         <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-starting">Starting…</Trans>
@@ -120,8 +157,7 @@ export function StartInvestigationButton({
     );
   }
 
-  // Failed — surface the error and let the user retry.
-  if (isError || investigation?.state === 'failed') {
+  if (isStartError || isAssistantInvestigationFailed(investigation?.state)) {
     return (
       <Tooltip
         content={t(
@@ -136,7 +172,6 @@ export function StartInvestigationButton({
     );
   }
 
-  // Not started.
   return (
     <Tooltip
       content={t(
@@ -149,4 +184,38 @@ export function StartInvestigationButton({
       </Button>
     </Tooltip>
   );
+}
+
+/** Exported for unit tests — builds the stable from-alert payload (no startsAt). */
+export function buildFromAlertRequest({
+  instanceLabels,
+  commonLabels,
+  rule,
+  alertState,
+}: StartInvestigationButtonProps): StartInvestigationFromAlertRequest {
+  const generatorURL = rule?.uid ? `${window.location.origin}/alerting/grafana/${rule.uid}/view` : undefined;
+
+  // Stable alert-group identity for Assistant dedup/lookup. Prefer instance labels;
+  // when an instance has none, fall back to rule identity so reopen still finds the link.
+  const groupLabels: Record<string, string> =
+    Object.keys(instanceLabels).length > 0
+      ? { ...instanceLabels }
+      : {
+          ...(rule?.title ? { alertname: rule.title } : {}),
+          ...(rule?.uid ? { rule_uid: rule.uid } : {}),
+        };
+
+  return {
+    name: rule?.title,
+    alerts: [
+      {
+        labels: instanceLabels,
+        status: alertState === GrafanaAlertState.Normal ? 'resolved' : 'firing',
+        generatorURL,
+      },
+    ],
+    commonLabels,
+    groupLabels,
+    externalURL: window.location.origin,
+  };
 }

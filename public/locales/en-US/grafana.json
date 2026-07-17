@@ -3626,6 +3626,7 @@
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
+        "investigation-checking": "Checking for investigation…",
         "investigation-failed": "Could not start the investigation. Try again.",
         "investigation-running": "Generating investigation report…",
         "investigation-starting": "Starting…",
