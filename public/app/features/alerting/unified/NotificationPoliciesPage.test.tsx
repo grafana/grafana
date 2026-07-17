@@ -282,7 +282,7 @@ describe.each([
     await user.click(await screen.findByRole('button', { name: /update policy/i }));
 
     // wait for it to go out of edit mode
-    expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: /updated notification policies/i })).toBeInTheDocument();
 
     // check that new config values are rendered
     rootRoute = await getRootRoute();
@@ -320,7 +320,7 @@ describe.each([
     //save
     await user.click(await screen.findByRole('button', { name: /update policy/i }));
 
-    expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: /updated notification policies/i })).toBeInTheDocument();
 
     const rootRoute = await getRootRoute();
     expect(rootRoute).toHaveTextContent(/delivered to lotsa-emails/i);

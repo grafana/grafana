@@ -27,8 +27,9 @@ export async function addDashboard(page: Page, title?: string): Promise<string> 
   await expect(saveAsButton).toBeEnabled();
   await saveAsButton.evaluate((btn: HTMLElement) => btn.click());
 
-  // Wait for success notification
-  await expect(page.getByText('Dashboard saved')).toBeVisible();
+  // Wait for success notification. Target the visible toast by role so it is not confused with the
+  // visually-hidden screen-reader announcer, which mirrors the same message text.
+  await expect(page.getByRole('status', { name: 'Dashboard saved' })).toBeVisible();
 
   // Get the dashboard UID from the URL
   const url = page.url();

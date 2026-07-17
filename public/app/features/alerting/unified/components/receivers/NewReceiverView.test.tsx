@@ -134,8 +134,8 @@ describe('new receiver', () => {
 
     await user.click(ui.saveContactButton.get());
 
-    expect(await screen.findByText(/failed to save the contact point/i)).toBeInTheDocument();
-    expect(await screen.findByText(/user not found/i)).toBeInTheDocument();
+    const errorAlert = await screen.findByRole('alert', { name: /failed to save the contact point/i });
+    expect(errorAlert).toHaveTextContent(/user not found/i);
   });
 });
 

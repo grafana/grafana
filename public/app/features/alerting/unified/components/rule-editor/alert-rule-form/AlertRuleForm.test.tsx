@@ -133,7 +133,7 @@ describe('AlertRuleForm submit failure handling', () => {
       }
       await user.click(ui.buttons.save.get());
 
-      expect(await screen.findByText(/Failed to save alert rule/i)).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: /Failed to save alert rule/i })).toBeInTheDocument();
       expect(screen.queryByText(/Rule added successfully/i)).not.toBeInTheDocument();
 
       await waitFor(() => {
@@ -205,7 +205,7 @@ describe('AlertRuleForm — submit routing by group presence', () => {
       await fillRuleBasics(user);
       await user.click(ui.buttons.save.get());
 
-      expect(await screen.findByText(/Rule added successfully/i)).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: /Rule added successfully/i })).toBeInTheDocument();
       expect(await appPlatformRequests).toHaveLength(1);
       expect(await legacyRequests).toHaveLength(0);
     });
@@ -250,7 +250,7 @@ describe('AlertRuleForm — submit routing by group presence', () => {
       await switchToNewMode(user);
       await user.click(ui.buttons.save.get());
 
-      expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: /Rule updated successfully/i })).toBeInTheDocument();
 
       const requests = await appPlatformRequests;
       expect(requests).toHaveLength(1);
@@ -287,7 +287,7 @@ describe('AlertRuleForm — submit routing by group presence', () => {
       await switchToNewMode(user);
       await user.click(ui.buttons.save.get());
 
-      expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: /Rule updated successfully/i })).toBeInTheDocument();
       expect(await recordingRequests).toHaveLength(1);
       expect(await alertRequests).toHaveLength(0);
       expect(await legacyRequests).toHaveLength(0);
@@ -310,7 +310,7 @@ describe('AlertRuleForm — submit routing by group presence', () => {
 
       await user.click(ui.buttons.save.get());
 
-      expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: /Rule updated successfully/i })).toBeInTheDocument();
       expect(await appPlatformRequests).toHaveLength(1);
       expect(await legacyRequests).toHaveLength(0);
     });
@@ -325,7 +325,7 @@ describe('AlertRuleForm — submit routing by group presence', () => {
       await switchToNewMode(user);
       await user.click(ui.buttons.save.get());
 
-      expect(await screen.findByText(/Failed to save alert rule/i)).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: /Failed to save alert rule/i })).toBeInTheDocument();
       expect(screen.queryByText(/Rule updated successfully/i)).not.toBeInTheDocument();
 
       await waitFor(() => {
@@ -408,7 +408,7 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
 
     await user.click(ui.buttons.save.get());
 
-    expect(await screen.findByText(/Failed to save alert rule/i)).toBeInTheDocument();
+    expect(await screen.findByRole('alert', { name: /Failed to save alert rule/i })).toBeInTheDocument();
     expect(screen.queryByText(/Rule added successfully/i)).not.toBeInTheDocument();
 
     await waitFor(() => {

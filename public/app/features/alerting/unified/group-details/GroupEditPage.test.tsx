@@ -45,7 +45,7 @@ const ui = {
   cancelButton: byRole('link', { name: /Cancel/ }),
   deleteButton: byRole('button', { name: /Delete/ }),
   rules: byTestId('reorder-alert-rule'),
-  successMessage: byText('Successfully updated the rule group'),
+  successMessage: byRole('status', { name: 'Successfully updated the rule group' }),
   errorMessage: byText('Failed to update rule group'),
   confirmDeleteModal: {
     dialog: byRole('dialog'),

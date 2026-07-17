@@ -47,8 +47,8 @@ describe('DeleteModal', () => {
 
     await confirmDelete(user);
 
-    expect(await screen.findByText(/Failed to delete folder rules/i)).toBeInTheDocument();
-    expect(await screen.findByText(/cannot delete/i)).toBeInTheDocument();
+    const errorAlert = await screen.findByRole('alert', { name: /Failed to delete folder rules/i });
+    expect(errorAlert).toHaveTextContent(/cannot delete/i);
     await waitFor(() => {
       expect(mockTrackFail).toHaveBeenCalledTimes(1);
     });

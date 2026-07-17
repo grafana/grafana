@@ -63,6 +63,6 @@ describe('Team settings', () => {
     await user.type(screen.getByLabelText(/Email/i), 'team@test.com');
     await user.click(screen.getByRole('button', { name: 'Save team details' }));
 
-    expect(await screen.findByText('Team updated')).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'Team updated' })).toBeInTheDocument();
   });
 });
