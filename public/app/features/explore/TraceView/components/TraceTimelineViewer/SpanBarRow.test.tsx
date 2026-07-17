@@ -17,10 +17,17 @@ import userEvent from '@testing-library/user-event';
 
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 
-import { type SpanLinkDef } from '../types/links';
-import { type TraceSpan } from '../types/trace';
+import { summaryDefaultsOnly, summaryWithConditionalAttrs } from '../model/pruned-spans.fixture';
+import transformTraceData from '../model/transform-trace-data';
+import { type SpanLinkDef, SpanLinkType } from '../types/links';
+import { type TraceResponse, type TraceSpan } from '../types/trace';
 
-import SpanBarRow, { type SpanBarRowProps } from './SpanBarRow';
+import { SpanBarRow, type SpanBarRowProps } from './SpanBarRow';
+
+function summarySpanFromFixture(fixture: TraceResponse): TraceSpan {
+  const trace = transformTraceData(structuredClone(fixture))!;
+  return trace.spans.find((s) => s.aggregation?.isSummary)!;
+}
 
 describe('<SpanBarRow>', () => {
   const spanID = 'some-id';
@@ -111,7 +118,12 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ href: 'href' }, { href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          [
+            { href: 'href', type: SpanLinkType.Traces },
+            { href: 'href', type: SpanLinkType.Traces },
+          ] as SpanLinkDef[]
+        }
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
@@ -138,7 +150,11 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ content: 'This span is referenced by another span', href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          [
+            { content: 'This span is referenced by another span', href: 'href', type: SpanLinkType.Traces },
+          ] as SpanLinkDef[]
+        }
       />
     );
     expect(screen.getByRole('link', { name: 'This span is referenced by another span' })).toBeInTheDocument();
@@ -191,7 +207,12 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ href: 'href' }, { href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          [
+            { href: 'href', type: SpanLinkType.Traces },
+            { href: 'href', type: SpanLinkType.Traces },
+          ] as SpanLinkDef[]
+        }
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
@@ -279,6 +300,100 @@ describe('<SpanBarRow>', () => {
       );
       render(<SpanBarRow {...(testProps as unknown as SpanBarRowProps)} />);
       expect(screen.getByText('(process-value)')).toBeInTheDocument();
+    });
+  });
+
+  describe('summary spans', () => {
+    // A real (parseable) service color; the shared `color-a` placeholder is not a valid
+    // CSS color and breaks the badge's contrast-text calculation.
+    const summaryProps = { ...props, color: '#FF780A' };
+
+    it('renders a count badge with the aggregated span_count', () => {
+      const span = summarySpanFromFixture(summaryDefaultsOnly); // span_count = 8
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      const badge = screen.getByLabelText('8 aggregated spans');
+      expect(badge).toHaveTextContent('8');
+    });
+
+    it('renders (min | median | max) duration stats when median is present', () => {
+      // min 4ms, median 9ms, max 60ms (raw ns in fixture)
+      const span = summarySpanFromFixture(summaryWithConditionalAttrs);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      expect(screen.getByText('(4ms | 9ms | 60ms)')).toBeInTheDocument();
+    });
+
+    it('falls back to (min | max) when median is absent', () => {
+      // summaryDefaultsOnly: min 4ms, max 60ms, no median
+      const span = summarySpanFromFixture(summaryDefaultsOnly);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      expect(screen.getByText('(4ms | 60ms)')).toBeInTheDocument();
+    });
+
+    it('shows summary stats even when spanBarOptions type is NONE', () => {
+      const span = summarySpanFromFixture(summaryWithConditionalAttrs);
+      const testProps = { ...summaryProps, spanBarOptions: { type: NONE }, span };
+      render(<SpanBarRow {...(testProps as unknown as SpanBarRowProps)} />);
+      expect(screen.getByText('(4ms | 9ms | 60ms)')).toBeInTheDocument();
+    });
+
+    it('falls back to the single wall-clock duration when min/max are absent', () => {
+      // isSummary with no duration_*_ns extracted -> degrade to formatDuration(span.duration).
+      const span = {
+        ...props.span,
+        aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 3 },
+      } as unknown as TraceSpan;
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      expect(screen.getByText('(9ms)')).toBeInTheDocument();
+    });
+
+    it('labels the duration stats in a tooltip on hover (median present)', async () => {
+      const span = summarySpanFromFixture(summaryWithConditionalAttrs);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      await userEvent.hover(screen.getByText('(4ms | 9ms | 60ms)'));
+      const tooltip = await screen.findByRole('tooltip');
+      expect(tooltip).toHaveTextContent('Min');
+      expect(tooltip).toHaveTextContent('Median');
+      expect(tooltip).toHaveTextContent('Max');
+    });
+
+    it('omits the median label in the tooltip when median is absent', async () => {
+      const span = summarySpanFromFixture(summaryDefaultsOnly);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      await userEvent.hover(screen.getByText('(4ms | 60ms)'));
+      const tooltip = await screen.findByRole('tooltip');
+      expect(tooltip).toHaveTextContent('Min');
+      expect(tooltip).toHaveTextContent('Max');
+      expect(tooltip).not.toHaveTextContent('Median');
+    });
+
+    it('does not render a count badge for normal (non-summary) spans', () => {
+      render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
+      expect(screen.queryByLabelText(/aggregated spans/)).not.toBeInTheDocument();
+    });
+
+    it('does not render a count badge when the aggregated span count is 0', () => {
+      const span = {
+        ...props.span,
+        aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 0 },
+      } as unknown as TraceSpan;
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      expect(screen.queryByLabelText(/aggregated spans/)).not.toBeInTheDocument();
+    });
+
+    it('renders the duration stats outside the toggle button (no focusable descendant in the switch)', () => {
+      // The stats tooltip trigger gets tabIndex=0 from @grafana/ui Tooltip; a <button> may not have
+      // a tabindex descendant, so the stats must be a sibling of the switch, not a child of it.
+      const span = summarySpanFromFixture(summaryWithConditionalAttrs);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      const toggle = screen.getByRole('switch');
+      expect(toggle).not.toHaveTextContent('4ms | 9ms | 60ms');
+      expect(screen.getByText('(4ms | 9ms | 60ms)')).toBeInTheDocument();
+    });
+
+    it('renders the stat string (no parens) on the span bar itself', () => {
+      const span = summarySpanFromFixture(summaryWithConditionalAttrs);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      expect(screen.getByTestId('SpanBar--label')).toHaveTextContent('4ms | 9ms | 60ms');
     });
   });
 });

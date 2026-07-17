@@ -1,12 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { config, useAppPluginInstalled } from '@grafana/runtime';
+import { useAppPluginInstalled } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { AdvisorRedirectNotice } from './AdvisorRedirectNotice';
 
-const originalFeatureToggleValue = config.featureToggles.grafanaAdvisor;
 jest.mock('@grafana/runtime/internal', () => ({
   UserStorage: jest.fn().mockImplementation(() => ({
     getItem: jest.fn().mockResolvedValue('true'),
@@ -23,24 +22,16 @@ const useAppPluginInstalledMock = jest.mocked(useAppPluginInstalled);
 
 describe('AdvisorRedirectNotice', () => {
   beforeEach(() => {
-    config.featureToggles.grafanaAdvisor = true;
     contextSrv.isGrafanaAdmin = true;
     useAppPluginInstalledMock.mockReturnValue({ loading: false, value: true, error: undefined });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    config.featureToggles.grafanaAdvisor = originalFeatureToggleValue;
   });
 
   it('should not render when user is not admin', async () => {
     contextSrv.isGrafanaAdmin = false;
-    render(<AdvisorRedirectNotice />);
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
-  });
-
-  it('should not render when feature flag is disabled', async () => {
-    config.featureToggles.grafanaAdvisor = false;
     render(<AdvisorRedirectNotice />);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });

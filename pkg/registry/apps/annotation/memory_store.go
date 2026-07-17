@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -43,11 +42,23 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	filter := opts.Deleted
+	if filter != DeletedExclude && filter != DeletedInclude && filter != DeletedOnly {
+		filter = DeletedExclude
+	}
+
 	//nolint:prealloc
 	var result []annotationV0.Annotation // no, we can't pre-alloc it, we don't know the size yet
 
 	for _, anno := range m.data {
 		if anno.Namespace != namespace {
+			continue
+		}
+		deleted := anno.DeletionTimestamp != nil
+		if deleted && filter == DeletedExclude {
+			continue
+		}
+		if !deleted && filter == DeletedOnly {
 			continue
 		}
 
@@ -157,10 +168,6 @@ func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if anno.Name == "" {
-		anno.Name = uuid.New().String()
-	}
-
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; exists {
@@ -186,7 +193,12 @@ func (m *memoryStore) Update(ctx context.Context, anno *annotationV0.Annotation)
 
 	key := anno.Namespace + "/" + anno.Name
 
-	if _, exists := m.data[key]; !exists {
+	existing, exists := m.data[key]
+	if !exists {
+		return nil, ErrNotFound
+	}
+
+	if existing.DeletionTimestamp != nil {
 		return nil, ErrNotFound
 	}
 
@@ -202,11 +214,13 @@ func (m *memoryStore) Delete(ctx context.Context, namespace, name string) error 
 
 	key := namespace + "/" + name
 
-	if _, exists := m.data[key]; !exists {
+	anno, exists := m.data[key]
+	if !exists || anno.DeletionTimestamp != nil {
 		return ErrNotFound
 	}
 
-	delete(m.data, key)
+	now := metav1.Now()
+	anno.DeletionTimestamp = &now
 	return nil
 }
 
@@ -218,6 +232,9 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 
 	for _, anno := range m.data {
 		if anno.Namespace != namespace {
+			continue
+		}
+		if anno.DeletionTimestamp != nil {
 			continue
 		}
 		for _, tag := range anno.Spec.Tags {

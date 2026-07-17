@@ -326,11 +326,6 @@ export function normalizeContactPoints(
 }
 
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
-  // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
-  if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
-    return undefined;
-  }
-
   if (ga.metadata?.editor_settings) {
     return {
       simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,

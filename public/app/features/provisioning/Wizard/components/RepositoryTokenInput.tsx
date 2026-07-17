@@ -15,11 +15,13 @@ export function RepositoryTokenInput() {
     register,
     control,
     setValue,
+    watch,
     formState: { errors },
     getValues,
   } = useFormContext<WizardFormData>();
 
   const type = getValues('repository.type');
+  const url = watch('repository.url');
   const isGitBased = isGitProvider(type);
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
@@ -30,7 +32,7 @@ export function RepositoryTokenInput() {
 
   return (
     <>
-      {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
+      {hasTokenInstructions && <TokenPermissionsInfo type={type} url={url} />}
       <Field
         noMargin
         label={gitFields.tokenConfig.label}
@@ -72,6 +74,23 @@ export function RepositoryTokenInput() {
             {...register('repository.tokenUser', gitFields.tokenUserConfig.validation)}
             id="tokenUser"
             placeholder={gitFields.tokenUserConfig.placeholder}
+          />
+        </Field>
+      )}
+      {gitFields.emailConfig && (
+        <Field
+          noMargin
+          label={gitFields.emailConfig.label}
+          required={gitFields.emailConfig.required}
+          description={gitFields.emailConfig.description}
+          error={errors?.repository?.email?.message}
+          invalid={!!errors?.repository?.email?.message}
+        >
+          <Input
+            {...register('repository.email', gitFields.emailConfig.validation)}
+            id="email"
+            type="email"
+            placeholder={gitFields.emailConfig.placeholder}
           />
         </Field>
       )}

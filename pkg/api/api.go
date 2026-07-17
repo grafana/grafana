@@ -502,6 +502,14 @@ func (hs *HTTPServer) registerRoutes() {
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
+		// On-demand datasource diagnostics. Admin-only, on-prem-only, experimental.
+		// Two deliberate, independent gates:
+		// 1. on-prem only (empty StackID => never on Grafana Cloud)
+		// 2. grafana.onDemandDiagnostics flag at request time
+		if hs.Cfg.StackID == "" {
+			apiRoute.Post("/ds/diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDiagnostics))
+		}
+
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers()),

@@ -9,6 +9,8 @@ import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
+import { incidentsCardClicked } from '../analytics/main';
+
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelColor } from './severity';
@@ -43,7 +45,12 @@ type IncidentsCardInnerProps = {
  * the availability gate lives in the parent wrapper.
  */
 function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardInnerProps) {
-  const { data: incidents = [], isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
+  const {
+    data: incidents = [],
+    isLoading,
+    error,
+    refetch,
+  } = incidentsApi.useGetActiveIncidentsQuery({ pluginId }, { refetchOnMountOrArgChange: true });
   const incidentCount = incidents?.length ?? 0;
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
   // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other
@@ -78,30 +85,57 @@ function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardIn
           <Badge text={incident.severityLabel} color={severityLevelColor(canonicalSeverity(incident.severityLabel))} />
           <SummaryCardTitle
             href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
+            onClick={() =>
+              incidentsCardClicked({
+                action: 'incident_detail',
+                placement: 'list',
+                severity: canonicalSeverity(incident.severityLabel),
+              })
+            }
           >
             {incident.title}
           </SummaryCardTitle>
           <SummaryCardAge date={new Date(incident.createdTime)} />
         </>
       )}
+      emptyAction={
+        canDeclare ? (
+          <LinkButton
+            variant="primary"
+            icon="fire"
+            href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
+            onClick={() => incidentsCardClicked({ action: 'declare_incident', placement: 'empty_state' })}
+          >
+            <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
+          </LinkButton>
+        ) : undefined
+      }
       footer={
-        !incidentCount
-          ? canDeclare && (
-              <LinkButton
-                variant="secondary"
-                size="sm"
-                fill="text"
-                icon="fire"
-                href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
-              >
-                <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
-              </LinkButton>
-            )
-          : canAccess && (
-              <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
-                <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
-              </LinkButton>
-            )
+        <>
+          {incidentCount > 0 && canDeclare && (
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              fill="text"
+              icon="fire"
+              href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
+              onClick={() => incidentsCardClicked({ action: 'declare_incident', placement: 'footer' })}
+            >
+              <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
+            </LinkButton>
+          )}
+          {canAccess && (
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              fill="text"
+              href={createBridgeURL(pluginId, '/incidents')}
+              onClick={() => incidentsCardClicked({ action: 'view_all_incidents', placement: 'footer' })}
+            >
+              <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
+            </LinkButton>
+          )}
+        </>
       }
     />
   );

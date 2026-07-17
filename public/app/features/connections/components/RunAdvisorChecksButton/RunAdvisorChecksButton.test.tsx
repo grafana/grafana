@@ -4,7 +4,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
-  isAdvisorEnabled,
   useCreateDatasourceAdvisorChecks,
   useLatestDatasourceCheck,
 } from 'app/features/connections/hooks/useDatasourceAdvisorChecks';
@@ -12,7 +11,6 @@ import {
 import { RunAdvisorChecksButton } from './RunAdvisorChecksButton';
 
 jest.mock('app/features/connections/hooks/useDatasourceAdvisorChecks', () => ({
-  isAdvisorEnabled: jest.fn(),
   useCreateDatasourceAdvisorChecks: jest.fn(),
   useLatestDatasourceCheck: jest.fn(),
 }));
@@ -24,7 +22,6 @@ jest.mock('app/core/copy/appNotification', () => ({
   useAppNotification: jest.fn(),
 }));
 
-const mockIsAdvisorEnabled = isAdvisorEnabled as jest.Mock;
 const mockUseCreateDatasourceAdvisorChecks = useCreateDatasourceAdvisorChecks as jest.Mock;
 const mockUseLatestDatasourceCheck = useLatestDatasourceCheck as jest.Mock;
 const mockReportInteraction = reportInteraction as jest.Mock;
@@ -40,7 +37,6 @@ describe('RunAdvisorChecksButton', () => {
       error: jest.fn(),
       info: jest.fn(),
     });
-    mockIsAdvisorEnabled.mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
     contextSrv.isGrafanaAdmin = false;
     mockUseCreateDatasourceAdvisorChecks.mockReturnValue({
@@ -49,14 +45,6 @@ describe('RunAdvisorChecksButton', () => {
       isAvailable: true,
     });
     mockUseLatestDatasourceCheck.mockReturnValue({ check: undefined, isLoading: false });
-  });
-
-  it('does not render when advisor is disabled', () => {
-    mockIsAdvisorEnabled.mockReturnValue(false);
-
-    const { container } = render(<RunAdvisorChecksButton />);
-
-    expect(container).toBeEmptyDOMElement();
   });
 
   it('does not render when user is not an admin', () => {
