@@ -20,8 +20,8 @@ func SnapshotMigration(m migrator.SnapshotMigrator) migrations.MigrationDefiniti
 		Resources: []migrations.ResourceInfo{
 			{
 				GroupResource: snapshotGR,
-				LockTables:   []string{"dashboard_snapshot"},
-				FloorVersion: dashV0.VERSION,
+				LockTables:    []string{"dashboard_snapshot"},
+				FloorVersion:  dashV0.VERSION,
 			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
