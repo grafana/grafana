@@ -148,9 +148,14 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
           // the original expression so every combination becomes its own
           // filter value (preserving any literal text around the variable),
           // rather than a single glob literal that matches no dimension
-          // value.
+          // value. templateSrv records one interpolation entry per match, so
+          // a variable repeated in the expression must be expanded only once
+          // (replaceAll already substitutes every occurrence of the match).
+          const uniqueVariables = foundVariables.filter(
+            (variable, index) => foundVariables.findIndex((other) => other.match === variable.match) === index
+          );
           let expanded = [rawValue];
-          for (const variable of foundVariables) {
+          for (const variable of uniqueVariables) {
             const values = variable.value.split(',');
             expanded = expanded.flatMap((expression) =>
               values.map((value) => expression.replaceAll(variable.match, value))

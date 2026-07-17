@@ -204,6 +204,36 @@ describe('AzureMonitorDatasource', () => {
       });
     });
 
+    it('should not duplicate filter values when the same variable appears twice in one expression', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        const result = target ?? '';
+        // The real templateSrv records one interpolation entry per match,
+        // so a repeated variable produces duplicate entries.
+        const occurrences = (result.match(/\$env/g) ?? []).length;
+        for (let i = 0; i < occurrences; i++) {
+          interpolated?.push({ value: 'dev,prod', match: '$env', variableName: 'env' });
+        }
+        return result.replaceAll('$env', 'dev,prod');
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['$env-$env'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['dev-dev', 'prod-prod'] }],
+        },
+      });
+    });
+
     it('should expand multiple multi-value variables in one dimension filter value', () => {
       replace = (
         target?: string,
