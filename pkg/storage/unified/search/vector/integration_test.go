@@ -617,3 +617,46 @@ func readEmbeddingTimestamps(t *testing.T, engine *xorm.Engine, namespace, model
 	require.NoError(t, row.Scan(&createdAt, &updatedAt))
 	return createdAt, updatedAt
 }
+
+func TestIntegrationVectorCollectionCatalog(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	// The migration seeds the dashboards row.
+	c, found, err := backend.ResolveCollection(ctx, "dashboard.grafana.app", "dashboards")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "dashboards", c.PartitionKey)
+	assert.False(t, c.IsExternal)
+
+	// Unknown pair: not found, no error.
+	_, found, err = backend.ResolveCollection(ctx, "nope.grafana.app", "nope")
+	require.NoError(t, err)
+	assert.False(t, found)
+
+	// Insert an external collection whose wire name is not a valid SQL
+	// identifier — the catalog decouples wire names from partition keys.
+	_, err = engine.DB().ExecContext(ctx, `
+		INSERT INTO embedding_collections (group_name, resource, partition_key, is_external)
+		VALUES ('infra-memory.assistant.external', 'infra-memories', 'infra_memories', true)
+		ON CONFLICT DO NOTHING`)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE group_name = 'infra-memory.assistant.external'`)
+	})
+
+	// A fresh backend (fresh cache) sees the new row immediately.
+	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
+	fresh := NewPgvectorBackend(ctx, database, 1000, 0, false, engine)
+	c, found, err = fresh.ResolveCollection(ctx, "infra-memory.assistant.external", "infra-memories")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "infra_memories", c.PartitionKey)
+	assert.True(t, c.IsExternal)
+
+	// validateResource rides the catalog: operations on an unprovisioned
+	// partition key are rejected before touching the embeddings table.
+	_, err = fresh.Search(ctx, "ns", testModel, "not-provisioned", make([]float32, 3), 5)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
+}

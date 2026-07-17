@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -46,6 +47,11 @@ type pgvectorBackend struct {
 	// *sql.DB). The kvStorageBackend uses the same pattern; xorm engines
 	// have finalizers that close the DB on GC. nil is safe.
 	dbKeepAlive any
+
+	// catalog is the cached embedding_collections snapshot; catalogMu
+	// guards it and keeps refreshes single-flight. See catalog.go.
+	catalogMu sync.Mutex
+	catalog   *catalogSnapshot
 }
 
 func NewPgvectorBackend(ctx context.Context, database db.DB, promotionThreshold int, promoterInterval time.Duration, ownsSchema bool, dbKeepAlive any) *pgvectorBackend {
@@ -98,10 +104,16 @@ func truncateRunes(s string, max int) string {
 	return string([]rune(s)[:max-len(ellipsis)]) + ellipsis
 }
 
-// Just dashboards for now
-// TODO dynamically add new partition/table if resource doesnt exist
-func validateResource(resource string) error {
-	if resource != "dashboards" {
+// validateResource rejects operations on partition keys that have no
+// embedding_collections row. The catalog is the allowlist; internal callers
+// (reconciler, backfill) pass partition keys directly, so the check rides
+// the same cached snapshot ResolveCollection uses.
+func (b *pgvectorBackend) validateResource(ctx context.Context, resource string) error {
+	ok, err := b.hasPartitionKey(ctx, resource)
+	if err != nil {
+		return fmt.Errorf("resolve resource %q: %w", resource, err)
+	}
+	if !ok {
 		return fmt.Errorf("unsupported resource %q (no embeddings sub-tree provisioned)", resource)
 	}
 	return nil
@@ -146,7 +158,7 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 	if model == "" {
 		return fmt.Errorf("model must not be empty")
 	}
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return err
 	}
 
@@ -215,7 +227,7 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 // transaction; called from both Upsert and UpsertReplaceSubresources.
 func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vector) error {
 	for i := range vectors {
-		if err := validateResource(vectors[i].Resource); err != nil {
+		if err := b.validateResource(ctx, vectors[i].Resource); err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
 		emb, err := fitEmbedding(vectors[i].Embedding, EmbeddingDim)
@@ -262,7 +274,7 @@ func (b *pgvectorBackend) Delete(ctx context.Context, namespace, model, resource
 	if model == "" {
 		return fmt.Errorf("model must not be empty")
 	}
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return err
 	}
 	req := &sqlVectorCollectionDeleteRequest{
@@ -283,7 +295,7 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 	if len(subresources) == 0 {
 		return nil
 	}
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return err
 	}
 	req := &sqlVectorCollectionDeleteSubresourcesRequest{
@@ -299,7 +311,7 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 }
 
 func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, string, error) {
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return nil, "", err
 	}
 	req := &sqlVectorCollectionGetContentRequest{
@@ -326,7 +338,7 @@ func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, 
 }
 
 func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error) {
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return false, err
 	}
 	req := &sqlVectorCollectionExistsRequest{
@@ -362,7 +374,7 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		attribute.Int("filter_count", len(filters)),
 	)
 
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return nil, err
 	}
 	queryEmb, err := fitEmbedding(embedding, EmbeddingDim)

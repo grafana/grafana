@@ -64,6 +64,26 @@ type fakeVectorBackend struct {
 	gotFilters                          []vector.SearchFilter
 	results                             []vector.VectorSearchResult
 	err                                 error
+
+	// ResolveCollection behavior: default resolves any pair to
+	// {PartitionKey: resource}. Set collection to override, or
+	// resolveNotFound/resolveErr to exercise those paths.
+	collection      *vector.Collection
+	resolveNotFound bool
+	resolveErr      error
+}
+
+func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	if f.resolveErr != nil {
+		return vector.Collection{}, false, f.resolveErr
+	}
+	if f.resolveNotFound {
+		return vector.Collection{}, false, nil
+	}
+	if f.collection != nil {
+		return *f.collection, true, nil
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
 func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource string,
@@ -533,4 +553,71 @@ func TestVectorSearch_AuthzWholeResourcesOneItemEach(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, resp.Results, 3)
 	assert.Len(t, access.gotItems, 3)
+}
+
+func TestVectorSearch_UnknownCollectionIsNotFound(t *testing.T) {
+	// The catalog is the allowlist: an unprovisioned (group, resource)
+	// pair returns NOT_FOUND without embedding the query or hitting the
+	// backend search.
+	fake := &fakeTextEmbedder{dim: 4}
+	backend := &fakeVectorBackend{resolveNotFound: true}
+	s := newTestSearchServer(newTestEmbedder(fake), backend)
+
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: 1,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.Error)
+	assert.Equal(t, int32(404), resp.Error.Code)
+	assert.Empty(t, backend.gotResource, "backend search must not run")
+	assert.Empty(t, fake.gotIn.Texts, "query must not be embedded")
+}
+
+func TestVectorSearch_SearchesPartitionKeyNotWireName(t *testing.T) {
+	// The backend is addressed by the catalog's partition key, not the
+	// wire-level resource name.
+	backend := &fakeVectorBackend{
+		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "part_key"},
+	}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
+
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: 1,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "part_key", backend.gotResource)
+}
+
+func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
+	// External rows aren't unified-storage resources; per-result authz is
+	// skipped (the caller post-filters), so every row comes back even
+	// when the access client would deny everything.
+	backend := &fakeVectorBackend{
+		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
+		results: []vector.VectorSearchResult{
+			{UID: "u1", Title: "T1", Score: 0.1},
+			{UID: "u2", Title: "T2", Score: 0.2},
+		},
+	}
+	access := &countingAccessClient{allow: func(string, string) bool { return false }}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: 5,
+	})
+	require.NoError(t, err)
+	assert.Nil(t, resp.Error)
+	require.Len(t, resp.Results, 2)
+	assert.Zero(t, access.batchCalls, "BatchCheck must not be called for external collections")
+}
+
+func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {
+	backend := &fakeVectorBackend{resolveErr: errors.New("catalog down")}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
+
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
 }

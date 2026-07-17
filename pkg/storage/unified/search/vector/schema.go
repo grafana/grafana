@@ -173,4 +173,38 @@ END $$;`))
 				ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
 		`))
+
+	// Catalog of collections addressable through the wire API. Maps the
+	// wire-level (group_name, resource) pair to the value stored in
+	// embeddings.resource (the LIST partition key), so wire names carry no
+	// SQL-identifier constraints. A row here IS the allowlist: pairs
+	// without one get NOT_FOUND. is_external marks externally-pushed
+	// collections whose reads skip per-result authz. Provisioning is an
+	// operator INSERT for now.
+	embeddingCollections := migrator.Table{
+		Name: "embedding_collections",
+		Columns: []*migrator.Column{
+			{Name: "group_name", Type: migrator.DB_Varchar, Length: 256, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource", Type: migrator.DB_Varchar, Length: 256, Nullable: false, IsPrimaryKey: true},
+			{Name: "partition_key", Type: migrator.DB_Varchar, Length: 256, Nullable: false},
+			{Name: "is_external", Type: migrator.DB_Bool, Nullable: false, Default: "false"},
+			{Name: "created_at", Type: migrator.DB_TimeStampz, Nullable: false, Default: "CURRENT_TIMESTAMP"},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"partition_key"}, Type: migrator.UniqueIndex},
+		},
+	}
+	mg.AddMigration("create embedding_collections table",
+		migrator.NewAddTableMigration(embeddingCollections))
+	mg.AddMigration("create embedding_collections partition_key unique index",
+		migrator.NewAddIndexMigration(embeddingCollections, embeddingCollections.Indices[0]))
+
+	// Seed the pre-catalog dashboards partition. partition_key matches the
+	// resource value already stored on every row, so no data moves.
+	mg.AddMigration("seed embedding_collections with dashboards",
+		migrator.NewRawSQLMigration("").Postgres(`
+			INSERT INTO embedding_collections (group_name, resource, partition_key, is_external)
+			VALUES ('dashboard.grafana.app', 'dashboards', 'dashboards', false)
+			ON CONFLICT DO NOTHING;
+		`))
 }

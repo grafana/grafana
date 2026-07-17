@@ -662,13 +662,24 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, err
 	}
 
+	// The catalog is the allowlist: an unprovisioned (group, resource)
+	// pair is NOT_FOUND before we spend an embedding on the query.
+	coll, found, err := s.vectorBackend.ResolveCollection(ctx, req.Key.Group, req.Key.Resource)
+	if err != nil {
+		s.log.Error("vector search: resolve collection", "err", err)
+		return nil, status.Error(codes.Internal, "resolve collection")
+	}
+	if !found {
+		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
+	}
+
 	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
 	if err != nil {
 		return nil, err
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
-		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
+		req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
 		s.log.Error("vector search: backend", "err", err)
@@ -683,17 +694,23 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
-	if err != nil {
-		s.log.Error("vector search: authz batch check", "err", err)
-		return nil, status.Error(codes.Internal, "authz batch check")
+	// External rows aren't unified-storage resources — the authz service
+	// has nothing to answer for them, so per-result checks are skipped
+	// and the caller does its own post-filtering.
+	var allowed map[vectorAuthzKey]bool
+	if !coll.IsExternal {
+		allowed, err = s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+		if err != nil {
+			s.log.Error("vector search: authz batch check", "err", err)
+			return nil, status.Error(codes.Internal, "authz batch check")
+		}
 	}
 
 	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		if !allowed[vectorAuthzKey{r.UID, r.Folder}] {
+		if !coll.IsExternal && !allowed[vectorAuthzKey{r.UID, r.Folder}] {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
