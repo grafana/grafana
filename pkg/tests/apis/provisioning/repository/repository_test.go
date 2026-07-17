@@ -713,8 +713,6 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 	// Test that enabling sync on a repo with a conflicting path is rejected
 	t.Run("Git repository path conflict detected when enabling sync", func(t *testing.T) {
-		t.Skip("currently blocking many PRs")
-
 		baseURL := "https://github.com/grafana/test-repo-enable-sync-conflict"
 
 		// Create an initial repo with sync enabled and a specific path
@@ -741,9 +739,17 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		created, err := helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
 
-		// Now try to enable sync on the second repo - this should fail due to parent/child conflict
-		created.Object["spec"].(map[string]interface{})["sync"].(map[string]interface{})["enabled"] = true
-		_, err = helper.Repositories.Resource.Update(t.Context(), created, metav1.UpdateOptions{FieldValidation: "Strict"})
+		// Now try to enable sync on the second repo - this should fail due to parent/child conflict.
+		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
+		err = common.RetryOnConflict(t, func() error {
+			obj, err := helper.Repositories.Resource.Get(t.Context(), created.GetName(), metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			obj.Object["spec"].(map[string]interface{})["sync"].(map[string]interface{})["enabled"] = true
+			_, err = helper.Repositories.Resource.Update(t.Context(), obj, metav1.UpdateOptions{FieldValidation: "Strict"})
+			return err
+		})
 		require.Error(t, err, "Enabling sync should fail due to parent/child path conflict")
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 	})
