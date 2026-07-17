@@ -1,15 +1,13 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { type ReactNode } from 'react';
-import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Alert, Badge, Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Badge, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { HomeSection } from '../HomeSection';
 
-import { CARD_LIST_MAX_HEIGHT } from './constants';
+import { SummaryCardBody } from './SummaryCardBody';
 
 interface SummaryCardProps<T> {
   title: string;
@@ -46,8 +44,6 @@ export function SummaryCard<T>({
   renderItem,
   footer,
 }: SummaryCardProps<T>) {
-  const styles = useStyles2(getStyles);
-
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
   return (
@@ -64,41 +60,15 @@ export function SummaryCard<T>({
             {!loading && headerExtra}
           </Stack>
 
-          {loading && (
-            <Stack direction="column">
-              {Array.from({ length: 3 }, (_, i) => (
-                <Skeleton key={i} height={20} />
-              ))}
-            </Stack>
-          )}
-
-          {error && (
-            <Alert
-              severity="warning"
-              title={error.title}
-              action={
-                <Button onClick={error.onRetry} variant="secondary" size="sm">
-                  <Trans i18nKey="home.summary-card.retry">Retry</Trans>
-                </Button>
-              }
-            />
-          )}
-
-          {!loading && !error && items.length === 0 && (
-            <Stack direction="column" alignItems="center">
-              {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
-            </Stack>
-          )}
-
-          {!loading && !error && items.length > 0 && (
-            <ul className={styles.list}>
-              {items.map((item) => (
-                <li key={getItemKey(item)} className={styles.row}>
-                  {renderItem(item)}
-                </li>
-              ))}
-            </ul>
-          )}
+          <SummaryCardBody
+            loading={loading}
+            error={error}
+            emptyMessage={emptyMessage}
+            emptyAction={emptyAction}
+            items={items}
+            getItemKey={getItemKey}
+            renderItem={renderItem}
+          />
         </Stack>
 
         {!loading && !error && footer && <Stack justifyContent="flex-end">{footer}</Stack>}
@@ -141,27 +111,6 @@ export function SummaryCardAge({ date }: { date: Date | number }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  list: css({
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.5),
-    maxHeight: CARD_LIST_MAX_HEIGHT,
-    overflowY: 'auto',
-    // Negative margin + matching padding gives the scrollbar a gutter clear of the age column
-    // while keeping that column's right edge aligned with the sibling cards.
-    marginRight: theme.spacing(-2),
-    paddingRight: theme.spacing(2),
-  }),
-  row: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(0.5, 0),
-    minWidth: 0,
-  }),
   title: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',

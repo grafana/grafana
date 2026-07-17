@@ -1,11 +1,14 @@
+import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { escapeRegExp } from 'lodash';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { Badge, LinkButton, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { canonicalSeverity, type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
@@ -16,11 +19,15 @@ import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/type
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
+import { HomeSection } from '../HomeSection';
 import { alertsCardClicked } from '../analytics/main';
 
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
+import { SummaryCardBody } from './SummaryCardBody';
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelColor, severityLevelRank } from './severity';
+
+const ALERTS_TAB_ID = 'alerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
@@ -79,6 +86,12 @@ export function FiringAlertsCard() {
  * the permission gate is in the parent wrapper.
  */
 function FiringAlertsCardInner() {
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const styles = useStyles2(getStyles);
+  // Only used by the redesigned layout; harmless on the legacy path. Structured as a tab
+  // so an Incidents tab can be appended later.
+  const [activeTab, setActiveTab] = useState(ALERTS_TAB_ID);
+
   // Fetched once — teams change at login granularity. A failed fetch leaves teams
   // undefined, so the card intentionally shows all org alerts unfiltered.
   const { value: teams, loading: teamsLoading } = useAsync(() => getBackendSrv().get<Team[]>('/api/user/teams'), []);
@@ -137,116 +150,189 @@ function FiringAlertsCardInner() {
     ? createRelativeUrl(ALERTING_PATHS.ALERT_GROUPS, { [ALERTMANAGER_NAME_QUERY_KEY]: GRAFANA_RULES_SOURCE_NAME })
     : alertListPageLink({ search: `source:${GRAFANA_RULES_SOURCE_NAME}` });
 
+  const title = t('home.firing-alerts-card.title', 'Firing alerts');
+  const count = alerts?.length ?? 0;
+
+  const headerExtra = (
+    <Stack>
+      {criticalCount > 0 && (
+        <Badge
+          text={t('home.firing-alerts-card.critical-count', '', {
+            count: criticalCount,
+            defaultValue_one: '{{count}} critical',
+            defaultValue_other: '{{count}} critical',
+          })}
+          color="red"
+        />
+      )}
+      {highCount > 0 && (
+        <Badge
+          text={t('home.firing-alerts-card.high-count', '', {
+            count: highCount,
+            defaultValue_one: '{{count}} high',
+            defaultValue_other: '{{count}} high',
+          })}
+          color="orange"
+        />
+      )}
+    </Stack>
+  );
+
+  const error = alertsError
+    ? {
+        title: t('home.firing-alerts-card.error-title', 'Could not load firing alerts'),
+        onRetry: () => refetch(),
+      }
+    : undefined;
+
+  const emptyMessage = hasTeams
+    ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
+    : t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+
+  const getItemKey = ({ alert }: (typeof displayed)[number]) => alert.fingerprint;
+
+  const renderItem = ({ alert, level, startedAt }: (typeof displayed)[number]) => {
+    const detailHref = alertDetailHref(alert);
+    return (
+      <>
+        <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+        <SummaryCardTitle
+          href={detailHref}
+          onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
+        >
+          {alert.labels.alertname}
+        </SummaryCardTitle>
+        {alert.labels.team && (
+          <Text color="secondary" variant="bodySmall" truncate>
+            {alert.labels.team}
+          </Text>
+        )}
+        <SummaryCardAge date={startedAt} />
+      </>
+    );
+  };
+
+  const emptyAction = canCreate ? (
+    <LinkButton
+      variant="primary"
+      icon="plus"
+      href={newRuleHref}
+      onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'empty_state' })}
+    >
+      <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
+    </LinkButton>
+  ) : undefined;
+
+  const footer = (
+    <>
+      {hasAlerts && canCreate && (
+        <LinkButton
+          variant="secondary"
+          size="sm"
+          fill="text"
+          icon="plus"
+          href={newRuleHref}
+          onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'footer' })}
+        >
+          <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
+        </LinkButton>
+      )}
+      <LinkButton
+        variant="secondary"
+        size="sm"
+        fill="text"
+        href={viewAllHref}
+        onClick={() =>
+          alertsCardClicked({
+            action: hasAlerts ? 'view_all_alerts' : 'view_all_rules',
+            placement: 'footer',
+          })
+        }
+      >
+        {hasAlerts ? (
+          <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
+        ) : (
+          <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
+        )}
+      </LinkButton>
+    </>
+  );
+
+  if (redesignEnabled) {
+    // Single tab today; structured as an array so an Incidents tab can be appended later.
+    const tabs = [{ id: ALERTS_TAB_ID, label: title, counter: count }];
+
+    return (
+      <Stack direction="column" gap={2}>
+        <Stack justifyContent="space-between" alignItems="center">
+          <Text element="h2" variant="h5">
+            {title}
+          </Text>
+          {/* Header-right slot (team/service filter) is future work. */}
+        </Stack>
+
+        <HomeSection paddingX={2} paddingY={1} direction="column" display="flex" grow={1}>
+          <TabsBar>
+            {tabs.map((tab) => (
+              <Tab
+                key={tab.id}
+                label={tab.label}
+                active={activeTab === tab.id}
+                counter={tab.counter}
+                onChangeTab={() => setActiveTab(tab.id)}
+              />
+            ))}
+            <div className={styles.tabBarSpacer} />
+            {!loading && headerExtra}
+          </TabsBar>
+
+          <div className={styles.body}>
+            <SummaryCardBody
+              loading={loading}
+              error={error}
+              emptyMessage={emptyMessage}
+              emptyAction={emptyAction}
+              items={displayed}
+              getItemKey={getItemKey}
+              renderItem={renderItem}
+            />
+          </div>
+
+          {!loading && !error && footer && <div className={styles.footer}>{footer}</div>}
+        </HomeSection>
+      </Stack>
+    );
+  }
+
   return (
     <SummaryCard
-      title={t('home.firing-alerts-card.title', 'Firing alerts')}
-      count={alerts?.length ?? 0}
-      headerExtra={
-        <Stack>
-          {criticalCount > 0 && (
-            <Badge
-              text={t('home.firing-alerts-card.critical-count', '', {
-                count: criticalCount,
-                defaultValue_one: '{{count}} critical',
-                defaultValue_other: '{{count}} critical',
-              })}
-              color="red"
-            />
-          )}
-          {highCount > 0 && (
-            <Badge
-              text={t('home.firing-alerts-card.high-count', '', {
-                count: highCount,
-                defaultValue_one: '{{count}} high',
-                defaultValue_other: '{{count}} high',
-              })}
-              color="orange"
-            />
-          )}
-        </Stack>
-      }
+      title={title}
+      count={count}
+      headerExtra={headerExtra}
       loading={loading}
-      error={
-        alertsError
-          ? {
-              title: t('home.firing-alerts-card.error-title', 'Could not load firing alerts'),
-              onRetry: () => refetch(),
-            }
-          : undefined
-      }
-      emptyMessage={
-        hasTeams
-          ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-          : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
-      }
+      error={error}
+      emptyMessage={emptyMessage}
       items={displayed}
-      getItemKey={({ alert }) => alert.fingerprint}
-      renderItem={({ alert, level, startedAt }) => {
-        const detailHref = alertDetailHref(alert);
-        return (
-          <>
-            <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
-            <SummaryCardTitle
-              href={detailHref}
-              onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
-            >
-              {alert.labels.alertname}
-            </SummaryCardTitle>
-            {alert.labels.team && (
-              <Text color="secondary" variant="bodySmall" truncate>
-                {alert.labels.team}
-              </Text>
-            )}
-            <SummaryCardAge date={startedAt} />
-          </>
-        );
-      }}
-      emptyAction={
-        canCreate ? (
-          <LinkButton
-            variant="primary"
-            icon="plus"
-            href={newRuleHref}
-            onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'empty_state' })}
-          >
-            <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
-          </LinkButton>
-        ) : undefined
-      }
-      footer={
-        <>
-          {hasAlerts && canCreate && (
-            <LinkButton
-              variant="secondary"
-              size="sm"
-              fill="text"
-              icon="plus"
-              href={newRuleHref}
-              onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'footer' })}
-            >
-              <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
-            </LinkButton>
-          )}
-          <LinkButton
-            variant="secondary"
-            size="sm"
-            fill="text"
-            href={viewAllHref}
-            onClick={() =>
-              alertsCardClicked({
-                action: hasAlerts ? 'view_all_alerts' : 'view_all_rules',
-                placement: 'footer',
-              })
-            }
-          >
-            {hasAlerts ? (
-              <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
-            ) : (
-              <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
-            )}
-          </LinkButton>
-        </>
-      }
+      getItemKey={getItemKey}
+      renderItem={renderItem}
+      emptyAction={emptyAction}
+      footer={footer}
     />
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  tabBarSpacer: css({
+    flex: 1,
+  }),
+  body: css({
+    paddingTop: theme.spacing(1),
+  }),
+  footer: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+    padding: theme.spacing(1),
+    // Pin to the bottom of the grid-stretched card so it lines up with the dashboards reset button.
+    marginTop: 'auto',
+  }),
+});
