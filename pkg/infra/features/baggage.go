@@ -13,7 +13,7 @@ const (
 	NamespaceKey = "namespace"
 )
 
-// InstanceContextFromBaggage extracts per-tenant attributes from OTel baggage
+// EvaluationContextFromBaggage extracts per-tenant attributes from OTel baggage
 // and injects them into an OpenFeature evaluation context. The HG gateway
 // populates these baggage members on every proxied request, so MT services get
 // a full per-tenant eval context with no extra metadata API calls. namespace is
@@ -36,7 +36,7 @@ func EvaluationContextFromBaggage(ctx context.Context) openfeature.EvaluationCon
 // Register it in each MT service's HTTP middleware chain.
 func WithTransactionContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		evalCtx := InstanceContextFromBaggage(r.Context())
+		evalCtx := EvaluationContextFromBaggage(r.Context())
 		ctx := openfeature.MergeTransactionContext(r.Context(), evalCtx)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

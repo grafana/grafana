@@ -19,10 +19,10 @@ func baggageCtx(t *testing.T, members string) *http.Request {
 	return req.WithContext(baggage.ContextWithBaggage(req.Context(), bag))
 }
 
-func TestInstanceContextFromBaggage(t *testing.T) {
+func TestEvaluationContextFromBaggage(t *testing.T) {
 	t.Run("empty context returns empty eval context", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		evalCtx := InstanceContextFromBaggage(req.Context())
+		evalCtx := EvaluationContextFromBaggage(req.Context())
 
 		assert.Empty(t, evalCtx.TargetingKey())
 		assert.Empty(t, evalCtx.Attributes())
@@ -30,7 +30,7 @@ func TestInstanceContextFromBaggage(t *testing.T) {
 
 	t.Run("all canonical fields are extracted", func(t *testing.T) {
 		req := baggageCtx(t, "slug=mystack,plan=pro,channel=stable,namespace=stacks-42")
-		evalCtx := InstanceContextFromBaggage(req.Context())
+		evalCtx := EvaluationContextFromBaggage(req.Context())
 
 		attrs := evalCtx.Attributes()
 		assert.Equal(t, "mystack", attrs["slug"])
@@ -41,7 +41,7 @@ func TestInstanceContextFromBaggage(t *testing.T) {
 
 	t.Run("absent fields are not added to attributes", func(t *testing.T) {
 		req := baggageCtx(t, "slug=mystack,namespace=stacks-42")
-		evalCtx := InstanceContextFromBaggage(req.Context())
+		evalCtx := EvaluationContextFromBaggage(req.Context())
 
 		attrs := evalCtx.Attributes()
 		assert.Contains(t, attrs, "slug")
@@ -52,7 +52,7 @@ func TestInstanceContextFromBaggage(t *testing.T) {
 
 	t.Run("missing namespace results in empty targeting key", func(t *testing.T) {
 		req := baggageCtx(t, "slug=mystack,plan=pro")
-		evalCtx := InstanceContextFromBaggage(req.Context())
+		evalCtx := EvaluationContextFromBaggage(req.Context())
 
 		assert.Empty(t, evalCtx.TargetingKey())
 		assert.Equal(t, "mystack", evalCtx.Attributes()["slug"])
