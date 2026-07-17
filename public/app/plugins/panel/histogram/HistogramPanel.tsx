@@ -10,10 +10,11 @@ import {
   getHistogramFields,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { useFlagDashboardsFilterablePanels } from '@grafana/runtime/internal';
 import { TooltipDisplayMode, TooltipPlugin2, usePanelContext, useTheme2 } from '@grafana/ui';
-import { FILTER_OUT_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
+import { TooltipHoverMode } from '@grafana/ui/internal';
 
-import { getGroupedFilters } from '../timeseries/utils';
+import { getFilterByGroupedLabels } from '../timeseries/utils';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';
@@ -24,8 +25,7 @@ type Props = PanelProps<Options>;
 export const HistogramPanel = ({ data, options, width, height }: Props) => {
   const theme = useTheme2();
   const { getFiltersBasedOnGrouping, onAddAdHocFilters } = usePanelContext();
-  // TODO: gate grouped-label filtering behind the new feature toggle once it's added.
-  const filteringEnabled = true;
+  const filteringEnabled = useFlagDashboardsFilterablePanels();
 
   const histogram = useMemo(() => {
     if (!data.series.length) {
@@ -104,11 +104,6 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
                 render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-                  const groupingFilters =
-                    seriesIdx != null && filteringEnabled && getFiltersBasedOnGrouping
-                      ? getGroupedFilters(xMinOnlyFrame, seriesIdx, getFiltersBasedOnGrouping)
-                      : [];
-
                   return (
                     <HistogramTooltip
                       series={histogram}
@@ -120,17 +115,13 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
                       isPinned={isPinned}
                       maxHeight={options.tooltip.maxHeight}
                       filterByGroupedLabels={
-                        filteringEnabled && groupingFilters.length && onAddAdHocFilters
-                          ? {
-                              onFilterForGroupedLabels: () => {
-                                onAddAdHocFilters(groupingFilters);
-                              },
-                              onFilterOutGroupedLabels: () => {
-                                onAddAdHocFilters(
-                                  groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                );
-                              },
-                            }
+                        filteringEnabled
+                          ? getFilterByGroupedLabels(
+                              xMinOnlyFrame,
+                              seriesIdx,
+                              getFiltersBasedOnGrouping,
+                              onAddAdHocFilters
+                            )
                           : undefined
                       }
                     />

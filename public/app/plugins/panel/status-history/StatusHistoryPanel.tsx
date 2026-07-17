@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { DashboardCursorSync, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { useFlagDashboardsFilterablePanels } from '@grafana/runtime/internal';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -12,7 +13,7 @@ import {
   useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
@@ -26,7 +27,7 @@ import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
-import { getGroupedFilters, getTimezones } from '../timeseries/utils';
+import { getFilterByGroupedLabels, getTimezones } from '../timeseries/utils';
 
 import { type Options } from './panelcfg.gen';
 
@@ -62,8 +63,7 @@ export const StatusHistoryPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
-  // TODO: gate grouped-label filtering behind the new feature toggle once it's added.
-  const filteringEnabled = true;
+  const filteringEnabled = useFlagDashboardsFilterablePanels();
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),
@@ -161,11 +161,6 @@ export const StatusHistoryPanel = ({
                       dismiss();
                     };
 
-                    const groupingFilters =
-                      seriesIdx != null && filteringEnabled && getFiltersBasedOnGrouping
-                        ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
-                        : [];
-
                     return (
                       <StateTimelineTooltip
                         series={alignedFrame}
@@ -181,17 +176,13 @@ export const StatusHistoryPanel = ({
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
                         filterByGroupedLabels={
-                          filteringEnabled && groupingFilters.length && onAddAdHocFilters
-                            ? {
-                                onFilterForGroupedLabels: () => {
-                                  onAddAdHocFilters(groupingFilters);
-                                },
-                                onFilterOutGroupedLabels: () => {
-                                  onAddAdHocFilters(
-                                    groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                  );
-                                },
-                              }
+                          filteringEnabled
+                            ? getFilterByGroupedLabels(
+                                alignedFrame,
+                                seriesIdx,
+                                getFiltersBasedOnGrouping,
+                                onAddAdHocFilters
+                              )
                             : undefined
                         }
                         canExecuteActions={userCanExecuteActions}

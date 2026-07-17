@@ -14,7 +14,12 @@ import {
 import { convertFieldType } from '@grafana/data/internal';
 import { type GraphFieldConfig, LineInterpolation, TooltipDisplayMode, type VizTooltipOptions } from '@grafana/schema';
 import { type AdHocFilterItem } from '@grafana/ui';
-import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
+import {
+  buildScaleKey,
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+  type FilterByGroupedLabelsModel,
+} from '@grafana/ui/internal';
 
 import { type HeatmapTooltip } from '../heatmap/panelcfg.gen';
 
@@ -368,6 +373,32 @@ export function getGroupedFilters(
   }
 
   return groupingFilters;
+}
+
+export function getFilterByGroupedLabels(
+  frame: DataFrame,
+  seriesIdx: number | null | undefined,
+  getFiltersBasedOnGrouping: ((items: AdHocFilterItem[]) => AdHocFilterItem[]) | undefined,
+  onAddAdHocFilters: ((items: AdHocFilterItem[]) => void) | undefined
+): FilterByGroupedLabelsModel | undefined {
+  if (seriesIdx == null || getFiltersBasedOnGrouping == null || onAddAdHocFilters == null) {
+    return undefined;
+  }
+
+  const groupingFilters = getGroupedFilters(frame, seriesIdx, getFiltersBasedOnGrouping);
+
+  if (groupingFilters.length === 0) {
+    return undefined;
+  }
+
+  return {
+    onFilterForGroupedLabels: () => {
+      onAddAdHocFilters(groupingFilters);
+    },
+    onFilterOutGroupedLabels: () => {
+      onAddAdHocFilters(groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR })));
+    },
+  };
 }
 
 export const LTTB_THRESHOLD = 150;
