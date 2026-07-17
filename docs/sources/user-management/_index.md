@@ -22,7 +22,7 @@ keywords:
 weight: 45
 ---
 
-# User management: authenticate, manage user identity, and grant permissions
+# User management: authenticate, provision users, manage identity, and grant permissions
 
 Grafana user management covers the full lifecycle of access: how users prove who they are, how their accounts exist in the system, and what they're allowed to do.
 
@@ -34,7 +34,5 @@ This section is organized around six topics:
 1. **[Authorization](./authorization/)** — Assign roles and permissions to control what users can access and do.
 1. **[API access](./api-access/)** — Authenticate non-human workloads and automations against the Grafana API.
 1. **[Audit](./audit/)** — Track and export audit logs and detect leaked credentials.
-
-{{< section >}}
 
 For information about authentication and authorization for your Grafana Cloud Stack and Grafana Cloud Portal, refer to [Grafana Cloud Access Policies](/docs/grafana-cloud/authentication-and-permissions/access-policies/).
