@@ -773,6 +773,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/folder/ @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/iam/ @grafana/access-squad @grafana/identity-squad
 /packages/grafana-api-clients/src/clients/rtkq/logsdrilldown/ @grafana/observability-logs
+/packages/grafana-api-clients/src/clients/rtkq/plugins/ @grafana/grafana-catalog
 /packages/grafana-api-clients/src/clients/rtkq/preferences/ @grafana/grafana-catalog
 /packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
@@ -790,6 +791,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-openapi/src/apis/folder.* @grafana/grafana-frontend-navigation
 /packages/grafana-openapi/src/apis/iam.* @grafana/access-squad @grafana/identity-squad
 /packages/grafana-openapi/src/apis/logsdrilldown.* @grafana/observability-logs
+/packages/grafana-openapi/src/apis/plugins.* @grafana/grafana-catalog
 /packages/grafana-openapi/src/apis/preferences.* @grafana/grafana-catalog
 /packages/grafana-openapi/src/apis/provisioning.* @grafana/grafana-frontend-navigation
 /packages/grafana-openapi/src/apis/shorturl.* @grafana/sharing-squad
@@ -1004,6 +1006,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/migrate-to-cloud @grafana/grafana-operator-experience-squad
+/public/app/features/notebook/ @grafana/sharing-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-navigation
 /public/app/features/org/ @grafana/grafana-frontend-navigation
 /public/app/features/panel/ @grafana/dashboards-squad
@@ -1167,6 +1170,8 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
+/public/app/features/dashboard-scene/scene/layout-notebook/ @grafana/sharing-squad
+/public/app/features/dashboard-scene/serialization/layoutSerializers/NotebookLayout* @grafana/sharing-squad
 /public/app/features/dashboard-scene/sharing/ @grafana/sharing-squad
 /public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
 /public/app/features/dashboard/dashgrid/DashboardLibrary/ @grafana/sharing-squad
