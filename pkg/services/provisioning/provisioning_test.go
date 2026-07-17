@@ -141,6 +141,24 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
 	})
 
+	t.Run("Should return context error when cancelled during retry backoff", func(t *testing.T) {
+		serviceTest := setup(t)
+		serviceTest.service.dashboardProvisionRetries = 5
+		serviceTest.service.dashboardProvisionRetryBackoff = time.Hour
+
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			return fmt.Errorf("%w: Test error", dashboards.ErrGetOrCreateFolder)
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := serviceTest.service.provisionDashboardsWithRetry(ctx)
+		// Cancellation must not be masked as an allow-listed folder failure.
+		require.ErrorIs(t, err, context.Canceled)
+		require.NotErrorIs(t, err, dashboards.ErrGetOrCreateFolder)
+	})
+
 	t.Run("Should return run error when dashboard provisioning fails for non-allow-listed error", func(t *testing.T) {
 		serviceTest := setup(t)
 		provisioningErr := errors.New("Non-allow-listed error")

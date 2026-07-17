@@ -179,7 +179,9 @@ func (ps *ProvisioningServiceImpl) provisionDashboardsWithRetry(ctx context.Cont
 			"attempt", attempt+1, "maxRetries", ps.dashboardProvisionRetries, "error", err)
 		select {
 		case <-ctx.Done():
-			return err
+			// Return the cancellation, not the folder error, so an aborted startup
+			// is not allow-listed and reported as success by the caller.
+			return ctx.Err()
 		case <-time.After(ps.dashboardProvisionRetryBackoff):
 		}
 	}
