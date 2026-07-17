@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
-import { from, lastValueFrom } from 'rxjs';
+import { from, map, type Observable, of, switchMap } from 'rxjs';
 
 import {
   CoreApp,
@@ -33,11 +33,18 @@ export const LogsLinkButton = ({ spanLinkModel }: Props) => {
 
   const tooltip = useMemo(() => getLogsButtonTooltip(settings, presence), [presence, settings]);
 
+  const isLoading = presence === 'loading';
+
   return (
     <span className={styles}>
       <DataLinkButton
         link={linkModel}
-        buttonProps={{ icon, className, variant: presence === 'absent' ? 'secondary' : 'primary', tooltip }}
+        buttonProps={{
+          icon: isLoading ? 'spinner' : icon,
+          className,
+          variant: presence === 'absent' ? 'secondary' : 'primary',
+          tooltip,
+        }}
       ></DataLinkButton>
     </span>
   );
@@ -73,24 +80,18 @@ function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
     }
 
     const effectiveTimeRange = timeRange ?? getDefaultTimeRange();
-    let cancelled = false;
 
     setPresence('loading');
-    checkForLogs(query, effectiveTimeRange)
-      .then((hasLogs) => {
-        if (!cancelled) {
-          setPresence(hasLogs ? 'present' : 'absent');
-        }
-      })
-      .catch(() => {
-        // If the check fails we don't want to hide a potentially valid link, so keep it enabled.
-        if (!cancelled) {
-          setPresence('present');
-        }
-      });
+    const subscription = checkForLogs(query, effectiveTimeRange).subscribe({
+      next: (hasLogs) => setPresence(hasLogs ? 'present' : 'absent'),
+      // If the check fails we don't want to hide a potentially valid link, so keep it enabled.
+      error: () => setPresence('present'),
+    });
 
+    // Unsubscribing cancels the in-flight datasource request when the component
+    // unmounts or the query changes before the check resolves.
     return () => {
-      cancelled = true;
+      subscription.unsubscribe();
     };
     // The trace view re-renders a lot on every event, including mouse over.
     // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
@@ -100,11 +101,10 @@ function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
   return presence;
 }
 
-async function checkForLogs(query: DataQuery, timeRange: TimeRange): Promise<boolean> {
+function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolean> {
   if (!query.datasource) {
-    return false;
+    return of(false);
   }
-  const datasource = await getDataSourceInstance(query.datasource);
 
   const request = {
     requestId: getNextRequestId(),
@@ -119,12 +119,16 @@ async function checkForLogs(query: DataQuery, timeRange: TimeRange): Promise<boo
     startTime: Date.now(),
   };
 
-  // `query` can return either an Observable or a Promise, so normalize with `from`
-  // and take the final response once the datasource has finished emitting.
-  const response = await lastValueFrom(from(datasource.query(request)));
-
-  const series: DataFrame[] = response.data ?? [];
-  return series.some((frame) => frame.length > 0);
+  // Resolving the datasource is async, and `query` can return either an Observable
+  // or a Promise, so normalize both with `from`. Returning an Observable lets the
+  // caller unsubscribe to cancel the request while it's still in flight.
+  return from(getDataSourceInstance(query.datasource)).pipe(
+    switchMap((datasource) => from(datasource.query(request))),
+    map((response) => {
+      const series: DataFrame[] = response.data ?? [];
+      return series.some((frame) => frame.length > 0);
+    })
+  );
 }
 
 export function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
@@ -146,7 +150,7 @@ export function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSource
   return defaultCTA;
 }
 
-function getLogsButtonTooltip(
+export function getLogsButtonTooltip(
   settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
   presence: LogsPresence
 ) {
