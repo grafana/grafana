@@ -187,4 +187,15 @@ describe('dashboardEdit journey wiring', () => {
 
     expect(mockHandle.end).not.toHaveBeenCalledWith('abandoned', expect.anything());
   });
+
+  it('should not abandon when Save As navigates from /d/<uid> to /d/<new-uid>', () => {
+    setLocation('/d/abc/my-dash');
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc' });
+    locationSubject.next({ pathname: '/d/new-uid/my-dash-copy' });
+
+    expect(mockHandle.end).not.toHaveBeenCalledWith('abandoned', expect.anything());
+  });
 });

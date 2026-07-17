@@ -57,13 +57,14 @@ registerJourneyTriggers('dashboard_edit', (tracker) => {
 onJourneyInstance('dashboard_edit', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
-  // Capture the dashboard pathname at journey start. Any pathname change
-  // (switching dashboards, navigating to /dashboards, /explore, anywhere) is
-  // abandonment — the user gave up the edit. Special-case: a new dashboard at
-  // /dashboard/new is allowed to transition to /d/<new-uid> after save (the
-  // route change can race with `grafana_dashboard_created`).
+  // Capture the dashboard pathname at journey start. Navigating away from the
+  // edit (e.g. /explore, /dashboards) is abandonment. Special-case: after save
+  // creates a new dashboard — either first save from /dashboard/new, or Save As
+  // from an existing /d/<uid> — the app navigates to /d/<new-uid>. That route
+  // change can race with the async `grafana_dashboard_created` /
+  // `grafana_dashboard_saved` interaction, so allow transitions onto /d/.
   const editingPath = window.location.pathname;
-  const allowSaveTransition = editingPath === '/dashboard/new';
+  const allowSaveTransition = editingPath === '/dashboard/new' || editingPath.startsWith('/d/');
   add(
     abandonOnRouteChange(handle, (pathname) => {
       if (pathname === editingPath) {

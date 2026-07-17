@@ -245,7 +245,7 @@ User enters dashboard edit mode, makes changes, and saves or discards.
 | End (discarded) | `dashboards_edit_discarded`                                              | Journey ends                                                |
 | End (abandoned) | SPA route change to a different pathname (`/explore`, another dashboard) | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
-**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected). The pathname captured at journey start is the in-scope path; any change abandons the journey, except `/dashboard/new` → `/d/<new-uid>` which is allowed (the `_created` interaction races with the route change). Two start triggers because `/dashboard/new` auto-enters edit mode and bypasses the Edit button — the `dashboards_new_dashboard_init` silent interaction is emitted from `DashboardScene`'s activation handler in that case.
+**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected). The pathname captured at journey start is the in-scope path; navigating away (e.g. `/explore`) abandons the journey. Transitions onto `/d/<uid>` are allowed after save — both `/dashboard/new` → `/d/<new-uid>` and Save As `/d/<uid>` → `/d/<new-uid>` — because the `_created` / `_saved` interaction is reported asynchronously and can race with the route change. Two start triggers because `/dashboard/new` auto-enters edit mode and bypasses the Edit button — the `dashboards_new_dashboard_init` silent interaction is emitted from `DashboardScene`'s activation handler in that case.
 
 ### panel_edit
 
