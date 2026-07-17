@@ -20,11 +20,34 @@ export interface DashboardMutationAPI {
   getAvailableCommands(): string[];
 }
 
+export interface DashboardEditLockHandle {
+  /** Releases the lock. Idempotent — safe to call more than once. */
+  release(): void;
+  /** Updates the short status line shown next to the lock's progress spinner. */
+  setStatus(status: string): void;
+}
+
+/**
+ * Lets a plugin block manual dashboard interaction while it is programmatically
+ * editing the open dashboard (e.g. an AI agent mutating the live scene), so
+ * concurrent user edits cannot corrupt the dashboard. While at least one lock
+ * is held, Grafana dims the content area and shows a progress pill.
+ */
+export interface DashboardEditLockAPI {
+  acquire(options: {
+    /** What is happening, e.g. "Assistant is editing this dashboard". */
+    label?: string;
+    /** When provided, the progress pill offers a Cancel button that invokes it. */
+    onCancel?: () => void;
+  }): DashboardEditLockHandle;
+}
+
 interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;
   dashboardMutationAPI?: DashboardMutationAPI;
+  dashboardEditLockAPI?: DashboardEditLockAPI;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).

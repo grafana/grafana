@@ -6509,6 +6509,10 @@
       }
     }
   },
+  "dashboard-edit-lock": {
+    "cancel": "Cancel",
+    "default-label": "The Assistant is editing this dashboard"
+  },
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Upload dashboard JSON file",
