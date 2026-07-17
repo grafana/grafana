@@ -8908,6 +8908,7 @@
       "open-in-profiles-drilldown": "Open in Profiles Drilldown",
       "profiles-for-this-span": "Profiles for this span",
       "related-logs": "Related logs",
+      "related-logs-tooltip": "View related logs using the trace data source configuration.",
       "session-for-this-span": "Session for this span"
     },
     "span-flame-graph": {

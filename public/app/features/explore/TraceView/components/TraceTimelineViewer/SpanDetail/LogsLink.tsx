@@ -155,7 +155,7 @@ export function getLogsButtonTooltip(
   presence: LogsPresence
 ) {
   const defaultCTA = t(
-    'explore.span-detail-link-buttons.related-logs.tooltip',
+    'explore.span-detail-link-buttons.related-logs-tooltip',
     'View related logs using the trace data source configuration.'
   );
   if (!settings) {
@@ -177,7 +177,7 @@ export function getLogsButtonTooltip(
       );
     }
     return t(
-      'explore.span-detail-link-buttons.related-logs.no-logstooltip',
+      'explore.span-detail-link-buttons.related-logs.no-logs-tooltip',
       'No related logs found using the trace data source configuration.'
     );
   }
