@@ -9,7 +9,7 @@ if [ -n "$STRICT_CSP" ]; then
     # Opt-in: override the e2e CSP template to drop 'unsafe-eval' (enforcing) so a blocked
     # new Function/eval throws and fails the test. $NONCE / $ROOT_PATH are escaped so bash
     # leaves them literal — Grafana substitutes them per request, not the shell.
-    export GF_SECURITY_CONTENT_SECURITY_POLICY_TEMPLATE="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"
+    export GF_SECURITY_CONTENT_SECURITY_POLICY_TEMPLATE="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"
 fi
 
 LICENSE_PATH=""
