@@ -62,7 +62,7 @@ export class PostHogBackend implements EchoBackend<PageviewEchoEvent, PostHogBac
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
       (tempPosthog as Record<string, any>).__SV = 1;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-      (tempPosthog as Record<string, any>)._i = [[options.postHogToken, { api_host: apiHost }, '']];
+      (tempPosthog as Record<string, any>)._i = [[options.postHogToken, { api_host: apiHost }, 'posthog']];
 
       loadScript(`${apiHost}/static/array.js`, true);
     } else {
