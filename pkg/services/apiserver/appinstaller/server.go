@@ -38,6 +38,11 @@ type serverWrapper struct {
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
 	log := logging.FromContext(s.ctx)
+	group := s.installer.ManifestData().Group
+	served := make([]schema.GroupVersion, 0, len(apiGroupInfo.VersionedResourcesStorageMap))
+	for ver := range apiGroupInfo.VersionedResourcesStorageMap {
+		served = append(served, schema.GroupVersion{Group: group, Version: ver})
+	}
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
 		for storagePath, restStorage := range storageMap {
 			legacyProvider, dualWriteSupported := s.installer.(LegacyStorageProvider)
@@ -62,6 +67,10 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 					legacyStorage := legacyProvider.GetLegacyStorage(gr.WithVersion(v))
 					if legacyStorage == nil {
 						log.Debug("Skipping dual writer; no legacy storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+					} else if err := s.dualWriteService.ValidateServedVersions(s.ctx, gr, served); err != nil {
+						// Fall back to legacy if unified would serve an unregistered apiVersion.
+						log.Warn("serving legacy storage", "resource", gr.String(), "error", err)
+						storage = legacyStorage
 					} else {
 						storage, err = NewDualWriter(
 							gr,

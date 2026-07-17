@@ -66,6 +66,52 @@ func TestMigrationStatusReader_FindDefinition(t *testing.T) {
 	}
 }
 
+func TestMigrationStatusReader_GetTargetVersion(t *testing.T) {
+	staticGR := schema.GroupResource{Resource: "preferences", Group: "preferences.grafana.app"}
+	dynamicGR := schema.GroupResource{Resource: "dashboards", Group: "dashboard.grafana.app"}
+	emptyGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+	unknownGR := schema.GroupResource{Resource: "unknown", Group: "unknown.grafana.app"}
+
+	registry := NewMigrationRegistry()
+	registry.Register(MigrationDefinition{
+		ID:          "preferences",
+		MigrationID: "preferences migration",
+		Resources:   []ResourceInfo{{GroupResource: staticGR, TargetVersion: "v1"}},
+	})
+	registry.Register(MigrationDefinition{
+		ID:          "dashboards",
+		MigrationID: "dashboards migration",
+		Resources:   []ResourceInfo{{GroupResource: dynamicGR, TargetVersion: DynamicTargetVersion}},
+	})
+	registry.Register(MigrationDefinition{
+		ID:          "playlists",
+		MigrationID: "playlists migration",
+		Resources:   []ResourceInfo{{GroupResource: emptyGR}},
+	})
+
+	reader := newTestStatusReader(t, &setting.Cfg{}, registry)
+
+	tests := []struct {
+		name        string
+		gr          schema.GroupResource
+		wantVersion string
+		wantOK      bool
+	}{
+		{name: "static version returned", gr: staticGR, wantVersion: "v1", wantOK: true},
+		{name: "dynamic version skipped", gr: dynamicGR, wantOK: false},
+		{name: "empty target version skipped", gr: emptyGR, wantOK: false},
+		{name: "unregistered resource skipped", gr: unknownGR, wantOK: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			version, ok := reader.GetTargetVersion(tt.gr)
+			require.Equal(t, tt.wantOK, ok)
+			require.Equal(t, tt.wantVersion, version)
+		})
+	}
+}
+
 func TestMigrationStatusReader_GetStorageMode_ConfigResolution(t *testing.T) {
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	unknownGR := schema.GroupResource{Resource: "unknown", Group: "unknown.grafana.app"}

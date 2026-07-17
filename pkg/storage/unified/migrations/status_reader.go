@@ -180,3 +180,18 @@ func (r *migrationStatusReader) findDefinition(gr schema.GroupResource) (Migrati
 	}
 	return MigrationDefinition{}, false
 }
+
+// GetTargetVersion implements contract.MigrationStatusReader.
+func (r *migrationStatusReader) GetTargetVersion(gr schema.GroupResource) (string, bool) {
+	for _, def := range r.registry.All() {
+		for _, ri := range def.Resources {
+			if ri.GroupResource == gr {
+				if ri.TargetVersion == "" || ri.IsDynamicVersion() {
+					return "", false
+				}
+				return ri.TargetVersion, true
+			}
+		}
+	}
+	return "", false
+}
