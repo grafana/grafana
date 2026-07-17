@@ -18,7 +18,7 @@ import DOMPurify from 'dompurify';
 import { type PropsWithChildren } from 'react';
 
 import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
@@ -81,11 +81,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       verticalAlign: 'middle',
       whiteSpace: 'nowrap',
     }),
-    linkIcon: css({
-      label: 'linkIcon',
-      verticalAlign: 'middle',
-      fontWeight: 'bold',
-    }),
     jsonTable: css({
       display: 'inline-block',
     }),
@@ -106,18 +101,18 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
-export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'>;
+export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick'>;
 
 interface LinkValueProps {
   link: KeyValuesTableLink;
 }
 
 export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>) => {
-  const { path, title = '', onClick, icon = 'external-link-alt' } = link;
+  const { path, title = '', onClick } = link;
 
   return (
     <a href={path} title={title} onClick={onClick} target="_blank" rel="noopener noreferrer">
-      {children} <Icon name={icon} />
+      {children}
     </a>
   );
 };
