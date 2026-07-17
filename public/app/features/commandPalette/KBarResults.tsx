@@ -188,6 +188,86 @@ export const KBarResults = (props: KBarResultsProps) => {
     activeRef.current = element;
   };
 
+  const renderRow = (virtualRow: (typeof rowVirtualizer.virtualItems)[number]) => {
+    const rawItem = itemsRef.current[virtualRow.index];
+    const isStringItem = typeof rawItem === 'string';
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const item = rawItem as ActionImpl & {
+      url?: string | URLCallback;
+      target?: React.HTMLAttributeAnchorTarget;
+    };
+
+    // ActionImpl constructor copies all properties from action onto ActionImpl
+    // so our url property is secretly there, but completely untyped
+    // Preferably this change is upstreamed and ActionImpl has this
+    const { target, url } = item;
+    const groupLabel = itemGroupLabels[virtualRow.index];
+
+    const handlers = !isStringItem && {
+      onPointerMove: () => pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
+      onPointerDown: () => query.setActiveIndex(virtualRow.index),
+      onClick: (ev: React.MouseEvent) => {
+        // Report before perform, since perform may close the palette / navigate away
+        props.onItemSelected?.(item, virtualRow.index);
+        execute(ev, item);
+      },
+    };
+    const active = !isStringItem && virtualRow.index === activeIndex;
+
+    const childProps = {
+      ...(isStringItem
+        ? { 'aria-hidden': true }
+        : {
+            id: getListboxItemId(virtualRow.index),
+            role: 'option',
+            'aria-selected': active,
+          }),
+      style: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        transform: `translateY(${virtualRow.start}px)`,
+      } as const,
+      ...handlers,
+    };
+
+    const renderedItem = React.cloneElement(
+      props.onRender({
+        item,
+        active,
+      }),
+      {
+        ref: virtualRow.measureRef,
+      }
+    );
+
+    if (url) {
+      return (
+        <a
+          key={virtualRow.index}
+          href={typeof url === 'function' ? url(search) : url}
+          target={target}
+          ref={legacyKeyboard && active ? setActiveRow : undefined}
+          {...childProps}
+        >
+          {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
+          {renderedItem}
+        </a>
+      );
+    }
+
+    return (
+      <div key={virtualRow.index} ref={legacyKeyboard && active ? setActiveRow : undefined} {...childProps}>
+        {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
+        {renderedItem}
+      </div>
+    );
+  };
+
+  const renderRows = () => rowVirtualizer.virtualItems.map(renderRow);
+
   return (
     <div
       ref={(element) => {
@@ -213,84 +293,7 @@ export const KBarResults = (props: KBarResultsProps) => {
           width: '100%',
         }}
       >
-        {rowVirtualizer.virtualItems.map((virtualRow) => {
-          const rawItem = itemsRef.current[virtualRow.index];
-          const isStringItem = typeof rawItem === 'string';
-
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const item = rawItem as ActionImpl & {
-            url?: string | URLCallback;
-            target?: React.HTMLAttributeAnchorTarget;
-          };
-
-          // ActionImpl constructor copies all properties from action onto ActionImpl
-          // so our url property is secretly there, but completely untyped
-          // Preferably this change is upstreamed and ActionImpl has this
-          const { target, url } = item;
-          const groupLabel = itemGroupLabels[virtualRow.index];
-
-          const handlers = !isStringItem && {
-            onPointerMove: () =>
-              pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
-            onPointerDown: () => query.setActiveIndex(virtualRow.index),
-            onClick: (ev: React.MouseEvent) => {
-              // Report before perform, since perform may close the palette / navigate away
-              props.onItemSelected?.(item, virtualRow.index);
-              execute(ev, item);
-            },
-          };
-          const active = !isStringItem && virtualRow.index === activeIndex;
-
-          const childProps = {
-            ...(isStringItem
-              ? { 'aria-hidden': true }
-              : {
-                  id: getListboxItemId(virtualRow.index),
-                  role: 'option',
-                  'aria-selected': active,
-                }),
-            style: {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${virtualRow.start}px)`,
-            } as const,
-            ...handlers,
-          };
-
-          const renderedItem = React.cloneElement(
-            props.onRender({
-              item,
-              active,
-            }),
-            {
-              ref: virtualRow.measureRef,
-            }
-          );
-
-          if (url) {
-            return (
-              <a
-                key={virtualRow.index}
-                href={typeof url === 'function' ? url(search) : url}
-                target={target}
-                ref={legacyKeyboard && active ? setActiveRow : undefined}
-                {...childProps}
-              >
-                {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
-                {renderedItem}
-              </a>
-            );
-          }
-
-          return (
-            <div key={virtualRow.index} ref={legacyKeyboard && active ? setActiveRow : undefined} {...childProps}>
-              {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
-              {renderedItem}
-            </div>
-          );
-        })}
+        {renderRows()}
       </div>
     </div>
   );
