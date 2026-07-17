@@ -340,7 +340,7 @@ export const PoliciesTree = ({
         isOpen={isResetModalOpen}
         onConfirm={async () => {
           await deleteRoutingTree.execute({
-            name: resetRoute?.[ROUTES_META_SYMBOL]?.name ?? resetRoute?.name ?? ROOT_ROUTE_NAME,
+            name: resetRoute?.name ?? ROOT_ROUTE_NAME,
             resourceVersion: resetRoute?.[ROUTES_META_SYMBOL]?.resourceVersion,
           });
           refetchPolicies();

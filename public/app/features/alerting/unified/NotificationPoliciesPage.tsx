@@ -240,10 +240,11 @@ function PolicyTreeTab() {
     if (selectedPolicyTreeNames.length === 0) {
       return sortedPolicies;
     }
-    return sortedPolicies.filter((policy) => {
-      const name = policy.name ?? ROOT_ROUTE_NAME;
-      return selectedPolicyTreeNames.includes(name);
-    });
+    // The filter selector stores the raw backend tree name (e.g. "default"), while listed policies carry the
+    // canonicalized name ("user-defined"). Canonicalize both sides so selecting the default tree matches it.
+    const canonicalize = (name?: string) => (isDefaultRoutingTreeName(name) ? ROOT_ROUTE_NAME : name);
+    const selectedCanonical = new Set(selectedPolicyTreeNames.map(canonicalize));
+    return sortedPolicies.filter((policy) => selectedCanonical.has(canonicalize(policy.name)));
   }, [sortedPolicies, selectedPolicyTreeNames]);
 
   const hasActiveFilters = Boolean(contactPointFilter) || labelMatchersFilter.length > 0;

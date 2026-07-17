@@ -1,7 +1,8 @@
 import { produce } from 'immer';
+import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
@@ -24,6 +25,7 @@ import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
+import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
   type AlertManagerDataSourceJsonData,
@@ -60,7 +62,7 @@ import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
 
 jest.mock('./useRouteGroupsMatcher');
 
-setupMswServer();
+const server = setupMswServer();
 
 const updateTiming = async (selectElement: HTMLElement, value: string): Promise<void> => {
   const user = userEvent.setup();
@@ -85,21 +87,30 @@ const openEditModal = async (
 };
 
 // This renders the notification policies tree/list page.
-const renderNotificationPolicies = (alertManagerSourceName: string = GRAFANA_RULES_SOURCE_NAME) =>
-  render(
+const renderNotificationPolicies = (
+  alertManagerSourceName: string = GRAFANA_RULES_SOURCE_NAME,
+  extraParams: Record<string, string> = {}
+) => {
+  const params = new URLSearchParams();
+  if (alertManagerSourceName) {
+    params.set(ALERTMANAGER_NAME_QUERY_KEY, alertManagerSourceName);
+  }
+  for (const [key, value] of Object.entries(extraParams)) {
+    params.set(key, value);
+  }
+  const query = params.toString();
+  return render(
     <>
       <AppNotificationList />
       <NotificationPolicies />
     </>,
     {
       historyOptions: {
-        initialEntries: [
-          '/alerting/routes' +
-            (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : ''),
-        ],
+        initialEntries: ['/alerting/routes' + (query ? `?${query}` : '')],
       },
     }
   );
+};
 
 // This renders the dedicated policy editor page for a single named policy.
 const renderPolicyPage = (routeName: string) => () =>
@@ -726,6 +737,68 @@ describe.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
       // assert the default tree (presented under `backendName`) shows the friendly "Default policy" label.
       const roots = await ui.rootRouteContainer.findAll();
       expect(roots.some((root) => within(root).queryByText(/default policy/i))).toBe(true);
+    });
+
+    it('keeps the default policy visible when the policy-tree filter selects it by the backend name', async () => {
+      // The filter selector stores the raw backend name; the default policy carries the canonical name.
+      // Selecting the default tree must still match it (regression: it was excluded when the backend emits "default").
+      renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME, { includeTree: backendName });
+      const roots = await ui.rootRouteContainer.findAll();
+      // Only the default tree matches this filter, and it must still render as "Default policy"...
+      expect(roots).toHaveLength(1);
+      expect(within(roots[0]).getByText(/default policy/i)).toBeInTheDocument();
+      // ...while the named fixture trees are filtered out (proves this is real filtering, not "show everything").
+      expect(screen.queryByText('Managed Policy - Empty Provisioned')).not.toBeInTheDocument();
+    });
+  }
+);
+
+describe.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
+  'resetting the default policy always addresses ROOT_ROUTE_NAME on the wire (backend emits "%s")',
+  (backendName) => {
+    beforeEach(() => {
+      setupDataSources(...Object.values(dataSources));
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsWrite,
+        ...PERMISSIONS_NOTIFICATION_POLICIES,
+      ]);
+      resetRoutingTreeMap();
+      presentDefaultRoutingTreeAs(backendName);
+      // Trim the other fixture trees so only the default tree renders — the default policy's more-actions
+      // button is then unambiguous (in the multi-tree view every root carries the same "default policy" label).
+      deleteRoutingTree('Managed Policy - Empty Provisioned');
+      deleteRoutingTree('Managed Policy - Override + Inherit');
+      deleteRoutingTree('Managed Policy - Many Top-Level');
+      deleteRoutingTree('Managed Policy - Deeply Nested');
+    });
+
+    afterEach(() => {
+      resetRoutingTreeMap();
+    });
+
+    it('deletes the default routing tree via ROOT_ROUTE_NAME, never the backend alias', async () => {
+      const deletedNames: string[] = [];
+      server.use(
+        http.delete(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`, ({ params }) => {
+          deletedNames.push(String(params.name));
+          return new HttpResponse(null, { status: 200 });
+        })
+      );
+
+      const user = userEvent.setup();
+      renderNotificationPolicies();
+      await ui.rootRouteContainer.find();
+
+      await user.click(await ui.moreActionsDefaultPolicy.find());
+      await user.click(await screen.findByRole('menuitem', { name: 'Reset' }));
+      const dialog = await screen.findByRole('dialog');
+      // ConfirmModal gates the confirm button behind typing the confirmation text.
+      await user.type(within(dialog).getByRole('textbox'), 'Reset');
+      await user.click(within(dialog).getByRole('button', { name: 'Reset' }));
+
+      // Wire name is canonical regardless of what the backend emits.
+      await waitFor(() => expect(deletedNames).toEqual([ROOT_ROUTE_NAME]));
     });
   }
 );
