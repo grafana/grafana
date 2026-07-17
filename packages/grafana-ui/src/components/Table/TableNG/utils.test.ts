@@ -30,7 +30,7 @@ import {
   buildInspectValue,
   buildNestedColumnWidthsMap,
   calculateFooterHeight,
-  compileFrameToRecordsV2 as compileFrameToRecords,
+  compileFrameToRecords,
   computeColWidths,
   createTypographyContext,
   displayJsonValue,
@@ -224,7 +224,7 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame);
       expect(records).toHaveLength(2);
       // Columns are exposed via prototype getters, not own properties, so assert with
@@ -252,7 +252,7 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const frameToRecords = compileFrameToRecords(parentFrame, 'nested');
+      const frameToRecords = compileFrameToRecords(parentFrame.fields.map(getDisplayName), 'nested');
       const records = frameToRecords(parentFrame);
       expect(records).toHaveLength(4);
       expect(records[0]).toMatchObject({ __depth: 0, __index: 0, id: 100 });
@@ -269,7 +269,7 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame, 3);
 
       expect(records).toHaveLength(2);
@@ -285,7 +285,7 @@ describe('TableNG utils', () => {
         ],
       } as unknown as DataFrame;
 
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame);
 
       expect(records).toHaveLength(3);
@@ -299,7 +299,7 @@ describe('TableNG utils', () => {
         fields: [],
       } as unknown as DataFrame;
 
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame, 3);
 
       expect(records).toHaveLength(0);
@@ -1293,7 +1293,7 @@ describe('TableNG utils', () => {
         },
       ];
       const frame = createDataFrame({ fields });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       rows = frameToRecords(frame);
       measurers = [
         {
@@ -1416,7 +1416,7 @@ describe('TableNG utils', () => {
           },
         ];
         const frame = createDataFrame({ fields: timeFields });
-        const frameToRecords = compileFrameToRecords(frame);
+        const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
         const timeRows = frameToRecords(frame);
 
         const timeMeasurer = {
@@ -1442,7 +1442,7 @@ describe('TableNG utils', () => {
           },
         ];
         const frame = createDataFrame({ fields: stringFields });
-        const frameToRecords = compileFrameToRecords(frame);
+        const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
         const stringRows = frameToRecords(frame);
 
         const stringMeasurer = {
@@ -1625,7 +1625,7 @@ describe('TableNG utils', () => {
           { name: 'value', values: [30, 20, 10] },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const sorted = applySort(frameToRecords(frame), frame.fields, [], getColumnTypes(frame.fields), false);
       expect(sorted).toMatchObject([
         { time: 1, value: 30 },
@@ -1646,7 +1646,7 @@ describe('TableNG utils', () => {
         { columnKey: 'time', direction: 'ASC' },
         { columnKey: 'value2', direction: 'DESC' },
       ];
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
       expect(sorted).toMatchObject([
         { time: 1, value: 10, value2: 40 },
@@ -1663,7 +1663,7 @@ describe('TableNG utils', () => {
           { name: 'value', values: [10, 20, 30] },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const rows = frameToRecords(frame);
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
       const sorted = applySort(rows, frame.fields, sortColumns, getColumnTypes(frame.fields), false);
@@ -1695,7 +1695,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName), 'nested');
       const sorted = applySort(
         frameToRecords(frame),
         frame.fields,
@@ -1728,7 +1728,7 @@ describe('TableNG utils', () => {
 
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
 
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
 
       expect(sorted).toMatchObject([
@@ -1747,7 +1747,7 @@ describe('TableNG utils', () => {
           { name: 'value', values: [10, 20, 30] },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const { filteredRows: filtered } = applyFilter(frameToRecords(frame), {}, frame.fields, false);
       expect(filtered).toMatchObject([
         { time: 1, value: 10 },
@@ -1773,7 +1773,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame);
       const { filteredRows: filtered } = applyFilter(
         records,
@@ -1804,7 +1804,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const { filteredRows: filtered } = applyFilter(
         frameToRecords(frame),
         {
@@ -1843,7 +1843,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName), 'nested');
       const records = frameToRecords(frame);
       const { filteredRows: filtered } = applyFilter(
         records,
@@ -1878,7 +1878,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName), 'nested');
       const records = frameToRecords(frame, 5);
 
       // Bug: no parentIndex arg — scoped filter is ignored, all rows returned
@@ -1919,7 +1919,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName), 'nested');
       const records = frameToRecords(frame, 3);
       const { filteredRows: filtered } = applyFilter(
         records,
@@ -1964,7 +1964,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame);
       const { filteredRows: filtered } = applyFilter(
         records,

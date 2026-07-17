@@ -1,0 +1,73 @@
+package clientmiddleware
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
+	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
+)
+
+// NewHTTPCaptureMiddleware creates a backend.HandlerMiddleware that captures HTTP traffic
+// for QueryData calls when a harcapture.Buffer is present in the context.
+//
+// For core (in-process) plugins it injects a capturing RoundTripper as contextual middleware, so the
+// existing ContextualMiddleware in the HTTP client chain picks it up. (External out-of-process gRPC
+// plugins will be captured separately, in a follow-up.)
+func NewHTTPCaptureMiddleware() backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+		return &HTTPCaptureMiddleware{BaseHandler: backend.NewBaseHandler(next)}
+	})
+}
+
+type HTTPCaptureMiddleware struct {
+	backend.BaseHandler
+}
+
+func (m *HTTPCaptureMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	buf := harcapture.FromContext(ctx)
+	if buf == nil {
+		return m.BaseHandler.QueryData(ctx, req)
+	}
+
+	// Inject capturing RoundTripper for core (in-process) plugins.
+	captureMW := sdkhttpclient.NamedMiddlewareFunc("http-capture", func(_ sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return sdkhttpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
+			// Buffer the request body before it is consumed by the transport.
+			var bodyBytes []byte
+			if r.Body != nil {
+				var readErr error
+				bodyBytes, readErr = io.ReadAll(r.Body)
+				_ = r.Body.Close()
+				if readErr != nil {
+					// Fail the request rather than silently forwarding a truncated body to the
+					// datasource; the diagnostics run surfaces the error.
+					return nil, fmt.Errorf("har capture: reading request body: %w", readErr)
+				}
+				r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			}
+
+			started := time.Now()
+			resp, err := next.RoundTrip(r)
+			elapsed := time.Since(started)
+
+			// Capture every attempt, including transport-level failures (connection refused,
+			// timeouts, etc.) where err is non-nil and resp is nil -- those are exactly the
+			// requests worth seeing in a diagnostics bundle. Restore the request body first so
+			// buildEntry can read it.
+			r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			buf.AddEntry(r, resp, err, started, elapsed)
+
+			return resp, err
+		})
+	})
+	ctx = sdkhttpclient.WithContextualMiddleware(ctx, captureMW)
+
+	return m.BaseHandler.QueryData(ctx, req)
+}

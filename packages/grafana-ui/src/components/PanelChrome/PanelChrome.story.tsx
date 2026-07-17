@@ -348,7 +348,9 @@ export const Basic: StoryFn<typeof PanelChrome> = (overrides?: Partial<PanelChro
     width: 400,
     height: 200,
     title: 'Very long title that should get ellipsis when there is no more space',
-    description,
+    description:
+      overrides?.description ??
+      'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
     menu,
     children: () => undefined,
   };
@@ -373,11 +375,9 @@ const LoadingIcon = [
 
 const leftItems = { LoadingIcon, Default };
 
-const description =
-  'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.';
-
 Basic.argTypes = {
   description: { control: { type: 'text' } },
+  title: { control: { type: 'text' } },
   subtitle: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),

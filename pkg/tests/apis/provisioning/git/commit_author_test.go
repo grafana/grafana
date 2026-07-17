@@ -12,7 +12,6 @@ import (
 
 func TestIntegrationGit_Files_CommitAuthor(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := t.Context()
 
 	repoName := "commit-author"
 	_, local := helper.CreateGitRepo(t, repoName, nil, "write")
@@ -28,7 +27,7 @@ func TestIntegrationGit_Files_CommitAuthor(t *testing.T) {
 		Param("message", "Create dashboard.json").
 		Body(common.DashboardJSON("commit-author-dash", "Commit Author", 1)).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 	require.NoError(t, result.Error(), "should create file")
 
 	name, email := user.Identity.GetName(), user.Identity.GetEmail()

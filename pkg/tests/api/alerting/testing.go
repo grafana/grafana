@@ -1521,6 +1521,15 @@ func (a apiClient) RawConvertPrometheusDeleteAlertmanagerConfig(t *testing.T, he
 	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
 }
 
+func (a apiClient) RawConvertPrometheusPromoteAlertmanagerConfig(t *testing.T, identifier string) (apimodels.ConvertAlertmanagerResponse, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/convert/api/v1/alerts/%s/promote", a.url, identifier), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.ConvertAlertmanagerResponse](t, req, http.StatusAccepted)
+}
+
 func (a apiClient) RawConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle string, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
 	t.Helper()
 
