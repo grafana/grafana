@@ -37,7 +37,7 @@ export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setC
   const CONNECTION_LINE_ID = useMemo(() => `connectionLineId-${headId}`, [headId]);
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = config.theme2.colors.text.primary;
-  const defaultArrowSize = 2;
+  const defaultArrowSize = 4;
   const defaultArrowDirection: DirectionDimensionConfig = {
     mode: DirectionDimensionMode.Fixed,
     fixed: ConnectionDirection.Forward,
