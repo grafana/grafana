@@ -26,7 +26,8 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -34,8 +35,8 @@ import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
-import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
+import { ScrollDirection } from '../infiniteScrollUtils';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { type LogLineMenuCustomItem } from './LogLineMenu';
@@ -322,7 +323,7 @@ export const LogLineContext = memo(
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
       : true;
 
-    // @todo: Remove when the LogRows are deprecated
+    // @todo: Remove when legacy LogRows are fully deleted
     const logListModel = useMemo(
       () =>
         log instanceof LogListModel
@@ -338,13 +339,11 @@ export const LogLineContext = memo(
 
     useEffect(() => {
       if (log.datasourceUid) {
-        getDataSourceSrv()
-          .get({ uid: log.datasourceUid })
-          .then((ds) => {
-            if (hasLogsContextSupport(ds)) {
-              setDatasourceInstance(ds);
-            }
-          });
+        getDataSourceInstance({ uid: log.datasourceUid }).then((ds) => {
+          if (hasLogsContextSupport(ds)) {
+            setDatasourceInstance(ds);
+          }
+        });
       }
     }, [log.datasourceUid]);
 

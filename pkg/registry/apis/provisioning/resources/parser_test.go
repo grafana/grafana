@@ -116,6 +116,40 @@ spec:
 		require.Equal(t, "v0alpha1", dash.GVR.Version)
 	})
 
+	t.Run("strips storage-owned dashboard fields including the deprecated internal ID", func(t *testing.T) {
+		// spec uid/version/id and the deprecatedInternalID label are owned by the
+		// storage layer, not the repository. Leaving the ID label on a create would
+		// bypass the eventually-consistent uniqueness guard and can reintroduce
+		// duplicate IDs when several dashboards sync together.
+		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-strip
+  labels:
+    grafana.app/deprecatedInternalID: "42"
+    keep-me: "yes"
+spec:
+  uid: should-be-removed
+  version: 7
+  id: 42
+  title: Test dashboard
+`),
+		})
+		require.NoError(t, err)
+
+		_, hasUID, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "uid")
+		require.False(t, hasUID, "spec.uid should be stripped")
+		_, hasVersion, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "version")
+		require.False(t, hasVersion, "spec.version should be stripped")
+		_, hasID, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "id")
+		require.False(t, hasID, "spec.id should be stripped")
+
+		require.Zero(t, dash.Meta.GetDeprecatedInternalID(), "deprecatedInternalID label should be cleared") // nolint:staticcheck
+		require.NotContains(t, dash.Obj.GetLabels(), utils.LabelKeyDeprecatedInternalID, "internal ID label should be removed")
+		require.Equal(t, "yes", dash.Obj.GetLabels()["keep-me"], "other labels should be preserved")
+	})
+
 	t.Run("validate proper folder metadata is set", func(t *testing.T) {
 		testCases := []struct {
 			name           string
@@ -202,6 +236,7 @@ spec:
 `),
 		})
 		require.NoError(t, err)
+		require.True(t, parsed.FolderScoped, "folder-capable kinds must be marked folder-scoped")
 		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Meta.GetFolder(),
 			"dashboards must continue to get a folder annotation")
 		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder])
@@ -219,6 +254,8 @@ spec:
 `),
 		})
 		require.NoError(t, err)
+		require.False(t, parsed.FolderScoped,
+			"org-scoped kinds must be marked not folder-scoped so the dual writer skips folder stamping")
 		require.Empty(t, parsed.Meta.GetFolder(),
 			"org-scoped resources must not have a folder annotation stamped on them")
 		_, hasFolder := parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder]

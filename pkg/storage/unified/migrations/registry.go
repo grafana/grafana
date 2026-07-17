@@ -46,9 +46,9 @@ type MigrationDefinition struct {
 	SkipWhenMissing bool                                  // For fully migrated resources, the table may not exist at all
 	// ResourceGroupsFunc, when set, is called before opening the bulk stream to
 	// resolve the actual groups present in the namespace, replacing the static
-	// Resources list for stream pre-authorization. The SearchClient is provided
+	// Resources list for stream pre-authorization. The ResourceClient is provided
 	// so implementations can also account for stale groups in unified storage.
-	ResourceGroupsFunc func(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error)
+	ResourceGroupsFunc func(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error)
 }
 
 // CreateValidators creates validators from the stored factory functions.
@@ -175,7 +175,7 @@ func (r *MigrationRegistry) HasResource(gr schema.GroupResource) bool {
 // GetResourceGroupsFunc returns the ResourceGroupsFunc for the definition that
 // covers the given resource, or nil if none is registered or the definition has
 // no dynamic resolver.
-func (r *MigrationRegistry) GetResourceGroupsFunc(gr schema.GroupResource) func(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error) {
+func (r *MigrationRegistry) GetResourceGroupsFunc(gr schema.GroupResource) func(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, def := range r.definitions {

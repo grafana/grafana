@@ -9,15 +9,19 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { BrandingContext, type BrandingContextValue } from '@grafana/ui/internal';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { FeatureControlContextProvider } from './core/components/AppChrome/FeatureControl/FeatureControlProvider';
+import { Branding } from './core/components/Branding/Branding';
 import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { type RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
@@ -28,6 +32,14 @@ import { RouterWrapper } from './routes/RoutesWrapper';
 interface AppWrapperProps {
   context: GrafanaContextType;
 }
+
+// Reads Branding.LoginLogo at render time so custom branding applied by enterprise at startup
+// is reflected regardless of module init order. Defined at module scope so the context value
+// keeps a stable identity across renders.
+function AppLogo(props: { className?: string }) {
+  return <Branding.LoginLogo {...props} />;
+}
+const brandingContextValue: BrandingContextValue = { AppLogo };
 
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
@@ -100,6 +112,8 @@ export function AppWrapper({ context }: AppWrapperProps) {
     reportInteraction('command_palette_action_selected', {
       actionId: action.id,
       actionName: action.name,
+      actionSection: action.section,
+      interactionMode: getCommandPaletteInputMode(),
     });
   };
 
@@ -123,29 +137,33 @@ export function AppWrapper({ context }: AppWrapperProps) {
         <OpenFeatureProvider client={getFeatureFlagClient()}>
           <GrafanaContext.Provider value={context}>
             <ThemeProvider value={config.theme2}>
-              <CacheProvider name={iconCacheID}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <MaybeTimeRangeProvider>
-                    <ScopesContextProvider>
-                      <ExtensionRegistriesProvider registries={registries}>
-                        <ExtensionsSidebarProvider>
-                          <UNSAFE_PortalProvider getContainer={getPortalContainer}>
-                            <GlobalStyles />
-                            <div className="grafana-app">
-                              <RouterWrapper {...routerWrapperProps} />
-                              <LiveConnectionWarning />
-                              <PortalContainer />
-                            </div>
-                          </UNSAFE_PortalProvider>
-                        </ExtensionsSidebarProvider>
-                      </ExtensionRegistriesProvider>
-                    </ScopesContextProvider>
-                  </MaybeTimeRangeProvider>
-                </KBarProvider>
-              </CacheProvider>
+              <BrandingContext.Provider value={brandingContextValue}>
+                <CacheProvider name={iconCacheID}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <MaybeTimeRangeProvider>
+                      <ScopesContextProvider>
+                        <ExtensionRegistriesProvider registries={registries}>
+                          <ExtensionsSidebarProvider>
+                            <FeatureControlContextProvider>
+                              <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                                <GlobalStyles />
+                                <div className="grafana-app">
+                                  <RouterWrapper {...routerWrapperProps} />
+                                  <LiveConnectionWarning />
+                                  <PortalContainer />
+                                </div>
+                              </UNSAFE_PortalProvider>
+                            </FeatureControlContextProvider>
+                          </ExtensionsSidebarProvider>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContextProvider>
+                    </MaybeTimeRangeProvider>
+                  </KBarProvider>
+                </CacheProvider>
+              </BrandingContext.Provider>
             </ThemeProvider>
           </GrafanaContext.Provider>
         </OpenFeatureProvider>

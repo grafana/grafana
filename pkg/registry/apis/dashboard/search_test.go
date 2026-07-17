@@ -952,6 +952,34 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"sort ascending dashboard-specific field": {
+			queryString: "sort=views_total",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "fields.views_total", Desc: false}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort descending dashboard-specific field": {
+			queryString: "sort=-views_total",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "fields.views_total", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
 		"facet fields": {
 			queryString: "facet=tags&facet=folder",
 			expected: &resourcepb.ResourceSearchRequest{
@@ -1316,6 +1344,12 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return nil, nil
 }
+func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (*resourcepb.GetResourceDailyStatsResponse, error) {
+	return nil, nil
+}
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
 	return nil, nil
 }
@@ -1344,6 +1378,10 @@ func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts 
 	return nil, nil
 }
 func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, nil
+}
+
+func (m *MockClient) ListStoredResources(ctx context.Context, in *resourcepb.ListStoredResourcesRequest, opts ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error) {
 	return nil, nil
 }
 func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {

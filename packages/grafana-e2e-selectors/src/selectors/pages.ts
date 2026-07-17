@@ -202,6 +202,11 @@ export const versionedPages = {
           },
         },
       },
+      outline: {
+        searchInput: {
+          '13.1.0': 'data-testid Dashboard Outline Search input',
+        },
+      },
     },
     DashNav: {
       nav: {
@@ -504,6 +509,9 @@ export const versionedPages = {
             },
           },
           QueryVariable: {
+            applyButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor apply button',
+            },
             closeButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor close button',
             },

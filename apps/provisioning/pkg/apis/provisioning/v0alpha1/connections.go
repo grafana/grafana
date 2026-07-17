@@ -148,6 +148,10 @@ type ConnectionSpec struct {
 	Webhook *ConnectionWebhookConfig `json:"webhook,omitempty"`
 }
 
+func (c *ConnectionSpec) IsGitHub() bool {
+	return c.GitHub != nil || c.GitHubEnterprise != nil
+}
+
 func (ConnectionSpec) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionSpec"
 }
@@ -172,6 +176,10 @@ type ConnectionStatus struct {
 
 	// The connection health status
 	Health HealthStatus `json:"health"`
+
+	// Token holds metadata about the last generated connection token, used to avoid
+	// regenerating a token whose secret was written recently but is not yet readable.
+	Token TokenStatus `json:"token,omitempty"`
 }
 
 func (ConnectionStatus) OpenAPIModelName() string {

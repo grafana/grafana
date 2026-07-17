@@ -37,6 +37,7 @@ export enum TestDataQueryType {
   USA = 'usa',
   VariablesQuery = 'variables-query',
   ErrorWithSource = 'error_with_source',
+  ErrorsAndNotices = 'errors_and_notices',
 }
 
 export interface StreamingQuery {
@@ -128,4 +129,6 @@ export interface TestDataDataQuery extends common.DataQuery {
   errorProbability?: number;
   errorMessage?: string;
   errorStatusCode?: number;
+  queryDelay?: string;
+  queryDelayVariability?: number;
 }

@@ -143,6 +143,8 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 }
 ```
 
+Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization (requires the **`dashboardSectionVariables`** feature toggle; when off, `variables` in the payload are ignored).
+
 **Response:**
 
 ```json
@@ -158,7 +160,7 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 
 ### `UPDATE_ROW`
 
-Update a row's properties. Only provided fields are changed.
+Update a row's properties. Only provided fields are changed. Optional **`spec.variables`** sets or clears section variables for the row (`[]` clears when the toggle is on; omit to leave unchanged).
 
 **Request:**
 
@@ -308,6 +310,8 @@ Add a tab to the layout. If the target is not a TabsLayout, the existing content
 }
 ```
 
+Tab `spec` may include optional **`variables`** for section-scoped template variables on that tab (same rules as row `variables` and the **`dashboardSectionVariables`** toggle).
+
 **Response:**
 
 ```json
@@ -323,7 +327,7 @@ Add a tab to the layout. If the target is not a TabsLayout, the existing content
 
 ### `UPDATE_TAB`
 
-Update a tab's properties. Only provided fields are changed.
+Update a tab's properties. Only provided fields are changed. Optional **`spec.variables`** sets or clears section variables on the tab (`[]` clears when the toggle is on; omit to leave unchanged).
 
 **Request:**
 
@@ -607,8 +611,10 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 
 **Request (with runtime status and data schema):**
 
+`includeStatus` and `includeSchema` are independent; request either or both.
+
 ```json
-{ "type": "LIST_PANELS", "payload": { "includeStatus": true } }
+{ "type": "LIST_PANELS", "payload": { "includeStatus": true, "includeSchema": true } }
 ```
 
 **Response:**
@@ -637,7 +643,15 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
             "element": { "kind": "ElementReference", "name": "panel-1" }
           }
         },
-        "status": { "isLoading": false, "hasError": false, "hasNoData": false },
+        "status": {
+          "loadingState": "Error",
+          "hasError": true,
+          "hasNoData": false,
+          "errors": [
+            { "source": "query", "message": "parse error: unexpected } in query", "refId": "A", "type": "unknown" }
+          ],
+          "notices": [{ "severity": "warning", "text": "Query returned partial data" }]
+        },
         "dataSchema": [
           {
             "name": "response_time",
@@ -661,7 +675,16 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 }
 ```
 
-`status` and `dataSchema` are only present when `includeStatus` is `true` and the panel has a data provider. `dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.
+`status` is present only when `includeStatus` is `true`, and `dataSchema` only when `includeSchema` is `true` (and the panel has a data provider). Both are a runtime side-channel: never part of the saved v2 dashboard spec (`element`), only the read result.
+
+`status` reports the panel's live query health:
+
+- `loadingState` — the raw scene loading state (`NotStarted`, `Loading`, `Streaming`, `Done`, `Error`). Whether a panel is loading is derivable from this, so no separate `isLoading` is returned.
+- `hasError` / `hasNoData` — reported explicitly because `loadingState` does not imply them: a `Done` panel can still carry errors (a query error or an error-severity notice) or return no data.
+- `errors` — every panel error in one structured array. `source` (`query` / `plugin` / `notice`) says where the error came from; `message` plus `refId`/`type` (query errors only) are a curated subset of `@grafana/data`'s `DataQueryError`. Consolidates all channels: query/datasource errors, error-severity data-frame notices, and plugin failures (unknown/missing viz type, library-panel load failure, or a module that fails to compile).
+- `notices` — non-error (`info` / `warning`) data-frame notices, deduped across frames. Error-severity notices are folded into `errors` instead.
+
+`dataSchema` contains the fields each result frame produced (`name`, `type`, `labels`) — metadata, not values. Use it to get the real field (column) names before referencing a field by name in a transformation (`organize`, `calculateField`, `filterFieldsByName`, `sortBy`) or a `byName` field override, so you target names that actually exist.
 
 ````
 
@@ -740,6 +763,8 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ## Variables
 
+Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set **only when `dashboardSectionVariables` is enabled**. When the toggle is off, `parentPath` is ignored and commands behave as dashboard-scope (`"/"`). **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section (with section variables enabled).
+
 ### `ADD_VARIABLE`
 
 **Request:**
@@ -751,6 +776,21 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
     "variable": {
       "kind": "CustomVariable",
       "spec": { "name": "env", "query": "dev,staging,prod", "multi": true }
+    }
+  }
+}
+```
+
+**Add a section variable on the first row:**
+
+```json
+{
+  "type": "ADD_VARIABLE",
+  "payload": {
+    "parentPath": "/rows/0",
+    "variable": {
+      "kind": "CustomVariable",
+      "spec": { "name": "region", "query": "eu,us", "multi": false }
     }
   }
 }
@@ -774,6 +814,8 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 }
 ```
 
+For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`). With `dashboardSectionVariables` disabled, `changes[0].path` remains dashboard-scoped (for example `"/variables/env"`).
+
 ### `UPDATE_VARIABLE`
 
 **Request:**
@@ -786,6 +828,22 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
     "variable": {
       "kind": "CustomVariable",
       "spec": { "name": "env", "query": "dev,staging,prod,canary", "multi": true }
+    }
+  }
+}
+```
+
+**Update a variable on the first row:**
+
+```json
+{
+  "type": "UPDATE_VARIABLE",
+  "payload": {
+    "parentPath": "/rows/0",
+    "name": "region",
+    "variable": {
+      "kind": "CustomVariable",
+      "spec": { "name": "region", "query": "eu,us,apac", "multi": false }
     }
   }
 }
@@ -823,6 +881,15 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 }
 ```
 
+**Remove a section variable:**
+
+```json
+{
+  "type": "REMOVE_VARIABLE",
+  "payload": { "parentPath": "/rows/0", "name": "region" }
+}
+```
+
 **Response:**
 
 ```json
@@ -839,6 +906,12 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ```json
 { "type": "LIST_VARIABLES", "payload": {} }
+```
+
+**List variables for a row section:**
+
+```json
+{ "type": "LIST_VARIABLES", "payload": { "parentPath": "/rows/0" } }
 ```
 
 **Response:**
@@ -868,11 +941,40 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ---
 
+## Settings
+
+### `UPDATE_DASHBOARD_SETTINGS`
+
+Update dashboard-level settings. Requires edit permissions. All fields are optional; only the fields provided are changed. `tags` and `links` replace the full list. Time-related fields are nested under `timeSettings` (matching the v2 dashboard spec).
+
+**Request:**
+
+```json
+{
+  "type": "UPDATE_DASHBOARD_SETTINGS",
+  "payload": {
+    "title": "Production Overview",
+    "description": "Key production service metrics",
+    "tags": ["production", "sre"],
+    "editable": true,
+    "cursorSync": "Crosshair",
+    "links": [{ "title": "Runbook", "url": "https://runbooks.example.com", "type": "link", "targetBlank": true }],
+    "timeSettings": { "from": "now-7d", "to": "now", "autoRefresh": "1m", "timezone": "utc" },
+    "liveNow": false,
+    "preload": true
+  }
+}
+```
+
+`cursorSync` accepts `"Off"`, `"Crosshair"`, or `"Tooltip"`. `cursorSync` and `liveNow` are behavior-based; when the dashboard has no `CursorSync` / `LiveNowTimer` behavior a warning is returned. The response `data` contains the updated settings (same shape as `GET_DASHBOARD_INFO`).
+
+---
+
 ## Metadata
 
 ### `GET_DASHBOARD_INFO`
 
-Get dashboard metadata. Read-only, no permissions required.
+Get dashboard identity/folder metadata plus every dashboard-level setting that `UPDATE_DASHBOARD_SETTINGS` can write. Read-only, no permissions required.
 
 **Request:**
 
@@ -888,8 +990,14 @@ Get dashboard metadata. Read-only, no permissions required.
   "data": {
     "title": "My Dashboard",
     "description": "Dashboard description",
-    "uid": "abc123",
     "tags": ["production", "monitoring"],
+    "editable": true,
+    "cursorSync": "Crosshair",
+    "links": [{ "title": "Runbook", "url": "https://runbooks.example.com", "type": "link" }],
+    "timeSettings": { "from": "now-6h", "to": "now", "autoRefresh": "30s", "timezone": "utc" },
+    "liveNow": false,
+    "preload": true,
+    "uid": "abc123",
     "folderTitle": "Infrastructure",
     "folderUid": "folder-1",
     "created": "2025-01-15T10:00:00Z",

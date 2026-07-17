@@ -264,6 +264,84 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// cancelOnDataSaveKV wraps a KV and cancels a context the first time a value is
+// durably written to the data section. This simulates a client cancelling the
+// request in the window between the data store commit and the event store
+// write, which used to leave the two stores split: the data was persisted but
+// the event never was, so watch consumers and search never saw the write.
+type cancelOnDataSaveKV struct {
+	KV
+	cancel func()
+	once   sync.Once
+}
+
+func (w *cancelOnDataSaveKV) Save(ctx context.Context, section, key string) (io.WriteCloser, error) {
+	wc, err := w.KV.Save(ctx, section, key)
+	if err != nil || section != kv.DataSection {
+		return wc, err
+	}
+	return &cancelOnCloseWriteCloser{WriteCloser: wc, w: w}, nil
+}
+
+type cancelOnCloseWriteCloser struct {
+	io.WriteCloser
+	w *cancelOnDataSaveKV
+}
+
+func (c *cancelOnCloseWriteCloser) Close() error {
+	err := c.WriteCloser.Close()
+	if err == nil {
+		c.w.once.Do(c.w.cancel)
+	}
+	return err
+}
+
+// TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent
+// verifies that once the data has been durably written, cancelling the client's
+// context does not abort the event write. Otherwise the data store and event
+// store diverge and consumers miss the event through watch and search.
+func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *testing.T) {
+	wrapper := &cancelOnDataSaveKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(wrapper))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	wrapper.cancel = cancel
+
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	const resourceName = "cancel-after-data-save"
+	addEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      resourceName,
+		},
+		Value:  objectToJSONBytes(t, testObj),
+		Object: metaAccessor,
+	}
+
+	rv, err := backend.WriteEvent(ctx, addEvent)
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+
+	// The event must be persisted even though the client cancelled right after
+	// the data was committed.
+	found := false
+	for ev, err := range backend.eventStore.ListSince(context.Background(), 0, SortOrderAsc) {
+		require.NoError(t, err)
+		if ev.Name == resourceName {
+			found = true
+		}
+	}
+	require.True(t, found, "event should be persisted after data save even if the client cancels")
+}
+
 func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 	for _, useChannel := range []bool{true, false} {
 		backend := setupTestStorageBackend(t)
@@ -1836,6 +1914,109 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 	require.Equal(t, rvB, items[1].resourceVersion)
 	require.Equal(t, "resource-a", items[2].name)
 	require.Equal(t, rvA, items[2].resourceVersion)
+}
+
+// TestKvStorageBackend_ListTrash_SortOrder verifies that trash listing honors
+// the sort convention: NotOlderThan yields ascending order (so watermark-based
+// callers advance forward), while the default match stays descending (which the
+// Restore Dashboards UI relies on). It also checks that ascending pagination
+// resumes forward via the continue token.
+func TestKvStorageBackend_ListTrash_SortOrder(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	createAndDelete := func(name string) int64 {
+		obj, err := createTestObjectWithName(name, appsNamespace, "data-"+name)
+		require.NoError(t, err)
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		key := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name}
+		addRV, err := backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED, Key: key,
+			Value: objectToJSONBytes(t, obj), Object: meta,
+		})
+		require.NoError(t, err)
+		delRV, err := backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_DELETED, Key: key,
+			Value: objectToJSONBytes(t, obj), Object: meta, ObjectOld: meta, PreviousRV: addRV,
+		})
+		require.NoError(t, err)
+		return delRV
+	}
+
+	rvA := createAndDelete("resource-a")
+	rvB := createAndDelete("resource-b")
+	rvC := createAndDelete("resource-c")
+	require.Less(t, rvA, rvB)
+	require.Less(t, rvB, rvC)
+
+	// collect lists (name, rv) and the continue token of the last consumed item,
+	// stopping after at most `limit` items.
+	collect := func(req *resourcepb.ListRequest, limit int) ([]string, []int64, string) {
+		var names []string
+		var rvs []int64
+		var token string
+		_, err := backend.ListHistory(ctx, req, func(iter ListIterator) error {
+			for iter.Next() {
+				if err := iter.Error(); err != nil {
+					return err
+				}
+				names = append(names, iter.Name())
+				rvs = append(rvs, iter.ResourceVersion())
+				token = iter.ContinueToken()
+				if limit > 0 && len(names) >= limit {
+					break
+				}
+			}
+			return iter.Error()
+		})
+		require.NoError(t, err)
+		return names, rvs, token
+	}
+
+	baseReq := func() *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources"},
+			},
+			Source: resourcepb.ListRequest_TRASH,
+			Limit:  10,
+		}
+	}
+
+	t.Run("NotOlderThan sorts ascending", func(t *testing.T) {
+		req := baseReq()
+		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+		names, rvs, _ := collect(req, 0)
+		require.Equal(t, []string{"resource-a", "resource-b", "resource-c"}, names)
+		require.Equal(t, []int64{rvA, rvB, rvC}, rvs)
+	})
+
+	t.Run("default match stays descending", func(t *testing.T) {
+		names, _, _ := collect(baseReq(), 0)
+		require.Equal(t, []string{"resource-c", "resource-b", "resource-a"}, names)
+	})
+
+	t.Run("ascending pagination resumes forward", func(t *testing.T) {
+		req := baseReq()
+		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+		req.Limit = 1
+		names, _, token := collect(req, 1)
+		require.Equal(t, []string{"resource-a"}, names)
+		require.NotEmpty(t, token)
+
+		// Direction must be pinned in the token so the next page stays ascending.
+		decoded, err := GetContinueToken(token)
+		require.NoError(t, err)
+		require.True(t, decoded.SortAscending)
+
+		next := baseReq()
+		next.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+		next.NextPageToken = token
+		names2, _, _ := collect(next, 0)
+		require.Equal(t, []string{"resource-b", "resource-c"}, names2)
+	})
 }
 
 func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {

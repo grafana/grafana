@@ -5,7 +5,7 @@ import { type SortingRule } from 'react-table';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Avatar,
   type CellProps,
@@ -217,35 +217,33 @@ const TeamList = () => {
 
           const showDeleteModal = async () => {
             let ownedFolders: DashboardHit[] = [];
-            if (config.featureToggles.teamFolders) {
-              foldersQueryRef.current = triggerFoldersQuery({
-                type: 'folder',
-                ownerReference: [`iam.grafana.app/Team/${original.uid}`],
-                limit: 1,
-              });
+            foldersQueryRef.current = triggerFoldersQuery({
+              type: 'folder',
+              ownerReference: [`iam.grafana.app/Team/${original.uid}`],
+              limit: 1,
+            });
 
-              const { data: foldersData, isError, error } = await foldersQueryRef.current;
+            const { data: foldersData, isError, error } = await foldersQueryRef.current;
 
-              const isAbortError = error && typeof error === 'object' && 'name' in error && error.name === 'AbortError';
+            const isAbortError = error && typeof error === 'object' && 'name' in error && error.name === 'AbortError';
 
-              if (isError && !isAbortError) {
-                notifyApp.error(
-                  t(
-                    'teams.team-list.failed-to-check-folders',
-                    'Failed to check if the team owns folders. Please try again.'
-                  )
-                );
-                console.error(error);
-                return;
-              }
+            if (isError && !isAbortError) {
+              notifyApp.error(
+                t(
+                  'teams.team-list.failed-to-check-folders',
+                  'Failed to check if the team owns folders. Please try again.'
+                )
+              );
+              console.error(error);
+              return;
+            }
 
-              if (isAbortError) {
-                return;
-              }
+            if (isAbortError) {
+              return;
+            }
 
-              if (foldersData?.hits) {
-                ownedFolders = foldersData.hits;
-              }
+            if (foldersData?.hits) {
+              ownedFolders = foldersData.hits;
             }
 
             reportInteraction('grafana_teams_list_delete_button_clicked', {
@@ -307,7 +305,7 @@ const TeamList = () => {
       actions={
         !noTeams ? (
           <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-            <Trans i18nKey="teams.team-list.new-team">New Team</Trans>
+            <Trans i18nKey="teams.team-list.new-team">New team</Trans>
           </LinkButton>
         ) : undefined
       }
@@ -337,6 +335,7 @@ const TeamList = () => {
                 <FilterInput
                   placeholder={t('teams.team-list.placeholder-search-teams', 'Search teams')}
                   value={query}
+                  escapeRegex={false}
                   onChange={setQuery}
                 />
               </InlineField>

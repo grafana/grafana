@@ -16,9 +16,9 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -54,7 +54,7 @@ func TestSearchFallback(t *testing.T) {
 			dual := dualwrite.ProvideServiceForTests(cfg)
 
 			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, cfg, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/searchUsers", nil)
@@ -113,6 +113,12 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return nil, nil
 }
+func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (*resourcepb.GetResourceDailyStatsResponse, error) {
+	return nil, nil
+}
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
 	return nil, nil
 }
@@ -141,6 +147,10 @@ func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts 
 	return nil, nil
 }
 func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, nil
+}
+
+func (m *MockClient) ListStoredResources(ctx context.Context, in *resourcepb.ListStoredResourcesRequest, opts ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error) {
 	return nil, nil
 }
 func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
@@ -208,7 +218,6 @@ func TestSearchSort(t *testing.T) {
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
 				mockClient,
-				featuremgmt.WithFeatures(),
 				&setting.Cfg{},
 				authlib.FixedAccessClient(true),
 			)
@@ -227,13 +236,34 @@ func TestSearchSort(t *testing.T) {
 	}
 }
 
+// The authz model's "user" type defines only get/update/delete relations
+// (schema_core.fga). A check whose verb maps to any other relation fails the
+// whole batch check at the authz server, blanking out all metadata, so guard
+// against re-adding one for the "users" resource.
+func TestUserAccessControlChecksUseSupportedVerbs(t *testing.T) {
+	supportedUserVerbs := map[string]bool{
+		utils.VerbGet:    true,
+		utils.VerbList:   true,
+		utils.VerbWatch:  true,
+		utils.VerbUpdate: true,
+		utils.VerbPatch:  true,
+		utils.VerbDelete: true,
+	}
+	for _, c := range userAccessControlChecks {
+		if c.resource != "users" {
+			continue
+		}
+		assert.True(t, supportedUserVerbs[c.verb],
+			"check %q uses verb %q whose relation is not defined on the authz \"user\" type", c.action, c.verb)
+	}
+}
+
 func TestAccessControl(t *testing.T) {
 	partialClient := &mockAccessClient{
 		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 			allowed := map[string]bool{
-				"org.users:read":         true,
-				"users.permissions:read": true,
-				"users.roles:read":       true,
+				"org.users:read":   true,
+				"users.roles:read": true,
 			}
 			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 			for _, check := range req.Checks {
@@ -335,9 +365,7 @@ func TestAccessControl(t *testing.T) {
 				for _, hit := range hits {
 					require.NotNil(t, hit.AccessControl)
 					assert.True(t, hit.AccessControl["org.users:read"])
-					assert.True(t, hit.AccessControl["users.permissions:read"])
 					assert.True(t, hit.AccessControl["users.roles:read"])
-					assert.False(t, hit.AccessControl["org.users:add"])
 					assert.False(t, hit.AccessControl["org.users:remove"])
 					assert.False(t, hit.AccessControl["org.users:write"])
 				}
@@ -380,7 +408,6 @@ func TestAccessControl(t *testing.T) {
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
 				mockClientWithHits(),
-				featuremgmt.WithFeatures(),
 				&setting.Cfg{},
 				tc.client,
 			)
@@ -460,7 +487,7 @@ func TestParseResults(t *testing.T) {
 		{Name: builders.USER_LAST_SEEN_AT},
 		{Name: builders.USER_ROLE},
 		{Name: builders.USER_DISABLED},
-		{Name: builders.USER_CREATED},
+		{Name: resource.SEARCH_FIELD_CREATED},
 		{Name: legacyIDField},
 	}
 	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli()

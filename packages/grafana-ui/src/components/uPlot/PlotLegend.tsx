@@ -204,6 +204,7 @@ export const PlotLegend = memo(function PlotLegend({
       isSortable={true}
       limit={limit}
       filterAction={!facetedFilterPinned ? filterToggle : undefined}
+      overflow={vizLayoutLegendProps.overflow}
     />
   );
 

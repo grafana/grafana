@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import { PureComponent, type ReactNode, type JSX, createRef } from 'react';
@@ -14,6 +14,7 @@ import {
   LoadingState,
   type PanelData,
   type QueryResultMetaNotice,
+  type ScopedVars,
   type TimeRange,
   getDataSourceRef,
   PluginExtensionPoints,
@@ -75,6 +76,10 @@ export interface Props<TQuery extends DataQuery> {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  /**
+   * Required to resolve section-scoped (row/tab) datasource variables
+   */
+  scopedVars?: ScopedVars;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -115,7 +120,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
    */
   getInterpolatedDataSourceUID(): string | undefined {
     if (this.props.query.datasource) {
-      const instanceSettings = this.dataSourceSrv.getInstanceSettings(this.props.query.datasource);
+      const instanceSettings = this.dataSourceSrv.getInstanceSettings(
+        this.props.query.datasource,
+        this.props.scopedVars
+      );
       return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
     }
 
@@ -532,7 +540,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
       >
-        <div className={rowClasses} id={this.id}>
+        <div
+          className={rowClasses}
+          id={this.id}
+          data-testid={selectors.components.Plugins.queryEditorRow(datasource.type, query.refId)}
+          data-plugin-id={datasource.type}
+        >
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>

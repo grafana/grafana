@@ -23,12 +23,11 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
@@ -47,10 +46,9 @@ type finalizerProcessor interface {
 
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
-	client     client.ProvisioningV0alpha1Interface
-	repoLister listers.RepositoryLister
-	repoSynced cache.InformerSynced
-	logger     logging.Logger
+	client client.ProvisioningV0alpha1Interface
+	repos  informer.RepositoryGetter
+	logger logging.Logger
 
 	jobs interface {
 		jobs.Queue
@@ -84,7 +82,7 @@ type RepositoryController struct {
 // NewRepositoryController creates new RepositoryController.
 func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
-	repoInformer informer.RepositoryInformer,
+	repos informer.RepositoryGetter,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	resourceLister resources.ResourceLister,
@@ -102,17 +100,16 @@ func NewRepositoryController(
 	minSyncInterval time.Duration,
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
+	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
-	folderAPIVersion string,
 	webhookSecretRotationInterval time.Duration,
-) (*RepositoryController, error) {
+) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
-		client:     provisioningClient,
-		repoLister: repoInformer.Lister(),
-		repoSynced: repoInformer.Informer().HasSynced,
+		client: provisioningClient,
+		repos:  repos,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -122,14 +119,13 @@ func NewRepositoryController(
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
-		quotaChecker:      NewRepositoryQuotaChecker(repoInformer.Lister()),
+		quotaChecker:      quotaChecker,
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
-			lister:           resourceLister,
-			clientFactory:    clients,
-			metrics:          &finalizerMetrics,
-			maxWorkers:       parallelOperations,
-			folderAPIVersion: folderAPIVersion,
+			lister:        resourceLister,
+			clientFactory: clients,
+			metrics:       &finalizerMetrics,
+			maxWorkers:    parallelOperations,
 		},
 		jobs:                          jobs,
 		logger:                        logging.DefaultLogger.With("logger", loggerName),
@@ -144,21 +140,22 @@ func NewRepositoryController(
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
 
-	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: rc.enqueue,
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueue(newObj)
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
 
-	return rc, nil
+	return rc
+}
+
+// EventHandler returns the informer event handlers for the controller. Register
+// it with the Repository informer to enqueue repositories on add and update.
+func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: rc.enqueue,
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			rc.enqueue(newObj)
+		},
+	}
 }
 
 func repoKeyFunc(obj any) (string, error) {
@@ -185,10 +182,6 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	ctx = logging.Context(ctx, logger)
 	logger.Info("Starting RepositoryController")
 	defer logger.Info("Shutting down RepositoryController")
-
-	if !cache.WaitForCacheSync(ctx.Done(), rc.repoSynced) {
-		return
-	}
 
 	logger.Info("Starting workers", "count", workerCount)
 	for i := 0; i < workerCount; i++ {
@@ -378,24 +371,24 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
-	hooks, _ := repo.(repository.Hooks)
-	if hooks == nil {
+	webhookRepo, ok := repo.(repository.WebhookRepository)
+	if !ok {
 		return nil, nil
 	}
 
 	if obj.Status.ObservedGeneration < 1 {
 		logger.Info("handle repository create")
-		patchOperations, err := hooks.OnCreate(ctx)
+		patchOperations, err := webhookOnCreate(ctx, webhookRepo)
 		if err != nil {
-			return nil, fmt.Errorf("error running OnCreate: %w", err)
+			return nil, fmt.Errorf("error running webhookOnCreate: %w", err)
 		}
 		return patchOperations, nil
 	}
 
 	logger.Info("handle repository spec update", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	patchOperations, err := hooks.OnUpdate(ctx)
+	patchOperations, err := webhookOnUpdate(ctx, webhookRepo)
 	if err != nil {
-		return nil, fmt.Errorf("error running OnUpdate: %w", err)
+		return nil, fmt.Errorf("error running webhookOnUpdate: %w", err)
 	}
 
 	return patchOperations, nil
@@ -582,10 +575,12 @@ func (rc *RepositoryController) process(key string) error {
 		return err
 	}
 
-	obj, err := rc.repoLister.Repositories(namespace).Get(name)
+	// Reconcile the object the read seam returns; how it is sourced and kept
+	// fresh is the informer.RepositoryGetter's concern, not the controller's.
+	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("repository not found in cache")
+		return errors.New("repository not found")
 	case err != nil:
 		return err
 	}
@@ -665,7 +660,7 @@ func (rc *RepositoryController) process(key string) error {
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		logger.Info("quota changed", "quota", newQuota)
-	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
+	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
 		logger.Info("webhook missing, reconciling")
 	case shouldRotateWebhookSecret:
 		logger.Info("webhook secret rotation due")
@@ -717,7 +712,47 @@ func (rc *RepositoryController) process(key string) error {
 
 	repo, err := rc.repoFactory.Build(ctx, obj)
 	if err != nil {
-		return fmt.Errorf("unable to create repository from configuration: %w", err)
+		// The token references a stored secret that could not be decrypted (e.g. an
+		// orphaned reference whose secret was deleted). When the token is minted from a
+		// connection, regenerate it and rebuild rather than failing the reconcile forever.
+		// shouldGenerateToken being false guarantees we did not already mint one this pass.
+		if errors.Is(err, repository.ErrTokenNotFound) && !shouldGenerateToken &&
+			obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+			// If we wrote a token for this repository very recently, its secret may not be
+			// readable from the store yet. Wait for it rather than regenerating, which would
+			// delete it and can loop under secret-store read-after-write lag.
+			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
+				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
+				rc.queue.AddAfter(key, tokenWriteRetryDelay)
+				return nil
+			}
+
+			logger.Warn("repository token secret could not be decrypted, regenerating from connection",
+				"connection", obj.Spec.Connection.Name, "error", err)
+
+			c, cerr := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+			if cerr != nil {
+				return fmt.Errorf("retrieving connection to regenerate token: %w", cerr)
+			}
+
+			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
+			if gerr != nil {
+				return fmt.Errorf("regenerating repository token: %w", gerr)
+			}
+
+			if len(tokenOps) > 0 {
+				patchOperations = append(patchOperations, tokenOps...)
+			}
+			// Work on a copy so we don't mutate the shared informer-cache object, and
+			// overwrite the whole value so the stale reference name is cleared too.
+			obj = obj.DeepCopy()
+			obj.Secure.Token = common.InlineSecureValue{Create: token}
+
+			repo, err = rc.repoFactory.Build(ctx, obj)
+		}
+		if err != nil {
+			return fmt.Errorf("unable to create repository from configuration: %w", err)
+		}
 	}
 
 	// Handle hooks - may return early if hooks fail
@@ -733,8 +768,8 @@ func (rc *RepositoryController) process(key string) error {
 	}
 
 	// Rotate webhook secret if due.
-	if rotator, ok := repo.(repository.WebhookSecretRotator); ok && shouldRotateWebhookSecret {
-		rotateOps, err := rotator.RotateWebhookSecret(ctx)
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateWebhookSecret {
+		rotateOps, err := rotateWebhookSecret(ctx, webhookRepo)
 		if err != nil {
 			logger.Warn("webhook secret rotation failed", "error", err)
 		}
@@ -836,7 +871,7 @@ func (rc *RepositoryController) process(key string) error {
 // Returns hook operations, whether processing should continue, and any error
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
-		(obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0)
+		repository.GetID(obj.Status.Webhook).IsEmpty()
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
@@ -874,7 +909,7 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	if len(obj.Spec.Workflows) == 0 {
 		return false
 	}
-	if obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0 {
+	if repository.GetID(obj.Status.Webhook).IsEmpty() {
 		return false
 	}
 	if obj.Status.Webhook.LastRotated == 0 {

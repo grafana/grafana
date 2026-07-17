@@ -9837,10 +9837,16 @@
         },
         "name-limit": "限制",
         "name-mode": "模式",
+        "name-overflow": "",
         "name-placement": "放置",
         "name-values": "值",
         "name-visibility": "可見性",
         "name-width": "寬度",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "底部",
           "label-right": "靠右"
@@ -11155,6 +11161,8 @@
         }
       },
       "fields-section": "欄位",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "隱藏記錄行",
       "inline-mode": "顯示內嵌",
       "inline-no-scrolls": "",
@@ -11900,9 +11908,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "管理身分識別提供者群組對應至 Grafana 角色"
     },
     "help": {
       "title": "說明"
@@ -14168,6 +14173,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "無法載入此查詢項目的資料來源",
     "loading-datasource": "正在載入資料來源",
     "no-query-editor-component": "資料來源外掛程式無法匯出任何查詢編輯器元件"

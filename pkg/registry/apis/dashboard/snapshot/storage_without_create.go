@@ -2,12 +2,16 @@ package snapshot
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +20,7 @@ import (
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // storageWrapper wraps a rest.Storage and hides the not supported interfaces
@@ -88,15 +93,24 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, err
 	}
 
-	// If external, use the deleteKey to send a DELETE to the external server's delete/{deleteKey} endpoint
+	// If external, send a DELETE to the external server. The endpoint is gated on
+	// externalSnapshotsK8SAPIPush: when on, use the K8s delete subresource; when
+	// off, use the legacy GET /api/snapshots-delete/{key} endpoint.
 	if snap.Spec.External != nil && *snap.Spec.External &&
 		snap.Spec.DeleteKey != nil && n.options.ExternalSnapshotURL != "" {
-		prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
-		deleteURL := strings.TrimRight(n.options.ExternalSnapshotURL, "/") +
-			"/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
-			prefix + "/delete/" + *snap.Spec.DeleteKey
-		if err := deleteExternalSnapshot(deleteURL, n.options.ExternalSnapshotToken); err != nil {
-			return nil, false, err
+		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
+			prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
+			deleteURL := strings.TrimRight(n.options.ExternalSnapshotURL, "/") +
+				"/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
+				prefix + "/delete/" + *snap.Spec.DeleteKey
+			if err := deleteExternalSnapshot(deleteURL, n.options.ExternalSnapshotToken); err != nil {
+				return nil, false, err
+			}
+		} else {
+			deleteURL := strings.TrimRight(n.options.ExternalSnapshotURL, "/") + "/api/snapshots-delete/" + *snap.Spec.DeleteKey
+			if err := deleteExternalSnapshotLegacy(deleteURL); err != nil {
+				return nil, false, err
+			}
 		}
 	}
 
@@ -163,5 +177,58 @@ func deleteExternalSnapshot(externalDeleteURL string, token string) error {
 		return dashboardsnapshots.ErrExternalSnapshotAuthFailed.Errorf("external snapshot server returned %d on delete", resp.StatusCode)
 	}
 
+	return dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("unexpected response when deleting external snapshot, status code: %d", resp.StatusCode)
+}
+
+// deleteExternalSnapshotLegacy sends a GET request to the external snapshot
+// server's legacy /api/snapshots-delete/{deleteKey} endpoint. If the passed URL
+// is in the K8s path format (e.g. a snapshot was created when
+// externalSnapshotsK8SAPIPush was on and is now being deleted with it off),
+// the host is extracted and the URL is rebuilt in the legacy format.
+func deleteExternalSnapshotLegacy(externalURL string) error {
+	requestURL := externalURL
+	if !strings.Contains(externalURL, "/api/snapshots-delete/") {
+		parsed, err := url.Parse(externalURL)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+			return fmt.Errorf("invalid external delete URL %q: %w", externalURL, err)
+		}
+		deleteKey := path.Base(strings.TrimRight(parsed.Path, "/"))
+		if deleteKey == "" || deleteKey == "." || deleteKey == "/" {
+			return fmt.Errorf("could not extract delete key from URL %q", externalURL)
+		}
+		requestURL = parsed.Scheme + "://" + parsed.Host + "/api/snapshots-delete/" + deleteKey
+	}
+
+	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := deleteExternalHTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	// Treat 404 as success — the snapshot may have already been deleted
+	// (e.g. double delete, cleanup script). Modern hosts (Grafana >= 9.0) return 404.
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	// Older hosts (Grafana < 9.0) return 500 with this message when the snapshot is
+	// already gone. Treat it as success too so repeat deletes stay idempotent.
+	if resp.StatusCode == http.StatusInternalServerError {
+		var respJSON map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&respJSON); err != nil {
+			return err
+		}
+		if respJSON["message"] == "Failed to get dashboard snapshot" {
+			return nil
+		}
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return dashboardsnapshots.ErrExternalSnapshotAuthFailed.Errorf("external snapshot server returned %d on delete", resp.StatusCode)
+	}
 	return dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("unexpected response when deleting external snapshot, status code: %d", resp.StatusCode)
 }

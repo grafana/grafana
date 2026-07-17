@@ -9898,10 +9898,16 @@
         },
         "name-limit": "Korlát",
         "name-mode": "Mód",
+        "name-overflow": "",
         "name-placement": "Elhelyezés",
         "name-values": "Értékek",
         "name-visibility": "Láthatóság",
         "name-width": "Szélesség",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Lent",
           "label-right": "Jobbra"
@@ -11226,6 +11232,8 @@
         }
       },
       "fields-section": "Mezők",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Naplósor elrejtése",
       "inline-mode": "Megjelenítés sorban",
       "inline-no-scrolls": "",
@@ -11971,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Identitásszolgáltató-csoportok Grafana-szerepkörökhöz rendeléseinek kezelése"
     },
     "help": {
       "title": "Súgó"
@@ -14263,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "A lekérdezés adatforrásának betöltése nem sikerült",
     "loading-datasource": "Adatforrás betöltése",
     "no-query-editor-component": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"

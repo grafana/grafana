@@ -10020,10 +10020,16 @@
         },
         "name-limit": "Limit",
         "name-mode": "Tryb",
+        "name-overflow": "",
         "name-placement": "Położenie",
         "name-values": "Wartości",
         "name-visibility": "Widoczność",
         "name-width": "Szerokość",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Na dole",
           "label-right": "Po prawej"
@@ -11368,6 +11374,8 @@
         }
       },
       "fields-section": "Pola",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Ukryj wiersz logu",
       "inline-mode": "Wyświetl bezpośrednio",
       "inline-no-scrolls": "",
@@ -12113,9 +12121,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Zarządzaj mapowaniami grup dostawców tożsamości do ról w usłudze Grafana"
     },
     "help": {
       "title": "Pomoc"
@@ -14453,6 +14458,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Nie udało się załadować źródła danych dla tego zapytania",
     "loading-datasource": "Ładowanie źródła danych",
     "no-query-editor-component": "Wtyczka źródła danych nie eksportuje żadnego komponentu edytora zapytań"
