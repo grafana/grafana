@@ -20,11 +20,7 @@ export const TimeZoneOffset = (props: Props) => {
     return null;
   }
 
-  return (
-    <>
-      <span className={cx(styles.offset, className)}>{formatUtcOffset(timestamp, timeZone)}</span>
-    </>
-  );
+  return <span className={cx(styles.offset, className)}>{formatUtcOffset(timestamp, timeZone)}</span>;
 };
 
 export const formatUtcOffset = (timestamp: number, timeZone: TimeZone): string => {

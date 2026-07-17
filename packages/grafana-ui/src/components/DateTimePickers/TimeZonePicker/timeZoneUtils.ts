@@ -2,82 +2,37 @@ import { InternalTimeZones, type TimeZone, getTimeZone } from '@grafana/data';
 
 import { getTimeZonesAt, type TimeZoneInfo as EasyTzInfo } from './easytz';
 
-export interface CanonicalTimeZoneInfo {
-  /** canonical IANA zone id, e.g. "Asia/Kolkata" */
-  name: string;
-  /** DST-aware abbreviation, e.g. "EST" / "EDT" */
-  abbr: string;
-  /** UTC offset at the requested instant, e.g. "-05:00" */
-  offset: string;
-  /** the runtime's legacy spelling when it differs, e.g. "Asia/Calcutta" */
-  legacyName?: string;
-}
-
-interface CanonicalCatalog {
-  list: CanonicalTimeZoneInfo[];
-  byName: Map<string, CanonicalTimeZoneInfo>;
-}
+export { getTimeZonesAt };
 
 // getTimeZonesAt memoizes per hour bucket and returns the same array by
-// reference, so a WeakMap keyed on that array caches the derived catalog.
-const catalogCache = new WeakMap<EasyTzInfo[], CanonicalCatalog>();
+// reference, so a WeakMap keyed on that array caches the name lookup.
+const indexCache = new WeakMap<EasyTzInfo[], Map<string, EasyTzInfo>>();
 
-/**
- * Folds the runtime's zone list into canonical-only entries (e.g. Chrome's
- * ICU lists the legacy Asia/Calcutta; it becomes Asia/Kolkata carrying
- * legacyName), indexed under both spellings.
- */
-const getCanonicalCatalog = (timestamp: number): CanonicalCatalog => {
-  const source = getTimeZonesAt(timestamp);
-  let catalog = catalogCache.get(source);
+const getZoneIndex = (timestamp: number): Map<string, EasyTzInfo> => {
+  const list = getTimeZonesAt(timestamp);
+  let byName = indexCache.get(list);
 
-  if (!catalog) {
-    const list: CanonicalTimeZoneInfo[] = [];
-    const byName = new Map<string, CanonicalTimeZoneInfo>();
+  if (!byName) {
+    byName = new Map(list.map((tz) => [tz.name, tz]));
 
-    for (const tz of source) {
-      const name = tz.aliasOf ?? tz.name;
-
-      // Guard against runtimes that list both spellings of the same zone.
-      if (byName.has(name)) {
-        continue;
-      }
-
-      const info: CanonicalTimeZoneInfo =
-        tz.aliasOf === undefined
-          ? { name, abbr: tz.abbr, offset: tz.offset }
-          : { name, abbr: tz.abbr, offset: tz.offset, legacyName: tz.name };
-
-      list.push(info);
-      byName.set(name, info);
-
-      if (info.legacyName !== undefined) {
-        byName.set(info.legacyName, info);
+    // Also index legacy-spelling entries under their canonical id (e.g.
+    // Asia/Calcutta under Asia/Kolkata). Entries actually named by the
+    // canonical id (indexed above) win, in case the runtime lists both.
+    for (const tz of list) {
+      if (tz.aliasOf !== undefined && !byName.has(tz.aliasOf)) {
+        byName.set(tz.aliasOf, tz);
       }
     }
 
-    // The source list is ordered by the runtime's spelling, so canonical
-    // renames (Asia/Calcutta -> Asia/Kolkata) land out of order.
-    list.sort((a, b) => a.name.localeCompare(b.name));
-
-    catalog = { list, byName };
-    catalogCache.set(source, catalog);
+    indexCache.set(list, byName);
   }
 
-  return catalog;
+  return byName;
 };
 
-/**
- * All zones known to the runtime at `timestamp` (epoch ms), deduplicated to
- * canonical IANA ids and sorted by name. Results are memoized per UTC hour
- * bucket and returned by reference — treat them as immutable.
- */
-export const getCanonicalTimeZonesAt = (timestamp: number): CanonicalTimeZoneInfo[] =>
-  getCanonicalCatalog(timestamp).list;
-
 /** Looks up a zone by either its canonical id or its legacy spelling. */
-export const findTimeZoneAt = (zone: string, timestamp: number): CanonicalTimeZoneInfo | undefined =>
-  getCanonicalCatalog(timestamp).byName.get(zone);
+export const findTimeZoneAt = (zone: string, timestamp: number): EasyTzInfo | undefined =>
+  getZoneIndex(timestamp).get(zone);
 
 /**
  * Returns the canonical IANA id for a zone (e.g. Asia/Calcutta -> Asia/Kolkata).
@@ -85,8 +40,10 @@ export const findTimeZoneAt = (zone: string, timestamp: number): CanonicalTimeZo
  * legacy spelling only maps to its canonical id when the runtime lists the
  * legacy spelling (as Chrome's ICU does).
  */
-export const canonicalZoneName = (zone: string, timestamp: number): string =>
-  findTimeZoneAt(zone, timestamp)?.name ?? zone;
+export const canonicalZoneName = (zone: string, timestamp: number): string => {
+  const tz = findTimeZoneAt(zone, timestamp);
+  return tz ? (tz.aliasOf ?? tz.name) : zone;
+};
 
 let browserTimeZone: string | undefined;
 

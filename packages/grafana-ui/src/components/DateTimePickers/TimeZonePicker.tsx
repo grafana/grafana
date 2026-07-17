@@ -13,12 +13,7 @@ import {
   type TimeZoneOptionInfo,
 } from './TimeZonePicker/TimeZoneOption';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
-import {
-  canonicalZoneName,
-  findTimeZoneAt,
-  getCanonicalTimeZonesAt,
-  resolveIanaName,
-} from './TimeZonePicker/timeZoneUtils';
+import { canonicalZoneName, findTimeZoneAt, getTimeZonesAt, resolveIanaName } from './TimeZonePicker/timeZoneUtils';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -110,13 +105,11 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
 
     // Internal zones (Default, Browser, UTC) go into a leading, label-less
     // group so they render at the top of the menu.
-    const internalZones: TimeZone[] = [];
-
-    if (includeInternal === true) {
-      internalZones.push(InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc);
-    } else if (Array.isArray(includeInternal)) {
-      internalZones.push(...includeInternal);
-    }
+    const internalZones: TimeZone[] = Array.isArray(includeInternal)
+      ? includeInternal
+      : includeInternal
+        ? [InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc]
+        : [];
 
     for (const zone of internalZones) {
       pushOption('', zone, getInternalTimeZoneInfo(zone, now));
@@ -125,11 +118,26 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     // Zones are presented under their canonical IANA id (e.g. Asia/Kolkata),
     // even when the runtime lists a legacy spelling (Chrome's ICU still
     // returns Asia/Calcutta). Intl accepts either spelling as input, so the
-    // canonical id is safe to use as the option value everywhere.
-    for (const tz of getCanonicalTimeZonesAt(now)) {
-      const delimiter = tz.name.indexOf('/');
-      const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      pushOption(group, tz.name, { name: tz.name, ianaName: tz.name, abbreviation: tz.abbr }, tz.legacyName);
+    // canonical id is safe to use as the option value everywhere. Renamed
+    // zones land out of the runtime's alphabetical order, hence the sorted
+    // copy (of references; entries are shared with the hour-bucket memo).
+    const zones = [...getTimeZonesAt(now)].sort((a, b) =>
+      (a.aliasOf ?? a.name).localeCompare(b.aliasOf ?? b.name)
+    );
+
+    for (const tz of zones) {
+      // Skip a legacy-spelling entry when the runtime also lists the
+      // canonical id itself (e.g. Asia/Choibalsan alongside Asia/Ulaanbaatar
+      // on older tz databases); the index maps the canonical id to its own
+      // entry in that case.
+      if (tz.aliasOf !== undefined && findTimeZoneAt(tz.aliasOf, now) !== tz) {
+        continue;
+      }
+
+      const name = tz.aliasOf ?? tz.name;
+      const delimiter = name.indexOf('/');
+      const group = delimiter === -1 ? '' : name.slice(0, delimiter);
+      pushOption(group, name, { name, ianaName: name, abbreviation: tz.abbr }, tz.aliasOf !== undefined ? tz.name : undefined);
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
@@ -183,12 +191,13 @@ const internalZoneNames: Record<string, string> = {
  * so e.g. a UTC default shows 'UTC, GMT'.
  */
 const getInternalTimeZoneInfo = (zone: TimeZone, timestamp: number): TimeZoneOptionInfo => {
-  const ianaName = canonicalZoneName(resolveIanaName(zone), timestamp);
+  const resolved = resolveIanaName(zone);
+  const tz = findTimeZoneAt(resolved, timestamp);
 
   return {
     name: internalZoneNames[zone] ?? zone,
-    ianaName,
+    ianaName: tz ? (tz.aliasOf ?? tz.name) : resolved,
     // The runtime's zone list may not contain a plain UTC entry.
-    abbreviation: ianaName === 'UTC' ? 'UTC, GMT' : (findTimeZoneAt(ianaName, timestamp)?.abbr ?? ''),
+    abbreviation: resolved === 'UTC' ? 'UTC, GMT' : (tz?.abbr ?? ''),
   };
 };

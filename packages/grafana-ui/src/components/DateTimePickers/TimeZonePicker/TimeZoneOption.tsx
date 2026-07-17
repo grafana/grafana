@@ -57,13 +57,9 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
           <TimeZoneDescription info={timeZoneInfo} />
         </div>
         <div className={styles.rightColumn}>
-          <TimeZoneOffset
-            /* Use the timeZoneInfo to pass the correct timeZone name,
-               as 'Default' has value '' which defaults to browser timezone */
-            timeZone={timeZoneInfo?.ianaName || data.value}
-            timestamp={timestamp}
-            className={offsetClassName}
-          />
+          {/* info.ianaName is used over data.value since internal zones like
+              'Default' carry a value that is not a concrete IANA zone */}
+          <TimeZoneOffset timeZone={timeZoneInfo.ianaName} timestamp={timestamp} className={offsetClassName} />
           {isSelected && (
             <span>
               <Icon name="check" />
@@ -107,13 +103,9 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
             <TimeZoneDescription info={timeZoneInfo} />
           </div>
           <div className={styles.rightColumn}>
-            <TimeZoneOffset
-              timestamp={timestamp}
-              /* Use the timeZoneInfo to pass the correct timeZone name,
-                 as 'Default' has value '' which defaults to browser timezone */
-              timeZone={timeZoneInfo?.ianaName || data.value}
-              className={offsetClassName}
-            />
+            {/* info.ianaName is used over data.value since internal zones like
+                'Default' carry a value that is not a concrete IANA zone */}
+            <TimeZoneOffset timeZone={timeZoneInfo.ianaName} timestamp={timestamp} className={offsetClassName} />
           </div>
         </div>
       </div>

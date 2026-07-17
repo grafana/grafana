@@ -1,11 +1,5 @@
 import { formatUtcOffset } from './TimeZoneOffset';
-import {
-  canonicalZoneName,
-  findTimeZoneAt,
-  getCanonicalTimeZonesAt,
-  guessBrowserTimeZone,
-  resolveIanaName,
-} from './timeZoneUtils';
+import { canonicalZoneName, findTimeZoneAt, guessBrowserTimeZone, resolveIanaName } from './timeZoneUtils';
 
 // Fixed timestamps so DST-dependent results are deterministic.
 const JAN = Date.UTC(2026, 0, 15); // northern winter / southern summer
@@ -29,35 +23,24 @@ describe('findTimeZoneAt', () => {
     expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ abbr: 'IST', offset: '+05:30' });
   });
 
-  it('resolves both spellings of a zone to the same canonical entry', () => {
-    // Node's ICU (like Chrome's) lists the legacy Asia/Calcutta; both
-    // spellings must resolve to the entry named by the canonical id.
+  it('resolves both spellings of a zone to the same entry', () => {
+    // Node's ICU (like Chrome's) lists the legacy Asia/Calcutta and not
+    // Asia/Kolkata; both spellings must resolve to that entry.
     const byCanonical = findTimeZoneAt('Asia/Kolkata', JUL);
     const byLegacy = findTimeZoneAt('Asia/Calcutta', JUL);
 
     expect(byCanonical).toBeDefined();
     expect(byCanonical).toBe(byLegacy);
-    expect(byCanonical).toMatchObject({ name: 'Asia/Kolkata', legacyName: 'Asia/Calcutta', abbr: 'IST' });
+    expect(byCanonical).toMatchObject({ name: 'Asia/Calcutta', aliasOf: 'Asia/Kolkata', abbr: 'IST' });
+  });
+
+  it('memoizes per hour bucket', () => {
+    expect(findTimeZoneAt('America/New_York', JAN)).toBe(findTimeZoneAt('America/New_York', JAN + 1));
   });
 
   it('returns undefined for unknown zones', () => {
     expect(findTimeZoneAt('Foo/Bar', JUL)).toBeUndefined();
     expect(findTimeZoneAt('', JUL)).toBeUndefined();
-  });
-});
-
-describe('getCanonicalTimeZonesAt', () => {
-  it('lists every zone exactly once, under its canonical id', () => {
-    const list = getCanonicalTimeZonesAt(JAN);
-    const names = list.map((tz) => tz.name);
-
-    expect(names).toContain('Asia/Kolkata');
-    expect(names).not.toContain('Asia/Calcutta');
-    expect(new Set(names).size).toBe(names.length);
-  });
-
-  it('memoizes per hour bucket', () => {
-    expect(getCanonicalTimeZonesAt(JAN)).toBe(getCanonicalTimeZonesAt(JAN + 1));
   });
 });
 
