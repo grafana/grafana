@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 
-import { type SelectableValue, type TimeZoneInfo, type TimeZone, InternalTimeZones } from '@grafana/data';
+import { type SelectableValue, type TimeZoneInfo, type TimeZone, InternalTimeZones, getTimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Select } from '../Select/Select';
@@ -9,7 +9,7 @@ import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { getTimeZonesAt, type TimeZoneInfo as EasyTzInfo } from './TimeZonePicker/easytz';
-import { findTimeZoneAt, offsetToMinutes, resolveIanaName } from './TimeZonePicker/timeZoneUtils';
+import { findTimeZoneAt, guessBrowserTimeZone, offsetToMinutes } from './TimeZonePicker/timeZoneUtils';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -203,27 +203,49 @@ const toTimeZoneInfo = (tz: EasyTzInfo): TimeZoneInfo => ({
 
 /** Builds display info for Grafana's internal zones (Default, Browser, UTC). */
 const getInternalTimeZoneInfo = (zone: TimeZone, timestamp: number): TimeZoneInfo => {
-  if (zone === InternalTimeZones.utc) {
-    return {
-      name: 'Coordinated Universal Time',
-      ianaName: 'UTC',
-      zone,
-      countries: [],
-      abbreviation: 'UTC, GMT',
-      offsetInMins: 0,
-    };
+  switch (zone) {
+    case InternalTimeZones.utc:
+      return {
+        name: 'Coordinated Universal Time',
+        ianaName: 'UTC',
+        zone,
+        countries: [],
+        abbreviation: 'UTC, GMT',
+        offsetInMins: 0,
+      };
+
+    case InternalTimeZones.localBrowserTime: {
+      const ianaName = guessBrowserTimeZone();
+      const tz = findTimeZoneAt(ianaName, timestamp);
+
+      return {
+        name: 'Browser Time',
+        ianaName,
+        zone,
+        countries: [],
+        abbreviation: tz?.abbr ?? '',
+        offsetInMins: tz ? offsetToMinutes(tz.offset) : 0,
+      };
+    }
+
+    // InternalTimeZones.default: inherit the resolved zone's info so e.g. a
+    // UTC default keeps the 'UTC, GMT' abbreviation, then override the name.
+    default: {
+      const resolved = getTimeZone();
+      const isInternal = resolved === InternalTimeZones.utc || resolved === InternalTimeZones.localBrowserTime;
+      const tz = isInternal ? undefined : findTimeZoneAt(resolved, timestamp);
+
+      const info = isInternal ? getInternalTimeZoneInfo(resolved, timestamp) : tz ? toTimeZoneInfo(tz) : undefined;
+
+      return {
+        ianaName: '',
+        abbreviation: '',
+        offsetInMins: 0,
+        countries: [],
+        ...info,
+        name: 'Default',
+        zone,
+      };
+    }
   }
-
-  const name = zone === InternalTimeZones.localBrowserTime ? 'Browser Time' : 'Default';
-  const ianaName = resolveIanaName(zone);
-  const tz = findTimeZoneAt(ianaName, timestamp);
-
-  return {
-    name,
-    ianaName,
-    zone,
-    countries: [],
-    abbreviation: tz?.abbr ?? '',
-    offsetInMins: tz ? offsetToMinutes(tz.offset) : 0,
-  };
 };

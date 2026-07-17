@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { DefaultTimeZone, setTimeZoneResolver } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { TimeZonePicker } from './TimeZonePicker';
@@ -93,6 +94,23 @@ describe('TimeZonePicker', () => {
       expect(option).toHaveTextContent('Coordinated Universal Time');
       expect(option).toHaveTextContent('UTC, GMT');
       expect(option).toHaveTextContent('UTC+00:00');
+    });
+
+    it('inherits the resolved zone info on the Default option', async () => {
+      setTimeZoneResolver(() => 'utc');
+
+      try {
+        render(<TimeZonePicker onChange={jest.fn()} includeInternal={true} />);
+
+        await userEvent.type(screen.getByRole('combobox'), 'default');
+
+        const option = await screen.findByTestId(selectors.components.Select.option);
+        expect(option).toHaveTextContent('Default');
+        expect(option).toHaveTextContent('UTC, GMT');
+        expect(option).toHaveTextContent('UTC+00:00');
+      } finally {
+        setTimeZoneResolver(() => DefaultTimeZone);
+      }
     });
 
     it('calls onChange with the internal utc zone', async () => {
