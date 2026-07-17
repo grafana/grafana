@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -47,11 +46,6 @@ type pgvectorBackend struct {
 	// *sql.DB). The kvStorageBackend uses the same pattern; xorm engines
 	// have finalizers that close the DB on GC. nil is safe.
 	dbKeepAlive any
-
-	// catalog is the cached embedding_collections snapshot; catalogMu
-	// guards it and keeps refreshes single-flight. See catalog.go.
-	catalogMu sync.Mutex
-	catalog   *catalogSnapshot
 }
 
 func NewPgvectorBackend(ctx context.Context, database db.DB, promotionThreshold int, promoterInterval time.Duration, ownsSchema bool, dbKeepAlive any) *pgvectorBackend {
@@ -105,9 +99,11 @@ func truncateRunes(s string, max int) string {
 }
 
 // validateResource rejects operations on partition keys that have no
-// embedding_collections row. The catalog is the allowlist; internal callers
-// (reconciler, backfill) pass partition keys directly, so the check rides
-// the same cached snapshot ResolveCollection uses.
+// catalog entry (unprovisioned — no partition to work with). `resource`
+// here is always the partition key: callers resolve caller-facing resource
+// names (which may contain chars a table name can't, e.g. hyphens) to
+// partition keys via ResolveCollection first; internal callers (reconciler,
+// backfill) work in partition keys directly.
 func (b *pgvectorBackend) validateResource(ctx context.Context, resource string) error {
 	ok, err := b.hasPartitionKey(ctx, resource)
 	if err != nil {
@@ -138,10 +134,21 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr 
 		attribute.String("namespace", vectors[0].Namespace),
 	)
 
+	// All validation — including the catalog lookup — happens before the
+	// transaction opens, so no extra DB queries run mid-transaction. A
+	// batch is single-resource, so one string compare per vector and one
+	// catalog lookup for the whole batch.
 	for i := range vectors {
 		if err := vectors[i].Validate(); err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
+		if vectors[i].Resource != vectors[0].Resource {
+			return fmt.Errorf("vector[%d]: resource %q does not match %q (batches are single-resource)",
+				i, vectors[i].Resource, vectors[0].Resource)
+		}
+	}
+	if err := b.validateResource(ctx, vectors[0].Resource); err != nil {
+		return err
 	}
 
 	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
@@ -160,6 +167,14 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 	}
 	if err := b.validateResource(ctx, resource); err != nil {
 		return err
+	}
+	// Enforce the documented contract that every changed vector belongs to
+	// the (namespace, model, resource, uid) tuple — cheap string compares,
+	// no catalog lookups. upsertAll does not re-validate per vector.
+	for i := range changed {
+		if changed[i].Resource != resource {
+			return fmt.Errorf("changed[%d]: resource %q does not match %q", i, changed[i].Resource, resource)
+		}
 	}
 
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.UpsertReplaceSubresources")
@@ -224,12 +239,10 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 }
 
 // upsertAll does the per-vector INSERT/UPSERT loop. Caller owns the
-// transaction; called from both Upsert and UpsertReplaceSubresources.
+// transaction and must have validated every vector's resource against the
+// catalog BEFORE opening it — no catalog queries in here.
 func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vector) error {
 	for i := range vectors {
-		if err := b.validateResource(ctx, vectors[i].Resource); err != nil {
-			return fmt.Errorf("vector[%d]: %w", i, err)
-		}
 		emb, err := fitEmbedding(vectors[i].Embedding, EmbeddingDim)
 		if err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)

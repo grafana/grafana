@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"testing"
-	"time"
 	"unicode/utf8"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
@@ -41,32 +40,21 @@ func TestVector_Validate(t *testing.T) {
 }
 
 func TestValidateResource(t *testing.T) {
-	// A fresh injected snapshot keeps this a unit test: the TTL guard in
-	// catalogSnapshot never reaches the DB.
-	b := &pgvectorBackend{
-		catalog: &catalogSnapshot{
-			partitionKeys: map[string]struct{}{"dashboards": {}},
-			loaded:        time.Now(),
-		},
-	}
-	cases := []struct {
-		in      string
-		wantErr bool
-	}{
-		{"dashboards", false},
-		{"folders", true}, // not provisioned
-		{"", true},
-	}
-	for _, tc := range cases {
-		t.Run(tc.in, func(t *testing.T) {
-			err := b.validateResource(context.Background(), tc.in)
-			if tc.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
+	// Partition keys with a catalog row pass; anything else is rejected.
+	rdb := test.NewDBProviderNopSQL(t)
+	b := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+	require.NoError(t, b.validateResource(ctx, "dashboards"))
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+	require.ErrorContains(t, b.validateResource(ctx, "folders"), "unsupported resource")
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+	require.ErrorContains(t, b.validateResource(ctx, ""), "unsupported resource")
+
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
 func TestPgvectorBackend_Upsert_EmptySlice(t *testing.T) {
@@ -92,32 +80,25 @@ func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-// warmCatalog injects a fresh catalog snapshot so validateResource never
-// queries the (mocked) DB.
-func warmCatalog(b *pgvectorBackend, keys ...string) {
-	snap := &catalogSnapshot{
-		byWire:        make(map[catalogWireKey]Collection, len(keys)),
-		partitionKeys: make(map[string]struct{}, len(keys)),
-		loaded:        time.Now(),
-	}
-	for _, k := range keys {
-		snap.partitionKeys[k] = struct{}{}
-		snap.byWire[catalogWireKey{"test.grafana.app", k}] = Collection{
-			Group: "test.grafana.app", Resource: k, PartitionKey: k,
-		}
-	}
-	b.catalog = snap
+// emptyCatalogRows is a zero-row embedding_collections result for sqlmock.
+func emptyCatalogRows() *sqlmock.Rows {
+	return sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external"})
+}
+
+// seededCatalogRows mirrors the migration's dashboards seed row.
+func seededCatalogRows() *sqlmock.Rows {
+	return emptyCatalogRows().AddRow("dashboard.grafana.app", "dashboards", "dashboards", false)
 }
 
 func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
-	// Unknown resource has no catalog row; Upsert errors before any DB work.
+	// Unknown resource has no catalog row; validation happens before the
+	// transaction opens, so no Begin/Rollback is expected — only the
+	// catalog lookup.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
-	warmCatalog(backend, "dashboards")
 	ctx := testutil.NewDefaultTestContext(t)
 
-	rdb.SQLMock.ExpectBegin()
-	rdb.SQLMock.ExpectRollback()
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
 
 	err := backend.Upsert(ctx, []Vector{
 		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
@@ -141,8 +122,9 @@ func TestPgvectorBackend_UpsertReplaceSubresources_InvalidVector_Rejected(t *tes
 	// Validate() runs before any DB work, so no Begin/Rollback expected.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
-	warmCatalog(backend, "dashboards")
 	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
 
 	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{
 		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Title: "t", Content: "x", Embedding: []float32{0.1}},
@@ -156,8 +138,9 @@ func TestPgvectorBackend_UpsertReplaceSubresources_UnknownResource_Rejected(t *t
 	// Unknown resource is rejected before any DB work; no tx is opened.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
-	warmCatalog(backend, "dashboards")
 	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
 
 	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "folders", "x", []Vector{
 		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},

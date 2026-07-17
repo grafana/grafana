@@ -174,13 +174,10 @@ END $$;`))
 				ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
 		`))
 
-	// Catalog of collections addressable through the wire API. Maps the
-	// wire-level (group_name, resource) pair to the value stored in
-	// embeddings.resource (the LIST partition key), so wire names carry no
-	// SQL-identifier constraints. A row here IS the allowlist: pairs
-	// without one get NOT_FOUND. is_external marks externally-pushed
-	// collections whose reads skip per-result authz. Provisioning is an
-	// operator INSERT for now.
+	// Catalog of provisioned collections. Two purposes:
+	// (1) map resource names to the value stored in embeddings.resource (the LIST partition key), since resource names
+	// may contain chars a table name can't (e.g. hyphens);
+	// (2) disambiguate same-named resources across groups, since the partition name doesn't encode the group.
 	embeddingCollections := migrator.Table{
 		Name: "embedding_collections",
 		Columns: []*migrator.Column{

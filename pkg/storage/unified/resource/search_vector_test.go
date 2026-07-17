@@ -153,14 +153,17 @@ func newTestSearchServer(emb *embedder.Embedder, backend vector.VectorBackend, a
 		vectorBackend: backend,
 		embedder:      emb,
 		access:        ac,
+		// validKey()'s pair, allowed on both lists so tests exercise paths past the allowlist.
+		collectionAllowlist: vector.NewCollectionAllowlist([]string{"g/r"}, []string{"g/r"}),
 	}
 }
 
-// authedCtx returns a context with a static user — required by the
-// VectorSearch handler's AuthInfoFrom check.
+// authedCtx returns a context with a static user in namespace "ns" —
+// required by the handler's requireUserNamespace and AuthInfoFrom checks
+// (validKey() uses the same namespace).
 func authedCtx() context.Context {
 	return authlib.WithAuthInfo(context.Background(),
-		&identity.StaticRequester{UserID: 1, UserUID: "u", Type: authlib.TypeUser},
+		&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "ns", Type: authlib.TypeUser},
 	)
 }
 
@@ -426,12 +429,17 @@ func TestVectorSearch_NoUserInContextReturnsUnauthenticated(t *testing.T) {
 	}
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
 
-	// context.Background() has no auth info — handler should reject.
-	_, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
+	// context.Background() has no auth info — requireUserNamespace rejects
+	// with a 401 ErrorResult before any work happens (same shape as the
+	// other delegated-only RPCs).
+	resp, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "q",
 	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	require.NoError(t, err)
+	require.NotNil(t, resp.Error)
+	assert.Equal(t, int32(401), resp.Error.Code)
+	assert.Empty(t, resp.Results)
+	assert.Empty(t, backend.gotResource, "backend search must not run")
 }
 
 func TestVectorSearch_AuthzCompileErrorReturnsInternal(t *testing.T) {
@@ -556,9 +564,8 @@ func TestVectorSearch_AuthzWholeResourcesOneItemEach(t *testing.T) {
 }
 
 func TestVectorSearch_UnknownCollectionIsNotFound(t *testing.T) {
-	// The catalog is the allowlist: an unprovisioned (group, resource)
-	// pair returns NOT_FOUND without embedding the query or hitting the
-	// backend search.
+	// An unprovisioned (group, resource) pair — no catalog row — returns
+	// NOT_FOUND without embedding the query or hitting the backend search.
 	fake := &fakeTextEmbedder{dim: 4}
 	backend := &fakeVectorBackend{resolveNotFound: true}
 	s := newTestSearchServer(newTestEmbedder(fake), backend)
@@ -575,7 +582,7 @@ func TestVectorSearch_UnknownCollectionIsNotFound(t *testing.T) {
 
 func TestVectorSearch_SearchesPartitionKeyNotWireName(t *testing.T) {
 	// The backend is addressed by the catalog's partition key, not the
-	// wire-level resource name.
+	// resource name the caller sent.
 	backend := &fakeVectorBackend{
 		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "part_key"},
 	}
@@ -620,4 +627,59 @@ func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestVectorSearch_NamespaceMismatchIsForbidden(t *testing.T) {
+	// A caller authenticated for one namespace must not read another
+	// tenant's rows — critical for external collections, where the
+	// per-result BatchCheck (the old implicit tenant guard) is skipped.
+	backend := &fakeVectorBackend{
+		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
+		results:    []vector.VectorSearchResult{{UID: "u1", Title: "T1", Score: 0.1}},
+	}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
+
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "other-tenant", Type: authlib.TypeUser},
+	)
+	resp, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: 1, // validKey() is namespace "ns"
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.Error)
+	assert.Equal(t, int32(403), resp.Error.Code)
+	assert.Empty(t, resp.Results)
+	assert.Empty(t, backend.gotResource, "backend search must not run")
+}
+
+func TestVectorSearch_CollectionNotInAllowlistIsNotFound(t *testing.T) {
+	// A provisioned collection outside the config allowlist answers exactly
+	// like an unprovisioned one.
+	backend := &fakeVectorBackend{}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
+	s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: 1,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.Error)
+	assert.Equal(t, int32(404), resp.Error.Code)
+	assert.Empty(t, backend.gotResource, "backend search must not run")
+}
+
+func TestVectorSearch_AllowlistSeparatesInternalAndExternal(t *testing.T) {
+	// An external collection is not covered by the internal list.
+	backend := &fakeVectorBackend{
+		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
+	}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
+	s.collectionAllowlist = vector.NewCollectionAllowlist([]string{"g/r"}, nil)
+
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: 1,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.Error)
+	assert.Equal(t, int32(404), resp.Error.Code)
 }

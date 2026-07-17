@@ -633,30 +633,27 @@ func TestIntegrationVectorCollectionCatalog(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, found)
 
-	// Insert an external collection whose wire name is not a valid SQL
-	// identifier — the catalog decouples wire names from partition keys.
+	// Insert an external collection whose resource name is not a valid SQL
+	// identifier — the catalog decouples resource names from partition keys.
 	_, err = engine.DB().ExecContext(ctx, `
 		INSERT INTO embedding_collections (group_name, resource, partition_key, is_external)
-		VALUES ('infra-memory.assistant.external', 'infra-memories', 'infra_memories', true)
+		VALUES ('ext.example.com', 'my-things', 'my_things', true)
 		ON CONFLICT DO NOTHING`)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		_, _ = engine.DB().ExecContext(context.Background(),
-			`DELETE FROM embedding_collections WHERE group_name = 'infra-memory.assistant.external'`)
+			`DELETE FROM embedding_collections WHERE group_name = 'ext.example.com'`)
 	})
 
-	// A fresh backend (fresh cache) sees the new row immediately.
-	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	fresh := NewPgvectorBackend(ctx, database, 1000, 0, false, engine)
-	c, found, err = fresh.ResolveCollection(ctx, "infra-memory.assistant.external", "infra-memories")
+	c, found, err = backend.ResolveCollection(ctx, "ext.example.com", "my-things")
 	require.NoError(t, err)
 	require.True(t, found)
-	assert.Equal(t, "infra_memories", c.PartitionKey)
+	assert.Equal(t, "my_things", c.PartitionKey)
 	assert.True(t, c.IsExternal)
 
 	// validateResource rides the catalog: operations on an unprovisioned
 	// partition key are rejected before touching the embeddings table.
-	_, err = fresh.Search(ctx, "ns", testModel, "not-provisioned", make([]float32, 3), 5)
+	_, err = backend.Search(ctx, "ns", testModel, "not-provisioned", make([]float32, 3), 5)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
 }

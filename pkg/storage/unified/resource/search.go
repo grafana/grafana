@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"net/http"
 	"slices"
 	"strings"
 	"sync"
@@ -194,6 +195,7 @@ type searchServer struct {
 	rateLimiter            vector.RateLimiter
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
+	collectionAllowlist    vector.CollectionAllowlist
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -306,6 +308,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimiter:            opts.RateLimiter,
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
+		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -617,15 +620,24 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		}
 	}
 	defer func() {
-		// Validation early-returns wrap a BadRequestError in the response but
-		// don't return an error — map those to InvalidArgument so the histogram
-		// doesn't conflate them with successful searches.
+		// Error early-returns wrap an ErrorResult in the response but don't
+		// return an error — map the HTTP-style code to its gRPC equivalent
+		// so the histogram doesn't conflate 404s/403s with validation errors.
 		code := codes.OK
 		switch {
 		case retErr != nil:
 			code = status.Code(retErr)
 		case resp != nil && resp.Error != nil:
-			code = codes.InvalidArgument
+			switch resp.Error.Code {
+			case http.StatusNotFound:
+				code = codes.NotFound
+			case http.StatusForbidden:
+				code = codes.PermissionDenied
+			case http.StatusUnauthorized:
+				code = codes.Unauthenticated
+			default:
+				code = codes.InvalidArgument
+			}
 		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
@@ -641,6 +653,11 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	if errResp := validateVectorSearchRequest(req); errResp != nil {
 		return errResp, nil
+	}
+
+	// External collections skip the per-result BatchCheck, so this namespace check is their only cross-tenant guard.
+	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
+		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
 	}
 
 	limit := int(req.Limit)
@@ -662,14 +679,16 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, err
 	}
 
-	// The catalog is the allowlist: an unprovisioned (group, resource)
-	// pair is NOT_FOUND before we spend an embedding on the query.
+	// An unprovisioned (group, resource) pair — no catalog row, so no
+	// partition to search — is NOT_FOUND before we spend an embedding on
+	// the query.
 	coll, found, err := s.vectorBackend.ResolveCollection(ctx, req.Key.Group, req.Key.Resource)
 	if err != nil {
 		s.log.Error("vector search: resolve collection", "err", err)
 		return nil, status.Error(codes.Internal, "resolve collection")
 	}
-	if !found {
+	// Config-disallowed and unprovisioned are deliberately the same answer, so callers can't probe which collections exist.
+	if !found || !s.collectionAllowlist.Allows(coll) {
 		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
 	}
 
