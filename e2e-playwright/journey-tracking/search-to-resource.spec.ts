@@ -1,4 +1,4 @@
-import { openCommandPalette } from './commandPalette';
+import { commandPaletteInput, openCommandPalette } from './commandPalette';
 import { test, expect } from './fixture';
 
 test.use({
@@ -14,7 +14,7 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     await page.waitForLoadState('networkidle');
 
     await openCommandPalette(page);
-    const searchInput = page.getByRole('combobox');
+    const searchInput = commandPaletteInput(page);
 
     // Verify journey started from command_palette_opened interaction
     await journeyRecorder.waitForJourneyStart('search_to_resource');
@@ -78,7 +78,7 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     await page.waitForLoadState('networkidle');
 
     await openCommandPalette(page);
-    const searchInput = page.getByRole('combobox');
+    const searchInput = commandPaletteInput(page);
 
     await journeyRecorder.waitForJourneyStart('search_to_resource');
 

@@ -1,4 +1,4 @@
-import { openCommandPalette } from './commandPalette';
+import { commandPaletteInput, openCommandPalette } from './commandPalette';
 import { test, expect } from './fixture';
 
 test.use({
@@ -229,11 +229,11 @@ test.describe('browse_to_resource journey tracking', { tag: ['@journey-tracking'
 
     // Open command palette while browse journey is active
     await openCommandPalette(page);
-    const commandPaletteInput = page.getByRole('combobox');
+    const paletteInput = commandPaletteInput(page);
 
     // Close the command palette without selecting anything
     await page.keyboard.press('Escape');
-    await expect(commandPaletteInput).toBeHidden({ timeout: 3000 });
+    await expect(paletteInput).toBeHidden({ timeout: 3000 });
 
     // The browse_to_resource journey should still be active (not ended).
     // Verify by completing the browse journey: click a dashboard and confirm success.

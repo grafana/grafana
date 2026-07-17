@@ -1,7 +1,12 @@
-import { type Page } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { expect } from '@grafana/plugin-e2e';
+
+/** KBar search input — scoped by placeholder so browse-page filter comboboxes don't match. */
+export function commandPaletteInput(page: Page): Locator {
+  return page.getByPlaceholder('Search or jump to...');
+}
 
 /**
  * Open the command palette via the nav toolbar trigger.
@@ -14,6 +19,5 @@ export async function openCommandPalette(page: Page) {
   await expect(trigger).toBeVisible();
   // The testid is on the wrapper; the interactive control is the inner button.
   await trigger.getByRole('button').click();
-  // KBarSearch renders with role="combobox"
-  await expect(page.getByRole('combobox')).toBeVisible();
+  await expect(commandPaletteInput(page)).toBeVisible();
 }
