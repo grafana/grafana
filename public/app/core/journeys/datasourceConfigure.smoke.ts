@@ -9,18 +9,14 @@ const NEW_DATASOURCE_PATH = '/datasources/new';
 
 /**
  * Land on /datasources/new (start fires via connections_new_datasource_page_view),
- * then navigate home via SPA route to trigger the page-leave handler.
- *
- * `connections_new_datasource_cancelled` is documented but only fires when a
- * user clicks Cancel inside the catalog UI. Without a stable Cancel selector
- * we go via in-app navigation; NewDataSourcePage's unmount emits
- * `connections_new_datasource_page_left` which ends the journey as `abandoned`.
+ * then click Cancel. End: discarded via connections_new_datasource_cancelled.
  */
 async function cancelFlow(page: Page): Promise<void> {
   await page.goto(NEW_DATASOURCE_PATH);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(400 + jitter(600));
-  await spaNavigateHome(page);
+  // LinkButton in NewDataSource.tsx — accessible name is the i18n "Cancel" label.
+  await page.getByRole('link', { name: 'Cancel' }).click();
   await page.waitForTimeout(500);
 }
 
