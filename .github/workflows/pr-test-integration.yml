@@ -386,11 +386,12 @@ jobs:
   report-timings:
     name: Report test timings
     needs: [sqlite-enterprise, mysql-enterprise, postgres-enterprise]
-    if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    if: always() && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-arm64-small
     permissions:
       contents: read
       pull-requests: write
+      actions: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -401,11 +402,33 @@ jobs:
         with:
           pattern: test-timings-*
           path: timings
+      - name: Download baseline timings from main
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          run_id=$(gh run list --workflow pr-test-integration.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" -n integration-test-timings -D baseline || true
+          fi
+      - name: Download previous run timings for this branch
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          for run_id in $(gh run list --workflow pr-test-integration.yml --branch "$BRANCH" --status completed --limit 5 --json databaseId --jq '.[].databaseId'); do
+            if gh run download "$run_id" -n integration-test-timings -D previous 2>/dev/null; then
+              break
+            fi
+          done
       - name: Build report
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          ./scripts/ci/backend-tests/timing-report.sh timings timings.csv > comment.md
+          ./scripts/ci/backend-tests/timing-report.sh timings timings.csv baseline/timings.csv previous/timings.csv > comment.md
           {
             echo ""
             echo "Full timings for all $(($(wc -l < timings.csv) - 1)) tests: [\`integration-test-timings\` artifact]($RUN_URL)"
@@ -416,6 +439,7 @@ jobs:
           name: integration-test-timings
           path: timings.csv
       - name: Post comment
+        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
