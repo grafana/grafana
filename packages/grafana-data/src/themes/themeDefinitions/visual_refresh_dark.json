@@ -8,7 +8,7 @@
       "page": "palette.ink900",
       "primary": "palette.ink850",
       "secondary": "palette.ink800",
-      "elevated": "palette.ink800"
+      "elevated": "palette.ink700"
     },
     "primary": {
       "main": "palette.ink100"
@@ -70,6 +70,9 @@
     "borderRadiusLg": 12
   },
   "components": {
+    "input": {
+      "background": "palette.ink850"
+    },
     "tag": {
       "colors": [
         { "background": "palette.coral900", "text": "palette.coral300" },

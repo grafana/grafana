@@ -69,9 +69,6 @@ spec:
         ExpressionMap:
           additionalProperties:
             $ref: '#/components/schemas/Expression'
-          description: |-
-            TODO: validate that only one can specify source=true
-            & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
           type: object
         IntervalTrigger:
           additionalProperties: false
@@ -100,8 +97,6 @@ spec:
           - KeepLast
           type: string
         NotificationSettings:
-          description: 'TODO(@moustafab): this should be imported from the notifications
-            package'
           oneOf:
           - $ref: '#/components/schemas/SimplifiedRouting'
           - $ref: '#/components/schemas/NamedRoutingTree'
@@ -203,7 +198,6 @@ spec:
         TemplateString:
           type: string
         TimeIntervalRef:
-          description: 'TODO(@moustafab): validate regex for time interval ref'
           type: string
         spec:
           additionalProperties: false
@@ -264,6 +258,95 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      searchFields:
+      - capabilities:
+        - filter
+        - retrieve
+        description: The rule type discriminator (always "alertrule")
+        name: type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The evaluation interval of the rule
+        name: interval
+        path: spec.trigger.interval
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Whether the rule is paused
+        name: paused
+        path: spec.paused
+        type: boolean
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The rule's labels, flattened to key and key=value terms
+        name: labels
+        type: string
+      - capabilities:
+        - retrieve
+        description: The rule's annotations, JSON-encoded for display
+        name: annotations
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: How long the condition must be met before the rule fires
+        name: for
+        path: spec.for
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: How long the rule keeps firing after the condition clears
+        name: keepFiringFor
+        path: spec.keepFiringFor
+        type: string
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The query datasource UIDs referenced by the rule's expressions
+        name: datasourceUIDs
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The UID of the dashboard the rule is associated with
+        name: dashboardUID
+        path: spec.panelRef.dashboardUID
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The ID of the panel the rule is associated with
+        name: panelID
+        path: spec.panelRef.panelID
+        type: int64
+      - capabilities:
+        - filter
+        - retrieve
+        description: The receiver for simplified-routing notification settings
+        name: receiver
+        path: spec.notificationSettings.receiver
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Which notification routing branch is configured
+        name: notificationType
+        path: spec.notificationSettings.type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The named routing tree for the rule's notifications
+        name: routingTree
+        path: spec.notificationSettings.routingTree
+        type: string
       selectableFields:
       - spec.title
       - spec.paused
@@ -318,9 +401,6 @@ spec:
         ExpressionMap:
           additionalProperties:
             $ref: '#/components/schemas/Expression'
-          description: |-
-            TODO: validate that only one can specify source=true
-            & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
           type: object
         IntervalTrigger:
           additionalProperties: false
@@ -331,7 +411,6 @@ spec:
           - interval
           type: object
         MetricName:
-          description: 'TODO(@moustafab): validate the metric name regex'
           pattern: ^[a-zA-Z_:][a-zA-Z0-9_:]*$
           type: string
         OperatorState:
@@ -432,6 +511,55 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      searchFields:
+      - capabilities:
+        - filter
+        - retrieve
+        description: The rule type discriminator (always "recordingrule")
+        name: type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The evaluation interval of the rule
+        name: interval
+        path: spec.trigger.interval
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Whether the rule is paused
+        name: paused
+        path: spec.paused
+        type: boolean
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The rule's labels, flattened to key and key=value terms
+        name: labels
+        type: string
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The query datasource UIDs referenced by the rule's expressions
+        name: datasourceUIDs
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The name of the recorded metric
+        name: metric
+        path: spec.metric
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The UID of the datasource the metric is written to
+        name: targetDatasourceUID
+        path: spec.targetDatasourceUID
+        type: string
       selectableFields:
       - spec.title
       - spec.paused
@@ -547,4 +675,246 @@ spec:
       scope: Namespaced
       userReadable: false
     name: v0alpha1
+    routes:
+      namespaced:
+        /search:
+          post:
+            operationId: createSearchRules
+            requestBody:
+              content:
+                application/json:
+                  schema:
+                    additionalProperties: false
+                    properties:
+                      continue:
+                        type: string
+                      facets:
+                        items:
+                          type: string
+                        type: array
+                      fields:
+                        items:
+                          type: string
+                        type: array
+                      labelSelector:
+                        type: string
+                      limit:
+                        type: integer
+                      sort:
+                        items:
+                          $ref: '#/components/schemas/createSearchRulesSearchSortField'
+                        type: array
+                      where:
+                        $ref: '#/components/schemas/createSearchRulesSearchWhereNode'
+                    type: object
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      description: |-
+                        listMeta is intentionally omitted: #SearchResults carries its
+                        own metadata (continue, totalHits) mirroring the generic
+                        search.grafana.app SearchResults envelope.
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        facets:
+                          additionalProperties:
+                            items:
+                              $ref: '#/components/schemas/createSearchRulesFacetValue'
+                            type: array
+                          type: object
+                        items:
+                          items:
+                            $ref: '#/components/schemas/createSearchRulesSearchResultHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          $ref: '#/components/schemas/createSearchRulesSearchResultsMetadata'
+                      required:
+                      - metadata
+                      - items
+                      - apiVersion
+                      - kind
+                      type: object
+                description: Default OK response
+      schemas:
+        createSearchRulesFacetValue:
+          additionalProperties: false
+          description: '#FacetValue is a single value/count pair in a facet breakdown.'
+          properties:
+            count:
+              type: integer
+            value:
+              type: string
+          required:
+          - value
+          - count
+          type: object
+        createSearchRulesRuleSearchHitFields:
+          additionalProperties: false
+          description: |-
+            #RuleSearchHitFields is the per-kind field payload returned on each hit.
+            It carries the union of alert- and recording-rule search fields; only the
+            fields relevant to a hit's kind are populated. This maps to the kind's
+            declared searchFields.
+          properties:
+            annotations:
+              additionalProperties:
+                type: string
+              description: Alert-rule fields.
+              type: object
+            dashboardUID:
+              type: string
+            datasourceUIDs:
+              items:
+                type: string
+              type: array
+            folder:
+              type: string
+            for:
+              type: string
+            interval:
+              type: string
+            keepFiringFor:
+              type: string
+            labels:
+              additionalProperties:
+                type: string
+              type: object
+            metric:
+              description: Recording-rule fields.
+              type: string
+            notificationType:
+              type: string
+            panelID:
+              type: integer
+            paused:
+              type: boolean
+            receiver:
+              type: string
+            routingTree:
+              type: string
+            targetDatasourceUID:
+              type: string
+            title:
+              type: string
+            type:
+              type: string
+          type: object
+        createSearchRulesSearchFilterLeaf:
+          additionalProperties: false
+          description: '#SearchFilterLeaf matches a single field against a set of
+            values.'
+          properties:
+            field:
+              type: string
+            operator:
+              enum:
+              - In
+              - NotIn
+              type: string
+            values:
+              items:
+                type: string
+              type: array
+          required:
+          - field
+          - operator
+          - values
+          type: object
+        createSearchRulesSearchResultHit:
+          additionalProperties: false
+          description: |-
+            #SearchResultHit is a single match: its identity, an optional relevance
+            score (present only when the query included free text), and the requested
+            fields.
+          properties:
+            fields:
+              $ref: '#/components/schemas/createSearchRulesRuleSearchHitFields'
+            resource:
+              $ref: '#/components/schemas/createSearchRulesSearchResultResource'
+            score:
+              type: number
+          required:
+          - resource
+          - fields
+          type: object
+        createSearchRulesSearchResultResource:
+          additionalProperties: false
+          description: '#SearchResultResource is the full identity of a hit.'
+          properties:
+            group:
+              type: string
+            kind:
+              type: string
+            name:
+              type: string
+            resource:
+              type: string
+          required:
+          - group
+          - resource
+          - kind
+          - name
+          type: object
+        createSearchRulesSearchResultsMetadata:
+          additionalProperties: false
+          description: |-
+            #SearchResultsMetadata carries the paging token and total authorised match
+            count.
+          properties:
+            continue:
+              type: string
+            totalHits:
+              type: integer
+          type: object
+        createSearchRulesSearchSortField:
+          description: |-
+            #SearchSortField selects a result ordering. A leading "-" denotes
+            descending. Each field must be declared sortable in the kind's manifest.
+          type: string
+        createSearchRulesSearchTextLeaf:
+          additionalProperties: false
+          description: |-
+            #SearchTextLeaf is a free-text search across one or more text-capable
+            fields. When fields is omitted, the kind's default text field set is used.
+          properties:
+            fields:
+              items:
+                type: string
+              type: array
+            value:
+              type: string
+          required:
+          - value
+          type: object
+        createSearchRulesSearchWhereNode:
+          additionalProperties: false
+          description: |-
+            #SearchWhereNode is a single node of the where query tree. A node has
+            exactly one key naming its type. v1 supports a top-level "and" combinator
+            plus the "text" and "filter" leaves; "or"/"not"/nesting and the "range"/
+            "exists" leaves are future, additive extensions.
+          properties:
+            and:
+              items:
+                $ref: '#/components/schemas/createSearchRulesSearchWhereNode'
+              type: array
+            filter:
+              $ref: '#/components/schemas/createSearchRulesSearchFilterLeaf'
+            text:
+              $ref: '#/components/schemas/createSearchRulesSearchTextLeaf'
+          type: object
     served: true

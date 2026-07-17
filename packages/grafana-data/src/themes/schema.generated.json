@@ -833,12 +833,6 @@
             },
             "background": {
               "type": "string"
-            },
-            "contentBackground": {
-              "type": "string"
-            },
-            "contentBorderColor": {
-              "type": "string"
             }
           },
           "additionalProperties": false

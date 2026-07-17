@@ -585,6 +585,7 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
 	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
+	resourcepb.RegisterResourceStatsServer(srv, handler)
 	resourcepb.RegisterBulkStoreServer(srv, handler)
 	resourcepb.RegisterBlobStoreServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
