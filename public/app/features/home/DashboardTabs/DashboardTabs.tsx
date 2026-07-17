@@ -271,7 +271,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
     </>
   );
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={2} minWidth={0}>
       {redesignEnabled ? (
         <>
           <Stack justifyContent="space-between">
@@ -283,7 +283,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
             </TextLink>
           </Stack>
 
-          <HomeSection paddingX={2} paddingY={1}>
+          <HomeSection minWidth={0} paddingX={2} paddingY={1}>
             {renderContent()}
           </HomeSection>
         </>

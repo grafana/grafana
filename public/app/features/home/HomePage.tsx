@@ -108,9 +108,15 @@ export default function HomePage() {
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
-                    <DashboardTabs extensionComponents={[]} />
+                    <div className={styles.gridItem}>
+                      <DashboardTabs extensionComponents={[]} />
+                    </div>
                     {/* TODO: Alerts and incidents will combine into one card */}
-                    <FiringAlertsCard />
+                    {showAlertsCard && (
+                      <div className={styles.gridItem}>
+                        <FiringAlertsCard />
+                      </div>
+                    )}
                   </Grid>
                 </>
               ) : (
@@ -150,5 +156,9 @@ const getStyles = () => ({
         display: 'none',
       },
     },
+  }),
+  gridItem: css({
+    minWidth: 0,
+    width: '100%',
   }),
 });

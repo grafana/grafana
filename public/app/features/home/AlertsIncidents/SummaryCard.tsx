@@ -51,7 +51,7 @@ export function SummaryCard<T>({
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
   return (
-    <HomeSection display="flex" direction="column">
+    <HomeSection display="flex" direction="column" minWidth={0}>
       <Stack direction="column" gap={2} grow={1}>
         <Stack direction="column" gap={2} grow={1}>
           <Stack alignItems="center" justifyContent="space-between">
