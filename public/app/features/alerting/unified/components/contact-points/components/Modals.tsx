@@ -86,4 +86,3 @@ export const useDeleteContactPointModal = (
 
   return [modalElement, handleShow, handleDismiss] as const;
 };
-
