@@ -3,6 +3,7 @@ package pluginconfig
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -57,6 +58,128 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[5])
 	})
+}
+
+func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
+	const grafanaAppURL = "https://grafana.example.com/"
+	marketplaceLicenseDirectory := mustAbs(t, "marketplace-license-test")
+
+	for _, tc := range []struct {
+		name        string
+		features    featuremgmt.FeatureToggles
+		directory   string
+		pluginID    string
+		appURL      string
+		license     plugins.Licensing
+		wantLicense string
+		wantAppURL  string
+	}{
+		{
+			name:      "feature disabled",
+			features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing, false),
+			directory: marketplaceLicenseDirectory,
+			pluginID:  "acme-widget",
+		},
+		{
+			name:      "nil features",
+			directory: marketplaceLicenseDirectory,
+			pluginID:  "acme-widget",
+		},
+		{
+			name:     "empty directory",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			pluginID: "acme-widget",
+		},
+		{
+			name:      "no licensing",
+			features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			directory: marketplaceLicenseDirectory,
+			pluginID:  "acme-widget",
+			appURL:    grafanaAppURL,
+		},
+		{
+			name:      "license is not valid",
+			features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			directory: marketplaceLicenseDirectory,
+			pluginID:  "acme-widget",
+			appURL:    grafanaAppURL,
+			license:   &pluginfakes.FakeLicensingService{},
+		},
+		{
+			name:        "valid license",
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			directory:   marketplaceLicenseDirectory,
+			pluginID:    "acme-widget",
+			appURL:      grafanaAppURL,
+			license:     &pluginfakes.FakeLicensingService{ValidLicense: true},
+			wantLicense: filepath.Join(marketplaceLicenseDirectory, "license-acme-widget.jwt"),
+			wantAppURL:  grafanaAppURL,
+		},
+		{
+			name:        "relative directory becomes absolute",
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			directory:   "marketplace-licenses",
+			pluginID:    "acme-widget",
+			appURL:      grafanaAppURL,
+			license:     &pluginfakes.FakeLicensingService{ValidLicense: true},
+			wantLicense: filepath.Join(mustAbs(t, "marketplace-licenses"), "license-acme-widget.jwt"),
+			wantAppURL:  grafanaAppURL,
+		},
+		{
+			name:        "safe ID without known suffix",
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			directory:   marketplaceLicenseDirectory,
+			pluginID:    "acme-widget",
+			appURL:      grafanaAppURL,
+			license:     &pluginfakes.FakeLicensingService{ValidLicense: true},
+			wantLicense: filepath.Join(marketplaceLicenseDirectory, "license-acme-widget.jwt"),
+			wantAppURL:  grafanaAppURL,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			provider := NewEnvVarsProvider(&PluginInstanceCfg{
+				Features:                    tc.features,
+				MarketplaceLicenseDirectory: tc.directory,
+				GrafanaAppURL:               tc.appURL,
+			}, tc.license, &fakeSSOSettingsProvider{})
+
+			envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: tc.pluginID}})
+			license, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+			appURL, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
+
+			if tc.wantLicense == "" {
+				require.False(t, hasLicense)
+				require.False(t, hasAppURL)
+				return
+			}
+			require.True(t, hasLicense)
+			require.Equal(t, tc.wantLicense, license)
+			require.True(t, hasAppURL)
+			require.Equal(t, tc.wantAppURL, appURL)
+		})
+	}
+
+	for _, pluginID := range []string{"", ".", "..", "../license", "acme/widget", `acme\widget`, "/tmp/license", "C:\\license", "C:license", "acme:widget", "acme\x00widget"} {
+		t.Run("rejects unsafe plugin ID "+pluginID, func(t *testing.T) {
+			provider := NewEnvVarsProvider(&PluginInstanceCfg{
+				Features:                    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+				MarketplaceLicenseDirectory: marketplaceLicenseDirectory,
+			}, &pluginfakes.FakeLicensingService{ValidLicense: true}, &fakeSSOSettingsProvider{})
+
+			envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
+			_, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+			_, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
+			require.False(t, hasLicense)
+			require.False(t, hasAppURL)
+		})
+	}
+}
+
+func mustAbs(t *testing.T, path string) string {
+	t.Helper()
+	abs, err := filepath.Abs(path)
+	require.NoError(t, err)
+	return abs
 }
 
 func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {

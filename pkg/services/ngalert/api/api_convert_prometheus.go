@@ -147,6 +147,7 @@ type Alertmanager interface {
 	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace, dryRun, promote bool) (merge.MergeResult, error)
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 	IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
+	PromoteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) (merge.MergeResult, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -596,8 +597,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) ||
-		!srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
@@ -696,8 +696,7 @@ func buildConvertResponse(result merge.MergeResult) apimodels.ConvertAlertmanage
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) ||
-		!srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
@@ -725,7 +724,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 	}
 
 	if extraCfg == nil {
-		return response.Error(http.StatusNotFound, "Alertmanager configuration not found", nil)
+		return errorToResponse(notifier.ErrAlertmanagerExtraConfigNotFound.Errorf("extra configuration not found"))
 	}
 
 	sanitizedConfig, err := extraCfg.GetSanitizedAlertmanagerConfigYAML()
@@ -746,8 +745,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) ||
-		!srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
@@ -767,6 +765,24 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(
 
 	logger.Info("Successfully deleted extra alertmanager configuration", "identifier", identifier)
 	return successfulResponse()
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPromoteAlertmanagerConfig(c *contextmodel.ReqContext, identifier string) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	stats, err := srv.am.PromoteExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, identifier)
+	if err != nil {
+		logger.Error("Failed to promote alertmanager configuration", "error", err, "identifier", identifier)
+		return errorToResponse(fmt.Errorf("failed to promote alertmanager configuration: %w", err))
+	}
+
+	logger.Info("Successfully promoted extra alertmanager configuration to main configuration", append(stats.LogContext(), "identifier", identifier)...)
+	return response.JSON(http.StatusAccepted, buildConvertResponse(stats))
 }
 
 // parseBooleanHeader parses a boolean header value, returning an error if the header

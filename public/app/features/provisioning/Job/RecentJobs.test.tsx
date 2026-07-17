@@ -67,10 +67,10 @@ describe('RecentJobs', () => {
       expect(await screen.findByText('ada@example.com')).toBeInTheDocument();
     });
 
-    it('shows Webhook when no user triggered the job', async () => {
+    it('shows System when no user triggered the job', async () => {
       setup([createJob()]);
 
-      expect(await screen.findByText('Webhook')).toBeInTheDocument();
+      expect(await screen.findByText('System')).toBeInTheDocument();
     });
   });
 

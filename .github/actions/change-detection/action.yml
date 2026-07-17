@@ -126,6 +126,8 @@ runs:
             - 'yarn.lock'
             - 'package.json'
             - '**/package.json'
+            - '.yarnrc.yml'
+            - 'yarn.config.cjs'
           frontend_packages:
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'

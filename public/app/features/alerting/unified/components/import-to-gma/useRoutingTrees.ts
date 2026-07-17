@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { notificationsAPI } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 
 const { useListRoutingTreeQuery } = notificationsAPI;
-
-import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
-
 interface RoutingTreeOption {
   /** The actual routing tree name (used as value) */
   name: string;
@@ -28,7 +26,7 @@ interface UseRoutingTreesResult {
  * Uses "Default Policy" for the root route, otherwise returns the actual name.
  */
 export function getRoutingTreeLabel(name: string): string {
-  if (name === ROOT_ROUTE_NAME || !name) {
+  if (isDefaultRoutingTreeName(name)) {
     return t('alerting.import-to-gma.routing-tree.default-policy', 'Default Policy');
   }
   return name;

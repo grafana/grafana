@@ -957,6 +957,138 @@ func TestValidateJob(t *testing.T) {
 				require.Contains(t, err.Error(), "must have at most 100 items")
 			},
 		},
+		{
+			name: "valid test job",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "test action without test options",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test: Required value")
+			},
+		},
+		{
+			name: "test action with non-positive duration",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 0}},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.duration")
+				require.Contains(t, err.Error(), "must be positive")
+			},
+		},
+		{
+			name: "test action over the duration cap",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: MaxTestJobDuration + time.Second}},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.duration")
+				require.Contains(t, err.Error(), "must not exceed")
+			},
+		},
+		{
+			name: "test action with negative progress updates",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
+						ProgressUpdates: -1,
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.progressUpdates")
+				require.Contains(t, err.Error(), "must be non-negative")
+			},
+		},
+		{
+			name: "test action with progress updates too dense for duration",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						// 1s / 100 updates = 10ms apart, far below the throttle.
+						Duration:        metav1.Duration{Duration: time.Second},
+						ProgressUpdates: 100,
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.progressUpdates")
+				require.Contains(t, err.Error(), "at least")
+			},
+		},
+		{
+			name: "test action with progress updates exactly at the throttle floor",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						// 10s / 20 updates = 500ms apart, exactly deliverable.
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
+						ProgressUpdates: 20,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "test action over progress updates cap",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
+						ProgressUpdates: MaxTestJobProgressUpdates + 1,
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.progressUpdates")
+				require.Contains(t, err.Error(), "must not exceed")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -979,6 +1111,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		name            string
 		obj             interface{}
 		operation       admission.Operation
+		perfEnabled     bool
 		wantErr         bool
 		wantErrContains string
 	}{
@@ -992,8 +1125,38 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Pull:       &provisioning.SyncJobOptions{Incremental: true},
 				},
 			},
-			operation: admission.Create,
-			wantErr:   false,
+			operation:   admission.Create,
+			perfEnabled: true,
+			wantErr:     false,
+		},
+		{
+			name: "test job is rejected when performance flag is disabled",
+			obj: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
+				},
+			},
+			operation:       admission.Create,
+			perfEnabled:     false,
+			wantErr:         true,
+			wantErrContains: "provisioning.performance feature flag",
+		},
+		{
+			name: "test job passes when performance flag is enabled",
+			obj: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
+				},
+			},
+			operation:   admission.Create,
+			perfEnabled: true,
+			wantErr:     false,
 		},
 		{
 			name: "invalid job fails validation",
@@ -1004,13 +1167,15 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Repository: "test-repo",
 				},
 			},
-			operation: admission.Create,
-			wantErr:   true,
+			operation:   admission.Create,
+			perfEnabled: true,
+			wantErr:     true,
 		},
 		{
-			name:    "returns nil for nil object",
-			obj:     nil,
-			wantErr: false,
+			name:        "returns nil for nil object",
+			obj:         nil,
+			perfEnabled: true,
+			wantErr:     false,
 		},
 		{
 			name: "returns error for non-job object",
@@ -1018,6 +1183,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 			},
 			operation:       admission.Create,
+			perfEnabled:     true,
 			wantErr:         true,
 			wantErrContains: "expected job",
 		},
@@ -1033,14 +1199,15 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Repository: "test-repo",
 				},
 			},
-			operation: admission.Update,
-			wantErr:   false,
+			operation:   admission.Update,
+			perfEnabled: true,
+			wantErr:     false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator(nil)
+			v := NewAdmissionValidator(nil, func(context.Context) bool { return tt.perfEnabled })
 
 			var obj runtime.Object
 			if tt.obj != nil {
@@ -1219,7 +1386,6 @@ func TestValidateAuthor(t *testing.T) {
 	annotations := map[string]string{
 		AnnoAuthor:      requester.GetName(),
 		AnnoAuthorEmail: requester.GetEmail(),
-		AnnoAuthorID:    requester.GetUID(),
 	}
 
 	tests := []struct {
@@ -1263,13 +1429,6 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " must match",
 		},
 		{
-			name:            "create with mismatched author ID",
-			ctx:             userCtx,
-			operation:       admission.Create,
-			annotations:     map[string]string{AnnoAuthorID: "user:other"},
-			wantErrContains: AnnoAuthorID + " must match",
-		},
-		{
 			name:            "create without requester",
 			ctx:             t.Context(),
 			operation:       admission.Create,
@@ -1300,12 +1459,12 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " is immutable",
 		},
 		{
-			name:            "update removing author ID",
+			name:            "update removing email",
 			ctx:             userCtx,
 			operation:       admission.Update,
-			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: requester.GetEmail()},
+			annotations:     map[string]string{AnnoAuthor: requester.GetName()},
 			oldAnnotations:  annotations,
-			wantErrContains: AnnoAuthorID + " is immutable",
+			wantErrContains: AnnoAuthorEmail + " is immutable",
 		},
 		{
 			name:        "delete is ignored",
