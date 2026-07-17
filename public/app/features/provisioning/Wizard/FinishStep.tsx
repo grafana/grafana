@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -27,12 +27,15 @@ export const FinishStep = memo(function FinishStep() {
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const [type, readOnly, wizardConnectionName, githubAuthType] = watch([
+  const [type, readOnly, wizardConnectionName, githubAuthType, email] = watch([
     'repository.type',
     'repository.readOnly',
     'githubApp.connectionName',
     'githubAuthType',
+    'repository.email',
   ]);
+
+  const emailWebhookDisabled = type === 'bitbucket' && !email;
 
   const isGitBased = isGitProvider(type);
 
@@ -56,6 +59,17 @@ export const FinishStep = memo(function FinishStep() {
       setValue('repository.webhook.disabled', true);
     }
   }, [connectionWebhookDisabled, setValue]);
+
+  const emailForcedDisabled = useRef(false);
+  useEffect(() => {
+    if (emailWebhookDisabled) {
+      emailForcedDisabled.current = true;
+      setValue('repository.webhook.disabled', true);
+    } else if (emailForcedDisabled.current) {
+      emailForcedDisabled.current = false;
+      setValue('repository.webhook.disabled', false);
+    }
+  }, [emailWebhookDisabled, setValue]);
 
   useEffect(() => {
     if (!hasStepError) {
@@ -176,6 +190,14 @@ export const FinishStep = memo(function FinishStep() {
           name="repository.webhook.baseUrl"
           disabledName="repository.webhook.disabled"
           connectionWebhookDisabled={connectionWebhookDisabled}
+          disabledReason={
+            emailWebhookDisabled
+              ? t(
+                  'provisioning.webhook-section.description-webhook-disabled-email-step',
+                  'Webhook integration is disabled because the Atlassian account email is not set. Set it in the connection step to enable webhooks.'
+                )
+              : undefined
+          }
           disabledError={errors?.repository?.webhook?.disabled?.message}
         />
       )}

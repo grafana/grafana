@@ -231,10 +231,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder: 'you@example.com',
-        required: true,
-        validation: {
-          required: t('provisioning.bitbucket.email-required', 'Email is required'),
-        },
+        required: false,
       },
       url: {
         ...shared.url,

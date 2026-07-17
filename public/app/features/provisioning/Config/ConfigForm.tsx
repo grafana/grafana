@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -103,12 +103,24 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
+  const emailWebhookDisabled = type === 'bitbucket' && !watch('email');
 
   useEffect(() => {
     if (connectionWebhookDisabled) {
       setValue('webhook.disabled', true);
     }
   }, [connectionWebhookDisabled, setValue]);
+
+  const emailForcedDisabled = useRef(false);
+  useEffect(() => {
+    if (emailWebhookDisabled) {
+      emailForcedDisabled.current = true;
+      setValue('webhook.disabled', true);
+    } else if (emailForcedDisabled.current) {
+      emailForcedDisabled.current = false;
+      setValue('webhook.disabled', false);
+    }
+  }, [emailWebhookDisabled, setValue]);
 
   const {
     data: refsData,
@@ -453,6 +465,14 @@ export function ConfigForm({ data }: ConfigFormProps) {
             name="webhook.baseUrl"
             disabledName="webhook.disabled"
             connectionWebhookDisabled={connectionWebhookDisabled}
+            disabledReason={
+              emailWebhookDisabled
+                ? t(
+                    'provisioning.webhook-section.description-webhook-disabled-email',
+                    'Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.'
+                  )
+                : undefined
+            }
             disabledError={errors?.webhook?.disabled?.message}
           />
         )}

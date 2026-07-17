@@ -13188,7 +13188,6 @@
       "branch-required": "Branch is required",
       "email-description": "The Atlassian account email used to authenticate the Bitbucket API. Required to enable webhooks.",
       "email-label": "Atlassian account email",
-      "email-required": "Email is required",
       "permissions": {
         "pull-requests-label": "Pull requests",
         "pull-requests-read-write": "Read and write",
@@ -14065,6 +14064,8 @@
     },
     "webhook-section": {
       "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-email": "Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.",
+      "description-webhook-disabled-email-step": "Webhook integration is disabled because the Atlassian account email is not set. Set it in the connection step to enable webhooks.",
       "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
