@@ -306,7 +306,9 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
 		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
-		return MakeErrTimeIntervalInUse(true, slices.Collect(maps.Keys(ns)))
+		ruleKeys := slices.Collect(maps.Keys(ns))
+		svc.log.Error("Cannot delete time interval because it is used by notification policies", "timeInterval", existing.Name, "rulesUid", strings.Join(ruleKeysToUIDs(ruleKeys), ","))
+		return MakeErrTimeIntervalInUse(true, ruleKeys)
 	}
 
 	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(provenance), version, "delete"); err != nil {
@@ -320,7 +322,9 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 			return err
 		}
 		if len(keys) > 0 {
-			return MakeErrTimeIntervalInUse(false, slices.Collect(maps.Keys(keys)))
+			ruleKeys := slices.Collect(maps.Keys(keys))
+			svc.log.Error("Cannot delete time interval because it is used in rule's notification settings", "timeInterval", existing.Name, "rulesUid", strings.Join(ruleKeysToUIDs(ruleKeys), ","))
+			return MakeErrTimeIntervalInUse(false, ruleKeys)
 		}
 
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
@@ -328,6 +332,14 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		}
 		return svc.provenanceStore.DeleteProvenance(ctx, &existingInterval, orgID)
 	})
+}
+
+func ruleKeysToUIDs(keys []models.AlertRuleKey) []string {
+	uids := make([]string, 0, len(keys))
+	for _, key := range keys {
+		uids = append(uids, key.UID)
+	}
+	return uids
 }
 
 func isTimeIntervalInUseInRoutes(name string, route *v1.Route) bool {
