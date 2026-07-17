@@ -5,6 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Alert, Badge, Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { HomeSection } from '../HomeSection';
@@ -46,6 +47,7 @@ export function SummaryCard<T>({
   renderItem,
   footer,
 }: SummaryCardProps<T>) {
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const styles = useStyles2(getStyles);
 
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
@@ -54,15 +56,17 @@ export function SummaryCard<T>({
     <HomeSection display="flex" direction="column">
       <Stack direction="column" gap={2} grow={1}>
         <Stack direction="column" gap={2} grow={1}>
-          <Stack alignItems="center" justifyContent="space-between">
-            <Stack alignItems="center">
-              <Text element="h2" variant="h5">
-                {title}
-              </Text>
-              {!loading && count > 0 && <Badge text={countText} color="red" />}
+          {!redesignEnabled && (
+            <Stack alignItems="center" justifyContent="space-between">
+              <Stack alignItems="center">
+                <Text element="h2" variant="h5">
+                  {title}
+                </Text>
+                {!loading && count > 0 && <Badge text={countText} color="red" />}
+              </Stack>
+              {!loading && headerExtra}
             </Stack>
-            {!loading && headerExtra}
-          </Stack>
+          )}
 
           {loading && (
             <Stack direction="column">
