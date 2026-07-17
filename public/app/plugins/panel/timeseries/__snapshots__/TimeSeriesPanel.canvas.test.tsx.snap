@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`TimeSeriesPanel (canvas) Annotations point annotations canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Annotations point annotations 1`] = `
 [
   {
     "props": {
@@ -350,7 +350,7 @@ exports[`TimeSeriesPanel (canvas) Annotations point annotations canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Annotations region annotations canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Annotations region annotations 1`] = `
 [
   {
     "props": {
@@ -666,7 +666,7 @@ exports[`TimeSeriesPanel (canvas) Annotations region annotations canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axes X Axis: defaults axes 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes X Axis: defaults 1`] = `
 [
   {
     "props": {
@@ -1351,7 +1351,7 @@ exports[`TimeSeriesPanel (canvas) Axes X Axis: defaults axes 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom 1`] = `
 [
   {
     "props": {
@@ -2719,7 +2719,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: hidden axes 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: hidden 1`] = `
 [
   {
     "props": {
@@ -2733,7 +2733,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: hidden axes 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right 1`] = `
 [
   {
     "props": {
@@ -3418,7 +3418,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top 1`] = `
 [
   {
     "props": {
@@ -4792,7 +4792,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
+exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max 1`] = `
 [
   {
     "props": {
@@ -5514,7 +5514,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Exemplars renders canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Exemplars renders 1`] = `
 [
   {
     "props": {
@@ -5702,7 +5702,7 @@ exports[`TimeSeriesPanel (canvas) Exemplars renders canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options defaults canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options defaults 1`] = `
 [
   {
     "props": {
@@ -5890,7 +5890,7 @@ exports[`TimeSeriesPanel (canvas) Options defaults canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options drawStyle: bars canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options drawStyle: bars 1`] = `
 [
   {
     "props": {
@@ -6093,7 +6093,7 @@ exports[`TimeSeriesPanel (canvas) Options drawStyle: bars canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options drawStyle: points canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options drawStyle: points 1`] = `
 [
   {
     "props": {
@@ -6194,7 +6194,7 @@ exports[`TimeSeriesPanel (canvas) Options drawStyle: points canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options fillOpacity: 25 canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options fillOpacity: 25 1`] = `
 [
   {
     "props": {
@@ -6404,7 +6404,7 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 25 canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options fillOpacity: 50 canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options fillOpacity: 50 1`] = `
 [
   {
     "props": {
@@ -6614,7 +6614,7 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 50 canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options fillOpacity: 80 canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options fillOpacity: 80 1`] = `
 [
   {
     "props": {
@@ -6824,7 +6824,7 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 80 canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options fillOpacity: 100 canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options fillOpacity: 100 1`] = `
 [
   {
     "props": {
@@ -7034,7 +7034,7 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 100 canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options gradientMode: hue canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options gradientMode: hue 1`] = `
 [
   {
     "props": {
@@ -7295,7 +7295,7 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: hue canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options gradientMode: opacity canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options gradientMode: opacity 1`] = `
 [
   {
     "props": {
@@ -7525,7 +7525,7 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: opacity canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options gradientMode: scheme canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options gradientMode: scheme 1`] = `
 [
   {
     "props": {
@@ -7798,7 +7798,7 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: scheme canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options lineInterpolation: smooth canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options lineInterpolation: smooth 1`] = `
 [
   {
     "props": {
@@ -8002,7 +8002,7 @@ exports[`TimeSeriesPanel (canvas) Options lineInterpolation: smooth canvas 1`] =
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepAfter canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepAfter 1`] = `
 [
   {
     "props": {
@@ -8232,7 +8232,7 @@ exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepAfter canvas 1`
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepBefore canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepBefore 1`] = `
 [
   {
     "props": {
@@ -8462,7 +8462,7 @@ exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepBefore canvas 1
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 1`] = `
 [
   {
     "props": {
@@ -8662,7 +8662,7 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options lineWidth: 6 canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options lineWidth: 6 1`] = `
 [
   {
     "props": {
@@ -8848,7 +8848,7 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 6 canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options lineWidth: 10 canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options lineWidth: 10 1`] = `
 [
   {
     "props": {
@@ -9034,7 +9034,7 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 10 canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options stacking: 100% 1`] = `
 [
   {
     "props": {
@@ -9566,7 +9566,7 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options stacking: normal canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options stacking: normal 1`] = `
 [
   {
     "props": {
