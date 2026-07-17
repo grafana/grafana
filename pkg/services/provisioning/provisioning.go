@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -161,15 +162,28 @@ func (ps *ProvisioningServiceImpl) starting(ctx context.Context) error {
 	return nil
 }
 
+// isRetriableFolderError reports whether a dashboard provisioning failure is a
+// transient folder-API condition worth retrying (e.g. the aggregated folder API
+// not yet available at startup), as opposed to a permanent configuration error
+// (invalid folder UID, path deeper than the max nested depth) that waiting cannot fix.
+func isRetriableFolderError(err error) bool {
+	if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
+		return false
+	}
+	return apierrors.IsServiceUnavailable(err) || apierrors.IsServerTimeout(err) ||
+		apierrors.IsTimeout(err) || apierrors.IsTooManyRequests(err)
+}
+
 // provisionDashboardsWithRetry retries dashboard provisioning while it fails
-// because the folder API is transiently unavailable (ErrGetOrCreateFolder). Any
-// other error returns immediately. The final ErrGetOrCreateFolder is returned to
-// the caller, which allow-lists it so a persistent outage does not block startup.
+// because the folder API is transiently unavailable. Any other error (including
+// permanent folder configuration errors) returns immediately. The final error is
+// returned to the caller, which allow-lists ErrGetOrCreateFolder so a folder
+// outage does not block startup.
 func (ps *ProvisioningServiceImpl) provisionDashboardsWithRetry(ctx context.Context) error {
 	var err error
 	for attempt := 0; ; attempt++ {
 		err = ps.ProvisionDashboards(ctx)
-		if err == nil || !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
+		if err == nil || !isRetriableFolderError(err) {
 			return err
 		}
 		if attempt >= ps.dashboardProvisionRetries {
