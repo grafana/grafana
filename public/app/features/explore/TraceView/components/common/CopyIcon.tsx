@@ -45,7 +45,22 @@ export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTi
   const [hasCopied, setHasCopied] = useState(false);
 
   const handleClick = () => {
-    navigator.clipboard.writeText(copyText);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(copyText);
+    } else {
+      // Fallback for insecure contexts (no HTTPS/localhost) where the Clipboard API is unavailable.
+      const previousActiveElement = document.activeElement;
+      const textarea = document.createElement('textarea');
+      document.body.appendChild(textarea);
+      textarea.value = copyText;
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+      if (previousActiveElement instanceof HTMLElement) {
+        previousActiveElement.focus();
+      }
+    }
     setHasCopied(true);
   };
 
