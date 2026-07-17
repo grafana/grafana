@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { CoreApp, type TimeRange } from '@grafana/data';
+import { CoreApp, type LinkModel, type TimeRange } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
@@ -17,6 +17,9 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+  // LogsLinkButton resolves the query datasource to check for logs; the links used
+  // here have no interpolated query, so this is only a safety net against real calls.
+  getDataSourceInstance: jest.fn().mockResolvedValue({ query: jest.fn() }),
 }));
 
 const span = {
@@ -32,13 +35,22 @@ const timeRange = {
   to: new Date(1000),
 } as unknown as TimeRange;
 
+// The Share button is always rendered by SpanDetailLinkButtons, so every render
+// below produces this button in addition to any link buttons under test.
+const focusSpanLink = {
+  href: '/focus',
+  title: 'Focus',
+  target: '_self',
+  origin: {},
+} as unknown as LinkModel;
+
 describe('SpanDetailLinkButtons', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should render nothing when createSpanLink is not provided', () => {
-    const { container } = render(
+  it('should render only the share button when createSpanLink is not provided', () => {
+    render(
       <SpanDetailLinkButtons
         span={span}
         createSpanLink={undefined}
@@ -47,10 +59,12 @@ describe('SpanDetailLinkButtons', () => {
         traceToProfilesOptions={undefined}
         timeRange={timeRange}
         app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getByText('Share')).toBeInTheDocument();
   });
 
   it('should render log link button when logs link exists', () => {
@@ -65,10 +79,12 @@ describe('SpanDetailLinkButtons', () => {
         traceToProfilesOptions={undefined}
         timeRange={timeRange}
         app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // Log link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByText('Related logs')).toBeInTheDocument();
   });
 
@@ -114,10 +130,12 @@ describe('SpanDetailLinkButtons', () => {
           traceToProfilesOptions={undefined}
           timeRange={timeRange}
           app={CoreApp.Explore}
+          focusSpanLink={focusSpanLink}
         />
       );
 
-      expect(screen.getAllByRole('button')).toHaveLength(1);
+      // Log link + the always-present share button.
+      expect(screen.getAllByRole('button')).toHaveLength(2);
       expect(screen.getByText(expectedCTA)).toBeInTheDocument();
     });
   });
@@ -138,10 +156,12 @@ describe('SpanDetailLinkButtons', () => {
         }}
         timeRange={timeRange}
         app={CoreApp.Dashboard}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // Profile link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
   });
 
@@ -157,10 +177,12 @@ describe('SpanDetailLinkButtons', () => {
         traceToProfilesOptions={undefined}
         timeRange={timeRange}
         app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // Session link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByText('Session for this span')).toBeInTheDocument();
   });
 
@@ -190,10 +212,12 @@ describe('SpanDetailLinkButtons', () => {
         }}
         timeRange={timeRange}
         app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(2);
+    // Profile link + profiles drilldown link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(3);
     expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
     expect(screen.getByText('Open in Profiles Drilldown')).toBeInTheDocument();
   });
@@ -224,10 +248,12 @@ describe('SpanDetailLinkButtons', () => {
         }}
         timeRange={timeRange}
         app={CoreApp.Dashboard}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // Profile link + the always-present share button (no drilldown outside Explore).
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
     expect(screen.queryByText('Open in Profiles Drilldown')).not.toBeInTheDocument();
   });
