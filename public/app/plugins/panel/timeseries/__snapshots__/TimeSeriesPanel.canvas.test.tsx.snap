@@ -1351,691 +1351,6 @@ exports[`TimeSeriesPanel (canvas) Axes X Axis: defaults axes 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: auto axes 1`] = `
-[
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-  {
-    "props": {
-      "value": "#ccccdc",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
-    },
-    "type": "font",
-  },
-  {
-    "props": {
-      "value": "center",
-    },
-    "type": "textAlign",
-  },
-  {
-    "props": {
-      "value": "top",
-    },
-    "type": "textBaseline",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "00:00:00",
-      "x": 24,
-      "y": 366,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "00:00:05",
-      "x": 537,
-      "y": 366,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": 1,
-    },
-    "type": "lineWidth",
-  },
-  {
-    "props": {
-      "value": "round",
-    },
-    "type": "lineJoin",
-  },
-  {
-    "props": {
-      "value": "butt",
-    },
-    "type": "lineCap",
-  },
-  {
-    "props": {
-      "segments": [],
-    },
-    "type": "setLineDash",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 361,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 361,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 361,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 361,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 8,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 8,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 8,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 8,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#ccccdc",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": "right",
-    },
-    "type": "textAlign",
-  },
-  {
-    "props": {
-      "value": "middle",
-    },
-    "type": "textBaseline",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "8",
-      "x": 19,
-      "y": 357,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "10",
-      "x": 19,
-      "y": 320,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "12",
-      "x": 19,
-      "y": 284,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "14",
-      "x": 19,
-      "y": 247,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "16",
-      "x": 19,
-      "y": 210,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "18",
-      "x": 19,
-      "y": 173,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "20",
-      "x": 19,
-      "y": 137,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "22",
-      "x": 19,
-      "y": 100,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "24",
-      "x": 19,
-      "y": 63,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "26",
-      "x": 19,
-      "y": 26,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 320,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 320,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 284,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 284,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 247,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 247,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 210,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 210,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 173,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 173,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 137,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 137,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 100,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 100,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 63,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 63,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 26,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 26,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 320,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 320,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 284,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 284,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 247,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 247,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 210,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 210,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 173,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 173,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 137,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 137,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 100,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 100,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 63,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 63,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 26,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 26,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-]
-`;
-
 exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
 [
   {
@@ -2075,8 +1390,44 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "00:00:00",
-      "x": 24,
-      "y": 366,
+      "x": 8,
+      "y": 345,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:01",
+      "x": 113,
+      "y": 345,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:02",
+      "x": 219,
+      "y": 345,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:03",
+      "x": 324,
+      "y": 345,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:04",
+      "x": 429,
+      "y": 345,
     },
     "type": "fillText",
   },
@@ -2084,8 +1435,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "00:00:05",
-      "x": 537,
-      "y": 366,
+      "x": 535,
+      "y": 345,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:06",
+      "x": 640,
+      "y": 345,
     },
     "type": "fillText",
   },
@@ -2138,29 +1498,99 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
-      "y": 357,
+      "x": 8,
+      "y": 336,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 361,
+      "x": 8,
+      "y": 340,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 537,
-      "y": 357,
+      "x": 113,
+      "y": 336,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
-      "y": 361,
+      "x": 113,
+      "y": 340,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 219,
+      "y": 336,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 219,
+      "y": 340,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 324,
+      "y": 336,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 324,
+      "y": 340,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 429,
+      "y": 336,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 429,
+      "y": 340,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 535,
+      "y": 336,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 535,
+      "y": 340,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 336,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 340,
     },
     "type": "lineTo",
   },
@@ -2173,29 +1603,99 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
-            "y": 357,
+            "x": 8,
+            "y": 336,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 361,
+            "x": 8,
+            "y": 340,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
-            "y": 357,
+            "x": 113,
+            "y": 336,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
-            "y": 361,
+            "x": 113,
+            "y": 340,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 219,
+            "y": 336,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 219,
+            "y": 340,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 324,
+            "y": 336,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 324,
+            "y": 340,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 429,
+            "y": 336,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 429,
+            "y": 340,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 535,
+            "y": 336,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 535,
+            "y": 340,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 336,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 340,
           },
           "type": "lineTo",
         },
@@ -2223,29 +1723,99 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
-      "y": 8,
+      "x": 8,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 357,
+      "x": 8,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 537,
-      "y": 8,
+      "x": 113,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
-      "y": 357,
+      "x": 113,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 219,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 219,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 324,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 324,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 429,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 429,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 535,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 535,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 336,
     },
     "type": "lineTo",
   },
@@ -2258,29 +1828,99 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
-            "y": 8,
+            "x": 8,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 357,
+            "x": 8,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
-            "y": 8,
+            "x": 113,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
-            "y": 357,
+            "x": 113,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 219,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 219,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 324,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 324,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 429,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 429,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 535,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 535,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 336,
           },
           "type": "lineTo",
         },
@@ -2303,22 +1943,19 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
   },
   {
     "props": {
-      "value": "right",
+      "maxWidth": null,
+      "text": "8",
+      "x": 640,
+      "y": 362,
     },
-    "type": "textAlign",
-  },
-  {
-    "props": {
-      "value": "middle",
-    },
-    "type": "textBaseline",
+    "type": "fillText",
   },
   {
     "props": {
       "maxWidth": null,
-      "text": "8",
-      "x": 19,
-      "y": 357,
+      "text": "9",
+      "x": 607,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2326,8 +1963,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "10",
-      "x": 19,
-      "y": 320,
+      "x": 573,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "11",
+      "x": 540,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2335,8 +1981,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "12",
-      "x": 19,
-      "y": 284,
+      "x": 507,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "13",
+      "x": 474,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2344,8 +1999,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "14",
-      "x": 19,
-      "y": 247,
+      "x": 440,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "15",
+      "x": 407,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2353,8 +2017,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "16",
-      "x": 19,
-      "y": 210,
+      "x": 374,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "17",
+      "x": 341,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2362,8 +2035,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "18",
-      "x": 19,
-      "y": 173,
+      "x": 307,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "19",
+      "x": 274,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2371,8 +2053,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "20",
-      "x": 19,
-      "y": 137,
+      "x": 241,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "21",
+      "x": 208,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2380,8 +2071,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "22",
-      "x": 19,
-      "y": 100,
+      "x": 174,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "23",
+      "x": 141,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2389,8 +2089,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "24",
-      "x": 19,
-      "y": 63,
+      "x": 108,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "25",
+      "x": 75,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2398,8 +2107,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "26",
-      "x": 19,
-      "y": 26,
+      "x": 41,
+      "y": 362,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "27",
+      "x": 8,
+      "y": 362,
     },
     "type": "fillText",
   },
@@ -2422,141 +2140,281 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
-      "y": 357,
+      "x": 640,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 357,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 320,
+      "x": 607,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 320,
+      "x": 607,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 284,
+      "x": 573,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 284,
+      "x": 573,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 247,
+      "x": 540,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 247,
+      "x": 540,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 210,
+      "x": 507,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 210,
+      "x": 507,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 173,
+      "x": 474,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 173,
+      "x": 474,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 137,
+      "x": 440,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 137,
+      "x": 440,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 100,
+      "x": 407,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 100,
+      "x": 407,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 63,
+      "x": 374,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 63,
+      "x": 374,
+      "y": 336,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 26,
+      "x": 341,
+      "y": 0,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 26,
+      "x": 341,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 307,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 307,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 274,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 274,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 241,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 241,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 208,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 208,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 174,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 174,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 141,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 141,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 108,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 108,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 75,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 75,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 41,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 41,
+      "y": 336,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 8,
+      "y": 0,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 8,
+      "y": 336,
     },
     "type": "lineTo",
   },
@@ -2569,141 +2427,281 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
-            "y": 357,
+            "x": 640,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 357,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 320,
+            "x": 607,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 320,
+            "x": 607,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 284,
+            "x": 573,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 284,
+            "x": 573,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 247,
+            "x": 540,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 247,
+            "x": 540,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 210,
+            "x": 507,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 210,
+            "x": 507,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 173,
+            "x": 474,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 173,
+            "x": 474,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 137,
+            "x": 440,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 137,
+            "x": 440,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 100,
+            "x": 407,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 100,
+            "x": 407,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 63,
+            "x": 374,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 63,
+            "x": 374,
+            "y": 336,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 26,
+            "x": 341,
+            "y": 0,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 26,
+            "x": 341,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 307,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 307,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 274,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 274,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 241,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 241,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 208,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 208,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 174,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 174,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 141,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 141,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 108,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 108,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 75,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 75,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 41,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 41,
+            "y": 336,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 8,
+            "y": 0,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 8,
+            "y": 336,
           },
           "type": "lineTo",
         },
@@ -2731,1362 +2729,6 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: hidden axes 1`] = `
       "y": 0,
     },
     "type": "clearRect",
-  },
-  {
-    "props": {
-      "value": "#ccccdc",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
-    },
-    "type": "font",
-  },
-  {
-    "props": {
-      "value": "center",
-    },
-    "type": "textAlign",
-  },
-  {
-    "props": {
-      "value": "top",
-    },
-    "type": "textBaseline",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "00:00:00",
-      "x": 24,
-      "y": 366,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "00:00:05",
-      "x": 537,
-      "y": 366,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": 1,
-    },
-    "type": "lineWidth",
-  },
-  {
-    "props": {
-      "value": "round",
-    },
-    "type": "lineJoin",
-  },
-  {
-    "props": {
-      "value": "butt",
-    },
-    "type": "lineCap",
-  },
-  {
-    "props": {
-      "segments": [],
-    },
-    "type": "setLineDash",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 361,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 361,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 361,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 361,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 8,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 8,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 8,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 8,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#ccccdc",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": "right",
-    },
-    "type": "textAlign",
-  },
-  {
-    "props": {
-      "value": "middle",
-    },
-    "type": "textBaseline",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "8",
-      "x": 19,
-      "y": 357,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "10",
-      "x": 19,
-      "y": 320,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "12",
-      "x": 19,
-      "y": 284,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "14",
-      "x": 19,
-      "y": 247,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "16",
-      "x": 19,
-      "y": 210,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "18",
-      "x": 19,
-      "y": 173,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "20",
-      "x": 19,
-      "y": 137,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "22",
-      "x": 19,
-      "y": 100,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "24",
-      "x": 19,
-      "y": 63,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "26",
-      "x": 19,
-      "y": 26,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 320,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 320,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 284,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 284,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 247,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 247,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 210,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 210,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 173,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 173,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 137,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 137,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 100,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 100,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 63,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 63,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 26,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 26,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 320,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 320,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 284,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 284,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 247,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 247,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 210,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 210,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 173,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 173,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 137,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 137,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 100,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 100,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 63,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 63,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 26,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 26,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-]
-`;
-
-exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: left axes 1`] = `
-[
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-  {
-    "props": {
-      "value": "#ccccdc",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
-    },
-    "type": "font",
-  },
-  {
-    "props": {
-      "value": "center",
-    },
-    "type": "textAlign",
-  },
-  {
-    "props": {
-      "value": "top",
-    },
-    "type": "textBaseline",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "00:00:00",
-      "x": 24,
-      "y": 366,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "00:00:05",
-      "x": 537,
-      "y": 366,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": 1,
-    },
-    "type": "lineWidth",
-  },
-  {
-    "props": {
-      "value": "round",
-    },
-    "type": "lineJoin",
-  },
-  {
-    "props": {
-      "value": "butt",
-    },
-    "type": "lineCap",
-  },
-  {
-    "props": {
-      "segments": [],
-    },
-    "type": "setLineDash",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 361,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 361,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 361,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 361,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 8,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 8,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 537,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 8,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 8,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#ccccdc",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "value": "right",
-    },
-    "type": "textAlign",
-  },
-  {
-    "props": {
-      "value": "middle",
-    },
-    "type": "textBaseline",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "8",
-      "x": 19,
-      "y": 357,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "10",
-      "x": 19,
-      "y": 320,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "12",
-      "x": 19,
-      "y": 284,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "14",
-      "x": 19,
-      "y": 247,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "16",
-      "x": 19,
-      "y": 210,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "18",
-      "x": 19,
-      "y": 173,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "20",
-      "x": 19,
-      "y": 137,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "22",
-      "x": 19,
-      "y": 100,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "24",
-      "x": 19,
-      "y": 63,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "26",
-      "x": 19,
-      "y": 26,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "rgba(240, 250, 255, 0.09)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 357,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 320,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 320,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 284,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 284,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 247,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 247,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 210,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 210,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 173,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 173,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 137,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 137,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 100,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 100,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 63,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 63,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "x": 24,
-      "y": 26,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 640,
-      "y": 26,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 357,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 320,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 320,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 284,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 284,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 247,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 247,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 210,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 210,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 173,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 173,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 137,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 137,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 100,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 100,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 63,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 63,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 24,
-            "y": 26,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 640,
-            "y": 26,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
   },
 ]
 `;
@@ -4130,7 +2772,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "00:00:00",
-      "x": 24,
+      "x": 8,
       "y": 366,
     },
     "type": "fillText",
@@ -4139,7 +2781,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "00:00:05",
-      "x": 537,
+      "x": 521,
       "y": 366,
     },
     "type": "fillText",
@@ -4193,28 +2835,28 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 361,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 521,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 521,
       "y": 361,
     },
     "type": "lineTo",
@@ -4228,28 +2870,28 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 361,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 521,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 521,
             "y": 361,
           },
           "type": "lineTo",
@@ -4278,28 +2920,28 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 521,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 521,
       "y": 357,
     },
     "type": "lineTo",
@@ -4313,28 +2955,28 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 521,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 521,
             "y": 357,
           },
           "type": "lineTo",
@@ -4358,7 +3000,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
   },
   {
     "props": {
-      "value": "right",
+      "value": "left",
     },
     "type": "textAlign",
   },
@@ -4372,7 +3014,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "8",
-      "x": 19,
+      "x": 629,
       "y": 357,
     },
     "type": "fillText",
@@ -4381,7 +3023,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "10",
-      "x": 19,
+      "x": 629,
       "y": 320,
     },
     "type": "fillText",
@@ -4390,7 +3032,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "12",
-      "x": 19,
+      "x": 629,
       "y": 284,
     },
     "type": "fillText",
@@ -4399,7 +3041,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "14",
-      "x": 19,
+      "x": 629,
       "y": 247,
     },
     "type": "fillText",
@@ -4408,7 +3050,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "16",
-      "x": 19,
+      "x": 629,
       "y": 210,
     },
     "type": "fillText",
@@ -4417,7 +3059,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "18",
-      "x": 19,
+      "x": 629,
       "y": 173,
     },
     "type": "fillText",
@@ -4426,7 +3068,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "20",
-      "x": 19,
+      "x": 629,
       "y": 137,
     },
     "type": "fillText",
@@ -4435,7 +3077,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "22",
-      "x": 19,
+      "x": 629,
       "y": 100,
     },
     "type": "fillText",
@@ -4444,7 +3086,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "24",
-      "x": 19,
+      "x": 629,
       "y": 63,
     },
     "type": "fillText",
@@ -4453,7 +3095,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "26",
-      "x": 19,
+      "x": 629,
       "y": 26,
     },
     "type": "fillText",
@@ -4477,140 +3119,140 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 320,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 320,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 284,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 284,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 247,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 247,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 210,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 210,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 173,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 173,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 137,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 137,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 100,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 100,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 63,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 63,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 26,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
+      "x": 624,
       "y": 26,
     },
     "type": "lineTo",
@@ -4624,140 +3266,140 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 320,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 320,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 284,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 284,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 247,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 247,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 210,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 210,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 173,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 173,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 137,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 137,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 100,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 100,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 63,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 63,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 26,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
+            "x": 624,
             "y": 26,
           },
           "type": "lineTo",
@@ -4815,7 +3457,43 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "00:00:00",
-      "x": 24,
+      "x": 8,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:01",
+      "x": 113,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:02",
+      "x": 219,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:03",
+      "x": 324,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:04",
+      "x": 429,
       "y": 366,
     },
     "type": "fillText",
@@ -4824,7 +3502,16 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "00:00:05",
-      "x": 537,
+      "x": 535,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "00:00:06",
+      "x": 640,
       "y": 366,
     },
     "type": "fillText",
@@ -4878,28 +3565,98 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 361,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 113,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 113,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 219,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 219,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 324,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 324,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 429,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 429,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 535,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 535,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 361,
     },
     "type": "lineTo",
@@ -4913,28 +3670,98 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 361,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 113,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 113,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 219,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 219,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 324,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 324,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 429,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 429,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 535,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 535,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 361,
           },
           "type": "lineTo",
@@ -4963,28 +3790,98 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
-      "y": 8,
+      "x": 8,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 8,
       "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 537,
-      "y": 8,
+      "x": 113,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 113,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 219,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 219,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 324,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 324,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 429,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 429,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 535,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 535,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 357,
     },
     "type": "lineTo",
@@ -4998,28 +3895,98 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
-            "y": 8,
+            "x": 8,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 8,
             "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
-            "y": 8,
+            "x": 113,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 113,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 219,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 219,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 324,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 324,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 429,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 429,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 535,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 535,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 357,
           },
           "type": "lineTo",
@@ -5043,13 +4010,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
   },
   {
     "props": {
-      "value": "right",
-    },
-    "type": "textAlign",
-  },
-  {
-    "props": {
-      "value": "middle",
+      "value": "bottom",
     },
     "type": "textBaseline",
   },
@@ -5057,8 +4018,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "8",
-      "x": 19,
-      "y": 357,
+      "x": 640,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "9",
+      "x": 607,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5066,8 +4036,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "10",
-      "x": 19,
-      "y": 320,
+      "x": 573,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "11",
+      "x": 540,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5075,8 +4054,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "12",
-      "x": 19,
-      "y": 284,
+      "x": 507,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "13",
+      "x": 474,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5084,8 +4072,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "14",
-      "x": 19,
-      "y": 247,
+      "x": 440,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "15",
+      "x": 407,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5093,8 +4090,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "16",
-      "x": 19,
-      "y": 210,
+      "x": 374,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "17",
+      "x": 341,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5102,8 +4108,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "18",
-      "x": 19,
-      "y": 173,
+      "x": 307,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "19",
+      "x": 274,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5111,8 +4126,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "20",
-      "x": 19,
-      "y": 137,
+      "x": 241,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "21",
+      "x": 208,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5120,8 +4144,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "22",
-      "x": 19,
-      "y": 100,
+      "x": 174,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "23",
+      "x": 141,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5129,8 +4162,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "24",
-      "x": 19,
-      "y": 63,
+      "x": 108,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "25",
+      "x": 75,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5138,8 +4180,17 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "26",
-      "x": 19,
-      "y": 26,
+      "x": 41,
+      "y": 19,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "27",
+      "x": 8,
+      "y": 19,
     },
     "type": "fillText",
   },
@@ -5162,8 +4213,8 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
-      "y": 357,
+      "x": 640,
+      "y": 24,
     },
     "type": "moveTo",
   },
@@ -5176,127 +4227,267 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
-      "y": 320,
+      "x": 607,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 320,
+      "x": 607,
+      "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 284,
+      "x": 573,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 284,
+      "x": 573,
+      "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 247,
+      "x": 540,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 247,
+      "x": 540,
+      "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 210,
+      "x": 507,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 210,
+      "x": 507,
+      "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 173,
+      "x": 474,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 173,
+      "x": 474,
+      "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 137,
+      "x": 440,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 137,
+      "x": 440,
+      "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 100,
+      "x": 407,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 100,
+      "x": 407,
+      "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 63,
+      "x": 374,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 63,
+      "x": 374,
+      "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 26,
+      "x": 341,
+      "y": 24,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 640,
-      "y": 26,
+      "x": 341,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 307,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 307,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 274,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 274,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 241,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 241,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 208,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 208,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 174,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 174,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 141,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 141,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 108,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 108,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 75,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 75,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 41,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 41,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 8,
+      "y": 24,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 8,
+      "y": 357,
     },
     "type": "lineTo",
   },
@@ -5309,8 +4500,8 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
-            "y": 357,
+            "x": 640,
+            "y": 24,
           },
           "type": "moveTo",
         },
@@ -5323,127 +4514,267 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
-            "y": 320,
+            "x": 607,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 320,
+            "x": 607,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 284,
+            "x": 573,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 284,
+            "x": 573,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 247,
+            "x": 540,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 247,
+            "x": 540,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 210,
+            "x": 507,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 210,
+            "x": 507,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 173,
+            "x": 474,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 173,
+            "x": 474,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 137,
+            "x": 440,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 137,
+            "x": 440,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 100,
+            "x": 407,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 100,
+            "x": 407,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 63,
+            "x": 374,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 63,
+            "x": 374,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 26,
+            "x": 341,
+            "y": 24,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 640,
-            "y": 26,
+            "x": 341,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 307,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 307,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 274,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 274,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 241,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 241,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 208,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 208,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 174,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 174,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 141,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 141,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 108,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 108,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 75,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 75,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 41,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 41,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 8,
+            "y": 24,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 8,
+            "y": 357,
           },
           "type": "lineTo",
         },
@@ -5500,7 +4831,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "00:00:00",
-      "x": 24,
+      "x": 31,
       "y": 366,
     },
     "type": "fillText",
@@ -5509,7 +4840,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "00:00:05",
-      "x": 537,
+      "x": 539,
       "y": 366,
     },
     "type": "fillText",
@@ -5563,28 +4894,28 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
+      "x": 31,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 31,
       "y": 361,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 539,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 539,
       "y": 361,
     },
     "type": "lineTo",
@@ -5598,28 +4929,28 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
+            "x": 31,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 31,
             "y": 361,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 539,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 539,
             "y": 361,
           },
           "type": "lineTo",
@@ -5648,28 +4979,28 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
+      "x": 31,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 24,
+      "x": 31,
       "y": 357,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 539,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 539,
       "y": 357,
     },
     "type": "lineTo",
@@ -5683,28 +5014,28 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
+            "x": 31,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 24,
+            "x": 31,
             "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 539,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 539,
             "y": 357,
           },
           "type": "lineTo",
@@ -5741,8 +5072,8 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "8",
-      "x": 19,
+      "text": "0",
+      "x": 26,
       "y": 357,
     },
     "type": "fillText",
@@ -5751,44 +5082,8 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "10",
-      "x": 19,
-      "y": 320,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "12",
-      "x": 19,
-      "y": 284,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "14",
-      "x": 19,
-      "y": 247,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "16",
-      "x": 19,
-      "y": 210,
-    },
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "18",
-      "x": 19,
-      "y": 173,
+      "x": 26,
+      "y": 322,
     },
     "type": "fillText",
   },
@@ -5796,35 +5091,80 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
     "props": {
       "maxWidth": null,
       "text": "20",
-      "x": 19,
-      "y": 137,
+      "x": 26,
+      "y": 287,
     },
     "type": "fillText",
   },
   {
     "props": {
       "maxWidth": null,
-      "text": "22",
-      "x": 19,
-      "y": 100,
+      "text": "30",
+      "x": 26,
+      "y": 252,
     },
     "type": "fillText",
   },
   {
     "props": {
       "maxWidth": null,
-      "text": "24",
-      "x": 19,
-      "y": 63,
+      "text": "40",
+      "x": 26,
+      "y": 217,
     },
     "type": "fillText",
   },
   {
     "props": {
       "maxWidth": null,
-      "text": "26",
-      "x": 19,
-      "y": 26,
+      "text": "50",
+      "x": 26,
+      "y": 183,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "60",
+      "x": 26,
+      "y": 148,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "70",
+      "x": 26,
+      "y": 113,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "80",
+      "x": 26,
+      "y": 78,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "90",
+      "x": 26,
+      "y": 43,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "100",
+      "x": 26,
+      "y": 8,
     },
     "type": "fillText",
   },
@@ -5847,7 +5187,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
+      "x": 31,
       "y": 357,
     },
     "type": "moveTo",
@@ -5861,127 +5201,141 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
   },
   {
     "props": {
-      "x": 24,
-      "y": 320,
+      "x": 31,
+      "y": 322,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 320,
+      "y": 322,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 284,
+      "x": 31,
+      "y": 287,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 284,
+      "y": 287,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 247,
+      "x": 31,
+      "y": 252,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 247,
+      "y": 252,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 210,
+      "x": 31,
+      "y": 217,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 210,
+      "y": 217,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 173,
+      "x": 31,
+      "y": 183,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 173,
+      "y": 183,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 137,
+      "x": 31,
+      "y": 148,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 137,
+      "y": 148,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 100,
+      "x": 31,
+      "y": 113,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 100,
+      "y": 113,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 63,
+      "x": 31,
+      "y": 78,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 63,
+      "y": 78,
     },
     "type": "lineTo",
   },
   {
     "props": {
-      "x": 24,
-      "y": 26,
+      "x": 31,
+      "y": 43,
     },
     "type": "moveTo",
   },
   {
     "props": {
       "x": 640,
-      "y": 26,
+      "y": 43,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
     },
     "type": "lineTo",
   },
@@ -5994,7 +5348,7 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
+            "x": 31,
             "y": 357,
           },
           "type": "moveTo",
@@ -6008,127 +5362,141 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max axes 1`] = `
         },
         {
           "props": {
-            "x": 24,
-            "y": 320,
+            "x": 31,
+            "y": 322,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 320,
+            "y": 322,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 284,
+            "x": 31,
+            "y": 287,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 284,
+            "y": 287,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 247,
+            "x": 31,
+            "y": 252,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 247,
+            "y": 252,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 210,
+            "x": 31,
+            "y": 217,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 210,
+            "y": 217,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 173,
+            "x": 31,
+            "y": 183,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 173,
+            "y": 183,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 137,
+            "x": 31,
+            "y": 148,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 137,
+            "y": 148,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 100,
+            "x": 31,
+            "y": 113,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 100,
+            "y": 113,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 63,
+            "x": 31,
+            "y": 78,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 63,
+            "y": 78,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 24,
-            "y": 26,
+            "x": 31,
+            "y": 43,
           },
           "type": "moveTo",
         },
         {
           "props": {
             "x": 640,
-            "y": 26,
+            "y": 43,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
           },
           "type": "lineTo",
         },
@@ -6533,13 +5901,13 @@ exports[`TimeSeriesPanel (canvas) Options drawStyle: bars canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
+      "value": "rgba(87, 148, 242, 0.25)",
     },
     "type": "fillStyle",
   },
@@ -6566,279 +5934,106 @@ exports[`TimeSeriesPanel (canvas) Options drawStyle: bars canvas 1`] = `
   },
   {
     "props": {
+      "fillRule": "nonzero",
       "path": [
         {
           "props": {
-            "x": 127,
+            "height": 183,
+            "width": 61,
+            "x": 96,
             "y": 320,
           },
-          "type": "lineTo",
+          "type": "rect",
         },
         {
           "props": {
-            "x": 229,
+            "height": 366,
+            "width": 61,
+            "x": 199,
             "y": 137,
           },
-          "type": "lineTo",
+          "type": "rect",
         },
         {
           "props": {
-            "x": 332,
+            "height": 275,
+            "width": 61,
+            "x": 302,
             "y": 228,
           },
-          "type": "lineTo",
+          "type": "rect",
         },
         {
           "props": {
-            "x": 435,
+            "height": 458,
+            "width": 61,
+            "x": 404,
             "y": 45,
           },
-          "type": "lineTo",
+          "type": "rect",
         },
         {
           "props": {
-            "x": 537,
+            "height": 330,
+            "width": 61,
+            "x": 507,
             "y": 173,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "fill",
-  },
-  {
-    "props": {
-      "path": [],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "height": 349,
-      "width": 616,
-      "x": 24,
-      "y": 8,
-    },
-    "type": "rect",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 349,
-            "width": 616,
-            "x": 24,
-            "y": 8,
           },
           "type": "rect",
         },
       ],
     },
-    "type": "clip",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-]
-`;
-
-exports[`TimeSeriesPanel (canvas) Options drawStyle: line canvas 1`] = `
-[
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "value": "rgba(0, 0, 0, 0)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {
-            "height": 350,
-            "width": 617,
-            "x": 23.5,
-            "y": 7.5,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {
-            "x": 127,
-            "y": 320,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 229,
-            "y": 137,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 332,
-            "y": 228,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 435,
-            "y": 45,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 173,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 183,
+            "width": 61,
+            "x": 96,
+            "y": 320,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 366,
+            "width": 61,
+            "x": 199,
+            "y": 137,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 275,
+            "width": 61,
+            "x": 302,
+            "y": 228,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 458,
+            "width": 61,
+            "x": 404,
+            "y": 45,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 330,
+            "width": 61,
+            "x": 507,
+            "y": 173,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -6909,288 +6104,13 @@ exports[`TimeSeriesPanel (canvas) Options drawStyle: points canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {
-            "height": 350,
-            "width": 617,
-            "x": 23.5,
-            "y": 7.5,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {
-            "x": 127,
-            "y": 320,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 229,
-            "y": 137,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 332,
-            "y": 228,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 435,
-            "y": 45,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 173,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "fill",
-  },
-  {
-    "props": {
-      "path": [],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "height": 349,
-      "width": 616,
-      "x": 24,
-      "y": 8,
-    },
-    "type": "rect",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 349,
-            "width": 616,
-            "x": 24,
-            "y": 8,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-]
-`;
-
-exports[`TimeSeriesPanel (canvas) Options fillOpacity: 0 canvas 1`] = `
-[
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "value": "rgba(0, 0, 0, 0)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {
-            "height": 350,
-            "width": 617,
-            "x": 23.5,
-            "y": 7.5,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {
-            "x": 127,
-            "y": 320,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 229,
-            "y": 137,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 332,
-            "y": 228,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 435,
-            "y": 45,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 173,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "fillStyle",
   },
@@ -7285,13 +6205,13 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 25 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
+      "value": "rgba(87, 148, 242, 0.25)",
     },
     "type": "fillStyle",
   },
@@ -7315,6 +6235,28 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 25 canvas 1`] = `
       ],
     },
     "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 537,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 127,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
   },
   {
     "props": {
@@ -7378,7 +6320,7 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 25 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "fillStyle",
   },
@@ -7473,13 +6415,13 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 50 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
+      "value": "rgba(87, 148, 242, 0.5)",
     },
     "type": "fillStyle",
   },
@@ -7503,6 +6445,28 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 50 canvas 1`] = `
       ],
     },
     "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 537,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 127,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
   },
   {
     "props": {
@@ -7566,7 +6530,7 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 50 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "fillStyle",
   },
@@ -7661,13 +6625,13 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 80 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
+      "value": "rgba(87, 148, 242, 0.8)",
     },
     "type": "fillStyle",
   },
@@ -7691,6 +6655,28 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 80 canvas 1`] = `
       ],
     },
     "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 537,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 127,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
   },
   {
     "props": {
@@ -7754,7 +6740,7 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 80 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "fillStyle",
   },
@@ -7849,13 +6835,13 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 100 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
+      "value": "#5794f2",
     },
     "type": "fillStyle",
   },
@@ -7879,6 +6865,28 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 100 canvas 1`] = `
       ],
     },
     "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 537,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 127,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
   },
   {
     "props": {
@@ -7942,7 +6950,7 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 100 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "fillStyle",
   },
@@ -8037,13 +7045,35 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: hue canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#c5ada0",
+          ],
+          [
+            1,
+            "#5a5a5a",
+          ],
+        ],
+      },
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "rgba(197, 173, 160, 0)",
+          ],
+          [
+            1,
+            "rgba(90, 90, 90, 0)",
+          ],
+        ],
+      },
     },
     "type": "fillStyle",
   },
@@ -8070,194 +7100,28 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: hue canvas 1`] = `
   },
   {
     "props": {
+      "fillRule": "nonzero",
       "path": [
         {
           "props": {
-            "x": 127,
-            "y": 320,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 229,
-            "y": 137,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 332,
-            "y": 228,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 435,
-            "y": 45,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
             "x": 537,
-            "y": 173,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 127,
+            "y": 504,
           },
           "type": "lineTo",
         },
       ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "height": 349,
-      "width": 616,
-      "x": 24,
-      "y": 8,
-    },
-    "type": "rect",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 349,
-            "width": 616,
-            "x": 24,
-            "y": 8,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-]
-`;
-
-exports[`TimeSeriesPanel (canvas) Options gradientMode: none canvas 1`] = `
-[
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "value": "rgba(0, 0, 0, 0)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {
-            "height": 350,
-            "width": 617,
-            "x": 23.5,
-            "y": 7.5,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
       "path": [
         {
           "props": {
@@ -8318,7 +7182,18 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: none canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#c5ada0",
+          ],
+          [
+            1,
+            "#5a5a5a",
+          ],
+        ],
+      },
     },
     "type": "fillStyle",
   },
@@ -8419,7 +7294,18 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: opacity canvas 1`] = `
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#80808000",
+          ],
+          [
+            1,
+            "#80808000",
+          ],
+        ],
+      },
     },
     "type": "fillStyle",
   },
@@ -8443,6 +7329,28 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: opacity canvas 1`] = `
       ],
     },
     "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 537,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 127,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
   },
   {
     "props": {
@@ -8601,13 +7509,43 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: scheme canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#73BF69ff",
+          ],
+          [
+            1,
+            "#73BF69ff",
+          ],
+          [
+            1,
+            "#F2495Cff",
+          ],
+        ],
+      },
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(0, 0, 0, 0)",
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#73BF6900",
+          ],
+          [
+            1,
+            "#73BF6900",
+          ],
+          [
+            1,
+            "#F2495C00",
+          ],
+        ],
+      },
     },
     "type": "fillStyle",
   },
@@ -8634,194 +7572,28 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: scheme canvas 1`] = `
   },
   {
     "props": {
+      "fillRule": "nonzero",
       "path": [
         {
           "props": {
-            "x": 127,
-            "y": 320,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 229,
-            "y": 137,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 332,
-            "y": 228,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 435,
-            "y": 45,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
             "x": 537,
-            "y": 173,
+            "y": 504,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 127,
+            "y": 504,
           },
           "type": "lineTo",
         },
       ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "height": 349,
-      "width": 616,
-      "x": 24,
-      "y": 8,
-    },
-    "type": "rect",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 349,
-            "width": 616,
-            "x": 24,
-            "y": 8,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-]
-`;
-
-exports[`TimeSeriesPanel (canvas) Options lineInterpolation: linear canvas 1`] = `
-[
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "value": "rgba(0, 0, 0, 0)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {
-            "height": 350,
-            "width": 617,
-            "x": 23.5,
-            "y": 7.5,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
       "path": [
         {
           "props": {
@@ -8882,7 +7654,22 @@ exports[`TimeSeriesPanel (canvas) Options lineInterpolation: linear canvas 1`] =
   },
   {
     "props": {
-      "value": "#808080",
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#73BF69ff",
+          ],
+          [
+            1,
+            "#73BF69ff",
+          ],
+          [
+            1,
+            "#F2495Cff",
+          ],
+        ],
+      },
     },
     "type": "fillStyle",
   },
@@ -9016,35 +7803,51 @@ exports[`TimeSeriesPanel (canvas) Options lineInterpolation: smooth canvas 1`] =
             "x": 127,
             "y": 320,
           },
-          "type": "lineTo",
+          "type": "moveTo",
         },
         {
           "props": {
+            "cpx1": 161,
+            "cpx2": 195,
+            "cpy1": 259,
+            "cpy2": 137,
             "x": 229,
             "y": 137,
           },
-          "type": "lineTo",
+          "type": "bezierCurveTo",
         },
         {
           "props": {
+            "cpx1": 263.3333333333333,
+            "cpx2": 297.6666666666667,
+            "cpy1": 137,
+            "cpy2": 228,
             "x": 332,
             "y": 228,
           },
-          "type": "lineTo",
+          "type": "bezierCurveTo",
         },
         {
           "props": {
+            "cpx1": 366.3333333333333,
+            "cpx2": 400.6666666666667,
+            "cpy1": 228,
+            "cpy2": 45,
             "x": 435,
             "y": 45,
           },
-          "type": "lineTo",
+          "type": "bezierCurveTo",
         },
         {
           "props": {
+            "cpx1": 469,
+            "cpx2": 503,
+            "cpy1": 45,
+            "cpy2": 130.33333333333334,
             "x": 537,
             "y": 173,
           },
-          "type": "lineTo",
+          "type": "bezierCurveTo",
         },
       ],
     },
@@ -9208,7 +8011,35 @@ exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepAfter canvas 1`
         },
         {
           "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 229,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
             "y": 137,
           },
           "type": "lineTo",
@@ -9223,6 +8054,20 @@ exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepAfter canvas 1`
         {
           "props": {
             "x": 435,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
             "y": 45,
           },
           "type": "lineTo",
@@ -9396,185 +8241,11 @@ exports[`TimeSeriesPanel (canvas) Options lineInterpolation: stepBefore canvas 1
         },
         {
           "props": {
-            "x": 229,
-            "y": 137,
+            "x": 127,
+            "y": 320,
           },
           "type": "lineTo",
         },
-        {
-          "props": {
-            "x": 332,
-            "y": 228,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 435,
-            "y": 45,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 537,
-            "y": 173,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
-    },
-    "type": "fill",
-  },
-  {
-    "props": {
-      "path": [],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-  {
-    "props": {
-      "x": -0.5,
-      "y": -0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "height": 349,
-      "width": 616,
-      "x": 24,
-      "y": 8,
-    },
-    "type": "rect",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 349,
-            "width": 616,
-            "x": 24,
-            "y": 8,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {},
-    "type": "restore",
-  },
-]
-`;
-
-exports[`TimeSeriesPanel (canvas) Options lineWidth: 1 canvas 1`] = `
-[
-  {
-    "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "value": "rgba(0, 0, 0, 0)",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {},
-    "type": "save",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {
-            "height": 350,
-            "width": 617,
-            "x": 23.5,
-            "y": 7.5,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "clip",
-  },
-  {
-    "props": {
-      "path": [
         {
           "props": {
             "x": 127,
@@ -9584,8 +8255,22 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 1 canvas 1`] = `
         },
         {
           "props": {
+            "x": 127,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 229,
             "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 228,
           },
           "type": "lineTo",
         },
@@ -9598,8 +8283,22 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 1 canvas 1`] = `
         },
         {
           "props": {
+            "x": 332,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 435,
             "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 173,
           },
           "type": "lineTo",
         },
@@ -9729,7 +8428,7 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "strokeStyle",
   },
@@ -9738,6 +8437,12 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 canvas 1`] = `
       "value": "rgba(0, 0, 0, 0)",
     },
     "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 3,
+    },
+    "type": "lineWidth",
   },
   {
     "props": {},
@@ -9749,10 +8454,10 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 canvas 1`] = `
       "path": [
         {
           "props": {
-            "height": 350,
-            "width": 617,
-            "x": 23.5,
-            "y": 7.5,
+            "height": 352,
+            "width": 619,
+            "x": 22.5,
+            "y": 6.5,
           },
           "type": "rect",
         },
@@ -9815,6 +8520,192 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 canvas 1`] = `
   },
   {
     "props": {
+      "x": 0.9,
+      "y": 0.9,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#5794f2",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1.8,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {
+      "x": -0.9,
+      "y": -0.9,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 349,
+      "width": 616,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 349,
+            "width": 616,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimeSeriesPanel (canvas) Options lineWidth: 6 canvas 1`] = `
+[
+  {
+    "props": {
+      "value": "#5794f2",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(0, 0, 0, 0)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 6,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 355,
+            "width": 622,
+            "x": 21,
+            "y": 5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {
       "x": 0.5,
       "y": 0.5,
     },
@@ -9822,9 +8713,15 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 canvas 1`] = `
   },
   {
     "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 3,
+    },
+    "type": "lineWidth",
   },
   {
     "props": {},
@@ -9906,18 +8803,11 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 3 canvas 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Options lineWidth: 5 canvas 1`] = `
+exports[`TimeSeriesPanel (canvas) Options lineWidth: 10 canvas 1`] = `
 [
   {
     "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "strokeStyle",
   },
@@ -9926,6 +8816,12 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 5 canvas 1`] = `
       "value": "rgba(0, 0, 0, 0)",
     },
     "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 10,
+    },
+    "type": "lineWidth",
   },
   {
     "props": {},
@@ -9937,10 +8833,10 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 5 canvas 1`] = `
       "path": [
         {
           "props": {
-            "height": 350,
-            "width": 617,
-            "x": 23.5,
-            "y": 7.5,
+            "height": 359,
+            "width": 626,
+            "x": 19,
+            "y": 3,
           },
           "type": "rect",
         },
@@ -9996,23 +8892,22 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 5 canvas 1`] = `
   },
   {
     "props": {
-      "x": -0.5,
-      "y": -0.5,
+      "x": 0.2999999999999998,
+      "y": 0.2999999999999998,
     },
     "type": "translate",
   },
   {
     "props": {
-      "x": 0.5,
-      "y": 0.5,
-    },
-    "type": "translate",
-  },
-  {
-    "props": {
-      "value": "#808080",
+      "value": "#5794f2",
     },
     "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 4.6,
+    },
+    "type": "lineWidth",
   },
   {
     "props": {},
@@ -10044,8 +8939,8 @@ exports[`TimeSeriesPanel (canvas) Options lineWidth: 5 canvas 1`] = `
   },
   {
     "props": {
-      "x": -0.5,
-      "y": -0.5,
+      "x": -0.2999999999999998,
+      "y": -0.2999999999999998,
     },
     "type": "translate",
   },
@@ -10126,8 +9021,8 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
         {
           "props": {
             "height": 112,
-            "width": 229,
-            "x": 23.5,
+            "width": 215,
+            "x": 37.5,
             "y": 7.5,
           },
           "type": "rect",
@@ -10141,36 +9036,36 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
       "path": [
         {
           "props": {
-            "x": 62,
-            "y": 109,
+            "x": 74,
+            "y": 101,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 100,
-            "y": 103,
+            "x": 109,
+            "y": 99,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
+            "x": 145,
+            "y": 97,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 181,
             "y": 96,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 176,
-            "y": 90,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 214,
-            "y": 83,
+            "x": 216,
+            "y": 95,
           },
           "type": "lineTo",
         },
@@ -10261,8 +9156,8 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
         {
           "props": {
             "height": 112,
-            "width": 229,
-            "x": 23.5,
+            "width": 215,
+            "x": 37.5,
             "y": 7.5,
           },
           "type": "rect",
@@ -10272,40 +9167,77 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
     "type": "clip",
   },
   {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 216,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 74,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 74,
+            "y": 101,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
     "props": {
       "path": [
         {
           "props": {
-            "x": 62,
-            "y": 77,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 100,
-            "y": 70,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 138,
+            "x": 74,
             "y": 64,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 176,
-            "y": 57,
+            "x": 109,
+            "y": 62,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 214,
-            "y": 50,
+            "x": 145,
+            "y": 60,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 181,
+            "y": 59,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 58,
           },
           "type": "lineTo",
         },
@@ -10396,8 +9328,8 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
         {
           "props": {
             "height": 112,
-            "width": 229,
-            "x": 23.5,
+            "width": 215,
+            "x": 37.5,
             "y": 7.5,
           },
           "type": "rect",
@@ -10407,40 +9339,77 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
     "type": "clip",
   },
   {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 216,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 74,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 74,
+            "y": 64,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
     "props": {
       "path": [
         {
           "props": {
-            "x": 62,
-            "y": 44,
+            "x": 74,
+            "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 100,
-            "y": 37,
+            "x": 109,
+            "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 31,
+            "x": 145,
+            "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 176,
-            "y": 24,
+            "x": 181,
+            "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 214,
-            "y": 18,
+            "x": 216,
+            "y": 8,
           },
           "type": "lineTo",
         },
@@ -10518,8 +9487,8 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
   {
     "props": {
       "height": 111,
-      "width": 228,
-      "x": 24,
+      "width": 214,
+      "x": 38,
       "y": 8,
     },
     "type": "rect",
@@ -10535,8 +9504,8 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% canvas 1`] = `
         {
           "props": {
             "height": 111,
-            "width": 228,
-            "x": 24,
+            "width": 214,
+            "x": 38,
             "y": 8,
           },
           "type": "rect",
@@ -10607,28 +9576,28 @@ exports[`TimeSeriesPanel (canvas) Options stacking: normal canvas 1`] = `
         {
           "props": {
             "x": 100,
-            "y": 103,
+            "y": 107,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 138,
-            "y": 96,
+            "y": 104,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 176,
-            "y": 90,
+            "y": 102,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 214,
-            "y": 83,
+            "y": 99,
           },
           "type": "lineTo",
         },
@@ -10730,40 +9699,77 @@ exports[`TimeSeriesPanel (canvas) Options stacking: normal canvas 1`] = `
     "type": "clip",
   },
   {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 214,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 62,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 62,
+            "y": 109,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
     "props": {
       "path": [
         {
           "props": {
             "x": 62,
-            "y": 77,
+            "y": 84,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 100,
+            "y": 80,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 138,
+            "y": 75,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 176,
             "y": 70,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 64,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
-            "x": 176,
-            "y": 57,
-          },
-          "type": "lineTo",
-        },
-        {
-          "props": {
             "x": 214,
-            "y": 50,
+            "y": 65,
           },
           "type": "lineTo",
         },
@@ -10865,33 +9871,70 @@ exports[`TimeSeriesPanel (canvas) Options stacking: normal canvas 1`] = `
     "type": "clip",
   },
   {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 214,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 62,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 62,
+            "y": 84,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
     "props": {
       "path": [
         {
           "props": {
             "x": 62,
-            "y": 44,
+            "y": 47,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 100,
-            "y": 37,
+            "y": 40,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 138,
-            "y": 31,
+            "y": 33,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 176,
-            "y": 24,
+            "y": 25,
           },
           "type": "lineTo",
         },

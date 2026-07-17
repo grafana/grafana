@@ -3,14 +3,20 @@ import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import type uPlot from 'uplot';
 
 import {
+  applyFieldOverrides,
   createDataFrame,
+  createFieldConfigRegistry,
+  createTheme,
   DataTopic,
   dateTime,
   type Field,
+  type FieldConfigSource,
+  FieldColorModeId,
   FieldType,
   LoadingState,
   type PanelData,
   type PanelProps,
+  ThresholdsMode,
   type TimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -31,8 +37,16 @@ import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 import { getPanelProps } from '../test-utils';
 
 import { TimeSeriesPanel } from './TimeSeriesPanel';
-import { defaultGraphConfig } from './config';
+import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { type Options } from './panelcfg.gen';
+
+/**
+ * The panel framework runs `applyFieldOverrides` before handing series to the panel component; in a unit
+ * test we must do it ourselves. Without it, the panel's `fieldConfig.defaults.custom` (drawStyle, fillOpacity,
+ * lineWidth, etc.) never reaches `field.config.custom`, so every option permutation renders identically.
+ * The registry must carry the time series custom config so `custom.*` defaults are applied.
+ */
+const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Time series');
 
 const width = 648;
 const height = 378;
@@ -82,7 +96,7 @@ function createTimeSeriesFrame(overrides?: { timeValues?: number[]; values?: num
   return createDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: timeValues, config: {} },
-      { name, type: FieldType.number, values, config: { custom: { ...defaultGraphConfig } } },
+      { name, type: FieldType.number, values, config: {} },
     ],
   });
 }
@@ -96,7 +110,7 @@ function createMultiSeriesFrame(seriesCount = 3) {
         name: `series${i + 1}`,
         type: FieldType.number,
         values: timeValues.map((_, t) => (i + 1) * 10 + t * 2),
-        config: { custom: { ...defaultGraphConfig } },
+        config: {},
       })),
     ],
   });
@@ -154,15 +168,28 @@ function renderTimeSeriesPanel(
   panelPropsOverrides?: Partial<PanelProps<Options>>
 ) {
   const mergedOptions: Options = { ...defaultPanelOptions, ...optionsOverrides };
+  const fieldConfig: FieldConfigSource = panelPropsOverrides?.fieldConfig ?? {
+    overrides: [],
+    defaults: { custom: { ...defaultGraphConfig } },
+  };
+  const { series: rawSeries = [createTimeSeriesFrame()], ...restDataOverrides } = dataOverrides ?? {};
+  const series = applyFieldOverrides({
+    data: rawSeries,
+    fieldConfig,
+    replaceVariables: (value) => value,
+    theme: createTheme(),
+    fieldConfigRegistry: graphFieldConfigRegistry,
+    timeZone: 'utc',
+  });
   const props = getPanelProps<Options>(mergedOptions, {
     data: {
       state: LoadingState.Done,
-      series: [createTimeSeriesFrame()],
+      series,
       timeRange: defaultTimeRange as TimeRange,
-      ...dataOverrides,
+      ...restDataOverrides,
     },
     timeRange: defaultTimeRange as TimeRange,
-    fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig } } },
+    fieldConfig,
     ...panelPropsOverrides,
     width: panelPropsOverrides?.width ?? width,
     height: panelPropsOverrides?.height ?? height,
@@ -234,38 +261,88 @@ describe('TimeSeriesPanel (canvas)', () => {
   describe('Options', () => {
     describe.each([
       ['defaults'],
-      ...Object.values(GraphDrawStyle).map(
-        (drawStyle): TestCase => [
-          `drawStyle: ${drawStyle}`,
-          undefined,
-          undefined,
-          { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, drawStyle } } } },
-        ]
-      ),
-      ...Object.values(LineInterpolation).map(
-        (lineInterpolation): TestCase => [
-          `lineInterpolation: ${lineInterpolation}`,
-          undefined,
-          undefined,
-          { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, lineInterpolation } } } },
-        ]
-      ),
-      ...[0, 25, 50, 80, 100].map(
+      // Line is the default draw style, covered by the `defaults` case above.
+      ...Object.values(GraphDrawStyle)
+        .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
+        .map(
+          (drawStyle): TestCase => [
+            `drawStyle: ${drawStyle}`,
+            undefined,
+            undefined,
+            {
+              // Fixed color + a visible fill so the shape (bars/points) actually renders and each draw style
+              // produces distinct output; with the default transparent fill bars/points draw nothing.
+              fieldConfig: {
+                overrides: [],
+                defaults: {
+                  color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
+                  custom: { ...defaultGraphConfig, drawStyle, fillOpacity: 25 },
+                },
+              },
+            },
+          ]
+        ),
+      // Linear is the default interpolation, so it is covered by the `defaults` case above.
+      ...Object.values(LineInterpolation)
+        .filter((lineInterpolation) => lineInterpolation !== LineInterpolation.Linear)
+        .map(
+          (lineInterpolation): TestCase => [
+            `lineInterpolation: ${lineInterpolation}`,
+            undefined,
+            undefined,
+            { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, lineInterpolation } } } },
+          ]
+        ),
+      // fillOpacity 0 (no fill) is the default, covered by the `defaults` case above.
+      ...[25, 50, 80, 100].map(
         (fillOpacity): TestCase => [
           `fillOpacity: ${fillOpacity}`,
           undefined,
           undefined,
-          { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, fillOpacity } } } },
+          {
+            // Fixed color so the fill is high-contrast and each opacity step reads clearly (pale to solid).
+            fieldConfig: {
+              overrides: [],
+              defaults: {
+                color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
+                custom: { ...defaultGraphConfig, fillOpacity },
+              },
+            },
+          },
         ]
       ),
-      ...Object.values(GraphGradientMode).map(
-        (gradientMode): TestCase => [
-          `gradientMode: ${gradientMode}`,
-          undefined,
-          undefined,
-          { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, gradientMode } } } },
-        ]
-      ),
+      // None is the default gradient mode, covered by the `defaults` case above.
+      ...Object.values(GraphGradientMode)
+        .filter((gradientMode) => gradientMode !== GraphGradientMode.None)
+        .map(
+          (gradientMode): TestCase => [
+            `gradientMode: ${gradientMode}`,
+            undefined,
+            undefined,
+            {
+              fieldConfig: {
+                overrides: [],
+                defaults: {
+                  custom: { ...defaultGraphConfig, gradientMode },
+                  // Scheme gradients color the line by the field's threshold scale, so they require a
+                  // color mode + thresholds; without them uPlot's gradient builder throws.
+                  ...(gradientMode === GraphGradientMode.Scheme
+                    ? {
+                        color: { mode: FieldColorModeId.Thresholds },
+                        thresholds: {
+                          mode: ThresholdsMode.Absolute,
+                          steps: [
+                            { value: -Infinity, color: 'green' },
+                            { value: 20, color: 'red' },
+                          ],
+                        },
+                      }
+                    : {}),
+                },
+              },
+            },
+          ]
+        ),
       [
         'stacking: normal',
         { series: [createMultiSeriesFrame()] },
@@ -294,12 +371,22 @@ describe('TimeSeriesPanel (canvas)', () => {
         },
         compactCanvas,
       ],
-      ...[1, 3, 5].map(
+      // Width 1 is the default, so start at 3 and use bold, well-separated widths that clearly stand out.
+      ...[3, 6, 10].map(
         (lineWidth): TestCase => [
           `lineWidth: ${lineWidth}`,
           undefined,
           undefined,
-          { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, lineWidth } } } },
+          {
+            // Fixed color so the stroke is high-contrast and each width is visibly distinct.
+            fieldConfig: {
+              overrides: [],
+              defaults: {
+                color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
+                custom: { ...defaultGraphConfig, lineWidth },
+              },
+            },
+          },
         ]
       ),
     ] satisfies TestCase[])(
@@ -321,14 +408,17 @@ describe('TimeSeriesPanel (canvas)', () => {
 
   describe('Axes', () => {
     describe.each([
-      ...Object.values(AxisPlacement).map(
-        (axisPlacement): TestCase => [
-          `Y Axis placement: ${axisPlacement}`,
-          undefined,
-          undefined,
-          { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, axisPlacement } } } },
-        ]
-      ),
+      // Auto resolves to Left, and Left is the default placement, so both are covered by `X Axis: defaults`.
+      ...Object.values(AxisPlacement)
+        .filter((axisPlacement) => axisPlacement !== AxisPlacement.Auto && axisPlacement !== AxisPlacement.Left)
+        .map(
+          (axisPlacement): TestCase => [
+            `Y Axis placement: ${axisPlacement}`,
+            undefined,
+            undefined,
+            { fieldConfig: { overrides: [], defaults: { custom: { ...defaultGraphConfig, axisPlacement } } } },
+          ]
+        ),
       [
         'Y Axis: soft min/max',
         undefined,
@@ -369,6 +459,9 @@ describe('TimeSeriesPanel (canvas)', () => {
   });
 
   describe('Exemplars', () => {
+    // Exemplars show up as marker elements drawn over the graph, not as part of the canvas itself, so they
+    // won't appear in these canvas snapshots. So this snapshot looks the same as the `defaults` case. It just
+    // checks that adding exemplar data doesn't change how the graph is drawn.
     describe.each([
       ['renders', { annotations: [createExemplarFrame({ timeValues: [1000, 2000, 3000], values: [10, 20, 15] })] }],
     ] satisfies TestCase[])(
