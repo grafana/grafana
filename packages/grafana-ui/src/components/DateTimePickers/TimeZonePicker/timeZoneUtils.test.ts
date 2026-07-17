@@ -60,6 +60,39 @@ describe('canonicalZoneName', () => {
   });
 });
 
+describe('on runtimes that list only canonical zone ids (e.g. Firefox)', () => {
+  it('still resolves persisted legacy spellings', async () => {
+    // Node's ICU lists the legacy Asia/Calcutta (like Chrome). Simulate a
+    // Firefox-like runtime where only the canonical Asia/Kolkata exists.
+    const canonicalOnly = [...new Set([...Intl.supportedValuesOf('timeZone'), 'Asia/Kolkata'])]
+      .filter((zone) => zone !== 'Asia/Calcutta')
+      .sort();
+
+    const spy = jest.spyOn(Intl, 'supportedValuesOf').mockReturnValue(canonicalOnly);
+
+    try {
+      // easytz snapshots the runtime zone list at module load, so evaluate a
+      // fresh module registry under the mocked runtime.
+      await jest.isolateModulesAsync(async () => {
+        const utils = await import('./timeZoneUtils');
+        const { formatUtcOffset } = await import('./TimeZoneOffset');
+
+        // A dashboard saved on Chrome (or by an older, moment-based Grafana)
+        // may have persisted the legacy spelling; it must still resolve.
+        expect(utils.findTimeZoneAt('Asia/Calcutta', JAN)).toMatchObject({
+          aliasOf: 'Asia/Kolkata',
+          abbr: 'IST',
+          offset: '+05:30',
+        });
+        expect(utils.canonicalZoneName('Asia/Calcutta', JAN)).toBe('Asia/Kolkata');
+        expect(formatUtcOffset(JAN, 'Asia/Calcutta')).toBe('UTC+05:30');
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
 describe('guessBrowserTimeZone', () => {
   it('returns a non-empty IANA zone name', () => {
     const zone = guessBrowserTimeZone();
