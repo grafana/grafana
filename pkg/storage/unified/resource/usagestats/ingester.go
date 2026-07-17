@@ -80,6 +80,9 @@ func NewIngester(opts IngesterOptions) (*Ingester, error) {
 	if decls == nil {
 		decls = DefaultDeclarations()
 	}
+	if err := decls.Validate(); err != nil {
+		return nil, err
+	}
 	now := opts.Now
 	if now == nil {
 		now = time.Now
@@ -200,6 +203,14 @@ func (i *Ingester) mergeBack(o objectRef, deltas map[string]uint64) {
 	defer i.mu.Unlock()
 	cur, ok := i.buffer[o]
 	if !ok {
+		if len(i.buffer) >= i.maxBufferedObjects {
+			var dropped uint64
+			for _, v := range deltas {
+				dropped += v
+			}
+			i.metrics.dropEvents(reasonBufferFull, int(dropped))
+			return
+		}
 		cur = map[string]uint64{}
 		i.buffer[o] = cur
 	}

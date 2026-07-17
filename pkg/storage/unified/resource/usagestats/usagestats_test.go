@@ -82,6 +82,20 @@ func TestDeclarations(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestDeclarationsValidate(t *testing.T) {
+	require.NoError(t, DefaultDeclarations().Validate())
+
+	// A resource declaring more metrics than fit in one daily batch cannot
+	// flush and must be rejected at startup.
+	tooMany := make([]string, kv.MaxBatchOps+1)
+	for i := range tooMany {
+		tooMany[i] = fmt.Sprintf("metric-%d", i)
+	}
+	decls := &Declarations{byGR: map[string]StatsDeclaration{}}
+	decls.add(StatsDeclaration{Group: "g.grafana.app", Resource: "things", Metrics: tooMany, Windows: []int{1}})
+	require.ErrorContains(t, decls.Validate(), "exceeding the max batch size")
+}
+
 func TestDeclarationFieldNames(t *testing.T) {
 	require.Equal(t, "views_last_1_days", aggregateField("views", 1))
 	require.Equal(t, "views_last_7_days", aggregateField("views", 7))

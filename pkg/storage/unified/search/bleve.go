@@ -822,6 +822,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx.facetFieldByRequestName = facetFieldsForMapping(searchFieldsProvider, key.Group, key.Resource)
 
 	if prepared.source.needsBuild() {
 		// Type-convert so buildIndexFromScratch can call updateResourceVersion after the builder returns.
@@ -1235,6 +1236,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 	}
 
 	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, allFields, standardSearchFields, updater, delegate.logger)
+	promoted.facetFieldByRequestName = delegate.facetFieldByRequestName
 	promoted.resourceVersion.Store(delegate.resourceVersion.Load())
 	cleanup = false
 
@@ -1601,6 +1603,9 @@ type bleveIndex struct {
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
+	// facetFieldByRequestName maps ResourceSearchRequest facet field names to
+	// keyword-analyzed Bleve index field names.
+	facetFieldByRequestName map[string]string
 
 	indexStorage string // memory or file, used when updating metrics
 
@@ -2111,6 +2116,11 @@ func (b *bleveIndex) Search(
 	// parse the facet fields
 	for k, v := range res.Facets {
 		f := newResponseFacet(v)
+		// Bleve reports the physical keyword-variant field. Keep that internal
+		// detail out of the API response.
+		if requested, ok := req.Facet[k]; ok {
+			f.Field = requested.Field
+		}
 		if response.Facet == nil {
 			response.Facet = make(map[string]*resourcepb.ResourceSearchResponse_Facet)
 		}
@@ -2198,8 +2208,12 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	defer span.End()
 
 	facets := bleve.FacetsRequest{}
-	for _, f := range req.Facet {
-		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
+	for name, facet := range req.Facet {
+		field, ok := b.facetFieldByRequestName[facet.Field]
+		if !ok {
+			return nil, resource.NewBadRequestError(fmt.Sprintf("field %q does not support faceting", facet.Field))
+		}
+		facets[name] = bleve.NewFacetRequest(field, int(facet.Limit))
 	}
 
 	// Convert resource-specific fields to bleve fields. Any field declared
@@ -2279,13 +2293,6 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			group:     b.key.Group,
 			resources: b.authzResources(req),
 		})
-	}
-
-	for k, v := range req.Facet {
-		if searchrequest.Facets == nil {
-			searchrequest.Facets = make(bleve.FacetsRequest)
-		}
-		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 	}
 
 	// Add the sort fields
