@@ -19,19 +19,19 @@ describe('TimeSeriesPanel (canvas) — line rendering', () => {
 
   it.each<CanvasCase>([
     { name: 'defaults' },
-    // Fixed color + a fill so bars/points render; the default transparent fill draws nothing.
-    ...Object.values(GraphDrawStyle)
-      .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
-      .map((drawStyle) => ({
-        name: `drawStyle: ${drawStyle}`,
-        panelProps: withFieldConfig({ custom: { drawStyle, fillOpacity: 25 }, defaults: fixedBlue }),
-      })),
-    ...Object.values(LineInterpolation)
-      .filter((lineInterpolation) => lineInterpolation !== LineInterpolation.Linear)
-      .map((lineInterpolation) => ({
+    // Line (the default draw style) is covered by 'defaults'. Fixed color + a fill so bars/points render;
+    // the default transparent fill draws nothing.
+    ...[GraphDrawStyle.Bars, GraphDrawStyle.Points].map((drawStyle) => ({
+      name: `drawStyle: ${drawStyle}`,
+      panelProps: withFieldConfig({ custom: { drawStyle, fillOpacity: 25 }, defaults: fixedBlue }),
+    })),
+    // Linear (the default interpolation) is covered by 'defaults'.
+    ...[LineInterpolation.Smooth, LineInterpolation.StepBefore, LineInterpolation.StepAfter].map(
+      (lineInterpolation) => ({
         name: `lineInterpolation: ${lineInterpolation}`,
         panelProps: withFieldConfig({ custom: { lineInterpolation } }),
-      })),
+      })
+    ),
     ...[3, 6, 10].map((lineWidth) => ({
       name: `lineWidth: ${lineWidth}`,
       panelProps: withFieldConfig({ custom: { lineWidth }, defaults: fixedBlue }),

@@ -16,13 +16,12 @@ jest.mock('@grafana/ui/src/utils/measureText', () =>
 describe('TimeSeriesPanel (canvas) — axis placement', () => {
   setupCanvasCapture();
 
-  it.each<CanvasCase>([
-    // Auto and Left are covered by 'X Axis: defaults' in the axis range suite.
-    ...Object.values(AxisPlacement)
-      .filter((axisPlacement) => axisPlacement !== AxisPlacement.Auto && axisPlacement !== AxisPlacement.Left)
-      .map((axisPlacement) => ({
-        name: `Y Axis placement: ${axisPlacement}`,
-        panelProps: withFieldConfig({ custom: { axisPlacement } }),
-      })),
-  ])('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
+  // Auto resolves to Left and Left is the default, so both are covered by 'X Axis: defaults' in the axis
+  // range suite; here we cover the remaining placements.
+  it.each<CanvasCase>(
+    [AxisPlacement.Top, AxisPlacement.Right, AxisPlacement.Bottom, AxisPlacement.Hidden].map((axisPlacement) => ({
+      name: `Y Axis placement: ${axisPlacement}`,
+      panelProps: withFieldConfig({ custom: { axisPlacement } }),
+    }))
+  )('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
 });
