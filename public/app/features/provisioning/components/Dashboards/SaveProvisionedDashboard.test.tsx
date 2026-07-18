@@ -23,9 +23,9 @@ jest.mock('app/features/dashboard-scene/saving/SaveDashboardAsForm', () => ({
 
 const mockUseProvisionedDashboardData = jest.mocked(useProvisionedDashboardData);
 
-function createDashboard(folderUid?: string) {
+function createDashboard({ folderUid, uid }: { folderUid?: string; uid?: string } = {}) {
   return {
-    state: { meta: { folderUid } },
+    state: { meta: { folderUid, uid } },
     setState: jest.fn(),
   } as unknown as DashboardScene;
 }
@@ -131,7 +131,7 @@ describe('SaveProvisionedDashboard', () => {
   });
 
   it('restores the git-flow folder when switching back from the database form', async () => {
-    const dashboard = createDashboard('git-folder-uid');
+    const dashboard = createDashboard({ folderUid: 'git-folder-uid' });
     const { user } = setup({}, { dashboard });
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
@@ -143,5 +143,69 @@ describe('SaveProvisionedDashboard', () => {
 
     expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid' } });
     expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+  });
+
+  it('restores the git-flow folder when the database form is cancelled via closeModal', async () => {
+    const dashboard = createDashboard({ folderUid: 'git-folder-uid' });
+    const { user, unmount } = setup({}, { dashboard });
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // Simulate a folder pick in the database form, then Cancel unmounting the drawer without drawer.onClose
+    dashboard.state.meta.folderUid = 'db-folder-uid';
+    unmount();
+
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid' } });
+  });
+
+  it('does not restore the folder when unmounting after a completed database save', async () => {
+    const dashboard = createDashboard({ folderUid: 'git-folder-uid' });
+    const { user, unmount } = setup({}, { dashboard });
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // saveCompleted sets meta.uid before the overlay closes
+    dashboard.state.meta.uid = 'new-dashboard-uid';
+    dashboard.state.meta.folderUid = 'db-folder-uid';
+    unmount();
+
+    expect(dashboard.setState).not.toHaveBeenCalled();
+  });
+
+  it('keeps the database switch link as an escape when the git flow stops resolving', async () => {
+    const dashboard = createDashboard();
+    const { user, rerender, props } = setup({}, { dashboard });
+
+    expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
+
+    // Picking an unmanaged database folder in the git form collapses it into the error gate
+    dashboard.state.meta.folderUid = 'db-folder-uid';
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: false,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Error,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    expect(screen.getByTestId('database-form')).toBeInTheDocument();
+
+    // Switching back must not restore the unresolvable folder
+    await user.click(screen.getByRole('button', { name: /git repository/i }));
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
+  });
+
+  it('does not touch the dashboard meta when unmounting from the git flow', () => {
+    const dashboard = createDashboard({ folderUid: 'git-folder-uid' });
+    const { unmount } = setup({}, { dashboard });
+
+    unmount();
+
+    expect(dashboard.setState).not.toHaveBeenCalled();
   });
 });

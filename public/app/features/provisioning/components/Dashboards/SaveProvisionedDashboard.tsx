@@ -1,4 +1,4 @@
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
@@ -24,18 +24,36 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
     useProvisionedDashboardData(dashboard, saveAsCopy);
   const [saveToDatabase, setSaveToDatabase] = useState(false);
-  const gitFolderUidRef = useRef<string | undefined>(undefined);
+  const [canSaveToDatabaseInstead, setCanSaveToDatabaseInstead] = useState(false);
+  const dbSwitchRef = useRef<{ active: boolean; gitFolderUid?: string }>({ active: false });
 
-  const canSaveToDatabaseInstead = repository?.target === 'folderless' && (isNew || !!saveAsCopy);
+  // Latched: the escape link must survive folder picks that make the repository stop resolving
+  useEffect(() => {
+    if (repository?.target === 'folderless' && (isNew || !!saveAsCopy)) {
+      setCanSaveToDatabaseInstead(true);
+    }
+  }, [repository, isNew, saveAsCopy]);
+
+  // Cancel in the database form bypasses drawer.onClose; restore the git-flow folder unless the save completed
+  useEffect(() => {
+    return () => {
+      const { active, gitFolderUid } = dbSwitchRef.current;
+      if (active && !dashboard.state.meta.uid) {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: gitFolderUid } });
+      }
+    };
+  }, [dashboard]);
 
   const handleSwitchToDatabase = () => {
-    gitFolderUidRef.current = dashboard.state.meta.folderUid;
+    // Only snapshot a folder the repository can resolve; otherwise fall back to root
+    dbSwitchRef.current = { active: true, gitFolderUid: repository ? dashboard.state.meta.folderUid : undefined };
     setSaveToDatabase(true);
   };
 
   const handleSwitchToGit = () => {
     // Restore the git-flow folder so the repository resolves again after database folder picks
-    dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: gitFolderUidRef.current } });
+    dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: dbSwitchRef.current.gitFolderUid } });
+    dbSwitchRef.current.active = false;
     setSaveToDatabase(false);
   };
 
@@ -53,13 +71,13 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   }
 
   return (
-    <ProvisionedFormGate
-      isLoading={repoDataStatus === RepoViewStatus.Loading}
-      isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
-      isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
-      error={error}
-    >
-      <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={2}>
+      <ProvisionedFormGate
+        isLoading={repoDataStatus === RepoViewStatus.Loading}
+        isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
+        isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
+        error={error}
+      >
         <SaveProvisionedDashboardForm
           dashboard={dashboard}
           drawer={drawer}
@@ -71,15 +89,15 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
           readOnly={readOnly}
           saveAsCopy={saveAsCopy}
         />
-        {canSaveToDatabaseInstead && (
-          <SwitchSaveTargetButton onClick={handleSwitchToDatabase}>
-            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard.save-to-database">
-              Save to Grafana database instead
-            </Trans>
-          </SwitchSaveTargetButton>
-        )}
-      </Stack>
-    </ProvisionedFormGate>
+      </ProvisionedFormGate>
+      {canSaveToDatabaseInstead && (
+        <SwitchSaveTargetButton onClick={handleSwitchToDatabase}>
+          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard.save-to-database">
+            Save to Grafana database instead
+          </Trans>
+        </SwitchSaveTargetButton>
+      )}
+    </Stack>
   );
 }
 
