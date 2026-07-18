@@ -1,9 +1,8 @@
 import {
-  assertCanvasOutput,
   type CanvasCase,
   createAnnotationFrame,
   DAY_MS,
-  renderTimeSeriesPanel,
+  renderCanvasCase,
   setupCanvasCapture,
   START_MS,
 } from './TimeSeriesPanel.canvasTestUtils';
@@ -34,8 +33,5 @@ describe('TimeSeriesPanel (canvas) — Annotations', () => {
         ],
       },
     },
-  ] satisfies CanvasCase[])('$name', async ({ data }) => {
-    renderTimeSeriesPanel(data);
-    await assertCanvasOutput();
-  });
+  ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase));
 });

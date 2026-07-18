@@ -277,3 +277,16 @@ export const assertAxesOutput = async (snapshotSize: { width: number; height: nu
   const axisEvents = removeCanvasTransforms(uPlotInstance!.ctx.__getEvents().slice(0, axisBoundary));
   expect(axisEvents).toMatchCanvasSnapshot([], snapshotSize);
 };
+
+/**
+ * Renders a case and asserts its captured draw calls. `size` is the single source of truth for the canvas
+ * dimensions — it sizes the render AND the snapshot metadata (no need to pass width/height twice). Assert
+ * the `series` layer (fills/stroke/markers) or the `axes` layer.
+ */
+export async function renderCanvasCase(
+  { data, options, panelProps, size }: CanvasCase,
+  layer: 'series' | 'axes' = 'series'
+): Promise<void> {
+  renderTimeSeriesPanel(data, options, { ...panelProps, ...size });
+  await (layer === 'axes' ? assertAxesOutput : assertCanvasOutput)(size);
+}

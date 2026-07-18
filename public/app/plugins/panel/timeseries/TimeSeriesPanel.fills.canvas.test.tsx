@@ -2,13 +2,12 @@ import { FieldColorModeId, ThresholdsMode } from '@grafana/data';
 import { GraphGradientMode, StackingMode } from '@grafana/schema';
 
 import {
-  assertCanvasOutput,
   type CanvasCase,
   compactCanvas,
   createMultiSeriesFrame,
   customFieldConfig,
   fixedBlue,
-  renderTimeSeriesPanel,
+  renderCanvasCase,
   setupCanvasCapture,
 } from './TimeSeriesPanel.canvasTestUtils';
 
@@ -55,36 +54,24 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
       ),
     },
     // fillOpacity so the stacked/overlapping regions are visible. Unstacked: the three series' fills overlay
-    // each other; stacked: they sit on top of one another (no overlap). Multi-series on the compact canvas.
+    // each other; stacked: they sit on top of one another (no overlap). `size` renders on the compact canvas.
     {
       name: 'stacking: none (overlapping fills)',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: {
-        ...customFieldConfig({ stacking: { mode: StackingMode.None, group: 'A' }, fillOpacity: 50 }),
-        ...compactCanvas,
-      },
+      panelProps: customFieldConfig({ stacking: { mode: StackingMode.None, group: 'A' }, fillOpacity: 50 }),
       size: compactCanvas,
     },
     {
       name: 'stacking: normal',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: {
-        ...customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' }, fillOpacity: 50 }),
-        ...compactCanvas,
-      },
+      panelProps: customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' }, fillOpacity: 50 }),
       size: compactCanvas,
     },
     {
       name: 'stacking: 100%',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: {
-        ...customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' }, fillOpacity: 50 }),
-        ...compactCanvas,
-      },
+      panelProps: customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' }, fillOpacity: 50 }),
       size: compactCanvas,
     },
-  ] satisfies CanvasCase[])('$name', async ({ data, options, panelProps, size }) => {
-    renderTimeSeriesPanel(data, options, panelProps);
-    await assertCanvasOutput(size);
-  });
+  ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase));
 });

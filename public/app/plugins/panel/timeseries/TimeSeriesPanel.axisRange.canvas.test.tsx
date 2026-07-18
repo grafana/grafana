@@ -1,11 +1,10 @@
 import { StackingMode } from '@grafana/schema';
 
 import {
-  assertAxesOutput,
   type CanvasCase,
   createMultiSeriesFrame,
   customFieldConfig,
-  renderTimeSeriesPanel,
+  renderCanvasCase,
   setupCanvasCapture,
 } from './TimeSeriesPanel.canvasTestUtils';
 
@@ -38,8 +37,5 @@ describe('TimeSeriesPanel (canvas) — axis range', () => {
       data: { series: [createMultiSeriesFrame()] },
       panelProps: customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' } }),
     },
-  ] satisfies CanvasCase[])('$name', async ({ data, options, panelProps, size }) => {
-    renderTimeSeriesPanel(data, options, panelProps);
-    await assertAxesOutput(size);
-  });
+  ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
 });

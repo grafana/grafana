@@ -1,10 +1,9 @@
 import { AxisPlacement } from '@grafana/schema';
 
 import {
-  assertAxesOutput,
   type CanvasCase,
   customFieldConfig,
-  renderTimeSeriesPanel,
+  renderCanvasCase,
   setupCanvasCapture,
 } from './TimeSeriesPanel.canvasTestUtils';
 
@@ -26,8 +25,5 @@ describe('TimeSeriesPanel (canvas) — axis placement', () => {
         name: `Y Axis placement: ${axisPlacement}`,
         panelProps: customFieldConfig({ axisPlacement }),
       })),
-  ] satisfies CanvasCase[])('$name', async ({ data, options, panelProps, size }) => {
-    renderTimeSeriesPanel(data, options, panelProps);
-    await assertAxesOutput(size);
-  });
+  ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
 });

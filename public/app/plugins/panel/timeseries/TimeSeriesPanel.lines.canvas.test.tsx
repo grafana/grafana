@@ -1,11 +1,10 @@
 import { GraphDrawStyle, LineInterpolation } from '@grafana/schema';
 
 import {
-  assertCanvasOutput,
   type CanvasCase,
   customFieldConfig,
   fixedBlue,
-  renderTimeSeriesPanel,
+  renderCanvasCase,
   setupCanvasCapture,
 } from './TimeSeriesPanel.canvasTestUtils';
 
@@ -43,8 +42,5 @@ describe('TimeSeriesPanel (canvas) — line rendering', () => {
       name: `lineWidth: ${lineWidth}`,
       panelProps: customFieldConfig({ lineWidth }, fixedBlue),
     })),
-  ] satisfies CanvasCase[])('$name', async ({ data, options, panelProps, size }) => {
-    renderTimeSeriesPanel(data, options, panelProps);
-    await assertCanvasOutput(size);
-  });
+  ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase));
 });
