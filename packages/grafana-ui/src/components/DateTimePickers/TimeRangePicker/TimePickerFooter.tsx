@@ -15,7 +15,7 @@ import { TabContent } from '../../Tabs/TabContent';
 import { TabsBar } from '../../Tabs/TabsBar';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
-import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
+import { formatUtcOffset, TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
 import { getTimeZoneTitle, TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
 import { getMonthOptions } from '../options';
 
@@ -77,7 +77,7 @@ export const TimePickerFooter = (props: Props) => {
             <div className={style.spacer} />
             <TimeZoneDescription info={info} />
           </div>
-          <TimeZoneOffset timeZone={timeZone} timestamp={timestamp} />
+          <TimeZoneOffset offset={formatUtcOffset(timestamp, timeZone)} />
         </div>
         <div className={style.spacer} />
         <Button

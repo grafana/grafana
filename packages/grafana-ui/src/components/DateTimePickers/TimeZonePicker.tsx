@@ -135,7 +135,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
 
       const delimiter = tz.name.indexOf('/');
       const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      pushOption(group, tz.name, { name: tz.name, ianaName: tz.name, abbreviation: tz.abbr }, legacyNames.get(tz.name));
+      pushOption(group, tz.name, { name: tz.name, abbreviation: tz.abbr, offset: tz.offset }, legacyNames.get(tz.name));
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
@@ -194,8 +194,8 @@ const getInternalTimeZoneInfo = (zone: TimeZone, timestamp: number): TimeZoneOpt
 
   return {
     name: internalZoneNames[zone] ?? zone,
-    ianaName: tz?.name ?? resolved,
     // The runtime's zone list may not contain a plain UTC entry.
     abbreviation: resolved === 'UTC' ? 'UTC, GMT' : (tz?.abbr ?? ''),
+    offset: tz?.offset ?? '+00:00',
   };
 };

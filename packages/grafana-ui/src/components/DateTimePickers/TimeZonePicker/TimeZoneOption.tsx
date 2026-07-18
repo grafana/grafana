@@ -22,10 +22,10 @@ interface Props {
 export interface TimeZoneOptionInfo {
   /** display name; the canonical IANA id, or e.g. 'Default' for internal zones */
   name: string;
-  /** concrete IANA zone the UTC offset is rendered from */
-  ianaName: string;
   /** DST-aware abbreviation, e.g. 'EST', or 'UTC, GMT' */
   abbreviation: string;
+  /** UTC offset at catalog build time, e.g. '+05:30' */
+  offset: string;
 }
 
 export interface SelectableZone extends SelectableValue<string> {
@@ -36,7 +36,6 @@ export interface SelectableZone extends SelectableValue<string> {
 export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const styles = useStyles2(getStyles);
-  const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
   return (
@@ -48,9 +47,7 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
           <TimeZoneDescription info={data.info} />
         </div>
         <div className={styles.rightColumn}>
-          {/* info.ianaName is used over data.value since internal zones like
-              'Default' carry a value that is not a concrete IANA zone */}
-          <TimeZoneOffset timeZone={data.info.ianaName} timestamp={timestamp} />
+          <TimeZoneOffset offset={`UTC${data.info.offset}`} />
           {isSelected && (
             <span>
               <Icon name="check" />
@@ -65,7 +62,6 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
 export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const styles = useStyles2(getStyles);
-  const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
   return (
@@ -88,9 +84,7 @@ export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
             <TimeZoneDescription info={data.info} />
           </div>
           <div className={styles.rightColumn}>
-            {/* info.ianaName is used over data.value since internal zones like
-                'Default' carry a value that is not a concrete IANA zone */}
-            <TimeZoneOffset timeZone={data.info.ianaName} timestamp={timestamp} />
+            <TimeZoneOffset offset={`UTC${data.info.offset}`} />
           </div>
         </div>
       </div>
