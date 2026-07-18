@@ -2,7 +2,7 @@ import { AxisPlacement } from '@grafana/schema';
 
 import {
   type CanvasCase,
-  customFieldConfig,
+  withFieldConfig,
   renderCanvasCase,
   setupCanvasCapture,
 } from './TimeSeriesPanel.canvasTestUtils';
@@ -22,7 +22,7 @@ describe('TimeSeriesPanel (canvas) — axis placement', () => {
       .filter((axisPlacement) => axisPlacement !== AxisPlacement.Auto && axisPlacement !== AxisPlacement.Left)
       .map((axisPlacement) => ({
         name: `Y Axis placement: ${axisPlacement}`,
-        panelProps: customFieldConfig({ custom: { axisPlacement } }),
+        panelProps: withFieldConfig({ custom: { axisPlacement } }),
       })),
   ])('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
 });

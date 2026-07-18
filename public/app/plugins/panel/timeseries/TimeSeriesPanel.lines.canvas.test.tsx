@@ -2,7 +2,7 @@ import { GraphDrawStyle, LineInterpolation, VizOrientation } from '@grafana/sche
 
 import {
   type CanvasCase,
-  customFieldConfig,
+  withFieldConfig,
   fixedBlue,
   renderCanvasCase,
   setupCanvasCapture,
@@ -24,17 +24,17 @@ describe('TimeSeriesPanel (canvas) — line rendering', () => {
       .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
       .map((drawStyle) => ({
         name: `drawStyle: ${drawStyle}`,
-        panelProps: customFieldConfig({ custom: { drawStyle, fillOpacity: 25 }, defaults: fixedBlue }),
+        panelProps: withFieldConfig({ custom: { drawStyle, fillOpacity: 25 }, defaults: fixedBlue }),
       })),
     ...Object.values(LineInterpolation)
       .filter((lineInterpolation) => lineInterpolation !== LineInterpolation.Linear)
       .map((lineInterpolation) => ({
         name: `lineInterpolation: ${lineInterpolation}`,
-        panelProps: customFieldConfig({ custom: { lineInterpolation } }),
+        panelProps: withFieldConfig({ custom: { lineInterpolation } }),
       })),
     ...[3, 6, 10].map((lineWidth) => ({
       name: `lineWidth: ${lineWidth}`,
-      panelProps: customFieldConfig({ custom: { lineWidth }, defaults: fixedBlue }),
+      panelProps: withFieldConfig({ custom: { lineWidth }, defaults: fixedBlue }),
     })),
     // orientation is a panel option, not field config; Vertical puts time on the Y axis.
     { name: 'orientation: vertical', options: { orientation: VizOrientation.Vertical } },

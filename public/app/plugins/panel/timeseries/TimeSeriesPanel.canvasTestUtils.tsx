@@ -68,7 +68,7 @@ interface CustomFieldConfigArgs {
   defaults?: Partial<FieldConfigSource['defaults']>;
 }
 
-export function customFieldConfig({ custom, defaults }: CustomFieldConfigArgs = {}): Partial<PanelProps<Options>> {
+export function withFieldConfig({ custom, defaults }: CustomFieldConfigArgs = {}): Partial<PanelProps<Options>> {
   return {
     fieldConfig: {
       overrides: [],
@@ -260,12 +260,12 @@ export async function renderCanvasCase(
   { data, options, panelProps, size }: CanvasCase,
   layer: 'series' | 'axes' = 'series'
 ): Promise<void> {
-  renderTimeSeriesPanel(data, options, { ...panelProps, ...size });
+  const snapshotSize = size ?? { width, height };
+  renderTimeSeriesPanel(data, options, { ...panelProps, width: snapshotSize.width, height: snapshotSize.height });
   await assertUPlotReady();
 
   const events = uPlotInstance!.ctx.__getEvents();
   const axisEvents = events.slice(0, axisBoundary);
-  const snapshotSize = size ?? { width, height };
 
   if (layer === 'axes') {
     expect(removeCanvasTransforms(axisEvents)).toMatchCanvasSnapshot([], snapshotSize);

@@ -5,7 +5,7 @@ import {
   type CanvasCase,
   compactCanvas,
   createMultiSeriesFrame,
-  customFieldConfig,
+  withFieldConfig,
   fixedBlue,
   renderCanvasCase,
   setupCanvasCapture,
@@ -24,20 +24,20 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
     // Fixed color so each opacity step reads clearly, pale to solid.
     ...[25, 50, 80, 100].map((fillOpacity) => ({
       name: `fillOpacity: ${fillOpacity}`,
-      panelProps: customFieldConfig({ custom: { fillOpacity }, defaults: fixedBlue }),
+      panelProps: withFieldConfig({ custom: { fillOpacity }, defaults: fixedBlue }),
     })),
     // Gradients paint the fill, so pair with a non-zero fillOpacity or the fill is transparent and nothing shows.
     ...Object.values(GraphGradientMode)
       .filter((gradientMode) => gradientMode !== GraphGradientMode.None && gradientMode !== GraphGradientMode.Scheme)
       .map((gradientMode) => ({
         name: `gradientMode: ${gradientMode}`,
-        panelProps: customFieldConfig({ custom: { gradientMode, fillOpacity: 25 } }),
+        panelProps: withFieldConfig({ custom: { gradientMode, fillOpacity: 25 } }),
       })),
     // Scheme gradients color by the threshold scale, so they need a color mode + thresholds (uPlot's
     // gradient builder throws without them) plus a fill to be visible.
     {
       name: 'gradientMode: scheme',
-      panelProps: customFieldConfig({
+      panelProps: withFieldConfig({
         custom: { gradientMode: GraphGradientMode.Scheme, fillOpacity: 25 },
         defaults: {
           color: { mode: FieldColorModeId.Thresholds },
@@ -55,13 +55,13 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
     {
       name: 'stacking: none (overlapping fills)',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: customFieldConfig({ custom: { stacking: { mode: StackingMode.None, group: 'A' }, fillOpacity: 50 } }),
+      panelProps: withFieldConfig({ custom: { stacking: { mode: StackingMode.None, group: 'A' }, fillOpacity: 50 } }),
       size: compactCanvas,
     },
     {
       name: 'stacking: normal',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: customFieldConfig({
+      panelProps: withFieldConfig({
         custom: { stacking: { mode: StackingMode.Normal, group: 'A' }, fillOpacity: 50 },
       }),
       size: compactCanvas,
@@ -69,7 +69,7 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
     {
       name: 'stacking: 100%',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: customFieldConfig({
+      panelProps: withFieldConfig({
         custom: { stacking: { mode: StackingMode.Percent, group: 'A' }, fillOpacity: 50 },
       }),
       size: compactCanvas,
