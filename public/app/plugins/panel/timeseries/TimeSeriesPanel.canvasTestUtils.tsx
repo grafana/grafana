@@ -15,7 +15,6 @@ import {
   type PanelData,
   type PanelProps,
   type TimeRange,
-  toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
@@ -139,7 +138,7 @@ export function createAnnotationFrame(overrides?: { timeValues?: number[]; text?
         : undefined,
     ].filter((f) => f != null),
   };
-  return toDataFrame(frame);
+  return createDataFrame(frame);
 }
 
 // Span the daily sample window (2024-01-01 .. +4 days) so all series/annotations fall inside the range.
