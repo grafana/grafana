@@ -36,36 +36,25 @@ import { type Options } from './panelcfg.gen';
 // preserves it so fills, gradient bands, and markers land in the captured draw calls.
 installCanvasPath2DShim();
 
-/**
- * The panel framework runs `applyFieldOverrides` before handing series to the panel component; in a unit
- * test we must do it ourselves. Without it, the panel's `fieldConfig.defaults.custom` (drawStyle, fillOpacity,
- * lineWidth, etc.) never reaches `field.config.custom`, so every option permutation renders identically.
- * The registry must carry the time series custom config so `custom.*` defaults are applied.
- */
+// The panel framework runs applyFieldOverrides before rendering; a unit test must do it too, or the
+// custom config (drawStyle, fillOpacity, etc.) never reaches field.config.custom and every case renders
+// identically. The registry carries the time series custom config so those defaults get applied.
 const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Time series');
 
-/** The default dark theme is argument-free and stable, so build it once for the whole suite. */
 const theme = createTheme();
 
 const width = 648;
 const height = 378;
 
-/** Minimal viewport for snapshots that only need a few series drawn (smaller canvas event payloads). */
+/** Smaller canvas for cases that only need a few series drawn. */
 export const compactCanvas = { width: 260, height: 140 } as const;
 
-/** Fixed high-contrast color for cases whose effect (fill/stroke) is only visible with a solid series color. */
 export const fixedBlue: Partial<FieldConfigSource['defaults']> = {
   color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
 };
 
-/**
- * A real time series panel applies field-config *editor* defaults that `defaultGraphConfig` (config.ts)
- * omits, and `applyFieldOverrides` does not inject them. Mirror the ones that affect canvas rendering so
- * snapshots match what a user actually sees:
- *   - pointSize: 5      — config.ts editor `defaultValue` for path 'pointSize'
- *   - showPoints: Auto  — config.ts editor `defaultValue` (graphFieldOptions.showPoints[0].value)
- * Without these, point markers never render in the tests even though a default panel shows them.
- */
+// pointSize/showPoints are editor defaults (config.ts) that applyFieldOverrides does not inject. Without
+// them point markers never render, even though a default panel shows them.
 const panelDefaultConfig: typeof defaultGraphConfig = {
   ...defaultGraphConfig,
   pointSize: 5,
@@ -73,13 +62,12 @@ const panelDefaultConfig: typeof defaultGraphConfig = {
 };
 
 interface CustomFieldConfigArgs {
-  /** `custom.*` graph overrides (drawStyle, fillOpacity, stacking, …), layered on the panel default config. */
+  /** custom graph overrides layered on the panel default config */
   custom?: Partial<typeof defaultGraphConfig>;
-  /** Top-level field defaults (color, thresholds, min/max, …) merged alongside `custom`. */
+  /** top-level field defaults (color, thresholds, min/max) merged alongside custom */
   defaults?: Partial<FieldConfigSource['defaults']>;
 }
 
-/** Panel props carrying a field config whose custom values extend the panel default graph config. */
 export function customFieldConfig({ custom, defaults }: CustomFieldConfigArgs = {}): Partial<PanelProps<Options>> {
   return {
     fieldConfig: {
@@ -89,13 +77,11 @@ export function customFieldConfig({ custom, defaults }: CustomFieldConfigArgs = 
   };
 }
 
-// Real timestamps one day apart, starting from a fixed date, so the x-axis shows several grid lines with
-// formatted date labels like users actually see — rather than the 00:00:00–00:00:05 that tiny epoch values
-// (1000ms…) produced. `Date.UTC` keeps it deterministic across time zones.
-export const START_MS = Date.UTC(2024, 0, 1); // 2024-01-01T00:00:00Z
+// Real timestamps one day apart so the x-axis shows several grid lines with formatted date labels, rather
+// than the 00:00:00-00:00:05 that tiny epoch values produce. Date.UTC keeps it deterministic across zones.
+export const START_MS = Date.UTC(2024, 0, 1);
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** `count` daily timestamps starting at START_MS. */
 const dailyTimestamps = (count = 5) => Array.from({ length: count }, (_, i) => START_MS + i * DAY_MS);
 
 function createTimeSeriesFrame(overrides?: { timeValues?: number[]; values?: number[]; name?: string }) {
@@ -268,10 +254,9 @@ const assertUPlotReady = async () => {
 };
 
 /**
- * Renders a case and snapshots its captured draw calls. `size` is the single source of truth for the canvas
- * dimensions — it sizes the render AND the snapshot metadata. `layer` picks which pass to assert: `series`
- * (fills/stroke/markers, with the axis/grid pass passed raw as viewer context) or `axes` (the axis pass).
- * Only the asserted events are scrubbed of transforms; the context events are passed raw for the viewer.
+ * Renders a case and snapshots its captured draw calls. `size` sizes both the render and the snapshot
+ * metadata. `layer` picks which pass to assert: 'series' (fills/stroke/markers, with the axis pass as
+ * viewer context) or 'axes' (the axis pass). Only the asserted events are scrubbed; context is passed raw.
  */
 export async function renderCanvasCase(
   { data, options, panelProps, size }: CanvasCase,

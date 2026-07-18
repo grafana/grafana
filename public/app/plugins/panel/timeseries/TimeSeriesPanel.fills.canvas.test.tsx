@@ -21,22 +21,20 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
   setupCanvasCapture();
 
   it.each<CanvasCase>([
-    // fillOpacity 0 (no fill) is the default. Fixed color so each opacity step reads clearly (pale to solid).
+    // Fixed color so each opacity step reads clearly, pale to solid.
     ...[25, 50, 80, 100].map((fillOpacity) => ({
       name: `fillOpacity: ${fillOpacity}`,
       panelProps: customFieldConfig({ custom: { fillOpacity }, defaults: fixedBlue }),
     })),
-    // None is the default gradient mode, covered by `defaults`; Scheme is a separate explicit case below.
-    // Gradients paint the fill, so pair with a non-zero fillOpacity — otherwise the fill is transparent and
-    // the gradient can't be seen (or visually verified for divergence).
+    // Gradients paint the fill, so pair with a non-zero fillOpacity or the fill is transparent and nothing shows.
     ...Object.values(GraphGradientMode)
       .filter((gradientMode) => gradientMode !== GraphGradientMode.None && gradientMode !== GraphGradientMode.Scheme)
       .map((gradientMode) => ({
         name: `gradientMode: ${gradientMode}`,
         panelProps: customFieldConfig({ custom: { gradientMode, fillOpacity: 25 } }),
       })),
-    // Scheme gradients color by the field's threshold scale, so they require a color mode + thresholds
-    // (without them uPlot's gradient builder throws) and a fill to be visible.
+    // Scheme gradients color by the threshold scale, so they need a color mode + thresholds (uPlot's
+    // gradient builder throws without them) plus a fill to be visible.
     {
       name: 'gradientMode: scheme',
       panelProps: customFieldConfig({
@@ -53,8 +51,7 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
         },
       }),
     },
-    // fillOpacity so the stacked/overlapping regions are visible. Unstacked: the three series' fills overlay
-    // each other; stacked: they sit on top of one another (no overlap). `size` renders on the compact canvas.
+    // fillOpacity so the regions show: unstacked the three fills overlap, stacked they sit on top of each other.
     {
       name: 'stacking: none (overlapping fills)',
       data: { series: [createMultiSeriesFrame()] },
@@ -77,5 +74,5 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
       }),
       size: compactCanvas,
     },
-  ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase));
+  ])('$name', (testCase) => renderCanvasCase(testCase));
 });

@@ -33,5 +33,5 @@ describe('TimeSeriesPanel (canvas) — Annotations', () => {
         ],
       },
     },
-  ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase));
+  ])('$name', (testCase) => renderCanvasCase(testCase));
 });

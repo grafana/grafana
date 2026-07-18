@@ -17,13 +17,12 @@ describe('TimeSeriesPanel (canvas) — axis placement', () => {
   setupCanvasCapture();
 
   it.each<CanvasCase>([
-    // Auto resolves to Left, and Left is the default placement, so both are covered by `X Axis: defaults`
-    // (in the axis range suite).
+    // Auto and Left are covered by 'X Axis: defaults' in the axis range suite.
     ...Object.values(AxisPlacement)
       .filter((axisPlacement) => axisPlacement !== AxisPlacement.Auto && axisPlacement !== AxisPlacement.Left)
       .map((axisPlacement) => ({
         name: `Y Axis placement: ${axisPlacement}`,
         panelProps: customFieldConfig({ custom: { axisPlacement } }),
       })),
-  ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
+  ])('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
 });
