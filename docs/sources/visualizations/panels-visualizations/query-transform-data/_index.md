@@ -196,6 +196,7 @@ Learn more about saved queries:
 - [Roles, permission, and RBAC](#roles-permissions-and-rbac)
 - [How to save a query](#save-a-query)
 - [Variables in saved queries](#variables-in-saved-queries)
+- [Manage saved queries as code](#manage-saved-queries-as-code)
 - [Known limitations](#known-limitations)
 
 ### Saved queries dialog box
@@ -275,6 +276,11 @@ You can map the original variables to either:
 
 Grafana applies your selections to the query before inserting it into the dashboard.
 However, the substitutions only apply to the query when it's reused, and the original saved query remains unchanged.
+
+### Manage saved queries as code
+
+You can manage saved queries as code with the Grafana Terraform provider, which lets you version-control your query library and keep it consistent across instances.
+For more information, refer to [Manage saved queries using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/infrastructure-as-code/terraform/manage-saved-queries/).
 
 ### Known limitations
 
