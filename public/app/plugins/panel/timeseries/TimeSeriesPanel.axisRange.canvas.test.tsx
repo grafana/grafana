@@ -3,9 +3,9 @@ import { StackingMode } from '@grafana/schema';
 import {
   type CanvasCase,
   createMultiSeriesFrame,
-  withFieldConfig,
   renderCanvasCase,
   setupCanvasCapture,
+  withFieldConfig,
 } from './TimeSeriesPanel.canvasTestUtils';
 
 jest.mock('@grafana/ui/src/utils/measureText', () =>

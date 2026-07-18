@@ -2,9 +2,9 @@ import { AxisPlacement } from '@grafana/schema';
 
 import {
   type CanvasCase,
-  withFieldConfig,
   renderCanvasCase,
   setupCanvasCapture,
+  withFieldConfig,
 } from './TimeSeriesPanel.canvasTestUtils';
 
 jest.mock('@grafana/ui/src/utils/measureText', () =>

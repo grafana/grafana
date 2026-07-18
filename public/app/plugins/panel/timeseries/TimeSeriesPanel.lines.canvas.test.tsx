@@ -2,10 +2,10 @@ import { GraphDrawStyle, LineInterpolation, VizOrientation } from '@grafana/sche
 
 import {
   type CanvasCase,
-  withFieldConfig,
   fixedBlue,
   renderCanvasCase,
   setupCanvasCapture,
+  withFieldConfig,
 } from './TimeSeriesPanel.canvasTestUtils';
 
 jest.mock('@grafana/ui/src/utils/measureText', () =>
