@@ -172,20 +172,212 @@ exports[`TimeSeriesPanel (canvas) — fills fillOpacity: 25 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 357,
+            "width": 624,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -417,20 +609,212 @@ exports[`TimeSeriesPanel (canvas) — fills fillOpacity: 50 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 357,
+            "width": 624,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -662,20 +1046,212 @@ exports[`TimeSeriesPanel (canvas) — fills fillOpacity: 80 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 357,
+            "width": 624,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -907,20 +1483,212 @@ exports[`TimeSeriesPanel (canvas) — fills fillOpacity: 100 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 357,
+            "width": 624,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -1203,20 +1971,212 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: hue 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 357,
+            "width": 624,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -1468,20 +2428,212 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: opacity 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 357,
+            "width": 624,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -1776,20 +2928,212 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: scheme 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 357,
+            "width": 624,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -1964,20 +3308,212 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 119,
+            "width": 222,
+            "x": 34,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 76,
+            "y": 101,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 74,
+            "y": 101,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 111,
+            "y": 99,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 109,
+            "y": 99,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 147,
+            "y": 97,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 145,
+            "y": 97,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 96,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 181,
+            "y": 96,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 218,
+            "y": 95,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 216,
+            "y": 95,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 76,
+            "y": 101,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 74,
+            "y": 101,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 111,
+            "y": 99,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 109,
+            "y": 99,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 147,
+            "y": 97,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 145,
+            "y": 97,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 96,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 181,
+            "y": 96,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 218,
+            "y": 95,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 216,
+            "y": 95,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -2171,20 +3707,212 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 119,
+            "width": 222,
+            "x": 34,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 76,
+            "y": 64,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 74,
+            "y": 64,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 111,
+            "y": 62,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 109,
+            "y": 62,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 147,
+            "y": 60,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 145,
+            "y": 60,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 59,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 181,
+            "y": 59,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 218,
+            "y": 58,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 216,
+            "y": 58,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 76,
+            "y": 64,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 74,
+            "y": 64,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 111,
+            "y": 62,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 109,
+            "y": 62,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 147,
+            "y": 60,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 145,
+            "y": 60,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 59,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 181,
+            "y": 59,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 218,
+            "y": 58,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 216,
+            "y": 58,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -2378,20 +4106,212 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 119,
+            "width": 222,
+            "x": 34,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 76,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 74,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 111,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 109,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 147,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 145,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 181,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 218,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 216,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 76,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 74,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 111,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 109,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 147,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 145,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 181,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 218,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 216,
+            "y": 8,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -2566,20 +4486,212 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 119,
+            "width": 236,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 64,
+            "y": 109,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 62,
+            "y": 109,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 102,
+            "y": 107,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 100,
+            "y": 107,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 140,
+            "y": 104,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 138,
+            "y": 104,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 102,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 176,
+            "y": 102,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 99,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 214,
+            "y": 99,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 64,
+            "y": 109,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 62,
+            "y": 109,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 102,
+            "y": 107,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 100,
+            "y": 107,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 140,
+            "y": 104,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 138,
+            "y": 104,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 102,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 176,
+            "y": 102,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 99,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 214,
+            "y": 99,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -2773,20 +4885,212 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 119,
+            "width": 236,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 64,
+            "y": 84,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 62,
+            "y": 84,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 102,
+            "y": 80,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 100,
+            "y": 80,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 140,
+            "y": 75,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 138,
+            "y": 75,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 70,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 176,
+            "y": 70,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 65,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 214,
+            "y": 65,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 64,
+            "y": 84,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 62,
+            "y": 84,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 102,
+            "y": 80,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 100,
+            "y": 80,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 140,
+            "y": 75,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 138,
+            "y": 75,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 70,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 176,
+            "y": 70,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 65,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 214,
+            "y": 65,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -2980,20 +5284,212 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 119,
+            "width": 236,
+            "x": 20,
+            "y": 4,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 64,
+            "y": 47,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 62,
+            "y": 47,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 102,
+            "y": 40,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 100,
+            "y": 40,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 140,
+            "y": 33,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 138,
+            "y": 33,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 25,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 176,
+            "y": 25,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 18,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 214,
+            "y": 18,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 64,
+            "y": 47,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 62,
+            "y": 47,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 102,
+            "y": 40,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 100,
+            "y": 40,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 140,
+            "y": 33,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 138,
+            "y": 33,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 25,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 176,
+            "y": 25,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 18,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2,
+            "startAngle": 0,
+            "x": 214,
+            "y": 18,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },

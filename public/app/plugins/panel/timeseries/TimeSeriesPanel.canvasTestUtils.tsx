@@ -18,7 +18,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 import {
   applyDefaultUPlotAxisMeasureTextMock,
   installCanvasPath2DShim,
@@ -59,7 +59,21 @@ export const fixedBlue: Partial<FieldConfigSource['defaults']> = {
   color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
 };
 
-/** Panel props carrying a field config whose custom values extend the graph defaults. */
+/**
+ * A real time series panel applies field-config *editor* defaults that `defaultGraphConfig` (config.ts)
+ * omits, and `applyFieldOverrides` does not inject them. Mirror the ones that affect canvas rendering so
+ * snapshots match what a user actually sees:
+ *   - pointSize: 5      — config.ts editor `defaultValue` for path 'pointSize'
+ *   - showPoints: Auto  — config.ts editor `defaultValue` (graphFieldOptions.showPoints[0].value)
+ * Without these, point markers never render in the tests even though a default panel shows them.
+ */
+const panelDefaultConfig: typeof defaultGraphConfig = {
+  ...defaultGraphConfig,
+  pointSize: 5,
+  showPoints: VisibilityMode.Auto,
+};
+
+/** Panel props carrying a field config whose custom values extend the panel default graph config. */
 export function customFieldConfig(
   custom: Partial<typeof defaultGraphConfig>,
   extraDefaults?: Partial<FieldConfigSource['defaults']>
@@ -67,7 +81,7 @@ export function customFieldConfig(
   return {
     fieldConfig: {
       overrides: [],
-      defaults: { ...extraDefaults, custom: { ...defaultGraphConfig, ...custom } },
+      defaults: { ...extraDefaults, custom: { ...panelDefaultConfig, ...custom } },
     },
   };
 }
@@ -138,7 +152,7 @@ export function renderTimeSeriesPanel(
   const mergedOptions: Options = { ...defaultPanelOptions, ...optionsOverrides };
   const fieldConfig: FieldConfigSource = panelPropsOverrides?.fieldConfig ?? {
     overrides: [],
-    defaults: { custom: { ...defaultGraphConfig } },
+    defaults: { custom: { ...panelDefaultConfig } },
   };
   const { series: rawSeries = [createTimeSeriesFrame()], ...restDataOverrides } = dataOverrides ?? {};
   const series = applyFieldOverrides({

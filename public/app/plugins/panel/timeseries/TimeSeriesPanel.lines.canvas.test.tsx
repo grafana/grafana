@@ -1,4 +1,4 @@
-import { GraphDrawStyle, LineInterpolation, VisibilityMode } from '@grafana/schema';
+import { GraphDrawStyle, LineInterpolation } from '@grafana/schema';
 
 import {
   assertCanvasOutput,
@@ -26,11 +26,9 @@ describe('TimeSeriesPanel (canvas) — line rendering', () => {
       .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
       .map((drawStyle) => ({
         name: `drawStyle: ${drawStyle}`,
-        // showPoints/pointSize so the points draw style renders visible markers (default size is invisible).
-        panelProps: customFieldConfig(
-          { drawStyle, fillOpacity: 25, showPoints: VisibilityMode.Always, pointSize: 6 },
-          fixedBlue
-        ),
+        // Fixed color + a visible fill so bars read clearly. Points render via the shared pointSize/showPoints
+        // defaults (drawStyle:points force-shows markers), matching a real panel.
+        panelProps: customFieldConfig({ drawStyle, fillOpacity: 25 }, fixedBlue),
       })),
     // Linear is the default interpolation, covered by `defaults`.
     ...Object.values(LineInterpolation)
