@@ -6,6 +6,10 @@
  *
  * SVG path-string construction (`new Path2D('M0 0 L1 1')`) is not supported — uPlot doesn't use it, and the
  * unpatched mock already ignored it.
+ *
+ * This reassigns the global `Path2D`, so call it from a suite's setup or a test module's top scope — never
+ * from a global jest setupFile. jest gives each test file its own environment, so the swap stays scoped to
+ * the file that calls it; wiring it globally would patch `Path2D` for every test.
  */
 let installed = false;
 
