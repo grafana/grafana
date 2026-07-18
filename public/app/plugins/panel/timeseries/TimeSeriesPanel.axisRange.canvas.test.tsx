@@ -1,6 +1,9 @@
+import { StackingMode } from '@grafana/schema';
+
 import {
   assertAxesOutput,
   type CanvasCase,
+  createMultiSeriesFrame,
   customFieldConfig,
   renderTimeSeriesPanel,
   setupCanvasCapture,
@@ -23,6 +26,18 @@ describe('TimeSeriesPanel (canvas) — axis range', () => {
     // Uses a different range (0-50) than the soft case so the snapshot stays distinct.
     { name: 'Y Axis: hard min/max', panelProps: customFieldConfig({}, { min: 0, max: 50 }) },
     { name: 'X Axis: defaults' },
+    // Stacking rescales the Y axis: Normal sums the series (range grows), Percent normalizes to 0-100%.
+    // Asserted via the axis layer since the series-only fills tests don't capture the axis change.
+    {
+      name: 'Y Axis: stacking normal',
+      data: { series: [createMultiSeriesFrame()] },
+      panelProps: customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' } }),
+    },
+    {
+      name: 'Y Axis: stacking 100%',
+      data: { series: [createMultiSeriesFrame()] },
+      panelProps: customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' } }),
+    },
   ] satisfies CanvasCase[])('$name', async ({ data, options, panelProps, size }) => {
     renderTimeSeriesPanel(data, options, panelProps);
     await assertAxesOutput(size);

@@ -54,16 +54,33 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
         }
       ),
     },
+    // fillOpacity so the stacked/overlapping regions are visible. Unstacked: the three series' fills overlay
+    // each other; stacked: they sit on top of one another (no overlap). Multi-series on the compact canvas.
+    {
+      name: 'stacking: none (overlapping fills)',
+      data: { series: [createMultiSeriesFrame()] },
+      panelProps: {
+        ...customFieldConfig({ stacking: { mode: StackingMode.None, group: 'A' }, fillOpacity: 50 }),
+        ...compactCanvas,
+      },
+      size: compactCanvas,
+    },
     {
       name: 'stacking: normal',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: { ...customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' } }), ...compactCanvas },
+      panelProps: {
+        ...customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' }, fillOpacity: 50 }),
+        ...compactCanvas,
+      },
       size: compactCanvas,
     },
     {
       name: 'stacking: 100%',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: { ...customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' } }), ...compactCanvas },
+      panelProps: {
+        ...customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' }, fillOpacity: 50 }),
+        ...compactCanvas,
+      },
       size: compactCanvas,
     },
   ] satisfies CanvasCase[])('$name', async ({ data, options, panelProps, size }) => {
