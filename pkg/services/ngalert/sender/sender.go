@@ -112,28 +112,36 @@ func WithMaxLabelStringSize(size int) Option {
 // WithMaxQueueCapacity sets the maximum capacity of the queue used by the sender.
 func WithMaxQueueCapacity(capacity int) Option {
 	return func(opts *ExternalAMOptions) {
-		opts.QueueCapacity = capacity
+		if capacity > 0 {
+			opts.QueueCapacity = capacity
+		}
 	}
 }
 
 // WithTimeout sets the fallback timeout used when sending to external Alertmanagers.
 func WithTimeout(timeout time.Duration) Option {
 	return func(opts *ExternalAMOptions) {
-		opts.Timeout = timeout
+		if timeout > 0 {
+			opts.Timeout = timeout
+		}
 	}
 }
 
 // WithMaxBatchSize sets the maximum batch size for sending alerts to the external Alertmanager(s).
 func WithMaxBatchSize(size int) Option {
 	return func(opts *ExternalAMOptions) {
-		opts.MaxBatchSize = size
+		if size > 0 {
+			opts.MaxBatchSize = size
+		}
 	}
 }
 
 // WithDispatcherWorkers sets the number of concurrent goroutines dispatching alerts.
 func WithDispatcherWorkers(workers int) Option {
 	return func(opts *ExternalAMOptions) {
-		opts.DispatcherWorkers = workers
+		if workers > 0 {
+			opts.DispatcherWorkers = workers
+		}
 	}
 }
 
