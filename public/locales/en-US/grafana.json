@@ -16021,10 +16021,6 @@
       "description": {
         "convert-to-specified-field-type": "Convert a field to a specified field type."
       },
-      "label": {
-        "browser": "Browser",
-        "utc": "UTC"
-      },
       "label-as": "as",
       "label-date-format": "Date format",
       "label-field": "Field",
