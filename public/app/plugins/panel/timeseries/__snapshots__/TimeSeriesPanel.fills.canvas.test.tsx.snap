@@ -1798,11 +1798,11 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: hue 1`] = `
         "addColorStop": [
           [
             0,
-            "rgba(197, 173, 160, 0)",
+            "rgba(197, 173, 160, 0.25)",
           ],
           [
             1,
-            "rgba(90, 90, 90, 0)",
+            "rgba(90, 90, 90, 0.25)",
           ],
         ],
       },
@@ -2266,7 +2266,7 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: opacity 1`] = `
         "addColorStop": [
           [
             0,
-            "#80808000",
+            "#80808040",
           ],
           [
             1,
@@ -2747,15 +2747,15 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: scheme 1`] = `
         "addColorStop": [
           [
             0,
-            "#73BF6900",
+            "#73BF6940",
           ],
           [
             1,
-            "#73BF6900",
+            "#73BF6940",
           ],
           [
             1,
-            "#F2495C00",
+            "#F2495C40",
           ],
         ],
       },

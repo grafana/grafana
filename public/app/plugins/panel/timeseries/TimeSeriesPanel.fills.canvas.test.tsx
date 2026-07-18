@@ -28,18 +28,20 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
       panelProps: customFieldConfig({ fillOpacity }, fixedBlue),
     })),
     // None is the default gradient mode, covered by `defaults`; Scheme is a separate explicit case below.
+    // Gradients paint the fill, so pair with a non-zero fillOpacity — otherwise the fill is transparent and
+    // the gradient can't be seen (or visually verified for divergence).
     ...Object.values(GraphGradientMode)
       .filter((gradientMode) => gradientMode !== GraphGradientMode.None && gradientMode !== GraphGradientMode.Scheme)
       .map((gradientMode) => ({
         name: `gradientMode: ${gradientMode}`,
-        panelProps: customFieldConfig({ gradientMode }),
+        panelProps: customFieldConfig({ gradientMode, fillOpacity: 25 }),
       })),
-    // Scheme gradients color the line by the field's threshold scale, so they require a color mode +
-    // thresholds; without them uPlot's gradient builder throws.
+    // Scheme gradients color by the field's threshold scale, so they require a color mode + thresholds
+    // (without them uPlot's gradient builder throws) and a fill to be visible.
     {
       name: 'gradientMode: scheme',
       panelProps: customFieldConfig(
-        { gradientMode: GraphGradientMode.Scheme },
+        { gradientMode: GraphGradientMode.Scheme, fillOpacity: 25 },
         {
           color: { mode: FieldColorModeId.Thresholds },
           thresholds: {
