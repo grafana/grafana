@@ -47,8 +47,8 @@ const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(d
 /** The default dark theme is argument-free and stable, so build it once for the whole suite. */
 const theme = createTheme();
 
-export const width = 648;
-export const height = 378;
+const width = 648;
+const height = 378;
 
 /** Minimal viewport for snapshots that only need a few series drawn (smaller canvas event payloads). */
 export const compactCanvas = { width: 260, height: 140 } as const;
@@ -92,9 +92,9 @@ export const START_MS = Date.UTC(2024, 0, 1); // 2024-01-01T00:00:00Z
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** `count` daily timestamps starting at START_MS. */
-export const dailyTimestamps = (count = 5) => Array.from({ length: count }, (_, i) => START_MS + i * DAY_MS);
+const dailyTimestamps = (count = 5) => Array.from({ length: count }, (_, i) => START_MS + i * DAY_MS);
 
-export function createTimeSeriesFrame(overrides?: { timeValues?: number[]; values?: number[]; name?: string }) {
+function createTimeSeriesFrame(overrides?: { timeValues?: number[]; values?: number[]; name?: string }) {
   const timeValues = overrides?.timeValues ?? dailyTimestamps();
   const values = overrides?.values ?? [10, 20, 15, 25, 18];
   const name = overrides?.name ?? 'value';
@@ -153,7 +153,7 @@ const defaultPanelOptions: Options = {
   tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None },
 };
 
-export function renderTimeSeriesPanel(
+function renderTimeSeriesPanel(
   dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>,
   optionsOverrides?: Partial<Options>,
   panelPropsOverrides?: Partial<PanelProps<Options>>
@@ -263,29 +263,26 @@ const assertUPlotReady = async () => {
   });
 };
 
-export const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
-  await assertUPlotReady();
-  const frame = uPlotInstance!.ctx.__getEvents();
-  const seriesEvents = removeCanvasTransforms(frame.slice(axisBoundary));
-  // Context (axis/grid) events are passed raw for the compare viewer; only the asserted series events are scrubbed.
-  expect(seriesEvents).toMatchCanvasSnapshot(frame.slice(0, axisBoundary), snapshotSize);
-};
-
-export const assertAxesOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
-  await assertUPlotReady();
-  const axisEvents = removeCanvasTransforms(uPlotInstance!.ctx.__getEvents().slice(0, axisBoundary));
-  expect(axisEvents).toMatchCanvasSnapshot([], snapshotSize);
-};
-
 /**
- * Renders a case and asserts its captured draw calls. `size` is the single source of truth for the canvas
- * dimensions — it sizes the render AND the snapshot metadata (no need to pass width/height twice). Assert
- * the `series` layer (fills/stroke/markers) or the `axes` layer.
+ * Renders a case and snapshots its captured draw calls. `size` is the single source of truth for the canvas
+ * dimensions — it sizes the render AND the snapshot metadata. `layer` picks which pass to assert: `series`
+ * (fills/stroke/markers, with the axis/grid pass passed raw as viewer context) or `axes` (the axis pass).
+ * Only the asserted events are scrubbed of transforms; the context events are passed raw for the viewer.
  */
 export async function renderCanvasCase(
   { data, options, panelProps, size }: CanvasCase,
   layer: 'series' | 'axes' = 'series'
 ): Promise<void> {
   renderTimeSeriesPanel(data, options, { ...panelProps, ...size });
-  await (layer === 'axes' ? assertAxesOutput : assertCanvasOutput)(size);
+  await assertUPlotReady();
+
+  const events = uPlotInstance!.ctx.__getEvents();
+  const axisEvents = events.slice(0, axisBoundary);
+  const snapshotSize = size ?? { width, height };
+
+  if (layer === 'axes') {
+    expect(removeCanvasTransforms(axisEvents)).toMatchCanvasSnapshot([], snapshotSize);
+  } else {
+    expect(removeCanvasTransforms(events.slice(axisBoundary))).toMatchCanvasSnapshot(axisEvents, snapshotSize);
+  }
 }
