@@ -3224,8 +3224,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 215,
+            "height": 350,
+            "width": 603,
             "x": 37.5,
             "y": 7.5,
           },
@@ -3242,49 +3242,49 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 38,
-            "y": 101,
+            "y": 299,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 92,
-            "y": 99,
+            "x": 189,
+            "y": 294,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 145,
-            "y": 97,
+            "x": 339,
+            "y": 289,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 199,
-            "y": 96,
+            "x": 490,
+            "y": 285,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 95,
+            "x": 640,
+            "y": 282,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 119,
+            "x": 640,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 38,
-            "y": 119,
+            "y": 357,
           },
           "type": "lineTo",
         },
@@ -3298,35 +3298,35 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 38,
-            "y": 101,
+            "y": 299,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 92,
-            "y": 99,
+            "x": 189,
+            "y": 294,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 145,
-            "y": 97,
+            "x": 339,
+            "y": 289,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 199,
-            "y": 96,
+            "x": 490,
+            "y": 285,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 95,
+            "x": 640,
+            "y": 282,
           },
           "type": "lineTo",
         },
@@ -3368,8 +3368,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 222,
+            "height": 357,
+            "width": 610,
             "x": 34,
             "y": 4,
           },
@@ -3386,7 +3386,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 40,
-            "y": 101,
+            "y": 299,
           },
           "type": "moveTo",
         },
@@ -3397,14 +3397,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 38,
-            "y": 101,
+            "y": 299,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 94,
-            "y": 99,
+            "x": 191,
+            "y": 294,
           },
           "type": "moveTo",
         },
@@ -3414,15 +3414,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 92,
-            "y": 99,
+            "x": 189,
+            "y": 294,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 147,
-            "y": 97,
+            "x": 341,
+            "y": 289,
           },
           "type": "moveTo",
         },
@@ -3432,15 +3432,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 145,
-            "y": 97,
+            "x": 339,
+            "y": 289,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 201,
-            "y": 96,
+            "x": 492,
+            "y": 285,
           },
           "type": "moveTo",
         },
@@ -3450,15 +3450,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 199,
-            "y": 96,
+            "x": 490,
+            "y": 285,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 95,
+            "x": 642,
+            "y": 282,
           },
           "type": "moveTo",
         },
@@ -3468,8 +3468,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 95,
+            "x": 640,
+            "y": 282,
           },
           "type": "arc",
         },
@@ -3483,7 +3483,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 40,
-            "y": 101,
+            "y": 299,
           },
           "type": "moveTo",
         },
@@ -3494,14 +3494,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 38,
-            "y": 101,
+            "y": 299,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 94,
-            "y": 99,
+            "x": 191,
+            "y": 294,
           },
           "type": "moveTo",
         },
@@ -3511,15 +3511,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 92,
-            "y": 99,
+            "x": 189,
+            "y": 294,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 147,
-            "y": 97,
+            "x": 341,
+            "y": 289,
           },
           "type": "moveTo",
         },
@@ -3529,15 +3529,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 145,
-            "y": 97,
+            "x": 339,
+            "y": 289,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 201,
-            "y": 96,
+            "x": 492,
+            "y": 285,
           },
           "type": "moveTo",
         },
@@ -3547,15 +3547,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 199,
-            "y": 96,
+            "x": 490,
+            "y": 285,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 95,
+            "x": 642,
+            "y": 282,
           },
           "type": "moveTo",
         },
@@ -3565,8 +3565,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 95,
+            "x": 640,
+            "y": 282,
           },
           "type": "arc",
         },
@@ -3608,8 +3608,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 215,
+            "height": 350,
+            "width": 603,
             "x": 37.5,
             "y": 7.5,
           },
@@ -3630,41 +3630,41 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 38,
-            "y": 101,
+            "y": 299,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 92,
-            "y": 99,
+            "x": 189,
+            "y": 294,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 145,
-            "y": 97,
+            "x": 339,
+            "y": 289,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 199,
-            "y": 96,
+            "x": 490,
+            "y": 285,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 95,
+            "x": 640,
+            "y": 282,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
+            "x": 640,
             "y": 8,
           },
           "type": "lineTo",
@@ -3679,7 +3679,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 38,
-            "y": 101,
+            "y": 299,
           },
           "type": "lineTo",
         },
@@ -3694,49 +3694,49 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 38,
-            "y": 64,
+            "y": 183,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 92,
-            "y": 62,
+            "x": 189,
+            "y": 177,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 145,
-            "y": 60,
+            "x": 339,
+            "y": 173,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 199,
-            "y": 59,
+            "x": 490,
+            "y": 169,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 58,
+            "x": 640,
+            "y": 166,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 119,
+            "x": 640,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 38,
-            "y": 119,
+            "y": 357,
           },
           "type": "lineTo",
         },
@@ -3754,35 +3754,35 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 38,
-            "y": 64,
+            "y": 183,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 92,
-            "y": 62,
+            "x": 189,
+            "y": 177,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 145,
-            "y": 60,
+            "x": 339,
+            "y": 173,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 199,
-            "y": 59,
+            "x": 490,
+            "y": 169,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 58,
+            "x": 640,
+            "y": 166,
           },
           "type": "lineTo",
         },
@@ -3824,8 +3824,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 222,
+            "height": 357,
+            "width": 610,
             "x": 34,
             "y": 4,
           },
@@ -3842,7 +3842,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 40,
-            "y": 64,
+            "y": 183,
           },
           "type": "moveTo",
         },
@@ -3853,14 +3853,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 38,
-            "y": 64,
+            "y": 183,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 94,
-            "y": 62,
+            "x": 191,
+            "y": 177,
           },
           "type": "moveTo",
         },
@@ -3870,15 +3870,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 92,
-            "y": 62,
+            "x": 189,
+            "y": 177,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 147,
-            "y": 60,
+            "x": 341,
+            "y": 173,
           },
           "type": "moveTo",
         },
@@ -3888,15 +3888,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 145,
-            "y": 60,
+            "x": 339,
+            "y": 173,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 201,
-            "y": 59,
+            "x": 492,
+            "y": 169,
           },
           "type": "moveTo",
         },
@@ -3906,15 +3906,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 199,
-            "y": 59,
+            "x": 490,
+            "y": 169,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 58,
+            "x": 642,
+            "y": 166,
           },
           "type": "moveTo",
         },
@@ -3924,8 +3924,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 58,
+            "x": 640,
+            "y": 166,
           },
           "type": "arc",
         },
@@ -3939,7 +3939,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 40,
-            "y": 64,
+            "y": 183,
           },
           "type": "moveTo",
         },
@@ -3950,14 +3950,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 38,
-            "y": 64,
+            "y": 183,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 94,
-            "y": 62,
+            "x": 191,
+            "y": 177,
           },
           "type": "moveTo",
         },
@@ -3967,15 +3967,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 92,
-            "y": 62,
+            "x": 189,
+            "y": 177,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 147,
-            "y": 60,
+            "x": 341,
+            "y": 173,
           },
           "type": "moveTo",
         },
@@ -3985,15 +3985,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 145,
-            "y": 60,
+            "x": 339,
+            "y": 173,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 201,
-            "y": 59,
+            "x": 492,
+            "y": 169,
           },
           "type": "moveTo",
         },
@@ -4003,15 +4003,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 199,
-            "y": 59,
+            "x": 490,
+            "y": 169,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 58,
+            "x": 642,
+            "y": 166,
           },
           "type": "moveTo",
         },
@@ -4021,8 +4021,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 58,
+            "x": 640,
+            "y": 166,
           },
           "type": "arc",
         },
@@ -4064,8 +4064,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 215,
+            "height": 350,
+            "width": 603,
             "x": 37.5,
             "y": 7.5,
           },
@@ -4086,41 +4086,41 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 38,
-            "y": 64,
+            "y": 183,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 92,
-            "y": 62,
+            "x": 189,
+            "y": 177,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 145,
-            "y": 60,
+            "x": 339,
+            "y": 173,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 199,
-            "y": 59,
+            "x": 490,
+            "y": 169,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 58,
+            "x": 640,
+            "y": 166,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
+            "x": 640,
             "y": 8,
           },
           "type": "lineTo",
@@ -4135,7 +4135,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         {
           "props": {
             "x": 38,
-            "y": 64,
+            "y": 183,
           },
           "type": "lineTo",
         },
@@ -4156,43 +4156,43 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         },
         {
           "props": {
-            "x": 92,
+            "x": 189,
             "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 145,
+            "x": 339,
             "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 199,
+            "x": 490,
             "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
+            "x": 640,
             "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 119,
+            "x": 640,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 38,
-            "y": 119,
+            "y": 357,
           },
           "type": "lineTo",
         },
@@ -4216,28 +4216,28 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         },
         {
           "props": {
-            "x": 92,
+            "x": 189,
             "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 145,
+            "x": 339,
             "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 199,
+            "x": 490,
             "y": 8,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
+            "x": 640,
             "y": 8,
           },
           "type": "lineTo",
@@ -4280,8 +4280,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 222,
+            "height": 357,
+            "width": 610,
             "x": 34,
             "y": 4,
           },
@@ -4315,7 +4315,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         },
         {
           "props": {
-            "x": 94,
+            "x": 191,
             "y": 8,
           },
           "type": "moveTo",
@@ -4326,14 +4326,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 92,
+            "x": 189,
             "y": 8,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 147,
+            "x": 341,
             "y": 8,
           },
           "type": "moveTo",
@@ -4344,14 +4344,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 145,
+            "x": 339,
             "y": 8,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 201,
+            "x": 492,
             "y": 8,
           },
           "type": "moveTo",
@@ -4362,14 +4362,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 199,
+            "x": 490,
             "y": 8,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
+            "x": 642,
             "y": 8,
           },
           "type": "moveTo",
@@ -4380,7 +4380,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
+            "x": 640,
             "y": 8,
           },
           "type": "arc",
@@ -4412,7 +4412,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         },
         {
           "props": {
-            "x": 94,
+            "x": 191,
             "y": 8,
           },
           "type": "moveTo",
@@ -4423,14 +4423,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 92,
+            "x": 189,
             "y": 8,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 147,
+            "x": 341,
             "y": 8,
           },
           "type": "moveTo",
@@ -4441,14 +4441,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 145,
+            "x": 339,
             "y": 8,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 201,
+            "x": 492,
             "y": 8,
           },
           "type": "moveTo",
@@ -4459,14 +4459,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 199,
+            "x": 490,
             "y": 8,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
+            "x": 642,
             "y": 8,
           },
           "type": "moveTo",
@@ -4477,7 +4477,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
+            "x": 640,
             "y": 8,
           },
           "type": "arc",
@@ -4507,8 +4507,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
   },
   {
     "props": {
-      "height": 111,
-      "width": 214,
+      "height": 349,
+      "width": 602,
       "x": 38,
       "y": 8,
     },
@@ -4524,8 +4524,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
         },
         {
           "props": {
-            "height": 111,
-            "width": 214,
+            "height": 349,
+            "width": 602,
             "x": 38,
             "y": 8,
           },
@@ -4573,8 +4573,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 229,
+            "height": 350,
+            "width": 617,
             "x": 23.5,
             "y": 7.5,
           },
@@ -4591,49 +4591,49 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 103,
+            "x": 178,
+            "y": 306,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 96,
+            "x": 332,
+            "y": 285,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 90,
+            "x": 486,
+            "y": 265,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 83,
+            "x": 640,
+            "y": 244,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 142,
+            "x": 640,
+            "y": 429,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 24,
-            "y": 142,
+            "y": 429,
           },
           "type": "lineTo",
         },
@@ -4647,35 +4647,35 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 103,
+            "x": 178,
+            "y": 306,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 96,
+            "x": 332,
+            "y": 285,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 90,
+            "x": 486,
+            "y": 265,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 83,
+            "x": 640,
+            "y": 244,
           },
           "type": "lineTo",
         },
@@ -4717,8 +4717,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 236,
+            "height": 357,
+            "width": 624,
             "x": 20,
             "y": 4,
           },
@@ -4735,7 +4735,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 26,
-            "y": 109,
+            "y": 326,
           },
           "type": "moveTo",
         },
@@ -4746,14 +4746,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 103,
+            "x": 180,
+            "y": 306,
           },
           "type": "moveTo",
         },
@@ -4763,15 +4763,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 103,
+            "x": 178,
+            "y": 306,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 96,
+            "x": 334,
+            "y": 285,
           },
           "type": "moveTo",
         },
@@ -4781,15 +4781,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 96,
+            "x": 332,
+            "y": 285,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 90,
+            "x": 488,
+            "y": 265,
           },
           "type": "moveTo",
         },
@@ -4799,15 +4799,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 90,
+            "x": 486,
+            "y": 265,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 83,
+            "x": 642,
+            "y": 244,
           },
           "type": "moveTo",
         },
@@ -4817,8 +4817,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 83,
+            "x": 640,
+            "y": 244,
           },
           "type": "arc",
         },
@@ -4832,7 +4832,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 26,
-            "y": 109,
+            "y": 326,
           },
           "type": "moveTo",
         },
@@ -4843,14 +4843,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 103,
+            "x": 180,
+            "y": 306,
           },
           "type": "moveTo",
         },
@@ -4860,15 +4860,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 103,
+            "x": 178,
+            "y": 306,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 96,
+            "x": 334,
+            "y": 285,
           },
           "type": "moveTo",
         },
@@ -4878,15 +4878,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 96,
+            "x": 332,
+            "y": 285,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 90,
+            "x": 488,
+            "y": 265,
           },
           "type": "moveTo",
         },
@@ -4896,15 +4896,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 90,
+            "x": 486,
+            "y": 265,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 83,
+            "x": 642,
+            "y": 244,
           },
           "type": "moveTo",
         },
@@ -4914,8 +4914,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 83,
+            "x": 640,
+            "y": 244,
           },
           "type": "arc",
         },
@@ -4957,8 +4957,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 229,
+            "height": 350,
+            "width": 617,
             "x": 23.5,
             "y": 7.5,
           },
@@ -4975,49 +4975,49 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 24,
-            "y": 77,
+            "y": 224,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 70,
+            "x": 178,
+            "y": 203,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 64,
+            "x": 332,
+            "y": 183,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 57,
+            "x": 486,
+            "y": 162,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 50,
+            "x": 640,
+            "y": 141,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 142,
+            "x": 640,
+            "y": 429,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 24,
-            "y": 142,
+            "y": 429,
           },
           "type": "lineTo",
         },
@@ -5031,35 +5031,35 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 24,
-            "y": 77,
+            "y": 224,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 70,
+            "x": 178,
+            "y": 203,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 64,
+            "x": 332,
+            "y": 183,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 57,
+            "x": 486,
+            "y": 162,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 50,
+            "x": 640,
+            "y": 141,
           },
           "type": "lineTo",
         },
@@ -5101,8 +5101,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 236,
+            "height": 357,
+            "width": 624,
             "x": 20,
             "y": 4,
           },
@@ -5119,7 +5119,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 26,
-            "y": 77,
+            "y": 224,
           },
           "type": "moveTo",
         },
@@ -5130,14 +5130,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 77,
+            "y": 224,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 70,
+            "x": 180,
+            "y": 203,
           },
           "type": "moveTo",
         },
@@ -5147,15 +5147,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 70,
+            "x": 178,
+            "y": 203,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 64,
+            "x": 334,
+            "y": 183,
           },
           "type": "moveTo",
         },
@@ -5165,15 +5165,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 64,
+            "x": 332,
+            "y": 183,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 57,
+            "x": 488,
+            "y": 162,
           },
           "type": "moveTo",
         },
@@ -5183,15 +5183,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 57,
+            "x": 486,
+            "y": 162,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 50,
+            "x": 642,
+            "y": 141,
           },
           "type": "moveTo",
         },
@@ -5201,8 +5201,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 50,
+            "x": 640,
+            "y": 141,
           },
           "type": "arc",
         },
@@ -5216,7 +5216,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 26,
-            "y": 77,
+            "y": 224,
           },
           "type": "moveTo",
         },
@@ -5227,14 +5227,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 77,
+            "y": 224,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 70,
+            "x": 180,
+            "y": 203,
           },
           "type": "moveTo",
         },
@@ -5244,15 +5244,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 70,
+            "x": 178,
+            "y": 203,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 64,
+            "x": 334,
+            "y": 183,
           },
           "type": "moveTo",
         },
@@ -5262,15 +5262,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 64,
+            "x": 332,
+            "y": 183,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 57,
+            "x": 488,
+            "y": 162,
           },
           "type": "moveTo",
         },
@@ -5280,15 +5280,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 57,
+            "x": 486,
+            "y": 162,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 50,
+            "x": 642,
+            "y": 141,
           },
           "type": "moveTo",
         },
@@ -5298,8 +5298,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 50,
+            "x": 640,
+            "y": 141,
           },
           "type": "arc",
         },
@@ -5341,8 +5341,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 229,
+            "height": 350,
+            "width": 617,
             "x": 23.5,
             "y": 7.5,
           },
@@ -5359,49 +5359,49 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 24,
-            "y": 44,
+            "y": 121,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 37,
+            "x": 178,
+            "y": 100,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 31,
+            "x": 332,
+            "y": 80,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 24,
+            "x": 486,
+            "y": 59,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 18,
+            "x": 640,
+            "y": 39,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 142,
+            "x": 640,
+            "y": 429,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 24,
-            "y": 142,
+            "y": 429,
           },
           "type": "lineTo",
         },
@@ -5415,35 +5415,35 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 24,
-            "y": 44,
+            "y": 121,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 37,
+            "x": 178,
+            "y": 100,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 31,
+            "x": 332,
+            "y": 80,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 24,
+            "x": 486,
+            "y": 59,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 18,
+            "x": 640,
+            "y": 39,
           },
           "type": "lineTo",
         },
@@ -5485,8 +5485,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 236,
+            "height": 357,
+            "width": 624,
             "x": 20,
             "y": 4,
           },
@@ -5503,7 +5503,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 26,
-            "y": 44,
+            "y": 121,
           },
           "type": "moveTo",
         },
@@ -5514,14 +5514,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 44,
+            "y": 121,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 37,
+            "x": 180,
+            "y": 100,
           },
           "type": "moveTo",
         },
@@ -5531,15 +5531,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 37,
+            "x": 178,
+            "y": 100,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 31,
+            "x": 334,
+            "y": 80,
           },
           "type": "moveTo",
         },
@@ -5549,15 +5549,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 31,
+            "x": 332,
+            "y": 80,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 24,
+            "x": 488,
+            "y": 59,
           },
           "type": "moveTo",
         },
@@ -5567,15 +5567,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 24,
+            "x": 486,
+            "y": 59,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 18,
+            "x": 642,
+            "y": 39,
           },
           "type": "moveTo",
         },
@@ -5585,8 +5585,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 18,
+            "x": 640,
+            "y": 39,
           },
           "type": "arc",
         },
@@ -5600,7 +5600,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         {
           "props": {
             "x": 26,
-            "y": 44,
+            "y": 121,
           },
           "type": "moveTo",
         },
@@ -5611,14 +5611,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 44,
+            "y": 121,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 37,
+            "x": 180,
+            "y": 100,
           },
           "type": "moveTo",
         },
@@ -5628,15 +5628,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 37,
+            "x": 178,
+            "y": 100,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 31,
+            "x": 334,
+            "y": 80,
           },
           "type": "moveTo",
         },
@@ -5646,15 +5646,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 31,
+            "x": 332,
+            "y": 80,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 24,
+            "x": 488,
+            "y": 59,
           },
           "type": "moveTo",
         },
@@ -5664,15 +5664,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 24,
+            "x": 486,
+            "y": 59,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 18,
+            "x": 642,
+            "y": 39,
           },
           "type": "moveTo",
         },
@@ -5682,8 +5682,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 18,
+            "x": 640,
+            "y": 39,
           },
           "type": "arc",
         },
@@ -5712,8 +5712,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
   },
   {
     "props": {
-      "height": 111,
-      "width": 228,
+      "height": 349,
+      "width": 616,
       "x": 24,
       "y": 8,
     },
@@ -5729,8 +5729,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: none (overlapping fills) 1
         },
         {
           "props": {
-            "height": 111,
-            "width": 228,
+            "height": 349,
+            "width": 616,
             "x": 24,
             "y": 8,
           },
@@ -5778,8 +5778,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 229,
+            "height": 350,
+            "width": 617,
             "x": 23.5,
             "y": 7.5,
           },
@@ -5796,49 +5796,49 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 107,
+            "x": 178,
+            "y": 318,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 104,
+            "x": 332,
+            "y": 310,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 102,
+            "x": 486,
+            "y": 303,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 99,
+            "x": 640,
+            "y": 295,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 121,
+            "x": 640,
+            "y": 365,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 24,
-            "y": 121,
+            "y": 365,
           },
           "type": "lineTo",
         },
@@ -5852,35 +5852,35 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 107,
+            "x": 178,
+            "y": 318,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 104,
+            "x": 332,
+            "y": 310,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 102,
+            "x": 486,
+            "y": 303,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 99,
+            "x": 640,
+            "y": 295,
           },
           "type": "lineTo",
         },
@@ -5922,8 +5922,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 236,
+            "height": 357,
+            "width": 624,
             "x": 20,
             "y": 4,
           },
@@ -5940,7 +5940,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 26,
-            "y": 109,
+            "y": 326,
           },
           "type": "moveTo",
         },
@@ -5951,14 +5951,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 107,
+            "x": 180,
+            "y": 318,
           },
           "type": "moveTo",
         },
@@ -5968,15 +5968,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 107,
+            "x": 178,
+            "y": 318,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 104,
+            "x": 334,
+            "y": 310,
           },
           "type": "moveTo",
         },
@@ -5986,15 +5986,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 104,
+            "x": 332,
+            "y": 310,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 102,
+            "x": 488,
+            "y": 303,
           },
           "type": "moveTo",
         },
@@ -6004,15 +6004,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 102,
+            "x": 486,
+            "y": 303,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 99,
+            "x": 642,
+            "y": 295,
           },
           "type": "moveTo",
         },
@@ -6022,8 +6022,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 99,
+            "x": 640,
+            "y": 295,
           },
           "type": "arc",
         },
@@ -6037,7 +6037,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 26,
-            "y": 109,
+            "y": 326,
           },
           "type": "moveTo",
         },
@@ -6048,14 +6048,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 107,
+            "x": 180,
+            "y": 318,
           },
           "type": "moveTo",
         },
@@ -6065,15 +6065,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 107,
+            "x": 178,
+            "y": 318,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 104,
+            "x": 334,
+            "y": 310,
           },
           "type": "moveTo",
         },
@@ -6083,15 +6083,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 104,
+            "x": 332,
+            "y": 310,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 102,
+            "x": 488,
+            "y": 303,
           },
           "type": "moveTo",
         },
@@ -6101,15 +6101,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 102,
+            "x": 486,
+            "y": 303,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 99,
+            "x": 642,
+            "y": 295,
           },
           "type": "moveTo",
         },
@@ -6119,8 +6119,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 99,
+            "x": 640,
+            "y": 295,
           },
           "type": "arc",
         },
@@ -6162,8 +6162,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 229,
+            "height": 350,
+            "width": 617,
             "x": 23.5,
             "y": 7.5,
           },
@@ -6184,41 +6184,41 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 107,
+            "x": 178,
+            "y": 318,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 104,
+            "x": 332,
+            "y": 310,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 102,
+            "x": 486,
+            "y": 303,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 99,
+            "x": 640,
+            "y": 295,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
+            "x": 640,
             "y": 8,
           },
           "type": "lineTo",
@@ -6233,7 +6233,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 109,
+            "y": 326,
           },
           "type": "lineTo",
         },
@@ -6248,49 +6248,49 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 84,
+            "y": 248,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 80,
+            "x": 178,
+            "y": 233,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 75,
+            "x": 332,
+            "y": 217,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 70,
+            "x": 486,
+            "y": 202,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 65,
+            "x": 640,
+            "y": 186,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 119,
+            "x": 640,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 24,
-            "y": 119,
+            "y": 357,
           },
           "type": "lineTo",
         },
@@ -6308,35 +6308,35 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 84,
+            "y": 248,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 80,
+            "x": 178,
+            "y": 233,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 75,
+            "x": 332,
+            "y": 217,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 70,
+            "x": 486,
+            "y": 202,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 65,
+            "x": 640,
+            "y": 186,
           },
           "type": "lineTo",
         },
@@ -6378,8 +6378,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 236,
+            "height": 357,
+            "width": 624,
             "x": 20,
             "y": 4,
           },
@@ -6396,7 +6396,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 26,
-            "y": 84,
+            "y": 248,
           },
           "type": "moveTo",
         },
@@ -6407,14 +6407,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 84,
+            "y": 248,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 80,
+            "x": 180,
+            "y": 233,
           },
           "type": "moveTo",
         },
@@ -6424,15 +6424,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 80,
+            "x": 178,
+            "y": 233,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 75,
+            "x": 334,
+            "y": 217,
           },
           "type": "moveTo",
         },
@@ -6442,15 +6442,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 75,
+            "x": 332,
+            "y": 217,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 70,
+            "x": 488,
+            "y": 202,
           },
           "type": "moveTo",
         },
@@ -6460,15 +6460,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 70,
+            "x": 486,
+            "y": 202,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 65,
+            "x": 642,
+            "y": 186,
           },
           "type": "moveTo",
         },
@@ -6478,8 +6478,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 65,
+            "x": 640,
+            "y": 186,
           },
           "type": "arc",
         },
@@ -6493,7 +6493,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 26,
-            "y": 84,
+            "y": 248,
           },
           "type": "moveTo",
         },
@@ -6504,14 +6504,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 84,
+            "y": 248,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 80,
+            "x": 180,
+            "y": 233,
           },
           "type": "moveTo",
         },
@@ -6521,15 +6521,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 80,
+            "x": 178,
+            "y": 233,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 75,
+            "x": 334,
+            "y": 217,
           },
           "type": "moveTo",
         },
@@ -6539,15 +6539,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 75,
+            "x": 332,
+            "y": 217,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 70,
+            "x": 488,
+            "y": 202,
           },
           "type": "moveTo",
         },
@@ -6557,15 +6557,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 70,
+            "x": 486,
+            "y": 202,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 65,
+            "x": 642,
+            "y": 186,
           },
           "type": "moveTo",
         },
@@ -6575,8 +6575,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 65,
+            "x": 640,
+            "y": 186,
           },
           "type": "arc",
         },
@@ -6618,8 +6618,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
       "path": [
         {
           "props": {
-            "height": 112,
-            "width": 229,
+            "height": 350,
+            "width": 617,
             "x": 23.5,
             "y": 7.5,
           },
@@ -6640,41 +6640,41 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 84,
+            "y": 248,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 80,
+            "x": 178,
+            "y": 233,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 75,
+            "x": 332,
+            "y": 217,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 70,
+            "x": 486,
+            "y": 202,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 65,
+            "x": 640,
+            "y": 186,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
+            "x": 640,
             "y": 8,
           },
           "type": "lineTo",
@@ -6689,7 +6689,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 84,
+            "y": 248,
           },
           "type": "lineTo",
         },
@@ -6704,49 +6704,49 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 47,
+            "y": 132,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 40,
+            "x": 178,
+            "y": 109,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 33,
+            "x": 332,
+            "y": 86,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 25,
+            "x": 486,
+            "y": 62,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 18,
+            "x": 640,
+            "y": 39,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 119,
+            "x": 640,
+            "y": 357,
           },
           "type": "lineTo",
         },
         {
           "props": {
             "x": 24,
-            "y": 119,
+            "y": 357,
           },
           "type": "lineTo",
         },
@@ -6764,35 +6764,35 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 24,
-            "y": 47,
+            "y": 132,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 81,
-            "y": 40,
+            "x": 178,
+            "y": 109,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 138,
-            "y": 33,
+            "x": 332,
+            "y": 86,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 195,
-            "y": 25,
+            "x": 486,
+            "y": 62,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 252,
-            "y": 18,
+            "x": 640,
+            "y": 39,
           },
           "type": "lineTo",
         },
@@ -6834,8 +6834,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
       "path": [
         {
           "props": {
-            "height": 119,
-            "width": 236,
+            "height": 357,
+            "width": 624,
             "x": 20,
             "y": 4,
           },
@@ -6852,7 +6852,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 26,
-            "y": 47,
+            "y": 132,
           },
           "type": "moveTo",
         },
@@ -6863,14 +6863,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 47,
+            "y": 132,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 40,
+            "x": 180,
+            "y": 109,
           },
           "type": "moveTo",
         },
@@ -6880,15 +6880,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 40,
+            "x": 178,
+            "y": 109,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 33,
+            "x": 334,
+            "y": 86,
           },
           "type": "moveTo",
         },
@@ -6898,15 +6898,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 33,
+            "x": 332,
+            "y": 86,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 25,
+            "x": 488,
+            "y": 62,
           },
           "type": "moveTo",
         },
@@ -6916,15 +6916,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 25,
+            "x": 486,
+            "y": 62,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 18,
+            "x": 642,
+            "y": 39,
           },
           "type": "moveTo",
         },
@@ -6934,8 +6934,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 18,
+            "x": 640,
+            "y": 39,
           },
           "type": "arc",
         },
@@ -6949,7 +6949,7 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         {
           "props": {
             "x": 26,
-            "y": 47,
+            "y": 132,
           },
           "type": "moveTo",
         },
@@ -6960,14 +6960,14 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "radius": 2,
             "startAngle": 0,
             "x": 24,
-            "y": 47,
+            "y": 132,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 83,
-            "y": 40,
+            "x": 180,
+            "y": 109,
           },
           "type": "moveTo",
         },
@@ -6977,15 +6977,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 81,
-            "y": 40,
+            "x": 178,
+            "y": 109,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 140,
-            "y": 33,
+            "x": 334,
+            "y": 86,
           },
           "type": "moveTo",
         },
@@ -6995,15 +6995,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 138,
-            "y": 33,
+            "x": 332,
+            "y": 86,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 197,
-            "y": 25,
+            "x": 488,
+            "y": 62,
           },
           "type": "moveTo",
         },
@@ -7013,15 +7013,15 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 195,
-            "y": 25,
+            "x": 486,
+            "y": 62,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 254,
-            "y": 18,
+            "x": 642,
+            "y": 39,
           },
           "type": "moveTo",
         },
@@ -7031,8 +7031,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 252,
-            "y": 18,
+            "x": 640,
+            "y": 39,
           },
           "type": "arc",
         },
@@ -7061,8 +7061,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
   },
   {
     "props": {
-      "height": 111,
-      "width": 228,
+      "height": 349,
+      "width": 616,
       "x": 24,
       "y": 8,
     },
@@ -7078,8 +7078,8 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
         },
         {
           "props": {
-            "height": 111,
-            "width": 228,
+            "height": 349,
+            "width": 616,
             "x": 24,
             "y": 8,
           },

@@ -48,9 +48,6 @@ const theme = createTheme();
 const width = 648;
 const height = 378;
 
-/** Smaller canvas for cases that only need a few series drawn. */
-export const compactCanvas = { width: 260, height: 140 } as const;
-
 export const fixedBlue: Partial<FieldConfigSource['defaults']> = {
   color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
 };
@@ -257,28 +254,26 @@ export interface CanvasCase {
   data?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>;
   options?: Partial<Options>;
   panelProps?: Partial<PanelProps<Options>>;
-  size?: { width: number; height: number };
 }
 
 /**
- * Renders a case and snapshots its captured draw calls. `size` sizes both the render and the snapshot
- * metadata. `layer` picks which pass to assert: 'series' (fills/stroke/markers, with the axis pass as
- * viewer context) or 'axes' (the axis pass). Only the asserted events are scrubbed; context is passed raw.
+ * Renders a case and snapshots its captured draw calls. `layer` picks which pass to assert: 'series'
+ * (fills/stroke/markers, with the axis pass as viewer context) or 'axes' (the axis pass). Only the
+ * asserted events are scrubbed; context is passed raw.
  */
 export async function renderCanvasCase(
-  { data, options, panelProps, size }: CanvasCase,
+  { data, options, panelProps }: CanvasCase,
   layer: 'series' | 'axes' = 'series'
 ): Promise<void> {
-  const snapshotSize = size ?? { width, height };
-  renderTimeSeriesPanel(data, options, { ...panelProps, width: snapshotSize.width, height: snapshotSize.height });
+  renderTimeSeriesPanel(data, options, panelProps);
   await assertUPlotReady();
 
   const events = uPlotInstance!.ctx.__getEvents();
   const axisEvents = events.slice(0, axisBoundary);
 
   if (layer === 'axes') {
-    expect(removeCanvasTransforms(axisEvents)).toMatchCanvasSnapshot([], snapshotSize);
+    expect(removeCanvasTransforms(axisEvents)).toMatchCanvasSnapshot([], { width, height });
   } else {
-    expect(removeCanvasTransforms(events.slice(axisBoundary))).toMatchCanvasSnapshot(axisEvents, snapshotSize);
+    expect(removeCanvasTransforms(events.slice(axisBoundary))).toMatchCanvasSnapshot(axisEvents, { width, height });
   }
 }

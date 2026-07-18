@@ -21,17 +21,30 @@ describe('TimeSeriesPanel (canvas) — line rendering', () => {
     { name: 'defaults' },
     // Line (the default draw style) is covered by 'defaults'. Fixed color + a fill so bars/points render;
     // the default transparent fill draws nothing.
-    ...[GraphDrawStyle.Bars, GraphDrawStyle.Points].map((drawStyle) => ({
-      name: `drawStyle: ${drawStyle}`,
-      panelProps: withFieldConfig({ custom: { drawStyle, fillOpacity: 25 }, defaults: fixedBlue }),
-    })),
+    {
+      name: 'drawStyle: bars',
+      panelProps: withFieldConfig({ custom: { drawStyle: GraphDrawStyle.Bars, fillOpacity: 25 }, defaults: fixedBlue }),
+    },
+    {
+      name: 'drawStyle: points',
+      panelProps: withFieldConfig({
+        custom: { drawStyle: GraphDrawStyle.Points, fillOpacity: 25 },
+        defaults: fixedBlue,
+      }),
+    },
     // Linear (the default interpolation) is covered by 'defaults'.
-    ...[LineInterpolation.Smooth, LineInterpolation.StepBefore, LineInterpolation.StepAfter].map(
-      (lineInterpolation) => ({
-        name: `lineInterpolation: ${lineInterpolation}`,
-        panelProps: withFieldConfig({ custom: { lineInterpolation } }),
-      })
-    ),
+    {
+      name: 'lineInterpolation: smooth',
+      panelProps: withFieldConfig({ custom: { lineInterpolation: LineInterpolation.Smooth } }),
+    },
+    {
+      name: 'lineInterpolation: stepBefore',
+      panelProps: withFieldConfig({ custom: { lineInterpolation: LineInterpolation.StepBefore } }),
+    },
+    {
+      name: 'lineInterpolation: stepAfter',
+      panelProps: withFieldConfig({ custom: { lineInterpolation: LineInterpolation.StepAfter } }),
+    },
     ...[3, 6, 10].map((lineWidth) => ({
       name: `lineWidth: ${lineWidth}`,
       panelProps: withFieldConfig({ custom: { lineWidth }, defaults: fixedBlue }),

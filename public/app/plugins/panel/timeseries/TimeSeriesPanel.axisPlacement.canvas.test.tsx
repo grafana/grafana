@@ -16,12 +16,20 @@ jest.mock('@grafana/ui/src/utils/measureText', () =>
 describe('TimeSeriesPanel (canvas) — axis placement', () => {
   setupCanvasCapture();
 
-  // Auto resolves to Left and Left is the default, so both are covered by 'X Axis: defaults' in the axis
-  // range suite; here we cover the remaining placements.
-  it.each<CanvasCase>(
-    [AxisPlacement.Top, AxisPlacement.Right, AxisPlacement.Bottom, AxisPlacement.Hidden].map((axisPlacement) => ({
-      name: `Y Axis placement: ${axisPlacement}`,
-      panelProps: withFieldConfig({ custom: { axisPlacement } }),
-    }))
-  )('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
+  // Auto resolves to Left and Left is the default, both covered by 'X Axis: defaults' in the axis range suite.
+  it.each<CanvasCase>([
+    { name: 'Y Axis placement: top', panelProps: withFieldConfig({ custom: { axisPlacement: AxisPlacement.Top } }) },
+    {
+      name: 'Y Axis placement: right',
+      panelProps: withFieldConfig({ custom: { axisPlacement: AxisPlacement.Right } }),
+    },
+    {
+      name: 'Y Axis placement: bottom',
+      panelProps: withFieldConfig({ custom: { axisPlacement: AxisPlacement.Bottom } }),
+    },
+    {
+      name: 'Y Axis placement: hidden',
+      panelProps: withFieldConfig({ custom: { axisPlacement: AxisPlacement.Hidden } }),
+    },
+  ])('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
 });
