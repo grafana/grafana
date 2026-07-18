@@ -1,4 +1,4 @@
-import { GraphDrawStyle, LineInterpolation } from '@grafana/schema';
+import { GraphDrawStyle, LineInterpolation, VizOrientation } from '@grafana/schema';
 
 import {
   type CanvasCase,
@@ -42,5 +42,13 @@ describe('TimeSeriesPanel (canvas) — line rendering', () => {
       name: `lineWidth: ${lineWidth}`,
       panelProps: customFieldConfig({ lineWidth }, fixedBlue),
     })),
+    // Panel `orientation` (a panel option, not field config) swaps the layout: Vertical puts time on the
+    // Y axis. Consumed by TimeSeriesPanel/prepConfig, so it changes the rendered output.
+    { name: 'orientation: vertical', options: { orientation: VizOrientation.Vertical } },
   ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase));
+
+  // timeCompare draws a time-shifted comparison series, but it's driven by a frame with
+  // meta.timeCompare.isTimeShiftQuery (query-layer state), not a plain panel option — needs comparison-frame
+  // fixtures to render meaningfully. Follow-up.
+  it.todo('timeCompare: renders a time-shift comparison overlay');
 });
