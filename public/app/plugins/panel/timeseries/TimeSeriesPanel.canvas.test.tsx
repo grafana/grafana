@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import type uPlot from 'uplot';
 
 import {
@@ -30,8 +29,13 @@ import {
   SortOrder,
   StackingMode,
   TooltipDisplayMode,
+  VisibilityMode,
 } from '@grafana/schema';
-import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@grafana/test-utils/canvas';
+import {
+  applyDefaultUPlotAxisMeasureTextMock,
+  installCanvasPath2DShim,
+  removeCanvasTransforms,
+} from '@grafana/test-utils/canvas';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
@@ -47,6 +51,10 @@ import { type Options } from './panelcfg.gen';
  * lineWidth, etc.) never reaches `field.config.custom`, so every option permutation renders identically.
  * The registry must carry the time series custom config so `custom.*` defaults are applied.
  */
+// uPlot builds series area fills via the Path2D copy constructor, which jest-canvas-mock drops. This shim
+// preserves it so fills/gradient bands/markers land in the captured draw calls (see @grafana/test-utils).
+installCanvasPath2DShim();
+
 const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Time series');
 
 /** The default dark theme is argument-free and stable, so build it once for the whole suite. */
@@ -208,8 +216,10 @@ describe('TimeSeriesPanel (canvas)', () => {
   const { preparePlotConfigBuilder: realPreparePlotConfigBuilder } = jest.requireActual(
     'app/core/components/TimeSeries/utils'
   );
-  let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
-  let clearAxisEvents = true;
+  // Index that splits the axis/grid pass from the series pass within one captured frame. uPlot draws axes
+  // first (drawAxes), then series (fill/stroke/markers). We reset at the start of each frame (drawClear) and
+  // record the boundary at drawAxes WITHOUT clearing — clearing there dropped the whole series pass.
+  let axisBoundary = 0;
 
   const assertUPlotReady = async () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
@@ -220,15 +230,16 @@ describe('TimeSeriesPanel (canvas)', () => {
 
   const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     await assertUPlotReady();
-    expect(removeCanvasTransforms(uPlotInstance!.ctx.__getEvents())).toMatchCanvasSnapshot(
-      uPlotAxisEvents!,
-      snapshotSize
-    );
+    const frame = uPlotInstance!.ctx.__getEvents();
+    const seriesEvents = removeCanvasTransforms(frame.slice(axisBoundary));
+    // Context (axis/grid) events are passed raw for the compare viewer; only the asserted series events are scrubbed.
+    expect(seriesEvents).toMatchCanvasSnapshot(frame.slice(0, axisBoundary), snapshotSize);
   };
 
   const assertAxesOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     await assertUPlotReady();
-    expect(removeCanvasTransforms(uPlotAxisEvents!)).toMatchCanvasSnapshot([], snapshotSize);
+    const axisEvents = removeCanvasTransforms(uPlotInstance!.ctx.__getEvents().slice(0, axisBoundary));
+    expect(axisEvents).toMatchCanvasSnapshot([], snapshotSize);
   };
 
   beforeEach(() => {
@@ -238,14 +249,17 @@ describe('TimeSeriesPanel (canvas)', () => {
       .mockImplementation((...args: Parameters<typeof realPreparePlotConfigBuilder>) => {
         const builder: UPlotConfigBuilder = realPreparePlotConfigBuilder(...args);
 
+        builder.addHook('drawClear', (u: uPlot) => {
+          u.ctx.__clearDrawCalls();
+          u.ctx.__clearEvents();
+          u.ctx.__clearPath();
+        });
         builder.addHook('drawAxes', (u: uPlot) => {
           uPlotInstance = u;
-          uPlotAxisEvents = u.ctx.__getEvents();
-          if (clearAxisEvents) {
-            u.ctx.__clearDrawCalls();
-            u.ctx.__clearEvents();
-            u.ctx.__clearPath();
-          }
+          axisBoundary = u.ctx.__getEvents().length;
+        });
+        builder.addHook('draw', (u: uPlot) => {
+          uPlotInstance = u;
         });
 
         return builder;
@@ -265,7 +279,11 @@ describe('TimeSeriesPanel (canvas)', () => {
         .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
         .map((drawStyle) => ({
           name: `drawStyle: ${drawStyle}`,
-          panelProps: customFieldConfig({ drawStyle, fillOpacity: 25 }, fixedBlue),
+          // showPoints/pointSize so the points draw style renders visible markers (default size is invisible).
+          panelProps: customFieldConfig(
+            { drawStyle, fillOpacity: 25, showPoints: VisibilityMode.Always, pointSize: 6 },
+            fixedBlue
+          ),
         })),
       // Linear is the default interpolation, covered by `defaults`.
       ...Object.values(LineInterpolation)

@@ -670,15 +670,6 @@ exports[`TimeSeriesPanel (canvas) Axes X Axis: defaults 1`] = `
 [
   {
     "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-  {
-    "props": {
       "value": "#ccccdc",
     },
     "type": "fillStyle",
@@ -1353,15 +1344,6 @@ exports[`TimeSeriesPanel (canvas) Axes X Axis: defaults 1`] = `
 
 exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom 1`] = `
 [
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "value": "#ccccdc",
@@ -2719,31 +2701,10 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: bottom 1`] = `
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: hidden 1`] = `
-[
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-]
-`;
+exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: hidden 1`] = `[]`;
 
 exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right 1`] = `
 [
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "value": "#ccccdc",
@@ -3420,15 +3381,6 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: right 1`] = `
 
 exports[`TimeSeriesPanel (canvas) Axes Y Axis placement: top 1`] = `
 [
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "value": "#ccccdc",
@@ -4796,15 +4748,6 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: hard min/max 1`] = `
 [
   {
     "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-  {
-    "props": {
       "value": "#ccccdc",
     },
     "type": "fillStyle",
@@ -5516,15 +5459,6 @@ exports[`TimeSeriesPanel (canvas) Axes Y Axis: hard min/max 1`] = `
 
 exports[`TimeSeriesPanel (canvas) Axes Y Axis: soft min/max 1`] = `
 [
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "value": "#ccccdc",
@@ -6771,6 +6705,246 @@ exports[`TimeSeriesPanel (canvas) Options drawStyle: bars 1`] = `
     "type": "translate",
   },
   {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#5794f2",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 359,
+            "width": 626,
+            "x": 19,
+            "y": 3,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 129.5,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231.5,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334.5,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437.5,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539.5,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 129.5,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231.5,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334.5,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437.5,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539.5,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
     "props": {},
     "type": "save",
   },
@@ -6843,20 +7017,212 @@ exports[`TimeSeriesPanel (canvas) Options drawStyle: points 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 359,
+            "width": 626,
+            "x": 19,
+            "y": 3,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "clip",
   },
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129.5,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231.5,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334.5,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437.5,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539.5,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "fill",
   },
   {
     "props": {
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "x": 129.5,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 127,
+            "y": 320,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 231.5,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 229,
+            "y": 137,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 334.5,
+            "y": 228,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 332,
+            "y": 228,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 437.5,
+            "y": 45,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 435,
+            "y": 45,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "x": 539.5,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 6.283185307179586,
+            "radius": 2.5,
+            "startAngle": 0,
+            "x": 537,
+            "y": 173,
+          },
+          "type": "arc",
+        },
+      ],
     },
     "type": "stroke",
   },
@@ -6962,6 +7328,41 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 25 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 537,
@@ -7174,6 +7575,41 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 50 1`] = `
       "path": [
         {
           "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 537,
             "y": 504,
           },
@@ -7384,6 +7820,41 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 80 1`] = `
       "path": [
         {
           "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 537,
             "y": 504,
           },
@@ -7592,6 +8063,41 @@ exports[`TimeSeriesPanel (canvas) Options fillOpacity: 100 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 537,
@@ -7844,6 +8350,41 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: hue 1`] = `
       "path": [
         {
           "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 537,
             "y": 504,
           },
@@ -8083,6 +8624,41 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: opacity 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 537,
@@ -8341,6 +8917,41 @@ exports[`TimeSeriesPanel (canvas) Options gradientMode: scheme 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 537,
@@ -9943,6 +10554,41 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% 1`] = `
       "path": [
         {
           "props": {
+            "x": 74,
+            "y": 101,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 109,
+            "y": 99,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 145,
+            "y": 97,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 181,
+            "y": 96,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 95,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 216,
             "y": 8,
           },
@@ -10113,6 +10759,41 @@ exports[`TimeSeriesPanel (canvas) Options stacking: 100% 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 74,
+            "y": 64,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 109,
+            "y": 62,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 145,
+            "y": 60,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 181,
+            "y": 59,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 58,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 216,
@@ -10475,6 +11156,41 @@ exports[`TimeSeriesPanel (canvas) Options stacking: normal 1`] = `
       "path": [
         {
           "props": {
+            "x": 62,
+            "y": 109,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 100,
+            "y": 107,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 138,
+            "y": 104,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 176,
+            "y": 102,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 214,
+            "y": 99,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 214,
             "y": 8,
           },
@@ -10645,6 +11361,41 @@ exports[`TimeSeriesPanel (canvas) Options stacking: normal 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 62,
+            "y": 84,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 100,
+            "y": 80,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 138,
+            "y": 75,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 176,
+            "y": 70,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 214,
+            "y": 65,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 214,
