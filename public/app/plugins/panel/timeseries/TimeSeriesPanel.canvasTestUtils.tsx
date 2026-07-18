@@ -36,6 +36,8 @@ import { type Options } from './panelcfg.gen';
 // preserves it so fills, gradient bands, and markers land in the captured draw calls.
 installCanvasPath2DShim();
 
+// --- Shared setup & fixtures ---
+
 // The panel framework runs applyFieldOverrides before rendering; a unit test must do it too, or the
 // custom config (drawStyle, fillOpacity, etc.) never reaches field.config.custom and every case renders
 // identically. The registry carries the time series custom config so those defaults get applied.
@@ -142,6 +144,8 @@ const defaultPanelOptions: Options = {
   tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None },
 };
 
+// --- Panel rendering ---
+
 function renderTimeSeriesPanel(
   dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>,
   optionsOverrides?: Partial<Options>,
@@ -177,16 +181,10 @@ function renderTimeSeriesPanel(
   return render(<TimeSeriesPanel {...props} />);
 }
 
-export interface CanvasCase {
-  name: string;
-  data?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>;
-  options?: Partial<Options>;
-  panelProps?: Partial<PanelProps<Options>>;
-  size?: { width: number; height: number };
-}
+// --- Canvas capture ---
 
-// Shared with each test file's `jest.mock('@grafana/ui/src/utils/measureText', …)` factory so the axis
-// measureText mock can route `getCanvasContext` to the current uPlot instance.
+// Shared with each test file's jest.mock('@grafana/ui/src/utils/measureText', ...) factory so the axis
+// measureText mock can route getCanvasContext to the current uPlot instance.
 let uPlotInstance: InstanceType<typeof uPlot> | undefined;
 // Index that splits the axis/grid pass from the series pass within one captured frame.
 let axisBoundary = 0;
@@ -250,6 +248,16 @@ const assertUPlotReady = async () => {
     expect(stable).toBe(true);
   });
 };
+
+// --- Case runner ---
+
+export interface CanvasCase {
+  name: string;
+  data?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>;
+  options?: Partial<Options>;
+  panelProps?: Partial<PanelProps<Options>>;
+  size?: { width: number; height: number };
+}
 
 /**
  * Renders a case and snapshots its captured draw calls. `size` sizes both the render and the snapshot
