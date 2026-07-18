@@ -81,7 +81,7 @@ export function withFieldConfig({ custom, defaults }: WithFieldConfigArgs = {}):
 export const START_MS = Date.UTC(2024, 0, 1);
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
-const dailyTimestamps = (count = 5) => Array.from({ length: count }, (_, i) => START_MS + i * DAY_MS);
+const dailyTimestamps = () => Array.from({ length: 5 }, (_, i) => START_MS + i * DAY_MS);
 
 function createTimeSeriesFrame() {
   return createDataFrame({
@@ -168,8 +168,8 @@ function renderTimeSeriesPanel(
     timeRange: defaultTimeRange,
     fieldConfig,
     ...panelPropsOverrides,
-    width: panelPropsOverrides?.width ?? width,
-    height: panelPropsOverrides?.height ?? height,
+    width,
+    height,
   });
   return render(<TimeSeriesPanel {...props} />);
 }
