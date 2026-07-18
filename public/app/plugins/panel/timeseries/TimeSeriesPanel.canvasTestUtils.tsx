@@ -63,14 +63,14 @@ const defaultGraphCustom: typeof defaultGraphConfig = {
   showPoints: VisibilityMode.Auto,
 };
 
-interface CustomFieldConfigArgs {
+interface WithFieldConfigArgs {
   /** custom graph overrides layered on the panel default config */
   custom?: Partial<typeof defaultGraphConfig>;
   /** top-level field defaults (color, thresholds, min/max) merged alongside custom */
   defaults?: Partial<FieldConfigSource['defaults']>;
 }
 
-export function withFieldConfig({ custom, defaults }: CustomFieldConfigArgs = {}): Partial<PanelProps<Options>> {
+export function withFieldConfig({ custom, defaults }: WithFieldConfigArgs = {}): Partial<PanelProps<Options>> {
   return {
     fieldConfig: {
       overrides: [],
@@ -86,24 +86,21 @@ export const DAY_MS = 24 * 60 * 60 * 1000;
 
 const dailyTimestamps = (count = 5) => Array.from({ length: count }, (_, i) => START_MS + i * DAY_MS);
 
-function createTimeSeriesFrame(overrides?: { timeValues?: number[]; values?: number[]; name?: string }) {
-  const timeValues = overrides?.timeValues ?? dailyTimestamps();
-  const values = overrides?.values ?? [10, 20, 15, 25, 18];
-  const name = overrides?.name ?? 'value';
+function createTimeSeriesFrame() {
   return createDataFrame({
     fields: [
-      { name: 'time', type: FieldType.time, values: timeValues },
-      { name, type: FieldType.number, values },
+      { name: 'time', type: FieldType.time, values: dailyTimestamps() },
+      { name: 'value', type: FieldType.number, values: [10, 20, 15, 25, 18] },
     ],
   });
 }
 
-export function createMultiSeriesFrame(seriesCount = 3) {
+export function createMultiSeriesFrame() {
   const timeValues = dailyTimestamps();
   return createDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: timeValues },
-      ...Array.from({ length: seriesCount }, (_, i) => ({
+      ...Array.from({ length: 3 }, (_, i) => ({
         name: `series${i + 1}`,
         type: FieldType.number,
         values: timeValues.map((_, t) => (i + 1) * 10 + t * 2),
@@ -112,16 +109,15 @@ export function createMultiSeriesFrame(seriesCount = 3) {
   });
 }
 
-export function createAnnotationFrame(overrides?: { timeValues?: number[]; text?: string[]; timeEnd?: number[] }) {
+export function createAnnotationFrame(overrides?: { timeValues?: number[]; timeEnd?: number[] }) {
   const timeValues = overrides?.timeValues ?? [START_MS + 2 * DAY_MS];
-  const text = overrides?.text ?? ['Deployment'];
   const timeEnd = overrides?.timeEnd;
   return createDataFrame({
     name: 'annotation',
     meta: { dataTopic: DataTopic.Annotations },
     fields: [
       { name: 'time', type: FieldType.time, values: timeValues },
-      { name: 'text', type: FieldType.string, values: text },
+      { name: 'text', type: FieldType.string, values: ['Deployment'] },
       ...(timeEnd
         ? [
             { name: 'timeEnd', type: FieldType.number, values: timeEnd },
@@ -233,7 +229,6 @@ export function setupCanvasCapture(): void {
 }
 
 const assertUPlotReady = async () => {
-  expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
   await waitFor(() =>
     expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
   );
