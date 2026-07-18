@@ -131,6 +131,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		queryCtx, querySpan := tracing.Start(callCtx, "datasource.query.pluginClient.QueryData",
 			attribute.Int("queries_count", len(queries)),
 		)
+		defer querySpan.End()
 
 		if chunked.IsRequestingChunkedResponse(req.Header.Get("accept")) {
 			if !r.builder.cfg.EnableChunkedQueryStreaming {
@@ -138,13 +139,16 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				return
 			}
 
-			if err = r.builder.client.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+			writer := chunked.NewChunkedHTTPWriter(w)
+			if err = r.builder.client.QueryChunkedData(queryCtx, &backend.QueryChunkedDataRequest{
 				Queries:       queries,
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
-			}, chunked.NewChunkedHTTPWriter(w)); err != nil {
+			}, writer); err != nil {
 				responder.Error(fmt.Errorf("error running chunked query %w", err))
+			} else if err = writer.Complete(); err != nil {
+				_ = tracing.Error(reqSpan, err)
 			}
 			return
 		}
@@ -154,7 +158,6 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			PluginContext: pluginCtx,
 			Headers:       map[string]string{},
 		})
-		querySpan.End()
 
 		// all errors get converted into k8s errors when sent in responder.Error and lose important context like downstream info
 		var e errutil.Error

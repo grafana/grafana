@@ -42,6 +42,13 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	})
 }
 
+// QueryChunkedData intentionally does not cache a streaming response. A stream can only
+// be cached after it has completed successfully, and buffering it here would defeat
+// streaming and make partial responses replayable.
+func (m *CachingMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 // CallResource receives a resource request and attempts to access results already stored in the cache for that request.
 // If data is found, it will return it immediately. Otherwise, it will perform the request as usual. The caller of CallResource is expected to explicitly update the cache with any responses.
 // If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.

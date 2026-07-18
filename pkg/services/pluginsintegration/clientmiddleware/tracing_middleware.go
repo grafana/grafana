@@ -88,6 +88,12 @@ func (m *TracingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	return resp, err
 }
 
+func (m *TracingMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) (err error) {
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
+	defer func() { end(err) }()
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 func (m *TracingMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)

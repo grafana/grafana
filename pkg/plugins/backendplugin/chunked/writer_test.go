@@ -2,6 +2,7 @@ package chunked
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -95,11 +96,12 @@ func TestRawChunkWriter_OnChunk(t *testing.T) {
 			RefId:       "test-ref",
 			Error:       "test error",
 			ErrorSource: "source",
+			Status:      http.StatusBadGateway,
 		}
 		err := writer.OnChunk(chunk)
 		require.NoError(t, err)
 		body := w.Body.String()
-		assert.Contains(t, body, `{"refId":"test-ref","error":"test error","errorSource":"source"}`+"\n")
+		assert.Contains(t, body, `{"refId":"test-ref","error":"test error","status":502,"errorSource":"source"}`+"\n")
 	})
 
 	t.Run("chunk with arrow frame", func(t *testing.T) {

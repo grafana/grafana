@@ -70,6 +70,7 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 
 	if chunk.Error != "" {
 		r.writeField("error", chunk.Error)
+		r.writeStatus(chunk.Status)
 
 		if chunk.ErrorSource != "" {
 			r.writeField("errorSource", chunk.ErrorSource)
@@ -86,10 +87,26 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 	return nil
 }
 
+// Complete writes the explicit successful stream terminator. EOF cannot prove that
+// all frames were delivered because an intermediary may truncate a response.
+func (r *rawChunkWriter) Complete() error {
+	if _, err := r.w.Write([]byte(`{"complete":true}` + "\n")); err != nil {
+		return err
+	}
+	if r.flusher != nil {
+		r.flusher.Flush()
+	}
+	return nil
+}
+
 func (r *rawChunkWriter) writeField(f string, v string) {
 	b, _ := json.Marshal(v)
 	_, _ = r.w.Write([]byte(`,"` + f + `":`))
 	_, _ = r.w.Write(b)
+}
+
+func (r *rawChunkWriter) writeStatus(status int32) {
+	_, _ = r.w.Write([]byte(fmt.Sprintf(`,"status":%d`, status)))
 }
 
 // WriteError implements [backend.ChunkedDataWriter].

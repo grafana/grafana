@@ -164,6 +164,19 @@ export class BackendSrv implements BackendService {
     const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
 
+    // Streaming intentionally bypasses the request queue, but it must retain
+    // the same local-request identity and authentication preparation as fetch().
+    options = this.parseRequestOptions(options);
+    const token = loadUrlToken();
+    if (token !== null && token !== '' && config.jwtUrlLogin && config.jwtHeaderName) {
+      options.headers = options.headers ?? {};
+      options.headers[config.jwtHeaderName] = token;
+    }
+    if (this.deviceID) {
+      options.headers = options.headers ?? {};
+      options.headers['X-Grafana-Device-Id'] = this.deviceID;
+    }
+
     const init = parseInitFromOptions({
       ...options,
       requestId,
