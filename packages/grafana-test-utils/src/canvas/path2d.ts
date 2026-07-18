@@ -22,7 +22,7 @@ export function installCanvasPath2DShim(): void {
       // jest-canvas-mock records path ops on a private `_path` array; copy the source's when cloning.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const src = path as any;
-      if (path instanceof Base && Array.isArray(src._path)) {
+      if (path instanceof Base) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (this as any)._path.push(...src._path);
       }
