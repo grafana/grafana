@@ -52,8 +52,4 @@ describe('TimeSeriesPanel (canvas) — line rendering', () => {
     // orientation is a panel option, not field config; Vertical puts time on the Y axis.
     { name: 'orientation: vertical', options: { orientation: VizOrientation.Vertical } },
   ])('$name', (testCase) => renderCanvasCase(testCase));
-
-  // timeCompare is driven by a frame with meta.timeCompare.isTimeShiftQuery, not a plain panel option, so
-  // it needs comparison-frame fixtures to render. Follow-up.
-  it.todo('timeCompare: renders a time-shift comparison overlay');
 });
