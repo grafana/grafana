@@ -1,5 +1,3 @@
-import { AxisPlacement } from '@grafana/schema';
-
 import {
   assertAxesOutput,
   type CanvasCase,
@@ -14,17 +12,10 @@ jest.mock('@grafana/ui/src/utils/measureText', () =>
   )
 );
 
-describe('TimeSeriesPanel (canvas) — Axes', () => {
+describe('TimeSeriesPanel (canvas) — axis range', () => {
   setupCanvasCapture();
 
   it.each<CanvasCase>([
-    // Auto resolves to Left, and Left is the default placement, so both are covered by `X Axis: defaults`.
-    ...Object.values(AxisPlacement)
-      .filter((axisPlacement) => axisPlacement !== AxisPlacement.Auto && axisPlacement !== AxisPlacement.Left)
-      .map((axisPlacement) => ({
-        name: `Y Axis placement: ${axisPlacement}`,
-        panelProps: customFieldConfig({ axisPlacement }),
-      })),
     // Soft min/max (custom axisSoftMin/Max) only expands the auto-range; here it stretches the Y axis to
     // 0-100 even though the data fits in 10-25.
     { name: 'Y Axis: soft min/max', panelProps: customFieldConfig({ axisSoftMin: 0, axisSoftMax: 100 }) },

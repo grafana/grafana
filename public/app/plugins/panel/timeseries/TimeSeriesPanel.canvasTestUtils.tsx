@@ -212,6 +212,17 @@ const assertUPlotReady = async () => {
   await waitFor(() =>
     expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
   );
+  // Some plugins redraw after their overlay mounts (e.g. the annotations plugin redraws once its markers
+  // are in the DOM). Under parallel test load that redraw can land after the first `.u-over` paint, so wait
+  // for the captured event stream to stop growing before snapshotting.
+  let previousCount = -1;
+  await waitFor(() => {
+    const count = uPlotInstance?.ctx.__getEvents().length ?? 0;
+    if (count === 0 || count !== previousCount) {
+      previousCount = count;
+      throw new Error('uPlot draw has not settled');
+    }
+  });
 };
 
 export const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {

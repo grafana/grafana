@@ -1,5 +1,5 @@
 import { FieldColorModeId, ThresholdsMode } from '@grafana/data';
-import { GraphDrawStyle, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
+import { GraphGradientMode, StackingMode } from '@grafana/schema';
 
 import {
   assertCanvasOutput,
@@ -18,26 +18,10 @@ jest.mock('@grafana/ui/src/utils/measureText', () =>
   )
 );
 
-describe('TimeSeriesPanel (canvas) — Options', () => {
+describe('TimeSeriesPanel (canvas) — fills', () => {
   setupCanvasCapture();
 
   it.each<CanvasCase>([
-    { name: 'defaults' },
-    // Line is the default draw style, covered by `defaults`. Fixed color + a visible fill so the shape
-    // (bars/points) actually renders — with the default transparent fill they draw nothing.
-    ...Object.values(GraphDrawStyle)
-      .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
-      .map((drawStyle) => ({
-        name: `drawStyle: ${drawStyle}`,
-        panelProps: customFieldConfig({ drawStyle, fillOpacity: 25 }, fixedBlue),
-      })),
-    // Linear is the default interpolation, covered by `defaults`.
-    ...Object.values(LineInterpolation)
-      .filter((lineInterpolation) => lineInterpolation !== LineInterpolation.Linear)
-      .map((lineInterpolation) => ({
-        name: `lineInterpolation: ${lineInterpolation}`,
-        panelProps: customFieldConfig({ lineInterpolation }),
-      })),
     // fillOpacity 0 (no fill) is the default. Fixed color so each opacity step reads clearly (pale to solid).
     ...[25, 50, 80, 100].map((fillOpacity) => ({
       name: `fillOpacity: ${fillOpacity}`,
@@ -80,12 +64,6 @@ describe('TimeSeriesPanel (canvas) — Options', () => {
       panelProps: { ...customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' } }), ...compactCanvas },
       size: compactCanvas,
     },
-    // Width 1 is the default, so start at 3 and use bold, well-separated widths. Fixed color so the stroke
-    // is high-contrast and each width is visibly distinct.
-    ...[3, 6, 10].map((lineWidth) => ({
-      name: `lineWidth: ${lineWidth}`,
-      panelProps: customFieldConfig({ lineWidth }, fixedBlue),
-    })),
   ] satisfies CanvasCase[])('$name', async ({ data, options, panelProps, size }) => {
     renderTimeSeriesPanel(data, options, panelProps);
     await assertCanvasOutput(size);
