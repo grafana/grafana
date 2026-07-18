@@ -6,14 +6,14 @@ import { t } from '@grafana/i18n';
 import { Select } from '../Select/Select';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
-import {
-  CompactTimeZoneOption,
-  WideTimeZoneOption,
-  type SelectableZone,
-  type TimeZoneOptionInfo,
-} from './TimeZonePicker/TimeZoneOption';
+import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
-import { canonicalZoneName, findTimeZoneAt, getTimeZonesAt, resolveIanaName } from './TimeZonePicker/timeZoneUtils';
+import {
+  canonicalZoneName,
+  getTimeZoneDisplayInfo,
+  getTimeZonesAt,
+  type TimeZoneDisplayInfo,
+} from './TimeZonePicker/timeZoneUtils';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -87,7 +87,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     const now = Date.now();
     const groups = new Map<string, SelectableZone[]>();
 
-    const pushOption = (group: string, zone: TimeZone, info: TimeZoneOptionInfo, legacyName?: string) => {
+    const pushOption = (group: string, zone: TimeZone, info: TimeZoneDisplayInfo, legacyName?: string) => {
       const label = getTimeZoneTitle(info);
       const options = groups.get(group) ?? [];
 
@@ -112,7 +112,11 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
         : [];
 
     for (const zone of internalZones) {
-      pushOption('', zone, getInternalTimeZoneInfo(zone, now));
+      const info = getTimeZoneDisplayInfo(zone, now);
+
+      if (info) {
+        pushOption('', zone, info);
+      }
     }
 
     const zones = getTimeZonesAt(now);
@@ -175,27 +179,4 @@ const filterBySearchIndex = (option: SelectableValue, searchQuery: string) => {
     return true;
   }
   return option.data.searchIndex.indexOf(searchQuery.toLowerCase()) > -1;
-};
-
-const internalZoneNames: Record<string, string> = {
-  [InternalTimeZones.default]: 'Default',
-  [InternalTimeZones.localBrowserTime]: 'Browser Time',
-  [InternalTimeZones.utc]: 'Coordinated Universal Time',
-};
-
-/**
- * Builds display info for Grafana's internal zones (Default, Browser, UTC).
- * The Default option inherits the resolved zone's abbreviation and offset,
- * so e.g. a UTC default shows 'UTC, GMT'.
- */
-const getInternalTimeZoneInfo = (zone: TimeZone, timestamp: number): TimeZoneOptionInfo => {
-  const resolved = resolveIanaName(zone);
-  const tz = findTimeZoneAt(resolved, timestamp);
-
-  return {
-    name: internalZoneNames[zone] ?? zone,
-    // The runtime's zone list may not contain a plain UTC entry.
-    abbreviation: resolved === 'UTC' ? 'UTC, GMT' : (tz?.abbr ?? ''),
-    offset: tz?.offset ?? '+00:00',
-  };
 };

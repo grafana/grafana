@@ -10,6 +10,7 @@ import { Icon } from '../../Icon/Icon';
 import { TimeZoneDescription } from './TimeZoneDescription';
 import { TimeZoneOffset } from './TimeZoneOffset';
 import { TimeZoneTitle } from './TimeZoneTitle';
+import { type TimeZoneDisplayInfo } from './timeZoneUtils';
 
 interface Props {
   isFocused: boolean;
@@ -19,18 +20,9 @@ interface Props {
   data: SelectableZone;
 }
 
-export interface TimeZoneOptionInfo {
-  /** display name; the canonical IANA id, or e.g. 'Default' for internal zones */
-  name: string;
-  /** DST-aware abbreviation, e.g. 'EST', or 'UTC, GMT' */
-  abbreviation: string;
-  /** UTC offset at catalog build time, e.g. '+05:30' */
-  offset: string;
-}
-
 export interface SelectableZone extends SelectableValue<string> {
   searchIndex: string;
-  info: TimeZoneOptionInfo;
+  info: TimeZoneDisplayInfo;
 }
 
 export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {

@@ -1,5 +1,11 @@
 import { formatUtcOffset } from './TimeZoneOffset';
-import { canonicalZoneName, findTimeZoneAt, guessBrowserTimeZone, resolveIanaName } from './timeZoneUtils';
+import {
+  canonicalZoneName,
+  findTimeZoneAt,
+  getTimeZoneDisplayInfo,
+  guessBrowserTimeZone,
+  resolveIanaName,
+} from './timeZoneUtils';
 
 // Fixed timestamps so DST-dependent results are deterministic.
 const JAN = Date.UTC(2026, 0, 15); // northern winter / southern summer
@@ -86,6 +92,45 @@ describe('on runtimes that list only canonical zone ids (e.g. Firefox)', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+describe('getTimeZoneDisplayInfo', () => {
+  it('returns display info for IANA zones', () => {
+    expect(getTimeZoneDisplayInfo('America/New_York', JAN)).toEqual({
+      name: 'America/New_York',
+      abbreviation: 'EST',
+      offset: '-05:00',
+    });
+  });
+
+  it('returns canonical info for legacy spellings', () => {
+    expect(getTimeZoneDisplayInfo('Asia/Calcutta', JAN)).toEqual({
+      name: 'Asia/Kolkata',
+      abbreviation: 'IST',
+      offset: '+05:30',
+    });
+  });
+
+  it('resolves internal zones', () => {
+    expect(getTimeZoneDisplayInfo('utc', JAN)).toEqual({
+      name: 'Coordinated Universal Time',
+      abbreviation: 'UTC, GMT',
+      offset: '+00:00',
+    });
+    expect(getTimeZoneDisplayInfo('browser', JAN)).toMatchObject({ name: 'Browser Time' });
+  });
+
+  it('handles a plain UTC value even when the runtime does not list it', () => {
+    expect(getTimeZoneDisplayInfo('UTC', JAN)).toEqual({
+      name: 'UTC',
+      abbreviation: 'UTC, GMT',
+      offset: '+00:00',
+    });
+  });
+
+  it('returns undefined for unknown zones', () => {
+    expect(getTimeZoneDisplayInfo('Foo/Bar', JAN)).toBeUndefined();
   });
 });
 
