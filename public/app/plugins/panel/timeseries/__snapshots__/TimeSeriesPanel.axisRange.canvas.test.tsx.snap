@@ -29,7 +29,7 @@ exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:00",
+      "text": "01/01 00:00",
       "x": 24,
       "y": 366,
     },
@@ -38,8 +38,35 @@ exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:05",
-      "x": 537,
+      "text": "01/02 00:00",
+      "x": 178,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 332,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 486,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
       "y": 366,
     },
     "type": "fillText",
@@ -107,14 +134,56 @@ exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 361,
     },
     "type": "lineTo",
@@ -142,14 +211,56 @@ exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 361,
           },
           "type": "lineTo",
@@ -192,14 +303,56 @@ exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 357,
     },
     "type": "lineTo",
@@ -227,14 +380,56 @@ exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 357,
           },
           "type": "lineTo",
@@ -705,7 +900,7 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:00",
+      "text": "01/01 00:00",
       "x": 24,
       "y": 366,
     },
@@ -714,8 +909,35 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:05",
-      "x": 537,
+      "text": "01/02 00:00",
+      "x": 178,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 332,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 486,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
       "y": 366,
     },
     "type": "fillText",
@@ -783,14 +1005,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 361,
     },
     "type": "lineTo",
@@ -818,14 +1082,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 361,
           },
           "type": "lineTo",
@@ -868,14 +1174,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 357,
     },
     "type": "lineTo",
@@ -903,14 +1251,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 357,
           },
           "type": "lineTo",
@@ -1418,7 +1808,7 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: soft min/max 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:00",
+      "text": "01/01 00:00",
       "x": 31,
       "y": 366,
     },
@@ -1427,8 +1817,35 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: soft min/max 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:05",
-      "x": 539,
+      "text": "01/02 00:00",
+      "x": 183,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 336,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 488,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
       "y": 366,
     },
     "type": "fillText",
@@ -1496,14 +1913,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: soft min/max 1`] = `
   },
   {
     "props": {
-      "x": 539,
+      "x": 183,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 539,
+      "x": 183,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 336,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 336,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 488,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 488,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 361,
     },
     "type": "lineTo",
@@ -1531,14 +1990,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: soft min/max 1`] = `
         },
         {
           "props": {
-            "x": 539,
+            "x": 183,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 539,
+            "x": 183,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 336,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 336,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 488,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 488,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 361,
           },
           "type": "lineTo",
@@ -1581,14 +2082,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: soft min/max 1`] = `
   },
   {
     "props": {
-      "x": 539,
+      "x": 183,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 539,
+      "x": 183,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 336,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 336,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 488,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 488,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 357,
     },
     "type": "lineTo",
@@ -1616,14 +2159,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: soft min/max 1`] = `
         },
         {
           "props": {
-            "x": 539,
+            "x": 183,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 539,
+            "x": 183,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 336,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 336,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 488,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 488,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 357,
           },
           "type": "lineTo",
@@ -2131,7 +2716,7 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking 100% 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:00",
+      "text": "01/01 00:00",
       "x": 38,
       "y": 366,
     },
@@ -2140,8 +2725,35 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking 100% 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:05",
-      "x": 540,
+      "text": "01/02 00:00",
+      "x": 189,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 339,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 490,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
       "y": 366,
     },
     "type": "fillText",
@@ -2209,14 +2821,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking 100% 1`] = `
   },
   {
     "props": {
-      "x": 540,
+      "x": 189,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 540,
+      "x": 189,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 339,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 339,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 490,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 490,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 361,
     },
     "type": "lineTo",
@@ -2244,14 +2898,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking 100% 1`] = `
         },
         {
           "props": {
-            "x": 540,
+            "x": 189,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 540,
+            "x": 189,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 339,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 339,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 490,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 490,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 361,
           },
           "type": "lineTo",
@@ -2294,14 +2990,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking 100% 1`] = `
   },
   {
     "props": {
-      "x": 540,
+      "x": 189,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 540,
+      "x": 189,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 339,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 339,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 490,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 490,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 357,
     },
     "type": "lineTo",
@@ -2329,14 +3067,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking 100% 1`] = `
         },
         {
           "props": {
-            "x": 540,
+            "x": 189,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 540,
+            "x": 189,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 339,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 339,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 490,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 490,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 357,
           },
           "type": "lineTo",
@@ -2844,7 +3624,7 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking normal 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:00",
+      "text": "01/01 00:00",
       "x": 24,
       "y": 366,
     },
@@ -2853,8 +3633,35 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking normal 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "00:00:05",
-      "x": 537,
+      "text": "01/02 00:00",
+      "x": 178,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 332,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 486,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
       "y": 366,
     },
     "type": "fillText",
@@ -2922,14 +3729,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking normal 1`] = `
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
       "y": 357,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 361,
     },
     "type": "lineTo",
@@ -2957,14 +3806,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking normal 1`] = `
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
             "y": 357,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 361,
           },
           "type": "lineTo",
@@ -3007,14 +3898,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking normal 1`] = `
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 537,
+      "x": 178,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
       "y": 357,
     },
     "type": "lineTo",
@@ -3042,14 +3975,56 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking normal 1`] = `
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 178,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
             "y": 357,
           },
           "type": "lineTo",

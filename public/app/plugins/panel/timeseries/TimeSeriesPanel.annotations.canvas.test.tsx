@@ -2,8 +2,10 @@ import {
   assertCanvasOutput,
   type CanvasCase,
   createAnnotationFrame,
+  DAY_MS,
   renderTimeSeriesPanel,
   setupCanvasCapture,
+  START_MS,
 } from './TimeSeriesPanel.canvasTestUtils';
 
 jest.mock('@grafana/ui/src/utils/measureText', () =>
@@ -16,10 +18,21 @@ describe('TimeSeriesPanel (canvas) — Annotations', () => {
   setupCanvasCapture();
 
   it.each<CanvasCase>([
-    { name: 'point annotations', data: { annotations: [createAnnotationFrame({ timeValues: [1000, 2000, 3000] })] } },
+    {
+      name: 'point annotations',
+      data: {
+        annotations: [
+          createAnnotationFrame({ timeValues: [START_MS + DAY_MS, START_MS + 2 * DAY_MS, START_MS + 3 * DAY_MS] }),
+        ],
+      },
+    },
     {
       name: 'region annotations',
-      data: { annotations: [createAnnotationFrame({ timeValues: [1500], timeEnd: [2500] })] },
+      data: {
+        annotations: [
+          createAnnotationFrame({ timeValues: [START_MS + 1.5 * DAY_MS], timeEnd: [START_MS + 2.5 * DAY_MS] }),
+        ],
+      },
     },
   ] satisfies CanvasCase[])('$name', async ({ data }) => {
     renderTimeSeriesPanel(data);

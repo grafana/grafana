@@ -33,16 +33,16 @@ import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { type Options } from './panelcfg.gen';
 
+// uPlot builds series area fills via the Path2D copy constructor, which jest-canvas-mock drops; this shim
+// preserves it so fills, gradient bands, and markers land in the captured draw calls.
+installCanvasPath2DShim();
+
 /**
  * The panel framework runs `applyFieldOverrides` before handing series to the panel component; in a unit
  * test we must do it ourselves. Without it, the panel's `fieldConfig.defaults.custom` (drawStyle, fillOpacity,
  * lineWidth, etc.) never reaches `field.config.custom`, so every option permutation renders identically.
  * The registry must carry the time series custom config so `custom.*` defaults are applied.
  */
-// uPlot builds series area fills via the Path2D copy constructor, which jest-canvas-mock drops; this shim
-// preserves it so fills, gradient bands, and markers land in the captured draw calls.
-installCanvasPath2DShim();
-
 const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Time series');
 
 /** The default dark theme is argument-free and stable, so build it once for the whole suite. */
@@ -86,8 +86,17 @@ export function customFieldConfig(
   };
 }
 
+// Real timestamps one day apart, starting from a fixed date, so the x-axis shows several grid lines with
+// formatted date labels like users actually see — rather than the 00:00:00–00:00:05 that tiny epoch values
+// (1000ms…) produced. `Date.UTC` keeps it deterministic across time zones.
+export const START_MS = Date.UTC(2024, 0, 1); // 2024-01-01T00:00:00Z
+export const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** `count` daily timestamps starting at START_MS. */
+export const dailyTimestamps = (count = 5) => Array.from({ length: count }, (_, i) => START_MS + i * DAY_MS);
+
 export function createTimeSeriesFrame(overrides?: { timeValues?: number[]; values?: number[]; name?: string }) {
-  const timeValues = overrides?.timeValues ?? [1000, 2000, 3000, 4000, 5000];
+  const timeValues = overrides?.timeValues ?? dailyTimestamps();
   const values = overrides?.values ?? [10, 20, 15, 25, 18];
   const name = overrides?.name ?? 'value';
   return createDataFrame({
@@ -99,7 +108,7 @@ export function createTimeSeriesFrame(overrides?: { timeValues?: number[]; value
 }
 
 export function createMultiSeriesFrame(seriesCount = 3) {
-  const timeValues = [1000, 2000, 3000, 4000, 5000];
+  const timeValues = dailyTimestamps();
   return createDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: timeValues, config: {} },
@@ -114,7 +123,7 @@ export function createMultiSeriesFrame(seriesCount = 3) {
 }
 
 export function createAnnotationFrame(overrides?: { timeValues?: number[]; text?: string[]; timeEnd?: number[] }) {
-  const timeValues = overrides?.timeValues ?? [2000];
+  const timeValues = overrides?.timeValues ?? [START_MS + 2 * DAY_MS];
   const text = overrides?.text ?? ['Deployment'];
   const frame = {
     name: 'annotation',
@@ -133,10 +142,11 @@ export function createAnnotationFrame(overrides?: { timeValues?: number[]; text?
   return toDataFrame(frame);
 }
 
+// Span the daily sample window (2024-01-01 .. +4 days) so all series/annotations fall inside the range.
 const defaultTimeRange: TimeRange = {
-  from: dateTime(0),
-  to: dateTime(6000),
-  raw: { from: 'now-6s', to: 'now' },
+  from: dateTime(START_MS),
+  to: dateTime(START_MS + 4 * DAY_MS),
+  raw: { from: 'now-4d', to: 'now' },
 };
 
 const defaultPanelOptions: Options = {

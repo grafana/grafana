@@ -47,14 +47,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
       "path": [
         {
           "props": {
-            "x": 127,
+            "x": 24,
             "y": 320,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 229,
+            "x": 178,
             "y": 137,
           },
           "type": "lineTo",
@@ -68,14 +68,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
         },
         {
           "props": {
-            "x": 435,
+            "x": 486,
             "y": 45,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 640,
             "y": 173,
           },
           "type": "lineTo",
@@ -135,7 +135,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
       "path": [
         {
           "props": {
-            "x": 129,
+            "x": 26,
             "y": 320,
           },
           "type": "moveTo",
@@ -146,14 +146,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 127,
+            "x": 24,
             "y": 320,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 231,
+            "x": 180,
             "y": 137,
           },
           "type": "moveTo",
@@ -164,7 +164,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 229,
+            "x": 178,
             "y": 137,
           },
           "type": "arc",
@@ -189,7 +189,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
         },
         {
           "props": {
-            "x": 437,
+            "x": 488,
             "y": 45,
           },
           "type": "moveTo",
@@ -200,14 +200,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 435,
+            "x": 486,
             "y": 45,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 539,
+            "x": 642,
             "y": 173,
           },
           "type": "moveTo",
@@ -218,7 +218,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 537,
+            "x": 640,
             "y": 173,
           },
           "type": "arc",
@@ -232,7 +232,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
       "path": [
         {
           "props": {
-            "x": 129,
+            "x": 26,
             "y": 320,
           },
           "type": "moveTo",
@@ -243,14 +243,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 127,
+            "x": 24,
             "y": 320,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 231,
+            "x": 180,
             "y": 137,
           },
           "type": "moveTo",
@@ -261,7 +261,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 229,
+            "x": 178,
             "y": 137,
           },
           "type": "arc",
@@ -286,7 +286,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
         },
         {
           "props": {
-            "x": 437,
+            "x": 488,
             "y": 45,
           },
           "type": "moveTo",
@@ -297,14 +297,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 435,
+            "x": 486,
             "y": 45,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 539,
+            "x": 642,
             "y": 173,
           },
           "type": "moveTo",
@@ -315,7 +315,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 537,
+            "x": 640,
             "y": 173,
           },
           "type": "arc",
@@ -394,14 +394,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
   },
   {
     "props": {
-      "x": 126.66666666666666,
+      "x": 178,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 126.66666666666666,
+      "x": 178,
       "y": 357,
     },
     "type": "lineTo",
@@ -421,63 +421,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
         },
         {
           "props": {
-            "x": 126.66666666666666,
+            "x": 178,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 126.66666666666666,
-            "y": 357,
-          },
-          "type": "lineTo",
-        },
-      ],
-    },
-    "type": "stroke",
-  },
-  {
-    "props": {},
-    "type": "beginPath",
-  },
-  {
-    "props": {
-      "x": 229.33333333333331,
-      "y": 8,
-    },
-    "type": "moveTo",
-  },
-  {
-    "props": {
-      "x": 229.33333333333331,
-      "y": 357,
-    },
-    "type": "lineTo",
-  },
-  {
-    "props": {
-      "value": "#00d3ff",
-    },
-    "type": "strokeStyle",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "x": 229.33333333333331,
-            "y": 8,
-          },
-          "type": "moveTo",
-        },
-        {
-          "props": {
-            "x": 229.33333333333331,
+            "x": 178,
             "y": 357,
           },
           "type": "lineTo",
@@ -527,6 +478,55 @@ exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
         {
           "props": {
             "x": 332,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "value": "#00d3ff",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
             "y": 357,
           },
           "type": "lineTo",
@@ -589,14 +589,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
       "path": [
         {
           "props": {
-            "x": 127,
+            "x": 24,
             "y": 320,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 229,
+            "x": 178,
             "y": 137,
           },
           "type": "lineTo",
@@ -610,14 +610,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
         },
         {
           "props": {
-            "x": 435,
+            "x": 486,
             "y": 45,
           },
           "type": "lineTo",
         },
         {
           "props": {
-            "x": 537,
+            "x": 640,
             "y": 173,
           },
           "type": "lineTo",
@@ -677,7 +677,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
       "path": [
         {
           "props": {
-            "x": 129,
+            "x": 26,
             "y": 320,
           },
           "type": "moveTo",
@@ -688,14 +688,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 127,
+            "x": 24,
             "y": 320,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 231,
+            "x": 180,
             "y": 137,
           },
           "type": "moveTo",
@@ -706,7 +706,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 229,
+            "x": 178,
             "y": 137,
           },
           "type": "arc",
@@ -731,7 +731,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
         },
         {
           "props": {
-            "x": 437,
+            "x": 488,
             "y": 45,
           },
           "type": "moveTo",
@@ -742,14 +742,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 435,
+            "x": 486,
             "y": 45,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 539,
+            "x": 642,
             "y": 173,
           },
           "type": "moveTo",
@@ -760,7 +760,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 537,
+            "x": 640,
             "y": 173,
           },
           "type": "arc",
@@ -774,7 +774,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
       "path": [
         {
           "props": {
-            "x": 129,
+            "x": 26,
             "y": 320,
           },
           "type": "moveTo",
@@ -785,14 +785,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 127,
+            "x": 24,
             "y": 320,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 231,
+            "x": 180,
             "y": 137,
           },
           "type": "moveTo",
@@ -803,7 +803,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 229,
+            "x": 178,
             "y": 137,
           },
           "type": "arc",
@@ -828,7 +828,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
         },
         {
           "props": {
-            "x": 437,
+            "x": 488,
             "y": 45,
           },
           "type": "moveTo",
@@ -839,14 +839,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 435,
+            "x": 486,
             "y": 45,
           },
           "type": "arc",
         },
         {
           "props": {
-            "x": 539,
+            "x": 642,
             "y": 173,
           },
           "type": "moveTo",
@@ -857,7 +857,7 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
             "endAngle": 6.283185307179586,
             "radius": 2,
             "startAngle": 0,
-            "x": 537,
+            "x": 640,
             "y": 173,
           },
           "type": "arc",
@@ -936,14 +936,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
   },
   {
     "props": {
-      "x": 178,
+      "x": 255,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 178,
+      "x": 255,
       "y": 357,
     },
     "type": "lineTo",
@@ -963,14 +963,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
         },
         {
           "props": {
-            "x": 178,
+            "x": 255,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 178,
+            "x": 255,
             "y": 357,
           },
           "type": "lineTo",
@@ -985,14 +985,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
   },
   {
     "props": {
-      "x": 280.6666666666667,
+      "x": 409,
       "y": 8,
     },
     "type": "moveTo",
   },
   {
     "props": {
-      "x": 280.6666666666667,
+      "x": 409,
       "y": 357,
     },
     "type": "lineTo",
@@ -1012,14 +1012,14 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
         },
         {
           "props": {
-            "x": 280.6666666666667,
+            "x": 409,
             "y": 8,
           },
           "type": "moveTo",
         },
         {
           "props": {
-            "x": 280.6666666666667,
+            "x": 409,
             "y": 357,
           },
           "type": "lineTo",
@@ -1037,8 +1037,8 @@ exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
   {
     "props": {
       "height": 349,
-      "width": 102.66666666666669,
-      "x": 178,
+      "width": 154,
+      "x": 255,
       "y": 8,
     },
     "type": "fillRect",
