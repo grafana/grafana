@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import type uPlot from 'uplot';
 
 import {
@@ -20,7 +19,11 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@grafana/test-utils/canvas';
+import {
+  applyDefaultUPlotAxisMeasureTextMock,
+  installCanvasPath2DShim,
+  removeCanvasTransforms,
+} from '@grafana/test-utils/canvas';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
@@ -36,6 +39,10 @@ import { type Options } from './panelcfg.gen';
  * lineWidth, etc.) never reaches `field.config.custom`, so every option permutation renders identically.
  * The registry must carry the time series custom config so `custom.*` defaults are applied.
  */
+// uPlot builds series area fills via the Path2D copy constructor, which jest-canvas-mock drops; this shim
+// preserves it so fills, gradient bands, and markers land in the captured draw calls.
+installCanvasPath2DShim();
+
 const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Time series');
 
 /** The default dark theme is argument-free and stable, so build it once for the whole suite. */
@@ -169,13 +176,16 @@ export interface CanvasCase {
 // Shared with each test file's `jest.mock('@grafana/ui/src/utils/measureText', …)` factory so the axis
 // measureText mock can route `getCanvasContext` to the current uPlot instance.
 let uPlotInstance: InstanceType<typeof uPlot> | undefined;
-let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
+// Index that splits the axis/grid pass from the series pass within one captured frame.
+let axisBoundary = 0;
 
 export const getUPlotInstance = () => uPlotInstance;
 
 /**
- * Registers the beforeEach/afterEach that spy uPlot's config builder, capture the axis-pass events, and
- * apply the deterministic axis measureText widths. Call once inside each canvas test's top describe.
+ * Registers the beforeEach/afterEach that spy uPlot's config builder and apply the deterministic axis
+ * measureText widths. Capture is non-clearing: reset events at the start of each frame (drawClear), record
+ * the axis/series boundary at drawAxes WITHOUT clearing (clearing there dropped the series fill pass), and
+ * grab the instance at frame end. Call once inside each canvas test's top describe.
  */
 export function setupCanvasCapture(): void {
   let prepConfigSpy: jest.SpyInstance;
@@ -190,12 +200,17 @@ export function setupCanvasCapture(): void {
       .mockImplementation((...args: Parameters<typeof realPreparePlotConfigBuilder>) => {
         const builder: UPlotConfigBuilder = realPreparePlotConfigBuilder(...args);
 
-        builder.addHook('drawAxes', (u: uPlot) => {
-          uPlotInstance = u;
-          uPlotAxisEvents = u.ctx.__getEvents();
+        builder.addHook('drawClear', (u: uPlot) => {
           u.ctx.__clearDrawCalls();
           u.ctx.__clearEvents();
           u.ctx.__clearPath();
+        });
+        builder.addHook('drawAxes', (u: uPlot) => {
+          uPlotInstance = u;
+          axisBoundary = u.ctx.__getEvents().length;
+        });
+        builder.addHook('draw', (u: uPlot) => {
+          uPlotInstance = u;
         });
 
         return builder;
@@ -214,7 +229,7 @@ const assertUPlotReady = async () => {
   );
   // Some plugins redraw after their overlay mounts (e.g. the annotations plugin redraws once its markers
   // are in the DOM). Under parallel test load that redraw can land after the first `.u-over` paint, so wait
-  // for the captured event stream to stop growing before snapshotting.
+  // for the captured event stream to stabilize before snapshotting.
   let previousCount = -1;
   await waitFor(() => {
     const count = uPlotInstance?.ctx.__getEvents().length ?? 0;
@@ -227,13 +242,14 @@ const assertUPlotReady = async () => {
 
 export const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
   await assertUPlotReady();
-  expect(removeCanvasTransforms(uPlotInstance!.ctx.__getEvents())).toMatchCanvasSnapshot(
-    uPlotAxisEvents!,
-    snapshotSize
-  );
+  const frame = uPlotInstance!.ctx.__getEvents();
+  const seriesEvents = removeCanvasTransforms(frame.slice(axisBoundary));
+  // Context (axis/grid) events are passed raw for the compare viewer; only the asserted series events are scrubbed.
+  expect(seriesEvents).toMatchCanvasSnapshot(frame.slice(0, axisBoundary), snapshotSize);
 };
 
 export const assertAxesOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
   await assertUPlotReady();
-  expect(removeCanvasTransforms(uPlotAxisEvents!)).toMatchCanvasSnapshot([], snapshotSize);
+  const axisEvents = removeCanvasTransforms(uPlotInstance!.ctx.__getEvents().slice(0, axisBoundary));
+  expect(axisEvents).toMatchCanvasSnapshot([], snapshotSize);
 };

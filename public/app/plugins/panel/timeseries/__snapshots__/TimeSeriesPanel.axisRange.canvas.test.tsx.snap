@@ -4,15 +4,6 @@ exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
 [
   {
     "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-  {
-    "props": {
       "value": "#ccccdc",
     },
     "type": "fillStyle",
@@ -687,15 +678,6 @@ exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
 
 exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
 [
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "value": "#ccccdc",
@@ -1409,15 +1391,6 @@ exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
 
 exports[`TimeSeriesPanel (canvas) — axis range Y Axis: soft min/max 1`] = `
 [
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "value": "#ccccdc",

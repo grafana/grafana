@@ -4,15 +4,6 @@ exports[`TimeSeriesPanel (canvas) — axis placement Y Axis placement: bottom 1`
 [
   {
     "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-  {
-    "props": {
       "value": "#ccccdc",
     },
     "type": "fillStyle",
@@ -1368,31 +1359,10 @@ exports[`TimeSeriesPanel (canvas) — axis placement Y Axis placement: bottom 1`
 ]
 `;
 
-exports[`TimeSeriesPanel (canvas) — axis placement Y Axis placement: hidden 1`] = `
-[
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-]
-`;
+exports[`TimeSeriesPanel (canvas) — axis placement Y Axis placement: hidden 1`] = `[]`;
 
 exports[`TimeSeriesPanel (canvas) — axis placement Y Axis placement: right 1`] = `
 [
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "value": "#ccccdc",
@@ -2069,15 +2039,6 @@ exports[`TimeSeriesPanel (canvas) — axis placement Y Axis placement: right 1`]
 
 exports[`TimeSeriesPanel (canvas) — axis placement Y Axis placement: top 1`] = `
 [
-  {
-    "props": {
-      "height": 378,
-      "width": 648,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "value": "#ccccdc",

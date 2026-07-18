@@ -48,6 +48,41 @@ exports[`TimeSeriesPanel (canvas) — fills fillOpacity: 25 1`] = `
       "path": [
         {
           "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 537,
             "y": 504,
           },
@@ -256,6 +291,41 @@ exports[`TimeSeriesPanel (canvas) — fills fillOpacity: 50 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 537,
@@ -468,6 +538,41 @@ exports[`TimeSeriesPanel (canvas) — fills fillOpacity: 80 1`] = `
       "path": [
         {
           "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 537,
             "y": 504,
           },
@@ -676,6 +781,41 @@ exports[`TimeSeriesPanel (canvas) — fills fillOpacity: 100 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 537,
@@ -928,6 +1068,41 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: hue 1`] = `
       "path": [
         {
           "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 537,
             "y": 504,
           },
@@ -1167,6 +1342,41 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: opacity 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 537,
@@ -1425,6 +1635,41 @@ exports[`TimeSeriesPanel (canvas) — fills gradientMode: scheme 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 537,
@@ -1791,6 +2036,41 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
       "path": [
         {
           "props": {
+            "x": 74,
+            "y": 101,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 109,
+            "y": 99,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 145,
+            "y": 97,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 181,
+            "y": 96,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 95,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 216,
             "y": 8,
           },
@@ -1961,6 +2241,41 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: 100% 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 74,
+            "y": 64,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 109,
+            "y": 62,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 145,
+            "y": 60,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 181,
+            "y": 59,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 216,
+            "y": 58,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 216,
@@ -2323,6 +2638,41 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
       "path": [
         {
           "props": {
+            "x": 62,
+            "y": 109,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 100,
+            "y": 107,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 138,
+            "y": 104,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 176,
+            "y": 102,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 214,
+            "y": 99,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
             "x": 214,
             "y": 8,
           },
@@ -2493,6 +2843,41 @@ exports[`TimeSeriesPanel (canvas) — fills stacking: normal 1`] = `
     "props": {
       "fillRule": "nonzero",
       "path": [
+        {
+          "props": {
+            "x": 62,
+            "y": 84,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 100,
+            "y": 80,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 138,
+            "y": 75,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 176,
+            "y": 70,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 214,
+            "y": 65,
+          },
+          "type": "lineTo",
+        },
         {
           "props": {
             "x": 214,
