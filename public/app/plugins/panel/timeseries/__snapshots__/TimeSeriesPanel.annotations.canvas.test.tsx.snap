@@ -1,0 +1,667 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TimeSeriesPanel (canvas) — Annotations point annotations 1`] = `
+[
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#808080",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(0, 0, 0, 0)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 350,
+            "width": 617,
+            "x": 23.5,
+            "y": 7.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#808080",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 349,
+      "width": 616,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 349,
+            "width": 616,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": 2,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "segments": [
+        5,
+        5,
+      ],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 126.66666666666666,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 126.66666666666666,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "value": "#00d3ff",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 126.66666666666666,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 126.66666666666666,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 229.33333333333331,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 229.33333333333331,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "value": "#00d3ff",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 229.33333333333331,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 229.33333333333331,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "value": "#00d3ff",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimeSeriesPanel (canvas) — Annotations region annotations 1`] = `
+[
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#808080",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(0, 0, 0, 0)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 350,
+            "width": 617,
+            "x": 23.5,
+            "y": 7.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 127,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 229,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 228,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 435,
+            "y": 45,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 537,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#808080",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 349,
+      "width": 616,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 349,
+            "width": 616,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": 2,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "segments": [
+        5,
+        5,
+      ],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "value": "#00d3ff",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 280.6666666666667,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 280.6666666666667,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "value": "#00d3ff",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 280.6666666666667,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 280.6666666666667,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "value": "rgba(0, 211, 255, 0.1)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "height": 349,
+      "width": 102.66666666666669,
+      "x": 178,
+      "y": 8,
+    },
+    "type": "fillRect",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;

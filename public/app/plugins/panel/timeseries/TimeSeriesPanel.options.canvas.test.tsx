@@ -1,0 +1,93 @@
+import { FieldColorModeId, ThresholdsMode } from '@grafana/data';
+import { GraphDrawStyle, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
+
+import {
+  assertCanvasOutput,
+  type CanvasCase,
+  compactCanvas,
+  createMultiSeriesFrame,
+  customFieldConfig,
+  fixedBlue,
+  renderTimeSeriesPanel,
+  setupCanvasCapture,
+} from './TimeSeriesPanel.canvasTestUtils';
+
+jest.mock('@grafana/ui/src/utils/measureText', () =>
+  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() =>
+    require('./TimeSeriesPanel.canvasTestUtils').getUPlotInstance()
+  )
+);
+
+describe('TimeSeriesPanel (canvas) — Options', () => {
+  setupCanvasCapture();
+
+  it.each<CanvasCase>([
+    { name: 'defaults' },
+    // Line is the default draw style, covered by `defaults`. Fixed color + a visible fill so the shape
+    // (bars/points) actually renders — with the default transparent fill they draw nothing.
+    ...Object.values(GraphDrawStyle)
+      .filter((drawStyle) => drawStyle !== GraphDrawStyle.Line)
+      .map((drawStyle) => ({
+        name: `drawStyle: ${drawStyle}`,
+        panelProps: customFieldConfig({ drawStyle, fillOpacity: 25 }, fixedBlue),
+      })),
+    // Linear is the default interpolation, covered by `defaults`.
+    ...Object.values(LineInterpolation)
+      .filter((lineInterpolation) => lineInterpolation !== LineInterpolation.Linear)
+      .map((lineInterpolation) => ({
+        name: `lineInterpolation: ${lineInterpolation}`,
+        panelProps: customFieldConfig({ lineInterpolation }),
+      })),
+    // fillOpacity 0 (no fill) is the default. Fixed color so each opacity step reads clearly (pale to solid).
+    ...[25, 50, 80, 100].map((fillOpacity) => ({
+      name: `fillOpacity: ${fillOpacity}`,
+      panelProps: customFieldConfig({ fillOpacity }, fixedBlue),
+    })),
+    // None is the default gradient mode, covered by `defaults`; Scheme is a separate explicit case below.
+    ...Object.values(GraphGradientMode)
+      .filter((gradientMode) => gradientMode !== GraphGradientMode.None && gradientMode !== GraphGradientMode.Scheme)
+      .map((gradientMode) => ({
+        name: `gradientMode: ${gradientMode}`,
+        panelProps: customFieldConfig({ gradientMode }),
+      })),
+    // Scheme gradients color the line by the field's threshold scale, so they require a color mode +
+    // thresholds; without them uPlot's gradient builder throws.
+    {
+      name: 'gradientMode: scheme',
+      panelProps: customFieldConfig(
+        { gradientMode: GraphGradientMode.Scheme },
+        {
+          color: { mode: FieldColorModeId.Thresholds },
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 20, color: 'red' },
+            ],
+          },
+        }
+      ),
+    },
+    {
+      name: 'stacking: normal',
+      data: { series: [createMultiSeriesFrame()] },
+      panelProps: { ...customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' } }), ...compactCanvas },
+      size: compactCanvas,
+    },
+    {
+      name: 'stacking: 100%',
+      data: { series: [createMultiSeriesFrame()] },
+      panelProps: { ...customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' } }), ...compactCanvas },
+      size: compactCanvas,
+    },
+    // Width 1 is the default, so start at 3 and use bold, well-separated widths. Fixed color so the stroke
+    // is high-contrast and each width is visibly distinct.
+    ...[3, 6, 10].map((lineWidth) => ({
+      name: `lineWidth: ${lineWidth}`,
+      panelProps: customFieldConfig({ lineWidth }, fixedBlue),
+    })),
+  ] satisfies CanvasCase[])('$name', async ({ data, options, panelProps, size }) => {
+    renderTimeSeriesPanel(data, options, panelProps);
+    await assertCanvasOutput(size);
+  });
+});
