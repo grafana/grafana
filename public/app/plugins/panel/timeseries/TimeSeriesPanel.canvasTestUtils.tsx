@@ -140,7 +140,7 @@ const defaultPanelOptions: Options = {
 // --- Panel rendering ---
 
 function renderTimeSeriesPanel(
-  dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>,
+  dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations'>>,
   optionsOverrides?: Partial<Options>,
   panelPropsOverrides?: Partial<PanelProps<Options>>
 ) {
@@ -251,7 +251,7 @@ const assertUPlotReady = async () => {
 
 export interface CanvasCase {
   name: string;
-  data?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>;
+  data?: Partial<Pick<PanelData, 'series' | 'annotations'>>;
   options?: Partial<Options>;
   panelProps?: Partial<PanelProps<Options>>;
 }
