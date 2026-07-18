@@ -23,7 +23,7 @@ describe('TimeSeriesPanel (canvas) — axis placement', () => {
       .filter((axisPlacement) => axisPlacement !== AxisPlacement.Auto && axisPlacement !== AxisPlacement.Left)
       .map((axisPlacement) => ({
         name: `Y Axis placement: ${axisPlacement}`,
-        panelProps: customFieldConfig({ axisPlacement }),
+        panelProps: customFieldConfig({ custom: { axisPlacement } }),
       })),
   ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase, 'axes'));
 });

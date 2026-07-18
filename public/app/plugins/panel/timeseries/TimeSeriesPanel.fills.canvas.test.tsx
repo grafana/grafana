@@ -24,7 +24,7 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
     // fillOpacity 0 (no fill) is the default. Fixed color so each opacity step reads clearly (pale to solid).
     ...[25, 50, 80, 100].map((fillOpacity) => ({
       name: `fillOpacity: ${fillOpacity}`,
-      panelProps: customFieldConfig({ fillOpacity }, fixedBlue),
+      panelProps: customFieldConfig({ custom: { fillOpacity }, defaults: fixedBlue }),
     })),
     // None is the default gradient mode, covered by `defaults`; Scheme is a separate explicit case below.
     // Gradients paint the fill, so pair with a non-zero fillOpacity — otherwise the fill is transparent and
@@ -33,15 +33,15 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
       .filter((gradientMode) => gradientMode !== GraphGradientMode.None && gradientMode !== GraphGradientMode.Scheme)
       .map((gradientMode) => ({
         name: `gradientMode: ${gradientMode}`,
-        panelProps: customFieldConfig({ gradientMode, fillOpacity: 25 }),
+        panelProps: customFieldConfig({ custom: { gradientMode, fillOpacity: 25 } }),
       })),
     // Scheme gradients color by the field's threshold scale, so they require a color mode + thresholds
     // (without them uPlot's gradient builder throws) and a fill to be visible.
     {
       name: 'gradientMode: scheme',
-      panelProps: customFieldConfig(
-        { gradientMode: GraphGradientMode.Scheme, fillOpacity: 25 },
-        {
+      panelProps: customFieldConfig({
+        custom: { gradientMode: GraphGradientMode.Scheme, fillOpacity: 25 },
+        defaults: {
           color: { mode: FieldColorModeId.Thresholds },
           thresholds: {
             mode: ThresholdsMode.Absolute,
@@ -50,27 +50,31 @@ describe('TimeSeriesPanel (canvas) — fills', () => {
               { value: 20, color: 'red' },
             ],
           },
-        }
-      ),
+        },
+      }),
     },
     // fillOpacity so the stacked/overlapping regions are visible. Unstacked: the three series' fills overlay
     // each other; stacked: they sit on top of one another (no overlap). `size` renders on the compact canvas.
     {
       name: 'stacking: none (overlapping fills)',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: customFieldConfig({ stacking: { mode: StackingMode.None, group: 'A' }, fillOpacity: 50 }),
+      panelProps: customFieldConfig({ custom: { stacking: { mode: StackingMode.None, group: 'A' }, fillOpacity: 50 } }),
       size: compactCanvas,
     },
     {
       name: 'stacking: normal',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: customFieldConfig({ stacking: { mode: StackingMode.Normal, group: 'A' }, fillOpacity: 50 }),
+      panelProps: customFieldConfig({
+        custom: { stacking: { mode: StackingMode.Normal, group: 'A' }, fillOpacity: 50 },
+      }),
       size: compactCanvas,
     },
     {
       name: 'stacking: 100%',
       data: { series: [createMultiSeriesFrame()] },
-      panelProps: customFieldConfig({ stacking: { mode: StackingMode.Percent, group: 'A' }, fillOpacity: 50 }),
+      panelProps: customFieldConfig({
+        custom: { stacking: { mode: StackingMode.Percent, group: 'A' }, fillOpacity: 50 },
+      }),
       size: compactCanvas,
     },
   ] satisfies CanvasCase[])('$name', (testCase) => renderCanvasCase(testCase));

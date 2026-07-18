@@ -27,20 +27,20 @@ describe('TimeSeriesPanel (canvas) — line rendering', () => {
         name: `drawStyle: ${drawStyle}`,
         // Fixed color + a visible fill so bars read clearly. Points render via the shared pointSize/showPoints
         // defaults (drawStyle:points force-shows markers), matching a real panel.
-        panelProps: customFieldConfig({ drawStyle, fillOpacity: 25 }, fixedBlue),
+        panelProps: customFieldConfig({ custom: { drawStyle, fillOpacity: 25 }, defaults: fixedBlue }),
       })),
     // Linear is the default interpolation, covered by `defaults`.
     ...Object.values(LineInterpolation)
       .filter((lineInterpolation) => lineInterpolation !== LineInterpolation.Linear)
       .map((lineInterpolation) => ({
         name: `lineInterpolation: ${lineInterpolation}`,
-        panelProps: customFieldConfig({ lineInterpolation }),
+        panelProps: customFieldConfig({ custom: { lineInterpolation } }),
       })),
     // Width 1 is the default, so start at 3 and use bold, well-separated widths. Fixed color so the stroke
     // is high-contrast and each width is visibly distinct.
     ...[3, 6, 10].map((lineWidth) => ({
       name: `lineWidth: ${lineWidth}`,
-      panelProps: customFieldConfig({ lineWidth }, fixedBlue),
+      panelProps: customFieldConfig({ custom: { lineWidth }, defaults: fixedBlue }),
     })),
     // Panel `orientation` (a panel option, not field config) swaps the layout: Vertical puts time on the
     // Y axis. Consumed by TimeSeriesPanel/prepConfig, so it changes the rendered output.

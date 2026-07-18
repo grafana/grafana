@@ -72,15 +72,19 @@ const panelDefaultConfig: typeof defaultGraphConfig = {
   showPoints: VisibilityMode.Auto,
 };
 
+interface CustomFieldConfigArgs {
+  /** `custom.*` graph overrides (drawStyle, fillOpacity, stacking, …), layered on the panel default config. */
+  custom?: Partial<typeof defaultGraphConfig>;
+  /** Top-level field defaults (color, thresholds, min/max, …) merged alongside `custom`. */
+  defaults?: Partial<FieldConfigSource['defaults']>;
+}
+
 /** Panel props carrying a field config whose custom values extend the panel default graph config. */
-export function customFieldConfig(
-  custom: Partial<typeof defaultGraphConfig>,
-  extraDefaults?: Partial<FieldConfigSource['defaults']>
-): Partial<PanelProps<Options>> {
+export function customFieldConfig({ custom, defaults }: CustomFieldConfigArgs = {}): Partial<PanelProps<Options>> {
   return {
     fieldConfig: {
       overrides: [],
-      defaults: { ...extraDefaults, custom: { ...panelDefaultConfig, ...custom } },
+      defaults: { ...defaults, custom: { ...panelDefaultConfig, ...custom } },
     },
   };
 }
