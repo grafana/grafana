@@ -193,8 +193,9 @@ export const getUPlotInstance = () => uPlotInstance;
 /**
  * Registers the beforeEach/afterEach that spy uPlot's config builder and apply the deterministic axis
  * measureText widths. Capture is non-clearing: reset events at the start of each frame (drawClear), record
- * the axis/series boundary at drawAxes WITHOUT clearing (clearing there dropped the series fill pass), and
- * grab the instance at frame end. Call once inside each canvas test's top describe.
+ * the axis/series boundary at drawAxes WITHOUT clearing, and grab the instance at frame end. The sibling
+ * canvas suites (heatmap/xychart/timeline) clear at drawAxes instead; that drops this panel's series fill
+ * pass, so keep the boundary-index approach here. Call once inside each canvas test's top describe.
  */
 export function setupCanvasCapture(): void {
   let prepConfigSpy: jest.SpyInstance;
