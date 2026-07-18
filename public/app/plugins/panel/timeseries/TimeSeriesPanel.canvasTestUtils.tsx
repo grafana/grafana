@@ -55,7 +55,7 @@ export const fixedBlue: Partial<FieldConfigSource['defaults']> = {
 
 // pointSize/showPoints are editor defaults (config.ts) that applyFieldOverrides does not inject. Without
 // them point markers never render, even though a default panel shows them.
-const panelDefaultConfig: typeof defaultGraphConfig = {
+const defaultGraphCustom: typeof defaultGraphConfig = {
   ...defaultGraphConfig,
   pointSize: 5,
   showPoints: VisibilityMode.Auto,
@@ -72,7 +72,7 @@ export function customFieldConfig({ custom, defaults }: CustomFieldConfigArgs = 
   return {
     fieldConfig: {
       overrides: [],
-      defaults: { ...defaults, custom: { ...panelDefaultConfig, ...custom } },
+      defaults: { ...defaults, custom: { ...defaultGraphCustom, ...custom } },
     },
   };
 }
@@ -90,8 +90,8 @@ function createTimeSeriesFrame(overrides?: { timeValues?: number[]; values?: num
   const name = overrides?.name ?? 'value';
   return createDataFrame({
     fields: [
-      { name: 'time', type: FieldType.time, values: timeValues, config: {} },
-      { name, type: FieldType.number, values, config: {} },
+      { name: 'time', type: FieldType.time, values: timeValues },
+      { name, type: FieldType.number, values },
     ],
   });
 }
@@ -100,12 +100,11 @@ export function createMultiSeriesFrame(seriesCount = 3) {
   const timeValues = dailyTimestamps();
   return createDataFrame({
     fields: [
-      { name: 'time', type: FieldType.time, values: timeValues, config: {} },
+      { name: 'time', type: FieldType.time, values: timeValues },
       ...Array.from({ length: seriesCount }, (_, i) => ({
         name: `series${i + 1}`,
         type: FieldType.number,
         values: timeValues.map((_, t) => (i + 1) * 10 + t * 2),
-        config: {},
       })),
     ],
   });
@@ -114,21 +113,21 @@ export function createMultiSeriesFrame(seriesCount = 3) {
 export function createAnnotationFrame(overrides?: { timeValues?: number[]; text?: string[]; timeEnd?: number[] }) {
   const timeValues = overrides?.timeValues ?? [START_MS + 2 * DAY_MS];
   const text = overrides?.text ?? ['Deployment'];
-  const frame = {
+  const timeEnd = overrides?.timeEnd;
+  return createDataFrame({
     name: 'annotation',
     meta: { dataTopic: DataTopic.Annotations },
     fields: [
       { name: 'time', type: FieldType.time, values: timeValues },
       { name: 'text', type: FieldType.string, values: text },
-      overrides?.timeEnd
-        ? { name: 'timeEnd', type: FieldType.number, config: {}, values: overrides.timeEnd }
-        : undefined,
-      overrides?.timeEnd
-        ? { name: 'isRegion', type: FieldType.boolean, config: {}, values: overrides.timeEnd.map((v) => v != null) }
-        : undefined,
-    ].filter((f) => f != null),
-  };
-  return createDataFrame(frame);
+      ...(timeEnd
+        ? [
+            { name: 'timeEnd', type: FieldType.number, values: timeEnd },
+            { name: 'isRegion', type: FieldType.boolean, values: timeEnd.map((v) => v != null) },
+          ]
+        : []),
+    ],
+  });
 }
 
 // Span the daily sample window (2024-01-01 .. +4 days) so all series/annotations fall inside the range.
@@ -151,13 +150,13 @@ function renderTimeSeriesPanel(
   const mergedOptions: Options = { ...defaultPanelOptions, ...optionsOverrides };
   const fieldConfig: FieldConfigSource = panelPropsOverrides?.fieldConfig ?? {
     overrides: [],
-    defaults: { custom: { ...panelDefaultConfig } },
+    defaults: { custom: { ...defaultGraphCustom } },
   };
   const { series: rawSeries = [createTimeSeriesFrame()], ...restDataOverrides } = dataOverrides ?? {};
   const series = applyFieldOverrides({
     data: rawSeries,
     fieldConfig,
-    replaceVariables: (value) => value,
+    replaceVariables: (v) => v,
     theme,
     fieldConfigRegistry: graphFieldConfigRegistry,
     timeZone: 'utc',
@@ -242,14 +241,13 @@ const assertUPlotReady = async () => {
   );
   // Some plugins redraw after their overlay mounts (e.g. the annotations plugin redraws once its markers
   // are in the DOM). Under parallel test load that redraw can land after the first `.u-over` paint, so wait
-  // for the captured event stream to stabilize before snapshotting.
+  // for the captured event stream to stabilize (two consecutive polls with the same count) before snapshotting.
   let previousCount = -1;
   await waitFor(() => {
     const count = uPlotInstance?.ctx.__getEvents().length ?? 0;
-    if (count === 0 || count !== previousCount) {
-      previousCount = count;
-      throw new Error('uPlot draw has not settled');
-    }
+    const stable = count > 0 && count === previousCount;
+    previousCount = count;
+    expect(stable).toBe(true);
   });
 };
 
