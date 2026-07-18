@@ -185,6 +185,7 @@ let uPlotInstance: InstanceType<typeof uPlot> | undefined;
 // Index that splits the axis/grid pass from the series pass within one captured frame.
 let axisBoundary = 0;
 
+/** Called only via dynamic require in each test's jest.mock factory, which knip can't statically see. @lintignore */
 export const getUPlotInstance = () => uPlotInstance;
 
 /**
