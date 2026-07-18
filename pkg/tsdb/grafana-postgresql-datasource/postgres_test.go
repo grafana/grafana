@@ -1375,13 +1375,42 @@ func TestIntegrationPostgres(t *testing.T) {
 		_, err = p.Exec(t.Context(), "CREATE TABLE empty_obj (empty_key VARCHAR(255) NULL, empty_val BIGINT NULL)")
 		require.NoError(t, err)
 
-		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
+		t.Run("When no rows are returned in table format, should keep the column schema", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT empty_key, empty_val FROM empty_obj",
 							"format": "table"
+						}`),
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Now(),
+							To:   time.Now().Add(1 * time.Minute),
+						},
+					},
+				},
+			}
+
+			resp, err := exe.QueryData(t.Context(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["A"]
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+			require.Equal(t, 0, frames[0].Rows())
+			require.Len(t, frames[0].Fields, 2)
+			require.Equal(t, "empty_key", frames[0].Fields[0].Name)
+			require.Equal(t, "empty_val", frames[0].Fields[1].Name)
+		})
+
+		t.Run("When no rows are returned in time series format, should return an empty frame", func(t *testing.T) {
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						JSON: []byte(`{
+							"rawSql": "SELECT empty_key, empty_val FROM empty_obj",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 						TimeRange: backend.TimeRange{

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -435,4 +436,63 @@ func (t *testQueryResultTransformer) TransformQueryError(_ log.Logger, err error
 
 func (t *testQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
 	return nil
+}
+
+func TestQueryDataZeroRows(t *testing.T) {
+	runQuery := func(t *testing.T, format string) *data.Frame {
+		t.Helper()
+
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		mock.ExpectQuery("SELECT name, value FROM empty_obj").WillReturnRows(
+			sqlmock.NewRowsWithColumnDefinition(
+				sqlmock.NewColumn("name").OfType("VARCHAR", "").Nullable(true),
+				sqlmock.NewColumn("value").OfType("BIGINT", int64(0)).Nullable(true),
+			),
+		)
+
+		handler, err := NewQueryDataHandler("", db, DataPluginConfiguration{RowLimit: 100},
+			&testQueryResultTransformer{}, &testMacroEngine{}, log.DefaultLogger)
+		require.NoError(t, err)
+
+		resp, err := handler.QueryData(t.Context(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					RefID: "A",
+					JSON:  []byte(fmt.Sprintf(`{"rawSql": "SELECT name, value FROM empty_obj", "format": %q}`, format)),
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NoError(t, mock.ExpectationsWereMet())
+
+		queryResult := resp.Responses["A"]
+		require.NoError(t, queryResult.Error)
+		require.Len(t, queryResult.Frames, 1)
+		return queryResult.Frames[0]
+	}
+
+	t.Run("table format keeps the column schema", func(t *testing.T) {
+		frame := runQuery(t, "table")
+		require.Equal(t, 0, frame.Rows())
+		require.Len(t, frame.Fields, 2)
+		require.Equal(t, "name", frame.Fields[0].Name)
+		require.Equal(t, "value", frame.Fields[1].Name)
+		require.Equal(t, "SELECT name, value FROM empty_obj", frame.Meta.ExecutedQueryString)
+	})
+
+	t.Run("time series format returns a frame without fields", func(t *testing.T) {
+		frame := runQuery(t, "time_series")
+		require.Equal(t, 0, frame.Rows())
+		require.Empty(t, frame.Fields)
+		require.Equal(t, "SELECT name, value FROM empty_obj", frame.Meta.ExecutedQueryString)
+	})
+}
+
+type testMacroEngine struct{}
+
+func (m *testMacroEngine) Interpolate(_ *backend.DataQuery, _ backend.TimeRange, sql string) (string, error) {
+	return sql, nil
 }

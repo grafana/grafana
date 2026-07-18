@@ -702,3 +702,52 @@ func (t *testQueryResultTransformer) TransformQueryError(_ log.Logger, err error
 func (t *testQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
 	return nil
 }
+
+func TestProcessFrameZeroRows(t *testing.T) {
+	newZeroRowFrame := func() *data.Frame {
+		return data.NewFrame("",
+			data.NewField("name", nil, []*string{}),
+			data.NewField("value", nil, []*int64{}),
+		)
+	}
+
+	newQueryModel := func(format dataQueryFormat) *dataQueryModel {
+		return &dataQueryModel{
+			InterpolatedQuery: "SELECT name, value FROM t",
+			Format:            format,
+			timeIndex:         -1,
+			timeEndIndex:      -1,
+			metricIndex:       -1,
+		}
+	}
+
+	t.Run("table format keeps the column schema", func(t *testing.T) {
+		ch := make(chan DBDataResponse, 1)
+		e := &DataSourceHandler{}
+		e.processFrame(newZeroRowFrame(), newQueryModel(dataQueryFormatTable), DBDataResponse{refID: "A"}, ch, log.DefaultLogger)
+
+		res := <-ch
+		require.NoError(t, res.dataResponse.Error)
+		require.Len(t, res.dataResponse.Frames, 1)
+		frame := res.dataResponse.Frames[0]
+		require.Equal(t, 0, frame.Rows())
+		require.Len(t, frame.Fields, 2)
+		require.Equal(t, "name", frame.Fields[0].Name)
+		require.Equal(t, "value", frame.Fields[1].Name)
+		require.Equal(t, "SELECT name, value FROM t", frame.Meta.ExecutedQueryString)
+	})
+
+	t.Run("time series format returns a frame without fields", func(t *testing.T) {
+		ch := make(chan DBDataResponse, 1)
+		e := &DataSourceHandler{}
+		e.processFrame(newZeroRowFrame(), newQueryModel(dataQueryFormatSeries), DBDataResponse{refID: "A"}, ch, log.DefaultLogger)
+
+		res := <-ch
+		require.NoError(t, res.dataResponse.Error)
+		require.Len(t, res.dataResponse.Frames, 1)
+		frame := res.dataResponse.Frames[0]
+		require.Equal(t, 0, frame.Rows())
+		require.Empty(t, frame.Fields)
+		require.Equal(t, "SELECT name, value FROM t", frame.Meta.ExecutedQueryString)
+	})
+}

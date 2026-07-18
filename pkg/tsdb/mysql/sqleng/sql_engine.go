@@ -290,11 +290,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	frame.Meta.ExecutedQueryString = interpolatedQuery
 
-	// If no rows were returned, clear any previously set `Fields` with a single empty `data.Field` slice.
-	// Then assign `queryResult.dataResponse.Frames` the current single frame with that single empty Field.
-	// This assures 1) our visualization doesn't display unwanted empty fields, and also that 2)
-	// additionally-needed frame data stays intact and is correctly passed to our visulization.
-	if frame.Rows() == 0 {
+	// If no rows were returned for a time series query, return a single frame with
+	// no fields: series are built from row values, so with zero rows there are no
+	// series to describe, and keeping the raw long-format fields makes panels
+	// render phantom series for queries that returned no data.
+	// Table-like formats keep their fields: SQL result sets always have a schema,
+	// so an empty result still describes the requested columns.
+	if frame.Rows() == 0 && qm.Format == dataQueryFormatSeries {
 		frame.Fields = []*data.Field{}
 		queryResult.dataResponse.Frames = data.Frames{frame}
 		ch <- queryResult

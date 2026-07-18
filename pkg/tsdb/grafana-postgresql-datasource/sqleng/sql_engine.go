@@ -210,7 +210,43 @@ func (e *DataSourceHandler) execQuery(ctx context.Context, query string) ([]*pgc
 	mrr := c.Conn().PgConn().Exec(ctx, query)
 	// Close returns the first error that occurred during the MultiResultReader's use. We will log that later.
 	defer mrr.Close() //nolint:errcheck
-	return mrr.ReadAll()
+	return readAllResults(mrr)
+}
+
+// readAllResults consumes the MultiResultReader like pgconn's ReadAll, except
+// it copies the field descriptions before reading any rows: pgconn only
+// attaches FieldDescriptions to a Result while reading its first row, so a
+// zero-row result would otherwise lose the column schema.
+func readAllResults(mrr *pgconn.MultiResultReader) ([]*pgconn.Result, error) {
+	var results []*pgconn.Result
+
+	for mrr.NextResult() {
+		rr := mrr.ResultReader()
+
+		result := &pgconn.Result{}
+		if fds := rr.FieldDescriptions(); len(fds) > 0 {
+			result.FieldDescriptions = make([]pgconn.FieldDescription, len(fds))
+			copy(result.FieldDescriptions, fds)
+		}
+
+		for rr.NextRow() {
+			values := rr.Values()
+			row := make([][]byte, len(values))
+			for i := range row {
+				if values[i] != nil {
+					row[i] = make([]byte, len(values[i]))
+					copy(row[i], values[i])
+				}
+			}
+			result.Rows = append(result.Rows, row)
+		}
+
+		result.CommandTag, result.Err = rr.Close()
+		results = append(results, result)
+	}
+
+	err := mrr.Close()
+	return results, err
 }
 
 func (e *DataSourceHandler) executeQuery(queryContext context.Context, query backend.DataQuery, wg *sync.WaitGroup,
@@ -301,11 +337,13 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 	}
 	frame.Meta.ExecutedQueryString = qm.InterpolatedQuery
 
-	// If no rows were returned, clear any previously set `Fields` with a single empty `data.Field` slice.
-	// Then assign `queryResult.dataResponse.Frames` the current single frame with that single empty Field.
-	// This assures 1) our visualization doesn't display unwanted empty fields, and also that 2)
-	// additionally-needed frame data stays intact and is correctly passed to our visulization.
-	if frame.Rows() == 0 {
+	// If no rows were returned for a time series query, return a single frame with
+	// no fields: series are built from row values, so with zero rows there are no
+	// series to describe, and keeping the raw long-format fields makes panels
+	// render phantom series for queries that returned no data.
+	// Table-like formats keep their fields: SQL result sets always have a schema,
+	// so an empty result still describes the requested columns.
+	if frame.Rows() == 0 && qm.Format == dataQueryFormatSeries {
 		frame.Fields = []*data.Field{}
 		queryResult.dataResponse.Frames = data.Frames{frame}
 		ch <- queryResult
