@@ -314,7 +314,7 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 
 	switch spec.Action {
 	case provisioning.JobActionPush:
-		return c.authorizeResourceJob(ctx, repo, cfg, spec)
+		return c.authorizePushJob(ctx, repo, cfg)
 	case provisioning.JobActionMigrate:
 		return c.authorizeMigrateJob(ctx, repo, cfg, spec)
 	case provisioning.JobActionDelete:
@@ -410,8 +410,25 @@ func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning
 	}, "")
 }
 
+// authorizePushJob checks that the requesting user may read every supported
+// resource type. A push job only exports resources to the repository (it reads
+// them and writes files to git); it never creates or deletes Grafana resources,
+// so read permission is sufficient.
+//
+// This runs at job creation time while the user's identity is still in the
+// request context, since the job executes later as the provisioning service
+// identity (which can read everything) — without this check a user could export
+// resources they are not allowed to read.
+func (c *jobsConnector) authorizePushJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository) error {
+	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
+	if err != nil {
+		return err
+	}
+	return authorizer.AuthorizeReadAllSupported(ctx)
+}
+
 // authorizeResourceJob checks that the requesting user has the required permissions
-// for operations that read and write all supported resource types (export and migrate).
+// for a migration, which reads and writes all supported resource types.
 // This runs at job creation time while the user's identity is still in the request
 // context, since the job executes later as the provisioning service identity.
 //
