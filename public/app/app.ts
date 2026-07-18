@@ -189,6 +189,19 @@ export class GrafanaApp {
       });
 
       setBackendSrv(backendSrv);
+
+      // The Meticulous recorder snippet is a synchronous <script> in <head>, so
+      // window.Meticulous is already set here when the recorder is enabled. The
+      // dynamic import keeps the redaction module in a separate chunk that is
+      // never fetched when the recorder is off. Awaiting guarantees the
+      // middleware is registered before any datasource query can fire.
+      if (window.Meticulous != null) {
+        const { initMeticulousRedaction } = await import(
+          /* webpackChunkName: "meticulous-redaction" */ './core/services/meticulous-redaction'
+        );
+        initMeticulousRedaction();
+      }
+
       await initEchoSrv();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
