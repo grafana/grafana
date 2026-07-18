@@ -249,14 +249,17 @@ func (ng *AlertNG) init() error {
 		}
 
 		cfg := remote.AlertmanagerConfig{
-			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
-			DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
-			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
-			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-			ExternalURL:       ng.Cfg.AppURL,
-			SmtpConfig:        smtpCfg,
-			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
-			RuntimeConfig:     runtimeConfig,
+			BasicAuthPassword:       ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+			DefaultConfig:           ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+			TenantID:                ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+			URL:                     ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+			ExternalURL:             ng.Cfg.AppURL,
+			SmtpConfig:              smtpCfg,
+			Timeout:                 ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+			RuntimeConfig:           runtimeConfig,
+			SenderQueueCapacity:     ng.Cfg.UnifiedAlerting.SenderQueueCapacity,
+			SenderBatchSize:         ng.Cfg.UnifiedAlerting.SenderBatchSize,
+			SenderDispatcherWorkers: ng.Cfg.UnifiedAlerting.SenderDispatcherWorkers,
 		}
 
 		// This function will be used by the MOA to create new Alertmanagers.
