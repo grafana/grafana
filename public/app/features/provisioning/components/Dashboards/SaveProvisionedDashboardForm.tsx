@@ -259,7 +259,6 @@ export function SaveProvisionedDashboardForm({
   const selectFolder = useCallback(
     async (uid?: string, title?: string) => {
       setValue('folder', { uid, title });
-      updateURLParams('folderUid', uid);
       const meta = await getProvisionedMeta(uid);
       dashboard.setState({
         meta: {
@@ -634,19 +633,6 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
           'Dashboard title validation failed.'
         );
   }
-}
-
-// Update the URL params without reloading the page
-function updateURLParams(param: string, value?: string) {
-  const url = new URL(window.location.href);
-  if (value === undefined || value === null) {
-    // No folder selected: remove the param so the URL stops pointing at the old folder
-    url.searchParams.delete(param);
-  } else {
-    // Empty string = root folder, still a real value to set
-    url.searchParams.set(param, value);
-  }
-  window.history.replaceState({}, '', url);
 }
 
 /**

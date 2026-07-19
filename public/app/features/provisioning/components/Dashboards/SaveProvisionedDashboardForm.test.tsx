@@ -1233,6 +1233,7 @@ describe('SaveProvisionedDashboardForm', () => {
       })
     );
 
+    // The navigation URL must stay untouched: the form only manages the scene meta
     window.history.replaceState({}, '', '/?folderUid=my-team-uid');
     const { user, props } = setupFolderless({
       defaultValues: {
@@ -1251,7 +1252,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
     const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
     await waitFor(() => expect(folderCombobox).toHaveValue(''));
-    expect(new URL(window.location.href).searchParams.has('folderUid')).toBe(false);
+    expect(new URL(window.location.href).searchParams.get('folderUid')).toBe('my-team-uid');
 
     await user.click(screen.getByRole('button', { name: /save/i }));
 

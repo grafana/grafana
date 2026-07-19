@@ -1,8 +1,10 @@
 import { render, screen } from 'test/test-utils';
 
+import { appEvents } from 'app/core/app_events';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
@@ -164,12 +166,41 @@ describe('SaveProvisionedDashboard', () => {
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 
-    // saveCompleted sets meta.uid before the overlay closes
-    dashboard.state.meta.uid = 'new-dashboard-uid';
+    // useSaveDashboard publishes this before the overlay closes
+    appEvents.publish(new DashboardSavedEvent());
     dashboard.state.meta.folderUid = 'db-folder-uid';
     unmount();
 
-    expect(dashboard.setState).not.toHaveBeenCalled();
+    expect(dashboard.setState).not.toHaveBeenCalledWith({
+      meta: expect.objectContaining({ folderUid: 'git-folder-uid' }),
+    });
+  });
+
+  it('clears the folder when switching to the database form', async () => {
+    const dashboard = createDashboard({ folderUid: 'repo-managed-folder' });
+    const { user } = setup({}, { dashboard });
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
+  });
+
+  it('hides the switch link when the repository resolves to a non-folderless repo', async () => {
+    const { rerender, props } = setup();
+
+    expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
+
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: true,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: false,
+      repository: { type: 'github', name: 'folder-repo', title: 'Folder Repo', workflows: ['write'], target: 'folder' },
+      repoDataStatus: RepoViewStatus.Ready,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    expect(screen.queryByRole('button', { name: /grafana database/i })).not.toBeInTheDocument();
   });
 
   it('keeps the database switch link as an escape when the git flow stops resolving', async () => {
