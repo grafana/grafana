@@ -29,7 +29,8 @@ function AlertIncidentTabsInner() {
   const [activeTab, setActiveTab] = useState(ALERTS_TAB_ID);
   const styles = useStyles2(getStyles);
   const alertsData = useFiringAlerts();
-  const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref } = alertsData;
+  const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
+  const isAlertActionsVisible = !loading && !error && activeTab === ALERTS_TAB_ID;
 
   const tabs = [
     {
@@ -43,8 +44,9 @@ function AlertIncidentTabsInner() {
     <Stack direction="column" gap={2}>
       <Stack justifyContent="space-between" alignItems="center">
         <Text element="h2" variant="h5">
-          <Trans i18nKey="home.dashboards.title">Firing alerts</Trans>
+          <Trans i18nKey="home.alerts-incidents.title">Firing alerts</Trans>
         </Text>
+        {/* TODO: team dropdown */}
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
@@ -70,17 +72,17 @@ function AlertIncidentTabsInner() {
           >
             {activeTab === ALERTS_TAB_ID && <FiringAlertsCardView data={alertsData} hideFooterActions />}
           </ScrollContainer>
-        </TabContent>
 
-        {/* Alerts tab footer */}
-        {activeTab === ALERTS_TAB_ID && (
-          <CreateAndViewAlertsButtons
-            hasAlerts={hasAlerts}
-            canCreate={canCreate}
-            newRuleHref={newRuleHref}
-            viewAllHref={viewAllHref}
-          />
-        )}
+          {/* Alerts tab footer */}
+          {isAlertActionsVisible && (
+            <CreateAndViewAlertsButtons
+              hasAlerts={hasAlerts}
+              canCreate={canCreate}
+              newRuleHref={newRuleHref}
+              viewAllHref={viewAllHref}
+            />
+          )}
+        </TabContent>
       </HomeSection>
     </Stack>
   );
@@ -88,6 +90,6 @@ function AlertIncidentTabsInner() {
 
 const getStyles = () => ({
   redesignedTabContent: css({
-    // padding: 0,
+    padding: 0,
   }),
 });

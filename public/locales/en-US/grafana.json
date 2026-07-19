@@ -10823,6 +10823,9 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "alerts-incidents": {
+      "title": "Firing alerts"
+    },
     "dashboard-tabs": {
       "most-used": "Most used",
       "most-used-active": "Most used dashboards",
