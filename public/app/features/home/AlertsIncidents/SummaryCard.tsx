@@ -88,7 +88,7 @@ export function SummaryCard<T>({
         )}
 
         {!loading && !error && items.length === 0 && (
-          <Stack direction="column" alignItems="center">
+          <Stack direction="column" grow={1} alignItems="center" justifyContent="center">
             {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
           </Stack>
         )}
