@@ -1,11 +1,11 @@
 import {
   createTheme,
+  FieldColorModeId,
   FieldType,
   ThresholdsMode,
   type TimeRange,
   toDataFrame,
   dateTime,
-  type DataFrame,
   fieldMatchers,
   FieldMatcherID,
   type Field,
@@ -45,7 +45,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const info = prepareTimelineFields(frames, timeRange, theme);
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
@@ -58,23 +58,23 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const info = prepareTimelineFields(frames, timeRange, theme);
     expect(info.warn).toEqual('No graphable fields');
   });
 
   it('errors with no frame', () => {
-    const info = prepareTimelineFields(undefined, true, timeRange, theme);
+    const info = prepareTimelineFields(undefined, timeRange, theme);
     expect(info.frames).toBeUndefined();
     expect(info.warn).toBe('');
   });
 
   it('errors with empty frame', () => {
-    const info = prepareTimelineFields([], true, timeRange, theme);
+    const info = prepareTimelineFields([], timeRange, theme);
     expect(info.frames).toBeUndefined();
     expect(info.warn).toBe('');
   });
 
-  it('will merge duplicate values', () => {
+  it('converts values to enum state indices, retaining nulls and undefineds', () => {
     const frames = [
       toDataFrame({
         fields: [
@@ -83,25 +83,15 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const info = prepareTimelineFields(frames, timeRange, theme);
     expect(info.warn).toBeUndefined();
 
     const out = info.frames![0];
 
     const field = out.fields.find((f) => f.name === 'b');
-    expect(field?.values).toMatchInlineSnapshot(`
-      [
-        1,
-        1,
-        undefined,
-        1,
-        2,
-        2,
-        null,
-        2,
-        3,
-      ]
-    `);
+    expect(field?.type).toBe(FieldType.enum);
+    expect(field?.config.type?.enum?.text).toEqual(['1', '2', '3']);
+    expect(field?.values).toEqual([0, 0, undefined, 0, 1, 1, null, 1, 2]);
   });
   it('should try to sort time fields', () => {
     const frames = [
@@ -112,7 +102,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    const result = prepareTimelineFields(frames, timeRange, theme);
     expect(result.frames?.[0].fields[0].values).toEqual([1, 2, 3, 4]);
   });
 
@@ -169,13 +159,18 @@ describe('prepare timeline graph', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, true, timeRange2, theme);
+    const info = prepareTimelineFields(frames, timeRange2, theme);
+
+    // 'Mix' states: RUN -> 0
+    expect(info.frames![0].fields[1].config.type?.enum?.text).toEqual(['RUN']);
+    // 'Cook' states: Heat -> 0, Stage -> 1, CCP -> 2
+    expect(info.frames![1].fields[1].config.type?.enum?.text).toEqual(['Heat', 'Stage', 'CCP']);
 
     let joined = preparePlotFrame(
       info.frames!,
       {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.byType).get('string'),
+        y: fieldMatchers.get(FieldMatcherID.byType).get('enum'),
       },
       timeRange2
     );
@@ -189,9 +184,9 @@ describe('prepare timeline graph', () => {
         1697784523487, 1697784949480, 1697785369505, 1697786485890,
       ],
       [
-        'RUN',
+        0,
         null,
-        'RUN',
+        0,
         undefined,
         undefined,
         undefined,
@@ -212,19 +207,19 @@ describe('prepare timeline graph', () => {
         undefined,
         undefined,
         undefined,
-        'Heat',
-        'Stage',
+        0,
+        1,
         null,
-        'Heat',
-        'Stage',
+        0,
+        1,
         null,
-        'Heat',
-        'Stage',
+        0,
+        1,
         null,
-        'Heat',
-        'Stage',
+        0,
+        1,
         null,
-        'CCP',
+        2,
         null,
         undefined,
       ],
@@ -260,13 +255,18 @@ describe('prepare timeline graph', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, true, timeRange2, theme);
+    const info = prepareTimelineFields(frames, timeRange2, theme);
+
+    // 'Channel 1' states: OK -> 0, NO_DATA -> 1
+    expect(info.frames![0].fields[1].config.type?.enum?.text).toEqual(['OK', 'NO_DATA']);
+    // 'Channel 2' states: ERROR -> 0, WARNING -> 1
+    expect(info.frames![1].fields[1].config.type?.enum?.text).toEqual(['ERROR', 'WARNING']);
 
     let joined = preparePlotFrame(
       info.frames!,
       {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.byType).get('string'),
+        y: fieldMatchers.get(FieldMatcherID.byType).get('enum'),
       },
       timeRange2
     );
@@ -278,8 +278,8 @@ describe('prepare timeline graph', () => {
         1709107200000, 1709110800000, 1709114400000, 1709116200000, 1709118000000, 1709123400000, 1709127000000,
         1709128800000,
       ],
-      ['OK', undefined, null, undefined, 'NO_DATA', undefined, undefined, null],
-      [undefined, 'ERROR', undefined, null, undefined, 'WARNING', null, undefined],
+      [0, undefined, null, undefined, 1, undefined, undefined, null],
+      [undefined, 0, undefined, null, undefined, 1, null, undefined],
     ]);
   });
 });
@@ -420,71 +420,115 @@ describe('getThresholdItems', () => {
 });
 
 describe('prepareTimelineLegendItems', () => {
-  it('should return legend items without crashing when single (base) threshold', () => {
+  const timeRange: TimeRange = {
+    from: dateTime(1),
+    to: dateTime(3),
+    raw: {
+      from: dateTime(1),
+      to: dateTime(3),
+    },
+  };
+
+  const legendOptions = { displayMode: LegendDisplayMode.List } as VizLegendOptions;
+
+  it('builds items from value mappings, collapsing unmapped values into Other', () => {
     const frames = [
-      {
-        refId: 'A',
+      toDataFrame({
         fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
           {
-            name: 'time',
+            name: 'state',
+            type: FieldType.string,
+            values: ['OK', 'ERROR', 'HUH'],
             config: {
-              color: {
-                mode: 'thresholds',
-              },
-              thresholds: {
-                mode: 'absolute',
-                steps: [
-                  {
-                    color: 'green',
-                    value: null,
+              mappings: [
+                {
+                  type: MappingType.ValueToText,
+                  options: {
+                    OK: { color: 'green', index: 0 },
+                    ERROR: { color: 'red', index: 1 },
                   },
-                ],
-              },
+                },
+              ],
             },
-            values: [
-              1634092733455, 1634092763455, 1634092793455, 1634092823455, 1634092853455, 1634092883455, 1634092913455,
-              1634092943455, 1634092973455, 1634093003455,
-            ],
-            display: (value: string) => ({
-              text: value,
-              color: undefined,
-              numeric: NaN,
-            }),
-          },
-          {
-            name: 'A-series',
-            config: {
-              color: {
-                mode: 'thresholds',
-              },
-              thresholds: {
-                mode: 'absolute',
-                steps: [
-                  {
-                    color: 'green',
-                    value: null,
-                  },
-                ],
-              },
-            },
-            values: ['< -∞', null, null, null, null, null, null, null, null, null],
-            display: (value?: string) => ({
-              text: value || '',
-              color: 'green',
-              numeric: NaN,
-            }),
           },
         ],
-      },
-    ] as unknown as DataFrame[];
+      }),
+    ];
 
-    const result = prepareTimelineLegendItems(
-      frames,
-      { displayMode: LegendDisplayMode.List } as VizLegendOptions,
-      theme
-    );
+    const info = prepareTimelineFields(frames, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
 
-    expect(result).toHaveLength(1);
+    expect(result?.map(({ label, color }) => ({ label, color }))).toEqual([
+      { label: 'OK', color: '#73bf69' },
+      { label: 'ERROR', color: '#f2495c' },
+      { label: 'Other', color: '#808080' },
+    ]);
+  });
+
+  it('builds items from absolute threshold steps', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'load',
+            type: FieldType.number,
+            values: [10, 40, 20],
+            config: {
+              color: { mode: FieldColorModeId.Thresholds },
+              thresholds: {
+                mode: ThresholdsMode.Absolute,
+                steps: [
+                  { value: -Infinity, color: 'green' },
+                  { value: 30, color: 'red' },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    ];
+
+    const info = prepareTimelineFields(frames, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
+
+    expect(result?.map(({ label, color }) => ({ label, color }))).toEqual([
+      { label: '< 30', color: '#73bf69' },
+      { label: '≥ 30', color: '#f2495c' },
+    ]);
+  });
+
+  it('builds items from distinct raw values when no mappings or thresholds exist', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'state', type: FieldType.string, values: ['ON', 'OFF', 'ON'] },
+        ],
+      }),
+    ];
+
+    const info = prepareTimelineFields(frames, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
+
+    expect(result?.map(({ label }) => label)).toEqual(['ON', 'OFF']);
+  });
+
+  it('returns undefined when the legend is hidden', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'state', type: FieldType.string, values: ['ON', 'OFF', 'ON'] },
+        ],
+      }),
+    ];
+
+    const info = prepareTimelineFields(frames, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, { ...legendOptions, showLegend: false }, theme);
+
+    expect(result).toBeUndefined();
   });
 });
 

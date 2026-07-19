@@ -1,17 +1,15 @@
 import {
   type DataFrame,
+  type EnumFieldConfig,
   FALLBACK_COLOR,
   type Field,
-  FieldColorModeId,
   type FieldConfig,
   FieldType,
   formattedValueToString,
+  getDisplayProcessor,
   getFieldDisplayName,
   getValueFormat,
   type GrafanaTheme2,
-  getActiveThreshold,
-  type Threshold,
-  getFieldConfigWithMinMax,
   ThresholdsMode,
   type TimeRange,
   cacheFieldDisplayNames,
@@ -36,6 +34,7 @@ import {
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, type UPlotConfigPrepFn, type VizLegendItem } from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
+import { getEnumConfig, type FieldColorValues } from 'app/plugins/panel/xychart/scatter';
 
 import { getConfig, type TimelineCoreOptions } from './timeline';
 
@@ -271,72 +270,142 @@ function getSpanNulls(field: Field) {
   return !spanNulls ? -1 : spanNulls === true ? Infinity : spanNulls;
 }
 
+// getEnumConfig emits hex8 colors; strip the opaque alpha suffix so the renderer's
+// getFillColor() does not mistake it for an explicit alpha and skip fillOpacity
+const stripOpaqueAlpha = (color: string) => (color.length === 9 && color.endsWith('ff') ? color.slice(0, 7) : color);
+
 /**
- * Merge values by the threshold
+ * Converts a value field to an enum field whose values are state indices and whose
+ * config.type.enum lookup holds each state's text/color/icon. States come from the field's
+ * value mappings or absolute thresholds (via getEnumConfig); fields without either get one
+ * state per distinct raw value, formatted and colored by the field's display processor.
  */
-function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undefined {
-  const thresholds = field.config.thresholds;
-  if (field.type !== FieldType.number || !thresholds || !thresholds.steps.length) {
-    return undefined;
+export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
+  const custom = {
+    ...field.config.custom,
+    spanNulls: getSpanNulls(field),
+  };
+
+  const hasMappings = (field.config.mappings?.length ?? 0) > 0;
+
+  // already-enum fields pass through untouched, as do continuous color schemes (gradient render
+  // path) without mappings. mappings win over continuous color modes, same as in getEnumConfig,
+  // since continuous-GrYlRd is the panel-wide default that mappings are layered onto.
+  if (field.type === FieldType.enum || (!hasMappings && field.config.color?.mode?.startsWith('continuous'))) {
+    return {
+      ...field,
+      config: {
+        ...field.config,
+        custom,
+      },
+    };
   }
 
-  const items = getThresholdItems(field.config, theme);
-  if (items.length !== thresholds.steps.length) {
-    return undefined; // should not happen
-  }
+  const noStates: Pick<FieldColorValues, 'index' | 'getAll'> = { index: {}, getAll: () => [] };
 
-  const thresholdToText = new Map<Threshold, string>();
-  const textToColor = new Map<string, string>();
-  for (let i = 0; i < items.length; i++) {
-    thresholdToText.set(thresholds.steps[i], items[i].label);
-    textToColor.set(items[i].label, items[i].color!);
-  }
+  // mappings compile to states for all field types, thresholds only for numeric values
+  const { index, getAll } = hasMappings || field.type === FieldType.number ? getEnumConfig(field, theme) : noStates;
 
-  let input = field.values;
-  const vals = new Array<String | undefined>(field.values.length);
-  if (thresholds.mode === ThresholdsMode.Percentage) {
-    const { min, max } = getFieldConfigWithMinMax(field);
-    const delta = max! - min!;
-    input = input.map((v) => {
-      if (v == null) {
-        return v;
+  const enumConfig: EnumFieldConfig = {
+    color: (index.color ?? []).map((c) => stripOpaqueAlpha(String(c))),
+    text: (index.text ?? []).slice(),
+    icon: (index.icon ?? []).slice(),
+  };
+
+  const values: Array<number | null | undefined> = Array(field.values.length);
+
+  if (enumConfig.text!.length > 0) {
+    // states from mappings or absolute thresholds
+    const idxs = getAll(field.values);
+    let otherIdx = -1;
+
+    for (let i = 0; i < values.length; i++) {
+      const raw = field.values[i];
+
+      if (raw === undefined) {
+        values[i] = undefined;
+      } else if (raw === null || (typeof raw === 'number' && Number.isNaN(raw))) {
+        // null/NaN can only become states via special value mappings;
+        // the compiled thresholds matcher would coerce them to step 0, so gate on mappings
+        values[i] = hasMappings && idxs[i] !== -1 ? idxs[i] : null;
+      } else if (idxs[i] !== -1) {
+        values[i] = idxs[i];
+      } else {
+        // collapse all unmapped values into a single fallback state
+        if (otherIdx === -1) {
+          otherIdx = enumConfig.text!.length;
+          enumConfig.text!.push(t('timeline.enum-state.other', 'Other'));
+          enumConfig.color!.push(FALLBACK_COLOR);
+          enumConfig.icon!.push('');
+        }
+        values[i] = otherIdx;
       }
-      return ((v - min!) / delta) * 100;
-    });
-  }
+    }
+  } else {
+    // no mappings/thresholds: each distinct raw value becomes a state, deduped by text+color
+    const display = field.display ?? getDisplayProcessor({ field, theme });
+    const idxByRawValue = new Map<unknown, number>();
+    const idxByStateKey = new Map<string, number>();
 
-  for (let i = 0; i < vals.length; i++) {
-    const v = input[i];
-    if (v == null) {
-      vals[i] = v;
-    } else {
-      vals[i] = thresholdToText.get(getActiveThreshold(v, thresholds.steps));
+    for (let i = 0; i < values.length; i++) {
+      const raw = field.values[i];
+
+      if (raw === undefined) {
+        values[i] = undefined;
+      } else if (raw === null || (typeof raw === 'number' && Number.isNaN(raw))) {
+        values[i] = null;
+      } else {
+        let idx = idxByRawValue.get(raw);
+
+        if (idx == null) {
+          const disp = display(raw);
+          const text = formattedValueToString(disp);
+          // set color explicitly so the enum display processor does not fall back to palette cycling
+          const color = disp.color ?? FALLBACK_COLOR;
+          const key = `${color}|${text}`;
+
+          idx = idxByStateKey.get(key);
+
+          if (idx == null) {
+            idx = enumConfig.text!.length;
+            idxByStateKey.set(key, idx);
+            enumConfig.text!.push(text);
+            enumConfig.color!.push(color);
+            enumConfig.icon!.push('');
+          }
+
+          idxByRawValue.set(raw, idx);
+        }
+
+        values[i] = idx;
+      }
     }
   }
 
-  return {
+  const enumField: Field = {
     ...field,
+    type: FieldType.enum,
+    values,
     config: {
       ...field.config,
-      custom: {
-        ...field.config.custom,
-        spanNulls: getSpanNulls(field),
+      // the display processor prefers mappings over the enum index, so drop them
+      mappings: undefined,
+      custom,
+      type: {
+        ...field.config.type,
+        enum: enumConfig,
       },
     },
-    type: FieldType.string,
-    values: vals,
-    display: (value) => ({
-      text: String(value),
-      color: textToColor.get(String(value)),
-      numeric: NaN,
-    }),
   };
+
+  enumField.display = getDisplayProcessor({ field: enumField, theme });
+
+  return enumField;
 }
 
 // This will return a set of frames with only graphable values included
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
-  mergeValues: boolean,
   timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
@@ -428,29 +497,10 @@ export function prepareTimelineFields(
           break;
         case FieldType.enum:
         case FieldType.number:
-          if (mergeValues && field.config.color?.mode === FieldColorModeId.Thresholds) {
-            const f = mergeThresholdValues(field, theme);
-            if (f) {
-              fields.push(f);
-              changed = true;
-              continue;
-            }
-          }
-
         case FieldType.boolean:
         case FieldType.string:
-          field = {
-            ...field,
-            config: {
-              ...field.config,
-              custom: {
-                ...field.config.custom,
-                spanNulls: getSpanNulls(field),
-              },
-            },
-          };
+          fields.push(toEnumField(field, theme));
           changed = true;
-          fields.push(field);
           break;
         default:
           changed = true;
@@ -608,66 +658,38 @@ export function prepareTimelineLegendItems(
     return undefined;
   }
 
-  return getFieldLegendItem(allNonTimeFields(frames), theme);
-}
-
-function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
-  if (!fields.length) {
-    return undefined;
-  }
-
   const items: VizLegendItem[] = [];
-  const fieldConfig = fields[0].config;
-  const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
-  const thresholds = fieldConfig.thresholds;
+  const seen = new Set<string>();
 
-  // If thresholds are enabled show each step in the legend
-  // This ignores the hide from legend since the range is valid
-  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
-    return getThresholdItems(fieldConfig, theme);
-  }
-
-  // If thresholds are enabled show each step in the legend
-  if (colorMode.startsWith('continuous')) {
-    return undefined; // eventually a color bar
-  }
-
-  const stateColors: Map<string, string | undefined> = new Map();
-
-  fields.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.legend) {
-      field.values.forEach((v) => {
-        let state = field.display!(v);
-        if (state.color) {
-          stateColors.set(state.text, state.color!);
-        }
-      });
-    }
-  });
-
-  stateColors.forEach((color, label) => {
-    if (label.length > 0) {
-      items.push({
-        label: label!,
-        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
-        yAxis: 1,
-      });
-    }
-  });
-
-  return items;
-}
-
-function allNonTimeFields(frames: DataFrame[]): Field[] {
-  const fields: Field[] = [];
   for (const frame of frames) {
     for (const field of frame.fields) {
-      if (field.type !== FieldType.time) {
-        fields.push(field);
+      if (field.type === FieldType.time || field.config.custom?.hideFrom?.legend) {
+        continue;
+      }
+
+      // continuous color schemes remain non-enum and contribute no legend items (eventually a color bar)
+      const { text = [], color = [] } = field.config.type?.enum ?? {};
+
+      for (let i = 0; i < text.length; i++) {
+        const label = text[i];
+        const stateColor = color[i] ?? FALLBACK_COLOR;
+        const key = `${stateColor}|${label}`;
+
+        if (label != null && label !== '' && !seen.has(key)) {
+          seen.add(key);
+
+          items.push({
+            label,
+            color: theme.visualization.getColorByName(stateColor),
+            yAxis: 1,
+          });
+        }
       }
     }
   }
-  return fields;
+
+  // e.g. all-continuous fields produce no items and should render no legend at all
+  return items.length > 0 ? items : undefined;
 }
 
 export function findNextStateIndex(field: Field, datapointIdx: number) {

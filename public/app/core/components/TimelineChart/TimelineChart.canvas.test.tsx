@@ -49,7 +49,7 @@ const timeRange: TimeRange = {
  * handing frames to TimelineChart: field overrides (to attach `display` + color resolution) followed
  * by `prepareTimelineFields` (null insertion, sorting, span-null config).
  */
-function prepareFrames(raw: DataFrame[], mergeValues = true): DataFrame[] {
+function prepareFrames(raw: DataFrame[]): DataFrame[] {
   const withDisplay = applyFieldOverrides({
     data: raw,
     // Panels supply custom field-config defaults; the timeline core reads `field.config.custom`
@@ -60,7 +60,7 @@ function prepareFrames(raw: DataFrame[], mergeValues = true): DataFrame[] {
     timeZone: 'utc',
   });
 
-  const { frames } = prepareTimelineFields(withDisplay, mergeValues, timeRange, theme);
+  const { frames } = prepareTimelineFields(withDisplay, timeRange, theme);
   if (!frames) {
     throw new Error('prepareTimelineFields returned no frames for test fixture');
   }
@@ -290,9 +290,9 @@ describe('TimelineChart (canvas)', () => {
           },
         ],
       });
-      // mergeValues defaults to false at render time; the frames are prepared unmerged too, so the
-      // three consecutive OK samples stay as distinct boxes rather than collapsing into one.
-      renderTimeline(prepareFrames([raw], false), { showValue: VisibilityMode.Always });
+      // mergeValues defaults to false at render time, so the three consecutive OK samples
+      // (equal enum state indices) stay as distinct boxes rather than collapsing into one.
+      renderTimeline(prepareFrames([raw]), { showValue: VisibilityMode.Always });
       await assertCanvasOutput();
     });
   });

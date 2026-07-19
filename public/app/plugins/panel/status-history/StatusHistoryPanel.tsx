@@ -56,7 +56,7 @@ export const StatusHistoryPanel = ({
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, false, timeRange, theme),
+    () => prepareTimelineFields(data.series, timeRange, theme),
     [data.series, timeRange, theme]
   );
 

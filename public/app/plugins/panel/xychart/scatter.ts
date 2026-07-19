@@ -644,7 +644,8 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
           let { color, text, icon } = m.options[k];
 
           if (color != null) {
-            let idx = indexOf(color, text, icon);
+            // mappings without display text show the matched value itself
+            let idx = indexOf(color, text ?? k, icon);
             let rhs = k.toLowerCase() === 'null' ? 'null' : f.type === FieldType.string ? JSON.stringify(k) : Number(k);
             conds += `v === ${rhs} ? ${idx} : `;
           }
