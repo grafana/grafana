@@ -69,7 +69,7 @@ export function useFiringAlerts() {
 
   // Severity and timestamp are derived once per alert so the sort comparator,
   // the badge counts, and the rows don't recompute them.
-  const { displayed, criticalCount, highCount } = useMemo(() => {
+  const { visibleAlerts, criticalCount, highCount } = useMemo(() => {
     let criticalCount = 0;
     let highCount = 0;
     const decorated = (alerts ?? []).map((alert) => {
@@ -84,7 +84,7 @@ export function useFiringAlerts() {
     // Most severe first, most recent first within the same severity
     decorated.sort((a, b) => b.rank - a.rank || b.startedAt - a.startedAt);
     // Cap the rendered rows; counts above are over every alert so the badges stay accurate.
-    return { displayed: decorated.slice(0, HOME_CARD_MAX_ITEMS), criticalCount, highCount };
+    return { visibleAlerts: decorated.slice(0, HOME_CARD_MAX_ITEMS), criticalCount, highCount };
   }, [alerts]);
 
   const canCreate = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
@@ -99,8 +99,7 @@ export function useFiringAlerts() {
     : alertListPageLink({ search: `source:${GRAFANA_RULES_SOURCE_NAME}` });
 
   return {
-    alerts,
-    displayed,
+    visibleAlerts,
     count,
     criticalCount,
     highCount,

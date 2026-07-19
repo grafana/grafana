@@ -35,7 +35,7 @@ function AlertIncidentTabsInner() {
   const tabs = [
     {
       id: ALERTS_TAB_ID,
-      label: t('home.firing-alerts-card.title', 'Firing alerts'),
+      label: t('home.alerts-incidents.title', 'Firing alerts'),
       // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
       counter: loading ? undefined : count,
     },

@@ -68,7 +68,7 @@ export function FiringAlertsCardView({
     count,
     criticalCount,
     highCount,
-    displayed,
+    visibleAlerts,
     hasAlerts,
     hasTeams,
     loading,
@@ -121,7 +121,7 @@ export function FiringAlertsCardView({
           ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
           : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
       }
-      items={displayed}
+      items={visibleAlerts}
       getItemKey={({ alert }) => alert.fingerprint}
       renderItem={({ alert, level, startedAt }) => {
         const detailHref = alertDetailHref(alert);
