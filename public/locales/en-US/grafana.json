@@ -10824,7 +10824,8 @@
   },
   "home": {
     "alerts-incidents": {
-      "title": "Firing alerts"
+      "alert-tab-label": "Firing alerts",
+      "title": "Alerts & incidents"
     },
     "dashboard-tabs": {
       "most-used": "Most used",

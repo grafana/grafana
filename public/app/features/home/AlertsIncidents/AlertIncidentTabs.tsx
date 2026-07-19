@@ -35,7 +35,7 @@ function AlertIncidentTabsInner() {
   const tabs = [
     {
       id: ALERTS_TAB_ID,
-      label: t('home.alerts-incidents.title', 'Firing alerts'),
+      label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
       // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
       counter: loading ? undefined : count,
     },
@@ -44,7 +44,7 @@ function AlertIncidentTabsInner() {
     <Stack direction="column" gap={2}>
       <Stack justifyContent="space-between" alignItems="center">
         <Text element="h2" variant="h5">
-          <Trans i18nKey="home.alerts-incidents.title">Firing alerts</Trans>
+          <Trans i18nKey="home.alerts-incidents.title">Alerts & incidents</Trans>
         </Text>
         {/* TODO: team dropdown */}
       </Stack>
