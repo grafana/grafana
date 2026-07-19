@@ -43,6 +43,16 @@ describe('TimeZonePicker', () => {
     expect(await screen.findByText('Sydney')).toBeInTheDocument();
   });
 
+  it('filters by abbreviations that moment-timezone reported as numeric offsets', async () => {
+    // moment's tzdata reports '+03' for Moscow, which getTimeZoneInfo blanked
+    // out, so searching 'msk' used to find nothing; easy-tz curates MSK.
+    render(<TimeZonePicker onChange={jest.fn()} />);
+
+    await userEvent.type(screen.getByRole('combobox'), 'msk');
+
+    expect(await screen.findByText('Moscow')).toBeInTheDocument();
+  });
+
   it('lists zones under their canonical id even when the runtime uses a legacy spelling', async () => {
     render(<TimeZonePicker onChange={jest.fn()} />);
 
@@ -73,7 +83,18 @@ describe('TimeZonePicker', () => {
   });
 
   it('selects the canonical option when the value uses a legacy spelling', () => {
+    // Callers commonly prefill the value with the Intl-detected browser zone,
+    // which Chrome's ICU may report under a legacy spelling. The moment-based
+    // picker listed canonical names only, so such values selected nothing.
     render(<TimeZonePicker value="Asia/Calcutta" onChange={jest.fn()} />);
+    expect(screen.getByText('Kolkata')).toBeInTheDocument();
+  });
+
+  it('selects the option when the value is canonical but the runtime lists the legacy spelling', () => {
+    // Node's ICU (like Chrome's) lists only the legacy Asia/Calcutta; a
+    // canonical value must still match even though the option list is now
+    // sourced from the runtime.
+    render(<TimeZonePicker value="Asia/Kolkata" onChange={jest.fn()} />);
     expect(screen.getByText('Kolkata')).toBeInTheDocument();
   });
 
