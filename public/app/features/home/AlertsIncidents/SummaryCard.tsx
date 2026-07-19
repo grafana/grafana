@@ -53,7 +53,12 @@ export function SummaryCard<T>({
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
   return (
-    <HomeSection display="flex" direction="column">
+    <HomeSection
+      display="flex"
+      direction="column"
+      paddingY={redesignEnabled ? 1 : undefined}
+      paddingX={redesignEnabled ? 0 : undefined}
+    >
       <Stack direction="column" gap={2} grow={1}>
         <Stack direction="column" gap={2} grow={1}>
           {!redesignEnabled && (
@@ -95,7 +100,7 @@ export function SummaryCard<T>({
           )}
 
           {!loading && !error && items.length > 0 && (
-            <ul className={styles.list}>
+            <ul className={redesignEnabled ? undefined : styles.list}>
               {items.map((item) => (
                 <li key={getItemKey(item)} className={styles.row}>
                   {renderItem(item)}

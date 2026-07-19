@@ -8,13 +8,16 @@ import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
 import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
 
-import { canViewFiringAlerts, FiringAlertsCard } from './FiringAlertsCard';
+import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
+import { FiringAlertsCardView } from './FiringAlertsCard';
+import { canViewFiringAlerts, useFiringAlerts } from './useFiringAlerts';
 
 const ALERTS_TAB_ID = 'firing-alerts';
 
 export function AlertIncidentTabs() {
   const canViewAlerts = canViewFiringAlerts();
 
+  // TODO: Check for incident plugin and show incidents tab if it is available
   if (!canViewAlerts) {
     return null;
   }
@@ -25,24 +28,33 @@ export function AlertIncidentTabs() {
 function AlertIncidentTabsInner() {
   const [activeTab, setActiveTab] = useState(ALERTS_TAB_ID);
   const styles = useStyles2(getStyles);
+  const alertsData = useFiringAlerts();
+  const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref } = alertsData;
 
-  const tabs = [{ id: ALERTS_TAB_ID, label: t('home.firing-alerts-card.title', 'Firing alerts') }];
+  const tabs = [
+    {
+      id: ALERTS_TAB_ID,
+      label: t('home.firing-alerts-card.title', 'Firing alerts'),
+      // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
+      counter: loading ? undefined : count,
+    },
+  ];
   return (
     <Stack direction="column" gap={2}>
-      <Stack justifyContent="space-between">
+      <Stack justifyContent="space-between" alignItems="center">
         <Text element="h2" variant="h5">
           <Trans i18nKey="home.dashboards.title">Firing alerts</Trans>
         </Text>
       </Stack>
 
-      <HomeSection paddingX={2} paddingY={1}>
+      <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
         <TabsBar>
           {tabs.map((tab) => (
             <Tab
               key={tab.id}
               label={tab.label}
               active={activeTab === tab.id}
-              //   counter={tab.counter}
+              counter={tab.counter}
               onChangeTab={() => {
                 setActiveTab(tab.id);
                 tabChanged({ tab: tab.id });
@@ -56,9 +68,19 @@ function AlertIncidentTabsInner() {
             maxHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
             minHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
           >
-            {activeTab === ALERTS_TAB_ID && <FiringAlertsCard />}
+            {activeTab === ALERTS_TAB_ID && <FiringAlertsCardView data={alertsData} hideFooterActions />}
           </ScrollContainer>
         </TabContent>
+
+        {/* Alerts tab footer */}
+        {activeTab === ALERTS_TAB_ID && (
+          <CreateAndViewAlertsButtons
+            hasAlerts={hasAlerts}
+            canCreate={canCreate}
+            newRuleHref={newRuleHref}
+            viewAllHref={viewAllHref}
+          />
+        )}
       </HomeSection>
     </Stack>
   );
