@@ -1,8 +1,9 @@
 import { http, HttpResponse } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
@@ -49,7 +50,7 @@ function mockAlerts(alerts: AlertmanagerAlert[]) {
   server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json(alerts)));
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   // Grant alerting permission by default
   jest
@@ -57,9 +58,18 @@ beforeEach(() => {
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
   mockTeams([]);
   mockAlerts([]);
+  // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
+  // so exercise it in the same flag state it renders in production.
+  await act(async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+  });
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
+  await act(async () => {
+    setTestFlags({});
+  });
   jest.restoreAllMocks();
 });
 
@@ -71,16 +81,18 @@ describe('AlertIncidentTabs', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders the Firing alerts heading and tab when permitted', async () => {
+  it('renders a single Firing alerts heading and tab when permitted', async () => {
     mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
     render(<AlertIncidentTabs />);
 
     // Wait for the alert to load so the card content is rendered.
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-    // The section heading and the inner card both render a "Firing alerts" heading.
-    expect(screen.getAllByRole('heading', { name: 'Firing alerts' }).length).toBeGreaterThan(0);
+    // In the redesign the inner card header is hidden, so only the section heading remains.
+    expect(screen.getByRole('heading', { name: 'Firing alerts' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /firing alerts/i })).toBeInTheDocument();
+    // The severity breakdown badge lives in the card header, which the redesign hides.
+    expect(screen.queryByText(/1 critical/i)).not.toBeInTheDocument();
   });
 
   it('shows a tab counter reflecting the number of firing alerts', async () => {
