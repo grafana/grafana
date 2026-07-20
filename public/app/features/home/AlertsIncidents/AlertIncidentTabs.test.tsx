@@ -89,7 +89,7 @@ describe('AlertIncidentTabs', () => {
     // Wait for the alert to load so the card content is rendered.
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
     // In the redesign the inner card header is hidden, so only the section heading remains.
-    expect(screen.getByRole('heading', { name: 'Firing alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Alerts & incidents' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /firing alerts/i })).toBeInTheDocument();
     // The severity breakdown badge lives in the card header, which the redesign hides.
     expect(screen.queryByText(/1 critical/i)).not.toBeInTheDocument();
