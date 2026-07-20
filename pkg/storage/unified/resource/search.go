@@ -602,6 +602,8 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 // (lower score = closer match — passes through pgvector's <=> output).
 //
 // Returns Unimplemented when no embedding provider or vector backend is configured
+//
+//nolint:gocyclo
 func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (resp *resourcepb.VectorSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.VectorSearch")
 	defer span.End()
