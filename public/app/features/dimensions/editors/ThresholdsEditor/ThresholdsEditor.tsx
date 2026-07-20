@@ -11,6 +11,7 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagDashboardsThresholdsInterpolation } from '@grafana/runtime/internal';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -28,6 +29,7 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   const isMounted = useRef(false);
   const userAddedThreshold = useRef(false);
   const styles = useStyles2(getStyles);
+  const interpolationEnabled = useFlagDashboardsThresholdsInterpolation();
 
   const stepsRef = useRef(steps);
   stepsRef.current = steps;
@@ -113,7 +115,7 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
         return t;
       }
 
-      if (rawValue.includes('$')) {
+      if (interpolationEnabled && rawValue.includes('$')) {
         // a variable expression: store it alongside the numeric value, which stays as the fallback
         return { ...t, valueExpr: rawValue };
       }
@@ -188,11 +190,12 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
 
     return (
       <Input
-        // text input so variable expressions (e.g. $myVar) can be typed
-        type="text"
+        // with interpolation enabled, a text input so variable expressions (e.g. $myVar) can be typed
+        type={interpolationEnabled ? 'text' : 'number'}
+        step={interpolationEnabled ? undefined : '0.0001'}
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChangeThresholdValue(event, threshold)}
-        value={threshold.valueExpr ?? threshold.value}
+        value={interpolationEnabled ? (threshold.valueExpr ?? threshold.value) : threshold.value}
         aria-label={ariaLabel}
         ref={idx === 0 ? latestThresholdInputRef : null}
         onBlur={onBlur}

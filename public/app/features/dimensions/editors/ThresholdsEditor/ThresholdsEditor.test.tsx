@@ -1,7 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { createTheme, type Threshold, ThresholdsMode } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockThemeContext } from '@grafana/ui';
 
 import { ThresholdsEditor, type Props } from './ThresholdsEditor';
@@ -23,6 +25,10 @@ describe('ThresholdsEditor', () => {
 
   beforeAll(() => {
     restoreThemeContext = mockThemeContext(createTheme());
+  });
+
+  beforeEach(() => {
+    setTestFlags({ 'dashboards.thresholdsInterpolation': true });
   });
 
   afterAll(() => {
@@ -248,6 +254,37 @@ describe('ThresholdsEditor', () => {
     const baseThreshold = screen.getByRole('textbox', { name: 'Threshold 3' });
     expect(baseThreshold).toBeDisabled();
     expect(baseThreshold).toHaveValue('Base');
+  });
+
+  it('keeps numeric-only inputs and does not store expressions when the feature toggle is disabled', async () => {
+    setTestFlags({ 'dashboards.thresholdsInterpolation': false });
+
+    const onChange = jest.fn();
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 50, valueExpr: '$warn', color: '#EAB839' },
+      ],
+    };
+    setup({ thresholds, onChange });
+
+    // number input (spinbutton) showing the numeric fallback, not the expression
+    const input = screen.getByRole('spinbutton', { name: 'Threshold 1' });
+    expect(input).toHaveValue(50);
+
+    await userEvent.tripleClick(input);
+    await userEvent.paste('42');
+    await userEvent.tab();
+
+    // the edited step is written back numeric-only
+    expect(onChange).toHaveBeenCalledWith({
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 42, color: '#EAB839' },
+      ],
+    });
   });
 
   it('adds the next threshold based on the highest numeric value, including fallbacks', async () => {
