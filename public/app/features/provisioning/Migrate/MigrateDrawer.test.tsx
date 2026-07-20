@@ -181,6 +181,29 @@ describe('MigrateDrawer', () => {
     expect(await screen.findByText('Enter a valid target branch name')).toBeInTheDocument();
   });
 
+  it('blocks a pull request that targets the configured branch', async () => {
+    // A PR against the configured branch is meaningless — the backend would fall
+    // back to a direct write and never return a pull-request URL. `makeRepo`
+    // inherits the factory's configured branch (`main`).
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    const branchInput = await screen.findByRole('textbox');
+    await user.clear(branchInput);
+    await user.type(branchInput, 'main');
+
+    expect(screen.getByText(/choose a branch other than the configured branch/i)).toBeInTheDocument();
+    const migrateButton = screen.getByRole('button', { name: /migrate everything/i });
+    expect(migrateButton).toHaveAttribute('aria-disabled', 'true');
+    await user.hover(migrateButton);
+    expect(await screen.findByText('Choose a target branch other than the configured branch')).toBeInTheDocument();
+  });
+
   it('submits skipResourceDeletion when "Keep existing resources" is checked', async () => {
     let postedBody = '';
     server.use(
@@ -398,6 +421,19 @@ describe('MigrateDrawer', () => {
     expect(await screen.findByText('Pulling...')).toBeInTheDocument();
     expect(postedBody).toContain('"action":"migrate"');
     expect(postedBody).toContain('"generateNewFolderIDs":false');
+  });
+
+  it('hides the "Generate new folder IDs" control for an instance-sync repository', async () => {
+    // The control never applies to instance sync (folder UIDs must be preserved),
+    // so it is hidden and cannot be toggled on.
+    const instanceRepo = createRepository({
+      metadata: { name: 'inst' },
+      spec: { title: 'Instance repo', workflows: ['write'], sync: { target: 'instance', enabled: true } },
+    });
+    render(<MigrateDrawer selective={false} repos={[instanceRepo]} onDismiss={jest.fn()} />);
+
+    expect(await screen.findByRole('checkbox', { name: /keep existing resources/i })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /generate new folder ids/i })).not.toBeInTheDocument();
   });
 
   it('notifies onMigrated once the migration completes', async () => {

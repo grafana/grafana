@@ -18,6 +18,30 @@ import { validateBranchName } from '../utils/git';
 // branch, or open a pull request against a new branch.
 type MigrateWorkflow = 'write' | 'branch';
 
+// Resolve the write-workflow-relevant bits of a repository in one place, so the
+// per-repo state reset (on selection change) and the initial mount state share
+// the same derivation without adjusting state during render.
+function getRepoWorkflowState(repo?: Repository) {
+  const workflows = repo?.spec?.workflows ?? [];
+  const supportsWrite = workflows.includes('write');
+  const supportsBranch = workflows.includes('branch');
+  const remote =
+    repo?.spec?.github ??
+    repo?.spec?.githubEnterprise ??
+    repo?.spec?.gitlab ??
+    repo?.spec?.bitbucket ??
+    repo?.spec?.git;
+  return {
+    supportsWrite,
+    supportsBranch,
+    // A branch-only repo can't commit to its configured branch, so opening a
+    // pull request is the only option.
+    branchRequired: supportsBranch && !supportsWrite,
+    syncTarget: repo?.spec?.sync?.target,
+    configuredBranch: remote?.branch ?? '',
+  };
+}
+
 interface MigrateDrawerProps {
   repos: Repository[];
   onDismiss: () => void;
@@ -80,10 +104,11 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   // Only pre-select a repository when exactly one is usable. With several
   // options available we leave the choice to the user rather than guessing, and
   // we never pre-select a disabled (un-pushable) repository.
-  const [selectedRepo, setSelectedRepo] = useState<string | undefined>(() => {
+  const initialSelectedRepo = useMemo(() => {
     const selectable = repoOptions.filter((option) => !option.isDisabled);
     return selectable.length === 1 ? selectable[0].value : undefined;
-  });
+  }, [repoOptions]);
+  const [selectedRepo, setSelectedRepo] = useState<string | undefined>(initialSelectedRepo);
   const { job, startJob, isLoading } = useSyncJob({ repoName: selectedRepo ?? '' });
   const migratedRef = useRef(false);
   // Track the job's reported status so the drawer can surface errors/warnings.
@@ -92,59 +117,69 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   const [stepStatusInfo, setStepStatusInfo] = useState<StepStatusInfo>({ status: 'idle' });
 
   const selectedRepoObj = repos.find((repo) => repo.metadata?.name === selectedRepo);
-  const syncTarget = selectedRepoObj?.spec?.sync?.target;
+  const { supportsWrite, supportsBranch, syncTarget, configuredBranch } = getRepoWorkflowState(selectedRepoObj);
 
-  const workflows = selectedRepoObj?.spec?.workflows ?? [];
-  const supportsWrite = workflows.includes('write');
-  const supportsBranch = workflows.includes('branch');
-  // A branch-only repo can't commit to its configured branch, so opening a pull
-  // request is the only option; a write-capable repo defaults to committing to
-  // the configured branch.
-  const branchRequired = supportsBranch && !supportsWrite;
+  // Generating new folder UIDs never applies to an instance sync: it takes over
+  // the whole instance and must preserve the existing folder UIDs. The control is
+  // hidden and the submitted value forced off for that target.
+  const folderIDsApplicable = syncTarget !== 'instance';
 
   // The write workflow the user picked: commit directly to the configured branch
   // or open a pull request. These are mutually exclusive, and the target branch
-  // is only relevant (and editable) for the pull-request workflow.
-  const [workflow, setWorkflow] = useState<MigrateWorkflow>(branchRequired ? 'branch' : 'write');
+  // is only relevant (and editable) for the pull-request workflow. Seeded from
+  // the initially-selected repo; reset by the event handlers below.
+  const [workflow, setWorkflow] = useState<MigrateWorkflow>(() =>
+    getRepoWorkflowState(repos.find((repo) => repo.metadata?.name === initialSelectedRepo)).branchRequired
+      ? 'branch'
+      : 'write'
+  );
   // Keep the migrated resources on the instance instead of deleting them.
   const [skipResourceDeletion, setSkipResourceDeletion] = useState(false);
   // Generate fresh folder UIDs on export. Defaults per target (instance sync
   // preserves UIDs and takes folders over; every other target regenerates); the
   // user can override, with a confirmation when turning it off.
-  const [generateNewFolderIDs, setGenerateNewFolderIDs] = useState(syncTarget !== 'instance');
+  const [generateNewFolderIDs, setGenerateNewFolderIDs] = useState(
+    () =>
+      getRepoWorkflowState(repos.find((repo) => repo.metadata?.name === initialSelectedRepo)).syncTarget !== 'instance'
+  );
   const [confirmDisableFolderIDs, setConfirmDisableFolderIDs] = useState(false);
 
-  // Reset per-repo choices when the selected repository changes, so a choice made
-  // for one repo doesn't carry into another.
-  const [prevSelectedRepo, setPrevSelectedRepo] = useState(selectedRepo);
-  if (selectedRepo !== prevSelectedRepo) {
-    setPrevSelectedRepo(selectedRepo);
-    setWorkflow(branchRequired ? 'branch' : 'write');
-    setSkipResourceDeletion(false);
-    setGenerateNewFolderIDs(syncTarget !== 'instance');
-  }
+  // The generated name is only a default; the user can edit it. Seeded on mount
+  // for a branch-only repo, and re-seeded from the event handlers (not during
+  // render) when the repo or workflow changes.
+  const [branchRef, setBranchRef] = useState(() => {
+    const initial = getRepoWorkflowState(repos.find((repo) => repo.metadata?.name === initialSelectedRepo));
+    return initial.branchRequired && initialSelectedRepo ? generateNewBranchName(`migrate-${initialSelectedRepo}`) : '';
+  });
 
   const isBranchWorkflow = supportsBranch && workflow === 'branch';
 
-  // Auto-populate the target branch when opening a pull request. Keyed on the
-  // repo and the workflow so the timestamped name is stable across renders and
-  // matches what we display and submit.
-  const generatedBranch = useMemo(
-    () => (selectedRepo && isBranchWorkflow ? generateNewBranchName(`migrate-${selectedRepo}`) : ''),
-    [selectedRepo, isBranchWorkflow]
+  // Reset the per-repo choices when the user selects a different repository, so a
+  // choice made for one repo doesn't carry into another.
+  const handleRepoChange = useCallback(
+    (repoName?: string) => {
+      const next = getRepoWorkflowState(repos.find((repo) => repo.metadata?.name === repoName));
+      setSelectedRepo(repoName);
+      setWorkflow(next.branchRequired ? 'branch' : 'write');
+      setSkipResourceDeletion(false);
+      setGenerateNewFolderIDs(next.syncTarget !== 'instance');
+      setBranchRef(next.branchRequired && repoName ? generateNewBranchName(`migrate-${repoName}`) : '');
+    },
+    [repos]
   );
 
-  // The generated name is only a default; the user can edit it. Re-seed the
-  // editable value whenever the generated default changes.
-  const [branchRef, setBranchRef] = useState(generatedBranch);
-  const [prevGeneratedBranch, setPrevGeneratedBranch] = useState(generatedBranch);
-  if (generatedBranch !== prevGeneratedBranch) {
-    setPrevGeneratedBranch(generatedBranch);
-    setBranchRef(generatedBranch);
-  }
+  // Switching to the pull-request workflow seeds a branch name the first time.
+  const selectBranchWorkflow = useCallback(() => {
+    setWorkflow('branch');
+    setBranchRef((current) => current || (selectedRepo ? generateNewBranchName(`migrate-${selectedRepo}`) : ''));
+  }, [selectedRepo]);
 
-  // In the pull-request workflow the branch name must be a valid git ref.
-  const branchNameValid = !isBranchWorkflow || Boolean(validateBranchName(branchRef));
+  // In the pull-request workflow the branch must be a valid git ref and must
+  // differ from the configured branch: a PR against the configured branch is
+  // meaningless, and the backend would silently fall back to a direct write
+  // (and never return a pull-request URL).
+  const branchIsConfigured = isBranchWorkflow && configuredBranch !== '' && branchRef.trim() === configuredBranch;
+  const branchNameValid = !isBranchWorkflow || (Boolean(validateBranchName(branchRef)) && !branchIsConfigured);
 
   const canMigrate = Boolean(selectedRepo) && hasResourcesToMigrate && branchNameValid;
 
@@ -154,7 +189,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     }
     await startJob(true, {
       syncTarget,
-      generateNewFolderIDs,
+      generateNewFolderIDs: folderIDsApplicable ? generateNewFolderIDs : false,
       ...(isBranchWorkflow && branchRef ? { branch: branchRef } : {}),
       ...(isSelective ? { resources } : {}),
       ...(skipResourceDeletion ? { skipResourceDeletion: true } : {}),
@@ -163,6 +198,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     canMigrate,
     startJob,
     syncTarget,
+    folderIDsApplicable,
     generateNewFolderIDs,
     isBranchWorkflow,
     branchRef,
@@ -257,7 +293,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
                 value={selectedRepo ?? null}
                 placeholder={t('provisioning.migrate.repo-placeholder', 'Select a repository')}
                 onChange={(option) => {
-                  setSelectedRepo(option.value);
+                  handleRepoChange(option.value);
                 }}
               />
             )}
@@ -280,7 +316,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
                 </Card>
               )}
               {supportsBranch && (
-                <Card noMargin isSelected={workflow === 'branch'} onClick={() => setWorkflow('branch')}>
+                <Card noMargin isSelected={workflow === 'branch'} onClick={selectBranchWorkflow}>
                   <Card.Heading>
                     <Trans i18nKey="provisioning.migrate.workflow-branch-title">Open a pull request</Trans>
                   </Card.Heading>
@@ -304,7 +340,19 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
               'Grafana creates this branch and opens the pull request for you. Edit the name to use a different branch.'
             )}
             invalid={!branchNameValid}
-            error={!branchNameValid ? <BranchValidationError /> : undefined}
+            error={
+              !branchNameValid ? (
+                branchIsConfigured ? (
+                  t(
+                    'provisioning.migrate.branch-must-differ',
+                    'Choose a branch other than the configured branch ({{branch}})',
+                    { branch: configuredBranch }
+                  )
+                ) : (
+                  <BranchValidationError />
+                )
+              ) : undefined
+            }
           >
             <Input
               id="migrate-target-branch"
@@ -329,38 +377,43 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
               />
             </Field>
 
-            <Field noMargin>
-              <Checkbox
-                label={t('provisioning.migrate.generate-folder-ids-label', 'Generate new folder IDs')}
-                description={t(
-                  'provisioning.migrate.generate-folder-ids-description',
-                  'Create the migrated folders anew instead of taking over the existing folders.'
-                )}
-                value={generateNewFolderIDs}
-                onChange={(e) => {
-                  if (e.currentTarget.checked) {
-                    setGenerateNewFolderIDs(true);
-                  } else {
-                    // Turning this off takes over existing folders — confirm first.
-                    setConfirmDisableFolderIDs(true);
-                  }
-                }}
-              />
-            </Field>
+            {folderIDsApplicable && (
+              <>
+                <Field noMargin>
+                  <Checkbox
+                    label={t('provisioning.migrate.generate-folder-ids-label', 'Generate new folder IDs')}
+                    description={t(
+                      'provisioning.migrate.generate-folder-ids-description',
+                      'Create the migrated folders anew instead of taking over the existing folders.'
+                    )}
+                    value={generateNewFolderIDs}
+                    onChange={(e) => {
+                      if (e.currentTarget.checked) {
+                        setGenerateNewFolderIDs(true);
+                      } else {
+                        // Turning this off takes over existing folders — confirm first.
+                        setConfirmDisableFolderIDs(true);
+                      }
+                    }}
+                  />
+                </Field>
 
-            {!generateNewFolderIDs && (
-              <Alert
-                severity="warning"
-                title={t(
-                  'provisioning.migrate.generate-folder-ids-warning-title',
-                  'Existing folders will be taken over'
+                {!generateNewFolderIDs && (
+                  <Alert
+                    severity="warning"
+                    title={t(
+                      'provisioning.migrate.generate-folder-ids-warning-title',
+                      'Existing folders will be taken over'
+                    )}
+                  >
+                    <Trans i18nKey="provisioning.migrate.generate-folder-ids-warning-body">
+                      Keeping the existing folder IDs takes over the current folders instead of creating new ones, which
+                      may leave their alerts and library panels orphaned. Only disable this if you understand the
+                      impact.
+                    </Trans>
+                  </Alert>
                 )}
-              >
-                <Trans i18nKey="provisioning.migrate.generate-folder-ids-warning-body">
-                  Keeping the existing folder IDs takes over the current folders instead of creating new ones, which may
-                  leave their alerts and library panels orphaned. Only disable this if you understand the impact.
-                </Trans>
-              </Alert>
+              </>
             )}
           </>
         )}
@@ -393,12 +446,17 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
                 ? t('provisioning.migrate.migrate-button-disabled-tooltip', 'Select a target repository first')
                 : !hasResourcesToMigrate
                   ? t('provisioning.migrate.migrate-button-empty-tooltip', 'Select at least one resource to migrate')
-                  : !branchNameValid
+                  : branchIsConfigured
                     ? t(
-                        'provisioning.migrate.migrate-button-invalid-branch-tooltip',
-                        'Enter a valid target branch name'
+                        'provisioning.migrate.migrate-button-configured-branch-tooltip',
+                        'Choose a target branch other than the configured branch'
                       )
-                    : undefined
+                    : !branchNameValid
+                      ? t(
+                          'provisioning.migrate.migrate-button-invalid-branch-tooltip',
+                          'Enter a valid target branch name'
+                        )
+                      : undefined
             }
           >
             {isSelective ? (
