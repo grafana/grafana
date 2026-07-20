@@ -4,6 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { AppEvents, type ScopedVars, type SelectableValue, type VariableWithMultiSupport } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  config,
   getAppEvents,
   getBackendSrv,
   logWarning,
@@ -58,10 +59,50 @@ export const paginatedRoutes = {
   workspaces: 'workspaces',
 } as const;
 
+// Cap the number of raw ARM pages we follow client-side (flag OFF) to avoid runaway loops.
+export const MAX_ARM_PAGES = 50;
+
+const armApiVersions = {
+  subscriptions: '2019-03-01',
+  workspaces: '2017-04-26-preview',
+};
+
 export interface ArmResourcePage<T> {
   value: T[];
   nextToken?: string;
   truncated: boolean;
+}
+
+function serverSidePaginationEnabled(): boolean {
+  return (config.featureToggles as Record<string, boolean | undefined>).azureMonitorServerSidePagination === true;
+}
+
+// Maps a paginated subtype onto the passthrough ARM resource path (with api-version). The
+// subscriptionId (workspaces only) lives in the path, not as a forwarded query param.
+function armResourcePath(subtype: string, params: Record<string, string>): string {
+  if (subtype === paginatedRoutes.subscriptions) {
+    return `${routeNames.azureMonitor}/subscriptions?api-version=${armApiVersions.subscriptions}`;
+  }
+  if (subtype === paginatedRoutes.workspaces) {
+    return `${routeNames.azureMonitor}/subscriptions/${params.subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=${armApiVersions.workspaces}`;
+  }
+  return subtype;
+}
+
+const resourcesUrl = (datasourceUid: string, path: string): string =>
+  `/api/datasources/uid/${datasourceUid}/resources/${path}`;
+
+function appendParams(url: string, params: Record<string, string | undefined>): string {
+  // Keys are controlled literals (listAll/nextToken/$skiptoken) so are left verbatim; only
+  // values are encoded (ARM $skiptoken values can contain reserved characters).
+  const query = Object.entries(params)
+    .filter((entry): entry is [string, string] => entry[1] !== undefined && entry[1] !== '')
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join('&');
+  if (!query) {
+    return url;
+  }
+  return `${url}${url.includes('?') ? '&' : '?'}${query}`;
 }
 
 export function parseNextLinkToken(linkHeader: string): string | undefined {
@@ -72,23 +113,51 @@ export function parseNextLinkToken(linkHeader: string): string | undefined {
   return new URLSearchParams(match[1]).get('nextToken') ?? undefined;
 }
 
+export function skipTokenFromNextLink(nextLink?: string): string | undefined {
+  if (!nextLink) {
+    return undefined;
+  }
+  try {
+    return new URL(nextLink).searchParams.get('$skiptoken') ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// Rewrites a raw ARM nextLink (absolute management.azure.com URL) onto a passthrough path by
+// stripping the scheme+host, keeping path+query, and re-prefixing with the resources route.
+export function nextLinkToPath(prefix: string, nextLink: string): string {
+  const { pathname, search } = new URL(nextLink);
+  return `${prefix}${pathname}${search}`;
+}
+
 export async function fetchArmResourcePage<T>(
   datasourceUid: string,
   subtype: string,
   params: Record<string, string> = {}
 ): Promise<ArmResourcePage<T>> {
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<AzureAPIResponse<T>>({
-      url: `/api/datasources/uid/${datasourceUid}/resources/${subtype}`,
-      params,
-      method: 'GET',
-    })
-  );
+  const path = armResourcePath(subtype, params);
+
+  if (serverSidePaginationEnabled()) {
+    // Flag ON: the passthrough understands listAll/nextToken and returns the cursor in the Link header.
+    const url = appendParams(resourcesUrl(datasourceUid, path), {
+      listAll: params.listAll,
+      nextToken: params.nextToken,
+    });
+    const response = await lastValueFrom(getBackendSrv().fetch<AzureAPIResponse<T>>({ url, method: 'GET' }));
+    const value = response.data?.value ?? [];
+    const linkHeader = response.headers.get('Link');
+    const nextToken = linkHeader ? parseNextLinkToken(linkHeader) : undefined;
+    const truncated = response.headers.get('X-Results-Truncated') === 'true';
+    return { value, nextToken, truncated };
+  }
+
+  // Flag OFF: raw ARM body. Do not forward listAll/nextToken; continuation rides ARM's own $skiptoken.
+  const url = appendParams(resourcesUrl(datasourceUid, path), { $skiptoken: params.nextToken });
+  const response = await lastValueFrom(getBackendSrv().fetch<AzureAPIResponse<T>>({ url, method: 'GET' }));
   const value = response.data?.value ?? [];
-  const linkHeader = response.headers.get('Link');
-  const nextToken = linkHeader ? parseNextLinkToken(linkHeader) : undefined;
-  const truncated = response.headers.get('X-Results-Truncated') === 'true';
-  return { value, nextToken, truncated };
+  const nextToken = skipTokenFromNextLink(response.data?.nextLink);
+  return { value, nextToken, truncated: false };
 }
 
 export async function fetchAllArmResources<T>(
@@ -96,11 +165,30 @@ export async function fetchAllArmResources<T>(
   subtype: string,
   params: Record<string, string> = {}
 ): Promise<T[]> {
-  const { value, truncated } = await fetchArmResourcePage<T>(datasourceUid, subtype, { ...params, listAll: 'true' });
-  if (truncated) {
+  if (serverSidePaginationEnabled()) {
+    // Flag ON: the backend eagerly pages server-side; request everything and honour the truncation header.
+    const { value, truncated } = await fetchArmResourcePage<T>(datasourceUid, subtype, { ...params, listAll: 'true' });
+    if (truncated) {
+      warnResultsTruncated();
+    }
+    return value;
+  }
+
+  // Flag OFF: follow the raw ARM nextLink client-side, rewriting each onto the passthrough path.
+  const prefix = resourcesUrl(datasourceUid, routeNames.azureMonitor);
+  const results: T[] = [];
+  let url: string | undefined = resourcesUrl(datasourceUid, armResourcePath(subtype, params));
+  let pages = 0;
+  for (; url && pages < MAX_ARM_PAGES; pages++) {
+    const response = await lastValueFrom(getBackendSrv().fetch<AzureAPIResponse<T>>({ url, method: 'GET' }));
+    results.push(...(response.data?.value ?? []));
+    const nextLink = response.data?.nextLink;
+    url = nextLink ? nextLinkToPath(prefix, nextLink) : undefined;
+  }
+  if (url) {
     warnResultsTruncated();
   }
-  return value;
+  return results;
 }
 
 export function warnResultsTruncated(): void {

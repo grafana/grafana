@@ -2,7 +2,7 @@ import { get, set } from 'lodash';
 import { of } from 'rxjs';
 
 import { AppEvents, type ScopedVars } from '@grafana/data';
-import { type VariableInterpolation } from '@grafana/runtime';
+import { config, type VariableInterpolation } from '@grafana/runtime';
 
 import AzureMonitorDatasource from '../datasource';
 import createMockQuery from '../mocks/query';
@@ -39,12 +39,19 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-function mockArmPage<T>(value: T[], headers: Record<string, string> = {}) {
-  return of({
-    data: { value },
-    headers: { get: (key: string) => headers[key] ?? null },
-  });
+// Flag ON: normalized body + Link/X-Results-Truncated headers.
+function onArmPage<T>(value: T[], headers: Record<string, string> = {}) {
+  return of({ data: { value }, headers: new Headers(headers) });
 }
+
+// Flag OFF: raw ARM body carrying nextLink, no Link header.
+function offArmPage<T>(value: T[], nextLink?: string) {
+  return of({ data: { value, nextLink } });
+}
+
+const setServerSidePagination = (enabled: boolean) => {
+  (config.featureToggles as Record<string, boolean | undefined>).azureMonitorServerSidePagination = enabled;
+};
 
 interface TestContext {
   instanceSettings: AzureMonitorDataSourceInstanceSettings;
@@ -917,44 +924,130 @@ describe('AzureMonitorDatasource', () => {
         ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         ctx.instanceSettings.uid = 'azuremonitor-uid';
         ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-        backendFetch.mockReturnValue(mockArmPage(response.value));
       });
 
-      it('should return list of subscriptions', () => {
-        return ctx.ds.getSubscriptions().then((results: Array<{ text: string; value: string }>) => {
-          expect(results.length).toEqual(1);
-          expect(results[0].text).toEqual('Primary Subscription');
-          expect(results[0].value).toEqual('99999999-cccc-bbbb-aaaa-9106972f9572');
+      describe('with server-side pagination OFF (raw ARM nextLink)', () => {
+        beforeEach(() => {
+          setServerSidePagination(false);
+          backendFetch.mockReturnValue(offArmPage(response.value));
+        });
+
+        it('should return list of subscriptions', () => {
+          return ctx.ds.getSubscriptions().then((results: Array<{ text: string; value: string }>) => {
+            expect(results.length).toEqual(1);
+            expect(results[0].text).toEqual('Primary Subscription');
+            expect(results[0].value).toEqual('99999999-cccc-bbbb-aaaa-9106972f9572');
+          });
+        });
+
+        it('requests the passthrough subscriptions path with no listAll/nextToken params', async () => {
+          backendFetch.mockReturnValue(
+            offArmPage([
+              { subscriptionId: 'sub-1', displayName: 'Subscription 1' },
+              { subscriptionId: 'sub-2', displayName: 'Subscription 2' },
+            ])
+          );
+
+          const results = await ctx.ds.getSubscriptions();
+
+          expect(results.map((r: { value: string }) => r.value)).toEqual(['sub-1', 'sub-2']);
+          expect(backendFetch).toHaveBeenCalledTimes(1);
+          expect(backendFetch).toHaveBeenCalledWith({
+            url: '/api/datasources/uid/azuremonitor-uid/resources/azuremonitor/subscriptions?api-version=2019-03-01',
+            method: 'GET',
+          });
+        });
+
+        it('follows the raw ARM nextLink across pages', async () => {
+          backendFetch
+            .mockReturnValueOnce(
+              offArmPage(
+                [{ subscriptionId: 'sub-1', displayName: 'Subscription 1' }],
+                'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=tok2'
+              )
+            )
+            .mockReturnValueOnce(offArmPage([{ subscriptionId: 'sub-2', displayName: 'Subscription 2' }]));
+
+          const results = await ctx.ds.getSubscriptions();
+
+          expect(results.map((r: { value: string }) => r.value)).toEqual(['sub-1', 'sub-2']);
+          expect(backendFetch).toHaveBeenCalledTimes(2);
+          expect(backendFetch.mock.calls[1][0].url).toContain('$skiptoken=tok2');
         });
       });
 
-      it('requests the backend subscriptions endpoint once in eager mode', async () => {
-        backendFetch.mockReturnValue(
-          mockArmPage([
-            { subscriptionId: 'sub-1', displayName: 'Subscription 1' },
-            { subscriptionId: 'sub-2', displayName: 'Subscription 2' },
-          ])
-        );
+      describe('with server-side pagination ON (Link header cursor)', () => {
+        beforeEach(() => {
+          setServerSidePagination(true);
+        });
 
-        const results = await ctx.ds.getSubscriptions();
+        afterEach(() => {
+          setServerSidePagination(false);
+        });
 
-        expect(results.map((r: { value: string }) => r.value)).toEqual(['sub-1', 'sub-2']);
-        expect(backendFetch).toHaveBeenCalledTimes(1);
-        expect(backendFetch).toHaveBeenCalledWith({
-          url: '/api/datasources/uid/azuremonitor-uid/resources/subscriptions',
-          params: { listAll: 'true' },
-          method: 'GET',
+        it('requests the passthrough subscriptions endpoint once in eager mode', async () => {
+          backendFetch.mockReturnValue(
+            onArmPage([
+              { subscriptionId: 'sub-1', displayName: 'Subscription 1' },
+              { subscriptionId: 'sub-2', displayName: 'Subscription 2' },
+            ])
+          );
+
+          const results = await ctx.ds.getSubscriptions();
+
+          expect(results.map((r: { value: string }) => r.value)).toEqual(['sub-1', 'sub-2']);
+          expect(backendFetch).toHaveBeenCalledTimes(1);
+          expect(backendFetch).toHaveBeenCalledWith({
+            url: '/api/datasources/uid/azuremonitor-uid/resources/azuremonitor/subscriptions?api-version=2019-03-01&listAll=true',
+            method: 'GET',
+          });
+        });
+
+        it('warns when the backend reports the listing was truncated', async () => {
+          backendFetch.mockReturnValue(
+            onArmPage([{ subscriptionId: 'sub-1', displayName: 'Subscription 1' }], { 'X-Results-Truncated': 'true' })
+          );
+
+          await ctx.ds.getSubscriptions();
+
+          expect(publishAppEvent).toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertWarning.name }));
         });
       });
 
-      it('warns when the backend reports the listing was truncated', async () => {
-        backendFetch.mockReturnValue(
-          mockArmPage([{ subscriptionId: 'sub-1', displayName: 'Subscription 1' }], { 'X-Results-Truncated': 'true' })
-        );
+      describe('getSubscriptionsPage (incremental)', () => {
+        it('under ON, sends listAll=false + nextToken and reads the Link header cursor', async () => {
+          setServerSidePagination(true);
+          backendFetch.mockReturnValue(
+            onArmPage([{ subscriptionId: 'sub-1', displayName: 'Subscription 1' }], {
+              Link: '<?nextToken=page2>; rel="next"',
+            })
+          );
 
-        await ctx.ds.getSubscriptions();
+          const { subscriptions, nextToken } = await ctx.ds.azureMonitorDatasource.getSubscriptionsPage('page1');
 
-        expect(publishAppEvent).toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertWarning.name }));
+          expect(subscriptions.map((s) => s.value)).toEqual(['sub-1']);
+          expect(nextToken).toBe('page2');
+          expect(backendFetch.mock.calls[0][0].url).toContain('&listAll=false');
+          expect(backendFetch.mock.calls[0][0].url).toContain('&nextToken=page1');
+          setServerSidePagination(false);
+        });
+
+        it('under OFF, forwards nextToken as $skiptoken and derives the next token from the body nextLink', async () => {
+          setServerSidePagination(false);
+          backendFetch.mockReturnValue(
+            offArmPage(
+              [{ subscriptionId: 'sub-1', displayName: 'Subscription 1' }],
+              'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=tok2'
+            )
+          );
+
+          const { subscriptions, nextToken } = await ctx.ds.azureMonitorDatasource.getSubscriptionsPage('tok1');
+
+          expect(subscriptions.map((s) => s.value)).toEqual(['sub-1']);
+          expect(nextToken).toBe('tok2');
+          expect(backendFetch.mock.calls[0][0].url).toContain('&$skiptoken=tok1');
+          expect(backendFetch.mock.calls[0][0].url).not.toContain('listAll');
+        });
       });
     });
 
