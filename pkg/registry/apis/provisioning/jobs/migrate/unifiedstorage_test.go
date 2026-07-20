@@ -588,6 +588,78 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 	})
 }
 
+func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
+	instanceRepo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitRepositoryType,
+			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+		},
+	}
+	folderRepo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitRepositoryType,
+			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+		},
+	}
+
+	t.Run("instance migration with SkipResourceDeletion does not delete the migrated resources", func(t *testing.T) {
+		exportWorker := jobs.NewMockWorker(t)
+		syncWorker := jobs.NewMockWorker(t)
+		pr := jobs.NewMockJobProgressRecorder(t)
+		repo := repository.NewMockRepository(t)
+		nc := NewMockNamespaceCleaner(t)
+
+		repo.On("Config").Return(instanceRepo)
+		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+		pr.On("StrictMaxErrors", 1).Return()
+		pr.On("ResetResults", false).Return()
+
+		exportWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Push != nil
+		}), mock.Anything).Return(nil)
+		syncWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Pull != nil
+		}), pr).Return(nil)
+
+		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
+		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+			Migrate: &provisioning.MigrateJobOptions{SkipResourceDeletion: true},
+		}}, pr)
+		require.NoError(t, err)
+		nc.AssertNotCalled(t, "Clean", mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	// A folder branch migration normally deletes the exported resources; with
+	// SkipResourceDeletion it exports to the branch but deletes nothing.
+	t.Run("folder branch migration with SkipResourceDeletion does not delete exported resources", func(t *testing.T) {
+		exportWorker := jobs.NewMockWorker(t)
+		syncWorker := jobs.NewMockWorker(t)
+		pr := jobs.NewMockJobProgressRecorder(t)
+		repo := repository.NewMockRepository(t)
+		nc := NewMockNamespaceCleaner(t)
+
+		repo.On("Config").Return(folderRepo)
+		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+		pr.On("StrictMaxErrors", 1).Return()
+
+		exportWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Push != nil && job.Spec.Push.Branch == "feature-x"
+		}), mock.Anything).Return(nil)
+
+		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
+		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x", SkipResourceDeletion: true},
+		}}, pr)
+		require.NoError(t, err)
+		syncWorker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		nc.AssertNotCalled(t, "CleanResources", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+}
+
 func TestUnifiedStorageMigrator_CommitMessagePrecedence(t *testing.T) {
 	tests := []struct {
 		name        string

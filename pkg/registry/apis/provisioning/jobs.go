@@ -455,6 +455,12 @@ func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository
 		return err
 	}
 
+	// When deletion is skipped the migration removes nothing, so no delete
+	// permission is required (read + create above is enough).
+	if spec.Migrate.SkipResourceDeletion {
+		return nil
+	}
+
 	// Require delete permission only for what the migration will actually remove,
 	// mirroring UnifiedStorageMigrator:
 	//   - instance/unset targets always clean the whole namespace → delete-all.

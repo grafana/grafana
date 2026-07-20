@@ -521,6 +521,20 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("instance migration with SkipResourceDeletion requires no delete permission", func(t *testing.T) {
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
+		}), mock.Anything).Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{SkipResourceDeletion: true}}
+
+		err := c.authorizeMigrateJob(ctx, mockReader, instanceRepo(), spec)
+		require.NoError(t, err)
+	})
+
 	t.Run("instance migration forbidden when delete is denied", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {

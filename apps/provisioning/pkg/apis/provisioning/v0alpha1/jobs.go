@@ -244,6 +244,13 @@ type MigrateJobOptions struct {
 	// existing folder UID. The subsequent pull creates new folders rather than
 	// taking over the originals. Has no effect when folder metadata is not written.
 	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
+
+	// SkipResourceDeletion keeps the migrated resources on the instance instead of
+	// removing them. By default a migration deletes the resources it moved (the
+	// whole namespace for an instance target, or the exported resources for a
+	// branch migration); when true, no deletion happens and the resources are
+	// left in place.
+	SkipResourceDeletion bool `json:"skipResourceDeletion,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {

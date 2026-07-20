@@ -106,6 +106,12 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		}
 	}
 
+	// SkipResourceDeletion keeps the migrated resources on the instance; when set
+	// we do no cleanup at all.
+	if options.SkipResourceDeletion {
+		return nil
+	}
+
 	// What to remove from the instance depends on the sync target. A non-branch
 	// migration already adopted its resources during the pull, so nothing below
 	// runs for it.

@@ -1977,6 +1977,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 							Format:      "",
 						},
 					},
+					"skipResourceDeletion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

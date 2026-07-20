@@ -1664,6 +1664,8 @@ export type MigrateJobOptions = {
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
   resources?: ResourceRef[];
+  /** SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place. */
+  skipResourceDeletion?: boolean;
 };
 export type MoveJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */

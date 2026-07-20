@@ -32,6 +32,12 @@ type MigrateJobOptionsApplyConfiguration struct {
 	// existing folder UID. The subsequent pull creates new folders rather than
 	// taking over the originals. Has no effect when folder metadata is not written.
 	GenerateNewFolderIDs *bool `json:"generateNewFolderIDs,omitempty"`
+	// SkipResourceDeletion keeps the migrated resources on the instance instead of
+	// removing them. By default a migration deletes the resources it moved (the
+	// whole namespace for an instance target, or the exported resources for a
+	// branch migration); when true, no deletion happens and the resources are
+	// left in place.
+	SkipResourceDeletion *bool `json:"skipResourceDeletion,omitempty"`
 }
 
 // MigrateJobOptionsApplyConfiguration constructs a declarative configuration of the MigrateJobOptions type for use with
@@ -74,5 +80,13 @@ func (b *MigrateJobOptionsApplyConfiguration) WithResources(values ...*ResourceR
 // If called multiple times, the GenerateNewFolderIDs field is set to the value of the last call.
 func (b *MigrateJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value bool) *MigrateJobOptionsApplyConfiguration {
 	b.GenerateNewFolderIDs = &value
+	return b
+}
+
+// WithSkipResourceDeletion sets the SkipResourceDeletion field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SkipResourceDeletion field is set to the value of the last call.
+func (b *MigrateJobOptionsApplyConfiguration) WithSkipResourceDeletion(value bool) *MigrateJobOptionsApplyConfiguration {
+	b.SkipResourceDeletion = &value
 	return b
 }
