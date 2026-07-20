@@ -80,8 +80,9 @@ export { TagList } from './components/Tags/TagList';
 export { FilterPill } from './components/FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
-/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; this export may be removed in a future release. */
+/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to `QueryInput`; this export may be removed in a future release. */
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
+export { QueryInput, type QueryInputProps } from './components/QueryInput/QueryInput';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
 export {
