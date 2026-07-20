@@ -68,6 +68,10 @@ import {
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import {
+  mayInjectAnyPredefinedVariables,
+  resolvePredefinedVariablesForDashboard,
+} from '../utils/predefinedVariableAllowList';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -1027,7 +1031,18 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
     const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
-    const predefinedVariables = await fetchPredefinedVariables(folderUid);
+    const annotations = rsp.metadata.annotations;
+    const resolutionInput = { annotations };
+
+    if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
+      return {
+        ...options,
+        defaultVariables: [...(options.defaultVariables ?? [])],
+      };
+    }
+
+    const candidates = await fetchPredefinedVariables(folderUid);
+    const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
 
     // Always attach (including []) so scene-cache hits can sync — including clearing
     // variables that were deleted after the scene was cached.

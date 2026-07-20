@@ -8,13 +8,16 @@ import {
   getAlertingTabID,
   getLibraryPanelsTabID,
   getDashboardsTabID,
+  getVariablesTabID,
 } from 'app/features/folders/state/navModel';
 import type { FolderDTO } from 'app/types/folders';
+
+export type FolderActiveTab = 'dashboards' | 'panels' | 'alerts' | 'variables';
 
 /**
  * Returns a memoized nav model while also resolving counts for the tabs.
  */
-export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: 'dashboards' | 'panels' | 'alerts') {
+export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: FolderActiveTab) {
   const folderCountsResult = useGetFolderCountsQuery(folderDTO?.uid ? { name: folderDTO.uid } : skipToken, {
     // Always refetch the counts as we don't have a way to invalidate the cache when descendant resources are
     // created or deleted because they are in separate RTK slices.
@@ -46,7 +49,9 @@ export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: 'dashbo
         ? getDashboardsTabID(folderDTO.uid)
         : activeTab === 'panels'
           ? getLibraryPanelsTabID(folderDTO.uid)
-          : getAlertingTabID(folderDTO.uid);
+          : activeTab === 'variables'
+            ? getVariablesTabID(folderDTO.uid)
+            : getAlertingTabID(folderDTO.uid);
     const tab = model.children?.find((child) => child.id === activeTabID);
     if (tab) {
       tab.active = true;

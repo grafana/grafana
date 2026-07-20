@@ -11,13 +11,14 @@ import {
   type Spec as DashboardV2Spec,
   defaultGridLayoutKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyUsePredefinedVariables } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type DashboardDTO } from 'app/types/dashboard';
 
 import { contextSrv } from '../../../core/services/context_srv';
+import { allowAllPredefinedVariablesAnnotationValue } from '../utils/predefinedVariableAllowList';
 
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
@@ -149,6 +150,9 @@ export async function buildNewDashboardSaveModelV2(
       creationTimestamp: new Date().toISOString(),
       annotations: {
         [AnnoKeyFolder]: '',
+        ...(config.featureToggles.globalDashboardVariables
+          ? { [AnnoKeyUsePredefinedVariables]: allowAllPredefinedVariablesAnnotationValue() }
+          : {}),
       },
     },
   };

@@ -59,6 +59,7 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
+  AnnoKeyUsePredefinedVariables,
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
@@ -91,7 +92,11 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
-import { isPredefinedOrigin } from '../utils/predefinedVariables';
+import {
+  mayInjectAnyPredefinedVariables,
+  resolvePredefinedVariablesForDashboard,
+} from '../utils/predefinedVariableAllowList';
+import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -344,6 +349,33 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     variableSet.setState({ variables: [...predefinedVarObjects, ...keptVars] });
   }
 
+  /**
+   * Re-resolve global/folder variables from the current allowlist annotation and apply them
+   * to the live scene (e.g. after save) so a full page reload is not required.
+   */
+  public async refreshPredefinedVariables(): Promise<void> {
+    if (!config.featureToggles.globalDashboardVariables) {
+      return;
+    }
+
+    const folderUid = this.state.meta.folderUid;
+    const annotations: Record<string, string | undefined> = {};
+    for (const [key, value] of Object.entries(this.state.meta.k8s?.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const resolutionInput = { annotations };
+
+    if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
+      this.setPredefinedVariables([]);
+      return;
+    }
+
+    const candidates = await fetchPredefinedVariables(folderUid);
+    this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
+  }
+
   public setDefaultLinks(defaultLinks: DashboardLink[]) {
     const userLinks = this.state.links.filter((l) => !l.origin);
     this.setState({ links: [...defaultLinks, ...userLinks] });
@@ -405,7 +437,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._editPaneActivation = undefined;
   }
 
-  public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
+  public async saveCompleted(
+    saveModel: Dashboard | DashboardV2Spec,
+    result: SaveDashboardResponseDTO,
+    folderUid?: string
+  ) {
     this.serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
@@ -426,6 +462,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
 
     this.state.editPanel?.dashboardSaved();
+
+    // Re-apply allowlist to the live variable set before re-baselining dirty state.
+    await this.refreshPredefinedVariables();
 
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
     this._initialUrlState = locationService.getLocation();
@@ -513,8 +552,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     locationService.replace(locationUtil.stripBaseFromUrl(url));
 
     if (restoreInitialState) {
-      //  Restore initial state and disable editing
+      // Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
+      this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
     } else {
       // Do not restore
@@ -574,7 +614,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.activateEditPane();
     }
 
+    this.restoreSerializerAnnotationsFromInitialState();
     this._changeTracker.startTrackingChanges();
+  }
+
+  /**
+   * Serializer annotations are mutated outside scene state when editing the allowlist.
+   * Restore them from the edit-session baseline when discarding.
+   */
+  private restoreSerializerAnnotationsFromInitialState() {
+    const k8s = this.serializer.getK8SMetadata();
+    if (!k8s) {
+      return;
+    }
+    const annotations: Record<string, string> = {};
+    for (const [key, value] of Object.entries(k8s.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyUsePredefinedVariables];
+    if (typeof initialValue === 'string') {
+      annotations[AnnoKeyUsePredefinedVariables] = initialValue;
+    } else {
+      delete annotations[AnnoKeyUsePredefinedVariables];
+    }
+    this.serializer.setK8SAnnotations(annotations);
   }
 
   public pauseTrackingChanges() {

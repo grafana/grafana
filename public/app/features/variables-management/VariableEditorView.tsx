@@ -55,7 +55,13 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   const isNew = !source;
   // '' represents the root Dashboards folder (global scope), matching the
   // FolderPicker's uid for its root item so it renders as selected.
-  const [folderUid, setFolderUid] = useState<string>(source ? (getVariableFolderUid(source) ?? '') : '');
+  // New variables may preselect a folder via ?folderUid= from the folder Variables tab.
+  const [folderUid, setFolderUid] = useState<string>(() => {
+    if (source) {
+      return getVariableFolderUid(source) ?? '';
+    }
+    return new URLSearchParams(window.location.search).get('folderUid') ?? '';
+  });
   const [sceneVariable, setSceneVariable] = useState<SceneVariable>(() =>
     source
       ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

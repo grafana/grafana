@@ -20,6 +20,7 @@ import { type DashboardChangeInfo } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
+import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
@@ -60,6 +61,8 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
   getDSReferencesMapping: () => DSReferencesMapping;
   makeExportableExternally: (s: DashboardScene) => Promise<E | { error: unknown }>;
   getK8SMetadata: () => Partial<ObjectMeta> | undefined;
+  /** Replace k8s annotations on the serializer metadata (V1 nests under meta.k8s; V2 is ObjectMeta). */
+  setK8SAnnotations: (annotations: Record<string, string>) => void;
 }
 
 export interface DashboardTrackingInfo {
@@ -204,11 +207,13 @@ export class V1DashboardSerializer
     );
 
     const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
+    const hasPredefinedVariablesChanges = hasPredefinedVariablesAnnotationChanges(scene);
 
     return {
       ...changeInfo,
       hasFolderChanges,
-      hasChanges: changeInfo.hasChanges || hasFolderChanges,
+      hasPredefinedVariablesChanges,
+      hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges,
       hasMigratedToV2: false,
     };
   }
@@ -230,6 +235,16 @@ export class V1DashboardSerializer
 
   getK8SMetadata() {
     return this.metadata?.k8s;
+  }
+
+  setK8SAnnotations(annotations: Record<string, string>) {
+    this.metadata = {
+      ...this.metadata,
+      k8s: {
+        ...this.metadata?.k8s,
+        annotations,
+      },
+    };
   }
 
   getTrackingInformation(): DashboardTrackingInfo | undefined {
@@ -427,12 +442,14 @@ export class V2DashboardSerializer
     );
 
     const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
+    const hasPredefinedVariablesChanges = hasPredefinedVariablesAnnotationChanges(scene);
     const isNew = !Boolean(scene.getInitialState()?.uid);
 
     return {
       ...changeInfo,
       hasFolderChanges,
-      hasChanges: changeInfo.hasChanges || hasFolderChanges,
+      hasPredefinedVariablesChanges,
+      hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges,
       isNew,
       hasMigratedToV2: !!changeInfo.hasMigratedToV2,
     };
@@ -452,6 +469,17 @@ export class V2DashboardSerializer
 
   getK8SMetadata() {
     return this.metadata;
+  }
+
+  setK8SAnnotations(annotations: Record<string, string>) {
+    this.metadata = {
+      ...(this.metadata ?? {
+        name: '',
+        resourceVersion: '',
+        creationTimestamp: '',
+      }),
+      annotations,
+    };
   }
 
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {

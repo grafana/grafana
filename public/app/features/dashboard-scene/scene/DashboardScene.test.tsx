@@ -27,7 +27,12 @@ import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import {
+  ALLOW_ALL_PREDEFINED,
+  AnnoKeyManagerKind,
+  AnnoKeyUsePredefinedVariables,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -43,6 +48,7 @@ import * as DashboardTemplateExtensionModule from '../settings/enterprise-compon
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
+import { serializeUsePredefinedVariables } from '../utils/predefinedVariableAllowList';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
@@ -305,11 +311,11 @@ describe('DashboardScene', () => {
         expect(newEditPane.isActive).toBe(true);
       });
 
-      it('Exiting already saved dashboard should not restore initial state', () => {
+      it('Exiting already saved dashboard should not restore initial state', async () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
 
-        scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted({} as Dashboard, {
           slug: 'slug',
           uid: 'dash-1',
           url: 'sss',
@@ -462,6 +468,30 @@ describe('DashboardScene', () => {
             ...prevMeta,
             folderUid: 'new-folder-uid',
             folderTitle: 'new-folder-title',
+          },
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.meta).toEqual(prevMeta);
+      });
+
+      it('A change to predefined variables allowlist should set isDirty true', () => {
+        const prevMeta = { ...scene.state.meta };
+        mockResultsOfDetectChangesWorker({ hasChanges: false });
+
+        const annotation = serializeUsePredefinedVariables({ predefinedVariablesAllowList: ALLOW_ALL_PREDEFINED });
+        scene.setState({
+          meta: {
+            ...prevMeta,
+            k8s: {
+              ...prevMeta.k8s,
+              annotations: {
+                ...prevMeta.k8s?.annotations,
+                [AnnoKeyUsePredefinedVariables]: annotation,
+              },
+            },
           },
         });
 

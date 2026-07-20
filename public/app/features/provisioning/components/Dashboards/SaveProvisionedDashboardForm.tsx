@@ -206,11 +206,11 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleDismiss = useCallback(
-    (wrapper: ResourceWrapper) => {
+    async (wrapper: ResourceWrapper) => {
       const model = dashboard.getSaveModel();
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
-      dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
+      await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
       dashboardWatcher.clearIgnoreSave();
     },
     [dashboard, defaultValues.folder?.uid]

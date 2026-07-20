@@ -561,7 +561,7 @@ export const dashboardLog = createLogger('Dashboard');
  */
 export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
-  return !!changes.diffCount;
+  return !!changes.diffCount || !!changes.hasFolderChanges || !!changes.hasPredefinedVariablesChanges;
 }
 
 export function useScenesFlickeringFix() {

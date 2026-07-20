@@ -17,6 +17,10 @@ interface SaveDashboardDiffProps {
   hasFolderChanges?: boolean;
   oldFolder?: string;
   newFolder?: string;
+  /** Metadata-only allowlist change (not part of Spec JSON). */
+  hasPredefinedVariablesChanges?: boolean;
+  oldPredefinedVariables?: string;
+  newPredefinedVariables?: string;
   hasMigratedToV2?: boolean;
 }
 
@@ -27,6 +31,9 @@ export const SaveDashboardDiff = ({
   hasFolderChanges,
   oldFolder,
   newFolder,
+  hasPredefinedVariablesChanges,
+  oldPredefinedVariables,
+  newPredefinedVariables,
   hasMigratedToV2,
 }: SaveDashboardDiffProps) => {
   const loader = useAsync(async () => {
@@ -89,6 +96,22 @@ export const SaveDashboardDiff = ({
           ]}
           key={'folder'}
           title={t('dashboard.save-dashboard-diff.title-folder', 'folder')}
+        />
+      )}
+      {hasPredefinedVariablesChanges && (
+        <DiffGroup
+          diffs={[
+            {
+              op: 'replace',
+              value: newPredefinedVariables,
+              originalValue: oldPredefinedVariables,
+              path: [],
+              startLineNumber: 0,
+              endLineNumber: 0,
+            },
+          ]}
+          key={'predefined-variables'}
+          title={t('dashboard.save-dashboard-diff.title-predefined-variables', 'predefined variables')}
         />
       )}
       {(!value || !oldValue) && <Spinner />}

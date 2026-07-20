@@ -72,7 +72,7 @@ export function useSaveDashboard(isCopy = false) {
         // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0).
         const diffCount = scene.getDashboardChanges().diffCount;
 
-        scene.saveCompleted(saveModel, resultData, options.folderUid);
+        await scene.saveCompleted(saveModel, resultData, options.folderUid);
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());

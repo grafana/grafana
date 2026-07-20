@@ -86,6 +86,19 @@ export const AnnoKeyEmbedded = 'grafana.app/embedded';
 /** Not intended to be used in production, we will be removing this in short-term future */
 export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
 
+/**
+ * JSON annotation controlling which predefined (global/folder) variables a dashboard receives.
+ * Value shape: `{ "predefinedVariablesAllowList": "*" | string[] }`
+ */
+export const AnnoKeyUsePredefinedVariables = 'grafana.app/usePredefinedVariables';
+
+/** Allowlist sentinel: receive all predefined variables. */
+export const ALLOW_ALL_PREDEFINED = '*';
+/** Allowlist sentinel: receive all org-global predefined variables. */
+export const ALLOW_ALL_GLOBAL_PREDEFINED = 'global:*';
+/** Allowlist sentinel: receive all folder-scoped predefined variables. */
+export const ALLOW_ALL_FOLDER_PREDEFINED = 'folder:*';
+
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
 
@@ -124,6 +137,8 @@ type GrafanaClientAnnotations = {
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
+
+  [AnnoKeyUsePredefinedVariables]?: string;
 };
 
 // Labels
