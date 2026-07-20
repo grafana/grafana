@@ -218,9 +218,6 @@ export const versionedComponents = {
         scenarioSelect: {
           [MIN_GRAFANA_VERSION]: 'Test Data Query scenario select',
         },
-        labelsInput: {
-          [MIN_GRAFANA_VERSION]: (refId: string) => `data-testid Test Data Query labels input ${refId}`,
-        },
         max: {
           [MIN_GRAFANA_VERSION]: 'TestData max',
         },
