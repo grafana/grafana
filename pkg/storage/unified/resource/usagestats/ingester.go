@@ -3,6 +3,7 @@ package usagestats
 import (
 	"context"
 	"errors"
+	"iter"
 	"slices"
 	"strings"
 	"sync"
@@ -326,27 +327,35 @@ func aggregateDeltas(decl StatsDeclaration, deltas map[string]uint64) map[string
 	return out
 }
 
-func (i *Ingester) GetResourceDailyStats(ctx context.Context, key *resourcepb.ResourceKey, fromDay, toDay string) ([]*resourcepb.DailyStat, error) {
-	if _, ok := i.decls.Lookup(key.Group, key.Resource); !ok {
-		return nil, nil
-	}
-	o := objectRefFromKey(key)
-	byDay, err := i.store.ReadDailyRange(ctx, o, fromDay, toDay)
-	if err != nil {
-		return nil, err
-	}
+// for tests
+func (i *Ingester) Flush(ctx context.Context) error {
+	return i.flush(ctx)
+}
 
-	// Day strings are zero-padded YYYY-MM-DD, so lexical order matches
-	// chronological order.
-	days := make([]string, 0, len(byDay))
-	for day := range byDay {
-		days = append(days, day)
-	}
-	slices.Sort(days)
+func (i *Ingester) GetResourceDailyStats(ctx context.Context, key *resourcepb.ResourceKey, fromDay, toDay string) iter.Seq2[*resourcepb.DailyStat, error] {
+	return func(yield func(*resourcepb.DailyStat, error) bool) {
+		if _, ok := i.decls.Lookup(key.Group, key.Resource); !ok {
+			return
+		}
+		o := objectRefFromKey(key)
+		byDay, err := i.store.ReadDailyRange(ctx, o, fromDay, toDay)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
 
-	out := make([]*resourcepb.DailyStat, 0, len(days))
-	for _, day := range days {
-		out = append(out, &resourcepb.DailyStat{Day: day, Metrics: byDay[day]})
+		// Day strings are zero-padded YYYY-MM-DD, so lexical order matches
+		// chronological order.
+		days := make([]string, 0, len(byDay))
+		for day := range byDay {
+			days = append(days, day)
+		}
+		slices.Sort(days)
+
+		for _, day := range days {
+			if !yield(&resourcepb.DailyStat{Day: day, Metrics: byDay[day]}, nil) {
+				return
+			}
+		}
 	}
-	return out, nil
 }
