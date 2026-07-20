@@ -109,8 +109,23 @@ export function StartInvestigationButton({
     pollingInterval: shouldPoll ? ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS : 0,
   });
 
-  // Prefer the polled row (fresh state) over the create/lookup snapshots.
-  const investigation = polledInvestigation ?? startedInvestigation ?? lookedUpInvestigation ?? undefined;
+  // Prefer create/retry over a stale terminal poll for the same id, and over a poll
+  // for a previous investigation id (retry creates a new row).
+  const investigation = useMemo(() => {
+    if (startedInvestigation) {
+      if (!polledInvestigation || polledInvestigation.id !== startedInvestigation.id) {
+        return startedInvestigation;
+      }
+      if (
+        isAssistantInvestigationTerminal(polledInvestigation.state) &&
+        !isAssistantInvestigationTerminal(startedInvestigation.state)
+      ) {
+        return startedInvestigation;
+      }
+    }
+    return polledInvestigation ?? startedInvestigation ?? lookedUpInvestigation ?? undefined;
+  }, [polledInvestigation, startedInvestigation, lookedUpInvestigation]);
+
   const investigationFailed = isAssistantInvestigationFailed(investigation?.state);
 
   useEffect(() => {
@@ -138,7 +153,24 @@ export function StartInvestigationButton({
     });
   };
 
-  if ((!hasStableIdentity || isLookingUp) && !investigation) {
+  // No stable group key yet (empty labels and rule still loading) — don't pretend
+  // we're looking up; Start stays disabled until identity is ready.
+  if (!hasStableIdentity) {
+    return (
+      <Tooltip
+        content={t(
+          'alerting.triage.instance-details-drawer.investigation-waiting-identity',
+          'Waiting for alert details before starting an investigation.'
+        )}
+      >
+        <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" disabled>
+          <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
+        </Button>
+      </Tooltip>
+    );
+  }
+
+  if (isLookingUp && !investigation) {
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <Spinner size="sm" inline />

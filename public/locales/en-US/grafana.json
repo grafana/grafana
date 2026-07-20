@@ -3634,6 +3634,7 @@
         "investigation-start-failed": "Could not start the investigation. Try again.",
         "investigation-starting": "Starting…",
         "investigation-watch-live": "Watch live in assistant workspace",
+        "investigation-waiting-identity": "Waiting for alert details before starting an investigation.",
         "open-investigation": "Open full investigation report",
         "section-silence": "Silence",
         "silence-button": "Silence",
