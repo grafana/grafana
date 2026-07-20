@@ -21,6 +21,12 @@ export class PanelOptions extends PageObject {
       .locator('textarea');
   }
 
+  getSubtitleSwitch() {
+    return this.dashboardPage.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldInput('subtitle-switch')
+    );
+  }
+
   async toggleTransparentBackground() {
     await test.step('Toggle transparent background', async () => {
       await this.page.getByRole('switch', { name: 'Transparent background' }).click({ force: true });

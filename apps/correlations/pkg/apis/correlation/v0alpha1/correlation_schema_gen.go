@@ -13,7 +13,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaCorrelation = resource.NewSimpleSchema("correlations.grafana.app", "v0alpha1", NewCorrelation(), &CorrelationList{}, resource.WithKind("Correlation"),
-		resource.WithPlural("correlations"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
+		resource.WithPlural("correlations"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
 			FieldSelector: "spec.source.name",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*Correlation)
@@ -24,7 +24,7 @@ var (
 				return string(cast.Spec.Source.Name), nil
 			},
 		},
-			resource.SelectableField{
+			{
 				FieldSelector: "spec.source.group",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*Correlation)
@@ -35,7 +35,7 @@ var (
 					return string(cast.Spec.Source.Group), nil
 				},
 			},
-			resource.SelectableField{
+			{
 				FieldSelector: "spec.target.name",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*Correlation)
@@ -49,7 +49,7 @@ var (
 					return string(cast.Spec.Target.Name), nil
 				},
 			},
-			resource.SelectableField{
+			{
 				FieldSelector: "spec.target.group",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*Correlation)

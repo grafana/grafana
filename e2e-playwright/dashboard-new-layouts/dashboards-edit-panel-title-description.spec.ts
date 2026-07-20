@@ -49,5 +49,22 @@ test.describe(
       await descriptionIcon.hover();
       await expect(page.getByRole('tooltip')).toHaveText(newDescription);
     });
+
+    test('can edit switch to subtitle description', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+
+      const controls = new Controls(page, dashboardPage, selectors);
+      const panel = new Panel(page, dashboardPage, selectors);
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
+
+      await controls.enterEditMode();
+
+      await panel.selectByTitle(/^No Data Points Warning$/);
+
+      await sidebar.panelOptions.getDescriptionTextarea().fill('test description');
+      await sidebar.panelOptions.getSubtitleSwitch().click();
+
+      await expect(page.getByTestId(selectors.components.Panels.Panel.subtitle)).toContainText('test description');
+    });
   }
 );
