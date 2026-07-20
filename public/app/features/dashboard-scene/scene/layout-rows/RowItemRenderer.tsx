@@ -13,9 +13,12 @@ import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistan
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { DashboardInteractions } from '../../utils/interactions';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { SectionVariableControls } from '../VariableControls';
+import { LayoutModePill } from '../layouts-shared/LayoutModePill';
+import { getLayoutModePill, selectAndEditLayout } from '../layouts-shared/autoLayoutActions';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
@@ -66,6 +69,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
 
   const isDraggable = !isClone && isEditing;
+  const rowLayoutPill = getLayoutModePill(layout);
 
   if (isHidden) {
     return null;
@@ -167,6 +171,19 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
+              {isEditing && rowLayoutPill && (
+                <LayoutModePill
+                  className={cx(styles.headerPill, 'dashboard-row-header-auto-pill')}
+                  data-testid="dashboard-row-layout-mode-pill"
+                  icon={rowLayoutPill.icon}
+                  label={rowLayoutPill.label}
+                  tooltip={rowLayoutPill.tooltip}
+                  onClick={() => {
+                    DashboardInteractions.layoutModePillClicked({ scope: 'row', layout: rowLayoutPill.layout });
+                    selectAndEditLayout(model);
+                  }}
+                />
+              )}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
@@ -190,10 +207,20 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
       marginBottom: theme.spacing(1),
 
       '& .dashboard-row-header-drag-handle': css({
+        opacity: 0,
+        // Keep the drag handle at the far right now that the header is left-aligned.
+        marginLeft: 'auto',
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'opacity 0.25s',
+        },
+      }),
+
+      '& .dashboard-row-header-auto-pill': css({
         opacity: 0,
 
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
@@ -226,7 +253,9 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '100%',
-      flexGrow: 1,
+      // Size to content so the auto layout pill can sit right next to the name.
+      flexGrow: 0,
+      flexShrink: 1,
       minWidth: 0,
     }),
     rowTitleHidden: css({
@@ -262,6 +291,17 @@ function getStyles(theme: GrafanaTheme2) {
       },
       // Re-enable for the specific nested row being hovered
       '&:hover .dashboard-row-wrapper:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
+
+      // Reveal the auto layout pill when hovering anywhere on the row (same nested-row scoping)
+      '&:hover .dashboard-row-header-auto-pill': {
+        opacity: 1,
+      },
+      '&:hover .dashboard-row-wrapper .dashboard-row-header-auto-pill': {
+        opacity: 0,
+      },
+      '&:hover .dashboard-row-wrapper:hover .dashboard-row-header-auto-pill': {
         opacity: 1,
       },
     }),
@@ -301,6 +341,9 @@ function getStyles(theme: GrafanaTheme2) {
     rowActions: css({
       display: 'flex',
       opacity: 0,
+    }),
+    headerPill: css({
+      flexShrink: 0,
     }),
     checkboxWrapper: css({
       display: 'flex',

@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import { useId, useMemo } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { Button } from '@grafana/ui';
+import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -17,7 +19,9 @@ import {
   editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { getLayoutContainer, getLayoutScope, selectAndEditLayout } from '../scene/layouts-shared/autoLayoutActions';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import {
@@ -38,7 +42,22 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
   const backgroundId = useId();
 
   const panelOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
+    const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' });
+
+    // When a panel's size is controlled by an auto layout, expose that relationship (and which
+    // parent controls it) up front, with a non-pointer route to the layout settings.
+    if (layoutElement instanceof AutoGridItem) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.viz-panel.options.size', 'Size'),
+          id: 'panel-auto-layout-size',
+          skipField: true,
+          render: () => <AutoLayoutSizeInfo panel={panel} />,
+        })
+      );
+    }
+
+    return category
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.viz-panel.options.title-option', 'Title'),
@@ -65,7 +84,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
           render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
         })
       );
-  }, [titleId, panel, descriptionId, backgroundId, isNewElement]);
+  }, [titleId, panel, descriptionId, backgroundId, isNewElement, layoutElement]);
 
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
@@ -156,6 +175,44 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     }
   }
 }
+
+function AutoLayoutSizeInfo({ panel }: { panel: VizPanel }) {
+  const styles = useStyles2(getSizeInfoStyles);
+
+  const onEditLayout = () => {
+    const manager = sceneGraph.getAncestor(panel, AutoGridLayoutManager);
+    const container = getLayoutContainer(manager);
+    DashboardInteractions.layoutModePillClicked({ scope: getLayoutScope(container), layout: 'auto' });
+    selectAndEditLayout(container);
+  };
+
+  return (
+    <div className={styles.row}>
+      <Icon name="apps" size="sm" className={styles.icon} />
+      <Text variant="bodySmall" color="secondary">
+        <Trans i18nKey="dashboard.viz-panel.options.size-managed">Managed by Auto layout</Trans>
+      </Text>
+      <span className={styles.separator}>·</span>
+      <Button variant="secondary" fill="text" size="sm" onClick={onEditLayout}>
+        <Trans i18nKey="dashboard.viz-panel.options.size-edit-layout">Edit layout</Trans>
+      </Button>
+    </div>
+  );
+}
+
+const getSizeInfoStyles = (theme: GrafanaTheme2) => ({
+  row: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+  }),
+  icon: css({
+    color: theme.colors.text.secondary,
+  }),
+  separator: css({
+    color: theme.colors.text.secondary,
+  }),
+});
 
 type OpenPanelEditVizProps = { panel: VizPanel };
 

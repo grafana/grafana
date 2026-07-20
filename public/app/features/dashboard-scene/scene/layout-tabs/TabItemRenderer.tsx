@@ -12,8 +12,11 @@ import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDis
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { SectionVariableControls } from '../VariableControls';
+import { LayoutModePill } from '../layouts-shared/LayoutModePill';
+import { getLayoutModePill, selectAndEditLayout } from '../layouts-shared/autoLayoutActions';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type TabItem } from './TabItem';
@@ -40,6 +43,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
+  const tabLayoutPill = getLayoutModePill(layout);
 
   if (isConditionallyHidden && !isEditing && !isActive) {
     return null;
@@ -66,7 +70,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             dragProvided.innerRef(ref);
             model.containerRef.current = ref;
           }}
-          className={cx(dragSnapshot.isDragging && styles.dragging)}
+          className={cx(styles.tabItemWrapper, dragSnapshot.isDragging && styles.dragging)}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
           style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
@@ -123,6 +127,19 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             data-tab-activation-key={key}
             {...titleCollisionProps}
           />
+          {isEditing && isActive && tabLayoutPill && (
+            <LayoutModePill
+              className={cx(styles.tabPill, 'dashboard-tab-auto-pill')}
+              data-testid="dashboard-tab-layout-mode-pill"
+              icon={tabLayoutPill.icon}
+              label={tabLayoutPill.label}
+              tooltip={tabLayoutPill.tooltip}
+              onClick={() => {
+                DashboardInteractions.layoutModePillClicked({ scope: 'tab', layout: tabLayoutPill.layout });
+                selectAndEditLayout(model);
+              }}
+            />
+          )}
         </div>
       )}
     </Draggable>
@@ -209,6 +226,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // Re-enable for the specific nested row being hovered
     '&:hover .dashboard-row-wrapper:hover .dashboard-canvas-controls': {
       opacity: 1,
+    },
+  }),
+  // Wraps the tab and its auto layout pill in the tab strip so the pill sits next to the label.
+  tabItemWrapper: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+
+    // Pill only visible when hovering the tab (its container in the strip).
+    '&:hover .dashboard-tab-auto-pill': {
+      opacity: 1,
+    },
+  }),
+  tabPill: css({
+    flexShrink: 0,
+    opacity: 0,
+
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'opacity 0.25s',
     },
   }),
 });
