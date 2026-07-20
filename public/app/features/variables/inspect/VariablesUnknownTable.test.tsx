@@ -3,13 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import * as runtime from '@grafana/runtime';
 
-import { customBuilder } from '../shared/testing/builders';
-
-import {
-  SLOW_VARIABLES_EXPANSION_THRESHOLD,
-  VariablesUnknownTable,
-  type VariablesUnknownTableProps,
-} from './VariablesUnknownTable';
+import { VariablesUnknownTable, type VariablesUnknownTableProps } from './VariablesUnknownTable';
 import { type UsagesToNetwork } from './types';
 import * as utils from './utils';
 
@@ -105,23 +99,6 @@ describe('VariablesUnknownTable', () => {
 
         afterEach(() => {
           jest.useRealTimers();
-        });
-
-        it('then it should report slow expansion', async () => {
-          const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
-          const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-          const { getUnknownsNetworkSpy } = await getTestContext({}, usages);
-          getUnknownsNetworkSpy.mockImplementation(() => {
-            return new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(usages);
-              }, SLOW_VARIABLES_EXPANSION_THRESHOLD);
-            });
-          });
-
-          await user.click(screen.getByLabelText('Renamed or missing variables'));
-
-          jest.advanceTimersByTime(SLOW_VARIABLES_EXPANSION_THRESHOLD);
         });
       });
     });

@@ -122,12 +122,10 @@ export function ViewModePanelPromptCard({ targets, onClose }: ViewModePanelPromp
       ? t('dashboard.panel-assistant.prompt-card.placeholder-multi', 'Ask Assistant about these panels...')
       : t('dashboard.panel-assistant.prompt-card.placeholder', 'Ask Assistant about this panel...');
 
-  const closedExplicitlyRef = useRef(false);
   const targetKeys = useMemo(() => targets.map((t) => t.panel.state.key).join(','), [targets]);
 
   useEffect(() => {
     if (visible) {
-      closedExplicitlyRef.current = false;
       reportInteraction('dashboards_assistant_popover_displayed', {
         panelCount: targets.length,
         pluginIds: targets.map((t) => t.panel.state.pluginId),
@@ -138,13 +136,11 @@ export function ViewModePanelPromptCard({ targets, onClose }: ViewModePanelPromp
   }, [visible, targetKeys]);
 
   const handleClose = useCallback(() => {
-    closedExplicitlyRef.current = true;
     onClose();
   }, [onClose]);
 
   const handleSubmit = useCallback(
     (prompt: string) => {
-      closedExplicitlyRef.current = true;
       reportInteraction('dashboards_assistant_popover_prompt_submitted', {
         panelCount: targets.length,
         promptLength: prompt.length,
