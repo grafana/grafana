@@ -16,11 +16,36 @@ export function getFilesToFormat(variant: Variant, groupName: string, version: s
   ];
 }
 
+/** Executables that are permitted to be spawned by runOrWarn. */
+const ALLOWED_FORMAT_EXECUTABLES: readonly string[] = ['yarn'];
+
 function runOrWarn(label: string, cmd: string, args: string[], cwd: string) {
+  // Validate the executable against a strict allowlist before anything else.
+  if (!ALLOWED_FORMAT_EXECUTABLES.includes(cmd)) {
+    throw new Error(`Refusing to run disallowed executable: "${cmd}"`);
+  }
+
+  // Validate the combined command (executable + sub-command flags) against the
+  // known-safe prefix allowlist, catching any unexpected sub-command injection.
   const command = [cmd, ...args].join(' ');
   if (!ALLOWED_FORMAT_COMMANDS.some((allowed) => command.startsWith(allowed))) {
     throw new Error(`Refusing to run disallowed format command: "${command}"`);
   }
+
+  // Validate every argument that looks like a file path: it must resolve to a
+  // location inside cwd so that crafted paths cannot escape the project root.
+  const resolvedCwd = path.resolve(cwd);
+  for (const arg of args) {
+    // Skip flag arguments (e.g. --fix, --write, --ignore-path=…).
+    if (arg.startsWith('-')) {
+      continue;
+    }
+    const resolvedArg = path.resolve(arg);
+    if (!resolvedArg.startsWith(resolvedCwd + path.sep) && resolvedArg !== resolvedCwd) {
+      throw new Error(`Refusing to pass path outside of working directory: "${arg}"`);
+    }
+  }
+
   console.log(`🧹 Running ${label} on generated/modified files...`);
   const result = spawnSync(cmd, args, { cwd, stdio: 'pipe', shell: false });
   if (result.error || result.status !== 0) {
