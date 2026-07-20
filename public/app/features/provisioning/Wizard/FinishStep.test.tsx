@@ -108,10 +108,25 @@ describe('FinishStep', () => {
       expect(await screen.findByText('Webhook options')).toBeInTheDocument();
     });
 
-    it('does not show the webhook section for a git provider without webhooks', async () => {
+    it('shows the webhook section for a Bitbucket repository', async () => {
       setup('bitbucket');
 
-      expect(await screen.findByText(PR_LABEL)).toBeInTheDocument();
+      expect(await screen.findByText('Webhook options')).toBeInTheDocument();
+    });
+
+    it('forces webhooks off for a Bitbucket repository without an email', async () => {
+      const { user } = setup('bitbucket');
+
+      await user.click(await screen.findByText('Webhook options'));
+
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeDisabled();
+      expect(screen.getByText(/atlassian account email is not set/i)).toBeInTheDocument();
+    });
+
+    it('does not show the webhook section for a git provider without webhooks', async () => {
+      setup('git');
+
+      expect(await screen.findByText(BRANCH_LABEL)).toBeInTheDocument();
       expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
     });
   });

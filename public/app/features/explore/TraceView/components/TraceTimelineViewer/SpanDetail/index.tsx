@@ -45,9 +45,10 @@ import { type TraceProcess, type TraceSpan, type TraceSpanReference } from '../.
 import { formatDuration } from '../../utils/date';
 import { getServiceDisplayName } from '../../utils/service-name';
 
-import AccordianKeyValues from './AccordianKeyValues';
-import AccordianLogs from './AccordianLogs';
-import AccordianReferences from './AccordianReferences';
+import AccordionCategorizedKeyValues from './AccordionCategorizedKeyValues';
+import AccordionKeyValues from './AccordionKeyValues';
+import AccordionLogs from './AccordionLogs';
+import AccordionReferences from './AccordionReferences';
 import type DetailState from './DetailState';
 import { ShareSpanButton } from './ShareSpanButton';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
@@ -180,23 +181,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       flexShrink: 0,
     }),
-    AccordianWarnings: css({
-      label: 'AccordianWarnings',
+    AccordionWarnings: css({
+      label: 'AccordionWarnings',
       background: autoColor(theme, '#fafafa'),
       border: `1px solid ${autoColor(theme, '#e4e4e4')}`,
       marginBottom: '0.25rem',
     }),
-    AccordianWarningsHeader: css({
-      label: 'AccordianWarningsHeader',
+    AccordionWarningsHeader: css({
+      label: 'AccordionWarningsHeader',
       background: autoColor(theme, '#fff7e6'),
       padding: '0.25rem 0.5rem',
     }),
-    AccordianWarningsHeaderOpen: css({
-      label: 'AccordianWarningsHeaderOpen',
+    AccordionWarningsHeaderOpen: css({
+      label: 'AccordionWarningsHeaderOpen',
       borderBottom: `1px solid ${autoColor(theme, '#e8e8e8')}`,
     }),
-    AccordianWarningsLabel: css({
-      label: 'AccordianWarningsLabel',
+    AccordionWarningsLabel: css({
+      label: 'AccordionWarningsLabel',
       color: autoColor(theme, '#d36c08'),
     }),
     Textarea: css({
@@ -220,7 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     debugLabel: css({
       label: 'debugLabel',
       '&::before': {
-        color: autoColor(theme, '#bbb'),
+        color: theme.colors.text.secondary,
         content: 'attr(data-label)',
       },
     }),
@@ -411,8 +412,9 @@ export default function SpanDetail(props: SpanDetailProps) {
   const listOfContentCards = [];
 
   listOfContentCards.push(
-    <AccordianKeyValues
+    <AccordionCategorizedKeyValues
       data={tags}
+      sectionType="span"
       label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
       isOpen={isTagsOpen}
       linksGetter={resourceLinksGetter}
@@ -422,8 +424,9 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (process.tags) {
     listOfContentCards.push(
-      <AccordianKeyValues
+      <AccordionCategorizedKeyValues
         data={process.tags}
+        sectionType="resource"
         label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
         linksGetter={resourceLinksGetter}
         isOpen={isProcessOpen}
@@ -434,7 +437,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (logs && logs.length > 0) {
     listOfContentCards.push(
-      <AccordianLogs
+      <AccordionLogs
         logs={logs}
         isOpen={logsState.isOpen}
         openedItems={logsState.openedItems}
@@ -447,7 +450,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (warnings && warnings.length > 0) {
     listOfContentCards.push(
-      <AccordianKeyValues
+      <AccordionKeyValues
         data={warnings.map((warning) => ({
           key: '',
           value: warning,
@@ -465,7 +468,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (stackTraces?.length) {
     listOfContentCards.push(
-      <AccordianKeyValues
+      <AccordionKeyValues
         data={stackTraces.map((stackTrace) => ({
           key: '',
           value: stackTrace,
@@ -483,7 +486,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF')) {
     listOfContentCards.push(
-      <AccordianReferences
+      <AccordionReferences
         data={references}
         isOpen={referencesState.isOpen}
         openedItems={referencesState.openedItems}

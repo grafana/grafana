@@ -6,3 +6,4 @@ zipkin
 opentsdb
 stackdriver
 mssql
+grafana-pyroscope-datasource

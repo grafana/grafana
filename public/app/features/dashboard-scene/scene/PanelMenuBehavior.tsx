@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
 import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -20,6 +21,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened } from 'app/features/alerting/unified/Analytics';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
@@ -194,6 +196,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');
           dashboard.copyPanel(panel);
         },
+        shortcut: 'p c',
       });
     }
 
@@ -265,6 +268,26 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
           dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Help }));
+        },
+      });
+    }
+
+    if (
+      isOnPrem() &&
+      contextSrv.isGrafanaAdmin &&
+      plugin &&
+      !plugin.meta.skipDataQuery &&
+      !isReadOnlyRepeat &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOnDemandDiagnostics, false)
+    ) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.download-diagnostics', 'Download diagnostics'),
+        iconClassName: 'download-alt',
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
+          dashboard.showModal(
+            new ShareDrawer({ shareView: shareDashboardType.downloadDiagnostics, panelRef: panel.getRef() })
+          );
         },
       });
     }

@@ -24,6 +24,32 @@ func fieldDefinitionsForMapping(provider resource.SearchFieldsProvider, group, k
 	return provider.Fields(schema.GroupVersionResource{Group: group, Resource: kindResource})
 }
 
+// facetFieldsForMapping returns the logical facet field names accepted by the
+// search API and the keyword-analyzed bleve fields that back them. Dynamic
+// fields are deliberately absent because they have no facet capability.
+func facetFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]string {
+	fields := make(map[string]string)
+	add := func(def resource.SearchFieldDefinition, prefix string) {
+		if !def.HasCapability(resource.SearchCapabilityFacet) {
+			return
+		}
+		logicalName := prefix + def.Name
+		fields[logicalName] = prefix + keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText))
+	}
+
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		add(def, "")
+	}
+	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
+		add(def, resource.SEARCH_FIELD_PREFIX)
+		// Requests accept per-kind fields with or without the internal fields. prefix.
+		if physicalName, ok := fields[resource.SEARCH_FIELD_PREFIX+def.Name]; ok {
+			fields[def.Name] = physicalName
+		}
+	}
+	return fields
+}
+
 // addCapabilityFieldMappings adds bleve field mappings to parent for a single
 // declared search field. The field is placed under parent using def.Name as
 // the local name; this helper does not add any sub-document prefix (callers
