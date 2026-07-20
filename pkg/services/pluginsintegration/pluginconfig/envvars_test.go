@@ -674,6 +674,58 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 	}
 }
 
+func TestEnvVarNames(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		envVars []string
+		want    []string
+	}{
+		{
+			name: "nil input",
+			want: []string{},
+		},
+		{
+			name:    "empty input",
+			envVars: []string{},
+			want:    []string{},
+		},
+		{
+			name:    "assignment",
+			envVars: []string{"KEY=value"},
+			want:    []string{"KEY"},
+		},
+		{
+			name:    "empty value",
+			envVars: []string{"KEY="},
+			want:    []string{"KEY"},
+		},
+		{
+			name:    "value contains equals sign",
+			envVars: []string{"KEY=value=with=equals"},
+			want:    []string{"KEY"},
+		},
+		{
+			name:    "bare key",
+			envVars: []string{"KEY"},
+			want:    []string{"KEY"},
+		},
+		{
+			name:    "empty and malformed entries",
+			envVars: []string{"", "=value"},
+			want:    []string{"", ""},
+		},
+		{
+			name:    "multiple ordered entries including duplicates",
+			envVars: []string{"FIRST=one", "SECOND=two=three", "FIRST=four", "BARE"},
+			want:    []string{"FIRST", "SECOND", "FIRST", "BARE"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, envVarNames(tc.envVars))
+		})
+	}
+}
+
 // getEnvVarWithExists takes a slice of strings in this format: "K=V" (env vars), and returns the "V" where K = wanted.
 // If there's no such key, it returns false as the second argument.
 func getEnvVarWithExists(vars []string, wanted string) (string, bool) {
