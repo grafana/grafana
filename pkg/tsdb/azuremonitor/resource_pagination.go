@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 const MaxArmPages = 50
@@ -61,9 +62,9 @@ func rebaseNextLink(baseURL, nextLink string) string {
 	if err != nil {
 		return nextLink
 	}
-	next.Scheme = base.Scheme
-	next.Host = base.Host
-	return next.String()
+	rebased := *base
+	rebased.RawQuery = next.RawQuery
+	return rebased.String()
 }
 
 func fetchArmPage(ctx context.Context, cli *http.Client, rawURL string) (*armListResponse, error) {
@@ -113,13 +114,16 @@ func appendSkipToken(rawURL, token string) string {
 	if err != nil {
 		return rawURL
 	}
-	q := u.Query()
-	q.Set("$skiptoken", token)
-	u.RawQuery = q.Encode()
+	param := "$skiptoken=" + url.QueryEscape(token)
+	if u.RawQuery == "" {
+		u.RawQuery = param
+	} else {
+		u.RawQuery += "&" + param
+	}
 	return u.String()
 }
 
-func writePaginatedResponse(rw http.ResponseWriter, value []json.RawMessage, nextToken string, truncated bool, linkParams url.Values) error {
+func writePaginatedResponse(rw http.ResponseWriter, value []json.RawMessage, nextToken string, truncated bool, listAll bool, linkParams url.Values) error {
 	body, err := json.Marshal(struct {
 		Value []json.RawMessage `json:"value"`
 	}{Value: value})
@@ -134,6 +138,7 @@ func writePaginatedResponse(rw http.ResponseWriter, value []json.RawMessage, nex
 			nextParams[k] = v
 		}
 		nextParams.Set("nextToken", nextToken)
+		nextParams.Set("listAll", strconv.FormatBool(listAll))
 		rw.Header().Set("Link", fmt.Sprintf(`<?%s>; rel="next"`, nextParams.Encode()))
 	}
 	if truncated {

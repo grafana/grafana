@@ -142,6 +142,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		link := res.Header.Get("Link")
 		require.Contains(t, link, `rel="next"`)
 		require.Contains(t, link, "nextToken=page2")
+		require.Contains(t, link, "listAll=false")
 
 		body, err := readAllClose(res)
 		require.NoError(t, err)
@@ -202,6 +203,10 @@ func TestHandleSubscriptions(t *testing.T) {
 		require.Equal(t, http.StatusOK, res.StatusCode)
 		require.Equal(t, MaxArmPages, *count)
 		require.Equal(t, "true", res.Header.Get("X-Results-Truncated"))
+
+		link := res.Header.Get("Link")
+		require.Contains(t, link, `rel="next"`)
+		require.Contains(t, link, "listAll=true")
 
 		body, err := readAllClose(res)
 		require.NoError(t, err)
@@ -275,7 +280,8 @@ func TestSkipTokenFromNextLink(t *testing.T) {
 func TestAppendSkipToken(t *testing.T) {
 	out := appendSkipToken("https://management.azure.com/subscriptions?api-version=2019-03-01", "page2")
 	require.Contains(t, out, "api-version=2019-03-01")
-	require.Contains(t, out, "skiptoken=page2")
+	require.Contains(t, out, "$skiptoken=page2")
+	require.NotContains(t, out, "%24skiptoken")
 	require.Equal(t, "page2", skipTokenFromNextLink(out))
 }
 
@@ -286,6 +292,12 @@ func TestRebaseNextLink(t *testing.T) {
 	)
 	require.Equal(t, "https://proxy.internal/subscriptions?api-version=2019-03-01&$skiptoken=abc", got)
 	require.Equal(t, "", rebaseNextLink("https://proxy.internal/x", ""))
+
+	withPrefix := rebaseNextLink(
+		"https://proxy.internal/api/datasources/proxy/42/subscriptions?api-version=2019-03-01",
+		"https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=abc",
+	)
+	require.Equal(t, "https://proxy.internal/api/datasources/proxy/42/subscriptions?api-version=2019-03-01&$skiptoken=abc", withPrefix)
 }
 
 func TestFetchArmPagesRebasesNextLinkHost(t *testing.T) {

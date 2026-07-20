@@ -241,7 +241,7 @@ func (s *Service) listArmResource(rw http.ResponseWriter, req *http.Request, ser
 		s.logger.Warn("Azure Monitor ARM listing stopped at page cap; some results may be omitted", "maxPages", MaxArmPages, "path", armPath)
 	}
 
-	if err := writePaginatedResponse(rw, value, nextToken, truncated, linkParams); err != nil {
+	if err := writePaginatedResponse(rw, value, nextToken, truncated, listAll, linkParams); err != nil {
 		s.logger.Error("failed to write paginated response", "error", err)
 	}
 }
