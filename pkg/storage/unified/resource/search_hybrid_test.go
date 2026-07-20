@@ -394,18 +394,28 @@ func TestHybridSearch_FiltersReachBothLegs(t *testing.T) {
 	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 		Key: key, Query: "q",
 		Filters: []*resourcepb.Requirement{
+			{Key: "uid", Operator: "in", Values: []string{"u1"}},
+			{Key: "folder", Operator: "in", Values: []string{"f1"}},
 			{Key: "datasource_uid", Operator: "in", Values: []string{"ds1"}},
+			{Key: "language", Operator: "in", Values: []string{"promql"}},
 		},
 	})
 	require.NoError(t, err)
 
 	idx.mu.Lock()
-	require.Len(t, idx.gotReq.Options.Fields, 1)
-	assert.Equal(t, "reference.DataSource", idx.gotReq.Options.Fields[0].Key)
+	require.Len(t, idx.gotReq.Options.Fields, 4)
+	assert.Equal(t, SEARCH_FIELD_NAME, idx.gotReq.Options.Fields[0].Key)
+	assert.Equal(t, SEARCH_FIELD_FOLDER, idx.gotReq.Options.Fields[1].Key)
+	assert.Equal(t, "reference.DataSource", idx.gotReq.Options.Fields[2].Key)
+	assert.Equal(t, SEARCH_FIELD_PREFIX+"ds_types", idx.gotReq.Options.Fields[3].Key)
+	assert.Equal(t, []string{"prometheus"}, idx.gotReq.Options.Fields[3].Values)
 	idx.mu.Unlock()
 
-	require.Len(t, backend.gotFilters, 1)
-	assert.Equal(t, "datasourceUid", backend.gotFilters[0].Field)
+	require.Len(t, backend.gotFilters, 4)
+	assert.Equal(t, "uid", backend.gotFilters[0].Field)
+	assert.Equal(t, "folder", backend.gotFilters[1].Field)
+	assert.Equal(t, "datasourceUid", backend.gotFilters[2].Field)
+	assert.Equal(t, vector.SearchFilter{Field: "language", Values: []string{"promql"}}, backend.gotFilters[3])
 }
 
 func TestHybridSearch_SemanticAuthzDenied(t *testing.T) {
