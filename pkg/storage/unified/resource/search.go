@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
@@ -671,6 +672,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
+		if ctxErr := statusFromContextError(err); ctxErr != nil {
+			return nil, ctxErr
+		}
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
 	}
@@ -685,6 +689,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 	if err != nil {
+		if ctxErr := statusFromContextError(err); ctxErr != nil {
+			return nil, ctxErr
+		}
 		s.log.Error("vector search: authz batch check", "err", err)
 		return nil, status.Error(codes.Internal, "authz batch check")
 	}
@@ -707,6 +714,17 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
+}
+
+// statusFromContextError maps context cancellation/deadline errors to their
+// gRPC codes (Canceled/DeadlineExceeded) as the gRPC spec requires; returns
+// nil for anything else so callers fall through to their own mapping.
+// Without this, client disconnects surface as Internal and trip error SLOs.
+func statusFromContextError(err error) error {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return status.FromContextError(err).Err()
+	}
+	return nil
 }
 
 // validateVectorSearchRequest returns a non-nil response with a
@@ -775,6 +793,9 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 		Task:      embedder.TaskRetrievalQuery,
 	})
 	if err != nil {
+		if ctxErr := statusFromContextError(err); ctxErr != nil {
+			return nil, ctxErr
+		}
 		s.log.Error("vector search: embed query", "err", err)
 		return nil, status.Error(codes.Internal, "embed query")
 	}

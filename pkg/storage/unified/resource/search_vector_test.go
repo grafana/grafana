@@ -329,6 +329,39 @@ func TestVectorSearch_BackendErrorReturnsInternal(t *testing.T) {
 	assert.Equal(t, codes.Internal, status.Code(err))
 }
 
+func TestVectorSearch_EmbedderContextCanceledReturnsCanceled(t *testing.T) {
+	// Mimic the bedrock client's wrapping of a client-disconnect cancellation.
+	wantErr := fmt.Errorf("bedrock: invoke: %w", context.Canceled)
+	emb := newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: wantErr})
+	s := newTestSearchServer(emb, &fakeVectorBackend{})
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
+}
+
+func TestVectorSearch_EmbedderDeadlineExceededReturnsDeadlineExceeded(t *testing.T) {
+	wantErr := fmt.Errorf("bedrock: invoke: %w", context.DeadlineExceeded)
+	emb := newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: wantErr})
+	s := newTestSearchServer(emb, &fakeVectorBackend{})
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.DeadlineExceeded, status.Code(err))
+}
+
+func TestVectorSearch_BackendContextCanceledReturnsCanceled(t *testing.T) {
+	backend := &fakeVectorBackend{err: fmt.Errorf("pgvector: %w", context.Canceled)}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
+}
+
 // fakeAccessClient implements authlib.AccessClient with a per-row decision
 // function. Used to exercise the post-filter authz path.
 type fakeAccessClient struct {
@@ -412,6 +445,19 @@ func TestVectorSearch_NoUserInContextReturnsUnauthenticated(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.Unauthenticated, status.Code(err))
+}
+
+func TestVectorSearch_AuthzContextCanceledReturnsCanceled(t *testing.T) {
+	access := &erroringAccessClient{err: fmt.Errorf("authz: %w", context.Canceled)}
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{{UID: "u1", Score: 0.1}},
+	}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
 }
 
 func TestVectorSearch_AuthzCompileErrorReturnsInternal(t *testing.T) {
