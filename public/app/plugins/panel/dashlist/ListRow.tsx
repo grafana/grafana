@@ -35,7 +35,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
           )}
           {/* Subtitle */}
           <Text truncate color="secondary" variant="bodySmall">
-            {subtitle ?? '-'}
+            {subtitle ?? ''}
           </Text>
         </Stack>
       </Stack>
@@ -54,19 +54,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-
-    a: {
-      flex: 1,
-
-      '&:hover': {
-        '> p': {
-          '&:first-child': {
-            color: theme.colors.text.link,
-            textDecoration: 'underline',
-          },
-        },
-      },
-    },
   }),
   dashlistLinkCompact: css({
     margin: 0,
