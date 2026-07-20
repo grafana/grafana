@@ -64,9 +64,8 @@ describe('MigrateDrawer', () => {
   });
 
   it('auto-generates the target branch for a branch-only repository', async () => {
-    // A branch-only repository migrates through a pull request, so pushing to a
-    // branch is mandatory: the checkbox is checked and disabled, and the
-    // read-only branch is generated for the user (prefixed `migrate-<repo>`).
+    // A branch-only repository migrates through a pull request, so the PR workflow
+    // is the only option and its branch is generated (prefixed `migrate-<repo>`).
     render(
       <MigrateDrawer
         selective={false}
@@ -76,18 +75,28 @@ describe('MigrateDrawer', () => {
     );
 
     expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeEnabled();
+    // No commit-to-configured-branch option is offered for a branch-only repo.
+    expect(screen.queryByText('Commit to the configured branch')).not.toBeInTheDocument();
+    expect(screen.getByText('Open a pull request')).toBeInTheDocument();
 
-    const checkbox = screen.getByRole('checkbox', { name: /push changes to a branch/i });
-    expect(checkbox).toBeChecked();
-    expect(checkbox).toBeDisabled();
-
-    // The only textbox in the drawer is the editable, auto-populated branch.
+    // The editable, auto-populated branch is shown.
     const branchInput = screen.getByRole('textbox');
     expect(branchInput).not.toHaveAttribute('readonly');
     expect((branchInput as HTMLInputElement).value).toMatch(/^migrate-pr-only\//);
   });
 
-  it('lets a write-capable repo opt into pushing to a branch via the checkbox', async () => {
+  it('offers no pull-request option for a write-only repository', async () => {
+    render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My repo', ['write'])]} onDismiss={jest.fn()} />
+    );
+
+    expect(await screen.findByText('Commit to the configured branch')).toBeInTheDocument();
+    // No PR option, and no target-branch input in commit mode.
+    expect(screen.queryByText('Open a pull request')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it('lets a write-capable repo open a pull request via the workflow card', async () => {
     let postedBody = '';
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
@@ -105,14 +114,12 @@ describe('MigrateDrawer', () => {
       />
     );
 
-    // Unchecked by default → direct write, so no branch field is shown.
-    const checkbox = await screen.findByRole('checkbox', { name: /push changes to a branch/i });
-    expect(checkbox).not.toBeChecked();
-    expect(checkbox).toBeEnabled();
+    // Defaults to committing to the configured branch → no branch field shown.
+    expect(await screen.findByText('Commit to the configured branch')).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
 
-    // Checking it auto-populates the editable branch field.
-    await user.click(checkbox);
+    // Choosing the pull-request card reveals the editable, auto-populated branch.
+    await user.click(screen.getByText('Open a pull request'));
     const branchInput = screen.getByRole('textbox');
     expect(branchInput).not.toHaveAttribute('readonly');
     expect((branchInput as HTMLInputElement).value).toMatch(/^migrate-repo-1\//);
@@ -172,6 +179,58 @@ describe('MigrateDrawer', () => {
     // Hovering surfaces a tooltip explaining why the button is disabled.
     await user.hover(migrateButton);
     expect(await screen.findByText('Enter a valid target branch name')).toBeInTheDocument();
+  });
+
+  it('submits skipResourceDeletion when "Keep existing resources" is checked', async () => {
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My repo')]} onDismiss={jest.fn()} />
+    );
+
+    await user.click(await screen.findByRole('checkbox', { name: /keep existing resources/i }));
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toMatch(/"skipResourceDeletion":true/);
+  });
+
+  it('confirms before disabling "Generate new folder IDs" and warns while off', async () => {
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My repo')]} onDismiss={jest.fn()} />
+    );
+
+    const checkbox = await screen.findByRole('checkbox', { name: /generate new folder ids/i });
+    expect(checkbox).toBeChecked();
+
+    // Unchecking asks for confirmation before turning it off.
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+    await user.click(await screen.findByRole('button', { name: /keep existing ids/i }));
+
+    // Now off: a warning is shown and the job posts generateNewFolderIDs=false.
+    expect(checkbox).not.toBeChecked();
+    expect(screen.getByText(/existing folders will be taken over/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toMatch(/"generateNewFolderIDs":false/);
   });
 
   it('offers both write and branch-workflow repositories as migration targets', async () => {

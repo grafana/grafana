@@ -24,6 +24,16 @@ export interface SyncJobOptions {
    * pull request and removes the migrated resources until the branch is merged.
    */
   branch?: string;
+  /**
+   * Keep the migrated resources on the instance instead of deleting them. When unset the backend
+   * uses its default deletion behavior for the sync target.
+   */
+  skipResourceDeletion?: boolean;
+  /**
+   * Whether to write fresh folder UIDs on export. When unset, defaults to `syncTarget !== 'instance'`
+   * (regenerate for all targets except instance sync, which preserves existing folder UIDs).
+   */
+  generateNewFolderIDs?: boolean;
 }
 
 export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJobParams) {
@@ -31,7 +41,14 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
 
   const createSyncJob = useCallback(
     async (requiresMigration: boolean, options?: SyncJobOptions & { skipStatusUpdates?: boolean }) => {
-      const { skipStatusUpdates = false, resources, syncTarget, branch } = options || {};
+      const {
+        skipStatusUpdates = false,
+        resources,
+        syncTarget,
+        branch,
+        skipResourceDeletion,
+        generateNewFolderIDs,
+      } = options || {};
 
       if (!repoName) {
         if (!skipStatusUpdates) {
@@ -63,9 +80,10 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
                 // library panels orphaned under a now-managed folder). Instance
                 // sync is the exception: it takes over the whole instance and
                 // must preserve the existing folder UIDs. Every other (and any
-                // unknown) target defaults to regeneration, the safe side. Has
-                // no effect unless folder metadata is written.
-                generateNewFolderIDs: syncTarget !== 'instance',
+                // unknown) target defaults to regeneration, the safe side. The
+                // caller can override this default explicitly. Has no effect
+                // unless folder metadata is written.
+                generateNewFolderIDs: generateNewFolderIDs ?? syncTarget !== 'instance',
                 // When resources are passed, only those (unmanaged) dashboards
                 // are migrated; otherwise the migrate object keeps the legacy
                 // "migrate everything unmanaged" behavior the wizard relies on.
@@ -74,6 +92,8 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
                 // the configured branch; a value routes the migration through a
                 // pull request on that branch instead.
                 ...(branch ? { branch } : {}),
+                // Keep migrated resources on the instance instead of deleting them.
+                ...(skipResourceDeletion ? { skipResourceDeletion: true } : {}),
               },
             }
           : {
