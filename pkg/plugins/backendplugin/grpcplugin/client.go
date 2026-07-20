@@ -1,6 +1,7 @@
 package grpcplugin
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -93,8 +94,12 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	} else {
 		logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
 		// filepath.Clean removes any path traversal sequences before the path is used in exec.Command.
-		// The dynamic part of executablePath comes from the plugin definition, not from user input.
-		cfg.Cmd = exec.Command(filepath.Clean(executablePath), descriptor.executableArgs...) //nolint:gosec
+		// We additionally require the path to be absolute to prevent ambiguous or injected relative paths.
+		cleanPath := filepath.Clean(executablePath)
+		if !filepath.IsAbs(cleanPath) {
+			return nil, errors.New("plugin executable path must be an absolute path")
+		}
+		cfg.Cmd = exec.Command(cleanPath, descriptor.executableArgs...) //nolint:gosec
 		cfg.Cmd.Env = env
 	}
 
