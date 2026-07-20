@@ -359,7 +359,28 @@ export function useWizardAssistant(): WizardAssistant {
         revision,
         unavailableMetrics
       );
-      const parsed = parseWizardJson(await run('wizard-refine', systemPrompt, prompt, datasources));
+      const raw = await run('wizard-refine', systemPrompt, prompt, datasources);
+
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = parseWizardJson(raw);
+      } catch {
+        // The model occasionally answers in prose (usually clarifying
+        // questions) despite the JSON-only rule. Run one corrective round
+        // that feeds the invalid answer back and asks for the same content
+        // in the required shape; a second failure surfaces the user-facing
+        // error from parseWizardJson as before.
+        const corrected = await run(
+          'wizard-refine',
+          systemPrompt,
+          `${prompt}\n\nYour previous response was NOT the required JSON object. This was it:\n"""\n${raw}\n"""\n\n` +
+            'Re-express that response as the required JSON object now. If it asked clarifying questions in prose, ' +
+            'put them in the "questions" array (verified real values as options) and still fill "prompt" and "summary" ' +
+            'with your best plan from what you already know. Respond with ONLY the JSON object.',
+          datasources
+        );
+        parsed = parseWizardJson(corrected);
+      }
       const refined = typeof parsed.prompt === 'string' && parsed.prompt.trim() !== '' ? parsed.prompt : request;
       const dataNotes = typeof parsed.dataNotes === 'string' && parsed.dataNotes !== '' ? parsed.dataNotes : undefined;
       return {
