@@ -13,8 +13,6 @@ import { VariablesUnknownButton } from './VariablesUnknownButton';
 import { type UsagesToNetwork } from './types';
 import { getUnknownsNetwork } from './utils';
 
-export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;
-
 export interface VariablesUnknownTableProps {
   variables: BaseVariableModel[];
   dashboard: DashboardModel | null;
