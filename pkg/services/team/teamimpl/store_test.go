@@ -334,6 +334,15 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, queryResult.TotalCount, 2)
 				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
 				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+
+				// Filtering by a single team id must also filter TotalCount, not
+				// return the unfiltered org total.
+				singleQuery := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, TeamIds: []int64{teamIds[0]}}
+				singleQueryResult, err := teamSvc.SearchTeams(context.Background(), singleQuery)
+				require.NoError(t, err)
+				require.Len(t, singleQueryResult.Teams, 1)
+				require.EqualValues(t, singleQueryResult.TotalCount, 1)
+				require.Equal(t, singleQueryResult.Teams[0].ID, teamIds[0])
 			})
 
 			t.Run("Should be able to query teams by UIDs", func(t *testing.T) {
@@ -354,6 +363,15 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, queryResult.TotalCount, 2)
 				assert.Contains(t, teamUIDs, queryResult.Teams[0].UID)
 				assert.Contains(t, teamUIDs, queryResult.Teams[1].UID)
+
+				// Filtering by a single UID must also filter TotalCount, not
+				// return the unfiltered org total.
+				singleQuery := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, UIDs: []string{teamUIDs[0]}}
+				singleQueryResult, err := teamSvc.SearchTeams(context.Background(), singleQuery)
+				require.NoError(t, err)
+				require.Len(t, singleQueryResult.Teams, 1)
+				require.EqualValues(t, singleQueryResult.TotalCount, 1)
+				require.Equal(t, singleQueryResult.Teams[0].UID, teamUIDs[0])
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {

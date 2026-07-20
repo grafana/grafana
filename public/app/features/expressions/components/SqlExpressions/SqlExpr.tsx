@@ -118,10 +118,11 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   };
 
   // Quote the seeded table name so refIds with spaces or special characters produce a runnable query.
+  const initialTable = quoteIdentifierIfNecessary(vars[0] || 'table name', SQL_EXPRESSIONS_DIALECT);
   const initialQuery = `SELECT
   *
 FROM
-  ${quoteIdentifierIfNecessary(vars[0] ?? '', SQL_EXPRESSIONS_DIALECT)}
+  ${initialTable}
 LIMIT
   10`;
 

@@ -75,10 +75,10 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 		deltaTitle = "🚀🎉"
 	)
 
-	createUnmanagedFolder(t, helper, alphaUID, alphaTitle)
-	createUnmanagedFolderWithParent(t, helper, betaUID, betaTitle, alphaUID)
-	createUnmanagedFolderWithParent(t, helper, gammaUID, gammaTitle, betaUID)
-	createUnmanagedFolderWithParent(t, helper, deltaUID, deltaTitle, gammaUID)
+	helper.CreateUnmanagedFolderWithName(t, alphaUID, alphaTitle, "")
+	helper.CreateUnmanagedFolderWithName(t, betaUID, betaTitle, alphaUID)
+	helper.CreateUnmanagedFolderWithName(t, gammaUID, gammaTitle, betaUID)
+	helper.CreateUnmanagedFolderWithName(t, deltaUID, deltaTitle, gammaUID)
 	dashName := helper.CreateUnmanagedDashboard(t, "Sample Dashboard", deltaUID)
 
 	const repo = "folder-title-normalization-repo"
@@ -282,8 +282,8 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 func TestIntegrationProvisioning_MigrateFolderTitleCollisionFails(t *testing.T) {
 	helper := sharedHelper(t)
 
-	createUnmanagedFolder(t, helper, "collision-a", "» Reports")
-	createUnmanagedFolder(t, helper, "collision-b", "Reports")
+	helper.CreateUnmanagedFolderWithName(t, "collision-a", "» Reports", "")
+	helper.CreateUnmanagedFolderWithName(t, "collision-b", "Reports", "")
 
 	const repo = "folder-title-collision-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
