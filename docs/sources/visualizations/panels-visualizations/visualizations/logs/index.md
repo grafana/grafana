@@ -112,15 +112,15 @@ Use these settings to refine your visualization:
 | Wrap lines | Turn line wrapping on or off. |
 | Prettify JSON | Toggle the switch on to pretty print all JSON logs. This setting does not affect logs in any format other than JSON. |
 | Enable columns for displayed fields | Show selected displayed fields as columns. |
-| Enable logs highlighting | Use a predefined syntax coloring grammar to highlight relevant parts of the log lines. |
+| Enable logs highlighting | Use a predefined coloring scheme to highlight relevant parts of the log lines. |
 | Enable log details | Toggle the switch on to see an extendable area with log details including labels and detected fields. Each field or label has a stats icon to display free-form statistics in relation to all displayed logs. The default setting is on. |
-| Log Details panel mode | Choose to display the log details in a sidebar panel or inline, below the log line. |
-| Enable infinite scrolling | Request more results by scrolling to the bottom of the logs list. |
+| Log details panel mode | Choose to display the log details in a sidebar panel or inline, below the log line. |
+| Enable field selector | Experimental. Show a component to manage the displayed fields from the logs. The default is off. |
+| Enable infinite scrolling | Experimental. Request more results by scrolling to the bottom of the logs list. The default is off. |
 | Show controls | Display controls to jump to the last or first log line and filter by log level. |
 | Display download control | Display a control to download log lines when **Show controls** is enabled. |
-| Font size | Select between the default font size and small font size. |
 | Unique labels | Show or hide the unique labels column, which shows only non-common labels. |
-| Deduplication | Hide log messages that are duplicates of others shown, according to your selected criteria. Choose from: <ul><li>**None** - Don't deduplicate log lines.</li><li>**Exact** - Ignoring ISO datetimes.</li><li>**Numbers** - Ignoring only those that differ by numbers such as IPs or latencies.</li><li>**Signature** - Removing successive lines with identical punctuation and white space.</li></ul> |
+| Deduplication | Hide log messages that are duplicates of others shown, according to your selected criteria. Choose from: <ul><li>**None** - Don't deduplicate log lines.</li><li>**Exact** - De-duplication of successive lines that are identical, ignoring ISO datetimes.</li><li>**Numbers** - Ignoring only those that differ by numbers such as IPs or latencies.</li><li>**Signature** - Removing successive lines with identical punctuation and white space.</li></ul> |
 | Order | Set whether to show results **Newest first** or **Oldest first**. |
 
 <!-- prettier-ignore-end -->
