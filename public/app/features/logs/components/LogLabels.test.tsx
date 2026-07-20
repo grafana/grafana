@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogLabels, LogLabelsList } from './LogLabels';
+import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
 import { getNormalizedFieldName } from './panel/processing';
 
 describe('<LogLabels />', () => {

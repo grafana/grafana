@@ -1,20 +1,20 @@
 import { css, cx } from '@emotion/css';
-import { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
+import { type AnchorHTMLAttributes, type ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+import { type GrafanaTheme2, textUtil, type ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { IconName, IconSize, IconType } from '../../types/icon';
-import { ComponentSize } from '../../types/size';
+import { type IconName, type IconSize, type IconType } from '../../types/icon';
+import { type ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
+import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
-export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
+export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'accent', 'destructive', 'success'];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
@@ -58,9 +58,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       'aria-label': ariaLabel,
-      variant = 'primary',
       size = 'md',
       fill = 'solid',
+      variant = fill === 'text' ? 'accent' : 'primary',
       icon,
       fullWidth,
       children,
@@ -151,10 +151,13 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       disabled,
       tooltip,
       tooltipPlacement,
+      href,
       ...otherProps
     },
     ref
   ) => {
+    const sanitizedHref = href ? textUtil.sanitizeUrl(href) : href;
+
     const theme = useTheme2();
     const styles = getButtonStyles({
       theme,
@@ -182,6 +185,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       <a
         className={linkButtonStyles}
         {...otherProps}
+        href={sanitizedHref}
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
         ref={tooltip ? undefined : ref}
@@ -284,6 +288,8 @@ export const getButtonStyles = (props: StyleProps) => {
     }),
     disabled: css(disabledStyles, {
       '&:hover': css(disabledStyles),
+      '&:focus': css(disabledStyles),
+      '&:focus-visible': css(disabledStyles),
     }),
     img: css({
       width: '16px',
@@ -314,7 +320,7 @@ export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
   };
 }
 
-export function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
+function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
@@ -430,6 +436,9 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
     case 'success':
       return getButtonVariantStyles(theme, theme.colors.success, fill);
 
+    case 'accent':
+      return getButtonVariantStyles(theme, theme.colors.accent, fill);
+
     case 'primary':
     default:
       return getButtonVariantStyles(theme, theme.colors.primary, fill);
@@ -442,21 +451,5 @@ export const clearButtonStyles = (theme: GrafanaTheme2) => {
     color: theme.colors.text.primary,
     border: 'none',
     padding: 0,
-  });
-};
-
-export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
-  return css({
-    background: 'transparent',
-    border: 'none',
-    padding: 0,
-    fontFamily: 'inherit',
-    color: 'inherit',
-    height: '100%',
-    cursor: 'context-menu',
-    '&:hover': {
-      background: 'transparent',
-      color: 'inherit',
-    },
   });
 };

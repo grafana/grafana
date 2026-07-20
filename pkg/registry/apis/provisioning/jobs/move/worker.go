@@ -106,7 +106,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	msg := fmt.Sprintf("Move files from Grafana %s", job.Name)
 	stageOptions := repository.StageOptions{
 		Mode:                  repository.StageModeCommitOnlyOnce,
-		CommitOnlyOnceMessage: msg,
+		CommitOnlyOnceMessage: jobs.CommitMessage(job, msg),
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
 		Ref:                   opts.Ref,
@@ -161,6 +161,15 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		resultBuilder := jobs.NewPathOnlyResult(path).WithAction(repository.FileActionRenamed)
 		// Construct the target path by combining the job's target path with the file/folder name
 		targetPath := w.constructTargetPath(opts.TargetPath, path)
+
+		if path == targetPath {
+			progress.SetMessage(ctx, "Skipping "+path+" because it is already in "+opts.TargetPath)
+			progress.Record(ctx, jobs.NewPathOnlyResult(path).WithAction(repository.FileActionIgnored).Build())
+			if err := progress.TooManyErrors(); err != nil {
+				return err
+			}
+			continue
+		}
 
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
 		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {

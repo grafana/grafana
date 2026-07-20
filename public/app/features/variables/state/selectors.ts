@@ -1,15 +1,13 @@
-import memoizeOne from 'memoize-one';
-
-import { TypedVariableModel } from '@grafana/data';
-import { StoreState } from 'app/types/store';
+import { type TypedVariableModel } from '@grafana/data';
+import { type StoreState } from 'app/types/store';
 
 import { getState } from '../../../store/store';
 import { toStateKey } from '../toStateKey';
 
 import { defaultVariablesFilter } from './defaultVariablesFilter';
 import { getNextVariableIndex } from './getNextVariableIndex';
-import { getInitialTemplatingState, TemplatingState } from './reducers';
-import { KeyedVariableIdentifier } from './types';
+import { getInitialTemplatingState, type TemplatingState } from './reducers';
+import { type KeyedVariableIdentifier } from './types';
 
 export function getVariable(
   identifier: KeyedVariableIdentifier,
@@ -55,24 +53,10 @@ export function getVariablesByKey(key: string, state: StoreState = getState()): 
   return getFilteredVariablesByKey(defaultVariablesFilter, key, state);
 }
 
-export const getSubMenuVariables = memoizeOne(
-  (key: string, variables: Record<string, TypedVariableModel>): TypedVariableModel[] => {
-    return getVariablesByKey(key, getState());
-  }
-);
-
-export const getEditorVariables = (key: string, state: StoreState): TypedVariableModel[] => {
-  return getVariablesByKey(key, state);
-};
-
 export type GetVariables = typeof getVariablesByKey;
 
 export function getNewVariableIndex(key: string, state: StoreState = getState()): number {
   return getNextVariableIndex(Object.values(getVariablesState(key, state).variables));
-}
-
-export function getVariablesIsDirty(key: string, state: StoreState = getState()): boolean {
-  return getVariablesState(key, state).transaction.isDirty;
 }
 
 export function getIfExistsLastKey(state: StoreState = getState()): string | undefined {

@@ -1,8 +1,8 @@
-import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { mockRulerGrafanaRecordingRule, mockRulerGrafanaRule } from '../../../mocks';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { Annotation } from '../../../utils/constants';
 
 import { getPayloadToExport } from './ModifyExportRuleForm';
@@ -115,10 +115,17 @@ const expectedModifiedRule2 = (uid: string) => ({
     ],
     exec_err_state: 'Error',
     is_paused: false,
+    metadata: {
+      editor_settings: {
+        simplified_notifications_section: true,
+        simplified_query_and_expressions_section: true,
+      },
+    },
+    missing_series_evals_to_resolve: 0,
     no_data_state: 'NoData',
+    notification_settings: undefined,
     title: 'Rule2 updated',
     uid: uid,
-    missing_series_evals_to_resolve: 0,
   },
   keep_firing_for: '1m',
   labels: {

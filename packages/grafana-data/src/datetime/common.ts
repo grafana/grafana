@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { TimeZone, DefaultTimeZone } from '../types/time';
+import { type TimeZone, DefaultTimeZone } from '../types/time';
 
 /**
  * Used for helper functions handling time zones.

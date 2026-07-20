@@ -2,28 +2,28 @@ import { css, cx } from '@emotion/css';
 import { forwardRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, ScopedVars } from '@grafana/data';
+import { type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { sanitize, sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { ButtonLinkProps } from '@grafana/ui/internal';
+import { type ButtonLinkProps } from '@grafana/ui/internal';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
 interface Props {
   link: DashboardLink;
   linkInfo: { title: string };
-  dashboardUID: string;
+  dashboardUID?: string;
   scopedVars?: ScopedVars;
 }
 
 interface DashboardLinksMenuProps {
   link: DashboardLink;
-  dashboardUID: string;
+  dashboardUID?: string;
 }
 
 function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
@@ -123,7 +123,7 @@ const useResolvedLinks = ({ link, dashboardUID }: Pick<Props, 'link' | 'dashboar
   if (!result.value) {
     return [];
   }
-  return resolveLinks(dashboardUID, link, result.value.view);
+  return resolveLinks(link, result.value.view, dashboardUID);
 };
 
 interface ResolvedLinkDTO {
@@ -137,9 +137,9 @@ export async function searchForTags(tags: string[]) {
 }
 
 export function resolveLinks(
-  dashboardUID: string,
   link: DashboardLink,
   searchHits: DashboardQueryResult[],
+  dashboardUID?: string,
   dependencies: { getLinkSrv: typeof getLinkSrv; sanitize: typeof sanitize; sanitizeUrl: typeof sanitizeUrl } = {
     getLinkSrv,
     sanitize,

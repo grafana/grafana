@@ -13,6 +13,7 @@ type cloudWatchLink struct {
 type metricExpression struct {
 	Expression string `json:"expression"`
 	Label      string `json:"label,omitempty"`
+	ID         string `json:"id"`
 }
 
 type metricStatMeta struct {

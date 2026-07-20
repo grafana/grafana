@@ -21,10 +21,8 @@ type BaseDataSourceService interface {
 }
 
 type CorrelationsStore interface {
-	DeleteCorrelationsByTargetUID(ctx context.Context, cmd correlations.DeleteCorrelationsByTargetUIDCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error
 	CreateCorrelation(ctx context.Context, cmd correlations.CreateCorrelationCommand) (correlations.Correlation, error)
-	CreateOrUpdateCorrelation(ctx context.Context, cmd correlations.CreateCorrelationCommand) error
 }
 
 var (
@@ -104,6 +102,7 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 
 		if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 			SourceUID:       dataSource.UID,
+			SourceType:      dataSource.Type,
 			OrgId:           dataSource.OrgID,
 			OnlyProvisioned: true,
 		}); err != nil {
@@ -111,20 +110,23 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 		}
 
 		for _, correlation := range ds.Correlations {
-			createCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, dataSource.OrgID)
+			targetUID, ok := correlation["targetUID"].(string)
+			targetType := ""
+			if ok {
+				cmd := &datasources.GetDataSourceQuery{OrgID: dataSource.OrgID, UID: targetUID}
+				targetDS, err := dc.dsService.GetDataSource(ctx, cmd)
+				if errors.Is(err, datasources.ErrDataSourceNotFound) {
+					return err
+				}
+				targetType = targetDS.Type
+			}
+
+			createCorrelationCmd, err := makeCreateCorrelationCommand(ctx, correlation, dataSource.UID, dataSource.Type, targetType, dataSource.OrgID)
 			if err != nil {
 				dc.log.Error("failed to parse correlation", "correlation", correlation)
 				return err
 			}
-			// "Provisioned" column was introduced in #71110. Any records that were created before this change
-			// are marked as "not provisioned". To avoid duplicates we ensure these records are updated instead
-			// of being inserted once again with Provisioned=true.
-			// This is required to help users upgrade with confidence. Post GA we do not expect this code to be
-			// needed at all as it should result in a no-op. This should be mentioned in what's new docs when
-			// feature becomes GA.
-			// This can be changed to dc.correlationsStore.CreateCorrelation in Grafana 11 and CreateOrUpdateCorrelation
-			// can be removed.
-			if err := dc.correlationsStore.CreateOrUpdateCorrelation(ctx, createCorrelationCmd); err != nil {
+			if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
 				return fmt.Errorf("err=%s source=%s", err.Error(), createCorrelationCmd.SourceUID)
 			}
 		}
@@ -191,7 +193,7 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	return nil
 }
 
-func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+func makeCreateCorrelationCommand(ctx context.Context, correlation map[string]any, SourceUID string, SourceType string, TargetType string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
 	// we look for a correlation type at the root if it is defined, if not use default
 	// we ignore the legacy config.type value - the only valid value at that version was "query"
 	var corrTypeStr = correlation["type"]
@@ -205,6 +207,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	createCommand := correlations.CreateCorrelationCommand{
 		SourceUID:   SourceUID,
+		SourceType:  SourceType,
 		Label:       correlation["label"].(string),
 		Description: correlation["description"].(string),
 		OrgId:       OrgId,
@@ -215,6 +218,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	targetUID, ok := correlation["targetUID"].(string)
 	if ok {
 		createCommand.TargetUID = &targetUID
+		createCommand.TargetType = &TargetType
 	}
 
 	if correlation["transformations"] != nil {

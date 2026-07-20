@@ -5,10 +5,12 @@ import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types/store';
-import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { ImportToGMABanner } from '../components/import-to-gma/ImportToGMABanner';
+import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useShowImportToGMARulesBanner';
 import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
 import { NoRulesSplash } from '../components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../components/rules/RuleDetails';
@@ -118,6 +120,9 @@ const RuleListV1 = () => {
 
   const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
   const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+
+  const showImportToGMABanner = useShowImportToGMARulesBanner();
+
   return (
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
@@ -130,6 +135,7 @@ const RuleListV1 = () => {
     >
       <Stack direction="column">
         <AlertsActivityBanner />
+        {showImportToGMABanner && <ImportToGMABanner />}
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (

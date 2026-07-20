@@ -1,13 +1,13 @@
 import { omit } from 'lodash';
 
 import { LabelMatcherFactory, RouteFactory } from '../api/notifications/v0alpha1/mocks/fakes/Routes';
-import { Label } from '../matchers/types';
-import { LabelMatchDetails, matchLabels } from '../matchers/utils';
+import { type Label } from '../matchers/types';
+import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
 
-import { Route } from './types';
+import { type Route } from './types';
 import {
-  InheritableProperties,
-  RouteMatchResult,
+  type InheritableProperties,
+  type RouteMatchResult,
   addUniqueIdentifier,
   computeInheritedTree,
   findMatchingRoutes,

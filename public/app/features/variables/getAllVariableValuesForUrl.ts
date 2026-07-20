@@ -1,4 +1,4 @@
-import { ScopedVars, UrlQueryMap } from '@grafana/data';
+import { type ScopedVars, type UrlQueryMap } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { variableAdapters } from './adapters';

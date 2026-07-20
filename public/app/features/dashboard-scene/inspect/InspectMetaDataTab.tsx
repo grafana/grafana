@@ -1,12 +1,12 @@
-import { DataSourceApi } from '@grafana/data';
+import { type DataSourceApi } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
-  SceneObjectRef,
-  VizPanel,
+  type SceneObjectState,
+  type SceneObjectRef,
+  type VizPanel,
 } from '@grafana/scenes';
 import { InspectTab } from 'app/features/inspector/types';
 

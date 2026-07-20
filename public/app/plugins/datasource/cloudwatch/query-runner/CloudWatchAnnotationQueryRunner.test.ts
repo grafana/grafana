@@ -1,4 +1,4 @@
-import { CloudWatchAnnotationQuery } from '../dataquery.gen';
+import { type CloudWatchAnnotationQuery } from '../dataquery.gen';
 import { setupMockedAnnotationQueryRunner } from '../mocks/AnnotationQueryRunner';
 import { namespaceVariable, regionVariable } from '../mocks/CloudWatchDataSource';
 

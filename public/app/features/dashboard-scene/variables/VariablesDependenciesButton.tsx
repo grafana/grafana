@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariable, SceneVariableState } from '@grafana/scenes';
+import { type SceneVariable, type SceneVariableState } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
 
@@ -10,9 +12,10 @@ import { createDependencyEdges, createDependencyNodes, filterNodesWithDependenci
 
 interface Props {
   variables: Array<SceneVariable<SceneVariableState>>;
+  isInSidebar?: boolean;
 }
 
-export const VariablesDependenciesButton = ({ variables }: Props) => {
+export const VariablesDependenciesButton = ({ variables, isInSidebar }: Props) => {
   const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
   const edges = useMemo(() => createDependencyEdges(variables), [variables]);
 
@@ -28,7 +31,21 @@ export const VariablesDependenciesButton = ({ variables }: Props) => {
       edges={edges}
     >
       {({ showModal }) => {
-        return (
+        return isInSidebar ? (
+          <Button
+            className={css({ width: '100%', justifyContent: 'center' })}
+            icon="channel-add"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              reportInteraction('Show variable dependencies');
+              showModal();
+            }}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.showDependenciesButton}
+          >
+            <Trans i18nKey="variables.variables-dependencies-button.show-dependencies">Show dependencies</Trans>
+          </Button>
+        ) : (
           <Button
             onClick={() => {
               reportInteraction('Show variable dependencies');

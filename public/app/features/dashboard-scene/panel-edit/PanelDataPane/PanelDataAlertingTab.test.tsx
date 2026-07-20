@@ -2,7 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
-import { PromOptions } from '@grafana/prometheus';
+import { type PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -17,15 +17,15 @@ import {
   mockRulerRuleGroup,
 } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { configureStore } from 'app/store/configureStore';
+import { type configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
-import { DashboardDataDTO } from 'app/types/dashboard';
-import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { type DashboardDataDTO } from 'app/types/dashboard';
+import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';

@@ -1,6 +1,12 @@
 import { invert } from 'lodash';
 
-import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataFrame, TimeRange } from '@grafana/data';
+import {
+  type AbstractLabelMatcher,
+  AbstractLabelOperator,
+  type AbstractQuery,
+  type DataFrame,
+  type TimeRange,
+} from '@grafana/data';
 
 import { DATAPLANE_LABEL_TYPES_NAME, LabelType } from './types';
 
@@ -131,7 +137,7 @@ export function getLokiLabelTypeFromFrame(
   }
 }
 
-export const mapOpToAbstractOp: Record<AbstractLabelOperator, string> = {
+const mapOpToAbstractOp: Record<AbstractLabelOperator, string> = {
   [AbstractLabelOperator.Equal]: '=',
   [AbstractLabelOperator.NotEqual]: '!=',
   [AbstractLabelOperator.EqualRegEx]: '=~',
@@ -179,7 +185,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>) {
 }
 
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
-export const SUGGESTIONS_LIMIT = 10000;
-export function limitSuggestions(items: string[]) {
+const SUGGESTIONS_LIMIT = 10000;
+function limitSuggestions(items: string[]) {
   return items.slice(0, SUGGESTIONS_LIMIT);
 }

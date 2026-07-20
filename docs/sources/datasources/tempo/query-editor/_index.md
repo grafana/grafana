@@ -1,6 +1,9 @@
 ---
 aliases:
   - ../../data-sources/tempo/query-editor/
+  - traceql-structure/
+  - ../traces-in-grafana/json-trace-file/
+  - ../json-trace-file/
 description: Guide for using the Tempo data source's query editor
 keywords:
   - grafana
@@ -32,14 +35,18 @@ Don't know TraceQL? Try [Grafana Traces Drilldown](https://grafana.com/docs/graf
 
 You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** and a Tempo data source.
 
-### TraceQL knowledge helpful, but not required
+{{< admonition type="note" >}}
+Before running queries, verify that your Tempo data source is configured and connected.
+If queries return no results or errors, refer to [Configure the Tempo data source](../configure-tempo-data-source/) to check your connection and authentication settings.
+{{< /admonition >}}
 
 You don't have to know TraceQL to create a query.
-You can use the **Search** query builder's user interface to select options to search your data.
-These selections generate a TraceQL query.
-Any query generated using **Search** query builder can be transferred to the **TraceQL** query editor, where you can edit the query directly.
+The **Search** query builder lets you select options from drop-down lists to build a query visually.
+These selections generate a TraceQL query that you can transfer to the **TraceQL** editor to refine further.
 
-To learn more about how to query by TraceQL, refer to the [TraceQL documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql).
+TraceQL queries follow the pattern `{ conditions } | pipeline`, where conditions inside `{}` select spans and pipeline operators like `count()` or `avg()` aggregate results.
+To learn the full syntax, refer to [Construct a TraceQL query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/).
+For a language overview, refer to the [TraceQL documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql).
 
 ## Choose a query editing mode
 
@@ -50,52 +57,56 @@ Refer to [Use query types together](#use-query-types-together) for more informat
 
 ![The three query types: Search, TraceQL, and Service Graph](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-types.png)
 
-The three query types are:
-
-- **Search** query builder - Provides a user interface for building a TraceQL query.
-- **TraceQL** query editor - Lets you write your own TraceQL query with assistance from autocomplete.
-- **Service Graph** view - Displays a visual relationship between services. Refer to the [Service graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/) documentation for more information.
-
 ### Search query builder
 
-The **Search** query builder provides drop-down lists and text fields to help you write a query.
-The query builder is ideal for people who aren't familiar with or want to learn TraceQL.
+Start here if you're exploring data or learning TraceQL.
+The **Search** query builder provides drop-down lists and text fields to build a query visually without needing to know TraceQL syntax.
+Your selections automatically generate a TraceQL query that you can copy to the editor for further refinement.
 
-Refer to the [Search using the TraceQL query builder documentation](traceql-search/) to learn more about creating queries using convenient drop-down menus.
+Refer to [Search traces using the query builder](traceql-search/) for more information.
 
 ![The Search query builder](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-search-v11.png)
 
 ### TraceQL query editor
 
-The **TraceQL** query editor lets you search by trace ID and write TraceQL queries using autocomplete.
+Use the **TraceQL** editor when you need complex filters, structural queries across parent and child spans, or aggregations that the Search builder doesn't support.
+The editor provides autocomplete for attribute names, scopes, and operators.
+You can also search for a trace ID by entering it directly into the query field.
 
-Refer to the [TraceQL query editor documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-editor/) to learn more about constructing queries using a code-editor-like experience.
+For copy-paste query examples, refer to [TraceQL query examples](traceql-query-examples/).
+Refer to [Write TraceQL queries with the editor](traceql-editor/) for more information.
 
 ![The TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-traceql-v11.png)
 
-You can also search for a trace ID by entering it into the query field.
-
 ### Service graph view
 
-The **Service Graph** view uses metrics to display span request rates, error rates, and durations, as well as service graphs.
-After the requirements are set up, this preconfigured view is immediately available.
+The **Service Graph** view answers a different question than trace search: instead of finding individual traces, it visualizes how your services connect and highlights request rate, error rate, and duration (RED metrics) across those connections.
 
-Using the service graph view, you can:
+Using the Service Graph view, you can:
 
-- Discover spans which are consistently erroring and the rates at which they occur.
+- Discover spans that consistently return errors and the rates at which they occur.
 - Get an overview of the overall rate of span calls throughout your services.
 - Determine how long the slowest queries in your service take to complete.
 - Examine all traces that contain spans of particular interest based on rate, error, and duration values (RED signals).
 
-For more information about the service graph, refer to [Service graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/).
+The Service Graph requires metrics generation to be configured.
+For more information, refer to [Service Graph and Service Graph view](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/).
 
 ![Screenshot of the Service Graph view](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph.png)
+
+## Understand search behavior
+
+Tempo search is non-deterministic. When you run a search, Tempo performs a massively parallel scan over the selected time range and returns the first N matching results. Even identical searches can return different results due to variations in machine load and network latency.
+
+This design prioritizes speed over predictability. To make results deterministic, append a `with` clause to your TraceQL queries, for example `{ status = error } with (most_recent=true)`, so Tempo returns the most recent matching traces. For more information, refer to [Retrieve most recent results](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#retrieve-most-recent-results).
 
 ## Use TraceQL panels in dashboards
 
 To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/traces/).
 
 To learn more about Grafana dashboards, refer to the [Use dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/).
+
+For example dashboards with traces, visit [Grafana Play](https://play.grafana.org).
 
 ## Set options for query builder and editor
 
@@ -167,6 +178,23 @@ Remove query
 
 For more information, refer to the [Query inspector in Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/) and [Query management in Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/query-management/) documentation.
 
+## Upload a JSON trace file
+
+You can upload a JSON file that contains a single trace and visualize it.
+If the file has multiple traces, Grafana visualizes the first trace.
+
+To upload a trace file:
+
+1. Select **Explore** in Grafana.
+1. Select **Import trace** next to the query type selector.
+1. Upload your JSON trace file.
+
+To download a trace or Service Graph through the [Inspector panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/):
+
+1. Open the inspector.
+1. Navigate to the **Data** tab.
+1. Click **Download traces** or **Download Service Graph**.
+
 ## Cross-tenant TraceQL queries
 
 If you've configured a multi-stack Tempo data source, you can perform TraceQL queries across those stacks and tenants.
@@ -190,3 +218,11 @@ If these two conditions are satisfied in separate tenants, then Tempo doesn't re
 Refer to [Set up a multi-stack Tempo data source in Grafana](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/multi-stack-data-sources/#set-up-a-multi-stack-tempo-data-source-in-grafana) for information about configuring the Tempo data source.
 
 For information about Tempo configuration requirements, refer to the [Cross-tenant query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/operations/cross_tenant_query/) and [Enable multitenancy](https://grafana.com/docs/tempo/<TEMPO_VERSION>/operations/multitenancy/) documentation.
+
+## Next steps
+
+- [TraceQL query examples](traceql-query-examples/) - Copy-paste query examples for common use cases
+- [Construct a TraceQL query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/) - Full TraceQL syntax, scopes, and operators
+- [Service Graph and Service Graph view](../service-graph/) - Visualize service dependencies and RED metrics
+- [Span filters](../span-filters/) - Refine trace results after querying
+- [Configure the Tempo data source](../configure-tempo-data-source/) - Connection, authentication, and feature settings

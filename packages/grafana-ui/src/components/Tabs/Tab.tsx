@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { HTMLProps } from 'react';
+import { type HTMLProps } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';

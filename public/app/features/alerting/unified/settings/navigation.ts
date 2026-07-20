@@ -1,10 +1,13 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useSelector } from 'app/types/store';
 
 import { useSettingsExtensionsNav } from './extensions';
+
+/** Deep-link target for the Alerting settings Alertmanager tab (auto-sync configuration lives here). */
+export const ALERTING_SETTINGS_URL = '/alerting/admin/alertmanager';
 
 export function useSettingsPageNav() {
   const location = useLocation();
@@ -19,8 +22,8 @@ export function useSettingsPageNav() {
     {
       id: 'alertmanager',
       text: t('alerting.settings.tabs.alert-managers', 'Alert managers'),
-      url: '/alerting/admin/alertmanager',
-      active: location.pathname === '/alerting/admin/alertmanager',
+      url: ALERTING_SETTINGS_URL,
+      active: location.pathname === ALERTING_SETTINGS_URL,
       icon: 'cloud',
       parentItem: settingsNav,
     },

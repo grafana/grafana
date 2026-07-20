@@ -1,0 +1,191 @@
+import {
+  validateNoHiddenCharacters,
+  validateNoUserInfoInUrl,
+  validateSigner,
+  validateSigningKey,
+  validateSmimeCertificate,
+} from './validators';
+
+describe('validateNoHiddenCharacters', () => {
+  // Should pass for valid inputs
+  it('returns true for a normal ASCII string', () => {
+    expect(validateNoHiddenCharacters('hello world')).toBe(true);
+  });
+
+  it('returns true for a valid PEM private key', () => {
+    const pem = '-----BEGIN RSA PRIVATE KEY-----\nMIIE...base64...\n-----END RSA PRIVATE KEY-----';
+    expect(validateNoHiddenCharacters(pem)).toBe(true);
+  });
+
+  it('returns true for empty string', () => {
+    expect(validateNoHiddenCharacters('')).toBe(true);
+  });
+
+  it('returns true for undefined', () => {
+    expect(validateNoHiddenCharacters(undefined)).toBe(true);
+  });
+
+  it('returns true for string with newlines and carriage returns', () => {
+    expect(validateNoHiddenCharacters('line1\r\nline2\nline3')).toBe(true);
+  });
+
+  it('returns true for string with tabs', () => {
+    expect(validateNoHiddenCharacters('col1\tcol2')).toBe(true);
+  });
+
+  // Should fail for hidden characters
+  it('returns error for zero-width space (U+200B)', () => {
+    expect(validateNoHiddenCharacters('abc\u200Bdef')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for zero-width non-joiner (U+200C)', () => {
+    expect(validateNoHiddenCharacters('abc\u200Cdef')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for zero-width joiner (U+200D)', () => {
+    expect(validateNoHiddenCharacters('abc\u200Ddef')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for BOM (U+FEFF)', () => {
+    expect(validateNoHiddenCharacters('\uFEFFkey content')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for left-to-right mark (U+200E)', () => {
+    expect(validateNoHiddenCharacters('abc\u200Edef')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for right-to-left mark (U+200F)', () => {
+    expect(validateNoHiddenCharacters('abc\u200Fdef')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for soft hyphen (U+00AD)', () => {
+    expect(validateNoHiddenCharacters('abc\u00ADdef')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for word joiner (U+2060)', () => {
+    expect(validateNoHiddenCharacters('abc\u2060def')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  // Unicode whitespace that breaks btoa() but looks like a regular space
+  it('returns error for thin space (U+2009)', () => {
+    expect(validateNoHiddenCharacters('abc\u2009def')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for narrow no-break space (U+202F)', () => {
+    expect(validateNoHiddenCharacters('abc\u202Fdef')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for ideographic space (U+3000)', () => {
+    expect(validateNoHiddenCharacters('abc\u3000def')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for medium mathematical space (U+205F)', () => {
+    expect(validateNoHiddenCharacters('abc\u205Fdef')).toEqual(expect.stringContaining('hidden'));
+  });
+
+  it('returns error for en space (U+2002)', () => {
+    expect(validateNoHiddenCharacters('abc\u2002def')).toEqual(expect.stringContaining('hidden'));
+  });
+});
+
+describe('validateNoUserInfoInUrl', () => {
+  // Valid inputs
+  it('returns true for a clean HTTPS URL', () => {
+    expect(validateNoUserInfoInUrl('https://github.com/owner/repo')).toBe(true);
+  });
+
+  it('returns true for a URL with @ in the path (not userinfo)', () => {
+    expect(validateNoUserInfoInUrl('https://github.com/owner@scope/repo')).toBe(true);
+  });
+
+  it('returns true for empty string', () => {
+    expect(validateNoUserInfoInUrl('')).toBe(true);
+  });
+
+  it('returns true for undefined', () => {
+    expect(validateNoUserInfoInUrl(undefined)).toBe(true);
+  });
+
+  it('returns true for malformed URL (defers to pattern)', () => {
+    expect(validateNoUserInfoInUrl('not a url')).toBe(true);
+  });
+
+  it('returns true for whitespace-only string', () => {
+    expect(validateNoUserInfoInUrl('   ')).toBe(true);
+  });
+
+  // Invalid inputs
+  it('returns error for URL with username and password', () => {
+    const url = 'https://user:token@github.com/owner/repo'; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
+  });
+
+  it('returns error for URL with username only', () => {
+    const url = 'https://user@github.com/owner/repo'; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
+  });
+
+  it('returns error for URL with password only (empty username)', () => {
+    const url = 'https://:token@github.com/owner/repo'; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
+  });
+
+  it('returns error for URL-encoded credentials', () => {
+    const url = 'https://user:%24TOKEN@github.com/owner/repo'; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
+  });
+
+  it('returns error for URL with leading/trailing whitespace around credentials', () => {
+    const url = '  https://user:token@github.com/owner/repo  '; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
+  });
+});
+
+describe('validateSigner', () => {
+  it('returns true when signing is disabled, regardless of value', () => {
+    expect(validateSigner(false)('')).toBe(true);
+    expect(validateSigner(false)(undefined)).toBe(true);
+  });
+
+  it('returns true when signing is enabled and a value is provided', () => {
+    expect(validateSigner(true)('Jane Doe')).toBe(true);
+  });
+
+  it('returns an error when signing is enabled and the value is empty or whitespace', () => {
+    expect(validateSigner(true)('')).toEqual(expect.stringContaining('commit signing is enabled'));
+    expect(validateSigner(true)('   ')).toEqual(expect.stringContaining('commit signing is enabled'));
+    expect(validateSigner(true)(undefined)).toEqual(expect.stringContaining('commit signing is enabled'));
+  });
+});
+
+describe('validateSigningKey', () => {
+  it('returns true when a key is not required, regardless of value', () => {
+    expect(validateSigningKey(false)('')).toBe(true);
+    expect(validateSigningKey(false)(undefined)).toBe(true);
+  });
+
+  it('returns true when a key is required and a value is provided', () => {
+    expect(validateSigningKey(true)('key-material')).toBe(true);
+  });
+
+  it('returns an error when a key is required and the value is empty or whitespace', () => {
+    expect(validateSigningKey(true)('')).toEqual(expect.stringContaining('Signing key is required'));
+    expect(validateSigningKey(true)('   ')).toEqual(expect.stringContaining('Signing key is required'));
+  });
+});
+
+describe('validateSmimeCertificate', () => {
+  it('returns true when the method is not smime, regardless of value', () => {
+    expect(validateSmimeCertificate('gpg')('')).toBe(true);
+    expect(validateSmimeCertificate(undefined)('')).toBe(true);
+  });
+
+  it('returns true when the method is smime and a value is provided', () => {
+    expect(validateSmimeCertificate('smime')('-----BEGIN CERTIFICATE-----')).toBe(true);
+  });
+
+  it('returns an error when the method is smime and the value is empty or whitespace', () => {
+    expect(validateSmimeCertificate('smime')('')).toEqual(expect.stringContaining('Certificate is required'));
+    expect(validateSmimeCertificate('smime')('   ')).toEqual(expect.stringContaining('Certificate is required'));
+  });
+});

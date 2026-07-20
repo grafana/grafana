@@ -2,7 +2,7 @@ import { memo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
-import { Team } from 'app/types/teams';
+import { type Team } from 'app/types/teams';
 
 export interface Props {
   teams: Team[];
@@ -63,5 +63,3 @@ export const UserTeams = memo<Props>(({ isLoading, teams }) => {
 });
 
 UserTeams.displayName = 'UserTeams';
-
-export default UserTeams;

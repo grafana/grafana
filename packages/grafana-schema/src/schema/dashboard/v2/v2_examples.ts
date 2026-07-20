@@ -1,4 +1,4 @@
-import { defaultDataQueryKind, Spec } from './index';
+import { defaultDataQueryKind, type Spec } from './types.spec.gen';
 
 export const handyTestingSchema: Spec = {
   title: 'Default Dashboard',
@@ -158,9 +158,9 @@ export const handyTestingSchema: Spec = {
             },
             transformations: [
               {
-                kind: 'limit',
+                kind: 'Transformation',
+                group: 'limit',
                 spec: {
-                  id: 'limit',
                   disabled: false,
                   filter: {
                     id: 'byValue',
@@ -466,6 +466,7 @@ export const handyTestingSchema: Spec = {
           },
         ],
         description: 'An adhoc variable',
+        enableGroupBy: false,
         filters: [
           {
             condition: 'AND',

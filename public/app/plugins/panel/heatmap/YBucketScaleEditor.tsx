@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { ScaleDistribution, type ScaleDistributionConfig } from '@grafana/schema';
 import { RadioButtonGroup, Field, Select, Input } from '@grafana/ui';
 
 type ScaleOptionValue = 'auto' | ScaleDistribution;

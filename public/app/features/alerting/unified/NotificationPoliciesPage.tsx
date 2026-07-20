@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSet } from 'react-use';
 
-import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Button, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
@@ -18,9 +19,14 @@ import {
   useCreatePolicyAction,
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
+import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
+import {
+  AlertGroupAction,
+  NotificationPolicyAction,
+  TimeIntervalAction,
+} from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
@@ -28,6 +34,15 @@ import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarn
 import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { Spacer } from './components/Spacer';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
+import {
+  trackNotificationPoliciesFilterContactPoint,
+  trackNotificationPoliciesFilterMatchers,
+  trackNotificationPoliciesFilterPolicyTree,
+  trackNotificationPoliciesToggledAll,
+} from './components/notification-policies/notificationPolicyAnalytics';
+import { useAlertGroupAbility } from './hooks/abilities/alertmanager/useAlertGroupAbility';
+import { useNotificationPolicyAbility } from './hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { useTimeIntervalAbility } from './hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
@@ -48,15 +63,19 @@ const NotificationPoliciesTabs = () => {
 
   // Alertmanager logic and data hooks
   const { selectedAlertmanager = '' } = useAlertmanager();
-  const [policiesSupported, canSeePoliciesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
-  const [timingsSupported, canSeeTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
+  const policiesAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.ViewTree });
+  const timingsAbility = useTimeIntervalAbility({ action: TimeIntervalAction.View });
+  const canAccessPolicies = isGranted(policiesAbility);
+  const canAccessTimings = isGranted(timingsAbility);
+
   const availableTabs = [
-    canSeePoliciesTab && ActiveTab.NotificationPolicies,
-    canSeeTimingsTab && ActiveTab.TimeIntervals,
+    canAccessPolicies && ActiveTab.NotificationPolicies,
+    canAccessTimings && ActiveTab.TimeIntervals,
   ].filter((tab) => !!tab);
+
   const { data: muteTimings = [] } = useMuteTimings({
     alertmanager: selectedAlertmanager,
-    skip: !canSeeTimingsTab,
+    skip: !canAccessTimings,
   });
 
   // Tab state management
@@ -86,7 +105,7 @@ const NotificationPoliciesTabs = () => {
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
       <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
       <TabsBar>
-        {policiesSupported && canSeePoliciesTab && (
+        {canAccessPolicies && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-notification-policies', 'Notification Policies')}
             active={policyTreeTabActive}
@@ -96,7 +115,7 @@ const NotificationPoliciesTabs = () => {
             }}
           />
         )}
-        {timingsSupported && canSeeTimingsTab && (
+        {canAccessTimings && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-time-intervals', 'Time intervals')}
             active={muteTimingsTabActive}
@@ -120,13 +139,12 @@ const NotificationPoliciesTabs = () => {
  * Unified policy tree view that handles both single and multiple policy trees.
  * Owns the single Web Worker instance and alert groups query shared by all PoliciesTree children.
  *
- * When the `alertingMultiplePolicies` feature toggle is enabled (Grafana AM only),
- * lists all policy trees with create/filter/expand controls.
- * Otherwise, renders a single default policy tree.
+ * For the Grafana Alertmanager, lists all policy trees with create/filter/expand controls.
+ * Otherwise (external Alertmanagers), renders a single default policy tree.
  */
 function PolicyTreeTab() {
   const { selectedAlertmanager = '', isGrafanaAlertmanager } = useAlertmanager();
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: canSeeAlertGroups } = useAlertGroupAbility(AlertGroupAction.View);
 
   // Single worker + alert groups query shared by all PoliciesTree instances
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
@@ -135,7 +153,7 @@ function PolicyTreeTab() {
     { skip: !canSeeAlertGroups || !selectedAlertmanager }
   );
 
-  const useMultiplePolicies = isGrafanaAlertmanager && config.featureToggles.alertingMultiplePolicies;
+  const useMultiplePolicies = isGrafanaAlertmanager;
 
   const {
     currentData: allPolicies,
@@ -158,6 +176,9 @@ function PolicyTreeTab() {
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
+  const prevLabelMatchersRef = useRef<ObjectMatcher[]>([]);
+  const prevContactPointRef = useRef<string | undefined>(undefined);
+
   /**
    * Expand / collapse state
    * `defaultExpanded` is the baseline; `expandedOverrides` holds route IDs (hash-based) that are
@@ -175,6 +196,13 @@ function PolicyTreeTab() {
 
   const handleChangeContactPoint = useCallback(
     (value: string | undefined) => {
+      if (prevContactPointRef.current === value) {
+        return;
+      }
+      prevContactPointRef.current = value;
+      if (value) {
+        trackNotificationPoliciesFilterContactPoint();
+      }
       setContactPointFilter(value);
       resetExpandState();
     },
@@ -183,6 +211,13 @@ function PolicyTreeTab() {
 
   const handleChangeLabelMatchers = useCallback(
     (value: ObjectMatcher[]) => {
+      if (isEqual(prevLabelMatchersRef.current, value)) {
+        return;
+      }
+      prevLabelMatchersRef.current = value;
+      if (value.length > 0) {
+        trackNotificationPoliciesFilterMatchers();
+      }
       setLabelMatchersFilter(value);
       resetExpandState();
     },
@@ -191,6 +226,9 @@ function PolicyTreeTab() {
 
   // Reset expand state when the policy-tree selector filter changes
   useEffect(() => {
+    if (selectedPolicyTreeNames.length > 0) {
+      trackNotificationPoliciesFilterPolicyTree({ selectedCount: selectedPolicyTreeNames.length });
+    }
     resetExpandState();
   }, [selectedPolicyTreeNames, resetExpandState]);
 
@@ -217,9 +255,13 @@ function PolicyTreeTab() {
     : expandedOverrides.size === visiblePolicies.length;
 
   const toggleAllExpanded = useCallback(() => {
+    trackNotificationPoliciesToggledAll({
+      action: isAllExpanded ? 'collapse' : 'expand',
+      visiblePoliciesCount: visiblePolicies.length,
+    });
     setManualDefaultExpanded(!isAllExpanded);
     clear();
-  }, [isAllExpanded, clear]);
+  }, [isAllExpanded, clear, visiblePolicies]);
 
   // Single-tree mode: show filters but no collapse/expand or create button
   if (!useMultiplePolicies) {

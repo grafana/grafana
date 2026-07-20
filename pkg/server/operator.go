@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -21,7 +23,7 @@ type OperatorDependencies struct {
 type Operator struct {
 	Name        string
 	Description string
-	RunFunc     func(deps OperatorDependencies) error
+	RunFunc     func(ctx context.Context, deps OperatorDependencies) error
 }
 
 var operatorsRegistry []Operator

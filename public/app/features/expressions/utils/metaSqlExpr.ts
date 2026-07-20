@@ -1,25 +1,48 @@
-import { v4 as uuidv4 } from 'uuid';
-
-import { getDefaultTimeRange, DataFrameView } from '@grafana/data';
-import { QueryFormat, SQLQuery, SQLSelectableValue } from '@grafana/plugin-ui';
-import { DataQuery } from '@grafana/schema';
-import { mapFieldsToTypes } from 'app/plugins/datasource/mysql/fields';
-import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';
+import {
+  type AdHocVariableFilter,
+  DataFrameView,
+  getDefaultTimeRange,
+  type ScopedVars,
+  type TimeRange,
+  generateUUID,
+} from '@grafana/data';
+import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
+import { type DataQuery } from '@grafana/schema';
+import { quoteIdentifierIfNecessary } from '@grafana/sql';
 
 import { dataSource } from '../ExpressionDatasource';
 
-export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuery[]): Promise<SQLSelectableValue[]> {
+import { interpolateSourceQueries } from './interpolateSourceQueries';
+import { SQL_EXPRESSIONS_DIALECT } from './sqlIdentifier';
+
+export interface FetchSQLFieldsOptions {
+  range?: TimeRange;
+  scopedVars?: ScopedVars;
+  filters?: AdHocVariableFilter[];
+}
+
+export async function fetchSQLFields(
+  query: Partial<SQLQuery>,
+  queries: DataQuery[],
+  options: FetchSQLFieldsOptions = {}
+): Promise<SQLSelectableValue[]> {
   const datasource = dataSource;
   if (!query.table) {
     return [];
   }
 
-  const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
+  const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(query.table, SQL_EXPRESSIONS_DIALECT)} LIMIT 1`;
+  const sourceQueries = queries.filter((q) => q.refId === query.table);
+  const interpolatedSourceQueries = await interpolateSourceQueries(
+    sourceQueries,
+    options.scopedVars ?? {},
+    options.filters
+  );
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
-    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
-    getDefaultTimeRange(),
-    queries.filter((q) => q.refId === query.table)
+    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${generateUUID()}` },
+    options.range ?? getDefaultTimeRange(),
+    interpolatedSourceQueries
   );
   const frame = new DataFrameView<string[]>(queryResponse);
 
@@ -28,12 +51,89 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
       name,
       text: name,
       label: name,
-      value: quoteIdentifierIfNecessary(name),
+      value: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
       type,
     };
   });
 
   return mapFieldsToTypes(fields);
+}
+
+type RAQBFieldType = 'boolean' | 'text' | 'number' | 'date' | 'datetime' | 'time';
+
+function mapFieldsToTypes(columns: SQLSelectableValue[]) {
+  const fields: SQLSelectableValue[] = [];
+
+  for (const col of columns) {
+    const type = col.type?.toUpperCase() ?? '';
+    let raqbFieldType: RAQBFieldType = 'text';
+
+    switch (type) {
+      case 'BOOLEAN':
+      case 'BOOL':
+        raqbFieldType = 'boolean';
+        break;
+      case 'FLOAT':
+      case 'FLOAT64':
+      case 'INT':
+      case 'INTEGER':
+      case 'INT64':
+      case 'NUMERIC':
+      case 'BIGNUMERIC':
+        raqbFieldType = 'number';
+        break;
+      case 'DATE':
+        raqbFieldType = 'date';
+        break;
+      case 'DATETIME':
+      case 'TIMESTAMP':
+        raqbFieldType = 'datetime';
+        break;
+      case 'TIME':
+        raqbFieldType = 'time';
+        break;
+    }
+
+    fields.push({ ...col, raqbFieldType, icon: mapColumnTypeToIcon(type) });
+  }
+
+  return fields;
+}
+
+function mapColumnTypeToIcon(type: string) {
+  switch (type) {
+    case 'TIME':
+    case 'DATETIME':
+    case 'TIMESTAMP':
+      return 'clock-nine';
+    case 'BOOLEAN':
+      return 'toggle-off';
+    case 'INTEGER':
+    case 'FLOAT':
+    case 'FLOAT64':
+    case 'INT':
+    case 'SMALLINT':
+    case 'BIGINT':
+    case 'TINYINT':
+    case 'BYTEINT':
+    case 'INT64':
+    case 'NUMERIC':
+    case 'DECIMAL':
+      return 'calculator-alt';
+    case 'CHAR':
+    case 'VARCHAR':
+    case 'STRING':
+    case 'BYTES':
+    case 'TEXT':
+    case 'TINYTEXT':
+    case 'MEDIUMTEXT':
+    case 'LONGTEXT':
+      return 'text';
+    case 'GEOGRAPHY':
+      return 'map';
+    default:
+      return undefined;
+  }
 }
 
 // based off https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go

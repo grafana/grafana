@@ -1,7 +1,7 @@
-import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
 
-import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
+import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
@@ -67,15 +67,15 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
   };
 }
 
-export const initialState: NavIndex = {};
+const initialState: NavIndex = {};
 
 export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
 // Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
 export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
 
-export const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
+const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
 
-export const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
+const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
   ...item,
   parentItem: {
     ...item.parentItem,
@@ -112,17 +112,21 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     return { ...state, ...newPages };
   } else if (updateConfigurationSubtitle.match(action)) {
     const subTitle = `Organization: ${action.payload}`;
+    const next = { ...state };
 
-    return {
-      ...state,
-      cfg: { ...state.cfg, subTitle },
-      datasources: getItemWithNewSubTitle(state.datasources, subTitle),
-      correlations: getItemWithNewSubTitle(state.correlations, subTitle),
-      users: getItemWithNewSubTitle(state.users, subTitle),
-      teams: getItemWithNewSubTitle(state.teams, subTitle),
-      plugins: getItemWithNewSubTitle(state.plugins, subTitle),
-      'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
-    };
+    if (next.cfg) {
+      next.cfg = { ...next.cfg, subTitle };
+    }
+
+    // Which of these entries exist varies by permissions, features and deployment;
+    // a missing one must not crash the dispatch (it would abort the org-switch reload).
+    for (const id of ['datasources', 'correlations', 'users', 'teams', 'plugins', 'org-settings']) {
+      if (next[id]) {
+        next[id] = getItemWithNewSubTitle(next[id], subTitle);
+      }
+    }
+
+    return next;
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];
   }

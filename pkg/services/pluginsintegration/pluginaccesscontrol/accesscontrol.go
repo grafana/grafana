@@ -7,7 +7,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -19,6 +18,8 @@ const (
 
 	// App Plugins actions
 	ActionAppAccess = "plugins.app:access"
+
+	pluginsMaintainerRoleName = ac.FixedRolePrefix + "plugins:maintainer"
 )
 
 var (
@@ -44,7 +45,10 @@ func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool
 	}
 }
 
-func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
+// FixedRoleRegistrations returns plugin role registrations with grants adjusted
+// for the running instance. When pluginAdminEnabled is false the maintainer
+// role receives no grants (plugin install/uninstall is disabled).
+func FixedRoleRegistrations(pluginAdminEnabled bool) []ac.RoleRegistration {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -69,9 +73,14 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
+
+	maintainerGrants := []string{ac.RoleGrafanaAdmin}
+	if !pluginAdminEnabled {
+		maintainerGrants = []string{}
+	}
 	PluginsMaintainer := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        ac.FixedRolePrefix + "plugins:maintainer",
+			Name:        pluginsMaintainerRoleName,
 			DisplayName: "Maintainer",
 			Description: "Install, uninstall plugins. Needs to be assigned globally.",
 			Group:       "Plugins",
@@ -79,14 +88,14 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 				{Action: ActionInstall},
 			},
 		},
-		Grants: []string{ac.RoleGrafanaAdmin},
+		Grants: maintainerGrants,
 	}
 
-	if !cfg.PluginAdminEnabled {
-		PluginsMaintainer.Grants = []string{}
-	}
+	return []ac.RoleRegistration{AppPluginsReader, PluginsWriter, PluginsMaintainer}
+}
 
-	return service.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsMaintainer)
+func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations(cfg.PluginAdminEnabled)...)
 }
 
 var datasourcesActions = map[string]bool{

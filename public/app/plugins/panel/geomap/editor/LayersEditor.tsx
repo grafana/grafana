@@ -1,6 +1,6 @@
-import { DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 
-import { StandardEditorProps } from '@grafana/data';
+import { type StandardEditorProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
@@ -8,7 +8,7 @@ import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList'
 
 import { getLayersOptions } from '../layers/registry';
 import { type Options } from '../panelcfg.gen';
-import { MapLayerState, GeomapInstanceState } from '../types';
+import { type MapLayerState, type GeomapInstanceState } from '../types';
 
 type LayersEditorProps = StandardEditorProps<unknown, unknown, Options, GeomapInstanceState>;
 

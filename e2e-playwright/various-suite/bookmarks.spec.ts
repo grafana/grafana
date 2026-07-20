@@ -24,7 +24,7 @@ test.describe(
       await expect(navList).toBeVisible();
 
       // Check if the Bookmark section is visible
-      const bookmarksItem = navList.locator('li').nth(1);
+      const bookmarksItem = navList.locator('li').nth(0);
       await expect(bookmarksItem).toBeVisible();
       await expect(bookmarksItem).toContainText('Bookmarks');
 
@@ -33,8 +33,8 @@ test.describe(
       await expect(adminItem).toBeVisible();
       await expect(adminItem).toContainText('Administration');
 
-      // Click the "Add to Bookmarks" button in the Administration section
-      const addToBookmarksButton = adminItem.getByLabel('Add Administration to Bookmarks');
+      // Click the "Bookmark" button in the Administration section
+      const addToBookmarksButton = adminItem.getByLabel('Bookmark Administration');
       await addToBookmarksButton.click({ force: true });
 
       // Check if the Administration menu item is visible in the Bookmarks section
@@ -70,7 +70,7 @@ test.describe(
       await expect(navList).toBeVisible();
 
       // Check if the Bookmark section is visible
-      const bookmarksItem = navList.locator('li').nth(1);
+      const bookmarksItem = navList.locator('li').nth(0);
       await expect(bookmarksItem).toBeVisible();
       await expect(bookmarksItem).toContainText('Bookmarks');
 
@@ -82,8 +82,8 @@ test.describe(
       const administrationLink = bookmarksItem.locator('a').filter({ hasText: 'Administration' });
       await expect(administrationLink).toBeVisible();
 
-      // Click the "Remove from Bookmarks" button
-      const removeFromBookmarksButton = bookmarksItem.getByLabel('Remove Administration from Bookmarks');
+      // Click the "Bookmark" button
+      const removeFromBookmarksButton = bookmarksItem.getByLabel('Bookmark Administration');
       await removeFromBookmarksButton.click({ force: true });
 
       // Check that Administration is no longer in bookmarks

@@ -1,8 +1,8 @@
-import { DataFrameJSON } from '@grafana/data';
-import { LiveDataFilter } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { TimeRegionConfig } from 'app/core/utils/timeRegions';
-import { SearchQuery } from 'app/features/search/service/types';
+import { type DataFrameJSON } from '@grafana/data';
+import { type LiveDataFilter } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
+import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { type SearchQuery } from 'app/features/search/service/types';
 
 //----------------------------------------------
 // Query
@@ -41,7 +41,7 @@ export interface GrafanaQuery extends DataQuery {
   dropPercent?: number;
 }
 
-export interface GrafanaQueryFile {
+interface GrafanaQueryFile {
   name: string;
   size: number;
 }

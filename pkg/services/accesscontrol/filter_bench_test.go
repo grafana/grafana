@@ -32,7 +32,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 	})
 	defer restore()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		baseSql := `SELECT data_source.* FROM data_source WHERE`
 		acFilter, err := accesscontrol.Filter(
 			&user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(permissions)}},

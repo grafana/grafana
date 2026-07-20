@@ -1,14 +1,15 @@
-import { Resizable, ResizeCallback } from 're-resizable';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { Resizable, type ResizeCallback } from 're-resizable';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
-import { DataFrame, store } from '@grafana/data';
+import { type DataFrame, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 
 import { useLogListContext } from '../panel/LogListContext';
 import { reportInteractionOnce } from '../panel/analytics';
-import { LogListModel } from '../panel/processing';
+import { type LogListModel } from '../panel/processing';
 
 import { FieldSelector, FIELD_SELECTOR_MIN_WIDTH, getDefaultFieldSelectorWidth } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
@@ -26,10 +27,18 @@ interface LogListFieldSelectorProps {
 }
 
 export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: LogListFieldSelectorProps) => {
-  const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields, logOptionsStorageKey } =
-    useLogListContext();
+  const {
+    displayedFields,
+    onClickShowField,
+    onClickHideField,
+    setDisplayedFields,
+    setShowLevel,
+    showLevel,
+    logOptionsStorageKey,
+  } = useLogListContext();
   const [sidebarHeight, setSidebarHeight] = useState(220);
   const [sidebarWidth, setSidebarWidth] = useState(getFieldSelectorWidth(logOptionsStorageKey));
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
   const dragStyles = useStyles2(getDragStyles);
 
   useLayoutEffect(() => {
@@ -96,7 +105,14 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     [displayedFields, onClickHideField, onClickShowField]
   );
 
-  const suggestedFields = useMemo(() => getSuggestedFieldsFromLogList(logs, displayedFields), [displayedFields, logs]);
+  const toggleLevel = useCallback(() => {
+    setShowLevel(!showLevel);
+  }, [setShowLevel, showLevel]);
+
+  const suggestedFields = useMemo(
+    () => getSuggestedFieldsFromLogList(logs, displayedFields, [], otelLogsFormattingEnabled),
+    [displayedFields, logs, otelLogsFormattingEnabled]
+  );
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
   if (!onClickShowField || !onClickHideField || !setDisplayedFields) {
@@ -127,9 +143,11 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
           clear={clearFields}
           collapse={collapse}
           fields={fields}
+          logLevelActive={showLevel}
           reorder={setDisplayedFields}
           suggestedFields={suggestedFields}
           toggle={toggleField}
+          toggleLevel={toggleLevel}
         />
       ) : (
         <div className={logsFieldSelectorWrapperStyles.collapsedButtonContainer}>

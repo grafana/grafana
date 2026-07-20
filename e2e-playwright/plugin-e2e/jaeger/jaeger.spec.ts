@@ -8,7 +8,7 @@ test(
   async ({ createDataSourceConfigPage, page }) => {
     await createDataSourceConfigPage({ type: 'jaeger' });
 
-    await expect(await page.getByText('Type: Jaeger', { exact: true })).toBeVisible();
+    await expect(await page.getByText(/^Type\s*Jaeger$/, { exact: true })).toBeVisible();
     await expect(await page.getByRole('heading', { name: 'Connection', exact: true })).toBeVisible();
   }
 );

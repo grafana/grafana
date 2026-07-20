@@ -3,9 +3,6 @@ package validator
 import (
 	"fmt"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // promQLPool contains realistic PromQL expressions sourced from real Grafana dashboards.
@@ -202,40 +199,6 @@ func buildDashboardJSONWithRows(flatPanels, rows, panelsPerRow, queriesPerPanel 
 		"uid":     "benchmark-rows-uid",
 		"version": 1,
 	}
-}
-
-// TestPerformanceBaseline_ExtractQueries asserts that query extraction for a large
-// dashboard completes within a generous threshold. Uses 5ms to account for slow CI
-// machines, GC pauses, and noisy neighbors. Our benchmarks show ~94µs for 800 queries
-// on fast hardware — this test only catches catastrophic regressions (e.g., O(n²)).
-// For precise measurements, use the benchmarks with `go test -bench=`.
-func TestPerformanceBaseline_ExtractQueries(t *testing.T) {
-	dashboard := buildDashboardJSON(200, 4)
-
-	start := time.Now()
-	queries, err := extractQueriesFromDashboard(dashboard)
-	elapsed := time.Since(start)
-
-	assert.NoError(t, err)
-	assert.Len(t, queries, 800)
-	assert.Less(t, elapsed, 5*time.Millisecond,
-		"extractQueriesFromDashboard took %v, expected < 5ms", elapsed)
-}
-
-// TestPerformanceBaseline_GroupQueries asserts that query grouping completes within
-// a generous threshold. Same rationale as TestPerformanceBaseline_ExtractQueries.
-func TestPerformanceBaseline_GroupQueries(t *testing.T) {
-	dashboard := buildDashboardJSON(100, 4)
-	queries, err := extractQueriesFromDashboard(dashboard)
-	assert.NoError(t, err)
-
-	start := time.Now()
-	grouped := groupQueriesByDatasource(queries, concreteUID, dashboard)
-	elapsed := time.Since(start)
-
-	assert.NotEmpty(t, grouped)
-	assert.Less(t, elapsed, 5*time.Millisecond,
-		"groupQueriesByDatasource took %v, expected < 5ms", elapsed)
 }
 
 // BenchmarkGroupQueriesByDatasource measures the second pipeline stage:

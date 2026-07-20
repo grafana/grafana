@@ -2,16 +2,16 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   standardTransformersRegistry,
-  TransformerRegistryItem,
+  type TransformerRegistryItem,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
@@ -70,7 +70,7 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
   );
 }
 
-export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
+function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const styles = useStyles2(getStyles);
 
   const hasGoToQueries = props.onGoToQueries != null;

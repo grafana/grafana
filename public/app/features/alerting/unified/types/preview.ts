@@ -1,7 +1,7 @@
-import { PanelData } from '@grafana/data';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type PanelData } from '@grafana/data';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { RuleFormType } from './rule-form';
+import { type RuleFormType } from './rule-form';
 
 export type PreviewRuleRequest = GrafanaPreviewRuleRequest | CloudPreviewRuleRequest;
 

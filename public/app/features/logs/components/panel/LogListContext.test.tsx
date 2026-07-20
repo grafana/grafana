@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { createLogLine } from '../mocks/logRow';
 
@@ -58,4 +58,13 @@ test('Allows to tell if a log is not permalinked', () => {
   const { result } = renderHook(() => useLogIsPermalinked(otherLog), { wrapper });
 
   expect(result.current).toBe(false);
+});
+
+test('Identifies custom grammar', () => {
+  const customWrapper = ({ children }: { children: ReactNode }) => (
+    <LogListContext.Provider value={{ ...value, isCustomGrammar: true }}>{children}</LogListContext.Provider>
+  );
+  const { result } = renderHook(() => useLogListContext(), { wrapper: customWrapper });
+
+  expect(result.current.isCustomGrammar).toBe(true);
 });

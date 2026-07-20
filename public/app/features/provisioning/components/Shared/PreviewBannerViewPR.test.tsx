@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { textUtil } from '@grafana/data';
-import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { isValidRepoType } from '../../guards';
@@ -25,7 +25,7 @@ const mockTextUtil = jest.mocked(textUtil);
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 
 function setup(
-  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string } = {
+  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string; prTitle?: string } = {
     prURL: 'test-url',
     repoType: 'github',
   }
@@ -42,6 +42,7 @@ function setup(
     repoType: options.repoType || 'github',
     resourcePushedTo: 'abc',
     action: options.action,
+    prTitle: options.prTitle,
   });
 
   const renderResult = render(<PreviewBannerViewPR {...componentProps} />);
@@ -194,6 +195,38 @@ describe('PreviewBannerViewPR', () => {
       setup({ prURL: 'test-url', isNewPr: true, action: 'delete' });
 
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+    });
+  });
+
+  describe('PR title prefill', () => {
+    const githubPrURL = 'https://github.com/org/repo/compare/main...feature?quick_pull=1&labels=grafana';
+
+    it('appends an encoded title param to a GitHub PR URL when pr_title is present', async () => {
+      setup({ prURL: githubPrURL, repoType: 'github', prTitle: 'update: My Dashboard' });
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(`${githubPrURL}&title=update%3A%20My%20Dashboard`, '_blank');
+    });
+
+    it('uses merge_request[title] for GitLab', async () => {
+      const gitlabPrURL = 'https://gitlab.com/org/repo/-/merge_requests/new?merge_request[source_branch]=feature';
+      setup({ prURL: gitlabPrURL, repoType: 'gitlab', prTitle: 'update: My Dashboard' });
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        `${gitlabPrURL}&merge_request[title]=update%3A%20My%20Dashboard`,
+        '_blank'
+      );
+    });
+
+    it('leaves the PR URL unchanged when no pr_title is present', async () => {
+      setup({ prURL: githubPrURL, repoType: 'github' });
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(githubPrURL, '_blank');
     });
   });
 });

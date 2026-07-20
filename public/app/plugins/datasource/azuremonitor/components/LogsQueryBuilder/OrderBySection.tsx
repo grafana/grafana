@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select, Label } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorOrderByExpression,
+  type BuilderQueryEditorOrderByExpression,
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 
-import { BuildAndUpdateOptions, inputFieldSize } from './utils';
+import { type BuildAndUpdateOptions, inputFieldSize } from './utils';
 
 interface OrderBySectionProps {
   query: AzureMonitorQuery;

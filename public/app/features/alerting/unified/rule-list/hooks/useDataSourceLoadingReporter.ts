@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { DataSourceLoadState } from './useDataSourceLoadingStates';
+import { type DataSourceLoadState } from './useDataSourceLoadingStates';
 
 /**
  * Reports datasource loading state to parent with automatic cleanup.

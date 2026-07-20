@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
 )
@@ -46,7 +47,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 			continue
 		}
 
-		cfg := backend.GrafanaConfigFromContext(ctx)
+		cfg := config.GrafanaConfigFromContext(ctx)
 		useGrpc := cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint")
 		// Handle "Search" query type
 		if query.QueryType == "search" {

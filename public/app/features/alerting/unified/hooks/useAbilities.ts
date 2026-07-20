@@ -1,24 +1,18 @@
 import { useMemo } from 'react';
 
-import { config } from '@grafana/runtime';
+import { config, useAppPluginEnabled } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
-import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
-} from 'app/features/alerting/unified/components/mute-timings/permissions';
-import {
-  PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
-  PERMISSIONS_NOTIFICATION_POLICIES_READ,
-} from 'app/features/alerting/unified/components/notification-policies/permissions';
+} from 'app/features/alerting/unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type CombinedRule, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { getGroupOriginName, groupIdentifier } from '../utils/groupIdentifier';
@@ -31,6 +25,7 @@ import {
   rulerRuleType,
 } from '../utils/rules';
 
+import { type FolderBulkAction } from './abilities/types';
 import { useIsRuleEditable } from './useIsRuleEditable';
 
 /**
@@ -104,12 +99,6 @@ export enum EnrichmentAction {
   Write = 'write-enrichment',
 }
 
-// this enum list all of the bulk actions we can perform on a folder
-export enum FolderBulkAction {
-  Pause = 'pause-folder', // unpause permissions are the same as pause
-  Delete = 'delete-folder',
-}
-
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
 // alert source, rule or alertmanager
 export enum AlertingAction {
@@ -132,6 +121,19 @@ export enum AlertingAction {
 const AlwaysSupported = true;
 const NotSupported = false;
 
+// Formerly in components/notification-policies/permissions.ts — inlined here
+// so that file can be deleted while useAbilities.ts is still being migrated.
+const PERMISSIONS_NOTIFICATION_POLICIES_READ = [
+  AccessControlAction.AlertingRoutesRead,
+  AccessControlAction.ActionAlertingManagedRoutesRead,
+];
+const PERMISSIONS_NOTIFICATION_POLICIES_MODIFY = [
+  AccessControlAction.AlertingRoutesWrite,
+  AccessControlAction.ActionAlertingManagedRoutesCreate,
+  AccessControlAction.ActionAlertingManagedRoutesWrite,
+  AccessControlAction.ActionAlertingManagedRoutesDelete,
+];
+
 export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction | EnrichmentAction;
 
 /**
@@ -151,21 +153,6 @@ export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | Fol
  */
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
-
-/**
- * This one will check for folder abilities
- */
-export const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
-  return {
-    [FolderBulkAction.Pause]: [AlwaysSupported, isAdmin()],
-    [FolderBulkAction.Delete]: [AlwaysSupported, isAdmin()],
-  };
-};
-
-export const useFolderBulkActionAbility = (action: FolderBulkAction): Ability => {
-  const allAbilities = useFolderBulkActionAbilities();
-  return allAbilities[action];
-};
 
 /**
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
@@ -198,6 +185,19 @@ export const useAlertingAbility = (action: AlertingAction): Ability => {
 };
 
 /**
+ * UI-only permission helper for places that need contact point visibility checks
+ * without requiring AlertmanagerContext.
+ */
+export function useCanViewContactPoints(): boolean {
+  return useMemo(
+    () =>
+      ctx.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+      ctx.hasPermission(AccessControlAction.AlertingReceiversRead),
+    []
+  );
+}
+
+/**
  * This one will check for enrichment abilities
  */
 export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
@@ -228,14 +228,6 @@ export function useAlertRuleAbility(rule: CombinedRule, action: AlertRuleAction)
   return useMemo(() => {
     return abilities[action];
   }, [abilities, action]);
-}
-
-export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleAction[]): Ability[] {
-  const abilities = useAllAlertRuleAbilities(rule);
-
-  return useMemo(() => {
-    return actions.map((action) => abilities[action]);
-  }, [abilities, actions]);
 }
 
 export function useRulerRuleAbility(
@@ -274,7 +266,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   return useAllRulerRuleAbilities(rule.rulerRule, groupIdentifierV2);
 }
 
-export function useAllRulerRuleAbilities(
+function useAllRulerRuleAbilities(
   rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifierV2
 ): Abilities<AlertRuleAction> {
@@ -285,14 +277,10 @@ export function useAllRulerRuleAbilities(
   const canSilence = useCanSilence(rule);
 
   const pluginOrigin = getRulePluginOrigin(rule);
-  // Check plugin installation - use skipToken to prevent query when no pluginId
-  const { data: pluginSettings, isLoading: pluginCheckLoading } = useGetPluginSettingsQuery(
-    pluginOrigin?.pluginId ?? '',
-    {
-      skip: !pluginOrigin?.pluginId,
-    }
+  // Check plugin installation - only fires when pluginOrigin is present (empty string returns false)
+  const { value: isPluginInstalled = false, loading: pluginCheckLoading } = useAppPluginEnabled(
+    pluginOrigin?.pluginId ?? ''
   );
-  const isPluginInstalled = pluginSettings?.enabled ?? false;
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedRule(rule) : false;
@@ -357,7 +345,7 @@ export function useAllRulerRuleAbilities(
  * Hook for checking abilities on Grafana Prometheus rules (GrafanaPromRuleDTO)
  * This is the next version of useAllRulerRuleAbilities designed to work with GrafanaPromRuleDTO
  */
-export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): Abilities<AlertRuleAction> {
+function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): Abilities<AlertRuleAction> {
   // For GrafanaPromRuleDTO, we use useIsGrafanaPromRuleEditable instead
   const { isEditable, isRemovable, loading } = useIsGrafanaPromRuleEditable(rule); // duplicate
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
@@ -366,15 +354,10 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
   const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
 
   const promPluginOrigin = getRulePluginOrigin(rule);
-  // Only check plugin installation if rule has a plugin origin label
-  // Skip the query if no pluginId to avoid unnecessary API calls
-  const { data: promPluginSettings, isLoading: promPluginCheckLoading } = useGetPluginSettingsQuery(
-    promPluginOrigin?.pluginId ?? '',
-    {
-      skip: !promPluginOrigin?.pluginId,
-    }
+  // Check plugin installation - only fires when promPluginOrigin is present (empty string returns false)
+  const { value: isPromPluginInstalled = false, loading: promPluginCheckLoading } = useAppPluginEnabled(
+    promPluginOrigin?.pluginId ?? ''
   );
-  const isPromPluginInstalled = promPluginSettings?.enabled ?? false;
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedPromRule(rule) : false;
@@ -535,7 +518,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.ViewContactPoint]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
-      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_READ : [])
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversRead] : [])
     ),
     [AlertmanagerAction.UpdateContactPoint]: toAbility(
       hasConfigurationAPI,

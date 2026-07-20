@@ -2442,7 +2442,7 @@ func Test_ProviderService(t *testing.T) {
 		name                  string
 		isLicenseEnabled      bool
 		expectedProvidersList []string
-		strategiesLength      int
+		expectedStrategies    []string
 	}{
 		{
 			name:             "should return all OAuth providers but not SAML because the licensing feature is not enabled",
@@ -2457,7 +2457,12 @@ func Test_ProviderService(t *testing.T) {
 				"okta",
 				"ldap",
 			},
-			strategiesLength: 2,
+			expectedStrategies: []string{
+				"*strategies.MTSettingsOAuthStrategy",
+				"*strategies.OAuthStrategy",
+				"*strategies.MTSettingsLDAPStrategy",
+				"*strategies.LDAPStrategy",
+			},
 		},
 		{
 			name:             "should return all fallback strategies and it should return all OAuth providers and SAML because the licensing feature is enabled and the provider is setup",
@@ -2473,7 +2478,14 @@ func Test_ProviderService(t *testing.T) {
 				"ldap",
 				"saml",
 			},
-			strategiesLength: 3,
+			expectedStrategies: []string{
+				"*strategies.MTSettingsOAuthStrategy",
+				"*strategies.OAuthStrategy",
+				"*strategies.MTSettingsLDAPStrategy",
+				"*strategies.LDAPStrategy",
+				"*strategies.MTSettingsSAMLStrategy",
+				"*strategies.SAMLStrategy",
+			},
 		},
 	}
 	for _, tc := range tests {
@@ -2484,7 +2496,15 @@ func Test_ProviderService(t *testing.T) {
 			env := setupTestEnv(t, tc.isLicenseEnabled, true, false)
 
 			require.Equal(t, tc.expectedProvidersList, env.service.providersList)
-			require.Equal(t, tc.strategiesLength, len(env.service.fbStrategies))
+
+			// Each provider family pairs its MT-Settings adapter directly in
+			// front of its legacy strategy; first match wins, so the order is
+			// the design.
+			strategyTypes := make([]string, 0, len(env.service.fbStrategies))
+			for _, strategy := range env.service.fbStrategies {
+				strategyTypes = append(strategyTypes, fmt.Sprintf("%T", strategy))
+			}
+			require.Equal(t, tc.expectedStrategies, strategyTypes)
 		})
 	}
 }

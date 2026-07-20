@@ -6,18 +6,20 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
+import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
 import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const addRowPayloadSchema = payloads.addRow;
+const addRowPayloadSchema = payloads.addRow;
 
 export type AddRowPayload = z.infer<typeof addRowPayloadSchema>;
 
@@ -27,6 +29,7 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
 
   payloadSchema: payloads.addRow,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -53,6 +56,10 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           hideHeader: row.spec.hideHeader,
           fillScreen: row.spec.fillScreen,
           repeatByVariable: row.spec.repeat?.value,
+          conditionalRendering: row.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(row.spec.conditionalRendering)
+            : undefined,
+          $variables: deserializeSectionVariables(row.spec.variables),
         });
 
         const currentRows = [...rowsManager.state.rows];
@@ -76,6 +83,10 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           hideHeader: row.spec.hideHeader,
           fillScreen: row.spec.fillScreen,
           repeatByVariable: row.spec.repeat?.value,
+          conditionalRendering: row.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(row.spec.conditionalRendering)
+            : undefined,
+          $variables: deserializeSectionVariables(row.spec.variables),
         });
 
         rowsManager = new RowsLayoutManager({ rows: [newRow] });
@@ -96,8 +107,8 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
 
       return {
         success: true,
-        data: { path: newPath },
-        changes: [{ path: newPath, previousValue: undefined, newValue: { title: row.spec.title } }],
+        data: { path: newPath, row: { kind: 'RowsLayoutRow', spec: row.spec } },
+        changes: [{ path: newPath, previousValue: null, newValue: { title: row.spec.title } }],
         warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {

@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2, Badge, Stack } from '@grafana/ui';
-import { OrgUser } from 'app/types/user';
+import { type OrgUser } from 'app/types/user';
 
 import { RolePickerDrawer } from './RolePickerDrawer';
 

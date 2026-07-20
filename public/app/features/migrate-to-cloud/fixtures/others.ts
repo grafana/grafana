@@ -1,6 +1,6 @@
 import { Chance } from 'chance';
 
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, PluginType } from '@grafana/data';
 
 export function wellFormedDatasource(
   seed = 1,

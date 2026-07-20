@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { Breadcrumb } from './types';
+import { type Breadcrumb } from './types';
 
 type Props = Breadcrumb & {
   isCurrent: boolean;

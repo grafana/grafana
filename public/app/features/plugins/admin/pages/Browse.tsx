@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
+import { type SelectableValue, type GrafanaTheme2, type PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, TextLink } from '@grafana/ui';
@@ -27,6 +27,7 @@ export default function Browse() {
   const locationSearch = locationSearchToObject(location.search);
   const navModel = useSelector((state) => getNavModel(state.navIndex, 'plugins'));
   const styles = useStyles2(getStyles);
+  const searchId = useId();
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
 
@@ -99,8 +100,8 @@ export default function Browse() {
         <AdvisorRedirectNotice />
         <div className={styles.searchContainer}>
           <HorizontalGroup wrap>
-            <Field label={t('plugins.browse.label-search', 'Search')}>
-              <SearchField value={keyword} onSearch={onSearch} />
+            <Field label={t('plugins.browse.label-search', 'Search')} htmlFor={searchId}>
+              <SearchField id={searchId} value={keyword} onSearch={onSearch} />
             </Field>
             <HorizontalGroup wrap className={styles.actionBar}>
               {/* Filter by type */}

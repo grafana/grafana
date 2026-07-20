@@ -2,12 +2,12 @@ import { render, screen } from '@testing-library/react';
 import createMockRaf from 'mock-raf';
 import uPlot from 'uplot';
 
-import { FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
-import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
+import { type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
+import { type GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 
 import { UPlotChart } from './Plot';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
-import { SeriesProps } from './config/UPlotSeriesBuilder';
+import { type SeriesProps } from './config/UPlotSeriesBuilder';
 import { preparePlotData2, getStackingGroups } from './utils';
 
 const mockRaf = createMockRaf();
@@ -109,6 +109,23 @@ describe('UPlotChart', () => {
       );
 
       expect(setDataMock).toBeCalledTimes(1);
+    });
+
+    it('updates uPlot data when dimensions also change', () => {
+      const { data, config } = mockData();
+
+      const { rerender } = render(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+      );
+
+      data.fields[1].values[0] = 1;
+
+      rerender(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={200} height={200} />
+      );
+
+      expect(setDataMock).toBeCalledTimes(1);
+      expect(setSizeMock).toBeCalledTimes(1);
     });
   });
 

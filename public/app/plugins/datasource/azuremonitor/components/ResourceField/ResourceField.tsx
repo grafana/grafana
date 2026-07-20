@@ -3,16 +3,16 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
+import { Button, Icon, Modal, useStyles2, type IconName } from '@grafana/ui';
 
-import { AzureMonitorResource } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import { type AzureMonitorResource } from '../../dataquery.gen';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureQueryEditorFieldProps } from '../../types/types';
+import { type ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
+import { type AzureQueryEditorFieldProps } from '../../types/types';
 import ResourcePicker from '../ResourcePicker/ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
+import { type ResourceRow, type ResourceRowGroup, type ResourceRowType } from '../ResourcePicker/types';
 import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';
 import { Field } from '../shared/Field';
 
@@ -68,9 +68,6 @@ const ResourceField = ({
         title={t('components.resource-field.title-select-resource', 'Select a resource')}
         isOpen={pickerIsOpen}
         onDismiss={closePicker}
-        // The growing number of rows added to the modal causes a focus
-        // error in the modal, making it impossible to click on new elements
-        trapFocus={false}
       >
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}

@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -10,24 +9,21 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
+	helper := sharedHelper(t)
 
 	const repo = "subresources-auth-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		Target:             "folder",
-		Copies:             map[string]string{}, // No files needed for this test
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1, // Repository creates a folder
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{}, // No files needed for this test
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	t.Run("test subresource", func(t *testing.T) {
 		newRepoConfig := map[string]any{
@@ -65,7 +61,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				SubResource("test").
 				Body(configBytes).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "admin should be able to POST test")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -80,7 +76,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				SubResource("test").
 				Body(configBytes).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "editor should not be able to POST test")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -96,7 +92,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				SubResource("test").
 				Body(configBytes).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "viewer should not be able to POST test")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -112,7 +108,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("resources").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "admin should be able to GET resources")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -125,7 +121,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("resources").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "editor should not be able to GET resources")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -139,7 +135,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("resources").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "viewer should not be able to GET resources")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -155,7 +151,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("history").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			// Admin should pass authorization - may get BadRequest if repo doesn't support history
 			// but should NOT get Forbidden (which would indicate authorization failure)
@@ -176,7 +172,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("history").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "editor should not be able to GET history")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -190,7 +186,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("history").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "viewer should not be able to GET history")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -206,7 +202,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("status").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "admin should be able to GET status")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -219,7 +215,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("status").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "editor should not be able to GET status")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -233,7 +229,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 				Resource("repositories").
 				Name(repo).
 				SubResource("status").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "viewer should not be able to GET status")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")

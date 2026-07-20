@@ -1,20 +1,20 @@
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { getDataSourceSrv, FetchResponse, CorrelationData, CorrelationsData } from '@grafana/runtime';
+import { type FetchResponse, type CorrelationData, type CorrelationsData } from '@grafana/runtime';
+import { getDataSourceInstanceSettings, getLogger } from '@grafana/runtime/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
-  Correlation,
-  CreateCorrelationParams,
-  CreateCorrelationResponse,
-  GetCorrelationsParams,
-  RemoveCorrelationParams,
-  RemoveCorrelationResponse,
-  UpdateCorrelationParams,
-  UpdateCorrelationResponse,
+  type Correlation,
+  type CreateCorrelationParams,
+  type CreateCorrelationResponse,
+  type GetCorrelationsParams,
+  type RemoveCorrelationParams,
+  type RemoveCorrelationResponse,
+  type UpdateCorrelationParams,
+  type UpdateCorrelationResponse,
 } from './types';
-import { correlationsLogger } from './utils';
 
 export interface CorrelationsResponse {
   correlations: Correlation[];
@@ -23,16 +23,19 @@ export interface CorrelationsResponse {
   totalCount: number;
 }
 
-export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
-  const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
+export const toEnrichedCorrelationData = async ({
+  sourceUID,
+  ...correlation
+}: Correlation): Promise<CorrelationData | undefined> => {
+  const sourceDatasource = await getDataSourceInstanceSettings(sourceUID);
   const targetDatasource =
-    correlation.type === 'query' ? getDataSourceSrv().getInstanceSettings(correlation.targetUID) : undefined;
+    correlation.type === 'query' ? await getDataSourceInstanceSettings(correlation.targetUID) : undefined;
 
   // According to #72258 we will remove logic to handle orgId=0/null as global correlations.
   // This logging is to check if there are any customers who did not migrate existing correlations.
   // See Deprecation Notice in https://github.com/grafana/grafana/pull/72258 for more details
   if (correlation?.orgId === undefined || correlation?.orgId === null || correlation?.orgId === 0) {
-    correlationsLogger.logWarning('Invalid correlation config: Missing org id.');
+    getLogger('features.correlations').logWarning('Invalid correlation config: Missing org id.');
   }
 
   if (
@@ -60,7 +63,7 @@ export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correla
     };
   }
 
-  correlationsLogger.logWarning(`Invalid correlation config: Missing source or target.`, {
+  getLogger('features.correlations').logWarning(`Invalid correlation config: Missing source or target.`, {
     source: JSON.stringify(sourceDatasource),
     target: JSON.stringify(targetDatasource),
   });
@@ -69,10 +72,15 @@ export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correla
 
 const validSourceFilter = (correlation: CorrelationData | undefined): correlation is CorrelationData => !!correlation;
 
-export const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse): CorrelationsData => {
+export const toEnrichedCorrelationsData = async (
+  correlationsResponse: CorrelationsResponse
+): Promise<CorrelationsData> => {
+  const correlations = (await Promise.all(correlationsResponse.correlations.map(toEnrichedCorrelationData))).filter(
+    validSourceFilter
+  );
   return {
     ...correlationsResponse,
-    correlations: correlationsResponse.correlations.map(toEnrichedCorrelationData).filter(validSourceFilter),
+    correlations,
   };
 };
 
@@ -110,8 +118,8 @@ export const useCorrelations = () => {
     async ({ sourceUID, ...correlation }) => {
       return backend
         .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
-        .then((response) => {
-          const enrichedCorrelation = toEnrichedCorrelationData(response.result);
+        .then(async (response) => {
+          const enrichedCorrelation = await toEnrichedCorrelationData(response.result);
           if (enrichedCorrelation !== undefined) {
             return enrichedCorrelation;
           } else {
@@ -132,8 +140,8 @@ export const useCorrelations = () => {
     ({ sourceUID, uid, ...correlation }) =>
       backend
         .patch<UpdateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations/${uid}`, correlation)
-        .then((response) => {
-          const enrichedCorrelation = toEnrichedCorrelationData(response.result);
+        .then(async (response) => {
+          const enrichedCorrelation = await toEnrichedCorrelationData(response.result);
           if (enrichedCorrelation !== undefined) {
             return enrichedCorrelation;
           } else {

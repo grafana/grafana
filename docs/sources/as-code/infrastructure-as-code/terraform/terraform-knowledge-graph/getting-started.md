@@ -13,7 +13,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-cod
 
 # Get started with Terraform for Knowledge Graph
 
-Learn how to configure Terraform to manage [Grafana Cloud Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) resources. This guide walks you through setting up the Grafana Terraform provider and preparing your environment.
+Learn how to configure Terraform to manage Grafana Cloud Knowledge Graph resources. This guide walks you through setting up the Grafana Terraform provider and preparing your environment.
 
 ## Before you begin
 
@@ -102,7 +102,7 @@ After applying the configuration, verify your setup by checking that:
 
 ## Best practices
 
-When managing Knowledge Graph resources with Terraform, consider the following best practices:
+When managing Knowledge Graph resources with Terraform, consider the following best practices.
 
 ### Name conventions
 

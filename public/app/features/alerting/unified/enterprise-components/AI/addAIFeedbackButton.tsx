@@ -1,4 +1,4 @@
-import { ComponentType, createElement } from 'react';
+import { type ComponentType, createElement } from 'react';
 
 import { t } from '@grafana/i18n';
 import { withErrorBoundary } from '@grafana/ui';

@@ -1,11 +1,14 @@
-import type { AppPluginConfig } from '@grafana/data';
+import { type AppPluginConfig, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
+import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
 import { initPluginMetas } from './plugins';
-import type { AppPluginMetas } from './types';
+import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
 
@@ -13,16 +16,35 @@ function initialized(): boolean {
   return Boolean(Object.keys(apps).length);
 }
 
+function setApps(input: AppPluginMetas) {
+  apps = input;
+}
+
+function setMetas(metas: PluginMetasResponse) {
+  if (!metas.items.length) {
+    // something failed while trying to fetch plugin meta
+    // fallback to config.panels from bootdata
+    // eslint-disable-next-line @grafana/no-config-apps
+    setApps(config.apps);
+    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.app });
+    return;
+  }
+
+  const mapper = getAppPluginMapper();
+  setApps(mapper(metas));
+}
+
 async function initAppPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    // eslint-disable-next-line no-restricted-syntax
-    apps = config.apps;
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    // eslint-disable-next-line @grafana/no-config-apps
+    setApps(config.apps);
+    logPluginMetaDebug('PluginMeta: initializing app plugins cache with bootdata values', {});
     return;
   }
 
   const metas = await initPluginMetas();
-  const mapper = getAppPluginMapper();
-  apps = mapper(metas);
+  setMetas(metas);
+  logPluginMetaDebug('PluginMeta: initializing app plugins cache with meta values', {});
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
@@ -67,5 +89,5 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
     throw new Error('setAppPluginMetas() function can only be called from tests.');
   }
 
-  apps = structuredClone(override);
+  setApps(structuredClone(override));
 }

@@ -2,7 +2,9 @@ package fixfoldermetadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -17,13 +19,19 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const keepFileName = ".keep"
+
 // Worker implements the fix-folder-metadata job type.
 // It scans the repository tree and writes a _folder.json metadata file for
 // every directory that does not already have one, using a hash-derived UID.
-type Worker struct{}
+// It also removes legacy .keep files from folders that have (or receive)
+// a _folder.json, since the metadata file supersedes the keep marker.
+type Worker struct {
+	clientFactory resources.ClientFactory
+}
 
-func NewWorker() *Worker {
-	return &Worker{}
+func NewWorker(clientFactory resources.ClientFactory) *Worker {
+	return &Worker{clientFactory: clientFactory}
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
@@ -57,11 +65,25 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 	// Configure staging options to commit everything at once
 	stageOptions := repository.StageOptions{
-		Ref:                   ref,
-		Timeout:               5 * time.Minute,
-		PushOnWrites:          false,
-		Mode:                  repository.StageModeCommitOnlyOnce,
-		CommitOnlyOnceMessage: fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
+		Ref:          ref,
+		Timeout:      5 * time.Minute,
+		PushOnWrites: false,
+		Mode:         repository.StageModeCommitOnlyOnce,
+		CommitOnlyOnceMessage: jobs.CommitMessage(
+			job,
+			fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
+		),
+	}
+
+	// Resolve the folder GVK via discovery (the server's preferred version) so the
+	// _folder.json manifests are written with whatever folder version the instance serves.
+	clients, err := w.clientFactory.Clients(ctx, repo.Config().Namespace)
+	if err != nil {
+		return fmt.Errorf("create clients: %w", err)
+	}
+	_, folderGVK, err := clients.Folder(ctx)
+	if err != nil {
+		return fmt.Errorf("resolve folder client: %w", err)
 	}
 
 	fn := func(stagedRepo repository.Repository, staged bool) error {
@@ -77,13 +99,16 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 		repoName := rw.Config().GetName()
 
-		// Collect dirs with existing metadata and parse all folder entries.
+		// Collect dirs with existing metadata, track .keep files, and parse all folder entries.
 		hasMetadata := make(map[string]struct{}, len(entries))
+		hasKeepFile := make(map[string]string, len(entries))
 		folders := make([]resources.Folder, 0, len(entries))
 		for _, entry := range entries {
 			if entry.Blob {
 				if resources.IsFolderMetadataFile(entry.Path) {
 					hasMetadata[safepath.Dir(entry.Path)] = struct{}{}
+				} else if isKeepFile(entry.Path) {
+					hasKeepFile[safepath.Dir(entry.Path)] = entry.Path
 				}
 				continue
 			}
@@ -99,10 +124,14 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 		for _, folder := range folders {
 			if _, ok := hasMetadata[folder.Path]; ok {
+				// Folder already has _folder.json; remove stale .keep if present.
+				if keepPath, ok := hasKeepFile[folder.Path]; ok {
+					deleteKeepFile(ctx, rw, keepPath, ref, logger)
+				}
 				continue
 			}
 
-			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path))
+			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), folderGVK)
 			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
 				fmt.Sprintf("Add folder metadata for %s", folder.Path))
 
@@ -115,6 +144,12 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 				progress.Record(ctx, rb.Build())
 				return wrappedErr
 			}
+
+			// _folder.json now exists; remove the legacy .keep if present.
+			if keepPath, ok := hasKeepFile[folder.Path]; ok {
+				deleteKeepFile(ctx, rw, keepPath, ref, logger)
+			}
+
 			progress.Record(ctx, rb.Build())
 		}
 
@@ -158,4 +193,19 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 
 	return nil
+}
+
+func isKeepFile(path string) bool {
+	return strings.HasSuffix(path, keepFileName)
+}
+
+// deleteKeepFile removes a .keep file, logging but not failing on errors
+// (the .keep may already be absent in certain edge cases).
+func deleteKeepFile(ctx context.Context, rw repository.ReaderWriter, keepPath, ref string, logger logging.Logger) {
+	if err := rw.Delete(ctx, keepPath, ref, "Remove legacy .keep replaced by _folder.json"); err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) {
+			return
+		}
+		logger.Warn("failed to delete .keep file", "path", keepPath, "error", err)
+	}
 }

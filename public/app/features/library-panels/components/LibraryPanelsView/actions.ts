@@ -1,5 +1,5 @@
-import { Action } from '@reduxjs/toolkit';
-import { Dispatch } from 'react';
+import { type Action } from '@reduxjs/toolkit';
+import { type Dispatch } from 'react';
 import { from, merge, of, Subscription, timer } from 'rxjs';
 import { catchError, finalize, mapTo, mergeMap, share, takeUntil } from 'rxjs/operators';
 

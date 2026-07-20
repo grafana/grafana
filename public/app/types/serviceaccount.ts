@@ -1,30 +1,7 @@
-import { OrgRole, WithAccessControlMetadata } from '@grafana/data';
+import { type OrgRole, type WithAccessControlMetadata } from '@grafana/data';
 
-import { Role } from './accessControl';
-import { ApiKey } from './apiKeys';
-
-export interface OrgServiceAccount extends WithAccessControlMetadata {
-  serviceAccountId: number;
-  avatarUrl: string;
-  email: string;
-  login: string;
-  name: string;
-  displayName: string;
-  orgId: number;
-  role: OrgRole;
-  tokens: number[];
-}
-
-export interface ServiceAccount {
-  id: number;
-  label: string;
-  avatarUrl: string;
-  login: string;
-  email: string;
-  name: string;
-  displayName: string;
-  orgId?: number;
-}
+import { type Role } from './accessControl';
+import { type ApiKey } from './apiKeys';
 
 export interface ServiceAccountDTO extends WithAccessControlMetadata {
   id: number;
@@ -81,8 +58,4 @@ export interface ServiceAccountsState {
   totalPages: number;
   showPaging: boolean;
   serviceAccountStateFilter: ServiceAccountStateFilter;
-}
-
-export interface ServiceAccountsUpgradeStatus {
-  upgraded: boolean;
 }

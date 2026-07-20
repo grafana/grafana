@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Select } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorWhereExpression,
+  type BuilderQueryEditorWhereExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 
-import { BuildAndUpdateOptions, removeExtraQuotes } from './utils';
+import { type BuildAndUpdateOptions, removeExtraQuotes } from './utils';
 
 interface FuzzySearchProps {
   query: AzureMonitorQuery;

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { memo, forwardRef } from 'react';
 
-import { FeatureState, GrafanaTheme2 } from '@grafana/data';
+import { type FeatureState, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { FeatureBadge } from '../FeatureBadge/FeatureBadge';
 
-import { InfoBox, InfoBoxProps } from './InfoBox';
+import { InfoBox, type InfoBoxProps } from './InfoBox';
 
 export interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'title' | 'urlTitle'> {
   title: string;

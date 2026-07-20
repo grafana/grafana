@@ -1,8 +1,8 @@
-import { type TypedUseQueryHookResult, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { type TypedUseQueryHookResult, type fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import {
-  ListRoutingTreeApiArg,
-  ListRoutingTreeApiResponse,
+  type ListRoutingTreeApiArg,
+  type ListRoutingTreeApiResponse,
   generatedAPI as notificationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
@@ -25,8 +25,7 @@ type ListRoutingTreesQueryOptions = Parameters<
  *
  * This function wraps the notificationsAPIv0alpha1.useListRoutingTreeQuery with proper typing.
  *
- * When the `alertingMultiplePolicies` feature toggle is enabled on the backend, this returns all
- * available routing trees. Otherwise, it returns only the default "user-defined" tree.
+ * The backend returns all available routing trees.
  *
  * @param queryArgs - Optional query arguments for filtering, pagination, etc.
  * @param queryOptions - Optional query options (refetchOnFocus, skip, etc.)

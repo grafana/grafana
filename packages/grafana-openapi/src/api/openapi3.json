@@ -93,16 +93,6 @@
         },
         "description": "(empty)"
       },
-      "apiResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/messageResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "badRequestError": {
         "content": {
           "application/json": {
@@ -812,29 +802,6 @@
         },
         "description": "(empty)"
       },
-      "getGroupRolesResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/RoleDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getGroupsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/getGroupsResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "getHomeDashboardResponse": {
         "content": {
           "application/json": {
@@ -1331,25 +1298,6 @@
           }
         },
         "description": "GoneError is returned when the requested endpoint was removed."
-      },
-      "helpFlagResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "helpFlags1": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
       },
       "importDashboardResponse": {
         "content": {
@@ -1855,16 +1803,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/HitList"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "searchResultResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SearchResult"
             }
           }
         },
@@ -3128,9 +3066,6 @@
         "properties": {
           "dashboard": {
             "$ref": "#/components/schemas/AnnotationActions"
-          },
-          "organization": {
-            "$ref": "#/components/schemas/AnnotationActions"
           }
         },
         "type": "object"
@@ -4238,6 +4173,12 @@
           },
           "subject": {
             "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -4310,10 +4251,6 @@
           },
           "uid": {
             "type": "string"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -4584,9 +4521,6 @@
             "type": "boolean"
           },
           "isSnapshot": {
-            "type": "boolean"
-          },
-          "isStarred": {
             "type": "boolean"
           },
           "provisioned": {
@@ -5303,6 +5237,40 @@
         },
         "type": "object"
       },
+      "ExternalAlertmanagerConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "ExternalAlertmanagerStatus": {
+        "properties": {
+          "cluster": {
+            "$ref": "#/components/schemas/clusterStatus"
+          },
+          "config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "uptime": {
+            "description": "uptime",
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionInfo": {
+            "$ref": "#/components/schemas/versionInfo"
+          }
+        },
+        "required": ["cluster", "config", "uptime", "versionInfo"],
+        "type": "object"
+      },
       "ExtraConfiguration": {
         "properties": {
           "alertmanager_config": {
@@ -5602,6 +5570,29 @@
             "type": "string"
           },
           "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "FooterItem": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "fontSize": {
+            "type": "string"
+          },
+          "fontStyle": {
+            "type": "string"
+          },
+          "fontWeight": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
             "type": "string"
           }
         },
@@ -6370,26 +6361,6 @@
         },
         "type": "object"
       },
-      "Group": {
-        "properties": {
-          "groupID": {
-            "type": "string"
-          },
-          "mappings": {}
-        },
-        "type": "object"
-      },
-      "GroupAttributes": {
-        "properties": {
-          "roles": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
       "HTTPClientConfig": {
         "properties": {
           "authorization": {
@@ -6903,17 +6874,6 @@
         },
         "title": "Label is a key/value pair of strings.",
         "type": "object"
-      },
-      "LabelSet": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/LabelValue"
-        },
-        "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
-        "type": "object"
-      },
-      "LabelValue": {
-        "title": "A LabelValue is an associated value for a LabelName.",
-        "type": "string"
       },
       "Labels": {
         "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
@@ -8093,9 +8053,6 @@
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
-          "regionalFormat": {
-            "type": "string"
-          },
           "theme": {
             "enum": ["light", "dark"],
             "type": "string"
@@ -8732,8 +8689,12 @@
             "description": "UID for the home dashboard",
             "type": "string"
           },
+          "homeURL": {
+            "description": "Explicit home URL (NOTE: this can only be modified in the system settings)",
+            "type": "string"
+          },
           "language": {
-            "description": "Selected language (beta)",
+            "description": "Selected language",
             "type": "string"
           },
           "navbar": {
@@ -8742,16 +8703,12 @@
           "queryHistory": {
             "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
           },
-          "regionalFormat": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
           "theme": {
-            "description": "light, dark, empty is default",
+            "description": "user interface theme",
             "type": "string"
           },
           "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "description": "The timezone selection",
             "type": "string"
           },
           "weekStart": {
@@ -9755,6 +9712,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -9892,6 +9855,15 @@
           "embeddedImageTheme": {
             "type": "string"
           },
+          "footerFontFamily": {
+            "type": "string"
+          },
+          "footerItems": {
+            "items": {
+              "$ref": "#/components/schemas/FooterItem"
+            },
+            "type": "array"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -9900,8 +9872,17 @@
             "format": "int64",
             "type": "integer"
           },
+          "pdfDashboardTitleEnabled": {
+            "type": "boolean"
+          },
+          "pdfHeaderEnabled": {
+            "type": "boolean"
+          },
           "pdfTheme": {
             "type": "string"
+          },
+          "pdfTimeRangeEnabled": {
+            "type": "boolean"
           },
           "userId": {
             "format": "int64",
@@ -9916,6 +9897,17 @@
             "type": "string"
           },
           "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportURLItem": {
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
             "type": "string"
           }
         },
@@ -10517,32 +10509,6 @@
         },
         "type": "object"
       },
-      "SearchDTO": {
-        "properties": {
-          "action": {
-            "type": "string"
-          },
-          "basicRole": {
-            "type": "string"
-          },
-          "onlyRoles": {
-            "type": "boolean"
-          },
-          "roleName": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "string"
-          },
-          "teamId": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "SearchDeviceQueryResult": {
         "properties": {
           "devices": {
@@ -10608,50 +10574,6 @@
             "type": "integer"
           },
           "totalCount": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "SearchResult": {
-        "properties": {
-          "result": {
-            "items": {
-              "$ref": "#/components/schemas/SearchResultItem"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "SearchResultItem": {
-        "properties": {
-          "action": {
-            "type": "string"
-          },
-          "basicRole": {
-            "type": "string"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "roleName": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "string"
-          },
-          "teamId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "version": {
             "format": "int64",
             "type": "integer"
           }
@@ -11440,6 +11362,7 @@
             "type": "string"
           },
           "uid": {
+            "description": "Deprecated: always empty; no per-entry id.",
             "type": "string"
           }
         },
@@ -11619,80 +11542,6 @@
       },
       "TempUserStatus": {
         "type": "string"
-      },
-      "TestReceiverConfigResult": {
-        "properties": {
-          "error": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "TestReceiverResult": {
-        "properties": {
-          "grafana_managed_receiver_configs": {
-            "items": {
-              "$ref": "#/components/schemas/TestReceiverConfigResult"
-            },
-            "type": "array"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "TestReceiversConfigAlertParams": {
-        "properties": {
-          "annotations": {
-            "$ref": "#/components/schemas/LabelSet"
-          },
-          "labels": {
-            "$ref": "#/components/schemas/LabelSet"
-          }
-        },
-        "type": "object"
-      },
-      "TestReceiversConfigBodyParams": {
-        "properties": {
-          "alert": {
-            "$ref": "#/components/schemas/TestReceiversConfigAlertParams"
-          },
-          "receivers": {
-            "items": {
-              "$ref": "#/components/schemas/PostableApiReceiver"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "TestReceiversResult": {
-        "properties": {
-          "alert": {
-            "$ref": "#/components/schemas/TestReceiversConfigAlertParams"
-          },
-          "notified_at": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "receivers": {
-            "items": {
-              "$ref": "#/components/schemas/TestReceiverResult"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
       },
       "TestRulePayload": {
         "properties": {
@@ -12344,9 +12193,6 @@
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
-          "regionalFormat": {
-            "type": "string"
-          },
           "theme": {
             "enum": ["light", "dark", "system"],
             "type": "string"
@@ -12398,10 +12244,6 @@
               "$ref": "#/components/schemas/Permission"
             },
             "type": "array"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "required": ["displayName", "description", "group"],
@@ -12616,6 +12458,12 @@
       },
       "UserSearchHitDTO": {
         "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
           "authLabels": {
             "items": {
               "type": "string"
@@ -12656,6 +12504,9 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "role": {
             "type": "string"
           },
           "uid": {
@@ -13033,21 +12884,6 @@
         },
         "type": "object"
       },
-      "getGroupsResponse": {
-        "properties": {
-          "groups": {
-            "items": {
-              "$ref": "#/components/schemas/Group"
-            },
-            "type": "array"
-          },
-          "total": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "gettableAlert": {
         "description": "GettableAlert gettable alert",
         "properties": {
@@ -13264,14 +13100,6 @@
           "$ref": "#/components/schemas/matcher"
         },
         "type": "array"
-      },
-      "messageResponse": {
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "type": "object"
       },
       "peerStatus": {
         "description": "PeerStatus peer status",
@@ -13574,28 +13402,6 @@
   },
   "openapi": "3.0.3",
   "paths": {
-    "/access-control/assignments/search": {
-      "post": {
-        "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
-        "operationId": "searchResult",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/searchResultResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Debug permissions.",
-        "tags": ["enterprise"]
-      }
-    },
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
@@ -15457,6 +15263,14 @@
             }
           },
           {
+            "description": "Limit response to annotations created by a specific user, identified by UID.",
+            "in": "query",
+            "name": "userUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "Find annotations for a specified alert rule by its ID.\ndeprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.",
             "in": "query",
             "name": "alertId",
@@ -17109,7 +16923,8 @@
     },
     "/dashboards/db": {
       "post": {
-        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.",
+        "deprecated": true,
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards",
         "operationId": "postDashboard",
         "requestBody": {
           "content": {
@@ -17256,6 +17071,7 @@
     },
     "/dashboards/tags": {
       "get": {
+        "deprecated": true,
         "operationId": "getDashboardTags",
         "responses": {
           "200": {
@@ -17268,7 +17084,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get all dashboards tags of an organisation.",
+        "summary": "Get all dashboards tags of an organization.",
         "tags": ["dashboards"]
       }
     },
@@ -17447,7 +17263,8 @@
     },
     "/dashboards/uid/{uid}": {
       "delete": {
-        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "deprecated": true,
+        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "operationId": "deleteDashboardByUID",
         "parameters": [
           {
@@ -17480,7 +17297,8 @@
         "tags": ["dashboards"]
       },
       "get": {
-        "description": "Will return the dashboard given the dashboard unique identifier (uid).",
+        "deprecated": true,
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "operationId": "getDashboardByUID",
         "parameters": [
           {
@@ -17518,6 +17336,8 @@
     },
     "/dashboards/uid/{uid}/permissions": {
       "get": {
+        "deprecated": true,
+        "description": "Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
         "operationId": "getDashboardPermissionsListByUID",
         "parameters": [
           {
@@ -17550,6 +17370,7 @@
         "tags": ["dashboards", "permissions"]
       },
       "post": {
+        "deprecated": true,
         "description": "This operation will remove existing permissions if they’re not included in the request.",
         "operationId": "updateDashboardPermissionsByUID",
         "parameters": [
@@ -17600,7 +17421,7 @@
     "/dashboards/uid/{uid}/restore": {
       "post": {
         "deprecated": true,
-        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
+        "description": "This API will be removed when /apis/dashboard.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "operationId": "restoreDashboardVersionByUID",
         "parameters": [
           {
@@ -17649,6 +17470,7 @@
     },
     "/dashboards/uid/{uid}/versions": {
       "get": {
+        "deprecated": true,
         "operationId": "getDashboardVersionsByUID",
         "parameters": [
           {
@@ -17703,6 +17525,7 @@
     },
     "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
       "get": {
+        "deprecated": true,
         "operationId": "getDashboardVersionByUID",
         "parameters": [
           {
@@ -18832,7 +18655,8 @@
     },
     "/folders": {
       "get": {
-        "description": "It returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
+        "deprecated": true,
+        "description": "It returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -18892,7 +18716,8 @@
         "tags": ["folders"]
       },
       "post": {
-        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
+        "deprecated": true,
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "createFolder",
         "requestBody": {
           "content": {
@@ -18929,46 +18754,10 @@
         "tags": ["folders"]
       }
     },
-    "/folders/id/{folder_id}": {
-      "get": {
-        "deprecated": true,
-        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
-        "operationId": "getFolderByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "folder_id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/folderResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get folder by id.",
-        "tags": ["folders"]
-      }
-    },
     "/folders/{folder_uid}": {
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
+        "deprecated": true,
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "deleteFolder",
         "parameters": [
           {
@@ -19013,6 +18802,8 @@
         "tags": ["folders"]
       },
       "get": {
+        "deprecated": true,
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "getFolderByUID",
         "parameters": [
           {
@@ -19045,6 +18836,8 @@
         "tags": ["folders"]
       },
       "put": {
+        "deprecated": true,
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "updateFolder",
         "parameters": [
           {
@@ -19097,6 +18890,8 @@
     },
     "/folders/{folder_uid}/counts": {
       "get": {
+        "deprecated": true,
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "getFolderDescendantCounts",
         "parameters": [
           {
@@ -19131,6 +18926,8 @@
     },
     "/folders/{folder_uid}/move": {
       "post": {
+        "deprecated": true,
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid},\nChanging the parent folder annotation",
         "operationId": "moveFolder",
         "parameters": [
           {
@@ -19176,6 +18973,7 @@
     },
     "/folders/{folder_uid}/permissions": {
       "get": {
+        "deprecated": true,
         "operationId": "getFolderPermissionList",
         "parameters": [
           {
@@ -19249,187 +19047,6 @@
         },
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "tags": ["folders", "permissions"]
-      }
-    },
-    "/groupsync/groups": {
-      "get": {
-        "operationId": "getMappedGroups",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getGroupsResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "List groups that have mappings set. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
-      }
-    },
-    "/groupsync/groups/{group_id}": {
-      "delete": {
-        "operationId": "deleteGroupMappings",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
-      },
-      "post": {
-        "operationId": "createGroupMappings",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GroupAttributes"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "201": {
-            "$ref": "#/components/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Create mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
-      },
-      "put": {
-        "operationId": "updateGroupMappings",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GroupAttributes"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "201": {
-            "$ref": "#/components/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
-      }
-    },
-    "/groupsync/groups/{group_id}/roles": {
-      "get": {
-        "operationId": "getGroupRoles",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getGroupRolesResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
       }
     },
     "/health": {
@@ -20140,6 +19757,8 @@
     },
     "/org/preferences": {
       "get": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "getOrgPreferences",
         "responses": {
           "200": {
@@ -20159,6 +19778,8 @@
         "tags": ["org", "preferences"]
       },
       "patch": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "patchOrgPreferences",
         "requestBody": {
           "content": {
@@ -20192,6 +19813,8 @@
         "tags": ["org", "preferences"]
       },
       "put": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "updateOrgPreferences",
         "requestBody": {
           "content": {
@@ -23959,58 +23582,6 @@
         "tags": ["user"]
       }
     },
-    "/user/helpflags/clear": {
-      "get": {
-        "operationId": "clearHelpFlags",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Clear user help flag.",
-        "tags": ["signed_in_user"]
-      }
-    },
-    "/user/helpflags/{flag_id}": {
-      "put": {
-        "operationId": "setHelpFlag",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "flag_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Set user help flag.",
-        "tags": ["signed_in_user"]
-      }
-    },
     "/user/orgs": {
       "get": {
         "description": "Return a list of all organizations of the current user.",
@@ -24082,6 +23653,8 @@
     },
     "/user/preferences": {
       "get": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "getUserPreferences",
         "responses": {
           "200": {
@@ -24098,6 +23671,8 @@
         "tags": ["signed_in_user", "preferences"]
       },
       "patch": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "patchUserPreferences",
         "requestBody": {
           "content": {
@@ -24128,7 +23703,8 @@
         "tags": ["signed_in_user", "preferences"]
       },
       "put": {
-        "description": "Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "updateUserPreferences",
         "requestBody": {
           "content": {
@@ -24606,6 +24182,7 @@
     },
     "/v1/provisioning/alert-rules": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRules",
         "responses": {
           "200": {
@@ -24617,12 +24194,23 @@
               }
             },
             "description": "ProvisionedAlertRules"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get all the alert rules.",
         "tags": ["provisioning"]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostAlertRule",
         "parameters": [
           {
@@ -24663,6 +24251,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Create a new alert rule.",
@@ -24751,6 +24349,36 @@
             },
             "description": "AlertingFileExport"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -24761,6 +24389,7 @@
     },
     "/v1/provisioning/alert-rules/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteAlertRule",
         "parameters": [
           {
@@ -24783,12 +24412,23 @@
         "responses": {
           "204": {
             "description": " The alert rule was deleted successfully."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Delete a specific alert rule by UID.",
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRule",
         "parameters": [
           {
@@ -24812,6 +24452,16 @@
             },
             "description": "ProvisionedAlertRule"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -24820,6 +24470,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutAlertRule",
         "parameters": [
           {
@@ -24869,6 +24520,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Update an existing alert rule.",
@@ -24939,6 +24600,36 @@
             },
             "description": "AlertingFileExport"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -24949,6 +24640,7 @@
     },
     "/v1/provisioning/contact-points": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetContactpoints",
         "parameters": [
           {
@@ -24970,12 +24662,23 @@
               }
             },
             "description": "ContactPoints"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get all the contact points.",
         "tags": ["provisioning"]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostContactpoints",
         "parameters": [
           {
@@ -25016,6 +24719,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Create a contact point.",
@@ -25131,6 +24844,7 @@
     },
     "/v1/provisioning/contact-points/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteContactpoints",
         "parameters": [
           {
@@ -25146,12 +24860,23 @@
         "responses": {
           "202": {
             "description": " The contact point was deleted successfully."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Delete a contact point.",
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutContactpoint",
         "parameters": [
           {
@@ -25201,6 +24926,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Update an existing contact point.",
@@ -25209,6 +24944,7 @@
     },
     "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
       "delete": {
+        "deprecated": true,
         "description": "Delete rule group",
         "operationId": "RouteDeleteAlertRuleGroup",
         "parameters": [
@@ -25257,6 +24993,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRuleGroup",
         "parameters": [
           {
@@ -25287,6 +25024,16 @@
             },
             "description": "AlertRuleGroup"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -25295,6 +25042,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
           {
@@ -25351,6 +25099,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Create or update alert rule group.",
@@ -25428,6 +25186,36 @@
             },
             "description": "AlertingFileExport"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -25438,6 +25226,7 @@
     },
     "/v1/provisioning/mute-timings": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTimings",
         "responses": {
           "200": {
@@ -25449,12 +25238,23 @@
               }
             },
             "description": "MuteTimings"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get all the mute timings.",
         "tags": ["provisioning"]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostMuteTiming",
         "parameters": [
           {
@@ -25495,6 +25295,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Create a new mute timing.",
@@ -25593,6 +25403,7 @@
     },
     "/v1/provisioning/mute-timings/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteMuteTiming",
         "parameters": [
           {
@@ -25624,6 +25435,16 @@
           "204": {
             "description": " The mute timing was deleted successfully."
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "409": {
             "content": {
               "application/json": {
@@ -25639,6 +25460,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTiming",
         "parameters": [
           {
@@ -25662,6 +25484,16 @@
             },
             "description": "MuteTimeInterval"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -25670,6 +25502,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutMuteTiming",
         "parameters": [
           {
@@ -25719,6 +25552,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           },
           "409": {
             "content": {
@@ -25836,6 +25679,7 @@
     },
     "/v1/provisioning/policies": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteResetPolicyTree",
         "responses": {
           "202": {
@@ -25847,12 +25691,23 @@
               }
             },
             "description": "Ack"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Clears the notification policy tree.",
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetPolicyTree",
         "responses": {
           "200": {
@@ -25864,12 +25719,23 @@
               }
             },
             "description": "Route"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get the notification policy tree.",
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutPolicyTree",
         "parameters": [
           {
@@ -25911,6 +25777,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Sets the notification policy tree.",
@@ -25951,6 +25827,36 @@
             },
             "description": "AlertingFileExport"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -25988,6 +25894,7 @@
     },
     "/v1/provisioning/templates": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
@@ -25999,6 +25906,16 @@
               }
             },
             "description": "NotificationTemplates"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get all notification template groups.",
@@ -26007,6 +25924,7 @@
     },
     "/v1/provisioning/templates/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
@@ -26031,6 +25949,16 @@
           "204": {
             "description": " The template was deleted successfully."
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "409": {
             "content": {
               "application/json": {
@@ -26046,6 +25974,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
@@ -26069,6 +25998,16 @@
             },
             "description": "NotificationTemplate"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -26084,6 +26023,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
@@ -26133,6 +26073,16 @@
               }
             },
             "description": "PublicError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           },
           "409": {
             "content": {

@@ -44,6 +44,8 @@ const (
 	StorageTypeLegacy StorageType = "legacy"
 
 	BlobThresholdDefault int = 0
+
+	DefaultGrpcClientKeepaliveTime time.Duration = 0
 )
 
 type RestConfigProvider interface {
@@ -152,7 +154,7 @@ func NewStorageOptions() *StorageOptions {
 		Address:                                "localhost:10000",
 		GrpcClientAuthenticationTokenNamespace: "*",
 		GrpcClientAuthenticationAllowInsecure:  false,
-		GrpcClientKeepaliveTime:                0,
+		GrpcClientKeepaliveTime:                DefaultGrpcClientKeepaliveTime,
 		BlobThresholdBytes:                     BlobThresholdDefault,
 		UnifiedStorageConfig:                   make(map[string]setting.UnifiedStorageConfig),
 	}
@@ -304,7 +306,7 @@ func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
 	retryInterceptor := grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
 	)
 
 	opts := []grpc.DialOption{
@@ -325,9 +327,8 @@ func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
 
 	if o.GrpcClientKeepaliveTime > 0 {
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                o.GrpcClientKeepaliveTime,
-			Timeout:             10 * time.Second,
-			PermitWithoutStream: true,
+			Time:    o.GrpcClientKeepaliveTime,
+			Timeout: 10 * time.Second,
 		}))
 	}
 

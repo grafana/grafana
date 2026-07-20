@@ -3,14 +3,18 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -57,7 +61,7 @@ func ProvideDefaultPluginConfigs(
 		dsService:       dsService,
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
-		converter:       NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
+		converter:       converter.NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
 	}
 }
 
@@ -65,7 +69,7 @@ type cachingDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
-	converter       *Converter
+	converter       *converter.Converter
 }
 
 func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
@@ -74,7 +78,7 @@ func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSO
 		dsService:       q.dsService,
 		dsCache:         q.dsCache,
 		contextProvider: q.contextProvider,
-		converter:       NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
+		converter:       converter.NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
 	}
 }
 
@@ -83,7 +87,7 @@ type scopedDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
-	converter       *Converter
+	converter       *converter.Converter
 }
 
 var (
@@ -104,6 +108,15 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *dat
 	if err != nil {
 		return nil, err
 	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userID, err := strconv.ParseInt(strings.TrimPrefix(user.GetID(), "user:"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	cmd.UserID = userID
 	out, err := q.dsService.AddDataSource(ctx, cmd)
 	if err != nil {
 		return nil, err
@@ -176,6 +189,11 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 			delete(ds.SecureJsonData, k)
 		}
 	}
+
+	// Add the decrypted secrets to the context if they were requested
+	pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
+		return secrets, nil
+	})
 
 	return q.converter.AsDataSource(ds)
 }

@@ -2,11 +2,11 @@ import { debounce, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { AppEvents, SelectableValue, toOption } from '@grafana/data';
+import { AppEvents, type SelectableValue, toOption } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { MultiSelect, InputActionMeta } from '@grafana/ui';
+import { MultiSelect, type InputActionMeta } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../../datasource';
+import { type CloudWatchDatasource } from '../../../datasource';
 import { appendTemplateVariables } from '../../../utils/utils';
 
 const MAX_LOG_GROUPS = 20;

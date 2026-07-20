@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 

@@ -113,6 +113,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 	r.OrgID = orgID
+	ctx = identity.WithOrgID(ctx, orgID)
 
 	var authErr error
 	for _, item := range s.clientQueue.items {
@@ -236,7 +237,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	c, ok := s.clients[client]
 	if !ok {
-		s.metrics.failedLogin.WithLabelValues(client).Inc()
+		s.metrics.failedLogin.WithLabelValues("unknown").Inc()
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 

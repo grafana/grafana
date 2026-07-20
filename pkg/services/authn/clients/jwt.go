@@ -114,7 +114,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.Name = name
 	}
 
-	id.Groups, err = s.extractGroups(claims)
+	id.ExternalGroups, err = s.extractGroups(claims)
 	if err != nil {
 		return nil, err
 	}

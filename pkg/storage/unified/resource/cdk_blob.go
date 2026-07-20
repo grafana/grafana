@@ -81,9 +81,7 @@ func (s *cdkBlobSupport) getBlobPath(key *resourcepb.ResourceKey, info *utils.Bl
 	var buffer bytes.Buffer
 	buffer.WriteString(s.root)
 
-	if key.Namespace == "" {
-		buffer.WriteString("__cluster__/")
-	} else {
+	if key.Namespace != "" {
 		buffer.WriteString(key.Namespace)
 		buffer.WriteString("/")
 	}

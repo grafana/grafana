@@ -1,4 +1,4 @@
-import { ExtensionInfo } from '@grafana/data';
+import { type ExtensionInfo } from '@grafana/data';
 import { Dropdown, Menu } from '@grafana/ui';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -16,7 +16,7 @@ type Props = {
   compact?: boolean;
 };
 
-const compactAllowedComponents = ['grafana-assistant-app'];
+const compactAllowedComponents = ['grafana-assistant-app', 'grafana-assistant-onboarding-app'];
 const interactiveLearningPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
 
 export function ExtensionToolbarItem({ compact }: Props) {

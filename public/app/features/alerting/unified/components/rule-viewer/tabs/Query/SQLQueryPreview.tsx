@@ -1,5 +1,5 @@
 import { ReactMonacoEditor } from '@grafana/ui';
-import { AlertDataQuery } from 'app/types/unified-alerting-dto';
+import { type AlertDataQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
   expression: string;
@@ -33,5 +33,3 @@ export interface SQLLike {
 export function isSQLLikeQuery(model: AlertDataQuery): model is SQLLike {
   return 'rawSql' in model;
 }
-
-export default SQLQueryPreview;

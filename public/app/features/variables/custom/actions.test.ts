@@ -1,8 +1,8 @@
-import { CustomVariableModel, VariableOption } from '@grafana/data';
+import { type CustomVariableModel, type VariableOption } from '@grafana/data';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
-import { getRootReducer, RootReducerType } from '../state/helpers';
+import { getRootReducer, type RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { initialVariableModelState } from '../types';

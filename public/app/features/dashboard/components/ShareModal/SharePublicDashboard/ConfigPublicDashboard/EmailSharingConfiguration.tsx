@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useForm, Controller } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { FieldSet, Button, ButtonGroup, Field, Input, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
@@ -14,12 +14,12 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardAccessMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
+import { type PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
   shareType: PublicDashboardShareType;

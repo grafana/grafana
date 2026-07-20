@@ -1,11 +1,15 @@
 import { isEqual } from 'lodash';
 
-import { SelectableValue, toOption, TraceSearchProps } from '@grafana/data';
+import { type SelectableValue, toOption, type TraceSearchProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersController, AdHocFiltersControllerState, AdHocFilterWithLabels } from '@grafana/scenes';
+import {
+  type AdHocFiltersController,
+  type AdHocFiltersControllerState,
+  type AdHocFilterWithLabels,
+} from '@grafana/scenes';
 
 import { getTraceTagKeys, getTraceTagValues } from '../../utils/tags';
-import { Trace } from '../types/trace';
+import { type Trace } from '../types/trace';
 
 /**
  * Convert AdHocFilterItem to AdHocFilterWithLabels for use with the combobox.

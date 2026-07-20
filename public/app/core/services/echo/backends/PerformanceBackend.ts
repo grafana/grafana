@@ -1,4 +1,4 @@
-import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
+import { type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
 
 import { backendSrv } from '../../backend_srv';
 

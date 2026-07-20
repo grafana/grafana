@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { contentTypeOptions, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+import { contentTypeOptions, type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
 
@@ -13,6 +13,8 @@ interface Props {
   suggestions: VariableSuggestion[];
   contentTypeHeader?: boolean;
 }
+
+const collator = new Intl.Collator();
 
 export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader = false }: Props) => {
   const styles = useStyles2(getStyles);
@@ -57,7 +59,7 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
     }
 
     newParams.push(contentType ?? [paramName, paramValue]);
-    newParams.sort((a, b) => a[0].localeCompare(b[0]));
+    newParams.sort((a, b) => collator.compare(a[0], b[0]));
     onChange(newParams);
 
     setParamName('');

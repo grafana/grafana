@@ -29,6 +29,7 @@ type UnifiedStorageMigrationServiceImpl struct {
 	kv           kvstore.KVStore
 	client       resource.ResourceClient
 	registry     *MigrationRegistry
+	gcGate       *resource.GCGate
 }
 
 var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationServiceImpl)(nil)
@@ -42,6 +43,7 @@ func ProvideUnifiedStorageMigrationService(
 	kv kvstore.KVStore,
 	client resource.ResourceClient,
 	registry *MigrationRegistry,
+	gcGate *resource.GCGate,
 ) contract.UnifiedStorageMigrationService {
 	return &UnifiedStorageMigrationServiceImpl{
 		migrator:     migrator,
@@ -52,14 +54,17 @@ func ProvideUnifiedStorageMigrationService(
 		kv:           kv,
 		client:       client,
 		registry:     registry,
+		gcGate:       gcGate,
 	}
 }
 
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
+	// Start GC after migration for chunked history + backfill transactions.
+	defer p.gcGate.Release()
+
 	if !p.cfg.ShouldRunMigrations() {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping",
-			"disableDataMigrations", p.cfg.DisableDataMigrations,
 			"unifiedStorageType", p.cfg.UnifiedStorageType(),
 			"target", p.cfg.Target,
 		)
@@ -73,6 +78,14 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 // EnsureMigrationLogTable creates the unifiedstorage_migration_log table if it doesn't exist.
 func EnsureMigrationLogTable(ctx context.Context, sqlStore db.DB, cfg *setting.Cfg) error {
+	exists, err := sqlStore.GetEngine().IsTableExist(migrationLogTableName)
+	if err != nil {
+		return fmt.Errorf("failed to check migration log table existence: %w", err)
+	}
+	if exists {
+		return nil
+	}
+
 	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
 	mg.AddCreateMigration()
 	sec := cfg.Raw.Section("database")
@@ -110,6 +123,14 @@ func RegisterMigrations(
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
+
+	// Chunked writes need the advisory lock for HA read-isolation: without it,
+	// readers on other instances may see partially migrated data.
+	if cfg.MigrationChunkedWrites && !sec.Key("migration_locking").MustBool(true) {
+		logger.Warn("migration_chunked_writes needs migration_locking for HA read-isolation; " +
+			"readers may see partially migrated data")
+	}
+
 	db := mg.DBEngine.DB().DB
 	maxOpenConns := db.Stats().MaxOpenConnections
 	maxConcurrentRenameConns := 0

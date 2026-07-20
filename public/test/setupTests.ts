@@ -5,13 +5,14 @@ import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
 import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
+import path from 'node:path';
 import { initReactI18next } from 'react-i18next';
 
 import { matchers } from '@grafana/test-utils';
 
-import getEnvConfig from '../../scripts/webpack/env-util';
+import { getEnvConfig } from '../../scripts/cli/env-util';
 
-const config = getEnvConfig() as Record<string, string | boolean>;
+const config = getEnvConfig(path.resolve(__dirname, '../..'));
 
 if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
   failOnConsole({
@@ -27,6 +28,22 @@ i18next.use(initReactI18next).init({
   resources: {},
   returnEmptyString: false,
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
+});
+
+// Pre-resolve dashboard API version resolver with beta defaults so tests
+// don't trigger real network requests via getDashboardAPI() -> resolve().
+// Tests that need to test the resolver itself should call reset() in beforeEach.
+jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => {
+  const actual = jest.requireActual('app/features/dashboard/api/DashboardAPIVersionResolver');
+  actual.dashboardAPIVersionResolver.set({ v1: 'v1beta1', v2: 'v2beta1' });
+  return actual;
+});
+
+// Pre-resolve folder app API to v1beta1 so tests using MSW folder handlers (v1beta1 paths) do not hit discovery.
+jest.mock('@grafana/api-clients/rtkq/folder/v1beta1', () => {
+  const actual = jest.requireActual('@grafana/api-clients/rtkq/folder/v1beta1');
+  actual.folderAPIVersionResolver.set('v1beta1');
+  return actual;
 });
 
 // mock out the worker that detects changes in the dashboard
@@ -89,5 +106,33 @@ if (window.performance) {
 
   if (!window.performance.clearMeasures) {
     window.performance.clearMeasures = jest.mocked<typeof window.performance.clearMeasures>(() => {});
+  }
+}
+
+// jsdom does not implement Range client-rect measurement, which CodeMirror uses
+// to position its cursor and tooltips. Provide inert stubs so editors render in
+// tests without each test having to mock them.
+if (typeof Range !== 'undefined') {
+  const emptyRect: DOMRect = {
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 0,
+    height: 0,
+    toJSON: () => ({}),
+  };
+
+  if (!Range.prototype.getClientRects) {
+    Range.prototype.getClientRects = () => {
+      const list = { length: 0, item: () => null, [Symbol.iterator]: function* () {} };
+      return list as unknown as DOMRectList;
+    };
+  }
+
+  if (!Range.prototype.getBoundingClientRect) {
+    Range.prototype.getBoundingClientRect = () => emptyRect;
   }
 }

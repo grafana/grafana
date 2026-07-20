@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -48,11 +47,11 @@ func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 			gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },
 		},
 	}
-	m := NewMockUnifiedMigrator(t)
-	m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil)
-	m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil)
+	fake := &fakeUnifiedMigrator{
+		migrateResponse: &resourcepb.BulkResponse{},
+	}
 
-	runner := NewMigrationRunner(m, locker, &transactionalTableRenamer{log: logger}, setting.NewCfg(), def, nil)
+	runner := NewMigrationRunner(fake, locker, &transactionalTableRenamer{log: logger}, setting.NewCfg(), def, nil)
 	engine := dbstore.GetEngine()
 	mg := migrator.NewMigrator(engine, setting.NewCfg())
 	sess := engine.NewSession()

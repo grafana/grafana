@@ -1,11 +1,11 @@
 package featuremgmt
 
 import (
-	"sort"
+	"maps"
+	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -55,7 +55,7 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 	mgmt.update()
 
 	// Log the enabled feature toggles at startup
-	enabled := sort.StringSlice(maps.Keys(mgmt.enabled))
+	enabled := slices.Sorted(maps.Keys(mgmt.enabled))
 	logctx := make([]any, len(enabled)*2)
 	for i, k := range enabled {
 		logctx[(i * 2)] = k

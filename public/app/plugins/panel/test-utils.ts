@@ -1,4 +1,4 @@
-import { PanelProps, LoadingState, getDefaultTimeRange, FieldConfigSource } from '@grafana/data';
+import { type PanelProps, LoadingState, getDefaultTimeRange, type FieldConfigSource } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
 /**

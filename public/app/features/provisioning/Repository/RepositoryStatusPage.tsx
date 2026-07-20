@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { SelectableValue, urlUtil } from '@grafana/data';
+import { type SelectableValue, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, Stack, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
@@ -11,6 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
+import { RepoIcon } from '../Shared/RepoIcon';
 import { PROVISIONING_URL } from '../constants';
 
 import { RepositoryActions } from './RepositoryActions';
@@ -61,6 +62,12 @@ export default function RepositoryStatusPage() {
         text: data?.spec?.title ?? t('provisioning.repository-status-page.title', 'Repository Status'),
         subTitle: data?.spec?.description,
       }}
+      renderTitle={(title) => (
+        <Stack alignItems="center">
+          <RepoIcon type={data?.spec?.type} autoHeight />
+          <Text element="h1">{title}</Text>
+        </Stack>
+      )}
       actions={data && <RepositoryActions repository={data} />}
     >
       <Page.Contents isLoading={query.isLoading}>

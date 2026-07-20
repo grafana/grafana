@@ -1,4 +1,4 @@
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import type { ConvertAlertmanagerResponse } from '../components/import-to-gma/types';
 
@@ -22,6 +22,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         targetDatasourceUID?: string;
         /** Extra labels to add to all imported rules (format: key=value,key2=value2) */
         extraLabels?: string;
+        /** JSON-encoded notification settings applied to all imported alerting rules */
+        notificationSettings?: string;
       }
     >({
       query: ({
@@ -32,6 +34,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         dataSourceUID,
         targetDatasourceUID,
         extraLabels,
+        notificationSettings,
       }) => ({
         url: `/api/convert/prometheus/config/v1/rules`,
         method: 'POST',
@@ -44,6 +47,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           ...(targetFolderUID ? { 'X-Grafana-Alerting-Folder-UID': targetFolderUID } : {}),
           ...(targetDatasourceUID ? { 'X-Grafana-Alerting-Target-Datasource-UID': targetDatasourceUID } : {}),
           ...(extraLabels ? { 'X-Grafana-Alerting-Extra-Labels': extraLabels } : {}),
+          ...(notificationSettings ? { 'X-Grafana-Alerting-Notification-Settings': notificationSettings } : {}),
         },
       }),
     }),
@@ -66,9 +70,11 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         configIdentifier: string;
         /** If true, forcibly replace existing configuration regardless of identifier */
         forceReplace?: boolean;
+        /** If true, merge the imported config into the main Grafana config as editable resources */
+        promote?: boolean;
       }
     >({
-      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, forceReplace }) => ({
+      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, forceReplace, promote }) => ({
         url: `/api/convert/api/v1/alerts`,
         method: 'POST',
         body: {
@@ -81,6 +87,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           // TODO: Remove this header once the backend no longer requires it
           'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
           ...(forceReplace ? { 'X-Grafana-Alerting-Config-Force-Replace': 'true' } : {}),
+          ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
       }),
     }),
@@ -103,9 +110,11 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         templateFiles?: Record<string, string>;
         /** Configuration identifier - used as the extra config name */
         configIdentifier: string;
+        /** If true, validate the merge into the main config (and the caller's permissions) */
+        promote?: boolean;
       }
     >({
-      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier }) => ({
+      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, promote }) => ({
         url: `/api/convert/api/v1/alerts`,
         method: 'POST',
         body: {
@@ -120,6 +129,9 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           // Always force-replace during dry-run to avoid 409 conflicts —
           // we want to validate the config regardless of existing identifiers
           'X-Grafana-Alerting-Config-Force-Replace': 'true',
+          // When promoting, the dry-run also validates the merge and the caller's
+          // create-permissions for every resource type in the config.
+          ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
       }),
     }),

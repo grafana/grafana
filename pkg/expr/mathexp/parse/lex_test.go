@@ -201,7 +201,7 @@ func TestParseErrorNoLeak(t *testing.T) {
 	initialGoroutines := runtime.NumGoroutine()
 
 	// Create several trees with parsing errors to check for leaks
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		tree := New()
 		input := "invalid expression with $"
 		err := tree.Parse(input)

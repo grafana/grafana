@@ -38,6 +38,9 @@ message MutateOperation {
     DeleteTeamBindingOperation delete_team_binding = 11;
     CreateRoleOperation create_role = 12;
     DeleteRoleOperation delete_role = 13;
+    UpdateServiceAccountOrgRoleOperation update_service_account_org_role = 14;
+    DeleteServiceAccountOrgRoleOperation delete_service_account_org_role = 15;
+    AddServiceAccountOrgRoleOperation add_service_account_org_role = 16;
   }
 }
 
@@ -87,6 +90,28 @@ message UpdateUserOrgRoleOperation {
 message DeleteUserOrgRoleOperation {
   // User UID
   string user = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+message AddServiceAccountOrgRoleOperation {
+  // Service account UID
+  string service_account = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+// UpdateServiceAccountOrgRoleOperation assigns the service account's basic role and deletes existing basic role assignments.
+message UpdateServiceAccountOrgRoleOperation {
+  // Service account UID
+  string service_account = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+message DeleteServiceAccountOrgRoleOperation {
+  // Service account UID
+  string service_account = 1;
   // Role name (e.g: "Admin", "Editor", "Viewer")
   string role = 2;
 }

@@ -19,7 +19,9 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
 
     await waitForTableLoad(page);
 
-    const minColumnIdx = await getColumnIdx(page, 'Min');
+    const table = page.locator('.rdg');
+
+    const minColumnIdx = await getColumnIdx(table, 'Min');
 
     // this is the footer cell for the "Min" column.
     const minReducerValue = await dashboardPage
@@ -62,7 +64,9 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
 
     await waitForTableLoad(page);
 
-    const minColumnIdx = await getColumnIdx(page, 'Min');
+    const table = page.locator('.rdg');
+
+    const minColumnIdx = await getColumnIdx(table, 'Min');
 
     // this is the footer cell for the "Min" column.
     const minReducerValue = await dashboardPage

@@ -2,12 +2,12 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { PreviewBranchInfo, PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
+import { type PreviewBranchInfo, PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
 
 export interface CommonBannerProps {
   queryParams: DashboardPageRouteSearchParams;

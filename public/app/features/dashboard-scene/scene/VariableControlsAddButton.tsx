@@ -1,27 +1,23 @@
 import { css } from '@emotion/css';
-import { PointerEventHandler, useCallback } from 'react';
+import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { openAddVariablePane } from '../settings/variables/VariableAddEditableElement';
+import { openAddVariablePane } from '../settings/variables/VariableTypeSelectionPane';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const { editview, editPanel, isEditing, viewPanel } = dashboard.useState();
 
-  const handlePointerDown: PointerEventHandler = useCallback(
-    (evt) => {
-      evt.stopPropagation();
-      openAddVariablePane(dashboard);
-      DashboardInteractions.addVariableButtonClicked({ source: 'variable_controls' });
-    },
-    [dashboard]
-  );
+  const handleClick = useCallback(() => {
+    openAddVariablePane(dashboard);
+    DashboardInteractions.addVariableButtonClicked({ source: 'variable_controls' });
+  }, [dashboard]);
 
   // Hide the button if:
   // - the dashboard is not in edit mode
@@ -35,9 +31,15 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
   return (
     <div className={styles.addButton}>
       <div className="dashboard-canvas-add-button">
-        <Button icon="plus" variant="primary" fill="text" onPointerDown={handlePointerDown}>
-          <Trans i18nKey="dashboard-scene.variable-controls.add-variable">Add variable</Trans>
-        </Button>
+        <Button
+          icon="plus"
+          variant="secondary"
+          fill="outline"
+          size="md"
+          onClick={handleClick}
+          tooltip={t('dashboard-scene.variable-controls.add-variable', 'Add variable')}
+          aria-label={t('dashboard-scene.variable-controls.add-variable', 'Add variable')}
+        />
       </div>
     </div>
   );

@@ -1,29 +1,28 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
   formattedValueToString,
-  InterpolateFunction,
-  LinkModel,
+  type InterpolateFunction,
+  type LinkModel,
   usePluginContext,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  getContentItems,
-  VizTooltipItem,
-  AdHocFilterModel,
-  FilterByGroupedLabelsModel,
-} from '@grafana/ui/internal';
+  getFieldDisplayItems,
+  isTooltipScrollable,
+} from '@grafana/ui';
 
 import { getFieldActions } from '../status-history/utils';
-
-import { isTooltipScrollable } from './utils';
 
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
@@ -85,7 +84,7 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
-  const contentItems = getContentItems(
+  const contentItems = getFieldDisplayItems(
     series.fields,
     xField,
     dataIdxs,

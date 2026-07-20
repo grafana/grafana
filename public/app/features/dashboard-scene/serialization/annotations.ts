@@ -1,6 +1,6 @@
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 import {
-  AnnotationQueryKind,
+  type AnnotationQueryKind,
   defaultAnnotationQuerySpec,
   defaultDataQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';

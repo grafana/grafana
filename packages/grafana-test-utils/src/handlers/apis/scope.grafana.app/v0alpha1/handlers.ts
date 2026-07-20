@@ -1,12 +1,13 @@
 import { HttpResponse, http } from 'msw';
 
 import {
+  MOCK_DEFAULT_SCOPE,
   MOCK_NODES,
   MOCK_SCOPES,
   MOCK_SCOPE_DASHBOARD_BINDINGS,
   MOCK_SUB_SCOPE_LOKI_ITEMS,
   MOCK_SUB_SCOPE_MIMIR_ITEMS,
-  ScopeNavigation,
+  type ScopeNavigation,
 } from '../../../../fixtures/scopes';
 import { getErrorResponse } from '../../../helpers';
 
@@ -122,10 +123,25 @@ const findScopeNavigationsHandler = () =>
     });
   });
 
+/**
+ * GET /apis/scope.grafana.app/v0alpha1/namespaces/:namespace/find/default_scope
+ *
+ * Returns the default scope envelope used when no scope is currently selected.
+ */
+const findDefaultScopeHandler = () =>
+  http.get(`${API_BASE}/find/default_scope`, () =>
+    HttpResponse.json({
+      apiVersion: 'scope.grafana.app/v0alpha1',
+      kind: 'FindDefaultScope',
+      scope: MOCK_DEFAULT_SCOPE,
+    })
+  );
+
 export default [
   getScopeHandler(),
   getScopeNodeHandler(),
   findScopeNodeChildrenHandler(),
   findScopeDashboardBindingsHandler(),
   findScopeNavigationsHandler(),
+  findDefaultScopeHandler(),
 ];

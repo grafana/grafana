@@ -2,12 +2,12 @@ import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { NavModelItem, PageLayoutType } from '@grafana/data';
+import { type NavModelItem, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { Page } from './Page';
-import { PageProps } from './types';
+import { type PageProps } from './types';
 
 const pageNav: NavModelItem = {
   text: 'pageNav title',

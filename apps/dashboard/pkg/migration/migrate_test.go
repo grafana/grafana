@@ -26,7 +26,13 @@ const INPUT_DIR = "testdata/input"
 const OUTPUT_DIR = "testdata/output"
 const SINGLE_VERSION_OUTPUT_DIR = "testdata/output/single_version"
 const LATEST_VERSION_OUTPUT_DIR = "testdata/output/latest_version"
-const DEV_DASHBOARDS_INPUT_DIR = "../../../../devenv/dev-dashboards"
+
+// DEV_DASHBOARDS_INPUT_DIR points at the preserved v1 gdev dashboard corpus rather
+// than devenv/dev-dashboards. The provisioned devenv set is now v2-schema (no top-level
+// schemaVersion), so it can no longer exercise the v1->latest migration path. The corpus
+// is the original v1 set, preserved here so this test continues to cover the v1->latest
+// migration path over real dashboards.
+const DEV_DASHBOARDS_INPUT_DIR = "testdata/v1_dev_dashboards"
 const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
 
 func TestMigrate(t *testing.T) {
@@ -438,12 +444,32 @@ func runDevDashboardMigrationTests(t *testing.T, targetVersion int, outputDir st
 
 		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
 		inputDash := loadDashboard(t, jsonFile)
-		inputVersion := getSchemaVersion(t, inputDash)
+		inputVersion, ok := getSchemaVersionIfPresent(inputDash)
+		if !ok {
+			t.Logf("Skipping %s: dashboard missing schemaVersion (likely non-legacy dashboard format)", relativeOutputPath)
+			continue
+		}
 
 		testName := fmt.Sprintf("%s v%d to v%d", relativeOutputPath, inputVersion, targetVersion)
 		t.Run(testName, func(t *testing.T) {
 			testMigrationUnified(t, inputDash, relativeOutputPath, inputVersion, targetVersion, outputDir)
 		})
+	}
+}
+
+func getSchemaVersionIfPresent(dash map[string]interface{}) (int, bool) {
+	version, ok := dash["schemaVersion"]
+	if !ok {
+		return 0, false
+	}
+
+	switch v := version.(type) {
+	case int:
+		return v, true
+	case float64:
+		return int(v), true
+	default:
+		return 0, false
 	}
 }
 

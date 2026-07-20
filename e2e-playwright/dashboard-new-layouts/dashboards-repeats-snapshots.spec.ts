@@ -1,8 +1,8 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
+import { type SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
 import { importTestDashboard, saveDashboard, switchToAutoGrid } from './utils';
@@ -48,8 +48,6 @@ async function publishDashboardSnapshot(
 
 test.use({
   featureToggles: {
-    scenes: true,
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },

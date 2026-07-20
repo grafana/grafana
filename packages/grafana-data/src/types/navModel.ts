@@ -1,7 +1,7 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { IconName } from './icon';
-import { LinkTarget } from './linkTarget';
+import { type IconName } from './icon';
+import { type LinkTarget } from './linkTarget';
 
 export interface NavLinkDTO {
   id?: string;
@@ -60,6 +60,11 @@ export type NavIndex = { [s: string]: NavModelItem };
 
 export enum PageLayoutType {
   Standard,
+  // TODO deprecate and remove this in the future once visual refresh is delivered
+  // there is only 1 page style - custom can be used for anything else
   Canvas,
   Custom,
+  // TODO deprecate and remove this in the future once visual refresh is delivered
+  // there is only 1 page style - custom can be used for anything else
+  Home,
 }

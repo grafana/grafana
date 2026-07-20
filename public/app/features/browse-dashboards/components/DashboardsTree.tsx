@@ -1,23 +1,24 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
-import { TableInstance, useTable } from 'react-table';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { type TableInstance, useTable } from 'react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
-import { GrafanaTheme2, isTruthy } from '@grafana/data';
+import { type GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { DashboardViewItem } from 'app/features/search/types';
+import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
+import { type DashboardViewItem } from 'app/features/search/types';
 
 import { canSelectItems } from '../permissions';
 import {
-  BrowseDashboardsPermissions,
-  DashboardsTreeCellProps,
-  DashboardsTreeColumn,
-  DashboardsTreeItem,
-  SelectionState,
+  type BrowseDashboardsPermissions,
+  type DashboardsTreeCellProps,
+  type DashboardsTreeColumn,
+  type DashboardsTreeItem,
+  type SelectionState,
 } from '../types';
 import { makeRowID } from '../utils/dashboards';
 
@@ -32,6 +33,7 @@ interface DashboardsTreeProps {
   width: number;
   height: number;
   permissions: BrowseDashboardsPermissions;
+  folderUID?: string;
   isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
@@ -45,6 +47,13 @@ interface DashboardsTreeProps {
 const HEADER_HEIGHT = 36;
 const ROW_HEIGHT = 36;
 const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
+// Initial estimate for the README row; replaced by the ResizeObserver-measured
+// height once the row mounts. The row must cover the real content height:
+// WebKit does not extend the scroller's scrollable area for content that
+// overflows the absolutely-positioned row, so an undersized row makes Safari
+// snap the scroll position back (content past the row is unreachable).
+const README_ROW_HEIGHT = 320;
+const README_ROW_PADDING_TOP = 16; // matches theme.spacing(2)
 
 export function DashboardsTree({
   items,
@@ -58,12 +67,27 @@ export function DashboardsTree({
   isItemLoaded,
   requestLoadMore,
   permissions,
+  folderUID,
 }: DashboardsTreeProps) {
   const treeID = useId();
 
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const listRef = useRef<List | null>(null);
   const styles = useStyles2(getStyles);
+
+  const [readmeHeight, setReadmeHeight] = useState(README_ROW_HEIGHT);
+
+  const handleReadmeHeightChange = useCallback((height: number) => {
+    // Ignore 0 (display:none / mid-unmount); React bails out on same-value sets.
+    if (height > 0) {
+      setReadmeHeight(Math.ceil(height));
+    }
+  }, []);
+  useEffect(() => {
+    // The tree stays mounted across folder navigation; a stale measurement would
+    // otherwise persist when the next folder's README panel renders nothing.
+    setReadmeHeight(README_ROW_HEIGHT);
+  }, [folderUID]);
 
   useEffect(() => {
     // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
@@ -77,6 +101,11 @@ export function DashboardsTree({
       listRef.current.resetAfterIndex(0);
     }
   }, [items]);
+
+  useEffect(() => {
+    // VariableSizeList caches row offsets; re-measure when the README grows/shrinks.
+    listRef.current?.resetAfterIndex(0);
+  }, [readmeHeight]);
 
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
@@ -120,10 +149,22 @@ export function DashboardsTree({
       onItemSelectionChange,
       treeID,
       permissions,
+      folderUID,
+      onReadmeHeightChange: handleReadmeHeightChange,
     }),
     // we need this to rerender if items changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID, permissions]
+    [
+      table,
+      isSelected,
+      onAllSelectionChange,
+      onItemSelectionChange,
+      items,
+      treeID,
+      permissions,
+      folderUID,
+      handleReadmeHeightChange,
+    ]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -147,8 +188,26 @@ export function DashboardsTree({
       if (row.item.kind === 'ui' && row.item.uiKind === 'divider') {
         return DIVIDER_HEIGHT;
       }
+      if (row.item.kind === 'ui' && row.item.uiKind === 'readme') {
+        return readmeHeight + README_ROW_PADDING_TOP;
+      }
 
       return ROW_HEIGHT;
+    },
+    [items, readmeHeight]
+  );
+
+  const itemKey = useCallback(
+    (index: number) => {
+      const item = items[index].item;
+      // Stabilize the readme row's identity across position shifts so
+      // react-window preserves the component instance when items are
+      // inserted before it (e.g. folder expansion). Other rows keep the
+      // default index-based keying.
+      if (item.kind === 'ui' && item.uiKind === 'readme') {
+        return item.uid;
+      }
+      return index;
     },
     [items]
   );
@@ -195,6 +254,7 @@ export function DashboardsTree({
               estimatedItemSize={ROW_HEIGHT}
               itemSize={getRowHeight}
               onItemsRendered={onItemsRendered}
+              itemKey={itemKey}
             >
               {VirtualListRow}
             </List>
@@ -215,6 +275,8 @@ interface VirtualListRowProps {
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
     treeID: string;
     permissions: BrowseDashboardsPermissions;
+    folderUID?: string;
+    onReadmeHeightChange: (height: number) => void;
   };
 }
 
@@ -234,6 +296,12 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
       <div key={key} {...rowProps}>
         <hr className={styles.divider} />
       </div>
+    );
+  }
+
+  if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'readme' && data.folderUID) {
+    return (
+      <ReadmeRow key={key} rowProps={rowProps} folderUID={data.folderUID} onHeightChange={data.onReadmeHeightChange} />
     );
   }
 
@@ -260,6 +328,37 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   );
 }
 
+interface ReadmeRowProps {
+  rowProps: React.HTMLAttributes<HTMLDivElement>;
+  folderUID: string;
+  onHeightChange: (height: number) => void;
+}
+
+function ReadmeRow({ rowProps, folderUID, onHeightChange }: ReadmeRowProps) {
+  const styles = useStyles2(getStyles);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = contentRef.current;
+    if (!element) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      onHeightChange(element.offsetHeight);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [onHeightChange]);
+
+  return (
+    <div {...rowProps} className={styles.readmeRow}>
+      <div ref={contentRef}>
+        <FolderReadmePanel folderUID={folderUID} />
+      </div>
+    </div>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     // Column flex properties (cell sizing) are set by customFlexTableLayout.ts
@@ -272,6 +371,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderTop: `1px solid ${theme.colors.border.weak}`,
       width: '100%',
       margin: 0,
+    }),
+
+    readmeRow: css({
+      paddingTop: theme.spacing(2),
+      flexDirection: 'column',
     }),
 
     headerRow: css({

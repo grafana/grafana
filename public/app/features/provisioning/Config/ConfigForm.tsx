@@ -20,7 +20,7 @@ import {
   Switch,
 } from '@grafana/ui';
 import {
-  Repository,
+  type Repository,
   useGetFrontendSettingsQuery,
   useGetRepositoryRefsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
@@ -32,14 +32,17 @@ import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { RepositoryFormData } from '../types';
-import { dataToSpec } from '../utils/data';
+import { type RepositoryFormData } from '../types';
+import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
-import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
+import { getRepositoryTypeConfig, isGitHubBased, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
-import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
+import { BranchOptionsSection } from './BranchOptionsSection';
+import { CommitOptionsSection } from './CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
+import { PullRequestOptionsSection } from './PullRequestOptionsSection';
+import { WebhookSection } from './WebhookSection';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -47,6 +50,7 @@ const getTargetOptions = (allowedTargets: string[]) => {
   const allOptions = [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
+    { value: 'folderless', label: t('provisioning.config-form.option-folderless', 'Folderless') },
   ];
 
   return allOptions.filter((option) => allowedTargets.includes(option.value));
@@ -81,7 +85,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
-  const [type, readOnly] = watch(['type', 'readOnly']);
+  const [type, readOnly, watchedConnectionName] = watch(['type', 'readOnly', 'connectionName']);
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
@@ -89,9 +93,23 @@ export function ConfigForm({ data }: ConfigFormProps) {
   // Repositories using GitHub App have a connection reference in their spec,
   // whereas PAT-based repositories store credentials directly
   const connectionName = data?.spec?.connection?.name;
-  const usesGitHubApp = Boolean(connectionName && type === 'github');
+  const usesGitHubApp = Boolean(connectionName && isGitHubBased(type));
 
-  const { options: connectionOptions, isLoading: connectionsLoading } = useConnectionOptions(usesGitHubApp);
+  const {
+    options: connectionOptions,
+    isLoading: connectionsLoading,
+    connections,
+  } = useConnectionOptions(usesGitHubApp, isGitHubBased(type) ? type : undefined);
+
+  const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
+  const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
+  const emailWebhookDisabled = type === 'bitbucket' && !watch('email')?.trim();
+
+  useEffect(() => {
+    if (connectionWebhookDisabled) {
+      setValue('webhook.disabled', true);
+    }
+  }, [connectionWebhookDisabled, setValue]);
 
   const {
     data: refsData,
@@ -135,7 +153,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      await submitData(spec, form.token);
+      const signingKeySecret = deriveSigningKeySecret(form, Boolean(data?.secure?.commitSigningKey?.name));
+      await submitData(spec, form.token, signingKeySecret);
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -273,7 +292,26 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
+            {gitFields.emailConfig && (
+              <Field
+                noMargin
+                label={gitFields.emailConfig.label}
+                required={gitFields.emailConfig.required}
+                error={errors?.email?.message}
+                invalid={!!errors?.email}
+                description={gitFields.emailConfig.description}
+              >
+                <Input
+                  {...register('email', {
+                    required: gitFields.emailConfig.validation?.required,
+                    pattern: gitFields.emailConfig.validation?.pattern,
+                  })}
+                  type="email"
+                  placeholder={gitFields.emailConfig.placeholder}
+                />
+              </Field>
+            )}
+            {hasTokenInstructions && <TokenPermissionsInfo type={type} url={watch('url')} />}
             <Field
               noMargin
               label={gitFields.urlConfig.label}
@@ -286,6 +324,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 {...register('url', {
                   required: gitFields.urlConfig.validation?.required,
                   pattern: gitFields.urlConfig.validation?.pattern,
+                  validate: gitFields.urlConfig.validation?.validate,
                 })}
                 placeholder={gitFields.urlConfig.placeholder}
               />
@@ -376,7 +415,58 @@ export function ConfigForm({ data }: ConfigFormProps) {
             readOnly={readOnly}
           />
         )}
-        {type === 'github' && <ConfigFormGithubCollapse register={register} />}
+        {isGitBased && (
+          <>
+            <BranchOptionsSection<RepositoryFormData>
+              register={register}
+              nameTemplateName="branchOptions.nameTemplate"
+              enforceTemplateName="branchOptions.enforceTemplate"
+            />
+            <CommitOptionsSection<RepositoryFormData>
+              register={register}
+              control={control}
+              setValue={setValue}
+              messageTemplateName="commit.singleResourceMessageTemplate"
+              enforceTemplateName="commit.enforceTemplate"
+              type={type}
+              signingMethodName="signingMethod"
+              signingKeyName="commitSigningKey"
+              smimeCertificateName="smimeCertificate"
+              signerNameName="commit.signerName"
+              signerEmailName="commit.signerEmail"
+              signerIsAuthorName="commit.signerIsAuthor"
+              defaultSigningKeyConfigured={Boolean(data?.secure?.commitSigningKey?.name)}
+            />
+            {/* Pull requests are not supported by the pure git type. */}
+            {type !== 'git' && (
+              <PullRequestOptionsSection<RepositoryFormData>
+                register={register}
+                titleTemplateName="pullRequest.titleTemplate"
+                enforceTemplateName="pullRequest.enforceTemplate"
+                repoType={type}
+                dashboardPreviewName="generateDashboardPreviews"
+              />
+            )}
+          </>
+        )}
+        {supportsWebhooks(type) && (
+          <WebhookSection<RepositoryFormData>
+            register={register}
+            control={control}
+            name="webhook.baseUrl"
+            disabledName="webhook.disabled"
+            connectionWebhookDisabled={connectionWebhookDisabled}
+            disabledReason={
+              emailWebhookDisabled
+                ? t(
+                    'provisioning.webhook-section.description-webhook-disabled-email',
+                    'Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.'
+                  )
+                : undefined
+            }
+            disabledError={errors?.webhook?.disabled?.message}
+          />
+        )}
 
         {isGitBased && (
           <ControlledCollapse

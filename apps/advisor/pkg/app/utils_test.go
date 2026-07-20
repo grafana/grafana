@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -18,8 +21,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetCheck(t *testing.T) {
@@ -465,7 +466,7 @@ func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
 	// Create multiple items to process
 	const numItems = 20
 	items := make([]any, numItems)
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		items[i] = fmt.Sprintf("item-%d", i)
 	}
 

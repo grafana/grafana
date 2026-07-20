@@ -1,10 +1,10 @@
-import { useState, ChangeEvent, useEffect } from 'react';
+import { useState, type ChangeEvent, useEffect } from 'react';
 
-import { ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { type ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans } from '@grafana/i18n';
-import { Button, Icon, Stack, Checkbox, Text, Box, IconName, Space, Tooltip } from '@grafana/ui';
+import { Button, Icon, Stack, Checkbox, Text, Box, type IconName, Space, Tooltip } from '@grafana/ui';
 
-import { ResourceTypeId, buildDependencyMaps, handleSelection, handleDeselection } from './resourceDependency';
+import { type ResourceTypeId, buildDependencyMaps, handleSelection, handleDeselection } from './resourceDependency';
 import { iconNameForResource, pluralizeResourceName } from './resourceInfo';
 
 interface ConfigureSnapshotProps {

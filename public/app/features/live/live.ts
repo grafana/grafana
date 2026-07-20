@@ -1,9 +1,9 @@
 import { map } from 'rxjs';
 
 import { toLiveChannelId, StreamingDataFrame } from '@grafana/data';
-import { BackendSrv, GrafanaLiveSrv } from '@grafana/runtime';
+import { type BackendSrv, type GrafanaLiveSrv } from '@grafana/runtime';
 
-import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
+import { type CentrifugeSrv, type StreamingDataQueryResponse } from './centrifuge/service';
 import { isStreamingResponseData, StreamingResponseDataType } from './data/utils';
 
 type GrafanaLiveServiceDeps = {

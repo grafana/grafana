@@ -1,6 +1,11 @@
-import { Grammar } from 'prismjs';
-
-import { CompletionItem } from '@grafana/ui';
+// Minimal shape for the command/function metadata in this file. Kept local rather than
+// imported from @grafana/ui so the CheatSheet tokenizer no longer depends on the Slate-era
+// completion types.
+interface CompletionItem {
+  label: string;
+  detail?: string;
+  documentation?: string;
+}
 
 export const QUERY_COMMANDS: CompletionItem[] = [
   {
@@ -25,10 +30,7 @@ export const QUERY_COMMANDS: CompletionItem[] = [
   },
 ];
 
-export const COMPARISON_OPERATORS = ['=', '!=', '<', '<=', '>', '>='];
-export const ARITHMETIC_OPERATORS = ['+', '-', '*', '/', '^', '%'];
-
-export const NUMERIC_OPERATORS = [
+const NUMERIC_OPERATORS = [
   {
     label: 'abs',
     detail: 'abs(a)',
@@ -66,7 +68,7 @@ export const NUMERIC_OPERATORS = [
   },
 ];
 
-export const GENERAL_FUNCTIONS = [
+const GENERAL_FUNCTIONS = [
   {
     label: 'ispresent',
     detail: 'ispresent(fieldname)',
@@ -79,7 +81,7 @@ export const GENERAL_FUNCTIONS = [
   },
 ];
 
-export const STRING_FUNCTIONS = [
+const STRING_FUNCTIONS = [
   {
     label: 'isempty',
     detail: 'isempty(fieldname)',
@@ -146,7 +148,7 @@ export const STRING_FUNCTIONS = [
   },
 ];
 
-export const DATETIME_FUNCTIONS = [
+const DATETIME_FUNCTIONS = [
   {
     label: 'bin',
     detail: 'bin(period)',
@@ -176,7 +178,7 @@ export const DATETIME_FUNCTIONS = [
   },
 ];
 
-export const IP_FUNCTIONS = [
+const IP_FUNCTIONS = [
   {
     label: 'isValidIp',
     detail: 'isValidIp(fieldname)',
@@ -209,31 +211,7 @@ export const IP_FUNCTIONS = [
   },
 ];
 
-export const BOOLEAN_FUNCTIONS = [
-  {
-    label: 'ispresent',
-    detail: 'ispresent(fieldname)',
-    documentation: 'Returns true if the field exists.',
-  },
-  {
-    label: 'isempty',
-    detail: 'isempty(fieldname)',
-    documentation: 'Returns true if the field is missing or is an empty string.',
-  },
-  {
-    label: 'isblank',
-    detail: 'isblank(fieldname)',
-    documentation: 'Returns true if the field is missing, an empty string, or contains only white space.',
-  },
-  {
-    label: 'strcontains',
-    detail: 'strcontains(string1, string2)',
-    documentation: 'Returns 1 if string1 contains string2 and 0 otherwise.',
-  },
-  ...IP_FUNCTIONS,
-];
-
-export const AGGREGATION_FUNCTIONS_STATS = [
+const AGGREGATION_FUNCTIONS_STATS = [
   {
     label: 'avg',
     detail: 'avg(NumericFieldname)',
@@ -276,7 +254,7 @@ export const AGGREGATION_FUNCTIONS_STATS = [
   },
 ];
 
-export const NON_AGGREGATION_FUNCS_STATS = [
+const NON_AGGREGATION_FUNCS_STATS = [
   {
     label: 'earliest',
     detail: 'earliest(fieldname)',
@@ -301,10 +279,10 @@ export const NON_AGGREGATION_FUNCS_STATS = [
   },
 ];
 
-export const STATS_FUNCS = [...AGGREGATION_FUNCTIONS_STATS, ...NON_AGGREGATION_FUNCS_STATS];
+const STATS_FUNCS = [...AGGREGATION_FUNCTIONS_STATS, ...NON_AGGREGATION_FUNCS_STATS];
 
 export const KEYWORDS = ['as', 'like', 'by', 'in', 'desc', 'asc'];
-export const FIELD_AND_FILTER_FUNCTIONS = [
+const FIELD_AND_FILTER_FUNCTIONS = [
   ...NUMERIC_OPERATORS,
   ...GENERAL_FUNCTIONS,
   ...STRING_FUNCTIONS,
@@ -313,54 +291,3 @@ export const FIELD_AND_FILTER_FUNCTIONS = [
 ];
 
 export const FUNCTIONS = [...FIELD_AND_FILTER_FUNCTIONS, ...STATS_FUNCS];
-
-const tokenizer: Grammar = {
-  comment: {
-    pattern: /^#.*/,
-    greedy: true,
-  },
-  backticks: {
-    pattern: /`.*?`/,
-    alias: 'string',
-    greedy: true,
-  },
-  quote: {
-    pattern: /".*?"/,
-    alias: 'string',
-    greedy: true,
-  },
-  regex: {
-    pattern: /\/.*?\/(?=\||\s*$|,)/,
-    greedy: true,
-  },
-  'query-command': {
-    pattern: new RegExp(`\\b(?:${QUERY_COMMANDS.map((command) => command.label).join('|')})\\b`, 'i'),
-    alias: 'function',
-  },
-  function: {
-    pattern: new RegExp(`\\b(?:${FUNCTIONS.map((f) => f.label).join('|')})\\b`, 'i'),
-  },
-  keyword: {
-    pattern: new RegExp(`(\\s+)(${KEYWORDS.join('|')})(?=\\s+)`, 'i'),
-    lookbehind: true,
-  },
-  // 'log-group-name': {
-  //   pattern: /[\.\-_/#A-Za-z0-9]+/,
-  // },
-  'field-name': {
-    pattern: /(@?[_a-zA-Z]+[_.0-9a-zA-Z]*)|(`((\\`)|([^`]))*?`)/,
-    greedy: true,
-  },
-  number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
-  'command-separator': {
-    pattern: /\|/,
-    alias: 'punctuation',
-  },
-  'comparison-operator': {
-    pattern: /([<>]=?)|(!?=)/,
-  },
-  punctuation: /[{}()`,.]/,
-  whitespace: /\s+/,
-};
-
-export default tokenizer;

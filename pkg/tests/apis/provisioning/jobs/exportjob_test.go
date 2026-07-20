@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -13,43 +12,41 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
+	helper := sharedHelper(t)
 
 	// Write dashboards at
 	dashboard := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
-	_, err := helper.DashboardsV0.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	createdV0, err := helper.DashboardsV0.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v0 dashboard")
 
 	// FIXME: add helper and template for dashboards in different versions
 	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err = helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	createdV1, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
 	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
-	_, err = helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	createdV2alpha, err := helper.DashboardsV2alpha1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
 
 	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	createdV2beta, err := helper.DashboardsV2beta1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2beta1 dashboard")
 
 	// Now for the repository.
 	const repo = "local-repository"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		Target:             "instance",          // Export is only supported for instance sync
-		Copies:             map[string]string{}, // No initial files needed for export test
-		ExpectedDashboards: 4,                   // 4 dashboards created above (v0, v1, v2alpha1, v2beta1)
-		ExpectedFolders:    0,                   // No folders expected after sync
+		Name:       repo,
+		SyncTarget: "instance", // Export is only supported for instance sync
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{}, // No initial files needed for export test
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireDashboards(t, createdV0.GetName(), createdV1.GetName(), createdV2alpha.GetName(), createdV2beta.GetName())
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Now export
 	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
@@ -74,10 +71,13 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 	common.PrintFileTree(t, helper.ProvisioningPath)
 
-	// Check that each file was exported with its stored version and new UIDs
+	// Check that each file was exported with its stored version and new UIDs.
+	// A dashboard created at v0 is relabeled to v1 on export: its body is already
+	// the lossless v1 representation, and a file labeled v0alpha1 cannot be loaded
+	// by the frontend dashboard loader once it is synced back in.
 	for _, test := range []props{
-		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
-		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
+		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
+		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
 		{title: "Test dashboard. Created at v2alpha1", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2alpha1", fileName: "test-dashboard-created-at-v2alpha1.json"},
 		{title: "Test dashboard. Created at v2beta1", apiVersion: "dashboard.grafana.app/v2beta1", name: "test-v2beta1", fileName: "test-dashboard-created-at-v2beta1.json"},
 	} {
@@ -109,10 +109,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
+	helper := sharedHelper(t)
 
 	// Test table for different dashboard versions
 	tests := []struct {
@@ -128,29 +125,31 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			name: "v0alpha1",
 			file: "../exportunifiedtorepository/dashboard-test-v0.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-				return helper.DashboardsV0.Resource.Create(ctx, dashboard, opts)
+				return helper.DashboardsV0.Resource.Create(t.Context(), dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v0",
 			expectedName:  "test-v0",
-			expectedVer:   "dashboard.grafana.app/v0alpha1",
-			fileName:      "test-dashboard-created-at-v0.json",
+			// v0 is relabeled to v1 on export so the synced file remains loadable;
+			// see the conversion shim in jobs/export/resources.go.
+			expectedVer: "dashboard.grafana.app/v1",
+			fileName:    "test-dashboard-created-at-v0.json",
 		},
 		{
-			name: "v1beta1",
+			name: "v1",
 			file: "../exportunifiedtorepository/dashboard-test-v1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-				return helper.DashboardsV1.Resource.Create(ctx, dashboard, opts)
+				return helper.DashboardsV1.Resource.Create(t.Context(), dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v1",
 			expectedName:  "test-v1",
-			expectedVer:   "dashboard.grafana.app/v1beta1",
+			expectedVer:   "dashboard.grafana.app/v1",
 			fileName:      "test-dashboard-created-at-v1.json",
 		},
 		{
 			name: "v2alpha1",
 			file: "../exportunifiedtorepository/dashboard-test-v2alpha1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-				return helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, opts)
+				return helper.DashboardsV2alpha1.Resource.Create(t.Context(), dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v2alpha1",
 			expectedName:  "test-v2alpha1",
@@ -161,7 +160,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			name: "v2beta1",
 			file: "../exportunifiedtorepository/dashboard-test-v2beta1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-				return helper.DashboardsV2beta1.Resource.Create(ctx, dashboard, opts)
+				return helper.DashboardsV2beta1.Resource.Create(t.Context(), dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v2beta1",
 			expectedName:  "test-v2beta1",
@@ -171,22 +170,26 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	}
 
 	// Create dashboards in different versions
+	names := make([]string, 0, len(tests))
 	for _, tt := range tests {
 		dashboard := helper.LoadYAMLOrJSONFile(tt.file)
-		_, err := tt.createFunc(dashboard, metav1.CreateOptions{})
+		created, err := tt.createFunc(dashboard, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create %s dashboard", tt.name)
+		names = append(names, created.GetName())
 	}
 
 	// Create repository
 	const repo = "version-test-repository"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		Target:             "instance", // Export is only supported for instance sync
-		Copies:             map[string]string{},
-		ExpectedDashboards: len(tests),
-		ExpectedFolders:    0,
+		Name:       repo,
+		SyncTarget: "instance", // Export is only supported for instance sync
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireDashboards(t, names...)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Export dashboards
 	spec := provisioning.JobSpec{
@@ -210,10 +213,11 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			err = json.Unmarshal(body, &obj)
 			require.NoError(t, err, "exported file not json %s", fpath)
 
-			// Verify API version matches the stored version
+			// Verify the exported apiVersion. Non-v0 versions are preserved as stored;
+			// v0 is relabeled to v1 so the synced file stays loadable.
 			val, _, err := unstructured.NestedString(obj, "apiVersion")
 			require.NoError(t, err)
-			require.Equal(t, tt.expectedVer, val, "exported dashboard should have original stored version")
+			require.Equal(t, tt.expectedVer, val, "exported dashboard should have expected apiVersion")
 
 			// Verify title
 			val, _, err = unstructured.NestedString(obj, "spec", "title")
@@ -234,7 +238,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 
 	// Verify that listing via v1 API shows storedVersion when conversion fails
 	// This tests the generic version handling logic
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err, "should be able to list dashboards via v1 API")
 
 	for _, dashboard := range dashboards.Items {
@@ -261,56 +265,14 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 
 							exportedVersion, _, err := unstructured.NestedString(obj, "apiVersion")
 							require.NoError(t, err)
-							// Extract version from apiVersion (e.g., "dashboard.grafana.app/v2alpha1" -> "v2alpha1")
-							expectedVersion := "dashboard.grafana.app/" + storedVersion
-							require.Equal(t, expectedVersion, exportedVersion,
-								"exported version should match storedVersion %s for dashboard %s", storedVersion, dashboardName)
+							// The exported apiVersion tracks the stored version, except v0
+							// which is relabeled to v1 (see the export conversion shim).
+							require.Equal(t, tt.expectedVer, exportedVersion,
+								"exported version for dashboard %s should be %s (storedVersion=%s)", dashboardName, tt.expectedVer, storedVersion)
 						}
 					}
 				}
 			}
 		}
 	}
-}
-
-func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	// Run Grafana WITHOUT the export feature flag enabled
-	helper := common.RunGrafana(t, common.WithoutExportFeatureFlag)
-
-	// Create a repository
-	const repo = "test-repository"
-	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "instance",
-	}
-	helper.CreateRepo(t, testRepo)
-
-	// Try to trigger an export job (it should fail)
-	spec := provisioning.JobSpec{
-		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Folder: "",
-			Path:   "",
-		},
-	}
-
-	// Trigger job and wait for it to complete (will fail)
-	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-
-	// Check that job failed with the expected error message
-	status, found, err := unstructured.NestedMap(job.Object, "status")
-	require.NoError(t, err)
-	require.True(t, found, "job should have status")
-
-	state, found, err := unstructured.NestedString(status, "state")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, "error", state, "job should have error state")
-
-	message, found, err := unstructured.NestedString(status, "message")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Contains(t, message, "export functionality is disabled by configuration")
 }

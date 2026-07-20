@@ -1,11 +1,11 @@
 import {
   EventBusSrv,
-  FieldConfigOptionsRegistry,
-  FieldConfigPropertyItem,
+  type FieldConfigOptionsRegistry,
+  type FieldConfigPropertyItem,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelPlugin,
+  type PanelPlugin,
   Registry,
   toDataFrame,
 } from '@grafana/data';
@@ -49,6 +49,12 @@ describe('getVisualizationOptions', () => {
           label: 'Name',
           origin: 'field',
           value: '__field.name',
+        },
+        {
+          documentation: 'Display name of the field (includes overrides and transformations)',
+          label: 'Display name',
+          origin: 'field',
+          value: '__field.displayName',
         },
         {
           documentation: 'Adds current variables',
@@ -114,6 +120,12 @@ describe('getVisualizationOptions', () => {
           label: 'Name',
           origin: 'field',
           value: '__field.name',
+        },
+        {
+          documentation: 'Display name of the field (includes overrides and transformations)',
+          label: 'Display name',
+          origin: 'field',
+          value: '__field.displayName',
         },
         {
           documentation: 'Formatted value for time on the same row',
@@ -229,6 +241,12 @@ describe('getVisualizationOptions', () => {
         eventBus: new EventBusSrv(),
         plugin: plugin,
         instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        reportInteractionUI: 'panel-edit',
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -291,6 +309,12 @@ describe('getVisualizationOptions', () => {
         eventBus: new EventBusSrv(),
         plugin: plugin,
         instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        reportInteractionUI: 'panel-edit',
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -359,6 +383,9 @@ describe('getVisualizationOptions', () => {
             },
           ],
         },
+        currentOptions: {},
+        currentFieldConfig: fieldConfig,
+        reportInteractionUI: 'panel-edit',
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -389,6 +416,9 @@ describe('getVisualizationOptions', () => {
             },
           ],
         },
+        currentOptions: {},
+        currentFieldConfig: fieldConfig,
+        reportInteractionUI: 'panel-edit',
       });
 
       expect(vizOptions.length).toEqual(1);

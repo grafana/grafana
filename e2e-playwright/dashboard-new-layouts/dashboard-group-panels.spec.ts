@@ -1,10 +1,17 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
-import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
+import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { groupIntoRow, groupIntoTab, saveDashboard, selectRow, toggleRow } from './utils';
+import {
+  groupIntoRow,
+  groupIntoTab,
+  saveDashboard,
+  selectRow,
+  stripMetadataNameFromImportJson,
+  toggleRow,
+} from './utils';
 
 test.use({
   featureToggles: {
@@ -25,10 +32,11 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    // Helper functions
     async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string) {
       await page.goto(selectors.pages.ImportDashboard.url);
-      await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(JSON.stringify(testV2Dashboard));
+      await page
+        .getByTestId(selectors.components.DashboardImportPage.textarea)
+        .fill(stripMetadataNameFromImportJson(JSON.stringify(testV2Dashboard)));
       await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
       await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
       await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
@@ -208,8 +216,7 @@ test.describe(
       ).toBeVisible();
 
       // Copy by selecting row and using copy button
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copyDropdown).click();
-      await page.getByRole('menuitem', { name: 'Copy' }).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copy).click();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.pasteRow).click();
 
@@ -269,8 +276,7 @@ test.describe(
       ).toBeVisible();
 
       // Duplicate by selecting row and using duplicate button
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copyDropdown).click();
-      await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.duplicate).click();
 
       // scroll `New row` into view - this is at the bottom of the dashboard body
       await dashboardPage
@@ -328,8 +334,7 @@ test.describe(
       ).toBeVisible();
 
       // Duplicate row
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copyDropdown).click();
-      await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.duplicate).click();
 
       // scroll `New row` into view - this is at the bottom of the dashboard body
       await dashboardPage
@@ -386,8 +391,7 @@ test.describe(
       ).toBeVisible();
 
       // Duplicate row
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copyDropdown).click();
-      await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.duplicate).click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
@@ -667,8 +671,7 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
 
       // Copy by selecting tab and using copy button
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copyDropdown).click();
-      await page.getByRole('menuitem', { name: 'Copy' }).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copy).click();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.pasteTab).click();
 
@@ -698,8 +701,7 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
 
       // Duplicate by selecting tab and using duplicate button
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copyDropdown).click();
-      await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.duplicate).click();
 
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab 1'))).toBeVisible();
@@ -727,10 +729,8 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
 
       // Duplicate tab twice
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copyDropdown).click();
-      await page.getByRole('menuitem', { name: 'Duplicate' }).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.copyDropdown).click();
-      await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.duplicate).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.duplicate).click();
 
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab 1'))).toBeVisible();

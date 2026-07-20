@@ -7,10 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
-func NewStorage(legacySvc RouteService, namespacer request.NamespaceMapper) grafanarest.Storage {
+func NewStorage(legacySvc RouteService, namespacer request.NamespaceMapper, metadata MetadataService) grafanarest.Storage {
 	return &legacyStorage{
 		service:        legacySvc,
 		namespacer:     namespacer,
 		tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
+		metadata:       metadata,
 	}
 }

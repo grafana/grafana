@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { useState, forwardRef, FocusEvent } from 'react';
+import { useState, forwardRef, type FocusEvent } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
 
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { Props as InputProps } from '../Input/Input';
+import { type Props as InputProps } from '../Input/Input';
 
 import ColorInput from './ColorInput';
 import { getStyles as getPaletteStyles } from './SpectrumPalette';

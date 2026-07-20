@@ -1,4 +1,4 @@
-import { RenderResult, screen } from '@testing-library/react';
+import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
@@ -40,22 +40,28 @@ describe('Connections', () => {
   const mockDatasources = getMockDataSources(3);
 
   beforeEach(() => {
+    config.pluginAdminExternalManageEnabled = true;
     (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
 
-  test('shows the "Connections Homepage" page by default when edition is Cloud', async () => {
+  test('shows cloud subtitle and cards from nav tree when edition is Cloud', async () => {
     config.pluginAdminExternalManageEnabled = true;
     renderPage();
 
-    // Add new connection card
+    // Cards are derived from the nav tree (navIndex mock)
     expect(await screen.findByText('Add new connection')).toBeVisible();
     expect(await screen.findByText('Collector')).toBeVisible();
     expect(await screen.findByText('Data sources')).toBeVisible();
     expect(await screen.findByText('Integrations')).toBeVisible();
     expect(await screen.findByText('Private data source connect')).toBeVisible();
 
-    // Heading
+    // Metadata enrichment: descriptions come from CardMetadata
+    expect(
+      await screen.findByText('Connect data to Grafana through data sources, integrations and apps')
+    ).toBeVisible();
+
+    // Cloud subtitle
     expect(await screen.findByText('Welcome to Connections')).toBeVisible();
     expect(
       await screen.findByText(
@@ -64,21 +70,49 @@ describe('Connections', () => {
     ).toBeVisible();
   });
 
-  test('shows the OSS "Connections Homepage" page by default when edition is OpenSource', async () => {
+  test('shows OSS subtitle and OSS card descriptions when edition is OpenSource', async () => {
     config.pluginAdminExternalManageEnabled = false;
     renderPage();
 
-    // Add new connection card
-    expect(await screen.findByText('Add new connection')).toBeVisible();
-    expect(await screen.findByText('View configured data sources')).toBeVisible();
-
-    // Heading
     expect(await screen.findByText('Welcome to Connections')).toBeVisible();
     expect(
       await screen.findByText(
         'Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections.'
       )
     ).toBeVisible();
+
+    // OSS-specific card subtitle for "Add new connection"
+    expect(await screen.findByText('Connect to a new data source')).toBeVisible();
+    // OSS-specific title for "Data sources"
+    expect(await screen.findByText('View configured data sources')).toBeVisible();
+  });
+
+  test('only shows cards for nav items present in the connections nav section', async () => {
+    // Store with a minimal connections nav (e.g. OSS - only core items)
+    const minimalStore = configureStore({
+      navIndex: {
+        ...navIndex,
+        connections: {
+          ...navIndex.connections,
+          children: [
+            {
+              id: 'connections-add-new-connection',
+              text: 'Add new connection',
+              url: '/connections/add-new-connection',
+            },
+            { id: 'connections-datasources', text: 'Data sources', url: '/connections/datasources' },
+          ],
+        },
+      },
+      plugins: getPluginsStateMock([]),
+    });
+    renderPage(ROUTES.Base, minimalStore);
+
+    expect(await screen.findByText('Add new connection')).toBeVisible();
+    expect(await screen.findByText('Data sources')).toBeVisible();
+    expect(screen.queryByText('Collector')).not.toBeInTheDocument();
+    expect(screen.queryByText('Integrations')).not.toBeInTheDocument();
+    expect(screen.queryByText('Private data source connect')).not.toBeInTheDocument();
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {

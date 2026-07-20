@@ -55,7 +55,6 @@ export function useCancelWizardModal({
         )}
         confirmText={t('alerting.import-to-gma.wizard.cancel-confirm-yes', 'Discard changes')}
         dismissText={t('alerting.import-to-gma.wizard.cancel-confirm-no', 'Dismiss')}
-        icon="exclamation-triangle"
         onConfirm={handleConfirm}
         onDismiss={dismissModal}
       />

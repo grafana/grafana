@@ -1,11 +1,12 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
-import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   CoreApp,
   createTheme,
-  DataSourceApi,
+  type DataSourceApi,
   EventBusSrv,
   LoadingState,
   PluginExtensionTypes,
@@ -13,10 +14,11 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { usePluginLinks } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
-import { Explore, Props } from './Explore';
+import { Explore, type Props } from './Explore';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
@@ -114,10 +116,6 @@ const dummyProps: Props = {
   queryLibraryRef: undefined,
   queriesChangedIndexAtRun: 0,
 };
-jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
@@ -169,9 +167,11 @@ const setup = (overrideProps?: Partial<Props>) => {
 
   return render(
     <TestProvider store={store}>
-      <ContentOutlineContextProvider>
-        <Explore {...exploreProps} />
-      </ContentOutlineContextProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <ContentOutlineContextProvider>
+          <Explore {...exploreProps} />
+        </ContentOutlineContextProvider>
+      </OpenFeatureProvider>
     </TestProvider>
   );
 };
@@ -290,11 +290,13 @@ describe('Explore', () => {
 
       render(
         <TestProvider store={store}>
-          <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
-            <ContentOutlineContextProvider>
-              <Explore {...exploreProps} />
-            </ContentOutlineContextProvider>
-          </QueryLibraryContextProviderMock>
+          <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+            <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+              <ContentOutlineContextProvider>
+                <Explore {...exploreProps} />
+              </ContentOutlineContextProvider>
+            </QueryLibraryContextProviderMock>
+          </OpenFeatureProvider>
         </TestProvider>
       );
 

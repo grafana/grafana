@@ -2,7 +2,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, Sidebar } from '@grafana/ui';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import ExportMenu from '../sharing/ExportButton/ExportMenu';
 
 interface Props {

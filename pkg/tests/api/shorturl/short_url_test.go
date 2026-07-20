@@ -72,7 +72,7 @@ func TestShortURL(t *testing.T) {
 	defer func() {
 		_ = res.Body.Close()
 	}()
-	assert.Equal(t, "http://localhost:3000/explore", res.Header.Get("Location"))
+	assert.Equal(t, "/explore", res.Header.Get("Location"))
 	assert.Equal(t, http.StatusFound, res.StatusCode)
 
 	// If the go-to does not exist, it should redirect to the home page and return 308.
@@ -82,7 +82,7 @@ func TestShortURL(t *testing.T) {
 		_ = res.Body.Close()
 	}()
 	assert.Equal(t, "http://localhost:3000/", res.Header.Get("Location"))
-	assert.Equal(t, http.StatusPermanentRedirect, res.StatusCode)
+	assert.Equal(t, http.StatusTemporaryRedirect, res.StatusCode)
 
 	// Create a client that does not have authentication.
 	notLoggedInClient := client(grafanaListedAddr, "", "")
@@ -118,7 +118,7 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 

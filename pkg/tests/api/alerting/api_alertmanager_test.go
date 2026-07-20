@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -74,8 +72,8 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		`
 	err := json.Unmarshal([]byte(amConfig), &cfg)
 	require.NoError(t, err)
-	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
-	require.NoError(t, err)
+
+	saveAndApplyAlertmanagerConfiguration(t, env, 1, amConfig)
 
 	t.Run("when retrieve alertmanager configuration", func(t *testing.T) {
 		cfgTemplate := `
@@ -89,9 +87,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 			}
 		}
 		`
-		cfgWithoutAutogen := fmt.Sprintf(cfgTemplate, `{
-			"receiver": "empty"
-		}`)
 		cfgWithAutogen := fmt.Sprintf(cfgTemplate, `{
 					"receiver": "empty",
 					"routes": [{
@@ -113,16 +108,16 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
 			},
 			{
-				desc:      "viewer request should succeed",
+				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusOK,
-				expBody:   cfgWithoutAutogen,
+				expStatus: http.StatusForbidden,
+				expBody:   `"title":"Access denied"`,
 			},
 			{
-				desc:      "editor request should succeed",
+				desc:      "editor request should fail",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusOK,
-				expBody:   cfgWithoutAutogen,
+				expStatus: http.StatusForbidden,
+				expBody:   `"title":"Access denied"`,
 			},
 			{
 				desc:      "admin request should succeed",
@@ -141,12 +136,14 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.expStatus, resp.StatusCode)
 				b, err := io.ReadAll(resp.Body)
+				require.NoError(t, err)
 				if tc.expStatus == http.StatusOK {
 					re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
 					b = re.ReplaceAll(b, []byte(`"uid":""`))
+					require.JSONEq(t, tc.expBody, string(b))
+				} else {
+					require.Contains(t, string(b), tc.expBody)
 				}
-				require.NoError(t, err)
-				require.JSONEq(t, tc.expBody, string(b))
 			})
 		}
 	})
@@ -358,96 +355,96 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 		name: "can create silence for foo=bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   util.Pointer("This is a comment"),
-				CreatedBy: util.Pointer("test"),
-				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   new("This is a comment"),
+				CreatedBy: new("test"),
+				EndsAt:    new(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: util.Pointer(true),
-					IsRegex: util.Pointer(false),
-					Name:    util.Pointer("foo"),
-					Value:   util.Pointer("bar"),
+					IsEqual: new(true),
+					IsRegex: new(false),
+					Name:    new("foo"),
+					Value:   new("bar"),
 				}},
-				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+				StartsAt: new(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can create silence for _foo1=bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   util.Pointer("This is a comment"),
-				CreatedBy: util.Pointer("test"),
-				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   new("This is a comment"),
+				CreatedBy: new("test"),
+				EndsAt:    new(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: util.Pointer(true),
-					IsRegex: util.Pointer(false),
-					Name:    util.Pointer("_foo1"),
-					Value:   util.Pointer("bar"),
+					IsEqual: new(true),
+					IsRegex: new(false),
+					Name:    new("_foo1"),
+					Value:   new("bar"),
 				}},
-				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+				StartsAt: new(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can create silence for 0foo=bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   util.Pointer("This is a comment"),
-				CreatedBy: util.Pointer("test"),
-				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   new("This is a comment"),
+				CreatedBy: new("test"),
+				EndsAt:    new(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: util.Pointer(true),
-					IsRegex: util.Pointer(false),
-					Name:    util.Pointer("0foo"),
-					Value:   util.Pointer("bar"),
+					IsEqual: new(true),
+					IsRegex: new(false),
+					Name:    new("0foo"),
+					Value:   new("bar"),
 				}},
-				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+				StartsAt: new(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can create silence for foo=🙂bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   util.Pointer("This is a comment"),
-				CreatedBy: util.Pointer("test"),
-				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   new("This is a comment"),
+				CreatedBy: new("test"),
+				EndsAt:    new(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: util.Pointer(true),
-					IsRegex: util.Pointer(false),
-					Name:    util.Pointer("foo"),
-					Value:   util.Pointer("🙂bar"),
+					IsEqual: new(true),
+					IsRegex: new(false),
+					Name:    new("foo"),
+					Value:   new("🙂bar"),
 				}},
-				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+				StartsAt: new(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can create silence for foo🙂=bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   util.Pointer("This is a comment"),
-				CreatedBy: util.Pointer("test"),
-				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   new("This is a comment"),
+				CreatedBy: new("test"),
+				EndsAt:    new(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: util.Pointer(true),
-					IsRegex: util.Pointer(false),
-					Name:    util.Pointer("foo🙂"),
-					Value:   util.Pointer("bar"),
+					IsEqual: new(true),
+					IsRegex: new(false),
+					Name:    new("foo🙂"),
+					Value:   new("bar"),
 				}},
-				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+				StartsAt: new(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can't create silence for missing label name",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   util.Pointer("This is a comment"),
-				CreatedBy: util.Pointer("test"),
-				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   new("This is a comment"),
+				CreatedBy: new("test"),
+				EndsAt:    new(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: util.Pointer(true),
-					IsRegex: util.Pointer(false),
-					Name:    util.Pointer(""),
-					Value:   util.Pointer("bar"),
+					IsEqual: new(true),
+					IsRegex: new(false),
+					Name:    new(""),
+					Value:   new("bar"),
 				}},
-				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+				StartsAt: new(strfmt.DateTime(time.Now())),
 			},
 		},
 		expErr: "unable to upsert silence: invalid silence: invalid label matcher 0: invalid label name \"\": unable to create silence",
@@ -455,16 +452,16 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 		name: "can't create silence for missing label value",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   util.Pointer("This is a comment"),
-				CreatedBy: util.Pointer("test"),
-				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   new("This is a comment"),
+				CreatedBy: new("test"),
+				EndsAt:    new(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: util.Pointer(true),
-					IsRegex: util.Pointer(false),
-					Name:    util.Pointer("foo"),
-					Value:   util.Pointer(""),
+					IsEqual: new(true),
+					IsRegex: new(false),
+					Name:    new("foo"),
+					Value:   new(""),
 				}},
-				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+				StartsAt: new(strfmt.DateTime(time.Now())),
 			},
 		},
 		expErr: "unable to upsert silence: invalid silence: at least one matcher must not match the empty string: unable to create silence",
@@ -546,10 +543,6 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 	}
 }
 `
-	cfgWithoutAutogen := fmt.Sprintf(cfgTemplate, `{
-			"receiver": "empty",
-			"group_by": ["grafana_folder", "alertname"]
-		}`)
 	cfgWithAutogen := fmt.Sprintf(cfgTemplate, `{
 					"receiver": "empty",
 					"routes": [{
@@ -574,14 +567,12 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		{
 			desc:      "viewer request should succeed",
 			url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/status",
-			expStatus: http.StatusOK,
-			expBody:   cfgWithoutAutogen,
+			expStatus: http.StatusForbidden,
 		},
 		{
 			desc:      "editor request should succeed",
 			url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/status",
-			expStatus: http.StatusOK,
-			expBody:   cfgWithoutAutogen,
+			expStatus: http.StatusForbidden,
 		},
 		{
 			desc:      "admin request should succeed",
@@ -605,7 +596,9 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 				b = re.ReplaceAll(b, []byte(`"uid":""`))
 			}
 			require.NoError(t, err)
-			require.JSONEq(t, tc.expBody, string(b))
+			if tc.expBody != "" {
+				require.JSONEq(t, tc.expBody, string(b))
+			}
 		})
 	}
 }

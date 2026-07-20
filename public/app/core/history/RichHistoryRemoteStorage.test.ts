@@ -1,23 +1,11 @@
 import { of } from 'rxjs';
 
-import { PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { SortOrder } from '../utils/richHistoryTypes';
 
-import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
-
-const dsMock = new DatasourceSrv();
-dsMock.init(
-  {
-    // @ts-ignore
-    'name-of-ds1': { uid: 'ds1', name: 'name-of-ds1' },
-    // @ts-ignore
-    'name-of-ds2': { uid: 'ds2', name: 'name-of-ds2' },
-  },
-  ''
-);
+import RichHistoryRemoteStorage, { type RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
 
 const fetchMock = jest.fn();
 const postMock = jest.fn();
@@ -31,7 +19,21 @@ jest.mock('@grafana/runtime', () => ({
     delete: deleteMock,
     patch: patchMock,
   }),
-  getDataSourceSrv: () => dsMock,
+}));
+
+const datasources: Record<string, { uid: string; name: string }> = {
+  'name-of-ds1': { uid: 'ds1', name: 'name-of-ds1' },
+  'name-of-ds2': { uid: 'ds2', name: 'name-of-ds2' },
+};
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
+    if (typeof nameOrUid === 'string') {
+      return Promise.resolve(datasources[nameOrUid]);
+    }
+    return Promise.resolve(Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid));
+  },
 }));
 
 const preferencesServiceMock = {

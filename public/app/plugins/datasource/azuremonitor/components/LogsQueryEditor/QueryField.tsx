@@ -1,9 +1,9 @@
-import { EngineSchema, getKustoWorker } from '@kusto/monaco-kusto';
+import { type EngineSchema, getKustoWorker } from '@kusto/monaco-kusto';
 import { useCallback, useEffect, useState } from 'react';
 
-import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
+import { CodeEditor, type Monaco, type MonacoEditor } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types/types';
+import { type AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setKustoQuery } from './setQueryValue';
 

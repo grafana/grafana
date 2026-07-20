@@ -1,4 +1,4 @@
-import { InMemoryProvider, JsonValue, OpenFeature } from '@openfeature/react-sdk';
+import { InMemoryProvider, type JsonValue, OpenFeature } from '@openfeature/react-sdk';
 
 let ofProvider: InMemoryProvider;
 

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { Trans } from '@grafana/i18n';
 
@@ -18,10 +18,8 @@ export const AsyncError = () => (
 
 export const NO_OPTIONS_I18N_KEY = 'combobox.options.no-found';
 
-export const NotFoundError = () => (
-  <MessageRow>
-    <Trans i18nKey={NO_OPTIONS_I18N_KEY}>No options found.</Trans>
-  </MessageRow>
+export const NotFoundError = ({ message }: { message?: string }) => (
+  <MessageRow>{message ?? <Trans i18nKey={NO_OPTIONS_I18N_KEY}>No options found.</Trans>}</MessageRow>
 );
 
 export const LoadingOptions = () => (

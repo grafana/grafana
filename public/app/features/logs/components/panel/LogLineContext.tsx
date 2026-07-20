@@ -1,44 +1,47 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   CoreApp,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceWithLogsContextSupport,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceWithLogsContextSupport,
   dateTime,
   EventBusSrv,
   formattedValueToString,
   getValueFormat,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   hasLogsContextSupport,
   LoadingState,
-  LogRowContextOptions,
+  type LogRowContextOptions,
   LogRowContextQueryDirection,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   shallowCompare,
   store,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
-import { Button, Collapse, Combobox, ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type DataQuery, type TimeZone } from '@grafana/schema';
+import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
-import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
+import { ScrollDirection } from '../infiniteScrollUtils';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
-import { LogLineMenuCustomItem } from './LogLineMenu';
-import { LogList, LogListOptions } from './LogList';
+import { type LogLineMenuCustomItem } from './LogLineMenu';
+import { LogList, type LogListOptions } from './LogList';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -54,6 +57,7 @@ interface LogLineContextProps {
     options?: LogRowContextOptions,
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
+  getFieldLinks?: GetFieldLinksFn;
   sortOrder?: LogsSortOrder;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -78,6 +82,7 @@ export const LogLineContext = memo(
     timeZone,
     getLogRowContextUi,
     getRowContextQuery,
+    getFieldLinks,
     onClose,
     getRowContext,
     displayedFields: displayedFieldsProp = [],
@@ -108,6 +113,7 @@ export const LogLineContext = memo(
     const dispatch = useDispatch();
     const theme = useTheme2();
     const styles = getStyles(theme);
+    const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
     const timeRange = useMemo(() => {
       const fromMs =
@@ -320,28 +326,27 @@ export const LogLineContext = memo(
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
       : true;
 
-    // @todo: Remove when the LogRows are deprecated
+    // @todo: Remove when legacy LogRows are fully deleted
     const logListModel = useMemo(
       () =>
         log instanceof LogListModel
           ? log
           : new LogListModel(log, {
               escape: false,
+              otelLogsFormattingEnabled,
               timeZone,
               wrapLogMessage,
             }),
-      [log, timeZone, wrapLogMessage]
+      [log, otelLogsFormattingEnabled, timeZone, wrapLogMessage]
     );
 
     useEffect(() => {
       if (log.datasourceUid) {
-        getDataSourceSrv()
-          .get({ uid: log.datasourceUid })
-          .then((ds) => {
-            if (hasLogsContextSupport(ds)) {
-              setDatasourceInstance(ds);
-            }
-          });
+        getDataSourceInstance({ uid: log.datasourceUid }).then((ds) => {
+          if (hasLogsContextSupport(ds)) {
+            setDatasourceInstance(ds);
+          }
+        });
       }
     }, [log.datasourceUid]);
 
@@ -443,6 +448,7 @@ export const LogLineContext = memo(
                 displayedFields={displayedFields}
                 enableLogDetails={true}
                 eventBus={eventBusRef.current}
+                getFieldLinks={getFieldLinks}
                 infiniteScrollMode="unlimited"
                 loadMore={handleLoadMore}
                 logLineMenuCustomItems={logLineMenuCustomItems}

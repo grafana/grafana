@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type JSX } from 'react';
 
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 
 import { DashboardLinkList } from './DashboardLinkList';
 

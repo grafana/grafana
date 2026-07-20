@@ -4,7 +4,8 @@ import * as React from 'react';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   Button,
   Field,
@@ -14,9 +15,8 @@ import {
   WeekStartPicker,
   FeatureBadge,
   Combobox,
-  ComboboxOption,
-  TextLink,
-  WeekStart,
+  type ComboboxOption,
+  type WeekStart,
   isWeekStart,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -25,13 +25,15 @@ import { changeTheme } from 'app/core/services/theme';
 
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props, State } from './utils';
+import { homeDashboardChanged } from './analytics/main';
+import { getLanguageOptions, getStyles, getTranslatedThemeName, type Props, type State } from './utils';
 
-export class SharedPreferences extends PureComponent<Props, State> {
+class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
   languageOptions: ComboboxOption[];
-  regionalFormatOptions: ComboboxOption[];
+  // Server value stashed at load so a save can tell whether the home dashboard actually changed.
+  initialHomeDashboardUID = '';
 
   constructor(props: Props) {
     super(props);
@@ -44,7 +46,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: '',
       weekStart: '',
       language: '',
-      regionalFormat: '',
       queryHistory: { homeTab: '' },
       navbar: { bookmarkUrls: [] },
     };
@@ -59,7 +60,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
       group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
     }));
     this.languageOptions = getLanguageOptions();
-    this.regionalFormatOptions = getRegionalFormatOptions();
 
     // Add default option
     this.themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
@@ -70,6 +70,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       isLoading: true,
     });
     const prefs = await this.service.load();
+    this.initialHomeDashboardUID = prefs.homeDashboardUID ?? '';
 
     this.setState({
       isLoading: false,
@@ -78,7 +79,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
       language: prefs.language,
-      regionalFormat: prefs.regionalFormat,
       queryHistory: prefs.queryHistory,
       navbar: prefs.navbar,
     });
@@ -89,8 +89,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
 
     if (confirmationResult) {
-      const { homeDashboardUID, theme, timezone, weekStart, language, regionalFormat, queryHistory, navbar } =
-        this.state;
+      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
       reportInteraction('grafana_preferences_save_button_clicked', {
         preferenceType: this.props.preferenceType,
         theme,
@@ -104,13 +103,21 @@ export class SharedPreferences extends PureComponent<Props, State> {
           timezone,
           weekStart,
           language,
-          regionalFormat,
           queryHistory,
           navbar,
         })
         .finally(() => {
           this.setState({ isSubmitting: false });
         });
+      const nextHomeDashboardUID = homeDashboardUID ?? '';
+      if (nextHomeDashboardUID !== this.initialHomeDashboardUID) {
+        homeDashboardChanged({
+          preferenceType: this.props.preferenceType,
+          action: nextHomeDashboardUID ? 'set' : 'cleared',
+          unifiedHomepageEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUnifiedHomepage, false),
+        });
+      }
+
       window.location.reload();
     }
   };
@@ -151,18 +158,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     });
   };
 
-  onLocaleChanged = (regionalFormat: string) => {
-    this.setState({ regionalFormat });
-
-    reportInteraction('grafana_preferences_regional_format_changed', {
-      toRegionalFormat: regionalFormat,
-      preferenceType: this.props.preferenceType,
-    });
-  };
-
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, isSubmitting, regionalFormat } =
-      this.state;
+    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, isSubmitting } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
@@ -174,20 +171,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
-            description={
-              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
-                <Trans i18nKey="shared-preferences.fields.theme-description">
-                  Enjoying the experimental themes? Tell us what you'd like to see{' '}
-                  <TextLink
-                    variant="bodySmall"
-                    external
-                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
-                  >
-                    here.
-                  </TextLink>
-                </Trans>
-              ) : undefined
-            }
           >
             <Combobox
               options={this.themeOptions}
@@ -267,33 +250,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
               id="language-preference-select"
             />
           </Field>
-          {config.featureToggles.localeFormatPreference && (
-            <Field
-              loading={isLoading}
-              disabled={isLoading}
-              label={
-                <Label htmlFor="locale-preference">
-                  <span className={styles.labelText}>
-                    <Trans i18nKey="shared-preferences.fields.locale-preference-label">Region format</Trans>
-                  </span>
-                  <FeatureBadge featureState={FeatureState.preview} />
-                </Label>
-              }
-              description={t(
-                'shared-preferences.fields.locale-preference-description',
-                'Choose your region to see the corresponding date, time, and number format'
-              )}
-              data-testid="User preferences locale drop down"
-            >
-              <Combobox
-                value={this.regionalFormatOptions.find((loc) => loc.value === regionalFormat)?.value || ''}
-                onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
-                options={this.regionalFormatOptions}
-                placeholder={t('shared-preferences.fields.locale-preference-placeholder', 'Choose region')}
-                id="locale-preference-select"
-              />
-            </Field>
-          )}
         </FieldSet>
         <Button
           disabled={isSubmitting}

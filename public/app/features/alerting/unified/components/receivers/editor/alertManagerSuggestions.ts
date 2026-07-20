@@ -1,7 +1,7 @@
 import type { Monaco } from '@grafana/ui';
 
 import { AlertmanagerTemplateFunction, GomplateFunctions } from './language';
-import { SuggestionDefinition } from './suggestionDefinition';
+import { type SuggestionDefinition } from './suggestionDefinition';
 
 export function getAlertManagerSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Function;

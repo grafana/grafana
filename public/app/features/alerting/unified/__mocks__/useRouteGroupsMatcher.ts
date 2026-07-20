@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 
-import { Labels } from '@grafana/data';
+import { type Labels } from '@grafana/data';
 
-import { AlertmanagerGroup, RouteWithID } from '../../../../plugins/datasource/alertmanager/types';
+import { type AlertmanagerGroup, type RouteWithID } from '../../../../plugins/datasource/alertmanager/types';
 import { routeGroupsMatcher } from '../routeGroupsMatcher';
 
 export function useRouteGroupsMatcher() {

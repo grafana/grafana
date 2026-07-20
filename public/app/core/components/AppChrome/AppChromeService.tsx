@@ -1,16 +1,16 @@
-import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
-import { AppEvents, NavModel, NavModelItem, PageLayoutType, store, UrlQueryValue } from '@grafana/data';
+import { AppEvents, type NavModel, type NavModelItem, PageLayoutType, store, type UrlQueryValue } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types/dashboard';
 
-import { RouteDescriptor } from '../../navigation/types';
+import { type RouteDescriptor } from '../../navigation/types';
 
-import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+import { type ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
 
 export interface AppChromeState {
   chromeless?: boolean;
@@ -21,6 +21,7 @@ export interface AppChromeState {
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
+  fullscreenWorkspace?: boolean;
   layout: PageLayoutType;
   returnToPrevious?: {
     title: ReturnToPreviousProps['title'];
@@ -29,7 +30,7 @@ export interface AppChromeState {
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
-export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
+const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -50,6 +51,7 @@ export class AppChromeService {
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
+    fullscreenWorkspace: false,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
@@ -167,6 +169,17 @@ export class AppChromeService {
       action: 'toggle',
       mode: nextMode,
     });
+  };
+
+  public setFullscreenWorkspace = (fullscreenWorkspace: boolean) => {
+    this.update({ fullscreenWorkspace });
+    reportInteraction('grafana_fullscreen_workspace', {
+      action: fullscreenWorkspace ? 'enter' : 'exit',
+    });
+  };
+
+  public toggleFullscreenWorkspace = () => {
+    this.setFullscreenWorkspace(!this.state.getValue().fullscreenWorkspace);
   };
 
   public exitKioskMode() {

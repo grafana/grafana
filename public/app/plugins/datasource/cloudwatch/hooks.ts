@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAsyncFn, useDeepCompareEffect } from 'react-use';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CloudWatchDatasource } from './datasource';
-import { ResourcesAPI } from './resources/ResourcesAPI';
-import { GetMetricsRequest, GetDimensionKeysRequest } from './resources/types';
+import { type CloudWatchDatasource } from './datasource';
+import { type ResourcesAPI } from './resources/ResourcesAPI';
+import { type GetMetricsRequest, type GetDimensionKeysRequest } from './resources/types';
 import { appendTemplateVariables } from './utils/utils';
 
 export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableValue<string>>, boolean] => {

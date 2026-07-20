@@ -1,12 +1,12 @@
-import { ReplaySubject } from 'rxjs';
+import { type ReplaySubject } from 'rxjs';
 
-import { AppPluginConfig, PluginExtensionAddedComponentConfig } from '@grafana/data';
+import { type AppPluginConfig, type PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
 import { isAddedComponentMetaInfoMissing } from '../validators';
 
-import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
 
 const logPrefix = 'Could not register component extension. Reason:';
 
@@ -35,7 +35,7 @@ export class AddedComponentsRegistry extends Registry<
     registry: RegistryType<AddedComponentRegistryItem[]>,
     item: PluginExtensionConfigs<PluginExtensionAddedComponentConfig>
   ): RegistryType<AddedComponentRegistryItem[]> {
-    const { pluginId, configs } = item;
+    const { pluginId, configs, pluginMeta } = item;
 
     for (const config of configs) {
       const configLog = this.logger.child({
@@ -68,6 +68,7 @@ export class AddedComponentsRegistry extends Registry<
             extensionTitle: config.title,
             Component: config.component,
             log: pointIdLog,
+            pluginMeta,
           }),
           description: config.description,
           title: config.title,

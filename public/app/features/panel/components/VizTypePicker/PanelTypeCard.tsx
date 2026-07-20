@@ -2,11 +2,12 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
+import { type GrafanaTheme2, isUnsignedPluginSignature, type PanelPluginMeta, PluginState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { getFocusStyles } from '@grafana/ui/internal';
+import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 interface Props {
@@ -153,7 +154,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
       cursor: 'pointer',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       boxShadow: theme.shadows.z1,
       border: `1px solid ${theme.colors.background.secondary}`,
       alignItems: 'center',
@@ -164,6 +165,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         transition: theme.transitions.create(['background'], {
           duration: theme.transitions.duration.short,
         }),
+      },
+
+      '&:focus-visible': {
+        ...getFocusStyles(theme),
       },
 
       '&:hover': {

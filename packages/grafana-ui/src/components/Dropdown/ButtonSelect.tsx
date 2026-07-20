@@ -1,12 +1,12 @@
-import { memo, HTMLAttributes, useState } from 'react';
+import { memo, type HTMLAttributes, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
-import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
-import { PopoverContent } from '../Tooltip/types';
+import { ToolbarButton, type ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
+import { type PopoverContent } from '../Tooltip/types';
 
 import { Dropdown } from './Dropdown';
 

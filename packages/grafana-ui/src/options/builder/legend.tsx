@@ -1,15 +1,16 @@
-import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { type ChangeEvent } from 'react';
 
-/**
- * @alpha
- */
+import { type PanelOptionsEditorBuilder, standardEditorsRegistry, type StatsPickerConfigSettings } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
+
+import { Input } from '../../components/Input/Input';
+
+/** @public */
 export function addLegendOptions<T extends OptionsWithLegend>(
   builder: PanelOptionsEditorBuilder<T>,
   includeLegendCalcs = true,
-  showLegend = true,
-  vizLegendSeriesLimit = false
+  showLegend = true
 ) {
   const category = [t('grafana-ui.builder.legend.category', 'Legend')];
 
@@ -49,25 +50,56 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       },
       showIf: (c) => c.legend.showLegend,
     })
-    .addNumberInput({
+    .addCustomEditor({
+      id: 'legend.width',
       path: 'legend.width',
       name: t('grafana-ui.builder.legend.name-width', 'Width'),
       category,
-      settings: {
-        placeholder: 'Auto',
-      },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
-    });
+      editor: ({ onChange, ...props }) => {
+        return (
+          <Input
+            {...props}
+            placeholder={t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)')}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              let value: string | undefined = e.currentTarget.value.trim();
 
-  if (vizLegendSeriesLimit) {
-    builder.addNumberInput({
+              if (value === '') {
+                value = undefined;
+              }
+
+              let numeric = Number(value);
+              onChange(Number.isNaN(numeric) ? value : numeric);
+            }}
+            // this is needed as a work-around for _something_ in an ancestor causing a blur/onChange/remount happen on every keypress
+            onInputCapture={(e) => {
+              e.stopPropagation();
+            }}
+          />
+        );
+      },
+    })
+    .addRadio({
+      path: 'legend.overflow',
+      name: t('grafana-ui.builder.legend.name-overflow', 'Overflow'),
+      category,
+      description: '',
+      defaultValue: 'ellipsis',
+      settings: {
+        options: [
+          { value: 'ellipsis', label: t('grafana-ui.builder.legend.overflow-options.label-ellipsis', 'Ellipsis') },
+          { value: 'wrap', label: t('grafana-ui.builder.legend.overflow-options.label-wrap', 'Wrap') },
+        ],
+      },
+      showIf: (c) => c.legend.showLegend && c.legend.displayMode === LegendDisplayMode.Table,
+    })
+    .addNumberInput({
       path: 'legend.limit',
       name: t('grafana-ui.builder.legend.name-limit', 'Limit'),
       category,
       description: t('grafana-ui.builder.legend.description-limit', 'Limits how many items are shown by default'),
       showIf: (c) => c.legend.showLegend,
     });
-  }
 
   if (includeLegendCalcs) {
     builder.addCustomEditor<StatsPickerConfigSettings, string[]>({

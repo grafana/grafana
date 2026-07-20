@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import { useRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { dateTime, GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
+import { dateTime, type GrafanaTheme2, type LogRowModel, renderMarkdown, type SelectableValue } from '@grafana/data';
 import { RawQuery } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -22,14 +21,14 @@ import {
 } from '@grafana/ui';
 
 import {
-  LogContextProvider,
+  type LogContextProvider,
   LOKI_LOG_CONTEXT_PRESERVED_LABELS,
-  PreservedLabels,
+  type PreservedLabels,
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
 import { lokiGrammar } from '../syntax';
-import { ContextFilter, LokiQuery } from '../types';
+import { type ContextFilter, type LokiQuery } from '../types';
 
 export interface LokiContextUiProps {
   logContextProvider: LogContextProvider;
@@ -229,20 +228,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
     }
   }, [showPreservedFiltersAppliedNotification]);
 
-  useEffect(() => {
-    reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
-      logRowUid: row.uid,
-      type: 'load',
-    });
-
-    return () => {
-      reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
-        logRowUid: row.uid,
-        type: 'unload',
-      });
-    };
-  }, [row.uid]);
-
   const realLabels = contextFilters.filter(({ nonIndexed }) => !nonIndexed);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
 
@@ -281,9 +266,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
           variant="secondary"
           disabled={isInitialState}
           onClick={(e) => {
-            reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
-              logRowUid: row.uid,
-            });
             setContextFilters((contextFilters) => {
               return contextFilters.map((contextFilter) => ({
                 ...contextFilter,
@@ -304,10 +286,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
         onToggle={() => {
           window.localStorage.setItem(IS_LOKI_LOG_CONTEXT_UI_OPEN, (!isOpen).toString());
           setIsOpen((isOpen) => !isOpen);
-          reportInteraction('grafana_explore_logs_loki_log_context_toggled', {
-            logRowUid: row.uid,
-            action: !isOpen ? 'open' : 'close',
-          });
         }}
         label={
           <div className={styles.rawQueryContainer}>
@@ -335,28 +313,14 @@ export function LokiContextUi(props: LokiContextUiProps) {
           >
             Widen the search
           </Label>
-          <MultiSelect
+          <MultiSelect<string>
             isLoading={loading}
             options={realLabels.map(contextFilterToSelectFilter)}
             value={realLabelsEnabled.map(contextFilterToSelectFilter)}
             closeMenuOnSelect={true}
             maxMenuHeight={200}
             noOptionsMessage="No further labels available"
-            onChange={(keys, actionMeta) => {
-              if (actionMeta.action === 'select-option') {
-                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
-                  logRowUid: row.uid,
-                  type: 'label',
-                  action: 'select',
-                });
-              }
-              if (actionMeta.action === 'remove-value') {
-                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
-                  logRowUid: row.uid,
-                  type: 'label',
-                  action: 'remove',
-                });
-              }
+            onChange={(keys) => {
               return setContextFilters(
                 contextFilters.map((filter) => {
                   if (filter.nonIndexed) {
@@ -376,7 +340,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               >
                 Refine the search
               </Label>
-              <MultiSelect
+              <MultiSelect<string>
                 isLoading={loading}
                 options={parsedLabels.map(contextFilterToSelectFilter)}
                 value={parsedLabelsEnabled.map(contextFilterToSelectFilter)}
@@ -384,21 +348,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 maxMenuHeight={200}
                 noOptionsMessage="No further labels available"
                 isClearable={true}
-                onChange={(keys, actionMeta) => {
-                  if (actionMeta.action === 'select-option') {
-                    reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
-                      logRowUid: row.uid,
-                      type: 'parsed_label',
-                      action: 'select',
-                    });
-                  }
-                  if (actionMeta.action === 'remove-value') {
-                    reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
-                      logRowUid: row.uid,
-                      type: 'parsed_label',
-                      action: 'remove',
-                    });
-                  }
+                onChange={(keys) => {
                   setContextFilters(
                     contextFilters.map((filter) => {
                       if (!filter.nonIndexed) {
@@ -429,10 +379,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
                   showLabel={true}
                   transparent={true}
                   onChange={(e) => {
-                    reportInteraction('grafana_explore_logs_loki_log_context_pipeline_toggled', {
-                      logRowUid: row.uid,
-                      action: e.currentTarget.checked ? 'enable' : 'disable',
-                    });
                     window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked.toString());
                     setIncludePipelineOperations(e.currentTarget.checked);
                     if (runContextQuery) {

@@ -1,27 +1,26 @@
 import { css } from '@emotion/css';
 import {
-  CSSProperties,
+  type CSSProperties,
   memo,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  MouseEvent,
+  type MouseEvent,
   useLayoutEffect,
 } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useIntersection } from 'react-use';
 import tinycolor from 'tinycolor2';
 
-import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
+import { findHighlightChunksInText, type GrafanaTheme2, LogsDedupStrategy, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { useLogDetailsContext } from './LogDetailsContext';
@@ -29,12 +28,12 @@ import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
-import { getNormalizedFieldName, LogListModel } from './processing';
+import { getNormalizedFieldName, type LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
   getLogLineDOMHeight,
-  LogFieldDimension,
-  LogLineVirtualization,
+  type LogFieldDimension,
+  type LogLineVirtualization,
   DEFAULT_LINE_HEIGHT,
 } from './virtualization';
 
@@ -361,7 +360,9 @@ const Log = memo(
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
         {showLevel && (log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
+          <span className={`${styles.level} level-${log.logLevel} field`} title={log.logLevel}>
+            {log.displayLevel}{' '}
+          </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
@@ -395,7 +396,7 @@ const DisplayedFields = ({
   styles: LogLineStyles;
 }) => {
   const { matchingUids, search } = useLogListSearchContext();
-  const { syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
+  const { isCustomGrammar, syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
 
   const searchWords = useMemo(() => {
     const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
@@ -414,8 +415,9 @@ const DisplayedFields = ({
         return <LogLineBody log={log} key={field} styles={styles} />;
       }
       if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+        const className = isCustomGrammar ? 'field prism-syntax-highlight' : 'field log-syntax-highlight';
         return (
-          <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
+          <span className={className} title={getNormalizedFieldName(field)} key={field}>
             <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
           </span>
         );
@@ -447,7 +449,7 @@ const DisplayedFields = ({
 };
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
-  const { syntaxHighlighting } = useLogListContext();
+  const { isCustomGrammar, syntaxHighlighting } = useLogListContext();
   const { matchingUids, search } = useLogListSearchContext();
 
   const highlight = useMemo(() => {
@@ -482,8 +484,12 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
     );
   }
 
+  const className = isCustomGrammar
+    ? 'field prism-syntax-highlight log-line-body'
+    : 'field log-syntax-highlight log-line-body';
+
   return (
-    <span className="field log-syntax-highlight log-line-body">
+    <span className={className}>
       <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />{' '}
     </span>
   );
@@ -534,7 +540,7 @@ export const getStyles = (
     warning: '#FBAD37',
     debug: '#6E9FFF',
     trace: '#6ed0e0',
-    info: '#6CCF8E',
+    info: '#6E9FFF',
     metadata: theme.colors.text.secondary,
     default: colorDefault,
     parsedField: theme.colors.text.secondary,
@@ -542,6 +548,10 @@ export const getStyles = (
   };
 
   const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
+  const pinnedColor = tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString();
+  const detailsColor = tinycolor(theme.colors.background.canvas)
+    .darken(theme.isDark ? 2 : 5)
+    .toRgbString();
 
   return {
     logLine: css({
@@ -553,6 +563,10 @@ export const getStyles = (
       wordBreak: 'break-all',
       '&:hover': {
         background: hoverColor,
+        // Keep the sticky menu background in sync with the hovered log line.
+        '& .log-line-menu': {
+          background: hoverColor,
+        },
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -619,19 +633,36 @@ export const getStyles = (
       lineHeight: theme.typography.body.lineHeight,
     }),
     detailsDisplayed: css({
-      background: tinycolor(theme.colors.background.canvas)
-        .darken(theme.isDark ? 2 : 5)
-        .toRgbString(),
+      background: detailsColor,
+      '& .log-line-menu': {
+        background: detailsColor,
+      },
     }),
     currentLog: css({
       background: hoverColor,
       fontWeight: theme.typography.fontWeightBold,
+      '& .log-line-menu': {
+        background: hoverColor,
+      },
     }),
     pinnedLogLine: css({
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: pinnedColor,
+      // The pinned highlight is translucent, so layer it over the panel background to keep the sticky menu opaque.
+      '& .log-line-menu': {
+        background: `linear-gradient(${pinnedColor}, ${pinnedColor}), ${theme.colors.background.primary}`,
+      },
     }),
     permalinkedLogLine: css({
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: pinnedColor,
+      '& .log-line-menu': {
+        background: `linear-gradient(${pinnedColor}, ${pinnedColor}), ${theme.colors.background.primary}`,
+      },
+    }),
+    menuWrapper: css({
+      background: theme.colors.background.primary,
+      left: 0,
+      position: 'sticky',
+      zIndex: 1,
     }),
     menuIcon: css({
       height: virtualization?.getLineHeight() ?? DEFAULT_LINE_HEIGHT,
@@ -692,6 +723,9 @@ export const getStyles = (
       },
       '&.level-debug': {
         color: colors.debug,
+      },
+      '&.level-trace': {
+        color: colors.trace,
       },
     }),
     loadMoreButton: css({

@@ -1,7 +1,7 @@
-import { Observable, of, throwError } from 'rxjs';
+import { type Observable, of, throwError } from 'rxjs';
 
-import { AnnotationQuery, DataSourceApi, getDefaultTimeRange } from '@grafana/data';
-import { AnnotationQueryResponse } from 'app/features/annotations/types';
+import { type AnnotationQuery, type DataSourceApi, getDefaultTimeRange } from '@grafana/data';
+import { type AnnotationQueryResponse } from 'app/features/annotations/types';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
@@ -10,7 +10,7 @@ import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
 
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { toAsyncOfResult } from './testHelpers';
-import { AnnotationQueryRunnerOptions } from './types';
+import { type AnnotationQueryRunnerOptions } from './types';
 
 function getDefaultOptions(): AnnotationQueryRunnerOptions {
   const annotation = {} as AnnotationQuery;

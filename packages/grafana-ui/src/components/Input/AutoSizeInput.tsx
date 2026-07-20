@@ -4,7 +4,7 @@ import * as React from 'react';
 import { measureText } from '../../utils/measureText';
 
 import { AutoSizeInputContext } from './AutoSizeInputContext';
-import { Input, Props as InputProps } from './Input';
+import { Input, type Props as InputProps } from './Input';
 
 export interface Props extends InputProps {
   /** Sets the min-width to a multiple of 8px. Default value is 10*/

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
 import { getGraphFrame } from './utils';
 

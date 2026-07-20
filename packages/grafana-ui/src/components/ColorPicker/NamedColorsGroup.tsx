@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
+import { type Property } from 'csstype';
 import { upperFirst } from 'lodash';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeVizHue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

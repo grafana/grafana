@@ -53,10 +53,14 @@ func (m StorageMode) String() string {
 // legacy storage, dual-write mode, or unified storage.
 //
 // Resolution priority:
-//  1. Config Mode1 (or Mode2/Mode3 for backward compat) → DualWrite
-//  2. Migration log entry exists → Unified
+//  1. Migration log entry exists → Unified
+//  2. Config Mode1 (or Mode2/Mode3 for backward compat) → DualWrite
 //  3. Config Mode4/Mode5 → Unified (temporary fallback for cloud backfill transition)
 //  4. Otherwise → Legacy
 type MigrationStatusReader interface {
-	GetStorageMode(ctx context.Context, gr schema.GroupResource) StorageMode
+	GetStorageMode(ctx context.Context, gr schema.GroupResource) (StorageMode, error)
+
+	// GetFloorVersion returns the oldest apiVersion that may exist in unified storage for a
+	// resource. ok is false when no migration declares a floor, so the guard cannot validate it.
+	GetFloorVersion(gr schema.GroupResource) (version string, ok bool)
 }

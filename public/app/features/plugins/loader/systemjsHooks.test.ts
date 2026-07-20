@@ -7,7 +7,7 @@ jest.mock('./pluginInfoCache', () => ({
 import { server } from './pluginLoader.mock';
 import { SystemJS } from './systemjs';
 import { decorateSystemJSFetch, decorateSystemJSResolve, getLoadPluginCssUrl } from './systemjsHooks';
-import { SystemJSWithLoaderHooks } from './types';
+import { type SystemJSWithLoaderHooks } from './types';
 
 describe('SystemJS Loader Hooks', () => {
   const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;

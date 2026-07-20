@@ -1,5 +1,5 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
+import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
 import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
@@ -13,7 +13,7 @@ import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
-import { PluginExtensionRegistries } from './types';
+import { type PluginExtensionRegistries } from './types';
 
 function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   const addedComponentsRegistry = new AddedComponentsRegistry(apps);
