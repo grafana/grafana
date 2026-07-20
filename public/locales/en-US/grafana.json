@@ -15541,6 +15541,9 @@
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
+    "frame-picker": {
+      "label": "Query"
+    },
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
