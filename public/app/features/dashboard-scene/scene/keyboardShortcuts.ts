@@ -146,7 +146,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       dispatch(
         notifyApp(
           createSuccessNotification(
-            t('panel.header-menu.panel-copy-success', 'Panel {{panelName}} copied to clipboard', {
+            t('panel.header-menu.panel-copy-success', 'Panel "{{panelName}}" copied to clipboard', {
               panelName,
               interpolation: { escapeValue: false },
             })
