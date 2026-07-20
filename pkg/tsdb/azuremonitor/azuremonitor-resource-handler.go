@@ -35,8 +35,10 @@ func (s *httpServiceProxy) writeErrorResponse(rw http.ResponseWriter, statusCode
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(statusCode)
 
+	// Set error response to initial error message
 	errorBody := map[string]string{"error": message}
 
+	// Attempt to locate JSON portion in error message
 	re := regexp.MustCompile(`\{.*?\}`)
 	jsonPart := re.FindString(message)
 	if jsonPart != "" {
@@ -45,10 +47,12 @@ func (s *httpServiceProxy) writeErrorResponse(rw http.ResponseWriter, statusCode
 			errorBody["error"] = fmt.Sprintf("Invalid JSON format in error message. Raw error: %s", message)
 			s.logger.Error("failed to unmarshal JSON error message", "error", unmarshalErr)
 		} else {
+			// Extract relevant fields for a formatted error message
 			errorType, _ := jsonData["error"].(string)
 			errorDescription, ok := jsonData["error_description"].(string)
 			if !ok {
 				s.logger.Error("unable to convert error_description to string", "rawError", jsonData["error_description"])
+				// Attempt to just format the error as a string
 				errorDescription = fmt.Sprintf("%v", jsonData["error_description"])
 			}
 			if errorType == "" {
@@ -102,6 +106,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}
 
+	// Return the ResponseWriter for testing purposes
 	return rw, nil
 }
 
@@ -166,6 +171,8 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 
 		_, err = s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
 		if err != nil {
+			// The ResourceRequest function should handle writing the error response
+			// We log the error here to ensure it's captured
 			s.logger.Error("error in resource request", "error", err)
 			return
 		}
