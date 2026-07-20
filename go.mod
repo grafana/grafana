@@ -273,7 +273,7 @@ require (
 )
 
 // Replace grafana-app-sdk to my own copy for v1alpha3
-replace github.com/grafana/grafana-app-sdk => github.com/grafana/grafana-app-sdk v0.56.5-0.20260716230603-2363ae59c387
+replace github.com/grafana/grafana-app-sdk => github.com/grafana/grafana-app-sdk v0.56.5-0.20260720212642-bef95d860a5a
 
 // Replace references to internal workspaces
 replace (

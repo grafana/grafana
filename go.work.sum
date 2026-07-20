@@ -1320,8 +1320,8 @@ github.com/grafana/go-mysql-server v0.20.2-grafana-3/go.mod h1:Oy0XD/nfIkwVBMud5
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d h1:oXRJlb9UjVsl6LhqBdbyAQ9YFhExwsj4bjh5vwMNRZY=
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
 github.com/grafana/grafana-app-sdk v0.53.1/go.mod h1:wR7nY/6FbkSjLgSyzE4buEy4JF0poSG6HCZ4MRQrFb4=
-github.com/grafana/grafana-app-sdk v0.56.5-0.20260716230603-2363ae59c387 h1:TFR54OOKY3kQKCTfRp9yitV7bJi+lH1lcwTw7pyGhRg=
-github.com/grafana/grafana-app-sdk v0.56.5-0.20260716230603-2363ae59c387/go.mod h1:OxlV2HvN6RDw0Uftlr/dp52d1nd74eoxlqm8Ld8bj38=
+github.com/grafana/grafana-app-sdk v0.56.5-0.20260720212642-bef95d860a5a h1:dynuIoTRurTyDKINZDjp0gyvGhr4uR8emCQQJvIGsFk=
+github.com/grafana/grafana-app-sdk v0.56.5-0.20260720212642-bef95d860a5a/go.mod h1:OxlV2HvN6RDw0Uftlr/dp52d1nd74eoxlqm8Ld8bj38=
 github.com/grafana/grafana-app-sdk/logging v0.53.2/go.mod h1:f0r/XriExa4jpUMHnI9aTRYzbbMHiDV+MXSpaSRGqIE=
 github.com/grafana/grafana-app-sdk/logging v0.54.1/go.mod h1:t0rXNkTz3R6PLpjxk4BIl2erHYkMBX+rd+UHSL0k5nw=
 github.com/grafana/grafana-cloud-migration-snapshot v1.10.0/go.mod h1:WpjMtcZmoU1KnBok8R+xt2Tb5WOnIcIcU0sd9fgyyE4=
