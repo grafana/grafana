@@ -26,7 +26,6 @@ import {
   isTooltipScrollable,
   useTheme2,
 } from '@grafana/ui';
-import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
@@ -50,7 +49,6 @@ interface HeatmapTooltipProps {
   seriesIdx: number | null | undefined;
   dataRef: React.MutableRefObject<HeatmapData>;
   showHistogram?: boolean;
-  showColorScale?: boolean;
   isPinned: boolean;
   dismiss: () => void;
   panelData: PanelData;
@@ -95,7 +93,6 @@ const HeatmapHoverCell = ({
   dataRef,
   showHistogram,
   isPinned,
-  showColorScale = false,
   mode,
   annotate,
   maxHeight,
@@ -203,7 +200,7 @@ const HeatmapHoverCell = ({
     getData();
   }
 
-  const { cellColor, colorPalette } = getHoverCellColor(data, index);
+  const { cellColor } = getHoverCellColor(data, index);
 
   const getDisplayData = (fromIdx: number, toIdx: number) => {
     let vals = [];
@@ -374,19 +371,6 @@ const HeatmapHoverCell = ({
           height={histCanHeight}
           ref={can}
           style={{ width: histCssWidth + 'px', height: histCssHeight + 'px' }}
-        />
-      );
-    }
-
-    // Color scale
-    if (colorPalette && showColorScale) {
-      customContent.push(
-        <ColorScale
-          colorPalette={colorPalette}
-          min={data.heatmapColors?.minValue!}
-          max={data.heatmapColors?.maxValue!}
-          display={data.display}
-          hoverValue={count}
         />
       );
     }

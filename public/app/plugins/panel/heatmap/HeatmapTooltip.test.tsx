@@ -375,15 +375,6 @@ describe('HeatmapTooltip', () => {
     });
   });
 
-  describe('showColorScale', () => {
-    it('renders ColorScale when showColorScale is true', () => {
-      render(<HeatmapTooltip {...defaultProps} showColorScale={true} />);
-
-      expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
-      expect(screen.getByText('count')).toBeVisible();
-    });
-  });
-
   describe('Exemplars', () => {
     it('renders ExemplarTooltip when seriesIdx is 2 and exemplars have display data', () => {
       const exemplarFrame = createDataFrame({

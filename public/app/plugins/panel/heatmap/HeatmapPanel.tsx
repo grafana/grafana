@@ -174,23 +174,10 @@ const HeatmapPanelViz = ({
       return null;
     }
 
-    let hoverValue: number | undefined = undefined;
-
-    // let heatmapType = dataRef.current?.heatmap?.meta?.type;
-    // let isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
-    // let countFieldIdx = !isSparseHeatmap ? 2 : 3;
-    // const countField = info.heatmap.fields[countFieldIdx];
-
-    // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
-    // if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-    //   hoverValue = countField.values[hover.dataIdx];
-    // }
-
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
           <ColorScale
-            hoverValue={hoverValue}
             colorPalette={palette}
             min={dataRef.current.heatmapColors?.minValue!}
             max={dataRef.current.heatmapColors?.maxValue!}
@@ -245,7 +232,6 @@ const HeatmapPanelViz = ({
                       isPinned={isPinned}
                       dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}
-                      showColorScale={options.tooltip.showColorScale}
                       panelData={data}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
