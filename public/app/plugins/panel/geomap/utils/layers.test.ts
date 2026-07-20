@@ -4,6 +4,11 @@ jest.mock('ol-mapbox-style', () => ({}));
 jest.mock('geotiff', () => ({}));
 
 import type BaseLayer from 'ol/layer/Base';
+import LayerGroup from 'ol/layer/Group';
+import VectorLayer from 'ol/layer/Vector';
+import WebGLPointsLayer from 'ol/layer/WebGLPoints';
+import Cluster from 'ol/source/Cluster';
+import VectorSource from 'ol/source/Vector';
 
 import {
   type DataFrame,
@@ -23,7 +28,7 @@ import { MARKERS_LAYER_ID } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { type MapLayerState } from '../types';
 
-import { applyLayerFilter, getMapLayerState, initLayer } from './layers';
+import { applyLayerFilter, getMapLayerState, initLayer, setMapLayerState } from './layers';
 
 const getIfExists = jest.spyOn(geomapLayerRegistry, 'getIfExists');
 
@@ -246,12 +251,40 @@ describe('initLayer', () => {
   });
 });
 
-describe('getMapLayerState', () => {
-  it('returns undefined for an undefined layer', () => {
+describe('setMapLayerState / getMapLayerState', () => {
+  const makeState = () => ({ getName: () => 'test-layer' }) as unknown as MapLayerState;
+
+  it('returns undefined for undefined or unregistered layers', () => {
     expect(getMapLayerState(undefined)).toBeUndefined();
+    expect(getMapLayerState(new VectorLayer({ source: new VectorSource() }))).toBeUndefined();
   });
 
-  it('returns undefined for a layer that was never registered', () => {
-    expect(getMapLayerState({} as BaseLayer)).toBeUndefined();
+  it('registers a standalone layer', () => {
+    const state = makeState();
+    const layer = new VectorLayer({ source: new VectorSource() });
+
+    setMapLayerState(layer, state);
+
+    expect(getMapLayerState(layer)).toBe(state);
+  });
+
+  it('registers WebGL and cluster-source children of a group but skips decorative layers', () => {
+    const state = makeState();
+    const raw = new VectorSource();
+    const webglChild = new WebGLPointsLayer({
+      source: new VectorSource(),
+      style: { 'circle-radius': 5, 'circle-fill-color': '#000000' },
+    });
+    const clusterChild = new VectorLayer({ source: new Cluster({ source: raw }) });
+    const decorativeChild = new VectorLayer({ source: raw });
+    const group = new LayerGroup({ layers: [webglChild, clusterChild, decorativeChild] });
+
+    setMapLayerState(group, state);
+
+    expect(getMapLayerState(group)).toBe(state);
+    expect(getMapLayerState(webglChild)).toBe(state);
+    expect(getMapLayerState(clusterChild)).toBe(state);
+    // Decorative (non-WebGL, non-cluster) children stay non-interactive
+    expect(getMapLayerState(decorativeChild)).toBeUndefined();
   });
 });

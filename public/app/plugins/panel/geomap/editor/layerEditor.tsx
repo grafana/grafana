@@ -32,7 +32,16 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       getContext: (parent) => {
         return { ...parent, options: opts.state.options, instanceState: opts.state };
       },
-      getValue: (path: string) => lodashGet(opts.state.options, path),
+      getValue: (path: string) => {
+        const value = lodashGet(opts.state.options, path);
+        if (value !== undefined) {
+          return value;
+        }
+        // Saved configs may predate newly added layer options, so editors fall
+        // back to the layer's declared defaults instead of rendering empty
+        const item = geomapLayerRegistry.getIfExists(opts.state.options?.type);
+        return lodashGet({ config: item?.defaultOptions }, path);
+      },
       onChange: (path: string, value: string) => {
         const { state } = opts;
         const { options } = state;

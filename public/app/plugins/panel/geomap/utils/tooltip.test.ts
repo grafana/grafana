@@ -2,6 +2,7 @@ import Feature from 'ol/Feature';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { Point } from 'ol/geom';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
+import Cluster from 'ol/source/Cluster';
 import VectorSource from 'ol/source/Vector';
 
 import { DataHoverClearEvent, type DataFrame, type PanelProps } from '@grafana/data';
@@ -10,7 +11,7 @@ import { GeomapPanel } from '../GeomapPanel';
 import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';
 import { type Options } from '../panelcfg.gen';
 
-import { pointerMoveListener, setTooltipListeners } from './tooltip';
+import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './tooltip';
 
 // Mock the GeomapPanel class
 jest.mock('../GeomapPanel', () => {
@@ -20,9 +21,14 @@ jest.mock('../GeomapPanel', () => {
         map: {
           getEventPixel: jest.fn().mockReturnValue([100, 100]),
           getCoordinateFromPixel: jest.fn().mockReturnValue([0, 0]),
+          getSize: jest.fn().mockReturnValue([800, 600]),
           forEachFeatureAtPixel: jest.fn(),
           getView: jest.fn().mockReturnValue({
             getResolution: jest.fn().mockReturnValue(100), // 100 map units/pixel → tolerance = 100 * 2 = 200 map units
+            // Separability inputs for cluster hover/click (only read for multi-member clusters):
+            getMaxZoom: jest.fn().mockReturnValue(20),
+            getResolutionForZoom: jest.fn().mockReturnValue(0.001), // tiny pixel at max zoom → spread members can separate
+            getResolutionForExtent: jest.fn().mockReturnValue(2),
           }),
         },
         mapDiv: {
@@ -56,6 +62,21 @@ jest.mock('./layers', () => {
     }),
   };
 });
+
+// Cluster expansion and click-to-zoom are gated on the hit layer being backed
+// by an ol Cluster source
+function makeClusterSourceLayer() {
+  const layer = new WebGLPointsLayer({
+    source: new VectorSource<Feature<Point>>(),
+    style: {
+      'circle-radius': 8,
+      'circle-fill-color': '#000000',
+      'circle-opacity': 1,
+    },
+  });
+  layer.getSource = jest.fn().mockReturnValue(new Cluster({}));
+  return layer;
+}
 
 describe('tooltip utils', () => {
   let panel: GeomapPanel;
@@ -291,6 +312,232 @@ describe('tooltip utils', () => {
       expect(layerHover.features.length).toBe(1); // only feature1
       expect(layerHover.features).not.toContain(farFeature);
     });
+
+    it('should show a zoom hint without a tooltip for a separable multi-member cluster', () => {
+      // Members far enough apart to pull apart by zooming
+      const near = new Feature({ geometry: new Point([0, 0]), rowIndex: 1, frame: {} as DataFrame });
+      const far = new Feature({ geometry: new Point([1000, 1000]), rowIndex: 2, frame: {} as DataFrame });
+      const cluster = new Feature({ geometry: new Point([500, 500]), features: [near, far] });
+      if (panel.map) {
+        (panel.map.forEachFeatureAtPixel as jest.Mock).mockImplementation((pixel, callback) => {
+          callback(cluster, makeClusterSourceLayer(), null);
+        });
+      }
+
+      const found = pointerMoveListener(mockEvent, panel);
+
+      expect(found).toBe(false);
+      expect(panel.hoverPayload.layers).toBeUndefined();
+      expect(panel.hoverPayload.data).toBeUndefined();
+      expect(mockVectorSource.forEachFeature).not.toHaveBeenCalled();
+      // The pointer cursor hints that clicking the cluster zooms in
+      expect(panel.mapDiv!.style.cursor).toBe('pointer');
+    });
+
+    it('should list the members in a tooltip for a non-separable (co-located) cluster', () => {
+      // All members share the same coordinate, so zooming can never separate them
+      const cluster = new Feature({
+        geometry: new Point([0, 0]),
+        features: [feature3, feature1, feature2],
+      });
+      if (panel.map) {
+        (panel.map.forEachFeatureAtPixel as jest.Mock).mockImplementation((pixel, callback) => {
+          callback(cluster, makeClusterSourceLayer(), null);
+        });
+      }
+
+      const found = pointerMoveListener(mockEvent, panel);
+
+      expect(found).toBe(true);
+      const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
+      expect(layerHover.features).toEqual([feature3, feature1, feature2]);
+      // The co-located source scan is skipped for cluster layers
+      expect(mockVectorSource.forEachFeature).not.toHaveBeenCalled();
+      expect(panel.mapDiv!.style.cursor).toBe('pointer');
+    });
+
+    it('should tooltip singleton cluster features as their member marker', () => {
+      const singleton = new Feature({
+        geometry: new Point([0, 0]),
+        features: [feature1],
+      });
+      if (panel.map) {
+        (panel.map.forEachFeatureAtPixel as jest.Mock).mockImplementation((pixel, callback) => {
+          callback(singleton, makeClusterSourceLayer(), null);
+        });
+      }
+
+      pointerMoveListener(mockEvent, panel);
+
+      const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
+      expect(layerHover.features).toEqual([feature1]);
+      expect(panel.hoverPayload.rowIndex).toBe(1);
+      expect(mockVectorSource.forEachFeature).not.toHaveBeenCalled();
+    });
+
+    it('should not treat a features array property on a non-cluster layer as cluster members', () => {
+      // GeoJSON layers copy arbitrary user property bags onto features, so a
+      // data property named 'features' must not be expanded (or sorted, which
+      // would throw on plain values)
+      const geojsonLike = new Feature({
+        geometry: new Point([0, 0]),
+        features: ['not', 'cluster', 'members'],
+        frame: {} as DataFrame,
+        rowIndex: 0,
+      });
+      if (panel.map) {
+        (panel.map.forEachFeatureAtPixel as jest.Mock).mockImplementation((pixel, callback) => {
+          callback(geojsonLike, mockWebGLLayer, null);
+        });
+      }
+
+      pointerMoveListener(mockEvent, panel);
+
+      const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
+      expect(layerHover.features).toEqual([geojsonLike]);
+    });
+  });
+});
+
+describe('pointerClickListener', () => {
+  function setupClusterClick(viewOverrides?: {
+    resolution?: number;
+    maxZoomResolution?: number;
+    fitResolution?: number;
+    memberCoords?: number[][];
+  }) {
+    const panel = new GeomapPanel({} as PanelProps<Options>);
+    const fit = jest.fn();
+    const preventDefault = jest.fn();
+    const stopPropagation = jest.fn();
+    const coords = viewOverrides?.memberCoords ?? [
+      [0, 0],
+      [1000, 1000],
+    ];
+    const members = coords.map(
+      (coord, i) => new Feature({ geometry: new Point(coord), rowIndex: i, frame: {} as DataFrame })
+    );
+    const cluster = new Feature({ geometry: new Point([500, 500]), features: members });
+    const clusterLayer = makeClusterSourceLayer();
+
+    if (panel.map) {
+      panel.map.getSize = jest.fn().mockReturnValue([800, 600]);
+      (panel.map.getView as jest.Mock).mockReturnValue({
+        // Current view: zoomed out relative to the fit target by default
+        getResolution: jest.fn().mockReturnValue(viewOverrides?.resolution ?? 100),
+        getMaxZoom: jest.fn().mockReturnValue(20),
+        // Resolution at maxZoom: separability tolerance = this * 2px
+        getResolutionForZoom: jest.fn().mockReturnValue(viewOverrides?.maxZoomResolution ?? 0.001),
+        // Resolution the member extent would fit at
+        getResolutionForExtent: jest.fn().mockReturnValue(viewOverrides?.fitResolution ?? 2),
+        fit,
+      });
+      (panel.map.forEachFeatureAtPixel as jest.Mock).mockImplementation((pixel, callback) =>
+        callback(cluster, clusterLayer, null)
+      );
+    }
+
+    const event = {
+      pixel: [100, 100],
+      preventDefault,
+      stopPropagation,
+    } as unknown as MapBrowserEvent<PointerEvent>;
+
+    return { panel, fit, preventDefault, stopPropagation, event };
+  }
+
+  it('zooms to a cluster extent instead of opening the tooltip when members can separate', () => {
+    const { panel, fit, preventDefault, stopPropagation, event } = setupClusterClick();
+
+    pointerClickListener(event, panel);
+
+    expect(fit).toHaveBeenCalledWith([0, 0, 1000, 1000], {
+      padding: [50, 50, 50, 50],
+      duration: 300,
+      maxZoom: 20,
+    });
+    expect(preventDefault).toHaveBeenCalled();
+    expect(stopPropagation).toHaveBeenCalled();
+    expect(panel.setState).not.toHaveBeenCalledWith({ ttipOpen: true });
+  });
+
+  it('does not zoom when members cannot separate even at maximum zoom', () => {
+    const { panel, fit, event } = setupClusterClick({
+      // Members 1000 units apart, but a max-zoom pixel is 1000 units wide
+      maxZoomResolution: 1000,
+    });
+
+    pointerClickListener(event, panel);
+
+    expect(fit).not.toHaveBeenCalled();
+  });
+
+  it('does not zoom again when the view is already fitted to the members', () => {
+    const { panel, fit, event } = setupClusterClick({
+      resolution: 2,
+      fitResolution: 2,
+    });
+
+    pointerClickListener(event, panel);
+
+    expect(fit).not.toHaveBeenCalled();
+  });
+
+  it('does not zoom while the measure tool is active', () => {
+    const { panel, fit, event } = setupClusterClick();
+    Object.assign(panel.state, { measureMenuActive: true });
+
+    pointerClickListener(event, panel);
+
+    expect(fit).not.toHaveBeenCalled();
+  });
+
+  it('does not zoom when the cluster feature comes from a non-cluster layer', () => {
+    const { panel, fit, event } = setupClusterClick();
+    const plainLayer = new WebGLPointsLayer({
+      source: new VectorSource<Feature<Point>>(),
+      style: { 'circle-radius': 8, 'circle-fill-color': '#000000' },
+    });
+    const impostor = new Feature({
+      geometry: new Point([0, 0]),
+      features: ['not', 'cluster', 'members'],
+    });
+    if (panel.map) {
+      (panel.map.forEachFeatureAtPixel as jest.Mock).mockImplementation((pixel, callback) =>
+        callback(impostor, plainLayer, null)
+      );
+    }
+
+    pointerClickListener(event, panel);
+
+    expect(fit).not.toHaveBeenCalled();
+  });
+
+  it('does not zoom when a tooltip is already pinned open', () => {
+    const { panel, fit, event } = setupClusterClick();
+    Object.assign(panel.state, { ttipOpen: true, ttip: { layers: [{}] } });
+
+    pointerClickListener(event, panel);
+
+    expect(fit).not.toHaveBeenCalled();
+  });
+
+  it('opens a member-list tooltip instead of zooming for a non-separable cluster', () => {
+    // A max-zoom pixel is 1000 units wide, so the 1000-unit member spread can
+    // never separate: the click should open the tooltip rather than zoom.
+    const { panel, fit } = setupClusterClick({ maxZoomResolution: 1000 });
+    const mouseEvent = new MouseEvent('click');
+    const event = {
+      pixel: [100, 100],
+      originalEvent: mouseEvent,
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    } as unknown as MapBrowserEvent<PointerEvent>;
+
+    pointerClickListener(event, panel);
+
+    expect(fit).not.toHaveBeenCalled();
+    expect(panel.setState).toHaveBeenCalledWith({ ttipOpen: true });
   });
 });
 

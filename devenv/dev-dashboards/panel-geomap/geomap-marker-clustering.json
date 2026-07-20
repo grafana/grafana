@@ -1,0 +1,450 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "geomap-clustering"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "datasource",
+            "version": "v0",
+            "datasource": {
+              "name": "grafana"
+            },
+            "spec": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            }
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Clustering on — colored by value (zoom in to expand)",
+          "description": "Clustering enabled with default settings. Zoom out and nearby cities merge into count badges whose color is the average of the grouped markers. Click a badge, or zoom in, to pull the members apart.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "csvContent": "name,latitude,longitude,value\nLondon,51.5074,-0.1278,82\nParis,48.8566,2.3522,74\nMadrid,40.4168,-3.7038,45\nBerlin,52.52,13.405,63\nRome,41.9028,12.4964,58\nAmsterdam,52.3676,4.9041,90\nVienna,48.2082,16.3738,40\nPrague,50.0755,14.4378,35\nWarsaw,52.2297,21.0122,52\nZurich,47.3769,8.5417,88\nBarcelona,41.3874,2.1686,49\nMunich,48.1351,11.582,66\nMilan,45.4642,9.19,55\nBrussels,50.8503,4.3517,71\nCopenhagen,55.6761,12.5683,60\nNew York,40.7128,-74.006,95\nLos Angeles,34.0522,-118.2437,78\nChicago,41.8781,-87.6298,64\nToronto,43.6532,-79.3832,50\nMexico City,19.4326,-99.1332,33\nSan Francisco,37.7749,-122.4194,85\nMiami,25.7617,-80.1918,47\nTokyo,35.6762,139.6503,92\nBeijing,39.9042,116.4074,70\nShanghai,31.2304,121.4737,68\nSingapore,1.3521,103.8198,80\nMumbai,19.076,72.8777,30\nSeoul,37.5665,126.978,72\nBangkok,13.7563,100.5018,38\nDubai,25.2048,55.2708,76\nSydney,-33.8688,151.2093,84\nMelbourne,-37.8136,144.9631,62\nSao Paulo,-23.5505,-46.6333,41\nBuenos Aires,-34.6037,-58.3816,36\nJohannesburg,-26.2041,28.0473,28\nCairo,30.0444,31.2357,44",
+                        "scenarioId": "csv_content"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "9.2.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "config": {},
+                  "name": "Layer 0",
+                  "type": "default"
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "config": {
+                      "cluster": {
+                        "enabled": true
+                      },
+                      "showLegend": true,
+                      "style": {
+                        "color": {
+                          "field": "value",
+                          "fixed": "dark-green"
+                        },
+                        "opacity": 0.8,
+                        "size": {
+                          "fixed": 7,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/circle.svg",
+                          "mode": "fixed"
+                        }
+                      }
+                    },
+                    "location": {
+                      "latitude": "latitude",
+                      "longitude": "longitude",
+                      "mode": "coords"
+                    },
+                    "name": "Layer 1",
+                    "tooltip": true,
+                    "type": "markers"
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 25,
+                  "lon": 10,
+                  "zoom": 1.6
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  },
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Co-located points — tooltip lists members",
+          "description": "Eight markers share one coordinate (Ashburn), so zooming can never separate them. Hover the count badge to list every member in the tooltip. The Washington DC, Baltimore, and Richmond markers separate out as you zoom in.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "csvContent": "name,latitude,longitude,value\nRack A1,39.0438,-77.4874,42\nRack A2,39.0438,-77.4874,55\nRack A3,39.0438,-77.4874,37\nRack A4,39.0438,-77.4874,61\nRack A5,39.0438,-77.4874,48\nRack A6,39.0438,-77.4874,52\nRack A7,39.0438,-77.4874,44\nRack A8,39.0438,-77.4874,58\nWashington DC,38.9072,-77.0369,20\nBaltimore,39.2904,-76.6122,15\nRichmond,37.5407,-77.436,12",
+                        "scenarioId": "csv_content"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "9.2.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "config": {},
+                  "name": "Layer 0",
+                  "type": "default"
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "config": {
+                      "cluster": {
+                        "enabled": true
+                      },
+                      "showLegend": false,
+                      "style": {
+                        "color": {
+                          "fixed": "semi-dark-blue"
+                        },
+                        "opacity": 0.8,
+                        "size": {
+                          "fixed": 8,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/circle.svg",
+                          "mode": "fixed"
+                        }
+                      }
+                    },
+                    "location": {
+                      "latitude": "latitude",
+                      "longitude": "longitude",
+                      "mode": "coords"
+                    },
+                    "name": "Layer 1",
+                    "tooltip": true,
+                    "type": "markers"
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.9,
+                  "lon": -77.1,
+                  "zoom": 8
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Fixed cluster color",
+          "description": "Same data as the first panel, but config.cluster.color is set to a fixed color. Count badges use that color instead of averaging the grouped markers, while individual markers stay colored by value.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "csvContent": "name,latitude,longitude,value\nLondon,51.5074,-0.1278,82\nParis,48.8566,2.3522,74\nMadrid,40.4168,-3.7038,45\nBerlin,52.52,13.405,63\nRome,41.9028,12.4964,58\nAmsterdam,52.3676,4.9041,90\nVienna,48.2082,16.3738,40\nPrague,50.0755,14.4378,35\nWarsaw,52.2297,21.0122,52\nZurich,47.3769,8.5417,88\nBarcelona,41.3874,2.1686,49\nMunich,48.1351,11.582,66\nMilan,45.4642,9.19,55\nBrussels,50.8503,4.3517,71\nCopenhagen,55.6761,12.5683,60\nNew York,40.7128,-74.006,95\nLos Angeles,34.0522,-118.2437,78\nChicago,41.8781,-87.6298,64\nToronto,43.6532,-79.3832,50\nMexico City,19.4326,-99.1332,33\nSan Francisco,37.7749,-122.4194,85\nMiami,25.7617,-80.1918,47\nTokyo,35.6762,139.6503,92\nBeijing,39.9042,116.4074,70\nShanghai,31.2304,121.4737,68\nSingapore,1.3521,103.8198,80\nMumbai,19.076,72.8777,30\nSeoul,37.5665,126.978,72\nBangkok,13.7563,100.5018,38\nDubai,25.2048,55.2708,76\nSydney,-33.8688,151.2093,84\nMelbourne,-37.8136,144.9631,62\nSao Paulo,-23.5505,-46.6333,41\nBuenos Aires,-34.6037,-58.3816,36\nJohannesburg,-26.2041,28.0473,28\nCairo,30.0444,31.2357,44",
+                        "scenarioId": "csv_content"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "9.2.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "config": {},
+                  "name": "Layer 0",
+                  "type": "default"
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "config": {
+                      "cluster": {
+                        "enabled": true,
+                        "color": "purple"
+                      },
+                      "showLegend": true,
+                      "style": {
+                        "color": {
+                          "field": "value",
+                          "fixed": "dark-green"
+                        },
+                        "opacity": 0.8,
+                        "size": {
+                          "fixed": 7,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/circle.svg",
+                          "mode": "fixed"
+                        }
+                      }
+                    },
+                    "location": {
+                      "latitude": "latitude",
+                      "longitude": "longitude",
+                      "mode": "coords"
+                    },
+                    "name": "Layer 1",
+                    "tooltip": true,
+                    "type": "markers"
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 25,
+                  "lon": 10,
+                  "zoom": 1.6
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  },
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 12,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 12,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 12,
+              "width": 24,
+              "height": 12,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "panel-tests", "geomap"],
+    "timeSettings": {
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - Geomap Marker Clustering",
+    "variables": []
+  }
+}
