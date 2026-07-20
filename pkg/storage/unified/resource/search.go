@@ -703,6 +703,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
 	}
@@ -722,6 +725,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	if !coll.IsExternal {
 		allowed, err = s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 		if err != nil {
+			if ctx.Err() != nil {
+				return nil, status.FromContextError(ctx.Err()).Err()
+			}
 			s.log.Error("vector search: authz batch check", "err", err)
 			return nil, status.Error(codes.Internal, "authz batch check")
 		}
@@ -813,6 +819,11 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 		Task:      embedder.TaskRetrievalQuery,
 	})
 	if err != nil {
+		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded
+		// per the gRPC spec — reporting Internal here trips error SLOs.
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: embed query", "err", err)
 		return nil, status.Error(codes.Internal, "embed query")
 	}
