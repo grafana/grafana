@@ -12548,6 +12548,7 @@
       "inspect-json": "Panel JSON",
       "more": "More...",
       "new-alert-rule": "New alert rule",
+      "panel-copy-success": "Panel {{panelName}} copied to clipboard",
       "paste-styles": "Paste styles",
       "query": "Query",
       "remove": "Remove",
@@ -12557,8 +12558,7 @@
       "styles": "Styles",
       "time-settings": "Time settings",
       "unlink-library-panel": "Unlink library panel",
-      "view": "View",
-      "panel-copy-success": "Panel {{panelName}} copied to clipboard"
+      "view": "View"
     },
     "panel-data-error-view": {
       "missing-value": {

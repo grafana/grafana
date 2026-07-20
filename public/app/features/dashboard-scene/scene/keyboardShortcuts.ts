@@ -11,6 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { InspectTab } from 'app/features/inspector/types';
 import { dispatch } from 'app/store/store';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
@@ -26,7 +27,6 @@ import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
-import { AccessControlAction } from 'app/types/accessControl';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
