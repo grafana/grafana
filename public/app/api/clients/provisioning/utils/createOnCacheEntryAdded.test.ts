@@ -133,6 +133,15 @@ describe('createOnCacheEntryAdded', () => {
     expect(result.current.data).toBe(before);
   });
 
+  it('removes a job on DELETED with a resourceVersion equal to the cached job', async () => {
+    const result = await setup(job('a', '8'), job('b', '9'));
+
+    emit('DELETED', job('a', '8'));
+
+    await waitFor(() => expect(result.current.data?.items).toHaveLength(1));
+    expect(result.current.data?.items[0].metadata?.name).toBe('b');
+  });
+
   it('skips a stale DELETED event older than the cached job', async () => {
     const result = await setup(job('a', '5'));
 

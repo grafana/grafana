@@ -24,11 +24,9 @@ function compareResourceVersions(a: string | undefined, b: string | undefined): 
   if (!a || !b || !/^\d+$/.test(a) || !/^\d+$/.test(b)) {
     return null;
   }
-  // length-first compare == numeric compare for digit strings, without parseInt precision loss
-  if (a.length !== b.length) {
-    return a.length - b.length;
-  }
-  return a < b ? -1 : a > b ? 1 : 0;
+  const x = BigInt(a);
+  const y = BigInt(b);
+  return x < y ? -1 : x > y ? 1 : 0;
 }
 
 /**
