@@ -8,7 +8,7 @@ import { ErrorModal } from '../ErrorModal';
 
 import { type MuteTiming, useDeleteMuteTiming } from './useMuteTimings';
 
-type UseDeleteMuteTimingModal = [modal: JSX.Element, showModal: () => void, isDeleting: boolean];
+type UseDeleteMuteTimingModal = [modal: JSX.Element, openConfirmModal: () => void, isDeleting: boolean];
 
 /**
  * Controls the delete confirmation and error modals for a single mute timing, exposing the in-flight
@@ -21,27 +21,27 @@ export const useDeleteMuteTimingModal = (
   const [deleteMuteTiming, deleteMuteTimingRequestState] = useDeleteMuteTiming({
     alertmanager: alertManagerSourceName,
   });
-  const [isOpen, setIsOpen] = useState(false);
-  const [error, setError] = useState<unknown>();
+  const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<unknown>();
 
-  const showModal = useCallback(() => setIsOpen(true), []);
-  const dismissModal = useCallback(() => setIsOpen(false), []);
+  const openConfirmModal = useCallback(() => setConfirmModalOpen(true), []);
+  const closeConfirmModal = useCallback(() => setConfirmModalOpen(false), []);
 
   const handleConfirm = useCallback(async () => {
     try {
       await deleteMuteTiming.execute({ name: muteTiming?.metadata?.name ?? muteTiming.name });
-    } catch (e) {
-      setError(e);
+    } catch (error) {
+      setDeleteError(error);
     } finally {
-      dismissModal();
+      closeConfirmModal();
     }
-  }, [deleteMuteTiming, dismissModal, muteTiming]);
+  }, [deleteMuteTiming, closeConfirmModal, muteTiming]);
 
   const modal = useMemo(
     () => (
       <>
         <ConfirmModal
-          isOpen={isOpen}
+          isOpen={isConfirmModalOpen}
           title={t('alerting.mute-timing-actions-buttons.title-delete-mute-timing', 'Delete mute timing')}
           body={t(
             'alerting.mute-timing-actions-button.body-delete-mute-timing',
@@ -50,13 +50,17 @@ export const useDeleteMuteTimingModal = (
           )}
           confirmText={t('alerting.common.delete', 'Delete')}
           onConfirm={handleConfirm}
-          onDismiss={dismissModal}
+          onDismiss={closeConfirmModal}
         />
-        <ErrorModal isOpen={error !== undefined} onDismiss={() => setError(undefined)} error={error} />
+        <ErrorModal
+          isOpen={deleteError !== undefined}
+          onDismiss={() => setDeleteError(undefined)}
+          error={deleteError}
+        />
       </>
     ),
-    [isOpen, error, handleConfirm, dismissModal, muteTiming.name]
+    [isConfirmModalOpen, deleteError, handleConfirm, closeConfirmModal, muteTiming.name]
   );
 
-  return [modal, showModal, isLoading(deleteMuteTimingRequestState)];
+  return [modal, openConfirmModal, isLoading(deleteMuteTimingRequestState)];
 };
