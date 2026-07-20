@@ -101,20 +101,19 @@ func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *server
 		return false, fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	query := updateVersionQuery{
-		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-		ServerLockTable: dbHelper.Table("server_lock"),
-		Version:         serverLock.Version + 1,
-		LastExecution:   time.Now().Unix(),
-		OperationUID:    serverLock.OperationUID,
-		PreviousVersion: serverLock.Version,
-	}
-	rawSQL, err := sqltemplate.Execute(updateVersionTemplate, query)
-	if err != nil {
-		return false, err
-	}
-
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
+		query := updateVersionQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			ServerLockTable: dbHelper.Table("server_lock"),
+			Version:         serverLock.Version + 1,
+			LastExecution:   time.Now().Unix(),
+			OperationUID:    serverLock.OperationUID,
+			PreviousVersion: serverLock.Version,
+		}
+		rawSQL, err := sqltemplate.Execute(updateVersionTemplate, query)
+		if err != nil {
+			return err
+		}
 		res, err := dbSession.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 		if err != nil {
 			return err
@@ -149,17 +148,16 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 		return nil, fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	query := getLockQuery{
-		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-		ServerLockTable: dbHelper.Table("server_lock"),
-		OperationUID:    actionName,
-	}
-	rawSQL, err := sqltemplate.Execute(getLockTemplate, query)
-	if err != nil {
-		return nil, err
-	}
-
 	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+		query := getLockQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			ServerLockTable: dbHelper.Table("server_lock"),
+			OperationUID:    actionName,
+		}
+		rawSQL, err := sqltemplate.Execute(getLockTemplate, query)
+		if err != nil {
+			return err
+		}
 		sqlRes := &serverLock{}
 		has, err := dbSession.SQL(rawSQL, query.GetArgs()...).Get(sqlRes)
 		if err != nil {
@@ -321,18 +319,17 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 		return fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	query := getLockForUpdateQuery{
-		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-		ServerLockTable: dbHelper.Table("server_lock"),
-		OperationUID:    actionName,
-	}
-	rawSQL, err := sqltemplate.Execute(getLockForUpdateTemplate, query)
-	if err != nil {
-		return err
-	}
-
 	// getting the lock - as the action name has a Unique constraint, this will fail if the lock is already on the database
 	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+		query := getLockForUpdateQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			ServerLockTable: dbHelper.Table("server_lock"),
+			OperationUID:    actionName,
+		}
+		rawSQL, err := sqltemplate.Execute(getLockForUpdateTemplate, query)
+		if err != nil {
+			return err
+		}
 		// we need to find if the lock is in the database
 		result := &serverLock{}
 		has, err := dbSession.SQL(rawSQL, query.GetArgs()...).Get(result)
@@ -411,17 +408,16 @@ func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string)
 		return fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	query := releaseLockQuery{
-		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-		ServerLockTable: dbHelper.Table("server_lock"),
-		OperationUID:    actionName,
-	}
-	rawSQL, err := sqltemplate.Execute(releaseLockTemplate, query)
-	if err != nil {
-		return err
-	}
-
 	err = dbHelper.DB.WithDbSession(dbCtx, func(dbSession *db.Session) error {
+		query := releaseLockQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			ServerLockTable: dbHelper.Table("server_lock"),
+			OperationUID:    actionName,
+		}
+		rawSQL, err := sqltemplate.Execute(releaseLockTemplate, query)
+		if err != nil {
+			return err
+		}
 		res, err := dbSession.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 		if err != nil {
 			return err
