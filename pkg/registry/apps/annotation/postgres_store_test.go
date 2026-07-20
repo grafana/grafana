@@ -292,7 +292,7 @@ func TestIntegrationPostgresCleanup(t *testing.T) {
 		store := newTestPostgresStore(t)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
-		now := time.Now().UTC()
+		now := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
 		old := now.AddDate(0, 0, -120)   // past a 90-day cutoff: dropped
 		recent := now.AddDate(0, 0, -30) // within the cutoff: kept
 		seed(t, store, ctx, "old", old)
