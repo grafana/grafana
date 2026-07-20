@@ -5584,12 +5584,19 @@
       "download-button": "Download diagnostics",
       "error-title": "Failed to generate diagnostics",
       "generating-button": "Generating…",
+      "generation-failed": "Diagnostics generation failed",
+      "info-text-dashboard": "Generates a diagnostic bundle for the whole dashboard by re-running every panel's queries with HTTP capture active. This runs in the background and may take a while for large dashboards.",
       "info-text-panel": "Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download may take a moment while the bundle is generated.",
+      "job-not-created": "Diagnostics job was not created",
+      "no-panels": "This dashboard has no panels with active queries.",
       "no-queries": "This panel has no active queries to capture.",
+      "progress": "Capturing panel {{done}} of {{total}}…",
       "request-failed": "Request failed",
       "sensitive-warning-body": "The bundle can include request headers, query parameters, and server log lines. Review it before sharing outside your organization.",
       "sensitive-warning-title": "May contain sensitive data",
+      "subtitle-dashboard": "Bundle HTTP traffic (HAR) and panel JSON for every panel in this dashboard to help troubleshoot.",
       "subtitle-panel": "Bundle HTTP traffic (HAR), logs, and panel JSON to help troubleshoot this panel.",
+      "timed-out": "Timed out waiting for diagnostics generation",
       "title": "Download diagnostics"
     },
     "dynamic-config-value-editor": {
@@ -6367,6 +6374,7 @@
           "tooltip": "This dashboard was marked as read only"
         },
         "export": {
+          "download-diagnostics": "Download diagnostics",
           "tooltip": {
             "as-code": "Export as code"
           }
