@@ -21,6 +21,7 @@ import {
   getThresholdItems,
   hasSpecialMappedValue,
   makeFramePerSeries,
+  mergeConsecutiveValues,
   prepareTimelineFields,
   prepareTimelineLegendItems,
 } from './utils';
@@ -45,7 +46,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
@@ -58,18 +59,18 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('No graphable fields');
   });
 
   it('errors with no frame', () => {
-    const info = prepareTimelineFields(undefined, timeRange, theme);
+    const info = prepareTimelineFields(undefined, true, timeRange, theme);
     expect(info.frames).toBeUndefined();
     expect(info.warn).toBe('');
   });
 
   it('errors with empty frame', () => {
-    const info = prepareTimelineFields([], timeRange, theme);
+    const info = prepareTimelineFields([], true, timeRange, theme);
     expect(info.frames).toBeUndefined();
     expect(info.warn).toBe('');
   });
@@ -83,7 +84,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, timeRange, theme);
+    const info = prepareTimelineFields(frames, false, timeRange, theme);
     expect(info.warn).toBeUndefined();
 
     const out = info.frames![0];
@@ -92,6 +93,22 @@ describe('prepare timeline graph', () => {
     expect(field?.type).toBe(FieldType.enum);
     expect(field?.config.type?.enum?.text).toEqual(['1', '2', '3']);
     expect(field?.values).toEqual([0, 0, undefined, 0, 1, 1, null, 1, 2]);
+  });
+
+  it('merges equal consecutive state indices into undefined when mergeValues is true', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [1, 2, 3, 4, 5, 6, 7] },
+          { name: 'b', values: [1, 1, undefined, 1, 2, 2, null, 2, 3] },
+        ],
+      }),
+    ];
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
+
+    const field = info.frames![0].fields.find((f) => f.name === 'b');
+    // undefined = "state continues"; the null gap ends the run so the following 2 starts a new one
+    expect(field?.values).toEqual([0, undefined, undefined, undefined, 1, undefined, null, 1, 2]);
   });
   it('should try to sort time fields', () => {
     const frames = [
@@ -102,7 +119,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const result = prepareTimelineFields(frames, timeRange, theme);
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
     expect(result.frames?.[0].fields[0].values).toEqual([1, 2, 3, 4]);
   });
 
@@ -159,7 +176,7 @@ describe('prepare timeline graph', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, timeRange2, theme);
+    const info = prepareTimelineFields(frames, true, timeRange2, theme);
 
     // 'Mix' states: RUN -> 0
     expect(info.frames![0].fields[1].config.type?.enum?.text).toEqual(['RUN']);
@@ -255,7 +272,7 @@ describe('prepare timeline graph', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, timeRange2, theme);
+    const info = prepareTimelineFields(frames, true, timeRange2, theme);
 
     // 'Channel 1' states: OK -> 0, NO_DATA -> 1
     expect(info.frames![0].fields[1].config.type?.enum?.text).toEqual(['OK', 'NO_DATA']);
@@ -336,6 +353,24 @@ describe('prepareFieldsForPagination', () => {
         ],
       },
     ]);
+  });
+});
+
+describe('mergeConsecutiveValues', () => {
+  it('replaces consecutive duplicates with undefined', () => {
+    expect(mergeConsecutiveValues([0, 0, 0, 1, 1, 0])).toEqual([0, undefined, undefined, 1, undefined, 0]);
+  });
+
+  it('continues runs through undefined samples', () => {
+    expect(mergeConsecutiveValues([0, undefined, 0, 1])).toEqual([0, undefined, undefined, 1]);
+  });
+
+  it('never merges nulls and ends runs at them', () => {
+    expect(mergeConsecutiveValues([0, null, null, 0, 0])).toEqual([0, null, null, 0, undefined]);
+  });
+
+  it('never merges NaN samples', () => {
+    expect(mergeConsecutiveValues([NaN, NaN, 1])).toEqual([NaN, NaN, 1]);
   });
 });
 
@@ -456,7 +491,7 @@ describe('prepareTimelineLegendItems', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
 
     expect(result?.map(({ label, color }) => ({ label, color }))).toEqual([
@@ -490,7 +525,7 @@ describe('prepareTimelineLegendItems', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
 
     expect(result?.map(({ label, color }) => ({ label, color }))).toEqual([
@@ -509,7 +544,7 @@ describe('prepareTimelineLegendItems', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
 
     expect(result?.map(({ label }) => label)).toEqual(['ON', 'OFF']);
@@ -525,7 +560,7 @@ describe('prepareTimelineLegendItems', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     const result = prepareTimelineLegendItems(info.frames, { ...legendOptions, showLegend: false }, theme);
 
     expect(result).toBeUndefined();

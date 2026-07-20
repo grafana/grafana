@@ -56,7 +56,8 @@ export const StatusHistoryPanel = ({
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, timeRange, theme),
+    // status-history draws a discrete cell per sample, so consecutive equal values are never merged
+    () => prepareTimelineFields(data.series, false, timeRange, theme),
     [data.series, timeRange, theme]
   );
 

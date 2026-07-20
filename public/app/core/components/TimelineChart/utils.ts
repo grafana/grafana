@@ -49,7 +49,6 @@ interface UPlotConfigOptions {
   colWidth?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
-  mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
   axisWidth?: number;
@@ -89,7 +88,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   colWidth,
   showValue,
   alignValue,
-  mergeValues,
   getValueColor,
   hoverMulti,
   xAxisConfig,
@@ -126,7 +124,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     hasMappedNaN: (seriesIdx) =>
       hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NaN) ||
       hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
-    mergeValues,
     rowHeight: rowHeight,
     colWidth: colWidth,
     showValue: showValue!,
@@ -403,9 +400,36 @@ export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
   return enumField;
 }
 
+/**
+ * Replaces consecutive duplicate values with `undefined`, which the join and renderer treat as
+ * "no state change here" (the previous box simply extends through it). This merges equal
+ * consecutive values at the data level, so the renderer, tooltip duration, and legend all see
+ * the same state runs. `undefined` samples are skipped (they are already merged/holes), and
+ * nulls always terminate a run (a null is a gap, never merged).
+ */
+export function mergeConsecutiveValues<T>(values: T[]): Array<T | undefined> {
+  const merged: Array<T | undefined> = Array(values.length);
+  let prev: T | undefined = undefined;
+
+  for (let i = 0; i < values.length; i++) {
+    const val = values[i];
+
+    if (val === undefined) {
+      merged[i] = undefined;
+    } else {
+      // NaN !== NaN, so NaN samples never merge (same as the old renderer comparison)
+      merged[i] = val !== null && val === prev ? undefined : val;
+      prev = val;
+    }
+  }
+
+  return merged;
+}
+
 // This will return a set of frames with only graphable values included
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
+  mergeValues: boolean,
   timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
@@ -498,10 +522,18 @@ export function prepareTimelineFields(
         case FieldType.enum:
         case FieldType.number:
         case FieldType.boolean:
-        case FieldType.string:
-          fields.push(toEnumField(field, theme));
+        case FieldType.string: {
+          // toEnumField always returns a fresh Field object, so replacing its values is safe
+          const enumField = toEnumField(field, theme);
+
+          if (mergeValues) {
+            enumField.values = mergeConsecutiveValues(enumField.values);
+          }
+
+          fields.push(enumField);
           changed = true;
           break;
+        }
         default:
           changed = true;
       }

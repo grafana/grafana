@@ -55,8 +55,8 @@ export const StateTimelinePanel = ({
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, timeRange, theme),
-    [data.series, timeRange, theme]
+    () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
+    [data.series, options.mergeValues, timeRange, theme]
   );
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
