@@ -199,23 +199,24 @@ export function PanelFrameTitleInput({
 
 export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: string }) {
   const { description, subtitle } = panel.useState();
-  const [prevDescription, setPrevDescription] = React.useState(subtitle ?? description ?? '');
+  const [prevDescription, setPrevDescription] = React.useState(description ?? subtitle ?? '');
+  let propName: 'description' | 'subtitle' = description ? 'description' : 'subtitle';
 
   const onCommitDescriptionChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     dashboardEditActions.edit({
-      description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
+      description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
-      perform: () => panel.setState({ description: description }),
-      undo: () => panel.setState({ description: prevDescription }),
+      perform: () => panel.setState({ [propName]: description }),
+      undo: () => panel.setState({ [propName]: prevDescription }),
     });
   };
 
   const onToggleSubtitle = (evt: React.ChangeEvent<HTMLInputElement>) => {
     dashboardEditActions.edit({
-      description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
+      description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => {
-        if (evt.currentTarget.checked) {
+        if (propName === 'description') {
           panel.setState({ subtitle: description });
           panel.setState({ description: undefined });
         } else {
@@ -223,15 +224,16 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
           panel.setState({ subtitle: undefined });
         }
       },
-      undo: () => {},
+      undo: () => {
+        if (propName === 'description') {
+          panel.setState({ subtitle: undefined });
+          panel.setState({ description: description });
+        } else {
+          panel.setState({ subtitle: subtitle });
+          panel.setState({ description: undefined });
+        }
+      },
     });
-    if (evt.currentTarget.checked) {
-      panel.setState({ subtitle: description });
-      panel.setState({ description: undefined });
-    } else {
-      panel.setState({ description: subtitle });
-      panel.setState({ subtitle: undefined });
-    }
   };
 
   const label = (
@@ -247,6 +249,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
           value={!!subtitle}
           onChange={onToggleSubtitle}
           label={t('dashboard.viz-panel.options.description-as-subtitle', 'As subtitle')}
+          data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('subtitle-switch')}
         />
       </Stack>
     </Stack>
@@ -272,7 +275,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
     dashboardEditActions.edit({
-      description: t('dashboard.edit-actions.panel-background', 'Change panel background'),
+      description: t('dashboard.edit-actions.panel-background', 'panel background change'),
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),
       undo: () => panel.setState({ displayMode: displayMode }),
@@ -292,7 +295,7 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
   }
 
   dashboardEditActions.edit({
-    description: t('dashboard.edit-actions.panel-title', 'Change panel title'),
+    description: t('dashboard.edit-actions.panel-title', 'panel title change'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),
     undo: () => updatePanelTitleState(panel, prevTitle),
