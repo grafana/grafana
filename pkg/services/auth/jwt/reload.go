@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -69,11 +68,8 @@ func validateJWTSettings(parsed setting.AuthJWTSettings, env string) error {
 		return err
 	}
 
-	if parsed.ExpectClaims != "" {
-		var dummy map[string]any
-		if err := json.Unmarshal([]byte(parsed.ExpectClaims), &dummy); err != nil {
-			return fmt.Errorf("invalid expect_claims: %w", err)
-		}
+	if _, _, err := parseClaimExpectations(parsed.ExpectClaims); err != nil {
+		return fmt.Errorf("invalid expect_claims: %w", err)
 	}
 
 	return nil

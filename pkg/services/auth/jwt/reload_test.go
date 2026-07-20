@@ -114,6 +114,21 @@ func TestValidate_RejectsInvalidExpectClaims(t *testing.T) {
 	require.Contains(t, err.Error(), "expect_claims")
 }
 
+func TestValidate_RejectsInvalidExpectClaimTypes(t *testing.T) {
+	s := &AuthService{Cfg: &setting.Cfg{}}
+
+	err := s.Validate(context.Background(), models.SSOSettings{
+		Settings: map[string]any{
+			"enabled":       true,
+			"header_name":   "X-JWT",
+			"jwk_set_url":   "https://example.com/.well-known/jwks.json",
+			"expect_claims": `{"iss": 123}`,
+		},
+	}, models.SSOSettings{}, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "expect_claims")
+}
+
 func TestReload_DisabledClearsKeyset(t *testing.T) {
 	s := &AuthService{Cfg: &setting.Cfg{}, log: log.New("test")}
 

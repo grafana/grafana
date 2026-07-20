@@ -520,7 +520,7 @@ func (s *Service) mergeSSOSettings(dbSettings, systemSettings *models.SSOSetting
 	result := &models.SSOSettings{
 		Provider: dbSettings.Provider,
 		Source:   dbSettings.Source,
-		Settings: mergeSettings(dbSettings.Settings, systemSettings.Settings),
+		Settings: mergeSettings(dbSettings.Provider, dbSettings.Settings, systemSettings.Settings),
 		Created:  dbSettings.Created,
 		Updated:  dbSettings.Updated,
 	}
@@ -604,7 +604,7 @@ func getConfigMaps(settings map[string]any) []map[string]any {
 // mergeSettings merges two maps in a way that the values from the first map are preserved
 // and the values from the second map are added only if they don't exist in the first map
 // or if they contain empty URLs.
-func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
+func mergeSettings(provider string, storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
 	for k, v := range storedSettings {
@@ -613,10 +613,10 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
-			if isMergingAllowed(k) {
+			if isMergingAllowed(provider, k) {
 				settings[k] = v
 			}
-		} else if isURL(k) && isEmptyString(settings[k]) && isMergingAllowed(k) {
+		} else if isURL(k) && isEmptyString(settings[k]) && isMergingAllowed(provider, k) {
 			// Overwrite all URL settings from the DB containing an empty string with their value
 			// from the system settings. This fixes an issue with empty auth_url, api_url and token_url
 			// from the DB not being replaced with their values defined in the system settings for
@@ -628,18 +628,33 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 	return settings
 }
 
+// jwtKeySourceFields are the mutually exclusive JWT key sources. The DB config
+// already holds exactly one, so none may be merged from the system settings or
+// the key source would become ambiguous on the next load.
+var jwtKeySourceFields = map[string]bool{
+	"jwk_set_url":   true,
+	"jwk_set_file":  true,
+	"jwk_set_value": true,
+	"key_file":      true,
+	"key_value":     true,
+}
+
 // isMergingAllowed returns true if the field provided can be merged from the system settings.
 // It won't allow fields that are part of a mutually exclusive group to be merged from system
-// settings, because the DB settings already contain one valid setting from each group. This
-// covers SAML certificate/key/metadata groups and the JWT key-source group (jwk_set_* and
-// key_file/key_value), where merging a system value back in would make the key source ambiguous.
-func isMergingAllowed(fieldName string) bool {
-	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata", "jwk_set", "key_file", "key_value"}
+// settings, because the DB settings already contain one valid setting from each group: the SAML
+// certificate/key/metadata groups (any provider) and the JWT key-source group (JWT only, since
+// jwk_set_url is a non-exclusive field for OAuth providers).
+func isMergingAllowed(provider, fieldName string) bool {
+	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata"}
 
 	for _, v := range forbiddenMergePatterns {
-		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+		if strings.Contains(strings.ToLower(fieldName), v) {
 			return false
 		}
+	}
+
+	if provider == social.JWTProviderName && jwtKeySourceFields[fieldName] {
+		return false
 	}
 	return true
 }

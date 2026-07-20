@@ -74,29 +74,32 @@ func (s *AuthService) init() error {
 }
 
 // apply installs a parsed settings struct as the current state.
-// Callers must hold s.mu for writing. On failure the previous working state is
-// left intact so a bad reload can't disable verification for a running server.
+// Callers must hold s.mu for writing. The new state is fully built before any
+// field is swapped, so a failed reload leaves the previous working state intact
+// and can't disable verification for a running server.
 func (s *AuthService) apply(next setting.AuthJWTSettings) error {
-	prevSettings, prevKeySet := s.settings, s.keySet
-	prevExpect, prevExpectRegistered := s.expect, s.expectRegistered
-
-	s.settings = next
-	s.keySet = nil
-	s.expect = nil
-	s.expectRegistered = jwt.Expected{}
-
 	if !next.Enabled {
+		s.settings = next
+		s.keySet = nil
+		s.expect = nil
+		s.expectRegistered = jwt.Expected{}
 		return nil
 	}
 
-	if err := s.initClaimExpectations(); err != nil {
-		s.settings, s.keySet, s.expect, s.expectRegistered = prevSettings, prevKeySet, prevExpect, prevExpectRegistered
+	expect, expectRegistered, err := parseClaimExpectations(next.ExpectClaims)
+	if err != nil {
 		return err
 	}
-	if err := s.initKeySet(); err != nil {
-		s.settings, s.keySet, s.expect, s.expectRegistered = prevSettings, prevKeySet, prevExpect, prevExpectRegistered
+
+	keySet, err := s.buildKeySet(next)
+	if err != nil {
 		return err
 	}
+
+	s.settings = next
+	s.keySet = keySet
+	s.expect = expect
+	s.expectRegistered = expectRegistered
 	return nil
 }
 

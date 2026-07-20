@@ -9,16 +9,17 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 )
 
-func (s *AuthService) initClaimExpectations() error {
-	if s.settings.ExpectClaims == "" {
-		s.expect = map[string]any{}
-		s.expectRegistered = jwt.Expected{}
-		return nil
+// parseClaimExpectations parses the expect_claims JSON into the free-form claim
+// map and the registered-claim expectations, validating the types of the
+// registered claims (iss/sub/aud). An empty input yields empty expectations.
+func parseClaimExpectations(raw string) (map[string]any, jwt.Expected, error) {
+	if raw == "" {
+		return map[string]any{}, jwt.Expected{}, nil
 	}
 
 	expect := map[string]any{}
-	if err := json.Unmarshal([]byte(s.settings.ExpectClaims), &expect); err != nil {
-		return err
+	if err := json.Unmarshal([]byte(raw), &expect); err != nil {
+		return nil, jwt.Expected{}, err
 	}
 
 	var expectRegistered jwt.Expected
@@ -28,14 +29,14 @@ func (s *AuthService) initClaimExpectations() error {
 			if stringValue, ok := value.(string); ok {
 				expectRegistered.Issuer = stringValue
 			} else {
-				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
+				return nil, jwt.Expected{}, fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
 			}
 			delete(expect, key)
 		case "sub":
 			if stringValue, ok := value.(string); ok {
 				expectRegistered.Subject = stringValue
 			} else {
-				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
+				return nil, jwt.Expected{}, fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
 			}
 			delete(expect, key)
 		case "aud":
@@ -45,21 +46,19 @@ func (s *AuthService) initClaimExpectations() error {
 					if v, ok := val.(string); ok {
 						expectRegistered.AnyAudience = append(expectRegistered.AnyAudience, v)
 					} else {
-						return fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
+						return nil, jwt.Expected{}, fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
 					}
 				}
 			case string:
 				expectRegistered.AnyAudience = []string{value}
 			default:
-				return fmt.Errorf("%q expectation has invalid type %T, array or string expected", key, value)
+				return nil, jwt.Expected{}, fmt.Errorf("%q expectation has invalid type %T, array or string expected", key, value)
 			}
 			delete(expect, key)
 		}
 	}
 
-	s.expect = expect
-	s.expectRegistered = expectRegistered
-	return nil
+	return expect, expectRegistered, nil
 }
 
 func validateClaims(claims map[string]any, expect map[string]any, expectRegistered jwt.Expected) error {
