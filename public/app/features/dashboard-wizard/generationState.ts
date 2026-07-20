@@ -19,6 +19,14 @@
 export interface DashboardGenerationRequest {
   /** The full dashboard-building request handed to the assistant. */
   prompt: string;
+  /**
+   * Short user-facing text (the user's own wizard prompt and choices) shown
+   * as their message in the build conversation. The full `prompt` then
+   * reaches the agent as hidden context instead of being displayed. When
+   * unset — or with an older assistant plugin that predates the prop — the
+   * full `prompt` is shown as the message.
+   */
+  displayPrompt?: string;
   /** Origin identifier reported to the assistant. */
   origin: string;
   /** 'new' builds a fresh dashboard; 'current' improves the one that is open. */

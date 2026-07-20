@@ -18,7 +18,13 @@ import {
   prewarmDashboardGeneration,
   startDashboardGeneration,
 } from './generationState';
-import { SHOWCASE_INTENT, WIZARD_ORIGIN, buildGenerationPrompt } from './prompts';
+import {
+  SHOWCASE_DISPLAY_PROMPT,
+  SHOWCASE_INTENT,
+  WIZARD_ORIGIN,
+  buildDisplayPrompt,
+  buildGenerationPrompt,
+} from './prompts';
 import { supportsLabelLookups } from './tools';
 import { type WizardQuestion, type WizardRefinement, type WizardSeed } from './types';
 
@@ -61,6 +67,8 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
   const [freeText, setFreeText] = useState('');
   const [contextItems, setContextItems] = useState<ChatContextItem[]>([]);
   const [refinement, setRefinement] = useState<WizardRefinement | null>(null);
+  /** Plan changes the user asked for on the review step, shown in the build conversation. */
+  const [planFeedback, setPlanFeedback] = useState<string[]>([]);
 
   const [questions, setQuestions] = useState<WizardQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
@@ -135,6 +143,8 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
         return;
       }
       setRefinement(result);
+      // A fresh plan was proposed from scratch; feedback on the old one no longer applies.
+      setPlanFeedback([]);
       if (result.questions.length > 0) {
         setQuestions(result.questions);
         setAnswers({});
@@ -152,7 +162,7 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
 
   const handleShowMeWhatGrafanaCanDo = () => {
     // The showcase path has no user intent to preview, so build directly.
-    handOffToAssistant({ prompt: SHOWCASE_INTENT, questions: [] }, []);
+    handOffToAssistant({ prompt: SHOWCASE_INTENT, questions: [] }, [], SHOWCASE_DISPLAY_PROMPT);
   };
 
   /** The clarifying questions the user answered, folded into the build request. */
@@ -189,6 +199,7 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
       }
       reportInteraction('dashboard_wizard_plan_refined');
       setRefinement(result);
+      setPlanFeedback((prev) => [...prev, feedback.trim()]);
     } catch (err) {
       setError(getMessageFromError(err));
     } finally {
@@ -205,7 +216,9 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
    */
   const handOffToAssistant = (
     result: WizardRefinement,
-    clarifications: Array<{ question: string; answer: string }>
+    clarifications: Array<{ question: string; answer: string }>,
+    /** The request as the user typed it — shown as their message in the conversation. */
+    displayRequest: string = freeText.trim()
   ) => {
     reportInteraction('dashboard_wizard_generated', { contextItems: contextItems.length });
 
@@ -224,6 +237,7 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
         summary: result.summary,
         verifiedMetrics: result.verifiedMetrics,
       }),
+      displayPrompt: buildDisplayPrompt({ request: displayRequest, clarifications, planFeedback }),
     });
 
     // Land in the new-dashboard editor right away so the user watches the

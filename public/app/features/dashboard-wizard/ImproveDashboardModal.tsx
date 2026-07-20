@@ -84,6 +84,7 @@ export function ImproveDashboardModal({ dashboard, onDismiss }: Props) {
         datasources: scopeDatasourcesToContext(getWizardDatasources(), contextItems),
         contextNotes: contextNotes || undefined,
       }),
+      displayPrompt: request,
     });
 
     onDismiss();

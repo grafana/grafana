@@ -15,7 +15,7 @@ import {
   subscribeToDashboardGeneration,
   type DashboardGenerationRequest,
 } from './generationState';
-import { buildRepairPrompt } from './prompts';
+import { REPAIR_DISPLAY_PROMPT, buildRepairPrompt } from './prompts';
 import { validateGeneratedDashboard } from './validateGeneratedDashboard';
 
 const BUILDER_COMPONENT_ID = 'grafana-assistant-app/headless-dashboard-builder/v0';
@@ -27,6 +27,13 @@ const MAX_REPAIR_PASSES = 1;
 interface HeadlessDashboardBuilderProps {
   /** Omitted while prewarming; the build starts once it is set. */
   buildPrompt?: string;
+  /**
+   * Short user-facing text shown as the user's message in the build
+   * conversation; the full buildPrompt then reaches the agent as hidden
+   * context instead of being displayed. Older plugins ignore this and show
+   * the full buildPrompt.
+   */
+  displayPrompt?: string;
   origin?: string;
   /** 'new' (default) builds a fresh dashboard; 'current' improves the open one. */
   target?: 'new' | 'current';
@@ -52,6 +59,13 @@ interface HeadlessDashboardBuilderProps {
  * which lets the assistant pre-create the chat session the build will use.
  * The builder element stays in the same tree position across the prewarm →
  * active transition so React updates it in place rather than remounting.
+ *
+ * The host lives in AppWrapper rather than inside the dashboard scene on
+ * purpose: the wizard opens from pages with no dashboard scene (QuickAdd,
+ * browse dashboards, datasource settings, Explore), where prewarm must
+ * already be possible, and the generation starts *before* the navigation to
+ * /dashboard/new — the mounted builder has to survive that navigation, since
+ * unmounting it disposes the prewarmed session or cancels a running build.
  */
 export function DashboardGenerationHost() {
   const phase = useSyncExternalStore(subscribeToDashboardGeneration, getDashboardGenerationPhase);
@@ -147,6 +161,7 @@ function DashboardGenerationSurface({
         origin: request.origin,
         target: 'current',
         prompt: buildRepairPrompt(issues),
+        displayPrompt: REPAIR_DISPLAY_PROMPT,
         repairAttempt: attempt + 1,
       });
       return;
@@ -171,6 +186,7 @@ function DashboardGenerationSurface({
   return (
     <Builder
       buildPrompt={request?.prompt}
+      displayPrompt={request?.displayPrompt}
       origin={origin}
       target={request?.target}
       openInAssistant={true}
