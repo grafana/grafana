@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/services"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -192,23 +193,33 @@ func isRetriableFolderError(err error) bool {
 // returned to the caller, which allow-lists ErrGetOrCreateFolder so a folder
 // outage does not block startup.
 func (ps *ProvisioningServiceImpl) provisionDashboardsWithRetry(ctx context.Context) error {
+	bo := backoff.New(ctx, backoff.Config{
+		// Min==Max keeps the historical fixed backoff between attempts.
+		MinBackoff: ps.dashboardProvisionRetryBackoff,
+		MaxBackoff: ps.dashboardProvisionRetryBackoff,
+		MaxRetries: ps.dashboardProvisionRetries,
+	})
 	var err error
-	for attempt := 0; ; attempt++ {
+	for {
 		err = ps.ProvisionDashboards(ctx)
 		if err == nil || !isRetriableFolderError(err) {
 			return err
 		}
-		if attempt >= ps.dashboardProvisionRetries {
+		if !bo.Ongoing() {
+			// Ongoing() is also false when the context is cancelled; surface the
+			// cancellation rather than the allow-listed folder error in that case.
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return ctxErr
+			}
 			return err
 		}
 		ps.log.Warn("Failed to provision dashboards, folder API unavailable; retrying",
-			"attempt", attempt+1, "maxRetries", ps.dashboardProvisionRetries, "error", err)
-		select {
-		case <-ctx.Done():
+			"attempt", bo.NumRetries()+1, "maxRetries", ps.dashboardProvisionRetries, "error", err)
+		bo.Wait()
+		if ctxErr := ctx.Err(); ctxErr != nil {
 			// Return the cancellation, not the folder error, so an aborted startup
 			// is not allow-listed and reported as success by the caller.
-			return ctx.Err()
-		case <-time.After(ps.dashboardProvisionRetryBackoff):
+			return ctxErr
 		}
 	}
 }
