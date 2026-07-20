@@ -4,7 +4,7 @@ import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
-import { ConfirmModal, Menu, Popover, useStyles2 } from '@grafana/ui';
+import { ConfirmModal, Menu, Popover, Text, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import {
@@ -167,7 +167,13 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
           referenceElement={refEl}
           content={
             <div ref={menuRef}>
-              <Menu>
+              <Menu
+                header={
+                  <Text variant="bodySmall" color="secondary">
+                    {t('dashboard.auto-grid.resize-intercept.header', 'Cannot resize in auto layout')}
+                  </Text>
+                }
+              >
                 <Menu.Item
                   icon="apps"
                   label={t('dashboard.auto-grid.resize-intercept.edit', 'Edit auto layout')}

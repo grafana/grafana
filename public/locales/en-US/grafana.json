@@ -5381,6 +5381,7 @@
       "resize-intercept": {
         "aria-label": "Panel sizes are managed by auto layout",
         "edit": "Edit auto layout",
+        "header": "Cannot resize in auto layout",
         "switch": "Switch to custom"
       }
     },

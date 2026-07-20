@@ -259,8 +259,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
   }),
   // Hidden by default; revealed only while the active tab (bar or content) is hovered.
+  // height:0 + verticalAlign keeps the (taller-than-text) pill from growing the tab's line box when
+  // it appears — it overflows into the tab's vertical padding instead of making the whole bar jump.
   tabPill: css({
     display: 'none',
+    alignItems: 'center',
+    height: 0,
+    verticalAlign: 'middle',
   }),
 });
 

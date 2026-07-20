@@ -50,6 +50,7 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { LayoutModePill } from '../layouts-shared/LayoutModePill';
 import {
+  dashboardHasRowsOrTabs,
   getLayoutContainer,
   getLayoutModePill,
   getLayoutScope,
@@ -679,7 +680,8 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   // surface it in their own container header on hover.
   const container = showCanvasActions ? getLayoutContainer(model) : undefined;
   const pillInfo = getLayoutModePill(model);
-  const showDashboardPill = !!container && getLayoutScope(container) === 'dashboard' && !!pillInfo;
+  const showDashboardPill =
+    !!container && getLayoutScope(container) === 'dashboard' && !!pillInfo && dashboardHasRowsOrTabs(model);
 
   if (soloPanelContext) {
     return children.map((child) => <child.Component model={child} key={child.state.key!} />);

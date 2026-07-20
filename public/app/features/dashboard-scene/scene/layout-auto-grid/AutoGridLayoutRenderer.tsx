@@ -13,6 +13,7 @@ import { useDashboardState } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { LayoutModePill } from '../layouts-shared/LayoutModePill';
 import {
+  dashboardHasRowsOrTabs,
   getLayoutContainer,
   getLayoutModePill,
   getLayoutScope,
@@ -48,7 +49,8 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   const container = showCanvasActions ? getLayoutContainer(layoutManager) : undefined;
   const scope = container ? getLayoutScope(container) : undefined;
   const pillInfo = getLayoutModePill(layoutManager);
-  const showDashboardPill = !!container && scope === 'dashboard' && !!pillInfo;
+  const showDashboardPill =
+    !!container && scope === 'dashboard' && !!pillInfo && dashboardHasRowsOrTabs(layoutManager);
 
   if (soloPanelContext) {
     return children.map((item) => <item.Component key={item.state.key} model={item} />);

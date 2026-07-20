@@ -7,7 +7,9 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
@@ -60,6 +62,15 @@ export function getLayoutContainer(manager: DashboardLayoutManager): SceneObject
   }
 
   return getDashboardSceneFor(manager);
+}
+
+/**
+ * Whether the dashboard is split into rows or tabs. The dashboard-scope layout pill is only useful
+ * when there are such containers to disambiguate; a flat single-grid dashboard doesn't need it.
+ */
+export function dashboardHasRowsOrTabs(scene: SceneObject): boolean {
+  const body = getDashboardSceneFor(scene).state.body;
+  return body instanceof RowsLayoutManager || body instanceof TabsLayoutManager;
 }
 
 export function getLayoutScope(container: SceneObject): AutoLayoutScope {
