@@ -56,11 +56,11 @@ func rebaseNextLink(baseURL, nextLink string) string {
 	}
 	next, err := url.Parse(nextLink)
 	if err != nil {
-		return nextLink
+		return ""
 	}
 	base, err := url.Parse(baseURL)
 	if err != nil {
-		return nextLink
+		return ""
 	}
 	rebased := *base
 	rebased.RawQuery = next.RawQuery

@@ -153,6 +153,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		require.Contains(t, link, `rel="next"`)
 		require.Contains(t, link, "nextToken=page2")
 		require.Contains(t, link, "listAll=false")
+		require.Contains(t, link, "api-version=2019-03-01")
 
 		body, err := readAllClose(res)
 		require.NoError(t, err)
