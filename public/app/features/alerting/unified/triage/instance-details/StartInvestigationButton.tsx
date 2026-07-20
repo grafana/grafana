@@ -40,7 +40,10 @@ export function StartInvestigationButton({
   rule,
   alertState,
 }: StartInvestigationButtonProps) {
-  const featureEnabled = Boolean(config.featureToggles.alertingEnrichmentAssistantInvestigations);
+  const featureEnabled = Boolean(
+    config.featureToggles.alertingEnrichmentAssistantInvestigations &&
+      config.featureToggles.alertingManualAssistantInvestigation
+  );
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
 
   // Stable identity for RTK Query cache keys — omit startsAt (set only on create).

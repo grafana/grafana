@@ -760,6 +760,11 @@ export interface FeatureToggles {
   */
   alertingEnrichmentAssistantInvestigations?: boolean;
   /**
+  * Enable manually starting an Assistant investigation from the alert instance drawer.
+  * @default false
+  */
+  alertingManualAssistantInvestigation?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
