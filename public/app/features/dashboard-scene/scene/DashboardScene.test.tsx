@@ -777,6 +777,13 @@ describe('DashboardScene', () => {
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
+      it('Should do nothing when pasting with an empty clipboard', () => {
+        store.delete(LS_PANEL_COPY_KEY);
+
+        expect(() => scene.pastePanel()).not.toThrow();
+        expect(buildGridItemForPanel).not.toHaveBeenCalled();
+      });
+
       describe('Copy/Paste panel styles', () => {
         const createTimeseriesPanel = () => {
           return new VizPanel({

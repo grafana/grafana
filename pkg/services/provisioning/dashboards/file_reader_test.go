@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -568,6 +569,35 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 		_, _, err = r.getOrCreateFolder(ctx, cfg, cfg.Folder)
 		require.NoError(t, err)
+	})
+
+	t.Run("transient folder update failure preserves the API error for retry", func(t *testing.T) {
+		setup()
+		cfg := &config{
+			Name:    configName,
+			Type:    "file",
+			OrgID:   1,
+			Folder:  "TEAM A",
+			Options: map[string]any{"folder": defaultDashboards},
+		}
+
+		// Pre-existing folder without a ManagedBy annotation triggers the update path.
+		fakeFolder := foldertest.NewFakeService()
+		fakeFolder.ExpectedFolder = &folder.Folder{UID: "team-a"}
+		// Dedicated mock: the shared fakeService has a broader UpdateFolderWithManagedByAnnotation
+		// expectation from another subtest that would otherwise swallow this call.
+		localFake := &dashboards.FakeDashboardProvisioning{}
+		localFake.On("UpdateFolderWithManagedByAnnotation", mock.Anything, mock.Anything, configName).
+			Return(nil, apierrors.NewServiceUnavailable("folder API unavailable"))
+
+		r, err := NewDashboardFileReader(cfg, logger, localFake, fakeStore, fakeFolder, cfgT)
+		require.NoError(t, err)
+
+		ctx := context.Background()
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
+		_, _, err = r.getOrCreateFolder(ctx, cfg, cfg.Folder)
+		require.Error(t, err)
+		require.True(t, apierrors.IsServiceUnavailable(err), "underlying 503 must survive for retry classification")
 	})
 
 	t.Run("should not create dashboard folder with uid general", func(t *testing.T) {
