@@ -37,9 +37,10 @@ type PropsType = {
   copyText: string;
   icon?: IconName;
   tooltipTitle: string;
+  ariaLabel?: string;
 };
 
-export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTitle }: PropsType) {
+export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTitle, ariaLabel }: PropsType) {
   const styles = useStyles2(getStyles);
 
   const [hasCopied, setHasCopied] = useState(false);
@@ -52,7 +53,7 @@ export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTi
   return (
     <Tooltip content={hasCopied ? t('explore.trace-view.tooltip-copy-icon', 'Copied') : tooltipTitle}>
       <Button
-        aria-label={t('explore.trace-view.aria-label-copy', 'Copy to clipboard')}
+        aria-label={ariaLabel ?? t('explore.trace-view.aria-label-copy', 'Copy to clipboard')}
         className={cx(styles.CopyIcon, className)}
         type="button"
         icon={icon}

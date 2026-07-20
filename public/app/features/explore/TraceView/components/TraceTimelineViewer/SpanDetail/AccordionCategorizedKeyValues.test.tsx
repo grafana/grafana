@@ -59,6 +59,44 @@ describe('AccordionCategorizedKeyValues', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
+  it('does not render Copy as TraceQL buttons by default', () => {
+    render(
+      <AccordionCategorizedKeyValues
+        data={tags}
+        sectionType="span"
+        isOpen={true}
+        label="Span attributes"
+        onToggle={jest.fn()}
+      />
+    );
+
+    const buttons = screen.getAllByRole('button', { hidden: true });
+    expect(buttons.filter((button) => button.getAttribute('aria-label') === 'Copy to clipboard')).toHaveLength(
+      tags.length
+    );
+  });
+
+  it('renders an extra Copy as TraceQL button per row when enableTraceQLCopy is set', () => {
+    render(
+      <AccordionCategorizedKeyValues
+        data={tags}
+        sectionType="span"
+        isOpen={true}
+        label="Span attributes"
+        onToggle={jest.fn()}
+        enableTraceQLCopy
+      />
+    );
+
+    const buttons = screen.getAllByRole('button', { hidden: true });
+    expect(buttons.filter((button) => button.getAttribute('aria-label') === 'Copy to clipboard')).toHaveLength(
+      tags.length
+    );
+    expect(buttons.filter((button) => button.getAttribute('aria-label') === 'Copy as TraceQL')).toHaveLength(
+      tags.length
+    );
+  });
+
   it('toggles category sections open and closed', async () => {
     render(
       <AccordionCategorizedKeyValues

@@ -22,6 +22,8 @@ export type AccordionCategorizedKeyValuesProps = {
   label: React.ReactNode;
   linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
   onToggle?: null | (() => void);
+  // TraceQL is Tempo-specific, so callers only set this when the trace came from a Tempo datasource.
+  enableTraceQLCopy?: boolean;
 };
 
 export default function AccordionCategorizedKeyValues({
@@ -31,6 +33,7 @@ export default function AccordionCategorizedKeyValues({
   label,
   linksGetter,
   onToggle = null,
+  enableTraceQLCopy = false,
 }: AccordionCategorizedKeyValuesProps) {
   const styles = useStyles2(getStyles);
   const isEmpty = !Array.isArray(data) || !data.length;
@@ -111,7 +114,11 @@ export default function AccordionCategorizedKeyValues({
                 </button>
                 {isCategoryOpen && (
                   <div className={styles.categoryContent}>
-                    <KeyValuesTable data={attributes} linksGetter={linksGetter} />
+                    <KeyValuesTable
+                      data={attributes}
+                      linksGetter={linksGetter}
+                      scope={enableTraceQLCopy ? sectionType : undefined}
+                    />
                   </div>
                 )}
               </div>
