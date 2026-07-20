@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { DashboardCursorSync, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { useFlagDashboardsFilterablePanels } from '@grafana/runtime/internal';
 import {
@@ -19,11 +19,12 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
-import { getFilterByGroupedLabels, getTimezones } from '../timeseries/utils';
+import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { usePagination } from './hooks';
@@ -63,6 +64,14 @@ export const StateTimelinePanel = ({
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   const filteringEnabled = useFlagDashboardsFilterablePanels();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      filteringEnabled
+        ? getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters)
+        : undefined,
+    [filteringEnabled, getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
@@ -154,16 +163,7 @@ export const StateTimelinePanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
-                        filterByGroupedLabels={
-                          filteringEnabled
-                            ? getFilterByGroupedLabels(
-                                alignedFrame,
-                                seriesIdx,
-                                getFiltersBasedOnGrouping,
-                                onAddAdHocFilters
-                              )
-                            : undefined
-                        }
+                        filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                         canExecuteActions={userCanExecuteActions}
                       />
                     );

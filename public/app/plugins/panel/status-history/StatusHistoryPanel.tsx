@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { DashboardCursorSync, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { useFlagDashboardsFilterablePanels } from '@grafana/runtime/internal';
@@ -20,6 +20,7 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
 import { usePagination } from '../state-timeline/hooks';
@@ -27,7 +28,7 @@ import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
-import { getFilterByGroupedLabels, getTimezones } from '../timeseries/utils';
+import { getTimezones } from '../timeseries/utils';
 
 import { type Options } from './panelcfg.gen';
 
@@ -64,6 +65,14 @@ export const StatusHistoryPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   const filteringEnabled = useFlagDashboardsFilterablePanels();
+
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      filteringEnabled
+        ? getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters)
+        : undefined,
+    [filteringEnabled, getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),
@@ -175,16 +184,7 @@ export const StatusHistoryPanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
-                        filterByGroupedLabels={
-                          filteringEnabled
-                            ? getFilterByGroupedLabels(
-                                alignedFrame,
-                                seriesIdx,
-                                getFiltersBasedOnGrouping,
-                                onAddAdHocFilters
-                              )
-                            : undefined
-                        }
+                        filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                         canExecuteActions={userCanExecuteActions}
                       />
                     );

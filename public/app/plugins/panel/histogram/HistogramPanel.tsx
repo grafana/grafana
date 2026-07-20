@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   histogramFieldsToFrame,
   joinHistograms,
+  type DataFrame,
   DataFrameType,
   type PanelProps,
   buildHistogram,
@@ -13,8 +14,7 @@ import { Trans } from '@grafana/i18n';
 import { useFlagDashboardsFilterablePanels } from '@grafana/runtime/internal';
 import { TooltipDisplayMode, TooltipPlugin2, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
-
-import { getFilterByGroupedLabels } from '../timeseries/utils';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';
@@ -26,6 +26,14 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
   const theme = useTheme2();
   const { getFiltersBasedOnGrouping, onAddAdHocFilters } = usePanelContext();
   const filteringEnabled = useFlagDashboardsFilterablePanels();
+
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      filteringEnabled
+        ? getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters)
+        : undefined,
+    [filteringEnabled, getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
 
   const histogram = useMemo(() => {
     if (!data.series.length) {
@@ -114,16 +122,7 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
                       sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
                       maxHeight={options.tooltip.maxHeight}
-                      filterByGroupedLabels={
-                        filteringEnabled
-                          ? getFilterByGroupedLabels(
-                              xMinOnlyFrame,
-                              seriesIdx,
-                              getFiltersBasedOnGrouping,
-                              onAddAdHocFilters
-                            )
-                          : undefined
-                      }
+                      filterByGroupedLabels={getFilterByGroupedLabelsModel(xMinOnlyFrame, seriesIdx)}
                     />
                   );
                 }}
