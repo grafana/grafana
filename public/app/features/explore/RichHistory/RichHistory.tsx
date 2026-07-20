@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -62,13 +62,28 @@ export function RichHistory(props: RichHistoryProps) {
     loadRichHistory();
   };
 
+  // Sequences concurrent loads so a stale resolution can't overwrite state that
+  // belongs to a newer request: an older rejection settling after a newer load,
+  // or an older success clearing an error raised by the latest filter change.
+  const latestLoadId = useRef(0);
+
   const loadRichHistory = debounce(() => {
+    const loadId = ++latestLoadId.current;
     setLoading(true);
     setLoadError(false);
-    props.loadRichHistory().catch(() => {
-      setLoading(false);
-      setLoadError(true);
-    });
+    props.loadRichHistory().then(
+      () => {
+        if (loadId === latestLoadId.current) {
+          setLoading(false);
+        }
+      },
+      () => {
+        if (loadId === latestLoadId.current) {
+          setLoading(false);
+          setLoadError(true);
+        }
+      }
+    );
   }, 300);
 
   const onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
@@ -82,11 +97,6 @@ export function RichHistory(props: RichHistoryProps) {
 
   const toggleActiveDatasourcesOnly = () =>
     updateSettings({ activeDatasourcesOnly: !props.richHistorySettings.activeDatasourcesOnly });
-
-  useEffect(() => {
-    setLoading(false);
-    setLoadError(false);
-  }, [richHistory]);
 
   const exploreActiveDS = useSelector(selectExploreDSMaps);
   const {

@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
@@ -99,6 +100,28 @@ describe('RichHistoryStarredTab', () => {
     fireEvent.change(input, { target: { value: '|=' } });
 
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ search: '|=' }));
+  });
+
+  it('updates the sort order filter when a new sort option is picked', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    updateFiltersSpy.mockClear(); // ignore the mount seed
+
+    const sortSelect = within(await screen.findByLabelText('Sort queries')).getByRole('combobox');
+    await selectOptionInTest(sortSelect, 'Newest first');
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ sortOrder: SortOrder.Descending }));
+  });
+
+  it('updates the datasource filter when a datasource is selected', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    updateFiltersSpy.mockClear(); // ignore the mount seed
+
+    const dsSelect = await screen.findByLabelText('Filter queries for data sources(s)');
+    await selectOptionInTest(dsSelect, 'active-ds');
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ datasourceFilters: ['active-ds'] }));
   });
 
   it('should show the loading message instead of cards while datasource instances are loading', async () => {

@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 // eslint-disable-next-line no-restricted-imports -- wildcard is used to spy on `useAsync`, not `useObservable`
 import * as reactUse from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
@@ -129,6 +130,17 @@ describe('RichHistoryQueriesTab', () => {
     // Once resolved, it seeds exactly once, using the now-populated active datasources.
     expect(updateFiltersSpy).toHaveBeenCalledTimes(1);
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ datasourceFilters: ['test-ds'] }));
+  });
+
+  it('updates the sort order filter when a new sort option is picked', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    updateFiltersSpy.mockClear(); // ignore the mount seed
+
+    const sortSelect = within(await screen.findByLabelText('Sort queries')).getByRole('combobox');
+    await selectOptionInTest(sortSelect, 'Oldest first');
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ sortOrder: SortOrder.Ascending }));
   });
 
   it('shows a datasource-list error instead of results when the list fails in active-only mode', () => {
