@@ -17,12 +17,21 @@ import {
 } from '../../api/assistantApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
+import { createAbsoluteUrl } from '../../utils/url';
 
 interface StartInvestigationButtonProps {
   instanceLabels: Labels;
   commonLabels?: Labels;
   rule?: GrafanaRuleDefinition;
   alertState?: GrafanaAlertState | null;
+}
+
+/** True when both product toggles for the manual investigation entry point are on. */
+export function isManualAssistantInvestigationEnabled(): boolean {
+  return Boolean(
+    config.featureToggles.alertingEnrichmentAssistantInvestigations &&
+      config.featureToggles.alertingManualAssistantInvestigation
+  );
 }
 
 /**
@@ -40,10 +49,7 @@ export function StartInvestigationButton({
   rule,
   alertState,
 }: StartInvestigationButtonProps) {
-  const featureEnabled = Boolean(
-    config.featureToggles.alertingEnrichmentAssistantInvestigations &&
-      config.featureToggles.alertingManualAssistantInvestigation
-  );
+  const featureEnabled = isManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
 
   // Stable identity for RTK Query cache keys — omit startsAt (set only on create).
@@ -55,8 +61,34 @@ export function StartInvestigationButton({
     [JSON.stringify(instanceLabels), JSON.stringify(commonLabels), rule?.uid, rule?.title, alertState]
   );
 
-  const [startInvestigation, { isLoading: isStarting, data: startedInvestigation, isError: isStartError }] =
+  const requestBodyKey = useMemo(() => JSON.stringify(requestBody), [requestBody]);
+
+  const [startInvestigation, { isLoading, data, isError, reset, originalArgs }] =
     assistantApi.useStartInvestigationFromAlertMutation();
+
+  // Mutation result is shared RTK state. Only trust it for the current alert identity
+  // (startsAt is set only on create, so strip it before comparing).
+  const mutationMatchesCurrent = useMemo(() => {
+    if (!originalArgs) {
+      return false;
+    }
+    const normalized = {
+      ...originalArgs,
+      alerts: originalArgs.alerts.map(({ startsAt: _startsAt, ...alert }) => alert),
+    };
+    return JSON.stringify(normalized) === requestBodyKey;
+  }, [originalArgs, requestBodyKey]);
+
+  const startedInvestigation = mutationMatchesCurrent ? data : undefined;
+  const isStarting = mutationMatchesCurrent && isLoading;
+  const isStartError = mutationMatchesCurrent && isError;
+
+  // Drop stale mutation state when the drawer switches instances.
+  useEffect(() => {
+    if (!mutationMatchesCurrent) {
+      reset();
+    }
+  }, [mutationMatchesCurrent, reset]);
 
   const { data: lookedUpInvestigation, isLoading: isLookingUp } = assistantApi.useLookupInvestigationFromAlertQuery(
     requestBody,
@@ -196,7 +228,8 @@ export function buildFromAlertRequest({
   rule,
   alertState,
 }: StartInvestigationButtonProps): StartInvestigationFromAlertRequest {
-  const generatorURL = rule?.uid ? `${window.location.origin}/alerting/grafana/${rule.uid}/view` : undefined;
+  const generatorURL = rule?.uid ? createAbsoluteUrl(`/alerting/grafana/${rule.uid}/view`) : undefined;
+  const externalURL = config.appUrl.replace(/\/$/, '');
 
   // Stable alert-group identity for Assistant dedup/lookup. Prefer instance labels;
   // when an instance has none, fall back to rule identity so reopen still finds the link.
@@ -219,6 +252,6 @@ export function buildFromAlertRequest({
     ],
     commonLabels,
     groupLabels,
-    externalURL: window.location.origin,
+    externalURL,
   };
 }

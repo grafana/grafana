@@ -11,13 +11,13 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
-import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
+import { canAccessPluginPage, useIrmPlugin, usePluginBridge } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../../utils/misc';
 
 import { InstanceLocation } from './InstanceDetailsDrawer';
-import { StartInvestigationButton } from './StartInvestigationButton';
+import { StartInvestigationButton, isManualAssistantInvestigationEnabled } from './StartInvestigationButton';
 
 type StateTextState = 'normal' | 'firing' | 'pending' | 'recovering' | 'unknown';
 type StateTextHealth = 'ok' | 'nodata' | 'error';
@@ -72,6 +72,8 @@ export function InstanceDetailsDrawerTitle({
 }: InstanceDetailsDrawerTitleProps) {
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
+  const { installed: assistantInstalled } = usePluginBridge(SupportedPlugin.Assistant);
+  const showStartInvestigation = !hideActions && isManualAssistantInvestigationEnabled() && Boolean(assistantInstalled);
   const canCreateSilence = isGranted(
     useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID: rule?.namespace_uid })
   );
@@ -187,7 +189,7 @@ export function InstanceDetailsDrawerTitle({
             </Stack>
           )}
         </Stack>
-        {!hideActions && (
+        {showStartInvestigation && (
           <Box marginTop={0.5}>
             <Stack direction="row" justifyContent="flex-end">
               <StartInvestigationButton
