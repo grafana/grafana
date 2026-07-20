@@ -2,6 +2,7 @@ package teamimpl
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
@@ -22,6 +23,7 @@ type Service struct {
 	legacyService     team.Service
 	k8sService        team.Service
 	openFeatureClient *openfeature.Client
+	featureNamespace  string
 	logger            log.Logger
 	tracer            tracing.Tracer
 }
@@ -39,18 +41,27 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configPro
 	}
 
 	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider, tracer)
+	featureNamespace := "default"
+	if cfg.StackID != "" {
+		featureNamespace = "stacks-" + cfg.StackID
+	}
 
 	return &Service{
 		legacyService:     legacyService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		featureNamespace:  featureNamespace,
 		logger:            log.New("team"),
 		tracer:            tracer,
 	}, nil
 }
 
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return team.Team{}, err
+	}
+	if redirectEnabled {
 		return s.k8sService.CreateTeam(ctx, cmd)
 	}
 
@@ -58,7 +69,11 @@ func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return err
+	}
+	if redirectEnabled {
 		return s.k8sService.UpdateTeam(ctx, cmd)
 	}
 
@@ -66,7 +81,11 @@ func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) e
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return err
+	}
+	if redirectEnabled {
 		return s.k8sService.DeleteTeam(ctx, cmd)
 	}
 
@@ -74,7 +93,11 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) && !s.shouldFallbackToLegacy(ctx) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return team.SearchTeamQueryResult{}, err
+	}
+	if redirectEnabled && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.SearchTeams(ctx, query)
 	}
 
@@ -82,7 +105,11 @@ func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery)
 }
 
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) && !s.shouldFallbackToLegacy(ctx) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if redirectEnabled && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.GetTeamByID(ctx, query)
 	}
 
@@ -98,7 +125,11 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 
 	ctxLogger := s.logger.FromContext(ctx)
 
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if redirectEnabled {
 		result, err := s.k8sService.GetTeamsByUser(ctx, query)
 		if err == nil {
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
@@ -119,13 +150,17 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 	defer span.End()
 
 	ctxLogger := s.logger.FromContext(ctx)
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// GetTeamIDsByUser is called during authentication (e.g. middleware that
 	// resolves team-based permissions) before a requester has been attached to
 	// the context. The k8s service requires a requester to build the dynamic
 	// client, so skip the k8s attempt for these pre-auth calls to avoid noisy
 	// per-request fallback logs.
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) {
+	if redirectEnabled {
 		if _, err := identity.GetRequester(ctx); err == nil {
 			ids, uids, err := s.k8sService.GetTeamIDsByUser(ctx, query)
 			if err == nil {
@@ -141,7 +176,11 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 }
 
 func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return false, err
+	}
+	if redirectEnabled {
 		return s.k8sService.IsTeamMember(ctx, orgId, teamId, userId)
 	}
 
@@ -162,7 +201,11 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 
 	ctxLogger := s.logger.FromContext(ctx)
 
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if redirectEnabled {
 		result, err := s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
 		if err == nil {
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
@@ -176,7 +219,11 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 }
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
-	if team.IsK8sRedirectEnabled(ctx, s.openFeatureClient) {
+	redirectEnabled, err := s.isK8sRedirectEnabled(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if redirectEnabled {
 		return s.k8sService.GetTeamMembers(ctx, query)
 	}
 
@@ -190,6 +237,19 @@ func (s *Service) RegisterDelete(query string) {
 	// This is called at init time (Wire providers) where no request context
 	// exists, making feature flag evaluation with context.Background() unreliable.
 	s.legacyService.RegisterDelete(query)
+}
+
+func (s *Service) isK8sRedirectEnabled(ctx context.Context) (bool, error) {
+	namespace, _ := openfeature.TransactionContext(ctx).Attributes()["namespace"].(string)
+	if namespace == "" {
+		namespace = s.featureNamespace
+	}
+
+	enabled, err := team.IsK8sRedirectEnabledForNamespace(ctx, s.openFeatureClient, namespace)
+	if err != nil {
+		return false, fmt.Errorf("evaluate Team k8s redirect: %w", err)
+	}
+	return enabled, nil
 }
 
 // shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.

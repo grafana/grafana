@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func TestIsK8sRedirectEnabled(t *testing.T) {
+func TestIsK8sRedirectEnabledForNamespace(t *testing.T) {
 	t.Cleanup(func() {
 		require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
 	})
@@ -61,12 +61,47 @@ func TestIsK8sRedirectEnabled(t *testing.T) {
 			})
 			require.NoError(t, openfeature.SetProviderAndWait(provider))
 
-			require.Equal(t, tc.want, IsK8sRedirectEnabled(t.Context(), openfeature.NewDefaultClient()))
+			got, err := IsK8sRedirectEnabledForNamespace(t.Context(), openfeature.NewDefaultClient(), "stacks-123")
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
 		})
 	}
 
 	t.Run("disabled without an OpenFeature client", func(t *testing.T) {
-		require.False(t, IsK8sRedirectEnabled(t.Context(), nil))
+		got, err := IsK8sRedirectEnabledForNamespace(t.Context(), nil, "stacks-123")
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("rejects an empty namespace", func(t *testing.T) {
+		got, err := IsK8sRedirectEnabledForNamespace(t.Context(), openfeature.NewDefaultClient(), "")
+		require.EqualError(t, err, "namespace is required to evaluate the Team k8s redirect")
+		require.False(t, got)
+	})
+
+	t.Run("evaluates flags for the requested namespace", func(t *testing.T) {
+		namespaceEvaluator := func(flag memprovider.InMemoryFlag, flatCtx openfeature.FlattenedContext) (any, openfeature.ProviderResolutionDetail) {
+			enabled := flatCtx[openfeature.TargetingKey] == "stacks-123" && flatCtx["namespace"] == "stacks-123"
+			return enabled, openfeature.ProviderResolutionDetail{}
+		}
+		provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagKubernetesTeamsApi: {
+				Key:              featuremgmt.FlagKubernetesTeamsApi,
+				DefaultVariant:   "default",
+				Variants:         map[string]any{"default": false},
+				ContextEvaluator: &namespaceEvaluator,
+			},
+			featuremgmt.FlagKubernetesTeamsRedirect: newBooleanFlag(featuremgmt.FlagKubernetesTeamsRedirect, true),
+			featuremgmt.FlagKubernetesUsersApi:      newBooleanFlag(featuremgmt.FlagKubernetesUsersApi, true),
+		})
+		require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+		ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext("stacks-old", map[string]any{
+			"namespace": "stacks-old",
+		}))
+		got, err := IsK8sRedirectEnabledForNamespace(ctx, openfeature.NewDefaultClient(), "stacks-123")
+		require.NoError(t, err)
+		require.True(t, got)
 	})
 }
 
