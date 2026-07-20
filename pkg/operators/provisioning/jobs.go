@@ -1,8 +1,11 @@
 package provisioning
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -87,7 +90,11 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	features := featuremgmt.ProvideToggles(featureManager)
 	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
-	perfTestingEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningPerformance)       //nolint:staticcheck
+	// Evaluated per job via OpenFeature so the flag behaves consistently with the
+	// API server (see performanceEnabled in the provisioning apiserver package).
+	perfTestingEnabled := func(ctx context.Context) bool {
+		return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
+	}
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
