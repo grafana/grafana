@@ -21,6 +21,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
+// knownSchemaTypos lists (integration type, PropertyName) pairs where alerting's v1 schema declares a field name
+// that doesn't match the actual JSON key its Config struct reads, so the check below would otherwise flag a false
+// gap in definitions.go. These are upstream bugs in github.com/grafana/alerting, not fixable from this repo.
+var knownSchemaTypos = map[schema.IntegrationType]map[string]bool{
+	schema.TelegramType: {
+		// grafana/alerting's telegram v1 schema declares PropertyName "disable_notification" but
+		// Config.DisableNotifications actually reads "disable_notifications" (typo introduced in
+		// alerting@3da3b9a5, "Improve schemas"). The UI checkbox for this field is currently a no-op.
+		// Fix upstream, then remove this entry.
+		"disable_notification": true,
+	},
+}
+
 // TestContactPointDefinitionsMatchSchema asserts that every field declared in the v1 schema of an integration
 // (github.com/grafana/alerting) has a matching field in the corresponding definitions.XXXIntegration struct below.
 // Without this check, a new or renamed field in alerting's schema could silently fail to round-trip through
@@ -62,6 +75,9 @@ func definitionsStructFor(t *testing.T, integrationType schema.IntegrationType) 
 func assertFieldsMatchSchema(t *testing.T, integrationType schema.IntegrationType, fields []schema.Field, goType reflect.Type) {
 	t.Helper()
 	for _, field := range fields {
+		if knownSchemaTypos[integrationType][field.PropertyName] {
+			continue
+		}
 		structField, ok := jsonField(goType, field.PropertyName)
 		if !assert.Truef(t, ok, "%s: schema field %q has no matching field in definitions.%s", integrationType, field.PropertyName, goType.Name()) {
 			continue
