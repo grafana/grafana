@@ -16,6 +16,8 @@
  * clears them; holders are expected to release in a `finally`.
  */
 
+import { config } from '@grafana/runtime';
+
 export interface DashboardEditLockOptions {
   /** What is happening, e.g. "Building your dashboard". */
   label?: string;
@@ -56,7 +58,7 @@ export function acquireDashboardEditLock(options: DashboardEditLockOptions = {})
   notify();
 
   const warnTimeout =
-    process.env.NODE_ENV === 'development'
+    config.buildInfo.env === 'development'
       ? window.setTimeout(() => {
           console.warn(
             `Dashboard edit lock "${options.label ?? id}" has been held for over ${LOCK_HELD_WARNING_MS / 60000} minutes — did the holder forget to release it?`
