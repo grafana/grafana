@@ -31,7 +31,7 @@ export interface StartInvestigationFromAlertRequest {
 export interface AssistantInvestigation {
   id: string;
   title: string;
-  // Assistant-owned enum; known values include pending / in_progress / completed / failed.
+  // Assistant-owned enum; known values include pending / in_progress / paused / completed / failed / cancelled.
   state: string;
   chatId?: string;
 }
@@ -74,9 +74,12 @@ function unwrapAssistantDataResponse(response: unknown): AssistantInvestigation 
   return investigation;
 }
 
-const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'running', 'in_progress', 'in-progress']);
+// Includes paused — loops can pause mid-run and should keep the "in progress" UI.
+const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'running', 'in_progress', 'in-progress', 'paused']);
 
-/** True while the Assistant is still producing the report. */
+const TERMINAL_INVESTIGATION_STATES = new Set(['completed', 'failed', 'cancelled', 'canceled']);
+
+/** True while the Assistant is still producing the report (or paused mid-run). */
 export function isAssistantInvestigationActive(state: string | undefined): boolean {
   return !!state && ACTIVE_INVESTIGATION_STATES.has(state);
 }
@@ -89,6 +92,11 @@ export function isAssistantInvestigationCompleted(state: string | undefined): bo
 /** True when the investigation failed or was cancelled. */
 export function isAssistantInvestigationFailed(state: string | undefined): boolean {
   return state === 'failed' || state === 'cancelled' || state === 'canceled';
+}
+
+/** True when polling can stop — completed, failed, or cancelled. */
+export function isAssistantInvestigationTerminal(state: string | undefined): boolean {
+  return !!state && TERMINAL_INVESTIGATION_STATES.has(state);
 }
 
 export const assistantApi = alertingApi.injectEndpoints({

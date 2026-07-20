@@ -14,6 +14,7 @@ import {
   isAssistantInvestigationActive,
   isAssistantInvestigationCompleted,
   isAssistantInvestigationFailed,
+  isAssistantInvestigationTerminal,
 } from '../../api/assistantApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -111,8 +112,8 @@ export function StartInvestigationButton({
       setShouldPoll(false);
       return;
     }
-    // Until we have a state sample, assume still generating so reopen polls.
-    setShouldPoll(isAssistantInvestigationActive(investigation?.state ?? 'pending'));
+    // Keep polling until a terminal state — unknown/paused must not freeze the UI.
+    setShouldPoll(!isAssistantInvestigationTerminal(investigation?.state ?? 'pending'));
   }, [knownId, investigation?.state]);
 
   if (!featureEnabled || !installed) {
@@ -204,6 +205,25 @@ export function StartInvestigationButton({
           <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
         </Button>
       </Tooltip>
+    );
+  }
+
+  // Known investigation in an unexpected state — open it; never offer Start (would mislead).
+  if (investigation) {
+    return (
+      <LinkButton
+        icon="file-alt"
+        variant="primary"
+        fill="text"
+        size="sm"
+        href={getAssistantInvestigationUrl(investigation.id)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Trans i18nKey="alerting.triage.instance-details-drawer.open-investigation">
+          Open full investigation report
+        </Trans>
+      </LinkButton>
     );
   }
 

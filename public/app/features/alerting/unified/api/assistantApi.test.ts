@@ -3,11 +3,12 @@ import {
   isAssistantInvestigationActive,
   isAssistantInvestigationCompleted,
   isAssistantInvestigationFailed,
+  isAssistantInvestigationTerminal,
 } from './assistantApi';
 
 describe('assistantApi helpers', () => {
   describe('isAssistantInvestigationActive', () => {
-    it.each(['pending', 'running', 'in_progress', 'in-progress'])('treats %s as active', (state) => {
+    it.each(['pending', 'running', 'in_progress', 'in-progress', 'paused'])('treats %s as active', (state) => {
       expect(isAssistantInvestigationActive(state)).toBe(true);
     });
 
@@ -32,6 +33,19 @@ describe('assistantApi helpers', () => {
       expect(isAssistantInvestigationFailed('completed')).toBe(false);
       expect(isAssistantInvestigationFailed(undefined)).toBe(false);
     });
+  });
+
+  describe('isAssistantInvestigationTerminal', () => {
+    it.each(['completed', 'failed', 'cancelled', 'canceled'])('treats %s as terminal', (state) => {
+      expect(isAssistantInvestigationTerminal(state)).toBe(true);
+    });
+
+    it.each(['pending', 'in_progress', 'paused', 'weird-future-state', undefined, ''])(
+      'treats %s as non-terminal',
+      (state) => {
+        expect(isAssistantInvestigationTerminal(state)).toBe(false);
+      }
+    );
   });
 
   describe('getAssistantInvestigationUrl', () => {
