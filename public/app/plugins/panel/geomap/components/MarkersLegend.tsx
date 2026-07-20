@@ -1,6 +1,11 @@
 import { css, cx } from '@emotion/css';
 
-import { getMinMaxAndDelta, formattedValueToString, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
+import {
+  getMinMaxAndDelta,
+  formattedValueToString,
+  getFieldColorModeForField,
+  type GrafanaTheme2,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2, type VizLegendItem } from '@grafana/ui';
