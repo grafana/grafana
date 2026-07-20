@@ -311,7 +311,7 @@ export const TimeSeriesPanel = ({
                           <Text variant="bodySmall" color="secondary" truncate title={title || undefined}>
                             {title
                               ? t('timeseries.inline.quickEdit.panelTitle', 'Time series: {{title}}', { title })
-                              : t('timeseries.inline.quickEdit.panelTitle.untitled', 'Time series: Untitled')}
+                              : t('timeseries.inline.quickEdit.panelTitleUntitled', 'Time series: Untitled')}
                           </Text>
                         </Stack>
                         <IconButton

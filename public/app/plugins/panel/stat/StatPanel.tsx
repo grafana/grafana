@@ -317,7 +317,7 @@ export const StatPanel = memo(
                             <Text variant="bodySmall" color="secondary" truncate title={title || undefined}>
                               {title
                                 ? t('stat.inline.quickEdit.panelTitle', 'Stat: {{title}}', { title })
-                                : t('stat.inline.quickEdit.panelTitle.untitled', 'Stat: Untitled')}
+                                : t('stat.inline.quickEdit.panelTitleUntitled', 'Stat: Untitled')}
                             </Text>
                           </Stack>
                           <IconButton

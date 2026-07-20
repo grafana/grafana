@@ -15381,6 +15381,7 @@
       "quickEdit": {
         "colorMode": "Color mode",
         "panelTitle": "Stat: {{title}}",
+        "panelTitleUntitled": "Stat: Untitled",
         "textMode": "Text mode",
         "title": "Quick edit",
         "tooltip": "Quick edit"
@@ -15448,7 +15449,6 @@
       "label-on": "On"
     }
   },
-  "stat.inline.quickEdit.panelTitle.untitled": "Stat: Untitled",
   "state-timeline": {
     "align-values-options": {
       "label-center": "Center",
@@ -15914,6 +15914,7 @@
         "legend": "Legend",
         "legendPlacement": "Legend placement",
         "panelTitle": "Time series: {{title}}",
+        "panelTitleUntitled": "Time series: Untitled",
         "title": "Quick edit",
         "tooltip": "Tooltip"
       },
@@ -15991,7 +15992,6 @@
       "tooltip-remove-timezone": "Remove timezone"
     }
   },
-  "timeseries.inline.quickEdit.panelTitle.untitled": "Time series: Untitled",
   "traces": {
     "adhocFilters": {
       "customValue": "Type a value",
