@@ -218,6 +218,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       flex: '1 1 auto',
+
+      // Reveal the active tab's layout mode pill when hovering anywhere in the tab (bar or content).
+      '&:hover .dashboard-tab-auto-pill': {
+        display: 'inline-flex',
+      },
     }),
     tabsBar: css({
       ...dashboardCanvasAddButtonHoverStyles,

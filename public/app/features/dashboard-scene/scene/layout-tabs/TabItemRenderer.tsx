@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router';
 
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
@@ -43,7 +44,43 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
+
+  // Show the layout mode pill next to the title, inside the tab card (via the Tab suffix slot).
   const tabLayoutPill = getLayoutModePill(layout);
+  const showPill = isEditing && isActive && !!tabLayoutPill;
+  const pillIcon = tabLayoutPill?.icon;
+  const pillLabel = tabLayoutPill?.label;
+  const pillTooltip = tabLayoutPill?.tooltip;
+  const pillLayout = tabLayoutPill?.layout;
+
+  const TabSuffix = useMemo(() => {
+    if (!isConditionallyHidden && !showPill) {
+      return undefined;
+    }
+
+    const Suffix = ({ className }: { className?: string }) => (
+      <span className={cx(styles.tabSuffix, className)}>
+        {isConditionallyHidden && <IsHiddenSuffix />}
+        {showPill && pillIcon && pillLabel && pillTooltip && pillLayout && (
+          // Hidden until the active tab (bar or content) is hovered — see tabLayoutContainer styles.
+          <span className={cx(styles.tabPill, 'dashboard-tab-auto-pill')}>
+            <LayoutModePill
+              data-testid="dashboard-tab-layout-mode-pill"
+              icon={pillIcon}
+              label={pillLabel}
+              tooltip={pillTooltip}
+              onClick={() => {
+                DashboardInteractions.layoutModePillClicked({ scope: 'tab', layout: pillLayout });
+                selectAndEditLayout(model);
+              }}
+            />
+          </span>
+        )}
+      </span>
+    );
+
+    return Suffix;
+  }, [isConditionallyHidden, showPill, pillIcon, pillLabel, pillTooltip, pillLayout, model, styles.tabSuffix, styles.tabPill]);
 
   if (isConditionallyHidden && !isEditing && !isActive) {
     return null;
@@ -70,7 +107,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             dragProvided.innerRef(ref);
             model.containerRef.current = ref;
           }}
-          className={cx(styles.tabItemWrapper, dragSnapshot.isDragging && styles.dragging)}
+          className={cx(dragSnapshot.isDragging && styles.dragging)}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
           style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
@@ -87,7 +124,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             )}
             active={isActive}
             title={titleInterpolated}
-            suffix={isConditionallyHidden ? IsHiddenSuffix : undefined}
+            suffix={TabSuffix}
             href={href}
             aria-selected={isActive}
             onChangeTab={(evt) => {
@@ -127,19 +164,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             data-tab-activation-key={key}
             {...titleCollisionProps}
           />
-          {isEditing && isActive && tabLayoutPill && (
-            <LayoutModePill
-              className={cx(styles.tabPill, 'dashboard-tab-auto-pill')}
-              data-testid="dashboard-tab-layout-mode-pill"
-              icon={tabLayoutPill.icon}
-              label={tabLayoutPill.label}
-              tooltip={tabLayoutPill.tooltip}
-              onClick={() => {
-                DashboardInteractions.layoutModePillClicked({ scope: 'tab', layout: tabLayoutPill.layout });
-                selectAndEditLayout(model);
-              }}
-            />
-          )}
         </div>
       )}
     </Draggable>
@@ -228,24 +252,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
       opacity: 1,
     },
   }),
-  // Wraps the tab and its auto layout pill in the tab strip so the pill sits next to the label.
-  tabItemWrapper: css({
+  // Holds the tab's suffix content (hidden icon and/or layout mode pill) next to the title.
+  tabSuffix: css({
     display: 'inline-flex',
     alignItems: 'center',
-    gap: theme.spacing(0.5),
-
-    // Pill only visible when hovering the tab (its container in the strip).
-    '&:hover .dashboard-tab-auto-pill': {
-      opacity: 1,
-    },
+    gap: theme.spacing(1),
   }),
+  // Hidden by default; revealed only while the active tab (bar or content) is hovered.
   tabPill: css({
-    flexShrink: 0,
-    opacity: 0,
-
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: 'opacity 0.25s',
-    },
+    display: 'none',
   }),
 });
 

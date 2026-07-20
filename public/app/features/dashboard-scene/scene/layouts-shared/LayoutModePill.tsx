@@ -19,23 +19,34 @@ export interface LayoutModePillProps {
 export function LayoutModePill({ icon, label, tooltip, onClick, className, ...rest }: LayoutModePillProps) {
   const styles = useStyles2(getStyles);
 
+  const activate = (evt: { preventDefault: () => void; stopPropagation: () => void }) => {
+    // preventDefault also stops the surrounding tab anchor from navigating when the pill lives
+    // inside a tab card; stopPropagation keeps clicks from starting a drag or toggling selection.
+    evt.preventDefault();
+    evt.stopPropagation();
+    onClick();
+  };
+
   return (
     <Tooltip content={tooltip}>
-      <button
-        type="button"
+      {/* Rendered as a role=button span (not a <button>) so it is valid inside a tab's anchor. */}
+      <span
+        role="button"
+        tabIndex={0}
         className={className ? `${styles.pill} ${className}` : styles.pill}
         data-testid={rest['data-testid']}
-        onClick={(evt) => {
-          evt.stopPropagation();
-          onClick();
+        onClick={activate}
+        onKeyDown={(evt) => {
+          if (evt.key === 'Enter' || evt.key === ' ') {
+            activate(evt);
+          }
         }}
-        // Prevent the click from starting a panel drag or toggling container selection.
         onPointerDown={(evt) => evt.stopPropagation()}
         onPointerUp={(evt) => evt.stopPropagation()}
       >
         <Icon name={icon} size="sm" />
         <span>{label}</span>
-      </button>
+      </span>
     </Tooltip>
   );
 }
@@ -64,6 +75,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.action.hover,
       color: theme.colors.text.primary,
       borderColor: theme.colors.border.medium,
+    },
+
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '1px',
     },
   }),
 });
