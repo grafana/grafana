@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { type DraggableProvided } from '@hello-pangea/dnd';
-import { type MouseEventHandler } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
