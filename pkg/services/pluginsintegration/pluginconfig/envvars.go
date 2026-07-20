@@ -69,7 +69,11 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
-	hostEnv = append(hostEnv, p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())...)
+
+	marketplaceEnvVars := p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())
+	p.logger.Debug("Providing marketplace env vars", "pluginId", plugin.PluginID(), "envVars", envVarNames(marketplaceEnvVars))
+	hostEnv = append(hostEnv, marketplaceEnvVars...)
+
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.secureSocksProxyEnvVars()...)
 	azureSettings := p.getAzureSettings()
@@ -309,11 +313,24 @@ func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	return env
 }
 
+// envVar returns a string in the format "key=value" for an environment variable.
 func (p *EnvVarsProvider) envVar(key, value string) string {
 	if strings.Contains(value, "\x00") {
 		p.logger.Error("Variable with key '%s' contains NUL", key)
 	}
 	return fmt.Sprintf("%s=%s", key, value)
+}
+
+// envVarNames returns the names of the environment variables from a list of "key=value" strings.
+func envVarNames(envVars []string) []string {
+	names := make([]string, 0, len(envVars))
+	for _, envVar := range envVars {
+		parts := strings.SplitN(envVar, "=", 2)
+		if len(parts) > 0 {
+			names = append(names, parts[0])
+		}
+	}
+	return names
 }
 
 func (p *EnvVarsProvider) getAzureSettings() *azsettings.AzureSettings {
