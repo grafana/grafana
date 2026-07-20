@@ -305,8 +305,14 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	if spec.Action == provisioning.JobActionPullRequest {
 		return apierrors.NewBadRequest("pull request jobs cannot be created via the API; they are triggered by webhooks")
 	}
-	if spec.Action == provisioning.JobActionFixFolderMetadata && !c.folderMetadataEnabled {
-		return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
+	if spec.Action == provisioning.JobActionFixFolderMetadata {
+		if !c.folderMetadataEnabled {
+			return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
+		}
+		// Editor-only. The jobs subresource authorizer may allow Folder Admins via
+		// folder dashboards:write fallback (for move/delete), but this action has no
+		// path/resource-level checks of its own, so re-require jobs:create here.
+		return c.authorizeEditorJob(ctx, cfg)
 	}
 	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
 		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
@@ -314,8 +320,17 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 
 	switch spec.Action {
 	case provisioning.JobActionPush:
+		// Keep push editor-only: the folder dashboards:write route fallback is for
+		// move/delete. authorizePushJob only checks read, which is too weak alone.
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
 		return c.authorizePushJob(ctx, repo, cfg)
 	case provisioning.JobActionMigrate:
+		// Same as push: do not let Folder Admins reach migrate via the jobs fallback.
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
 		return c.authorizeMigrateJob(ctx, repo, cfg, spec)
 	case provisioning.JobActionDelete:
 		if spec.Delete != nil {
@@ -328,6 +343,7 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata, provisioning.JobActionTest:
 		// Read-only / no-op operations don't require pre-flight resource authorization.
 		// Pull and test are authorized inline in handleCreateJob (admin-only).
+		// FixFolderMetadata is handled above via authorizeEditorJob.
 	case provisioning.JobActionReleaseResources, provisioning.JobActionDeleteResources:
 		// Orphan cleanup actions are handled separately via handleOrphanCleanupJob
 		// and never reach authorizeJob.
@@ -406,6 +422,18 @@ func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning
 		Verb:      utils.VerbUpdate,
 		Group:     provisioning.GROUP,
 		Resource:  provisioning.RepositoryResourceInfo.GetName(),
+		Namespace: cfg.Namespace,
+	}, "")
+}
+
+// authorizeEditorJob checks jobs:create with Editor fallback.
+// Used for job actions that must stay editor-only after the jobs subresource
+// authorizer allows Folder Admins via folder-level dashboards:write.
+func (c *jobsConnector) authorizeEditorJob(ctx context.Context, cfg *provisioning.Repository) error {
+	return c.access.WithFallbackRole(identity.RoleEditor).Check(ctx, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     provisioning.GROUP,
+		Resource:  provisioning.JobResourceInfo.GetName(),
 		Namespace: cfg.Namespace,
 	}, "")
 }

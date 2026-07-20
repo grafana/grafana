@@ -633,8 +633,9 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	//
 	// Folder-targeted Git Sync also allows users with dashboards:write on the
 	// repository root folder so Folder Admins can create move/delete sync jobs
-	// without global jobs:create. Finer-grained checks still run in the jobs
-	// connector (authorizeDeleteJob / authorizeMoveJob) for the specific action.
+	// (and inspect those jobs) without global jobs:create. The fallback always
+	// requires dashboards:write so Viewers cannot list job history. Push/migrate
+	// and fixFolderMetadata still re-require jobs:create in the jobs connector.
 	case "jobs":
 		err := b.accessWithEditor.Check(ctx, authlib.CheckRequest{
 			Verb:      a.GetVerb(),
@@ -660,16 +661,9 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			return toAuthorizerDecision(err)
 		}
 
-		// Jobs POST uses verb "create"; map mutating job verbs to dashboards:write
-		// (update). Read verbs keep dashboards:read (get).
-		verb := apiutils.VerbUpdate
-		switch a.GetVerb() {
-		case apiutils.VerbGet, apiutils.VerbList, apiutils.VerbWatch:
-			verb = apiutils.VerbGet
-		}
-
+		// Require dashboards:write (update) for all jobs verbs, including list/get.
 		if folderErr := b.access.Check(ctx, authlib.CheckRequest{
-			Verb:      verb,
+			Verb:      apiutils.VerbUpdate,
 			Group:     resources.DashboardResource.Group,
 			Resource:  resources.DashboardResource.Resource,
 			Namespace: a.GetNamespace(),

@@ -144,12 +144,6 @@ func TestAuthorizeJobsSubresource(t *testing.T) {
 			req.Resource == resources.DashboardResource.Resource &&
 			req.Namespace == ns
 	}
-	dashboardReadOnFolder := func(req authlib.CheckRequest) bool {
-		return req.Verb == utils.VerbGet &&
-			req.Group == resources.DashboardResource.Group &&
-			req.Resource == resources.DashboardResource.Resource &&
-			req.Namespace == ns
-	}
 
 	newFolderRepo := func(name string) *provisioning.Repository {
 		return &provisioning.Repository{
@@ -270,12 +264,32 @@ func TestAuthorizeJobsSubresource(t *testing.T) {
 		assert.Contains(t, reason, "no auth info in context")
 	})
 
-	t.Run("list verb maps to dashboards:read for folder access check", func(t *testing.T) {
+	t.Run("list/get/watch fallback requires dashboards:write not read", func(t *testing.T) {
+		for _, verb := range []string{utils.VerbList, utils.VerbGet, utils.VerbWatch} {
+			t.Run(verb, func(t *testing.T) {
+				editorChecker := auth.NewMockAccessChecker(t)
+				editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(mockForbidden())
+
+				accessChecker := auth.NewMockAccessChecker(t)
+				accessChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(dashboardWriteOnFolder), name).Return(nil)
+
+				repoStore := grafanarest.NewMockStorage(t)
+				repoStore.EXPECT().Get(mock.Anything, name, mock.Anything).Return(newFolderRepo(name), nil)
+
+				b := &APIBuilder{accessWithEditor: editorChecker, access: accessChecker, repoStore: repoStore}
+				decision, _, err := b.authorizeRepositorySubresource(ctx, jobsSubresourceAttrs(verb, name, ns))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionAllow, decision)
+			})
+		}
+	})
+
+	t.Run("viewer with only dashboards:read is denied via fallback", func(t *testing.T) {
 		editorChecker := auth.NewMockAccessChecker(t)
 		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(mockForbidden())
 
 		accessChecker := auth.NewMockAccessChecker(t)
-		accessChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(dashboardReadOnFolder), name).Return(nil)
+		accessChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(dashboardWriteOnFolder), name).Return(mockForbidden())
 
 		repoStore := grafanarest.NewMockStorage(t)
 		repoStore.EXPECT().Get(mock.Anything, name, mock.Anything).Return(newFolderRepo(name), nil)
@@ -283,39 +297,7 @@ func TestAuthorizeJobsSubresource(t *testing.T) {
 		b := &APIBuilder{accessWithEditor: editorChecker, access: accessChecker, repoStore: repoStore}
 		decision, _, err := b.authorizeRepositorySubresource(ctx, jobsSubresourceAttrs(utils.VerbList, name, ns))
 		require.NoError(t, err)
-		assert.Equal(t, authorizer.DecisionAllow, decision)
-	})
-
-	t.Run("get verb maps to dashboards:read for folder access check", func(t *testing.T) {
-		editorChecker := auth.NewMockAccessChecker(t)
-		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(mockForbidden())
-
-		accessChecker := auth.NewMockAccessChecker(t)
-		accessChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(dashboardReadOnFolder), name).Return(nil)
-
-		repoStore := grafanarest.NewMockStorage(t)
-		repoStore.EXPECT().Get(mock.Anything, name, mock.Anything).Return(newFolderRepo(name), nil)
-
-		b := &APIBuilder{accessWithEditor: editorChecker, access: accessChecker, repoStore: repoStore}
-		decision, _, err := b.authorizeRepositorySubresource(ctx, jobsSubresourceAttrs(utils.VerbGet, name, ns))
-		require.NoError(t, err)
-		assert.Equal(t, authorizer.DecisionAllow, decision)
-	})
-
-	t.Run("watch verb maps to dashboards:read for folder access check", func(t *testing.T) {
-		editorChecker := auth.NewMockAccessChecker(t)
-		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(mockForbidden())
-
-		accessChecker := auth.NewMockAccessChecker(t)
-		accessChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(dashboardReadOnFolder), name).Return(nil)
-
-		repoStore := grafanarest.NewMockStorage(t)
-		repoStore.EXPECT().Get(mock.Anything, name, mock.Anything).Return(newFolderRepo(name), nil)
-
-		b := &APIBuilder{accessWithEditor: editorChecker, access: accessChecker, repoStore: repoStore}
-		decision, _, err := b.authorizeRepositorySubresource(ctx, jobsSubresourceAttrs(utils.VerbWatch, name, ns))
-		require.NoError(t, err)
-		assert.Equal(t, authorizer.DecisionAllow, decision)
+		assert.Equal(t, authorizer.DecisionDeny, decision)
 	})
 
 	t.Run("folderless repo skips folder fallback and is denied", func(t *testing.T) {
