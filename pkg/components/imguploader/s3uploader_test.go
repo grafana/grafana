@@ -37,6 +37,37 @@ func TestUploadToS3(t *testing.T) {
 	})
 }
 
+func TestNormalizeEndpoint(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		endpoint string
+		want     string
+	}{
+		{"bare host gets https scheme", "s3.example.de", "https://s3.example.de"},
+		{"https is preserved", "https://s3.example.de", "https://s3.example.de"},
+		{"http is preserved", "http://s3.example.de", "http://s3.example.de"},
+		{"empty stays empty", "", ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, normalizeEndpoint(tt.endpoint))
+		})
+	}
+}
+
+func TestBuildAWSConfig(t *testing.T) {
+	t.Setenv("AWS_REQUEST_CHECKSUM_CALCULATION", "")
+	t.Setenv("AWS_RESPONSE_CHECKSUM_VALIDATION", "")
+	t.Setenv("AWS_PROFILE", "")
+	t.Setenv("AWS_CONFIG_FILE", filepath.Join(t.TempDir(), "config"))
+	t.Setenv("AWS_SHARED_CREDENTIALS_FILE", filepath.Join(t.TempDir(), "credentials"))
+
+	cfg, err := buildAWSConfig(t.Context(), S3UploaderOptions{Region: "us-east-1"})
+	require.NoError(t, err)
+
+	assert.Equal(t, aws.RequestChecksumCalculationWhenRequired, cfg.RequestChecksumCalculation)
+	assert.Equal(t, aws.ResponseChecksumValidationWhenRequired, cfg.ResponseChecksumValidation)
+}
+
 func stubS3Client(t *testing.T, mock s3ifaces.S3Client) {
 	t.Helper()
 	orig := newS3Client
