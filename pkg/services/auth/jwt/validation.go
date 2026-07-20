@@ -10,6 +10,12 @@ import (
 )
 
 func (s *AuthService) initClaimExpectations() error {
+	if s.settings.ExpectClaims == "" {
+		s.expect = map[string]any{}
+		s.expectRegistered = jwt.Expected{}
+		return nil
+	}
+
 	expect := map[string]any{}
 	if err := json.Unmarshal([]byte(s.settings.ExpectClaims), &expect); err != nil {
 		return err

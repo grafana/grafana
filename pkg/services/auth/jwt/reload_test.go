@@ -126,6 +126,21 @@ func TestReload_DisabledClearsKeyset(t *testing.T) {
 	require.Nil(t, s.keySet)
 }
 
+func TestReload_EmptyExpectClaims(t *testing.T) {
+	s := &AuthService{Cfg: &setting.Cfg{}, log: log.New("test")}
+
+	err := s.Reload(context.Background(), models.SSOSettings{
+		Settings: map[string]any{
+			"enabled":       true,
+			"header_name":   "X-JWT",
+			"jwk_set_url":   "https://example.com/.well-known/jwks.json",
+			"expect_claims": "",
+		},
+	})
+	require.NoError(t, err)
+	require.True(t, s.Settings().Enabled)
+}
+
 // TestReload_RaceWithVerify exercises Verify against concurrent Reload calls
 // under -race. The mutex contract on AuthService is what keeps Verify's
 // snapshot of keySet/expect/expectRegistered consistent — this test exists to
