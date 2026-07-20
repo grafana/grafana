@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useState, useEffect } from 'react';
-import * as React from 'react';
+import { useMemo } from 'react';
+import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 type Props = {
   colorPalette: string[];
@@ -12,83 +12,102 @@ type Props = {
 
   // Show a value as string -- when not defined, the raw values will not be shown
   display?: (v: number) => string;
-  hoverValue?: number;
   useStopsPercentage?: boolean;
 };
 
-type HoverState = {
-  isShown: boolean;
-  value: number;
+// rough glyph width at the 11px font used by the scale
+const APPROX_CHAR_WIDTH = 8;
+// minimum horizontal space between adjacent labels
+const LABEL_GAP = 36;
+
+type Tick = {
+  percent: number;
+  label: string;
 };
 
-const GRADIENT_STOPS = 10;
+export const ColorScale = ({ colorPalette, min, max, display, useStopsPercentage }: Props) => {
+  const styles = useStyles2(getStyles);
+  const [ref, { width }] = useMeasure<HTMLDivElement>();
 
-export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useStopsPercentage }: Props) => {
-  const [colors, setColors] = useState<string[]>([]);
-  const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
-  const [percent, setPercent] = useState<number | null>(null); // 0-100 for CSS percentage
-
-  const theme = useTheme2();
-  const styles = getStyles(theme, colors);
-
-  useEffect(() => {
-    setColors(getGradientStops({ colorArray: colorPalette, stops: GRADIENT_STOPS, useStopsPercentage }));
+  const background = useMemo(() => {
+    const colors = getGradientStops(colorPalette, useStopsPercentage);
+    return `linear-gradient(90deg, ${colors.join()})`;
   }, [colorPalette, useStopsPercentage]);
 
-  const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    const divOffset = event.nativeEvent.offsetX;
-    const offsetWidth = event.currentTarget.offsetWidth;
-    const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
-    const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
+  let ticks: Tick[] = [];
 
-    setScaleHover({ isShown: true, value: scaleValue });
-    setPercent(normPercentage);
-  };
+  if (display) {
+    const span = max - min;
+    // when the scale bounds are integers, snap intermediate ticks to whole values
+    const snapToInt = Number.isInteger(min) && Number.isInteger(max);
 
-  const onScaleMouseLeave = () => {
-    setScaleHover({ isShown: false, value: 0 });
-  };
+    const genTicks = (count: number) =>
+      Array.from({ length: count }, (_, i): Tick => {
+        let value = min + (i / (count - 1)) * span;
 
-  useEffect(() => {
-    setPercent(hoverValue == null ? null : clampPercent100((hoverValue - min) / (max - min)));
-  }, [hoverValue, min, max]);
+        if (snapToInt) {
+          value = Math.round(value);
+        }
+
+        return {
+          // ticks are placed where their (possibly snapped) value falls on the scale
+          percent: span > 0 ? ((value - min) / span) * 100 : i * 100,
+          label: display(value),
+        };
+      });
+
+    // min and max are always rendered; intermediate ticks are added when the
+    // footprint of the widest rendered label leaves room for them
+    let count = 2;
+
+    if (width > 0 && span > 0) {
+      const slotWidth = Math.max(display(min).length, display(max).length) * APPROX_CHAR_WIDTH + LABEL_GAP;
+      count = Math.max(2, Math.floor(width / slotWidth));
+    }
+
+    ticks = genTicks(count);
+
+    while (count > 2) {
+      const maxLabelLen = Math.max(...ticks.map((tick) => tick.label.length));
+      const fits = count * (maxLabelLen * APPROX_CHAR_WIDTH + LABEL_GAP) <= width;
+      // coarse display formats and integer snapping can collapse adjacent
+      // values into identical labels
+      const distinct = new Set(ticks.map((tick) => tick.label)).size === count;
+
+      if (fits && distinct) {
+        break;
+      }
+
+      ticks = genTicks(--count);
+    }
+  }
 
   return (
-    <div className={styles.scaleWrapper} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
-      <div className={styles.scaleGradient}>
-        {display && (scaleHover.isShown || hoverValue !== undefined) && (
-          <div className={styles.followerContainer}>
-            <div className={styles.follower} style={{ left: `${percent}%` }} />
-          </div>
-        )}
-      </div>
-      {display && (
-        <div className={styles.followerContainer}>
-          <div className={styles.legendValues}>
-            <span className={styles.disabled}>{display(min)}</span>
-            <span className={styles.disabled}>{display(max)}</span>
-          </div>
-          {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
-            <span className={styles.hoverValue} style={{ left: `${percent}%` }}>
-              {display(hoverValue ?? scaleHover.value)}
-            </span>
-          )}
+    <div ref={ref} className={styles.scaleWrapper}>
+      <div className={styles.scaleGradient} style={{ background }} />
+      {ticks.length > 0 && (
+        <div className={styles.legendValues}>
+          {ticks.map(({ percent, label }, i) => {
+            const transform = i === 0 ? undefined : i === ticks.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)';
+
+            return (
+              <span key={i} className={styles.legendValue} style={{ left: `${percent}%`, transform }}>
+                {label}
+              </span>
+            );
+          })}
         </div>
       )}
     </div>
   );
 };
 
-const getGradientStops = ({
-  colorArray,
-  stops,
-  useStopsPercentage = true,
-}: {
-  colorArray: string[];
-  stops: number;
-  useStopsPercentage?: boolean;
-}): string[] => {
+// max number of stops to sample for smooth gradients
+const GRADIENT_STOPS = 10;
+
+const getGradientStops = (colorArray: string[], useStopsPercentage = true): string[] => {
   const colorCount = colorArray.length;
+
   if (useStopsPercentage && colorCount <= 20) {
     const incr = (1 / colorCount) * 100;
     let per = 0;
@@ -106,7 +125,7 @@ const getGradientStops = ({
   }
 
   const gradientEnd = colorArray[colorCount - 1];
-  const skip = Math.ceil(colorCount / stops);
+  const skip = Math.ceil(colorCount / GRADIENT_STOPS);
   const gradientStops = new Set<string>();
 
   for (let i = 0; i < colorCount; i += skip) {
@@ -118,54 +137,23 @@ const getGradientStops = ({
   return [...gradientStops];
 };
 
-function clampPercent100(v: number) {
-  if (v > 1) {
-    return 100;
-  }
-  if (v < 0) {
-    return 0;
-  }
-  return v * 100;
-}
-
-const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   scaleWrapper: css({
     width: '100%',
     fontSize: '11px',
-    opacity: 1,
   }),
   scaleGradient: css({
-    background: `linear-gradient(90deg, ${colors.join()})`,
     height: '9px',
-    pointerEvents: 'none',
     borderRadius: theme.shape.radius.default,
   }),
   legendValues: css({
-    display: 'flex',
-    justifyContent: 'space-between',
-    pointerEvents: 'none',
-  }),
-  hoverValue: css({
-    position: 'absolute',
-    marginTop: '-14px',
-    padding: '3px 15px',
-    transform: 'translateX(-50%)',
-  }),
-  followerContainer: css({
     position: 'relative',
-    pointerEvents: 'none',
-    whiteSpace: 'nowrap',
+    height: theme.spacing(2),
   }),
-  follower: css({
+  legendValue: css({
     position: 'absolute',
-    height: '13px',
-    width: '13px',
-    borderRadius: theme.shape.radius.default,
-    transform: 'translateX(-50%) translateY(-50%)',
-    border: `2px solid ${theme.colors.text.primary}`,
-    top: '5px',
-  }),
-  disabled: css({
+    top: 0,
+    whiteSpace: 'nowrap',
     color: theme.colors.text.disabled,
   }),
 });

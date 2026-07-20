@@ -73,6 +73,8 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Enables the new text panel */
+  GrafanaNewTextPanel: "grafana.newTextPanel",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
@@ -477,6 +479,17 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", true, options).value;
+};
+
+/**
+ * Enables the new text panel
+ *
+ * **Details:**
+ * - flag key: `grafana.newTextPanel`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewTextPanel = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newTextPanel", false, options).value;
 };
 
 /**
