@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"iter"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -338,22 +337,13 @@ func (i *Ingester) GetResourceDailyStats(ctx context.Context, key *resourcepb.Re
 			return
 		}
 		o := objectRefFromKey(key)
-		byDay, err := i.store.ReadDailyRange(ctx, o, fromDay, toDay)
-		if err != nil {
-			yield(nil, err)
-			return
-		}
-
-		// Day strings are zero-padded YYYY-MM-DD, so lexical order matches
-		// chronological order.
-		days := make([]string, 0, len(byDay))
-		for day := range byDay {
-			days = append(days, day)
-		}
-		slices.Sort(days)
-
-		for _, day := range days {
-			if !yield(&resourcepb.DailyStat{Day: day, Metrics: byDay[day]}, nil) {
+		// The store already yields buckets in ascending chronological order.
+		for bucket, err := range i.store.ReadDailyRange(ctx, o, fromDay, toDay) {
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			if !yield(&resourcepb.DailyStat{Day: bucket.Day, Metrics: bucket.Metrics}, nil) {
 				return
 			}
 		}
