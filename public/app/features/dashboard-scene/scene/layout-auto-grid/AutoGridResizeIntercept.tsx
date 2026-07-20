@@ -127,6 +127,12 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       let moved = false;
 
+      // Keep the resize cursor for the whole gesture — otherwise it reverts once the pointer leaves
+      // the small corner zone while dragging.
+      document.body.style.cursor = 'nwse-resize';
+      const prevUserSelect = document.body.style.userSelect;
+      document.body.style.userSelect = 'none';
+
       const handleMove = (moveEvt: PointerEvent) => {
         if (!panelEl || !rect) {
           return;
@@ -144,6 +150,9 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
       const handleUp = (upEvt: PointerEvent) => {
         window.removeEventListener('pointermove', handleMove);
         window.removeEventListener('pointerup', handleUp);
+
+        document.body.style.cursor = '';
+        document.body.style.userSelect = prevUserSelect;
 
         const dist = Math.hypot(upEvt.clientX - start.x, upEvt.clientY - start.y);
         // Opens whether the corner was clicked or dragged (drag-end), since either is an attempt to resize.
