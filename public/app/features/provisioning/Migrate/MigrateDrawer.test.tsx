@@ -204,7 +204,7 @@ describe('MigrateDrawer', () => {
     expect(await screen.findByText('Choose a target branch other than the configured branch')).toBeInTheDocument();
   });
 
-  it('submits skipResourceDeletion when "Keep existing resources" is checked', async () => {
+  it('submits skipResourceDeletion (with a warning) when "Keep existing resources" is checked in the PR workflow', async () => {
     let postedBody = '';
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
@@ -215,14 +215,56 @@ describe('MigrateDrawer', () => {
     mockJobList(createJob());
 
     const { user } = render(
-      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My repo')]} onDismiss={jest.fn()} />
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
     );
 
     await user.click(await screen.findByRole('checkbox', { name: /keep existing resources/i }));
+    // Keeping resources on a PR migration warns that they must be deleted before merge.
+    expect(screen.getByText(/delete these resources before merging/i)).toBeInTheDocument();
+
     await user.click(screen.getByRole('button', { name: /migrate everything/i }));
 
     expect(await screen.findByText('Pulling...')).toBeInTheDocument();
     expect(postedBody).toMatch(/"skipResourceDeletion":true/);
+  });
+
+  it('does not offer "Keep existing resources" in the configured-branch (write) workflow', async () => {
+    // A direct commit takes resources over in place, so there is nothing to skip
+    // deleting — the option is only meaningful (and shown) for the PR workflow.
+    render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My repo', ['write'])]} onDismiss={jest.fn()} />
+    );
+
+    expect(await screen.findByText('Commit to the configured branch')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /keep existing resources/i })).not.toBeInTheDocument();
+  });
+
+  it('hides "Keep existing resources" again when switching back to the commit workflow', async () => {
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('repo-1', 'My repo', ['write', 'branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    // Defaults to commit → no retain option.
+    expect(await screen.findByText('Commit to the configured branch')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /keep existing resources/i })).not.toBeInTheDocument();
+
+    // Switch to PR → option appears and can be checked.
+    await user.click(screen.getByText('Open a pull request'));
+    await user.click(await screen.findByRole('checkbox', { name: /keep existing resources/i }));
+    expect(screen.getByText(/delete these resources before merging/i)).toBeInTheDocument();
+
+    // Switch back to commit → option is gone and the choice is cleared.
+    await user.click(screen.getByText('Commit to the configured branch'));
+    expect(screen.queryByRole('checkbox', { name: /keep existing resources/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete these resources before merging/i)).not.toBeInTheDocument();
   });
 
   it('confirms before disabling "Generate new folder IDs" and warns while off', async () => {
@@ -236,7 +278,11 @@ describe('MigrateDrawer', () => {
     mockJobList(createJob());
 
     const { user } = render(
-      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My repo')]} onDismiss={jest.fn()} />
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
     );
 
     const checkbox = await screen.findByRole('checkbox', { name: /generate new folder ids/i });
@@ -254,6 +300,69 @@ describe('MigrateDrawer', () => {
     await user.click(screen.getByRole('button', { name: /migrate everything/i }));
     expect(await screen.findByText('Pulling...')).toBeInTheDocument();
     expect(postedBody).toMatch(/"generateNewFolderIDs":false/);
+  });
+
+  it('restores the folder-ID default when switching from PR back to the commit workflow', async () => {
+    // Turning off "Generate new folder IDs" in the PR workflow must not linger as
+    // a hidden `false` on a direct commit — switching back restores the default.
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('repo-1', 'My repo', ['write', 'branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    // Go to PR, disable folder-ID generation.
+    await user.click(await screen.findByText('Open a pull request'));
+    await user.click(await screen.findByRole('checkbox', { name: /generate new folder ids/i }));
+    await user.click(await screen.findByRole('button', { name: /keep existing ids/i }));
+    expect(screen.getByText(/existing folders will be taken over/i)).toBeInTheDocument();
+
+    // Switch back to a direct commit and migrate — the default (true) is restored.
+    await user.click(screen.getByText('Commit to the configured branch'));
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toMatch(/"generateNewFolderIDs":true/);
+  });
+
+  it('dismisses the folder-ID confirmation when the repository changes', async () => {
+    // Two usable repos so neither is pre-selected; pick one, open the confirm
+    // modal, then switch repos — the modal must close and not carry the choice
+    // over to the newly selected repository. Branch repos default to the PR
+    // workflow, where the folder-ID control lives.
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('a', 'Repo A', ['branch']), makeRepo('b', 'Repo B', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    await user.click(await screen.findByRole('combobox'));
+    await user.click(await screen.findByText('Repo A'));
+
+    const checkbox = await screen.findByRole('checkbox', { name: /generate new folder ids/i });
+    await user.click(checkbox);
+    expect(await screen.findByRole('button', { name: /keep existing ids/i })).toBeInTheDocument();
+
+    // Switching repositories closes the pending confirmation...
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByText('Repo B'));
+
+    expect(screen.queryByRole('button', { name: /keep existing ids/i })).not.toBeInTheDocument();
+    // ...and the checkbox default for the new repo is intact (still checked).
+    expect(await screen.findByRole('checkbox', { name: /generate new folder ids/i })).toBeChecked();
   });
 
   it('offers both write and branch-workflow repositories as migration targets', async () => {
@@ -432,7 +541,8 @@ describe('MigrateDrawer', () => {
     });
     render(<MigrateDrawer selective={false} repos={[instanceRepo]} onDismiss={jest.fn()} />);
 
-    expect(await screen.findByRole('checkbox', { name: /keep existing resources/i })).toBeInTheDocument();
+    // The drawer is ready (migrate button enabled) but the folder-ID control is absent.
+    expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeEnabled();
     expect(screen.queryByRole('checkbox', { name: /generate new folder ids/i })).not.toBeInTheDocument();
   });
 

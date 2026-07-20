@@ -163,6 +163,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
       setWorkflow(next.branchRequired ? 'branch' : 'write');
       setSkipResourceDeletion(false);
       setGenerateNewFolderIDs(next.syncTarget !== 'instance');
+      setConfirmDisableFolderIDs(false);
       setBranchRef(next.branchRequired && repoName ? generateNewBranchName(`migrate-${repoName}`) : '');
     },
     [repos]
@@ -173,6 +174,17 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     setWorkflow('branch');
     setBranchRef((current) => current || (selectedRepo ? generateNewBranchName(`migrate-${selectedRepo}`) : ''));
   }, [selectedRepo]);
+
+  // The folder-ID and retain-resources overrides are only exposed in the
+  // pull-request workflow. Restore their defaults when switching to a direct
+  // commit so a choice made in the PR workflow doesn't silently ride along with
+  // the write (which would otherwise still submit the stale value).
+  const selectWriteWorkflow = useCallback(() => {
+    setWorkflow('write');
+    setSkipResourceDeletion(false);
+    setGenerateNewFolderIDs(syncTarget !== 'instance');
+    setConfirmDisableFolderIDs(false);
+  }, [syncTarget]);
 
   // In the pull-request workflow the branch must be a valid git ref and must
   // differ from the configured branch: a PR against the configured branch is
@@ -192,7 +204,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
       generateNewFolderIDs: folderIDsApplicable ? generateNewFolderIDs : false,
       ...(isBranchWorkflow && branchRef ? { branch: branchRef } : {}),
       ...(isSelective ? { resources } : {}),
-      ...(skipResourceDeletion ? { skipResourceDeletion: true } : {}),
+      ...(isBranchWorkflow && skipResourceDeletion ? { skipResourceDeletion: true } : {}),
     });
   }, [
     canMigrate,
@@ -304,7 +316,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           <Field noMargin label={t('provisioning.migrate.workflow-label', 'How should changes be applied?')}>
             <Stack direction="column" gap={1}>
               {supportsWrite && (
-                <Card noMargin isSelected={workflow === 'write'} onClick={() => setWorkflow('write')}>
+                <Card noMargin isSelected={workflow === 'write'} onClick={selectWriteWorkflow}>
                   <Card.Heading>
                     <Trans i18nKey="provisioning.migrate.workflow-write-title">Commit to the configured branch</Trans>
                   </Card.Heading>
@@ -363,20 +375,40 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           </Field>
         )}
 
-        {selectedRepo && (
+        {isBranchWorkflow && (
           <>
             <Field noMargin>
               <Checkbox
-                label={t('provisioning.migrate.retain-resources-label', 'Keep existing resources')}
+                label={t('provisioning.migrate.retain-resources-label', 'Keep existing resources during review')}
                 description={t(
                   'provisioning.migrate.retain-resources-description',
-                  'Keep the migrated resources on this instance instead of deleting them after migration.'
+                  'Keep the migrated resources on this instance while the pull request is open, so they stay live until the branch is merged. These resources must be manually deleted before the pull request is merged or else there will be errors during sync due to conflicting resources.'
                 )}
                 value={skipResourceDeletion}
                 onChange={(e) => setSkipResourceDeletion(e.currentTarget.checked)}
               />
             </Field>
 
+            {skipResourceDeletion && (
+              <Alert
+                severity="warning"
+                title={t(
+                  'provisioning.migrate.retain-resources-warning-title',
+                  'Delete these resources before merging'
+                )}
+              >
+                <Trans i18nKey="provisioning.migrate.retain-resources-warning-body">
+                  You must delete the migrated resources yourself before merging the pull request. If they still exist
+                  when the branch merges, they will conflict with the incoming managed resources and will not be
+                  reconciled.
+                </Trans>
+              </Alert>
+            )}
+          </>
+        )}
+
+        {isBranchWorkflow && (
+          <>
             {folderIDsApplicable && (
               <>
                 <Field noMargin>
