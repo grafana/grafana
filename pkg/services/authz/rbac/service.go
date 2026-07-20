@@ -1111,6 +1111,15 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 			s.logger.Warn("found unsplit permission scope", "scope", perm.Scope)
 			perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
 		}
+		// Collapse per-section grants (settings:<section>:*) to settings:uid:<section>.
+		// Handled here—before generic wildcards—to prevent section wildcards from
+		// escalating into global grants. True globals and per-key grants fall through.
+		if perm.Kind == "settings" && perm.Attribute != "*" {
+			if perm.Identifier == "*" {
+				permMap["settings:uid:"+perm.Attribute] = true
+			}
+			continue
+		}
 		// If has any wildcard, return immediately
 		if perm.Kind == "*" || perm.Attribute == "*" || perm.Identifier == "*" {
 			return map[string]bool{"*": true}
