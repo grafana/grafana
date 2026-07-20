@@ -176,42 +176,46 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 	r.SemanticQuery = strings.Repeat("x", 1001)
 	require.NotNil(t, validateHybridSearchRequest(r))
 
+	// All validation failures are InvalidArgument status errors, never
+	// response-embedded.
+	wantInvalid := func(err error, contains string) {
+		t.Helper()
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		assert.Contains(t, err.Error(), contains)
+	}
+
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "tags", Operator: "in", Values: []string{"prod"}}}
-	resp := validateHybridSearchRequest(r)
-	require.NotNil(t, resp)
-	assert.Contains(t, resp.Error.Message, "tags")
+	wantInvalid(validateHybridSearchRequest(r), "tags")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "uid", Operator: "in"}}
-	require.NotNil(t, validateHybridSearchRequest(r)) // no values
+	wantInvalid(validateHybridSearchRequest(r), "no values")
+
+	r = valid()
+	r.Filters = []*resourcepb.Requirement{{Key: "uid", Operator: "notin", Values: []string{"u1"}}}
+	wantInvalid(validateHybridSearchRequest(r), "operator")
 
 	r = valid()
 	r.SemanticQuery = "   "
-	resp = validateHybridSearchRequest(r)
-	require.NotNil(t, resp) // whitespace-only semantic_query
+	wantInvalid(validateHybridSearchRequest(r), "whitespace")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{
 		{Key: "uid", Operator: "in", Values: []string{"u1"}},
 		{Key: "uid", Operator: "in", Values: []string{"u2"}},
 	}
-	resp = validateHybridSearchRequest(r)
-	require.NotNil(t, resp) // duplicate keys diverge between legs
-	assert.Contains(t, resp.Error.Message, "duplicate")
+	wantInvalid(validateHybridSearchRequest(r), "duplicate")
 
 	r = valid()
 	r.Key.Resource = "dashboards"
 	r.Filters = []*resourcepb.Requirement{{Key: "language", Operator: "in", Values: []string{"promql", "cypher"}}}
-	resp = validateHybridSearchRequest(r)
-	require.NotNil(t, resp) // unknown language would leave the lexical leg unfiltered
-	assert.Contains(t, resp.Error.Message, "cypher")
+	wantInvalid(validateHybridSearchRequest(r), "cypher")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "datasource_uid", Operator: "in", Values: []string{"d"}}}
-	resp = validateHybridSearchRequest(r)
-	require.NotNil(t, resp) // dashboard-only key on resource "r"
-	assert.Contains(t, resp.Error.Message, "dashboards")
+	wantInvalid(validateHybridSearchRequest(r), "dashboards")
 
 	r = valid()
 	r.Key.Resource = "dashboards"
@@ -348,7 +352,6 @@ func TestHybridSearch_FusesBothLegs(t *testing.T) {
 		Key: validKey(), Query: "api latency", Limit: 10,
 	})
 	require.NoError(t, err)
-	assert.Nil(t, resp.Error)
 	require.Len(t, resp.Results, 3)
 
 	assert.Equal(t, "both", resp.Results[0].Key.Name)
@@ -441,19 +444,19 @@ func TestHybridSearch_NotConfigured(t *testing.T) {
 	assert.Equal(t, codes.Unimplemented, status.Code(err))
 }
 
-func TestHybridSearch_ValidationErrorsEmbedInResponse(t *testing.T) {
+func TestHybridSearch_ValidationErrorsAreInvalidArgument(t *testing.T) {
 	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
 
-	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{Query: "q"})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{Query: "q"})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 
-	resp, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+	_, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 		Key: validKey(), Query: "q",
 		Filters: []*resourcepb.Requirement{{Key: "tags", Operator: "in", Values: []string{"x"}}},
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 }
 
 func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {

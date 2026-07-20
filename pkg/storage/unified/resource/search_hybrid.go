@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
 
@@ -31,8 +32,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if s.embedder == nil || s.vectorBackend == nil {
 		return nil, status.Error(codes.Unimplemented, "hybrid search not configured")
 	}
-	if errResp := validateHybridSearchRequest(req); errResp != nil {
-		return errResp, nil
+	if err := validateHybridSearchRequest(req); err != nil {
+		return nil, err
 	}
 
 	limit := int(req.Limit)
@@ -123,8 +124,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	return &resourcepb.HybridSearchResponse{Results: fused}, nil
 }
 
-// rrfK is the standard Reciprocal Rank Fusion constant (Cormack, Clarke
-// & Buettcher 2009).
+// rrfK is the standard Reciprocal Rank Fusion constant.
 const rrfK = 60
 
 // maxChunksPerHybridResult bounds response size; only the best chunk
@@ -264,12 +264,13 @@ var languageToDSTypes = map[string][]string{
 	"sql": {"mysql", "postgres", "grafana-postgresql-datasource", "mssql"},
 }
 
-// validateHybridSearchRequest returns nil when valid, otherwise a
-// response wrapping a BadRequestError (matches the Search/VectorSearch
-// error convention).
-func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) *resourcepb.HybridSearchResponse {
-	reqErr := func(msg string) *resourcepb.HybridSearchResponse {
-		return &resourcepb.HybridSearchResponse{Error: NewBadRequestError(msg)}
+// validateHybridSearchRequest returns nil when valid, otherwise an
+// InvalidArgument status error. Unlike Search/VectorSearch, hybrid never
+// embeds errors in a successful response — request failures are always
+// gRPC statuses so client metrics/alerting can track them.
+func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
+	reqErr := func(msg string) error {
+		return status.Error(codes.InvalidArgument, msg)
 	}
 	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
 		return reqErr("missing namespace, group or resource")
@@ -292,6 +293,13 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) *resourcep
 	for _, f := range req.Filters {
 		if _, ok := hybridFilterKeys[f.Key]; !ok {
 			return reqErr(fmt.Sprintf("unsupported filter key %q", f.Key))
+		}
+		// Both legs evaluate every filter with IN semantics; accepting
+		// other operators would silently misinterpret them.
+		switch selection.Operator(f.Operator) {
+		case selection.In, selection.Equals, selection.DoubleEquals, selection.Operator(""):
+		default:
+			return reqErr(fmt.Sprintf("unsupported filter operator %q (only in/= are supported)", f.Operator))
 		}
 		if _, dup := seen[f.Key]; dup {
 			return reqErr(fmt.Sprintf("duplicate filter key %q", f.Key))

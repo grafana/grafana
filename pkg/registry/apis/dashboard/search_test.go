@@ -268,11 +268,9 @@ func TestHybridSearch(t *testing.T) {
 		assert.Equal(t, []string{""}, mockClient.LastHybridSearchRequest.Filters[0].Values)
 	})
 
-	t.Run("surfaces response-embedded validation errors", func(t *testing.T) {
+	t.Run("maps InvalidArgument validation errors to 400", func(t *testing.T) {
 		mockClient := &MockClient{
-			HybridSearchResponse: &resourcepb.HybridSearchResponse{
-				Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "query must not be empty"},
-			},
+			HybridSearchErr: status.Error(codes.InvalidArgument, "query must not be empty"),
 		}
 		rr := doRequest(newHandler(mockClient), "query=")
 		assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)

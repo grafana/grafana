@@ -305,11 +305,10 @@ message HybridSearchRequest {
 }
 
 message HybridSearchResponse {
-  // Error details
-  ErrorResult error = 1;
-
   // Top-k fused results, descending score, one row per resource.
-  repeated HybridSearchResult results = 2;
+  // Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
+  // bad filters), never payload-embedded errors.
+  repeated HybridSearchResult results = 1;
 }
 
 message HybridSearchResult {

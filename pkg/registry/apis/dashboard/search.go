@@ -749,10 +749,6 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
 		return
 	}
-	if result.GetError() != nil {
-		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
-		return
-	}
 
 	s.write(w, hybridSearchResultsToSearchResults(result))
 }
