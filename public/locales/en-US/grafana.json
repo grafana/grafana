@@ -1881,6 +1881,11 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "import-to-gma-banner": {
+      "description": "Bring your external Alertmanager configuration into Grafana-managed alerting using the import wizard.",
+      "open-button": "Import to Grafana Alerting",
+      "title": "Import your external Alertmanager into Grafana"
+    },
     "import-to-gma-tool": {
       "pageTitle": "Import to Grafana Alerting"
     },
@@ -4973,6 +4978,7 @@
       "dark-theme": "Dark",
       "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
+      "open-saved-queries": "Open saved queries",
       "scopes": "Scopes"
     },
     "deep-search": {
@@ -5579,12 +5585,19 @@
       "download-button": "Download diagnostics",
       "error-title": "Failed to generate diagnostics",
       "generating-button": "Generating…",
+      "generation-failed": "Diagnostics generation failed",
+      "info-text-dashboard": "Generates a diagnostic bundle for the whole dashboard by re-running every panel's queries with HTTP capture active. This runs in the background and may take a while for large dashboards.",
       "info-text-panel": "Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download may take a moment while the bundle is generated.",
+      "job-not-created": "Diagnostics job was not created",
+      "no-panels": "This dashboard has no panels with active queries.",
       "no-queries": "This panel has no active queries to capture.",
+      "progress": "Capturing panel {{done}} of {{total}}…",
       "request-failed": "Request failed",
       "sensitive-warning-body": "The bundle can include request headers, query parameters, and server log lines. Review it before sharing outside your organization.",
       "sensitive-warning-title": "May contain sensitive data",
+      "subtitle-dashboard": "Bundle HTTP traffic (HAR) and panel JSON for every panel in this dashboard to help troubleshoot.",
       "subtitle-panel": "Bundle HTTP traffic (HAR), logs, and panel JSON to help troubleshoot this panel.",
+      "timed-out": "Timed out waiting for diagnostics generation",
       "title": "Download diagnostics"
     },
     "dynamic-config-value-editor": {
@@ -6265,7 +6278,6 @@
       }
     },
     "source-link": {
-      "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
     },
     "support-snapshot-service": {
@@ -6363,6 +6375,7 @@
           "tooltip": "This dashboard was marked as read only"
         },
         "export": {
+          "download-diagnostics": "Download diagnostics",
           "tooltip": {
             "as-code": "Export as code"
           }
@@ -8809,6 +8822,8 @@
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
     "span-bar-row": {
+      "summary-count-aria_one": "{{count}} aggregated span",
+      "summary-count-aria_other": "{{count}} aggregated spans",
       "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
     "span-detail": {
@@ -8847,6 +8862,11 @@
     },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
+    },
+    "summary-span": {
+      "stat-max": "Max",
+      "stat-median": "Median",
+      "stat-min": "Min"
     },
     "supplementary-result-error": {
       "show-details": "Show details"
@@ -10767,6 +10787,7 @@
     "shortcuts-description": {
       "change-theme": "Change theme",
       "collapse-all-rows": "Collapse all rows",
+      "copy-panel": "Copy Panel",
       "copy-share-link": "Copy panel share link",
       "copy-time-range": "Copy time range",
       "dashboard-settings": "Dashboard settings",
@@ -10787,6 +10808,7 @@
       "open-search": "Open search",
       "open-share-embed-drawer": "Share panel embed",
       "open-shared-modal": "Share panel snapshot",
+      "paste-panel": "Paste Panel",
       "paste-time-range": "Paste time range",
       "refresh-all-panels": "Refresh all panels",
       "remove-panel": "Remove Panel",
@@ -10823,6 +10845,10 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "alerts-incidents": {
+      "alert-tab-label": "Firing alerts",
+      "title": "Alerts & incidents"
+    },
     "dashboard-tabs": {
       "most-used": "Most used",
       "most-used-active": "Most used dashboards",
@@ -10907,12 +10933,33 @@
         "title": "Measure real user experience"
       },
       "go-to": "Go to recommendation {{index}}",
+      "health": {
+        "nodes_one": "{{count}} node not ready",
+        "nodes_other": "{{count}} nodes not ready",
+        "pods_one": "{{count}} pod pending or failed",
+        "pods_other": "{{count}} pods pending or failed",
+        "restarts_one": "{{count}} restart in the last hour",
+        "restarts_other": "{{count}} restarts in the last hour"
+      },
       "hide": "Hide",
       "hosted-traces": {
         "action": "Enable Hosted Traces",
-        "context": "Because you set up Kubernetes Monitoring",
+        "context": "Complete the picture with distributed tracing",
         "description": "Add distributed tracing to see how requests flow between services and where they slow down.",
         "title": "Trace requests across services"
+      },
+      "kubernetes": {
+        "action": "Open K8s app",
+        "alerts-firing_one": "{{value}} alert firing",
+        "alerts-firing_other": "{{value}} alerts firing",
+        "cluster-cpu": "Cluster CPU · last 24h",
+        "clusters_one": "{{value}} cluster",
+        "clusters_other": "{{value}} clusters",
+        "datasource": "via {{name}}",
+        "pods_one": "{{value}} pod",
+        "pods_other": "{{value}} pods",
+        "title": "Kubernetes Monitoring",
+        "view": "View"
       },
       "next": "Next",
       "pause": "Pause",
@@ -10920,7 +10967,8 @@
       "recommended": "Recommended",
       "resume": "Resume",
       "show": "Show",
-      "switch": "Switch to another app you run",
+      "switch": "Recommendations follow the selected solution",
+      "switchSolution": "Switch solution",
       "synthetic-monitoring": {
         "action": "Add Synthetic Monitoring",
         "context": "Catch outages before your users do",
@@ -12195,6 +12243,10 @@
     "reporting": {
       "title": "Reporting"
     },
+    "saved-queries": {
+      "subtitle": "Reusable queries you can use across panels and Explore",
+      "title": "Saved queries"
+    },
     "scenes": {
       "title": "Scenes"
     },
@@ -12618,6 +12670,7 @@
       "inspect-json": "Panel JSON",
       "more": "More...",
       "new-alert-rule": "New alert rule",
+      "panel-copy-success": "Panel \"{{panelName}}\" copied to clipboard",
       "paste-styles": "Paste styles",
       "query": "Query",
       "remove": "Remove",
@@ -13180,6 +13233,9 @@
   "provisioning": {
     "bitbucket": {
       "branch-required": "Branch is required",
+      "email-description": "The Atlassian account email used to authenticate the Bitbucket API. Required to enable webhooks.",
+      "email-invalid": "Enter a valid email address",
+      "email-label": "Atlassian account email",
       "permissions": {
         "pull-requests-label": "Pull requests",
         "pull-requests-read-write": "Read and write",
@@ -13619,9 +13675,11 @@
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
       "kubectl": "Managed by: Kubectl",
+      "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "terraform": "Managed by: Terraform"
+      "terraform": "Managed by: Terraform",
+      "view-source-file": "View source file"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
@@ -13987,9 +14045,6 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
-    "source-link": {
-      "title": "Source ({{provider}})"
-    },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",
@@ -14050,9 +14105,6 @@
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
-    "view-repository-button": {
-      "label": "View repository"
-    },
     "warning-title-default": "Warning",
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
@@ -14060,6 +14112,8 @@
     },
     "webhook-section": {
       "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-email": "Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.",
+      "description-webhook-disabled-email-step": "Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.",
       "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
@@ -15487,6 +15541,9 @@
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
+    "frame-picker": {
+      "label": "Query"
+    },
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -16004,10 +16061,6 @@
       "convert-field-type": "Convert field type",
       "description": {
         "convert-to-specified-field-type": "Convert a field to a specified field type."
-      },
-      "label": {
-        "browser": "Browser",
-        "utc": "UTC"
       },
       "label-as": "as",
       "label-date-format": "Date format",

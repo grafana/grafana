@@ -200,7 +200,7 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 }
 
 // NewTenantWatcher creates and starts a TenantWatcher.
-func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppender, cfg TenantWatcherConfig) (*TenantWatcher, error) {
+func NewTenantWatcher(ctx context.Context, ds *dataStore, pds *PendingDeleteStore, writeEvent EventAppender, cfg TenantWatcherConfig) (*TenantWatcher, error) {
 	restCfg, err := NewTenantRESTConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("building tenant REST config: %w", err)
@@ -228,7 +228,7 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 
 	tw := &TenantWatcher{
 		log:                logger,
-		pendingDeleteStore: newPendingDeleteStore(ds.kv),
+		pendingDeleteStore: pds,
 		dataStore:          ds,
 		writeEvent:         writeEvent,
 		client:             client,

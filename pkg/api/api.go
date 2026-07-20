@@ -508,6 +508,10 @@ func (hs *HTTPServer) registerRoutes() {
 		// 2. grafana.onDemandDiagnostics flag at request time
 		if hs.Cfg.StackID == "" {
 			apiRoute.Post("/ds/diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDiagnostics))
+			// Dashboard-level diagnostics: async create/poll/download (support-bundle style).
+			apiRoute.Post("/ds/dashboard-diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDashboardDiagnostics))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid", reqGrafanaAdmin, routing.Wrap(hs.GetDashboardDiagnosticsStatus))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid/download", reqGrafanaAdmin, routing.Wrap(hs.DownloadDashboardDiagnostics))
 		}
 
 		// Unified Alerting

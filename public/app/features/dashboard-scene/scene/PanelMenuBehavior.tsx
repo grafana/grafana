@@ -195,6 +195,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');
           dashboard.copyPanel(panel);
         },
+        shortcut: 'p c',
       });
     }
 

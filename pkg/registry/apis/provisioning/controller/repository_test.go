@@ -1553,7 +1553,7 @@ func (s *hookRepoStub) CreateWebhook(context.Context, string, []string, string) 
 	return nil, s.hookResult()
 }
 
-func (s *hookRepoStub) GetWebhook(context.Context, int64) (repository.WebhookConfig, error) {
+func (s *hookRepoStub) GetWebhook(context.Context, repository.WebhookID) (repository.WebhookConfig, error) {
 	return nil, s.hookResult()
 }
 
@@ -1562,7 +1562,7 @@ func (s *hookRepoStub) EditWebhook(context.Context, repository.WebhookConfig) er
 	return s.hookResult()
 }
 
-func (s *hookRepoStub) DeleteWebhook(context.Context, int64) error {
+func (s *hookRepoStub) DeleteWebhook(context.Context, repository.WebhookID) error {
 	return s.hookResult()
 }
 
