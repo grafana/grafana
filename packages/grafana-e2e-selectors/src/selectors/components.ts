@@ -206,7 +206,7 @@ export const versionedComponents = {
   },
   AddToDashboard: {
     confirmButton: {
-      [MIN_GRAFANA_VERSION]: 'data-testid Add to dashboard confirm button',
+      '13.2.0': 'data-testid Add to dashboard confirm button',
     },
   },
   DataSource: {
