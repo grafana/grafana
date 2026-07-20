@@ -16,12 +16,12 @@ export function getFilesToFormat(variant: Variant, groupName: string, version: s
   ];
 }
 
-function runOrWarn(label: string, command: string, cwd: string) {
+function runOrWarn(label: string, cmd: string, args: string[], cwd: string) {
+  const command = [cmd, ...args].join(' ');
   if (!ALLOWED_FORMAT_COMMANDS.some((allowed) => command.startsWith(allowed))) {
     throw new Error(`Refusing to run disallowed format command: "${command}"`);
   }
   console.log(`🧹 Running ${label} on generated/modified files...`);
-  const [cmd, ...args] = command.split(' ').filter(Boolean);
   const result = spawnSync(cmd, args, { cwd, stdio: 'pipe', shell: false });
   if (result.error || result.status !== 0) {
     const detail = result.error?.message ?? result.stderr?.toString() ?? `exit code ${result.status}`;
@@ -31,10 +31,10 @@ function runOrWarn(label: string, command: string, cwd: string) {
 
 /** Run ESLint + Prettier on the given files (paths relative to basePath). */
 export function formatFiles(basePath: string, files: string[]) {
-  const absolute = files.map((f) => `"${path.join(basePath, f)}"`).join(' ');
-  runOrWarn('ESLint', `yarn eslint --fix ${absolute}`, basePath);
+  const absolutePaths = files.map((f) => path.join(basePath, f));
+  runOrWarn('ESLint', 'yarn', ['eslint', '--fix', ...absolutePaths], basePath);
   // --ignore-path so gitignored files (local/) can still be formatted
-  runOrWarn('Prettier', `yarn prettier --write ${absolute} --ignore-path=./.prettierignore`, basePath);
+  runOrWarn('Prettier', 'yarn', ['prettier', '--write', ...absolutePaths, '--ignore-path=./.prettierignore'], basePath);
 }
 
 /** Run the RTK codegen to produce endpoints.gen.ts. */
