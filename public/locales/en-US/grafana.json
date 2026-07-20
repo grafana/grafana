@@ -4978,6 +4978,7 @@
       "dark-theme": "Dark",
       "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
+      "open-saved-queries": "Open saved queries",
       "scopes": "Scopes"
     },
     "deep-search": {
@@ -10786,6 +10787,7 @@
     "shortcuts-description": {
       "change-theme": "Change theme",
       "collapse-all-rows": "Collapse all rows",
+      "copy-panel": "Copy Panel",
       "copy-time-range": "Copy time range",
       "dashboard-settings": "Dashboard settings",
       "duplicate-panel": "Duplicate Panel",
@@ -10806,6 +10808,7 @@
       "open-share-embed-drawer": "Share panel embed",
       "open-share-link-drawer": "Share panel link",
       "open-shared-modal": "Share panel snapshot",
+      "paste-panel": "Paste Panel",
       "paste-time-range": "Paste time range",
       "refresh-all-panels": "Refresh all panels",
       "remove-panel": "Remove Panel",
@@ -10842,6 +10845,10 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "alerts-incidents": {
+      "alert-tab-label": "Firing alerts",
+      "title": "Alerts & incidents"
+    },
     "dashboard-tabs": {
       "most-used": "Most used",
       "most-used-active": "Most used dashboards",
@@ -10926,12 +10933,33 @@
         "title": "Measure real user experience"
       },
       "go-to": "Go to recommendation {{index}}",
+      "health": {
+        "nodes_one": "{{count}} node not ready",
+        "nodes_other": "{{count}} nodes not ready",
+        "pods_one": "{{count}} pod pending or failed",
+        "pods_other": "{{count}} pods pending or failed",
+        "restarts_one": "{{count}} restart in the last hour",
+        "restarts_other": "{{count}} restarts in the last hour"
+      },
       "hide": "Hide",
       "hosted-traces": {
         "action": "Enable Hosted Traces",
-        "context": "Because you set up Kubernetes Monitoring",
+        "context": "Complete the picture with distributed tracing",
         "description": "Add distributed tracing to see how requests flow between services and where they slow down.",
         "title": "Trace requests across services"
+      },
+      "kubernetes": {
+        "action": "Open K8s app",
+        "alerts-firing_one": "{{value}} alert firing",
+        "alerts-firing_other": "{{value}} alerts firing",
+        "cluster-cpu": "Cluster CPU · last 24h",
+        "clusters_one": "{{value}} cluster",
+        "clusters_other": "{{value}} clusters",
+        "datasource": "via {{name}}",
+        "pods_one": "{{value}} pod",
+        "pods_other": "{{value}} pods",
+        "title": "Kubernetes Monitoring",
+        "view": "View"
       },
       "next": "Next",
       "pause": "Pause",
@@ -10939,7 +10967,8 @@
       "recommended": "Recommended",
       "resume": "Resume",
       "show": "Show",
-      "switch": "Switch to another app you run",
+      "switch": "Recommendations follow the selected solution",
+      "switchSolution": "Switch solution",
       "synthetic-monitoring": {
         "action": "Add Synthetic Monitoring",
         "context": "Catch outages before your users do",
@@ -12641,6 +12670,7 @@
       "inspect-json": "Panel JSON",
       "more": "More...",
       "new-alert-rule": "New alert rule",
+      "panel-copy-success": "Panel \"{{panelName}}\" copied to clipboard",
       "paste-styles": "Paste styles",
       "query": "Query",
       "remove": "Remove",

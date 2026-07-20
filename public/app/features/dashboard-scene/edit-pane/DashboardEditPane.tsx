@@ -430,7 +430,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(target));
   }
 
-  public pastePanel(target: SceneObject | undefined, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
+  public pastePanel(target: SceneObject | undefined) {
     const dashboard = getDashboardSceneFor(this);
 
     if (target) {
@@ -439,8 +439,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     } else {
       dashboard.pastePanel();
     }
-
-    DashboardInteractions.trackPastePanelClick(source, getLayoutType(target), 'click');
   }
 }
 
