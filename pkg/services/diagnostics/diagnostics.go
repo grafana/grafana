@@ -125,8 +125,14 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 
 		dir := uniquePanelDir(p.ID, p.Title, usedDirs)
 		entry.Dir = dir
-		if len(p.PanelJSON) > 0 {
-			files[dir+"/panel.json"] = indentJSON(p.PanelJSON)
+		// The whole-dashboard client posts the dashboard save model once rather than each panel's JSON
+		// separately, so resolve this panel's JSON from that model by id when it wasn't supplied inline.
+		panelJSON := p.PanelJSON
+		if len(panelJSON) == 0 {
+			panelJSON = extractPanelJSON(dashboardJSON, p.ID)
+		}
+		if len(panelJSON) > 0 {
+			files[dir+"/panel.json"] = indentJSON(panelJSON)
 		}
 
 		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
@@ -155,6 +161,42 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	}
 
 	return buildTarGz(files)
+}
+
+// extractPanelJSON returns the raw JSON of the panel with the given id from a dashboard save model,
+// or nil if absent. The whole-dashboard client sends the dashboard model once (not each panel's JSON),
+// so per-panel panel.json is resolved here by id. Collapsed rows carry their children in a nested
+// "panels" array, so the search recurses into them.
+func extractPanelJSON(dashboardJSON json.RawMessage, id int64) json.RawMessage {
+	if len(dashboardJSON) == 0 {
+		return nil
+	}
+	var doc struct {
+		Panels []json.RawMessage `json:"panels"`
+	}
+	if err := json.Unmarshal(dashboardJSON, &doc); err != nil {
+		return nil
+	}
+	return findPanelByID(doc.Panels, id)
+}
+
+func findPanelByID(panels []json.RawMessage, id int64) json.RawMessage {
+	for _, raw := range panels {
+		var meta struct {
+			ID     *int64            `json:"id"`
+			Panels []json.RawMessage `json:"panels"`
+		}
+		if err := json.Unmarshal(raw, &meta); err != nil {
+			continue
+		}
+		if meta.ID != nil && *meta.ID == id {
+			return raw
+		}
+		if found := findPanelByID(meta.Panels, id); found != nil {
+			return found
+		}
+	}
+	return nil
 }
 
 // uniquePanelDir builds a stable, filesystem-safe directory name (panels/<id>-<slug>),

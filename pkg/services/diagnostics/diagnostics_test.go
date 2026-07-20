@@ -417,6 +417,43 @@ func TestBuildDashboard(t *testing.T) {
 	require.Positive(t, m.Panels[0].HARBytes)
 }
 
+// The whole-dashboard client posts the dashboard save model once instead of each panel's JSON, so
+// BuildDashboard must resolve each panel's panel.json from that model by id -- including panels nested
+// inside a collapsed row.
+func TestBuildDashboard_resolvesPanelJSONFromDashboardModel(t *testing.T) {
+	dashboardJSON := json.RawMessage(`{
+		"title": "My dash",
+		"panels": [
+			{"id": 1, "type": "timeseries", "title": "CPU Usage"},
+			{"id": 9, "type": "row", "title": "Row", "panels": [
+				{"id": 2, "type": "logs", "title": "Logs"}
+			]}
+		]
+	}`)
+	// Neither panel carries inline PanelJSON -- it must be extracted from dashboardJSON by id.
+	panels := []DashboardPanel{
+		{ID: 1, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/1")},
+		{ID: 2, Title: "Logs", HARBuffer: bufferWithEntry(t, "http://ds/2")},
+	}
+	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/1-cpu-usage/panel.json", "top-level panel JSON resolved by id")
+	require.Contains(t, files, "panels/2-logs/panel.json", "panel nested in a collapsed row resolved by id")
+	require.Contains(t, string(files["panels/1-cpu-usage/panel.json"]), `"timeseries"`)
+	require.Contains(t, string(files["panels/2-logs/panel.json"]), `"logs"`)
+}
+
+func TestExtractPanelJSON(t *testing.T) {
+	dash := json.RawMessage(`{"panels":[{"id":1,"type":"a"},{"id":5,"type":"row","panels":[{"id":6,"type":"b"}]}]}`)
+	require.Contains(t, string(extractPanelJSON(dash, 1)), `"a"`)
+	require.Contains(t, string(extractPanelJSON(dash, 6)), `"b"`, "must find panels nested in a row")
+	require.Nil(t, extractPanelJSON(dash, 99), "unknown id -> nil")
+	require.Nil(t, extractPanelJSON(nil, 1), "empty dashboard -> nil")
+	require.Nil(t, extractPanelJSON(json.RawMessage(`not json`), 1), "malformed -> nil, not panic")
+}
+
 func TestBuildDashboard_recordsPanelQueryError(t *testing.T) {
 	panels := []DashboardPanel{
 		{ID: 7, Title: "Broken", QueryErr: errors.New("datasource exploded")},
