@@ -2199,6 +2199,11 @@ func TestStaleResults(t *testing.T) {
 	currentStates := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 	statesMap := checkExpectedStates(t, currentStates, initStates)
 	require.Equal(t, eval.Alerting, statesMap[state2].State) // make sure the state is alerting because we need it to be resolved later
+	// Model a series which resolved in an earlier evaluation and was notified.
+	// A later MissingSeries transition must still produce a new resolution event.
+	resolvedAt := clk.Now()
+	statesMap[state3].ResolvedAt = &resolvedAt
+	statesMap[state3].LastSentAt = &resolvedAt
 
 	staleDuration := 2 * time.Duration(rule.IntervalSeconds) * time.Second
 	clk.Add(staleDuration)
@@ -2219,7 +2224,7 @@ func TestStaleResults(t *testing.T) {
 			assert.Equal(t, eval.Normal, s.State.State)
 			assert.Equal(t, models.StateReasonMissingSeries, s.StateReason)
 			assert.Equal(t, clk.Now(), s.EndsAt)
-			if s.CacheID == state2 {
+			if s.CacheID == state2 || s.CacheID == state3 {
 				assert.Equalf(t, clk.Now(), *s.ResolvedAt, "Returned stale state should have ResolvedAt set")
 			}
 			key, err := s.GetAlertInstanceKey()
