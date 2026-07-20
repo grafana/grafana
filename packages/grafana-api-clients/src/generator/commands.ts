@@ -64,12 +64,19 @@ export function formatFiles(basePath: string, files: string[]) {
 
 /** Run the RTK codegen to produce endpoints.gen.ts. */
 export function runGenerateApis(basePath: string, variant: Variant) {
-  if (!ALLOWED_GENERATE_COMMANDS.includes(variant.generateCommand)) {
-    throw new Error(`Refusing to run disallowed generate command: "${variant.generateCommand}"`);
+  const isAllowed = ALLOWED_GENERATE_COMMANDS.some(
+    ([allowedCmd, ...allowedArgs]) =>
+      variant.generateCmd === allowedCmd &&
+      variant.generateArgs.length === allowedArgs.length &&
+      variant.generateArgs.every((arg, i) => arg === allowedArgs[i])
+  );
+  if (!isAllowed) {
+    throw new Error(
+      `Refusing to run disallowed generate command: "${variant.generateCmd} ${variant.generateArgs.join(' ')}"`
+    );
   }
-  console.log(`⏳ Running ${variant.generateCommand} to generate endpoints...`);
-  const [cmd, ...args] = variant.generateCommand.split(' ').filter(Boolean);
-  const result = spawnSync(cmd, args, { stdio: 'inherit', cwd: basePath, shell: false });
+  console.log(`⏳ Running ${variant.generateCmd} to generate endpoints...`);
+  const result = spawnSync(variant.generateCmd, [...variant.generateArgs], { stdio: 'inherit', cwd: basePath, shell: false });
   if (result.error) {
     console.error(`❌ Failed to generate API endpoints: ${result.error.message}`);
     throw result.error;
