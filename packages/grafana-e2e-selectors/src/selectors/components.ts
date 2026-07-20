@@ -1009,10 +1009,10 @@ export const versionedComponents = {
         '13.2.0': 'data-testid Transforms FilterByValue add-condition-button',
       },
       fieldSelect: {
-        '13.2.0': (index: number) => `data-testid Transforms FilterByValue field-select ${index}`,
+        '13.2.0': (index: string) => `data-testid Transforms FilterByValue field-select ${index}`,
       },
       matchSelect: {
-        '13.2.0': (index: number) => `data-testid Transforms FilterByValue match-select ${index}`,
+        '13.2.0': (index: string) => `data-testid Transforms FilterByValue match-select ${index}`,
       },
     },
     Reduce: {

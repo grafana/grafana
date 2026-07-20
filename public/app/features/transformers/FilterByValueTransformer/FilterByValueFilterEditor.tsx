@@ -86,7 +86,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
           options={fieldsAsOptions}
           value={filter.fieldName}
           onChange={onChangeField}
-          data-testid={selectors.components.Transforms.FilterByValue.fieldSelect(index)}
+          data-testid={selectors.components.Transforms.FilterByValue.fieldSelect(String(index))}
         />
       </InlineField>
       <InlineField label={t('transformers.filter-by-value-filter-editor.label-match', 'Match')}>
@@ -96,7 +96,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
           options={matcherOptions}
           value={matcherId}
           onChange={onChangeMatcher}
-          data-testid={selectors.components.Transforms.FilterByValue.matchSelect(index)}
+          data-testid={selectors.components.Transforms.FilterByValue.matchSelect(String(index))}
         />
       </InlineField>
       <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
