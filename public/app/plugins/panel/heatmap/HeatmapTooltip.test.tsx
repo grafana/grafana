@@ -1,14 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import {
-  createDataFrame,
-  createTheme,
-  DataFrameType,
-  FieldType,
-  getDefaultTimeRange,
-  getDisplayProcessor,
-  LoadingState,
-} from '@grafana/data';
+import { createDataFrame, createTheme, DataFrameType, FieldType, getDisplayProcessor } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { HeatmapCellLayout, TooltipDisplayMode } from '@grafana/schema';
 
@@ -178,8 +170,6 @@ describe('HeatmapTooltip', () => {
     seriesIdx: 1,
     dataRef: { current: createMinimalHeatmapData() },
     isPinned: false,
-    dismiss: jest.fn(),
-    panelData: { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() },
     replaceVariables: (v: string) => v,
   };
 

@@ -10,7 +10,6 @@ import {
   getFieldDisplayName,
   type InterpolateFunction,
   type LinkModel,
-  type PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import {
@@ -50,8 +49,6 @@ interface HeatmapTooltipProps {
   dataRef: React.MutableRefObject<HeatmapData>;
   showHistogram?: boolean;
   isPinned: boolean;
-  dismiss: () => void;
-  panelData: PanelData;
   annotate?: () => void;
   maxHeight?: number;
   maxWidth?: number;

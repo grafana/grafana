@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 type Props = {
   colorPalette: string[];
@@ -14,20 +14,17 @@ type Props = {
   useStopsPercentage?: boolean;
 };
 
-const GRADIENT_STOPS = 10;
-
 export const ColorScale = ({ colorPalette, min, max, display, useStopsPercentage }: Props) => {
-  const colors = useMemo(
-    () => getGradientStops({ colorArray: colorPalette, stops: GRADIENT_STOPS, useStopsPercentage }),
-    [colorPalette, useStopsPercentage]
-  );
+  const styles = useStyles2(getStyles);
 
-  const theme = useTheme2();
-  const styles = getStyles(theme, colors);
+  const background = useMemo(() => {
+    const colors = getGradientStops(colorPalette, useStopsPercentage);
+    return `linear-gradient(90deg, ${colors.join()})`;
+  }, [colorPalette, useStopsPercentage]);
 
   return (
     <div className={styles.scaleWrapper}>
-      <div className={styles.scaleGradient} />
+      <div className={styles.scaleGradient} style={{ background }} />
       {display && (
         <div className={styles.legendValues}>
           <span className={styles.disabled}>{display(min)}</span>
@@ -38,16 +35,12 @@ export const ColorScale = ({ colorPalette, min, max, display, useStopsPercentage
   );
 };
 
-const getGradientStops = ({
-  colorArray,
-  stops,
-  useStopsPercentage = true,
-}: {
-  colorArray: string[];
-  stops: number;
-  useStopsPercentage?: boolean;
-}): string[] => {
+// max number of stops to sample for smooth gradients
+const GRADIENT_STOPS = 10;
+
+const getGradientStops = (colorArray: string[], useStopsPercentage = true): string[] => {
   const colorCount = colorArray.length;
+
   if (useStopsPercentage && colorCount <= 20) {
     const incr = (1 / colorCount) * 100;
     let per = 0;
@@ -65,7 +58,7 @@ const getGradientStops = ({
   }
 
   const gradientEnd = colorArray[colorCount - 1];
-  const skip = Math.ceil(colorCount / stops);
+  const skip = Math.ceil(colorCount / GRADIENT_STOPS);
   const gradientStops = new Set<string>();
 
   for (let i = 0; i < colorCount; i += skip) {
@@ -77,13 +70,12 @@ const getGradientStops = ({
   return [...gradientStops];
 };
 
-const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   scaleWrapper: css({
     width: '100%',
     fontSize: '11px',
   }),
   scaleGradient: css({
-    background: `linear-gradient(90deg, ${colors.join()})`,
     height: '9px',
     borderRadius: theme.shape.radius.default,
   }),

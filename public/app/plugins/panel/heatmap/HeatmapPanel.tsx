@@ -71,7 +71,7 @@ export const HeatmapPanel = (props: HeatmapPanelProps) => {
     );
   }
 
-  return <HeatmapPanelViz {...props} info={info} palette={palette} />;
+  return <HeatmapPanelViz {...props} info={info} />;
 };
 
 const HeatmapPanelViz = ({
@@ -85,8 +85,7 @@ const HeatmapPanelViz = ({
   onChangeTimeRange,
   replaceVariables,
   info,
-  palette,
-}: HeatmapPanelProps & { info: HeatmapDataForViz; palette: string[] }) => {
+}: HeatmapPanelProps & { info: HeatmapDataForViz }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { sync, eventsScope, canAddAnnotations, onSelectRange, canExecuteActions } = usePanelContext();
@@ -170,7 +169,7 @@ const HeatmapPanelViz = ({
   }, [options, timeZone, data.structureRev, cursorSync, annotationsLength]);
 
   const renderLegend = () => {
-    if (!options.legend.show) {
+    if (!options.legend.show || info.heatmapColors == null) {
       return null;
     }
 
@@ -178,9 +177,9 @@ const HeatmapPanelViz = ({
       <VizLayout.Legend placement="bottom" maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
           <ColorScale
-            colorPalette={palette}
-            min={dataRef.current.heatmapColors?.minValue!}
-            max={dataRef.current.heatmapColors?.maxValue!}
+            colorPalette={info.heatmapColors.palette}
+            min={info.heatmapColors.minValue}
+            max={info.heatmapColors.maxValue}
             display={info.display}
           />
         </div>
@@ -230,9 +229,7 @@ const HeatmapPanelViz = ({
                       seriesIdx={seriesIdx}
                       dataRef={dataRef}
                       isPinned={isPinned}
-                      dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}
-                      panelData={data}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
                       maxWidth={options.tooltip.maxWidth}

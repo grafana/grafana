@@ -15,18 +15,16 @@ export interface MarkersLegendProps {
   styleConfig?: StyleConfigState;
 }
 
-export function MarkersLegend(props: MarkersLegendProps) {
-  const { layerName, styleConfig } = props;
+export function MarkersLegend({ layerName, styleConfig }: MarkersLegendProps) {
   const style = useStyles2(getStyles);
-
-  const colorField = styleConfig?.dims?.color?.field;
 
   if (!styleConfig) {
     return <></>;
   }
 
-  const { color, opacity } = styleConfig?.base ?? {};
-  const symbol = styleConfig?.config.symbol?.fixed;
+  const colorField = styleConfig.dims?.color?.field;
+  const { color, opacity } = styleConfig.base;
+  const symbol = styleConfig.config.symbol?.fixed;
 
   if (color && symbol && !colorField) {
     return (
@@ -64,9 +62,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
     //   ]
     // })
 
-    const display = colorField.display
-      ? (v: number) => formattedValueToString(colorField.display!(v))
-      : (v: number) => `${v}`;
+    const display = colorField.display ? (v: number) => formattedValueToString(colorField.display!(v)) : undefined;
     return (
       <div className={style.infoWrap}>
         <div className={style.layerName}>{layerName}</div>
