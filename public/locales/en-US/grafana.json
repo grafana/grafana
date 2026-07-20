@@ -1881,6 +1881,11 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "import-to-gma-banner": {
+      "description": "Bring your external Alertmanager configuration into Grafana-managed alerting using the import wizard.",
+      "open-button": "Import to Grafana Alerting",
+      "title": "Import your external Alertmanager into Grafana"
+    },
     "import-to-gma-tool": {
       "pageTitle": "Import to Grafana Alerting"
     },
@@ -5814,12 +5819,16 @@
       }
     },
     "get-field-override-categories": {
+      "body-matcher-no-editor": "This override is active, but this matcher type can only be edited in the dashboard JSON.",
+      "body-unknown-matcher": "This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.",
       "label-add-field-override": "Add field override",
       "label-add-override-property": "Add override property",
       "override-name": "Override {{overrideNum}}",
       "title": {
         "add-button": "add button"
-      }
+      },
+      "title-matcher-no-editor": "Matcher \"{{matcherName}}\" has no visual editor",
+      "title-unknown-matcher": "Unknown matcher type \"{{matcherId}}\""
     },
     "get-library-panel-options-category": {
       "descriptor": {
@@ -6001,6 +6010,12 @@
       "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type."
     },
     "new-panel-title": "New panel",
+    "notebook-layout": {
+      "description": "A vertical sequence of panels, text, and code cells",
+      "name": "Notebook",
+      "pill": "Published Notebook",
+      "time": "Time"
+    },
     "on-create-new-row": {
       "new-row": {
         "title": {
@@ -6256,7 +6271,6 @@
       }
     },
     "source-link": {
-      "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
     },
     "support-snapshot-service": {
@@ -8800,6 +8814,8 @@
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
     "span-bar-row": {
+      "summary-count-aria_one": "{{count}} aggregated span",
+      "summary-count-aria_other": "{{count}} aggregated spans",
       "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
     "span-detail": {
@@ -8838,6 +8854,11 @@
     },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
+    },
+    "summary-span": {
+      "stat-max": "Max",
+      "stat-median": "Median",
+      "stat-min": "Min"
     },
     "supplementary-result-error": {
       "show-details": "Show details"
@@ -12186,6 +12207,10 @@
     "reporting": {
       "title": "Reporting"
     },
+    "saved-queries": {
+      "subtitle": "Reusable queries you can use across panels and Explore",
+      "title": "Saved queries"
+    },
     "scenes": {
       "title": "Scenes"
     },
@@ -12261,11 +12286,21 @@
       "aria-label": "Breadcrumbs"
     },
     "extension-sidebar": {
+      "assistant-close": "Close Grafana Assistant",
+      "assistant-label": "Chat",
+      "assistant-open": "Open Grafana Assistant",
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
         "open-all": "Open AI assistants and sidebar apps"
       }
+    },
+    "fullscreen-workspace": {
+      "enter": "Enter Workspace",
+      "error-exit": "Exit workspace",
+      "error-message": "The Grafana Assistant workspace could not be loaded.",
+      "error-reload": "Reload page",
+      "error-title": "Workspace unavailable"
     },
     "help": {
       "aria-label": "Help",
@@ -12419,6 +12454,9 @@
       "title-zoom-in": "Zoom in",
       "title-zoom-out": "Zoom out"
     }
+  },
+  "notebook": {
+    "breadcrumb-title": "Notebooks"
   },
   "notifications": {
     "empty-state": {
@@ -13158,6 +13196,9 @@
   "provisioning": {
     "bitbucket": {
       "branch-required": "Branch is required",
+      "email-description": "The Atlassian account email used to authenticate the Bitbucket API. Required to enable webhooks.",
+      "email-invalid": "Enter a valid email address",
+      "email-label": "Atlassian account email",
       "permissions": {
         "pull-requests-label": "Pull requests",
         "pull-requests-read-write": "Read and write",
@@ -13597,9 +13638,11 @@
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
       "kubectl": "Managed by: Kubectl",
+      "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "terraform": "Managed by: Terraform"
+      "terraform": "Managed by: Terraform",
+      "view-source-file": "View source file"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
@@ -13887,6 +13930,11 @@
       "missing-folder-metadata": "Missing folder metadata file",
       "search-placeholder": "Search by path or title",
       "source": "Source",
+      "status-filter-aria-label": "Filter by status",
+      "status-filter-pending": "Not in sync",
+      "status-filter-placeholder": "Filter by status",
+      "status-filter-synced": "Synced",
+      "status-filter-warning": "Warnings",
       "status-pending": "Pending",
       "status-synced": "Synced",
       "view": "View"
@@ -13960,9 +14008,6 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
-    "source-link": {
-      "title": "Source ({{provider}})"
-    },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",
@@ -14023,9 +14068,6 @@
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
-    "view-repository-button": {
-      "label": "View repository"
-    },
     "warning-title-default": "Warning",
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
@@ -14033,6 +14075,8 @@
     },
     "webhook-section": {
       "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-email": "Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.",
+      "description-webhook-disabled-email-step": "Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.",
       "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
@@ -15977,10 +16021,6 @@
       "convert-field-type": "Convert field type",
       "description": {
         "convert-to-specified-field-type": "Convert a field to a specified field type."
-      },
-      "label": {
-        "browser": "Browser",
-        "utc": "UTC"
       },
       "label-as": "as",
       "label-date-format": "Date format",

@@ -232,8 +232,8 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		},
 	}, nil)
 
-	// The standard name field has sort capability so Bleve can use it as a stable pagination tie-breaker.
-	const expected = "3484142f1ce8094a4659bb0275fe91e4d68f0ce6fa1ed24a17dd81615a8a76d1"
+	// Standard tags declare facet capability so Bleve facets use their keyword-analyzed mapping.
+	const expected = "0f114ef8fa64163466eb9d3477163cfe964b5a626c37279d5e60a2586c18a064"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
 }
@@ -464,5 +464,50 @@ func TestValidateCrossVersionConsistency(t *testing.T) {
 					v2: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText}}},
 				}, nil)
 			})
+	})
+}
+
+func TestSearchFieldsRegistry(t *testing.T) {
+	dash := NewLowerGroupResource("dashboard.grafana.app", "dashboards")
+	provider := NewMapProvider(
+		map[schema.GroupVersionResource][]SearchFieldDefinition{
+			{Group: "dashboard.grafana.app", Version: "v1", Resource: "dashboards"}: {
+				{Name: "title", Path: "spec.title", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}},
+			},
+		},
+		nil,
+	)
+
+	r := NewSearchFieldsRegistry(
+		map[LowerGroupResource][]string{dash: {"spec.a", "spec.b"}},
+		map[LowerGroupResource]string{dash: "hash-1"},
+		map[LowerGroupResource]SearchFieldsProvider{dash: provider},
+	)
+
+	t.Run("reads the seeded values", func(t *testing.T) {
+		selectable, hash, p := r.For(dash)
+		require.Equal(t, []string{"spec.a", "spec.b"}, selectable)
+		require.Equal(t, "hash-1", hash)
+		require.Same(t, provider, p)
+	})
+
+	t.Run("returns zero values for an unknown kind", func(t *testing.T) {
+		other := NewLowerGroupResource("iam.grafana.app", "users")
+		selectable, hash, p := r.For(other)
+		require.Nil(t, selectable)
+		require.Empty(t, hash)
+		require.Nil(t, p)
+	})
+
+	t.Run("Replace swaps all three maps", func(t *testing.T) {
+		r.Replace(
+			map[LowerGroupResource][]string{dash: {"spec.c"}},
+			map[LowerGroupResource]string{dash: "hash-2"},
+			nil,
+		)
+		selectable, hash, p := r.For(dash)
+		require.Equal(t, []string{"spec.c"}, selectable)
+		require.Equal(t, "hash-2", hash)
+		require.Nil(t, p)
 	})
 }
