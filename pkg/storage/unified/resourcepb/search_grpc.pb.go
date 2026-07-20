@@ -41,9 +41,7 @@ type ResourceIndexClient interface {
 	RebuildIndexes(ctx context.Context, in *RebuildIndexesRequest, opts ...grpc.CallOption) (*RebuildIndexesResponse, error)
 	// Semantic search
 	VectorSearch(ctx context.Context, in *VectorSearchRequest, opts ...grpc.CallOption) (*VectorSearchResponse, error)
-	// Hybrid search: runs the query through both the lexical (full-text)
-	// index and the semantic (vector) backend and fuses the rankings
-	// server-side. Top-k contract: no pagination, sorting, or facets.
+	// Hybrid search: RRF fuse lexical and vector
 	HybridSearch(ctx context.Context, in *HybridSearchRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error)
 }
 
@@ -120,9 +118,7 @@ type ResourceIndexServer interface {
 	RebuildIndexes(context.Context, *RebuildIndexesRequest) (*RebuildIndexesResponse, error)
 	// Semantic search
 	VectorSearch(context.Context, *VectorSearchRequest) (*VectorSearchResponse, error)
-	// Hybrid search: runs the query through both the lexical (full-text)
-	// index and the semantic (vector) backend and fuses the rankings
-	// server-side. Top-k contract: no pagination, sorting, or facets.
+	// Hybrid search: RRF fuse lexical and vector
 	HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error)
 }
 

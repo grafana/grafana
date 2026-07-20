@@ -21,9 +21,7 @@ service ResourceIndex {
   // Semantic search
   rpc VectorSearch(VectorSearchRequest) returns (VectorSearchResponse);
 
-  // Hybrid search: runs the query through both the lexical (full-text)
-  // index and the semantic (vector) backend and fuses the rankings
-  // server-side. Top-k contract: no pagination, sorting, or facets.
+  // Hybrid search: RRF fuse lexical and vector
   rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
 }
 

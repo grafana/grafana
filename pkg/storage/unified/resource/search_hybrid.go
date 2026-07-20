@@ -268,50 +268,50 @@ var languageToDSTypes = map[string][]string{
 // response wrapping a BadRequestError (matches the Search/VectorSearch
 // error convention).
 func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) *resourcepb.HybridSearchResponse {
-	bad := func(msg string) *resourcepb.HybridSearchResponse {
+	reqErr := func(msg string) *resourcepb.HybridSearchResponse {
 		return &resourcepb.HybridSearchResponse{Error: NewBadRequestError(msg)}
 	}
 	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
-		return bad("missing namespace, group or resource")
+		return reqErr("missing namespace, group or resource")
 	}
 	if strings.TrimSpace(req.Query) == "" {
-		return bad("query must not be empty")
+		return reqErr("query must not be empty")
 	}
 	if len(req.Query) > 1000 {
-		return bad("query exceeds maximum length of 1000 bytes")
+		return reqErr("query exceeds maximum length of 1000 bytes")
 	}
 	if len(req.SemanticQuery) > 1000 {
-		return bad("semantic_query exceeds maximum length of 1000 bytes")
+		return reqErr("semantic_query exceeds maximum length of 1000 bytes")
 	}
 	if req.SemanticQuery != "" && strings.TrimSpace(req.SemanticQuery) == "" {
-		return bad("semantic_query must not be whitespace")
+		return reqErr("semantic_query must not be whitespace")
 	}
 	// Duplicate keys would diverge between legs: the lexical leg ANDs
 	// repeated requirements while the vector backend keeps the last one.
 	seen := make(map[string]struct{}, len(req.Filters))
 	for _, f := range req.Filters {
 		if _, ok := hybridFilterKeys[f.Key]; !ok {
-			return bad(fmt.Sprintf("unsupported filter key %q", f.Key))
+			return reqErr(fmt.Sprintf("unsupported filter key %q", f.Key))
 		}
 		if _, dup := seen[f.Key]; dup {
-			return bad(fmt.Sprintf("duplicate filter key %q", f.Key))
+			return reqErr(fmt.Sprintf("duplicate filter key %q", f.Key))
 		}
 		seen[f.Key] = struct{}{}
 		if len(f.Values) == 0 {
-			return bad(fmt.Sprintf("filter %q has no values", f.Key))
+			return reqErr(fmt.Sprintf("filter %q has no values", f.Key))
 		}
 		// These keys map to dashboard index fields and dashboard chunk
 		// metadata; other kinds have no equivalents, so the filter would
 		// silently match nothing — reject instead.
 		if (f.Key == "datasource_uid" || f.Key == "language") && req.Key.Resource != "dashboards" {
-			return bad(fmt.Sprintf("filter %q is only supported for dashboards", f.Key))
+			return reqErr(fmt.Sprintf("filter %q is only supported for dashboards", f.Key))
 		}
 		// Unknown languages would leave the lexical leg unfiltered while
 		// the semantic leg matches nothing — reject instead.
 		if f.Key == "language" {
 			for _, v := range f.Values {
 				if _, ok := languageToDSTypes[v]; !ok {
-					return bad(fmt.Sprintf("unsupported language %q", v))
+					return reqErr(fmt.Sprintf("unsupported language %q", v))
 				}
 			}
 		}
