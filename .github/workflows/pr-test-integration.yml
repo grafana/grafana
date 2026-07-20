@@ -203,6 +203,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      PROFILE: ${{ github.event_name == 'push' || startsWith(github.head_ref, 'profile/') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -228,15 +230,25 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' -json "${PACKAGES[@]}" \
-            | tee test-output.json \
-            | jq -Rrj 'fromjson? | select(.Action == "output").Output // empty'
+          if [ "$PROFILE" = "true" ]; then
+            mkdir -p profiles
+            PROFILE_DIR="$PWD/profiles" PROFILE_REPO_ROOT="$PWD" \
+              go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' \
+              -exec "$PWD/scripts/ci/backend-tests/profile-exec.sh" -json "${PACKAGES[@]}" \
+              | tee test-output.json \
+              | jq -Rrj 'fromjson? | select(.Action == "output").Output // empty'
+            go run ./scripts/ci/backend-tests/profiling summarize profiles > profile-summary.jsonl
+          else
+            go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+          fi
       - name: Upload test timings
-        if: always()
+        if: always() && env.PROFILE == 'true'
         uses: actions/upload-artifact@v5
         with:
           name: test-timings-sqlite-enterprise-${{ strategy.job-index }}
-          path: test-output.json
+          path: |
+            test-output.json
+            profile-summary.jsonl
           if-no-files-found: ignore
           retention-days: 1
 
