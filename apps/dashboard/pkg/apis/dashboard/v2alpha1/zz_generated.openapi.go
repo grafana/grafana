@@ -3394,6 +3394,12 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardQueryOptionsSpec(ref common.Ref
 							Format: "",
 						},
 					},
+					"timeCompare": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"queryCachingTTL": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},

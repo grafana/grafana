@@ -579,6 +579,7 @@ import (
 	_ "github.com/hashicorp/golang-lru/v2"
 	_ "github.com/hashicorp/golang-lru/v2/expirable"
 	_ "github.com/jmespath-community/go-jmespath"
+	_ "github.com/ktrysmt/go-bitbucket"
 	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
 	_ "github.com/open-feature/go-sdk/openfeature"
 	_ "github.com/open-feature/go-sdk/openfeature/memprovider"

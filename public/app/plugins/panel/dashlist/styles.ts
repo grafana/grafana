@@ -30,6 +30,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+    dashlistLinkCompact: css({
+      margin: 0,
+    }),
     dashlistCardContainer: css({
       display: 'block',
       height: '100%',

@@ -348,6 +348,73 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 	}
 }
 
+func TestAzureMonitorBuildQueriesRejectsMultiValueStartsWithFilter(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	tests := []struct {
+		name             string
+		dimensionFilters string
+		wantErr          bool
+	}{
+		{
+			name:             "multiple values in one sw filter",
+			dimensionFilters: `[{"dimension": "ApiName", "operator": "sw", "filters": ["Get", "Put"]}]`,
+			wantErr:          true,
+		},
+		{
+			name:             "single-value sw filters split across entries for the same dimension",
+			dimensionFilters: `[{"dimension": "ApiName", "operator": "sw", "filters": ["Get"]}, {"dimension": "ApiName", "operator": "sw", "filters": ["Put"]}]`,
+			wantErr:          true,
+		},
+		{
+			name:             "same dimension in different casing across entries",
+			dimensionFilters: `[{"dimension": "ApiName", "operator": "sw", "filters": ["Get"]}, {"dimension": "apiname", "operator": "sw", "filters": ["Put"]}]`,
+			wantErr:          true,
+		},
+		{
+			name:             "one sw filter per dimension is allowed",
+			dimensionFilters: `[{"dimension": "ApiName", "operator": "sw", "filters": ["Get"]}, {"dimension": "Tier", "operator": "sw", "filters": ["Hot"]}]`,
+			wantErr:          false,
+		},
+		{
+			name:             "sw and eq entries on the same dimension are allowed",
+			dimensionFilters: `[{"dimension": "ApiName", "operator": "sw", "filters": ["Get"]}, {"dimension": "ApiName", "operator": "eq", "filters": ["GetBlob"]}]`,
+			wantErr:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			query := backend.DataQuery{
+				RefID: "A",
+				JSON: fmt.Appendf(nil, `{
+					"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
+					"azureMonitor": {
+						"aggregation": "Total",
+						"timeGrain": "PT1M",
+						"metricName": "Transactions",
+						"metricNamespace": "Microsoft.Storage/storageAccounts",
+						"resources": [{"resourceGroup": "rg", "resourceName": "sa"}],
+						"dimensionFilters": %s
+					}
+				}`, tt.dimensionFilters),
+				TimeRange: backend.TimeRange{
+					From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+					To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+				},
+			}
+
+			_, err := datasource.buildQuery(query, types.DatasourceInfo{})
+			if !tt.wantErr {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.ErrorContains(t, err, "one 'starts with' filter value")
+			require.True(t, backend.IsDownstreamError(err), "a multi-value sw filter is a query configuration error, not a plugin error")
+		})
+	}
+}
+
 func TestCustomNamespace(t *testing.T) {
 	datasource := &AzureMonitorDatasource{}
 
