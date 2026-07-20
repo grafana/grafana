@@ -177,10 +177,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 			seen[v.UID] = struct{}{}
 			rank++
 			r.Score += 1.0 / float64(rrfK+rank)
-			// The index is the source of truth for display fields; the
-			// embeddings row may be stale. Membership, not emptiness,
-			// decides — "" is the legacy root-folder value, so an empty
-			// lexical folder must not be overwritten.
+			// Only fill in the title and folder when the resource wasn't found by lexical search
 			if _, ok := fromLex[v.UID]; !ok {
 				r.Title = v.Title
 				r.Folder = v.Folder
