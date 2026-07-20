@@ -1024,6 +1024,9 @@ export const versionedPages = {
       addFromQueryLibrary: {
         '11.5.0': 'data-testid explore add from query library button',
       },
+      addQueryRow: {
+        [MIN_GRAFANA_VERSION]: 'data-testid explore add query row button',
+      },
     },
     toolbar: {
       bar: {
