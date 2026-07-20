@@ -216,7 +216,7 @@ function stripEmptyPluginVersion(value: unknown): void {
   if (Array.isArray(value)) {
     value.forEach(stripEmptyPluginVersion);
   } else if (value && typeof value === 'object') {
-    const obj: Record<string, unknown> = value;
+    const obj = value as Record<string, unknown>;
     if ('pluginVersion' in obj && !obj.pluginVersion) {
       delete obj.pluginVersion;
     }
