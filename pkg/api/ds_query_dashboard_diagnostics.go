@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
@@ -76,9 +77,16 @@ type diagnosticsJob struct {
 	createdByUID   string
 }
 
-// jobOwnedBy reports whether requester is the identity that created j.
+// jobOwnedBy reports whether requester is the identity that created j. An empty UID on either side
+// never matches: admin-gated callers always carry a real UID, so this guards against a fail-open
+// where two identities with an empty UID in the same org would collide into one "owner" and could
+// read each other's job (which may hold verbatim captured HTTP traffic).
 func jobOwnedBy(j *diagnosticsJob, requester identity.Requester) bool {
-	return j.createdByOrgID == requester.GetOrgID() && j.createdByUID == requester.GetUID()
+	uid := requester.GetUID()
+	if uid == "" || j.createdByUID == "" {
+		return false
+	}
+	return j.createdByOrgID == requester.GetOrgID() && j.createdByUID == uid
 }
 
 type diagnosticsJobSnapshot struct {
@@ -99,6 +107,17 @@ type diagnosticsJobStore struct {
 // *HTTPServer can share it without new wire/DI wiring for this experimental feature.
 var dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 
+const (
+	// diagnosticsJobRetention bounds how long a job -- including its archive bytes -- is kept. Jobs are
+	// never explicitly removed on complete/download/fail, so without this the process-wide store would
+	// grow forever on a long-running server. Pruned opportunistically on create (no background sweeper
+	// for this experimental feature); finer-grained retention is part of the limits follow-up.
+	diagnosticsJobRetention = time.Hour
+	// diagnosticsJobMaxEntries is a hard cap on retained jobs so a burst of creations within the
+	// retention window still can't grow the store without bound. Oldest jobs are evicted first.
+	diagnosticsJobMaxEntries = 100
+)
+
 func (s *diagnosticsJobStore) create(total int, creator identity.Requester) *diagnosticsJob {
 	j := &diagnosticsJob{
 		UID:            util.GenerateShortUID(),
@@ -110,8 +129,32 @@ func (s *diagnosticsJobStore) create(total int, creator identity.Requester) *dia
 	}
 	s.mu.Lock()
 	s.jobs[j.UID] = j
+	s.pruneLocked(j.CreatedAt) // after insert, so the cap is exact (this job is newest, never evicted)
 	s.mu.Unlock()
 	return j
+}
+
+// pruneLocked drops jobs past the retention TTL, then evicts the oldest jobs beyond the max-entries
+// cap. Caller must hold s.mu. This is what keeps the in-memory store bounded.
+func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
+	for uid, j := range s.jobs {
+		if now.Sub(j.CreatedAt) > diagnosticsJobRetention {
+			delete(s.jobs, uid)
+		}
+	}
+	if len(s.jobs) <= diagnosticsJobMaxEntries {
+		return
+	}
+	uids := make([]string, 0, len(s.jobs))
+	for uid := range s.jobs {
+		uids = append(uids, uid)
+	}
+	sort.Slice(uids, func(a, b int) bool {
+		return s.jobs[uids[a]].CreatedAt.Before(s.jobs[uids[b]].CreatedAt)
+	})
+	for _, uid := range uids[:len(uids)-diagnosticsJobMaxEntries] {
+		delete(s.jobs, uid)
+	}
 }
 
 func (s *diagnosticsJobStore) setProgress(uid string, done int) {
@@ -167,9 +210,10 @@ func (s *diagnosticsJobStore) archiveOf(uid string, requester identity.Requester
 // ---- handlers -----------------------------------------------------------------------------------
 
 // QueryDashboardDiagnostics starts an asynchronous dashboard-diagnostics generation and returns a
-// job UID immediately (202). Generation runs in a background goroutine with its own timeout so a
-// large/slow dashboard can't block or time out the HTTP request. Poll the status endpoint, then
-// download when complete. Gated on the grafana.onDemandDiagnostics flag; server-admin only (route).
+// job UID immediately (202). Generation runs in a detached background goroutine, so a large/slow
+// dashboard can't block or time out the HTTP request. There is no per-run timeout yet (MVP scope,
+// see the NOTE above). Poll the status endpoint, then download when complete. Gated on the
+// grafana.onDemandDiagnostics flag; server-admin only (route).
 func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) response.Response {
 	if !diagnosticsEnabled(c.Req.Context()) {
 		return response.Error(http.StatusNotFound, "on-demand diagnostics is not enabled", nil)

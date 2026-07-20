@@ -90,6 +90,10 @@ type manifestPanelEntry struct {
 	HARBytes    int      `json:"harBytes,omitempty"`
 	Skipped     string   `json:"skipped,omitempty"`
 	Error       string   `json:"error,omitempty"`
+	// CaptureError records a failure to serialize this panel's captured traffic. It's kept separate
+	// from Error (a query failure) so one unserializable buffer only loses this panel's traffic.har,
+	// not the whole multi-panel bundle.
+	CaptureError string `json:"captureError,omitempty"`
 }
 
 // BuildDashboard assembles a whole-dashboard .tar.gz: a shared dashboard.json and manifest.json plus
@@ -124,11 +128,13 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 			files[dir+"/panel.json"] = indentJSON(p.PanelJSON)
 		}
 
+		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
+		// record it against this panel in the manifest and keep everything else (dashboard.json, the
+		// other panels' traffic, manifest). Only this panel loses its traffic.har.
 		har, err := collectHAR(p.HARBuffer)
 		if err != nil {
-			return nil, err
-		}
-		if len(har) > 0 {
+			entry.CaptureError = err.Error()
+		} else if len(har) > 0 {
 			files[dir+"/traffic.har"] = har
 			entry.HARBytes = len(har)
 		}

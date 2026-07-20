@@ -231,6 +231,65 @@ func TestDiagnosticsJobStore_lifecycle(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestDiagnosticsJobStore_prune(t *testing.T) {
+	creator := &user.SignedInUser{OrgID: 1, UserUID: "creator"}
+
+	// Retention TTL: a job older than the retention window is pruned on the next create, so the
+	// in-memory store can't accumulate finished/abandoned jobs (and their archive bytes) forever.
+	t.Run("evicts jobs past the retention TTL", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+		stale := s.create(1, creator)
+		s.jobs[stale.UID].CreatedAt = time.Now().Add(-diagnosticsJobRetention - time.Minute)
+
+		fresh := s.create(1, creator) // triggers pruneLocked
+		_, ok := s.snapshot(stale.UID, creator)
+		require.False(t, ok, "stale job should have been pruned")
+		_, ok = s.snapshot(fresh.UID, creator)
+		require.True(t, ok, "fresh job should remain")
+	})
+
+	// Max-entries cap: a burst within the retention window still can't grow the store past the cap;
+	// the oldest jobs are evicted first.
+	t.Run("evicts oldest beyond the max-entries cap", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+		base := time.Now()
+		var oldest string
+		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+			j := s.create(1, creator)
+			// Age them deterministically so eviction order is well-defined.
+			s.jobs[j.UID].CreatedAt = base.Add(time.Duration(i) * time.Second)
+			if i == 0 {
+				oldest = j.UID
+			}
+		}
+		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
+
+		// One more create pushes over the cap and must evict exactly the oldest.
+		newest := s.create(1, creator)
+		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
+		_, ok := s.snapshot(oldest, creator)
+		require.False(t, ok, "oldest job should have been evicted")
+		_, ok = s.snapshot(newest.UID, creator)
+		require.True(t, ok, "newest job should remain")
+	})
+}
+
+func TestJobOwnedBy_emptyUID(t *testing.T) {
+	// GetUID() for concrete identities is a typed ID (e.g. "user:creator") and is never empty, but
+	// jobOwnedBy still guards both sides so an unexpected empty UID can't fail open into a shared
+	// "owner" that could read another's captured-traffic bundle.
+	caller := &user.SignedInUser{OrgID: 1, UserUID: "creator"}
+
+	emptyJob := &diagnosticsJob{createdByOrgID: 1, createdByUID: ""}
+	require.False(t, jobOwnedBy(emptyJob, caller), "an empty stored UID must not match any caller")
+
+	// A job created the normal way (UID via GetUID) is owned only by that same identity.
+	owned := &diagnosticsJob{createdByOrgID: 1, createdByUID: caller.GetUID()}
+	require.True(t, jobOwnedBy(owned, caller), "matching org + non-empty UID is owned")
+	require.False(t, jobOwnedBy(owned, &user.SignedInUser{OrgID: 1, UserUID: "someone-else"}),
+		"a different identity in the same org is not the owner")
+}
+
 func TestPanelDatasourceUIDs(t *testing.T) {
 	q := func(uid string) *simplejson.Json {
 		j := simplejson.New()
