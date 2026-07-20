@@ -17,6 +17,7 @@ import (
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -51,10 +52,12 @@ func TestIntegrationUsers(t *testing.T) {
 			})
 
 			doUserCRUDTestsUsingTheNewAPIs(t, helper)
+			doUserListFilteringTest(t, helper)
 			doHiddenUsersTests(t, helper)
 			doUserFieldSelectorTests(t, helper)
 			doUserStatusUpdateTests(t, helper)
 			doDisplayTests(t, helper)
+			doSelfTests(t, helper)
 
 			if mode < 3 {
 				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
@@ -386,6 +389,54 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 	})
 }
 
+// doUserListFilteringTest verifies that a nameless collection list is allowed at
+// the API layer (allowListAuthorizer) even for a caller that cannot read every
+// user, and that the backend filters the result by the caller's permissions.
+// User read is org-global (all-or-nothing; there is no per-user resource
+// permission), so a user without users:read gets a 200 filtered result rather
+// than a 403. Admin listing is already covered by the CRUD, hidden-user and
+// field-selector tests.
+func doUserListFilteringTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("list is allowed at the API layer and filtered by permissions", func(t *testing.T) {
+		ctx := context.Background()
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		target := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
+		target.Object["metadata"].(map[string]any)["name"] = "listfiltertarget"
+		target.Object["spec"].(map[string]any)["login"] = "listfiltertarget"
+		target.Object["spec"].(map[string]any)["email"] = "listfiltertarget@example.com"
+		created, err := adminClient.Resource.Create(ctx, target, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		t.Cleanup(func() {
+			_ = adminClient.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+		})
+
+		// A user with no basic role has no users:read permission.
+		lister := helper.CreateUser("user-list-filter-user", apis.Org1, org.RoleNone, nil)
+		listerClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      lister,
+			Namespace: helper.Namespacer(lister.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// The nameless list must succeed (200) rather than 403, and must not
+		// surface a user the caller has no permission to read.
+		list, err := listerClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		names := make([]string, 0, len(list.Items))
+		for _, item := range list.Items {
+			names = append(names, item.GetName())
+		}
+		require.NotContains(t, names, created.GetName(), "user without users:read must not see other users")
+	})
+}
+
 func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("should hide users from the hidden users list on Get and List", func(t *testing.T) {
 		ctx := context.Background()
@@ -669,6 +720,43 @@ func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Len(t, res.Items, 1)
 		require.Equal(t, authlib.TypeServiceAccount, res.Items[0].Identity.Type)
 		require.Equal(t, sa.Id, res.Items[0].InternalID)
+	})
+}
+
+func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
+	// selfPath is the "who am I" endpoint. A literal `~` token must not be
+	// shadowed by the users/{name} resource route.
+	const selfPath = "/apis/iam.grafana.app/v0alpha1/namespaces/default/users/~"
+
+	assertSelf := func(t *testing.T, caller apis.User) {
+		t.Helper()
+
+		res := &iam.Display{}
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   caller,
+			Method: "GET",
+			Path:   selfPath,
+		}, res)
+		require.Equal(t, 200, rsp.Response.StatusCode)
+
+		wantID, err := identity.UserIdentifier(caller.Identity.GetID())
+		require.NoError(t, err)
+
+		require.Equal(t, authlib.TypeUser, res.Identity.Type)
+		require.Equal(t, caller.Identity.GetRawIdentifier(), res.Identity.Name)
+		require.Equal(t, caller.Identity.GetName(), res.DisplayName)
+		require.NotEmpty(t, res.DisplayName)
+		require.NotEmpty(t, res.AvatarURL)
+		require.Contains(t, res.AvatarURL, "/avatar/")
+		require.Equal(t, wantID, res.InternalID)
+	}
+
+	t.Run("self endpoint returns the calling user's display info", func(t *testing.T) {
+		assertSelf(t, helper.Org1.Admin)
+	})
+
+	t.Run("self endpoint works for a non-admin reading their own info", func(t *testing.T) {
+		assertSelf(t, helper.Org1.Viewer)
 	})
 }
 

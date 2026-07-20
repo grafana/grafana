@@ -22,7 +22,7 @@ export const NewThemeOptionsSchema = z.object({
   shape: ThemeShapeInputSchema.optional(),
   typography: ThemeTypographyInputSchema.optional(),
   visualization: ThemeVisualizationColorsInputSchema.optional(),
-  components: ThemeComponentsInputSchema,
+  components: ThemeComponentsInputSchema.optional(),
 });
 
 /** @internal */
@@ -50,7 +50,7 @@ export function createTheme(
   const spacing = createSpacing(spacingInput);
   const typography = createTypography(colors, typographyInput);
   const shadows = createShadows(colors, shadowsInput);
-  const components = createComponents(colors, shadows, componentsInput);
+  const components = createComponents(colors, componentsInput);
 
   const breakpoints = createBreakpoints();
   const transitions = createTransitions();

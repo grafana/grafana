@@ -349,6 +349,7 @@ interface ExampleProps {
   colorScheme?: FieldColorModeId;
   endpointMarker?: RadialGaugeProps['endpointMarker'];
   decimals?: number;
+  unit?: string;
   showScaleLabels?: boolean;
   neutral?: number;
 }
@@ -387,6 +388,7 @@ export function RadialGaugeExample({
   colorScheme = FieldColorModeId.Thresholds,
   endpointMarker = 'glow',
   decimals = 0,
+  unit = 'percent',
   showScaleLabels,
   neutral,
 }: ExampleProps) {
@@ -416,7 +418,7 @@ export function RadialGaugeExample({
         config: {
           min: min,
           max: max,
-          unit: 'percent',
+          unit,
           decimals: decimals,
           color: { mode: colorScheme, fixedColor: color ? theme.visualization.getColorByName(color) : undefined },
           thresholds,

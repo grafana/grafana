@@ -1,10 +1,11 @@
+import { mergeWith } from 'lodash';
 import * as z from 'zod';
 
 import { type ThemeColors } from './createColors';
-import { type ThemeShadows } from './createShadows';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
 import { resolvePaletteRefs } from './palette_new';
+import { type DeepRequired } from './types';
 
 interface MenuComponentTokens {
   borderRadius: keyof Radii;
@@ -55,119 +56,100 @@ export const DEFAULT_TAG_COLORS: readonly TagColors[] = [
 /** @beta */
 export const ThemeComponentsInputSchema = z
   .object({
-    tag: z
-      .object({
-        colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
-      })
-      .optional(),
+    /** Applies to normal buttons, inputs, radio buttons, etc */
+    height: z.object({
+      sm: z.number().optional(),
+      md: z.number().optional(),
+      lg: z.number().optional(),
+    }),
+    input: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
+      borderHover: z.string().optional(),
+      text: z.string().optional(),
+    }),
+    tooltip: z.object({
+      text: z.string().optional(),
+      background: z.string().optional(),
+    }),
+    panel: z.object({
+      padding: z.number().optional(),
+      headerHeight: z.number().optional(),
+      borderColor: z.string().optional(),
+      boxShadow: z.string().optional(),
+      background: z.string().optional(),
+    }),
+    dropdown: z.object({
+      background: z.string().optional(),
+    }),
+    overlay: z.object({
+      background: z.string().optional(),
+    }),
+    dashboard: z.object({
+      background: z.string().optional(),
+      padding: z.number().optional(),
+    }),
+    drawer: z.object({
+      padding: z.number().optional(),
+    }),
+    textHighlight: z.object({
+      background: z.string().optional(),
+      text: z.string().optional(),
+    }),
+    sidemenu: z.object({
+      width: z.number().optional(),
+    }),
+    horizontalDrawer: z.object({
+      defaultHeight: z.number().optional(),
+    }),
+    table: z.object({
+      rowHoverBackground: z.string().optional(),
+      rowSelected: z.string().optional(),
+    }),
+    menu: z.object({
+      borderRadius: z.enum(['default', 'md', 'sm', 'lg', 'pill', 'circle']).optional(),
+      padding: z.number().optional(),
+    }),
+    tag: z.object({
+      colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
+    }),
   })
-  .optional();
+  .partial();
 
 /** @beta */
-export type ThemeComponentsInput = z.infer<typeof ThemeComponentsInputSchema>;
+type ThemeComponentsInput = z.infer<typeof ThemeComponentsInputSchema>;
 
+// The menu and tag props are overridden to preserve types that zod inference can't reproduce
 /** @beta */
-export interface ThemeComponents {
-  /** Applies to normal buttons, inputs, radio buttons, etc */
-  height: {
-    sm: number;
-    md: number;
-    lg: number;
-  };
-  input: {
-    background: string;
-    borderColor: string;
-    borderHover: string;
-    text: string;
-  };
-  tooltip: {
-    text: string;
-    background: string;
-  };
-  panel: {
-    padding: number;
-    headerHeight: number;
-    borderColor: string;
-    boxShadow: string;
-    background: string;
-    contentBackground: string;
-    contentBorderColor: string;
-  };
-  dropdown: {
-    background: string;
-  };
-  overlay: {
-    background: string;
-  };
-  dashboard: {
-    background: string;
-    padding: number;
-  };
-  drawer: {
-    padding: number;
-  };
-  textHighlight: {
-    background: string;
-    text: string;
-  };
-  sidemenu: {
-    width: number;
-  };
-  horizontalDrawer: {
-    defaultHeight: number;
-  };
-  table: {
-    rowHoverBackground: string;
-    rowSelected: string;
-  };
+export type ThemeComponents = DeepRequired<Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu' | 'tag'>> & {
   menu: MenuComponentTokens;
   tag: {
     colors: readonly TagColors[];
   };
-}
+};
 
-export function createComponents(
-  colors: ThemeColors,
-  shadows: ThemeShadows,
-  componentsInput: ThemeComponentsInput = {}
-): ThemeComponents {
-  const resolvedComponents = resolvePaletteRefs(componentsInput);
+export function createComponents(colors: ThemeColors, componentsInput: ThemeComponentsInput = {}): ThemeComponents {
+  const resolvedInputs = resolvePaletteRefs(componentsInput);
 
-  const tag = {
-    // replace the default array wholesale rather than merging by index
-    colors: resolvedComponents.tag?.colors ?? DEFAULT_TAG_COLORS,
-  };
-
-  const panel = {
-    padding: 1,
-    headerHeight: 5,
-    background: colors.background.primary,
-    borderColor: colors.border.weak,
-    boxShadow: 'none',
-    contentBackground: colors.background.secondary,
-    contentBorderColor: colors.border.medium,
-  };
-
-  const input = {
-    borderColor: colors.border.medium,
-    borderHover: colors.border.strong,
-    text: colors.text.primary,
-    background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
-  };
-
-  const menu: MenuComponentTokens = {
-    borderRadius: 'lg',
-    padding: 0.5,
-  };
-
-  return {
+  const defaults: ThemeComponents = {
     height: {
       sm: 3,
       md: 4,
       lg: 6,
     },
-    input,
-    panel,
+    input: {
+      borderColor: colors.border.medium,
+      borderHover: colors.border.strong,
+      text: colors.text.primary,
+      background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
+    },
+    panel: {
+      padding: 1,
+      headerHeight: 5,
+      background: colors.background.primary,
+      borderColor: colors.border.weak,
+      boxShadow: 'none',
+    },
     dropdown: {
       background: colors.background.elevated,
     },
@@ -203,7 +185,18 @@ export function createComponents(
       rowHoverBackground: colors.action.hover,
       rowSelected: colors.action.selected,
     },
-    menu,
-    tag,
+    menu: {
+      borderRadius: 'lg',
+      padding: 0.5,
+    },
+    tag: {
+      colors: DEFAULT_TAG_COLORS,
+    },
   };
+
+  // deep-merge caller overrides on top of the defaults
+  // arrays (e.g. tag.colors) are replaced wholesale rather than merged by index
+  return mergeWith({}, defaults, resolvedInputs, (_, inputValue) =>
+    Array.isArray(inputValue) ? inputValue : undefined
+  );
 }

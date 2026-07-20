@@ -17,6 +17,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -77,6 +79,137 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
 	assert.NotNil(t, backend.snowflake)
+}
+
+func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
+	tests := []struct {
+		name           string
+		experimentalKV func(KV) *ExperimentalKVOptions
+	}{
+		{
+			name: "nil experimental options",
+		},
+		{
+			name: "tenant metadata disabled",
+			experimentalKV: func(kv KV) *ExperimentalKVOptions {
+				return &ExperimentalKVOptions{KV: kv}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mainKV := setupBadgerKV(t)
+			experimentalKV := setupBadgerKV(t)
+			backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
+				if tt.experimentalKV != nil {
+					opts.ExperimentalKV = tt.experimentalKV(experimentalKV)
+				}
+				opts.TenantDeleterConfig = &TenantDeleterConfig{
+					Interval: time.Hour,
+					Log:      log.NewNopLogger(),
+				}
+			})
+
+			require.Same(t, mainKV, backend.tenantDeleter.pendingDeleteStore.kv)
+		})
+	}
+}
+
+func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
+	mainKV := setupBadgerKV(t)
+	experimentalKV := setupBadgerKV(t)
+	backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
+		opts.ExperimentalKV = &ExperimentalKVOptions{
+			KV:             experimentalKV,
+			TenantMetadata: true,
+		}
+		opts.TenantWatcherConfig = &TenantWatcherConfig{
+			TenantAPIServerURL: "http://127.0.0.1:1",
+			Token:              "test-token",
+			TokenExchangeURL:   "http://127.0.0.1:1",
+			UsePolling:         true,
+			PollInterval:       time.Hour,
+			Log:                log.NewNopLogger(),
+		}
+		opts.TenantDeleterConfig = &TenantDeleterConfig{
+			Interval: time.Hour,
+			Log:      log.NewNopLogger(),
+			Gcom: &testGcomVerifier{
+				getInstance: func(context.Context, string, string) (gcom.Instance, error) {
+					return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
+				},
+			},
+		}
+	})
+
+	// The watcher and deleter must share the exact store so records cannot be
+	// written to one KV and scanned from another.
+	require.Same(t, experimentalKV, backend.tenantWatcher.pendingDeleteStore.kv)
+	require.Same(t, backend.tenantWatcher.pendingDeleteStore, backend.tenantDeleter.pendingDeleteStore)
+
+	// Reconciling a tenant writes its pending-delete record to the experimental
+	// KV while the resource label update goes through the main backend.
+	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", backend.snowflake.Generate().Int64(), nil)
+	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
+
+	record, err := backend.tenantWatcher.pendingDeleteStore.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.True(t, record.LabelingComplete)
+	_, err = newPendingDeleteStore(mainKV).Get(t.Context(), testStacksNS1)
+	require.ErrorIs(t, err, kv.ErrNotFound)
+
+	latest, err := backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
+		Namespace: testStacksNS1,
+		Group:     "apps",
+		Resource:  "dashboards",
+		Name:      "dash1",
+	})
+	require.NoError(t, err)
+	reader, err := backend.dataStore.Get(t.Context(), latest)
+	require.NoError(t, err)
+	value, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NoError(t, reader.Close())
+	resource := &unstructured.Unstructured{}
+	require.NoError(t, resource.UnmarshalJSON(value))
+	require.Equal(t, "true", resource.GetLabels()[labelPendingDelete])
+
+	_, err = backend.eventStore.Get(t.Context(), EventKey{
+		Namespace:       latest.Namespace,
+		Group:           latest.Group,
+		Resource:        latest.Resource,
+		Name:            latest.Name,
+		ResourceVersion: latest.ResourceVersion,
+		Action:          latest.Action,
+	})
+	require.NoError(t, err)
+
+	// The experimental KV is metadata-only: resource data and events remain in
+	// the main KV even when tenant metadata routing is enabled.
+	for _, err := range experimentalKV.Keys(t.Context(), dataSection, ListOptions{}) {
+		require.NoError(t, err)
+		require.Fail(t, "resource data must not be written to the experimental KV")
+	}
+	for _, err := range experimentalKV.Keys(t.Context(), eventsSection, ListOptions{}) {
+		require.NoError(t, err)
+		require.Fail(t, "resource events must not be written to the experimental KV")
+	}
+
+	// The deleter finds the watcher's record in the shared experimental store
+	// and uses it to purge the resource from the main KV.
+	backend.tenantDeleter.runDeletionPass(t.Context())
+
+	_, err = backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
+		Namespace: testStacksNS1,
+		Group:     "apps",
+		Resource:  "dashboards",
+		Name:      "dash1",
+	})
+	require.ErrorIs(t, err, ErrNotFound)
+	record, err = backend.tenantDeleter.pendingDeleteStore.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.NotEmpty(t, record.DeletedAt)
 }
 
 // TestKvStorageBackend_Accessors verifies that KV() returns the configured
@@ -262,6 +395,84 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 
 	_, err = backend.eventStore.Get(ctx, eventKey3)
 	require.NoError(t, err)
+}
+
+// cancelOnDataSaveKV wraps a KV and cancels a context the first time a value is
+// durably written to the data section. This simulates a client cancelling the
+// request in the window between the data store commit and the event store
+// write, which used to leave the two stores split: the data was persisted but
+// the event never was, so watch consumers and search never saw the write.
+type cancelOnDataSaveKV struct {
+	KV
+	cancel func()
+	once   sync.Once
+}
+
+func (w *cancelOnDataSaveKV) Save(ctx context.Context, section, key string) (io.WriteCloser, error) {
+	wc, err := w.KV.Save(ctx, section, key)
+	if err != nil || section != kv.DataSection {
+		return wc, err
+	}
+	return &cancelOnCloseWriteCloser{WriteCloser: wc, w: w}, nil
+}
+
+type cancelOnCloseWriteCloser struct {
+	io.WriteCloser
+	w *cancelOnDataSaveKV
+}
+
+func (c *cancelOnCloseWriteCloser) Close() error {
+	err := c.WriteCloser.Close()
+	if err == nil {
+		c.w.once.Do(c.w.cancel)
+	}
+	return err
+}
+
+// TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent
+// verifies that once the data has been durably written, cancelling the client's
+// context does not abort the event write. Otherwise the data store and event
+// store diverge and consumers miss the event through watch and search.
+func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *testing.T) {
+	wrapper := &cancelOnDataSaveKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(wrapper))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	wrapper.cancel = cancel
+
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	const resourceName = "cancel-after-data-save"
+	addEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      resourceName,
+		},
+		Value:  objectToJSONBytes(t, testObj),
+		Object: metaAccessor,
+	}
+
+	rv, err := backend.WriteEvent(ctx, addEvent)
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+
+	// The event must be persisted even though the client cancelled right after
+	// the data was committed.
+	found := false
+	for ev, err := range backend.eventStore.ListSince(context.Background(), 0, SortOrderAsc) {
+		require.NoError(t, err)
+		if ev.Name == resourceName {
+			found = true
+		}
+	}
+	require.True(t, found, "event should be persisted after data save even if the client cancels")
 }
 
 func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {

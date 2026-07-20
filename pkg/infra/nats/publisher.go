@@ -5,16 +5,16 @@ import (
 	"fmt"
 
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const publisherName = "nats-publisher"
 
 // Publisher hides nats.go types so callers can mock it.
 type Publisher interface {
-	Enabled() bool
+	Enabler
 	Publish(ctx context.Context, subject string, data []byte) error
 }
 
@@ -22,19 +22,25 @@ type Publisher interface {
 type PublisherService struct {
 	services.NamedService
 	*connection
+	metrics *publisherMetrics
 }
 
-func newPublisher(logger log.Logger, m *clientMetrics, config *Config, credentials func() string) *PublisherService {
-	conn := newConnection(rolePublisher, logger, m, config, credentials)
-	p := &PublisherService{connection: conn}
+func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
+	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherCredentials)
+	p := &PublisherService{connection: conn, metrics: m}
 	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
 	return p
 }
 
-// ProvidePublisher builds the publisher from the shared connection config (which
-// carries the bus config and resolves the mode) plus its per-role credentials.
-func ProvidePublisher(cfg *setting.Cfg, config *Config, m *clientMetrics) *PublisherService {
-	return newPublisher(log.New("infra.nats.publisher"), m, config, cfg.NATS.Auth.PublisherCredentials)
+// ProvidePublisher builds the publisher from the shared connection config, which
+// carries the bus config, resolves the mode, and exposes the per-role
+// credentials. It registers its own metrics.
+func ProvidePublisher(config *Config, reg prometheus.Registerer) *PublisherService {
+	m := newPublisherMetrics()
+	if config.Enabled() {
+		reg.MustRegister(m.collectors()...)
+	}
+	return newPublisher(log.New("infra.nats.publisher"), m, config)
 }
 
 func (p *PublisherService) IsDisabled() bool {
@@ -68,11 +74,11 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	if err != nil {
 		return err
 	}
-	role := string(p.role)
 	if err := nc.Publish(subject, data); err != nil {
-		p.metrics.publishErrors.WithLabelValues(role).Inc()
+		p.metrics.publishErrors.Inc()
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
-	p.metrics.messagesPub.WithLabelValues(role).Inc()
+	p.metrics.messagesPublished.Inc()
+	p.log.Debug("published message", "subject", subject, "bytes", len(data))
 	return nil
 }

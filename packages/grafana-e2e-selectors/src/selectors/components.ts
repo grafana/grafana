@@ -90,6 +90,9 @@ export const versionedComponents = {
     configurePanelButton: {
       '13.1.0': 'data-testid edit pane configure panel button',
     },
+    addNewVariableButton: {
+      '13.1.0': 'data-testid edit pane add new variable button',
+    },
   },
   EditPaneHeader: {
     deleteButton: {
@@ -753,6 +756,9 @@ export const versionedComponents = {
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },
+      showDependenciesButton: {
+        '13.1.0': 'data-testid show dependencies button',
+      },
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
       },
@@ -1184,6 +1190,20 @@ export const versionedComponents = {
     },
     current: {
       [MIN_GRAFANA_VERSION]: () => '[class*="-currentVisualizationItem"]',
+    },
+  },
+  Plugins: {
+    appPage: {
+      '13.2.0': (pluginId: string) => `data-testid App plugin page ${pluginId}`,
+    },
+    dataSourceConfigEditor: {
+      '13.2.0': (pluginId: string) => `data-testid Data source config editor ${pluginId}`,
+    },
+    configPage: {
+      '13.2.0': (pluginId: string, pageId: string) => `data-testid Plugin config page ${pluginId} ${pageId}`,
+    },
+    queryEditorRow: {
+      '13.2.0': (dataSourceType: string, refId: string) => `data-testid Query editor row ${dataSourceType} ${refId}`,
     },
   },
   Select: {

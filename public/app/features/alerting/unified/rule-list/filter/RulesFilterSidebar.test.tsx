@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -94,44 +94,29 @@ beforeEach(() => {
 });
 
 describe('RulesFilterSidebar — policy filter', () => {
-  describe('when alertingMultiplePolicies is enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingMultiplePolicies'] });
-
-    it('renders the notification policy selector', async () => {
-      render(<RulesFilterSidebar />);
-      expect(await screen.findByRole('combobox', { name: 'Notification policy' })).toBeInTheDocument();
-    });
-
-    it('calls updateFilters with the selected policy name', async () => {
-      const { user } = render(<RulesFilterSidebar />);
-      const select = await screen.findByRole('combobox', { name: 'Notification policy' });
-      await user.selectOptions(select, 'team-a-policy');
-      expect(mockUpdateFilters).toHaveBeenCalledWith(expect.objectContaining({ policy: 'team-a-policy' }));
-    });
-
-    it('does not include policy in the filter when the selection is cleared', async () => {
-      const { user } = render(<RulesFilterSidebar />);
-      const select = await screen.findByRole('combobox', { name: 'Notification policy' });
-      await user.selectOptions(select, 'team-a-policy');
-      await user.selectOptions(select, '');
-      const lastCall = mockUpdateFilters.mock.calls.at(-1)?.[0];
-      expect(lastCall?.policy).toBeUndefined();
-    });
+  it('renders the notification policy selector', async () => {
+    render(<RulesFilterSidebar />);
+    expect(await screen.findByRole('combobox', { name: 'Notification policy' })).toBeInTheDocument();
   });
 
-  describe('when alertingMultiplePolicies is disabled', () => {
-    testWithFeatureToggles({ disable: ['alertingMultiplePolicies'] });
+  it('calls updateFilters with the selected policy name', async () => {
+    const { user } = render(<RulesFilterSidebar />);
+    const select = await screen.findByRole('combobox', { name: 'Notification policy' });
+    await user.selectOptions(select, 'team-a-policy');
+    expect(mockUpdateFilters).toHaveBeenCalledWith(expect.objectContaining({ policy: 'team-a-policy' }));
+  });
 
-    it('does not render the notification policy selector', async () => {
-      render(<RulesFilterSidebar />);
-      expect(screen.queryByRole('combobox', { name: 'Notification policy' })).not.toBeInTheDocument();
-    });
+  it('does not include policy in the filter when the selection is cleared', async () => {
+    const { user } = render(<RulesFilterSidebar />);
+    const select = await screen.findByRole('combobox', { name: 'Notification policy' });
+    await user.selectOptions(select, 'team-a-policy');
+    await user.selectOptions(select, '');
+    const lastCall = mockUpdateFilters.mock.calls.at(-1)?.[0];
+    expect(lastCall?.policy).toBeUndefined();
   });
 });
 
 describe('RulesFilterSidebar — mutual exclusivity of contact point and policy filters', () => {
-  testWithFeatureToggles({ enable: ['alertingMultiplePolicies'] });
-
   beforeEach(() => {
     // canRenderContactPointSelector is evaluated per-render (not at module load),
     // so spyOn intercepts it correctly to grant the receivers permission.

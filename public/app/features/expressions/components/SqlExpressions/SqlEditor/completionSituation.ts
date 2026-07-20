@@ -1,13 +1,40 @@
 import { syntaxTree } from '@codemirror/language';
+import { type EditorState } from '@codemirror/state';
 import { type SyntaxNode } from '@lezer/common';
 
+import { unquoteIdentifier } from '@grafana/sql';
 import { type CodeMirrorCompletionContext } from '@grafana/ui/unstable';
+
+import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
 const SQL_STATEMENT_NODE_NAME = 'Statement';
 const SQL_COMPOSITE_IDENTIFIER_NODE_NAME = 'CompositeIdentifier';
 const SQL_IDENTIFIER_NODE_NAME = 'Identifier';
+const SQL_QUOTED_IDENTIFIER_NODE_NAME = 'QuotedIdentifier';
 const SQL_KEYWORD_NODE_NAME = 'Keyword';
+const SQL_BUILTIN_NODE_NAME = 'Builtin';
+const SQL_TYPE_NODE_NAME = 'Type';
+const SQL_PARENS_NODE_NAME = 'Parens';
+const SQL_CLOSE_PAREN_NODE_NAME = ')';
 const SQL_PUNCTUATION_NODE_NAME = 'Punctuation';
+
+// Bare table/alias identifiers, quoted or not. Qualified names (`table.column`) are composite.
+const SQL_IDENTIFIER_NODE_NAMES = new Set<string>([SQL_IDENTIFIER_NODE_NAME, SQL_QUOTED_IDENTIFIER_NODE_NAME]);
+const SQL_IDENTIFIER_LIKE_NODE_NAMES = new Set<string>([
+  ...SQL_IDENTIFIER_NODE_NAMES,
+  SQL_COMPOSITE_IDENTIFIER_NODE_NAME,
+]);
+
+// Nodes that can carry a function name immediately before a Parens group. The
+// lang-sql grammar tokenizes function names as plain identifiers or, for known
+// keywords/builtins/types, as those node kinds.
+const SQL_FUNCTION_NAME_NODE_NAMES = new Set([
+  SQL_IDENTIFIER_NODE_NAME,
+  SQL_QUOTED_IDENTIFIER_NODE_NAME,
+  SQL_KEYWORD_NODE_NAME,
+  SQL_BUILTIN_NODE_NAME,
+  SQL_TYPE_NODE_NAME,
+]);
 
 const SQL_SELECT_KEYWORD = 'SELECT';
 const SQL_FROM_KEYWORD = 'FROM';
@@ -105,6 +132,94 @@ export function getSqlCompletionSituation(
   };
 }
 
+export interface EnclosingFunctionCall {
+  name: string;
+  activeParameter: number;
+}
+
+/**
+ * Finds the innermost function call surrounding the cursor using the SQL syntax
+ * tree. Returns the function name and which argument the cursor is on, or null
+ * when the cursor is not inside a call's parentheses.
+ */
+export function getEnclosingFunctionCall(state: EditorState, pos: number): EnclosingFunctionCall | null {
+  const tree = syntaxTree(state);
+  const resolvedPos = Math.min(pos, state.doc.length);
+  let node: SyntaxNode | null = tree.resolveInner(resolvedPos, -1);
+
+  // Walk up to the innermost Parens node that actually encloses the cursor.
+  let parens: SyntaxNode | null = null;
+  while (node) {
+    if (node.name === SQL_PARENS_NODE_NAME && isCursorInsideParens(node, resolvedPos)) {
+      parens = node;
+      break;
+    }
+
+    node = node.parent;
+  }
+
+  if (!parens) {
+    return null;
+  }
+
+  const nameNode = parens.prevSibling;
+
+  if (!nameNode || !SQL_FUNCTION_NAME_NODE_NAMES.has(nameNode.name)) {
+    return null;
+  }
+
+  const name = getStateNodeText(state, nameNode).trim();
+
+  if (!name) {
+    return null;
+  }
+
+  return {
+    name,
+    activeParameter: countActiveParameter(state, parens, resolvedPos),
+  };
+}
+
+/**
+ * Determines whether the cursor sits inside a call's parentheses. A closed call
+ * ends with a `)` token, so the cursor dismisses once it moves onto or past it
+ * (matching VSCode). Unclosed calls that are still being typed have no `)` and
+ * extend to the cursor, so the signature stays while typing arguments.
+ */
+function isCursorInsideParens(parens: SyntaxNode, pos: number): boolean {
+  if (pos <= parens.from) {
+    return false;
+  }
+
+  const isClosed = parens.lastChild?.name === SQL_CLOSE_PAREN_NODE_NAME;
+  return isClosed ? pos < parens.to : pos <= parens.to;
+}
+
+/**
+ * Counts the argument separators that appear before the cursor within the call's
+ * parentheses. Only direct comma children are counted so nested calls do not
+ * affect the active parameter of the enclosing call.
+ */
+function countActiveParameter(state: EditorState, parens: SyntaxNode, pos: number): number {
+  let activeParameter = 0;
+
+  for (let child = parens.firstChild; child; child = child.nextSibling) {
+    if (child.to > pos) {
+      break;
+    }
+
+    if (child.name === SQL_PUNCTUATION_NODE_NAME && getStateNodeText(state, child) === ',') {
+      activeParameter++;
+    }
+  }
+
+  return activeParameter;
+}
+
+function getStateNodeText(state: EditorState, node: SyntaxNode): string {
+  return state.doc.sliceString(node.from, node.to);
+}
+
 function getStatementAtCursor(context: CodeMirrorCompletionContext): SyntaxNode | null {
   const tree = syntaxTree(context.state);
   const pos = Math.min(context.pos, context.state.doc.length);
@@ -187,7 +302,8 @@ function getQualifiedColumnContext(
     return undefined;
   }
 
-  const table = textBeforeCursor.slice(0, dotIndex).trim();
+  // The qualifier may be quoted (e.g. `table A`.column), so unquote it to match parsed table refs.
+  const table = unquoteIdentifier(textBeforeCursor.slice(0, dotIndex), SQL_EXPRESSIONS_DIALECT);
 
   if (!table) {
     return undefined;
@@ -288,7 +404,7 @@ function readTableRefAt(
     return undefined;
   }
 
-  const table = getNodeText(context, tableNode).trim();
+  const table = unquoteIdentifier(getNodeText(context, tableNode), SQL_EXPRESSIONS_DIALECT);
   const aliasResult = readAliasAt(context, children, index + 1);
 
   return {
@@ -306,12 +422,12 @@ function readAliasAt(
   const aliasIndex = getKeywordText(context, maybeAsKeyword) === SQL_AS_KEYWORD ? index + 1 : index;
   const aliasNode = children[aliasIndex];
 
-  if (!aliasNode || aliasNode.name !== SQL_IDENTIFIER_NODE_NAME) {
+  if (!isIdentifierNode(aliasNode)) {
     return { nextIndex: aliasIndex };
   }
 
   return {
-    alias: getNodeText(context, aliasNode).trim(),
+    alias: unquoteIdentifier(getNodeText(context, aliasNode), SQL_EXPRESSIONS_DIALECT),
     nextIndex: aliasIndex + 1,
   };
 }
@@ -331,7 +447,7 @@ function resolveQualifiedTable(tableRefs: TableRef[], tableOrAlias: string): Res
 }
 
 function isSameIdentifier(identifier: string | undefined, otherIdentifier: string): boolean {
-  // This parser path only handles unquoted identifiers, which SQL treats as case-insensitive.
+  // Identifiers are already unquoted here; compare case-insensitively like unquoted SQL names.
   return identifier?.toLowerCase() === otherIdentifier.toLowerCase();
 }
 
@@ -444,7 +560,11 @@ function getStatementChildren(statement: SyntaxNode): SyntaxNode[] {
 }
 
 function isIdentifierLike(node: SyntaxNode | undefined): node is SyntaxNode {
-  return node?.name === SQL_IDENTIFIER_NODE_NAME || node?.name === SQL_COMPOSITE_IDENTIFIER_NODE_NAME;
+  return node !== undefined && SQL_IDENTIFIER_LIKE_NODE_NAMES.has(node.name);
+}
+
+function isIdentifierNode(node: SyntaxNode | undefined): node is SyntaxNode {
+  return node !== undefined && SQL_IDENTIFIER_NODE_NAMES.has(node.name);
 }
 
 function isComma(context: CodeMirrorCompletionContext, node: SyntaxNode | undefined): boolean {

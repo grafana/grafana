@@ -17,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	claims "github.com/grafana/authlib/types"
 	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -33,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -685,10 +688,16 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		userID = id
 	}
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.GetOrgID(), UserID: userID, Teams: c.GetTeams()}
 	homePage := hs.Cfg.HomePage
 
-	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+	var preference *pref.Preference
+	var err error
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		preference, err = hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
+	} else {
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.GetOrgID(), UserID: userID, Teams: c.GetTeams()}
+		preference, err = hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+	}
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}

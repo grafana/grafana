@@ -32,7 +32,10 @@ export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | Hov
 interface BaseProps {
   padding?: PanelPadding;
   title?: string | React.ReactElement;
+  /** Shown in info icon tooltip next to the title, supports simple html markup */
   description?: string | (() => string);
+  /** Shown in as text below the title, supports simple html markup */
+  subtitle?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
@@ -163,6 +166,7 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
   subHeaderContent,
+  subtitle,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -187,25 +191,33 @@ export function PanelChrome({
     collapsed = !isOpen;
   }
 
+  const descriptionTitleItem = description && (
+    <PanelDescription description={description} className={dragClassCancel} />
+  );
+
+  const subtitleContent = subtitle && <PanelDescription description={subtitle} inSubHeader />;
+
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
+  const showSubHeader = !collapsed && Boolean(subHeaderContent || subtitleContent);
 
-  const headerHeight = getHeaderHeight(theme, hasHeader);
-  const subHeaderHeight = Math.min(measuredSubHeaderHeight, headerHeight);
+  // in dashboards we always have a subHeaderContent react node that sometimes is empty so showSubHeader can be true but 0 height
+  const subHeaderHeight = showSubHeader ? measuredSubHeaderHeight : 0;
+  const headerHeight = getHeaderHeight(theme, hasHeader, subHeaderHeight);
+
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
     headerHeight,
     collapsed,
-    subHeaderHeight,
     height,
     width
   );
 
   const headerStyles: CSSProperties = {
-    height: headerHeight,
     cursor: dragClass ? 'move' : 'auto',
+    paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
   const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
@@ -319,9 +331,9 @@ export function PanelChrome({
         </div>
       )}
 
-      {(titleItems || description) && (
+      {(titleItems || descriptionTitleItem) && (
         <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-          <PanelDescription description={description} className={dragClassCancel} />
+          {descriptionTitleItem}
           {titleItems}
         </div>
       )}
@@ -452,8 +464,9 @@ export function PanelChrome({
                 />
               )}
             </div>
-            {!collapsed && subHeaderContent && (
+            {!collapsed && (subHeaderContent || subtitleContent) && (
               <div className={styles.subHeader} ref={subHeaderRef}>
+                {subtitleContent}
                 {subHeaderContent}
               </div>
             )}
@@ -483,9 +496,10 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
+const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
-    return theme.spacing.gridSize * theme.components.panel.headerHeight;
+    // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
+    return theme.spacing.gridSize * theme.components.panel.headerHeight + subHeaderHeight;
   }
 
   return 0;
@@ -496,7 +510,6 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   headerHeight: number,
   collapsed: boolean,
-  subHeaderHeight: number,
   height?: number,
   width?: number
 ) => {
@@ -512,7 +525,12 @@ const getContentStyle = (
 
   let innerHeight = 0;
   if (height) {
-    innerHeight = height - headerHeight - panelPadding - panelBorder - subHeaderHeight;
+    innerHeight = height - headerHeight - panelPadding - panelBorder + chromePadding;
+
+    // When there is no header the content has topPadding
+    if (headerHeight === 0) {
+      innerHeight -= chromePadding;
+    }
   }
 
   if (collapsed) {
@@ -521,14 +539,14 @@ const getContentStyle = (
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
+    paddingTop: headerHeight > 0 ? 0 : chromePadding,
   };
 
   return { contentStyle, innerWidth, innerHeight };
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, contentBackground, contentBorderColor } = theme.components.panel;
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const { background, borderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -544,7 +562,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: visualRefreshEnabled ? 'unset' : 'hidden',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',
@@ -602,33 +620,25 @@ const getStyles = (theme: GrafanaTheme2) => {
     containNone: css({
       contain: 'none',
     }),
-    content: css(
-      {
-        label: 'panel-content',
-        flexGrow: 1,
-        contain: 'size layout',
-      },
-      visualRefreshEnabled && {
-        backgroundColor: contentBackground,
-        border: `1px solid ${contentBorderColor}`,
-        borderRadius: theme.shape.radius.lg,
-        overflow: 'hidden',
-        margin: '-1px', // to overlay the nested borders nicely
-      }
-    ),
+    content: css({
+      label: 'panel-content',
+      flexGrow: 1,
+      contain: 'size layout',
+    }),
     headerContainer: css({
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(0, 1, 0, 1),
+      padding: theme.spacing(1, 1, 0, 1),
       gap: theme.spacing(1),
+      maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
     }),
     subHeader: css({
       label: 'panel-sub-header',
       display: 'flex',
       alignItems: 'center',
       maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-      padding: theme.spacing(0, 1, 0, 1.5),
+      padding: theme.spacing(0, 1, 1, 1.5),
       overflow: 'hidden',
       gap: theme.spacing(1),
     }),

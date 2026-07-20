@@ -229,3 +229,95 @@ func TestRepository_SetBranch(t *testing.T) {
 		}
 	})
 }
+
+func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
+	tests := []struct {
+		name string
+		repo v0alpha1.Repository
+		want bool
+	}{
+		{
+			name: "github with previews enabled",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:   v0alpha1.GitHubRepositoryType,
+					GitHub: &v0alpha1.GitHubRepositoryConfig{GenerateDashboardPreviews: true},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "github with previews disabled",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:   v0alpha1.GitHubRepositoryType,
+					GitHub: &v0alpha1.GitHubRepositoryConfig{GenerateDashboardPreviews: false},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "github type with nil github config",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitHubRepositoryType,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "githubEnterprise with previews enabled via pull request options",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:        v0alpha1.GitHubEnterpriseRepositoryType,
+					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: true},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "githubEnterprise with previews disabled via pull request options",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:        v0alpha1.GitHubEnterpriseRepositoryType,
+					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: false},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "githubEnterprise type with nil pull request options",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitHubEnterpriseRepositoryType,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "gitlab with previews enabled via pull request options",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:        v0alpha1.GitLabRepositoryType,
+					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: true},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "non-github type with nil pull request options returns false",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitLabRepositoryType,
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.repo.ShouldGenerateDashboardPreviews())
+		})
+	}
+}

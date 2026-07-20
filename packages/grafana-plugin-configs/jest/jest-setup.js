@@ -36,6 +36,28 @@ Object.defineProperty(document, 'fonts', {
   value: { ready: Promise.resolve({}) },
 });
 
+// jsdom doesn't implement Range client-rect measurement, which CodeMirror uses
+// to position its cursor and tooltips. Provide inert stubs so editors render in
+// tests without measurement errors.
+if (typeof Range !== 'undefined') {
+  if (!Range.prototype.getClientRects) {
+    Range.prototype.getClientRects = () => ({ length: 0, item: () => null, [Symbol.iterator]: function* () {} });
+  }
+  if (!Range.prototype.getBoundingClientRect) {
+    Range.prototype.getBoundingClientRect = () => ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: 0,
+      height: 0,
+      toJSON: () => ({}),
+    });
+  }
+}
+
 // Used by useMeasure
 global.ResizeObserver = class ResizeObserver {
   static #observationEntry = {

@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { type ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import * as React from 'react';
 import { useLocalStorage } from 'react-use';
@@ -28,7 +28,8 @@ export interface OptionsPaneCategoryProps {
   disabledText?: string | React.ReactElement;
 }
 
-const CATEGORY_PARAM_NAME = 'showCategory' as const;
+export const CATEGORY_PARAM_NAME = 'showCategory' as const;
+export const HIGHLIGHT_CATEGORY_PARAM_NAME = 'highlightCategory' as const;
 
 export const OptionsPaneCategory = React.memo(
   ({
@@ -50,9 +51,11 @@ export const OptionsPaneCategory = React.memo(
 
     const isExpandedInitialValue = forceOpen || (savedState?.isExpanded ?? isOpenDefault);
     const [isExpanded, setIsExpanded] = useState(isExpandedInitialValue);
+    const [isHighlighted, setIsHighlighted] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
     const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
+    const isHighlightedFromUrl = queryParams[HIGHLIGHT_CATEGORY_PARAM_NAME] === id;
 
     // Handle opening by forceOpen param or from URL
     useEffect(() => {
@@ -63,6 +66,37 @@ export const OptionsPaneCategory = React.memo(
         }, 200);
       }
     }, [isExpanded, isOpenFromUrl, forceOpen]);
+
+    // remove effect when feature flag grafana.dashboardSettingsRedesign is removed
+    useEffect(() => {
+      if (!isHighlightedFromUrl) {
+        return;
+      }
+
+      setIsHighlighted(true);
+      setIsExpanded(true);
+      updateQueryParams({ [HIGHLIGHT_CATEGORY_PARAM_NAME]: undefined }, true);
+    }, [isHighlightedFromUrl, updateQueryParams]);
+
+    // remove effect when feature flag grafana.dashboardSettingsRedesign is removed
+    useEffect(() => {
+      if (!isHighlighted) {
+        return;
+      }
+
+      const scrollTimeout = window.setTimeout(() => {
+        ref.current?.scrollIntoView();
+      }, 200);
+
+      const highlightTimeout = window.setTimeout(() => {
+        setIsHighlighted(false);
+      }, 2000);
+
+      return () => {
+        window.clearTimeout(scrollTimeout);
+        window.clearTimeout(highlightTimeout);
+      };
+    }, [isHighlighted]);
 
     const onToggle = useCallback(() => {
       updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id }, true);
@@ -96,6 +130,7 @@ export const OptionsPaneCategory = React.memo(
     const headerStyles = cx(styles.header, {
       [styles.headerExpanded]: isExpanded,
       [styles.headerNested]: isNested,
+      [styles.boxHighlighted]: isHighlighted,
     });
 
     const bodyStyles = cx(styles.body, {
@@ -231,6 +266,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.border.weak,
     },
   }),
+
+  boxHighlighted: css({
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${categoryHighlight(theme)} 2s ease-out forwards`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      backgroundColor: theme.colors.primary.transparent,
+      boxShadow: `inset 0 0 0 1px ${theme.colors.primary.border}`,
+    },
+  }),
 });
+
+const categoryHighlight = (theme: GrafanaTheme2) =>
+  keyframes({
+    '0%': {
+      backgroundColor: theme.colors.primary.transparent,
+      boxShadow: `inset 0 0 0 1px ${theme.colors.primary.border}`,
+    },
+    '100%': {
+      backgroundColor: 'transparent',
+      boxShadow: 'none',
+    },
+  });
 
 const getOptionGroupStorageKey = (id: string) => `${PANEL_EDITOR_UI_STATE_STORAGE_KEY}.optionGroup[${id}]`;

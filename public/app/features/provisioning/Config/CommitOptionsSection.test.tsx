@@ -29,6 +29,7 @@ function Wrapper({ defaultSigningKeyConfigured, defaultValues, onSubmit = () => 
         smimeCertificateName="smimeCertificate"
         signerNameName="commit.signerName"
         signerEmailName="commit.signerEmail"
+        signerIsAuthorName="commit.signerIsAuthor"
         defaultSigningKeyConfigured={defaultSigningKeyConfigured}
       />
       <button type="submit">Submit</button>
@@ -91,7 +92,10 @@ describe('CommitOptionsSection', () => {
 
     await user.click(screen.getByText('Commit options'));
 
-    expect(screen.getByRole('textbox')).toHaveAttribute('name', 'commit.singleResourceMessageTemplate');
+    expect(screen.getByRole('textbox', { name: /Commit message template/i })).toHaveAttribute(
+      'name',
+      'commit.singleResourceMessageTemplate'
+    );
     expect(screen.getByRole('checkbox')).toHaveAttribute('name', 'commit.enforceTemplate');
   });
 
