@@ -365,7 +365,6 @@
 
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
-/pkg/tsdb/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /pkg/tsdb/sqlmacro/ @grafana/data-sources-plugins
 /pkg/tsdb/jaeger/ @grafana/data-sources-plugins
 
@@ -1165,7 +1164,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/loki/ @grafana/data-sources-plugins @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
