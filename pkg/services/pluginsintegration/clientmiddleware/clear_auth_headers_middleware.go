@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -12,11 +13,11 @@ import (
 // NewClearAuthHeadersMiddleware creates a new backend.HandlerMiddleware
 // that will clear any outgoing HTTP headers that was part of the incoming
 // HTTP request and used when authenticating to Grafana.
-func NewClearAuthHeadersMiddleware(cfgJWTAuth *setting.AuthJWTSettings, cfgAuthProxy *setting.AuthProxySettings) backend.HandlerMiddleware {
+func NewClearAuthHeadersMiddleware(jwtService jwt.JWTService, cfgAuthProxy *setting.AuthProxySettings) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ClearAuthHeadersMiddleware{
 			BaseHandler:  backend.NewBaseHandler(next),
-			cfgJWTAuth:   cfgJWTAuth,
+			jwtService:   jwtService,
 			cfgAuthProxy: cfgAuthProxy,
 		}
 	})
@@ -24,7 +25,7 @@ func NewClearAuthHeadersMiddleware(cfgJWTAuth *setting.AuthJWTSettings, cfgAuthP
 
 type ClearAuthHeadersMiddleware struct {
 	backend.BaseHandler
-	cfgJWTAuth   *setting.AuthJWTSettings
+	jwtService   jwt.JWTService
 	cfgAuthProxy *setting.AuthProxySettings
 }
 
@@ -35,7 +36,8 @@ func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend
 		return
 	}
 
-	items := contexthandler.GetAuthHTTPHeaders(m.cfgJWTAuth, m.cfgAuthProxy)
+	jwtAuth := m.jwtService.Settings()
+	items := contexthandler.GetAuthHTTPHeaders(&jwtAuth, m.cfgAuthProxy)
 	for _, k := range items {
 		h.DeleteHTTPHeader(k)
 	}

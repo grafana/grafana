@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,7 +23,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		cfg := setting.NewCfg()
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy)),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(&jwt.FakeJWTService{SettingsValue: cfg.JWTAuth}, &cfg.AuthProxy)),
 		)
 
 		pluginCtx := backend.PluginContext{
@@ -130,7 +131,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		cfg := setting.NewCfg()
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy)),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(&jwt.FakeJWTService{SettingsValue: cfg.JWTAuth}, &cfg.AuthProxy)),
 		)
 
 		req.Header.Set("Authorization", "val")
@@ -237,5 +238,29 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			require.Equal(t, "test", cdt.RunStreamReq.Headers[otherHeader])
 			require.Empty(t, cdt.RunStreamReq.GetHTTPHeaders())
 		})
+	})
+
+	t.Run("Clears the JWT header from the live settings, not the static config", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.JWTAuth = setting.AuthJWTSettings{Enabled: true, HeaderName: "X-Stale-JWT"}
+		liveJWT := &jwt.FakeJWTService{SettingsValue: setting.AuthJWTSettings{Enabled: true, HeaderName: "X-Live-JWT"}}
+
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(liveJWT, &cfg.AuthProxy)),
+		)
+
+		_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Headers: map[string]string{
+				otherHeader:   "test",
+				"X-Live-JWT":  "secret",
+				"X-Stale-JWT": "kept",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, cdt.QueryDataReq)
+		require.Empty(t, cdt.QueryDataReq.Headers["X-Live-JWT"])
+		require.Equal(t, "kept", cdt.QueryDataReq.Headers["X-Stale-JWT"])
 	})
 }

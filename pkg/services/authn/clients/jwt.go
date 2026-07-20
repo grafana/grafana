@@ -183,7 +183,7 @@ func retrieveToken(httpRequest *http.Request, settings setting.AuthJWTSettings) 
 
 func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
 	jwtSettings := s.settings()
-	if !jwtSettings.Enabled || jwtSettings.HeaderName == "" {
+	if !jwtSettings.Enabled || (jwtSettings.HeaderName == "" && !jwtSettings.URLLogin) {
 		return false
 	}
 

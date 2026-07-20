@@ -639,7 +639,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	oauthtokenService := oauthtoken.ProvideService(socialService, authinfoimplService, cfg, registerer, serverLockService, tracingService, userAuthTokenService, featureToggles)
 	ossCachingService := caching.ProvideCachingService()
 	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
-	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokenService, tracingService, cachingServiceClient, featureToggles, registerer)
+	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
+	if err != nil {
+		return nil, err
+	}
+	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokenService, tracingService, cachingServiceClient, featureToggles, registerer, authService)
 	if err != nil {
 		return nil, err
 	}
@@ -735,7 +739,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	gateway := pushhttp.ProvideService(cfg, grafanaLive)
 	authnimplService := authnimpl.ProvideService(cfg, tracingService, userAuthTokenService, usageStats, registerer, authinfoimplService)
 	authnAuthenticator := authnimpl.ProvideAuthnServiceAuthenticateOnly(authnimplService)
-	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles)
+	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles, authService)
 	logger := loggermw.Provide(cfg, featureToggles)
 	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
 	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
@@ -1032,10 +1036,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	teamAPI := teamapi.ProvideTeamAPI(routeRegisterImpl, teamimplService, acimplService, accessControl, teamPermissionsService, userimplService, ossLicensingService, cfg, prefService, k8sHandler, dashboardService, featureToggles, eventualRestConfigProvider)
 	cloudmigrationService, err := cloudmigrationimpl.ProvideService(cfg, httpclientProvider, featureToggles, sqlStore, service13, secretsKVStore, secretsService, routeRegisterImpl, registerer, tracingService, dashboardService, folderimplService, pluginstoreService, service12, accessControl, acimplService, kvStore, libraryElementService, alertNG)
-	if err != nil {
-		return nil, err
-	}
-	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
 	if err != nil {
 		return nil, err
 	}
@@ -1378,7 +1378,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	oauthtokentestService := oauthtokentest.ProvideService()
 	ossCachingService := caching.ProvideCachingService()
 	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
-	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokentestService, tracingService, cachingServiceClient, featureToggles, registerer)
+	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
+	if err != nil {
+		return nil, err
+	}
+	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokentestService, tracingService, cachingServiceClient, featureToggles, registerer, authService)
 	if err != nil {
 		return nil, err
 	}
@@ -1486,7 +1490,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	gateway := pushhttp.ProvideService(cfg, grafanaLive)
 	authnimplService := authnimpl.ProvideService(cfg, tracingService, userAuthTokenService, usageStats, registerer, authinfoimplService)
 	authnAuthenticator := authnimpl.ProvideAuthnServiceAuthenticateOnly(authnimplService)
-	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles)
+	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles, authService)
 	logger := loggermw.Provide(cfg, featureToggles)
 	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
 	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
@@ -1784,10 +1788,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	teamAPI := teamapi.ProvideTeamAPI(routeRegisterImpl, teamimplService, acimplService, accessControl, teamPermissionsService, userimplService, ossLicensingService, cfg, prefService, k8sHandler, dashboardService, featureToggles, eventualRestConfigProvider)
 	cloudmigrationService, err := cloudmigrationimpl.ProvideService(cfg, httpclientProvider, featureToggles, sqlStore, service13, secretsKVStore, secretsService, routeRegisterImpl, registerer, tracingService, dashboardService, folderimplService, pluginstoreService, service12, accessControl, acimplService, kvStore, libraryElementService, alertNG)
-	if err != nil {
-		return nil, err
-	}
-	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
 	if err != nil {
 		return nil, err
 	}
