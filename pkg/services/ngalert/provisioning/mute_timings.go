@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"maps"
 	"slices"
 	"strings"
 	"unsafe"
@@ -331,9 +330,10 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 }
 
 func (svc *MuteTimingService) errTimeIntervalInUse(name string, usedByRoutes bool, rules map[models.AlertRuleKey]models.ContactPointRouting) error {
-	ruleKeys := slices.Collect(maps.Keys(rules))
-	uids := make([]string, 0, len(ruleKeys))
-	for _, key := range ruleKeys {
+	ruleKeys := make([]models.AlertRuleKey, 0, len(rules))
+	uids := make([]string, 0, len(rules))
+	for key := range rules {
+		ruleKeys = append(ruleKeys, key)
 		uids = append(uids, key.UID)
 	}
 	msg := "Cannot delete time interval because it is used in rule's notification settings"
