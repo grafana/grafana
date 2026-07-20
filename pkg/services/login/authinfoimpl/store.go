@@ -3,58 +3,79 @@ package authinfoimpl
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var GetTime = time.Now
 
 type Store struct {
-	sqlStore       db.DB
-	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	sql            legacysql.LegacyDatabaseProvider
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption
 	logger         log.Logger
 }
 
-func ProvideStore(sqlStore db.DB,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+func ProvideStore(ctx context.Context, sql legacysql.LegacyDatabaseProvider,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption
 ) (login.Store, error) {
 	store := &Store{
-		sqlStore:       sqlStore,
+		sql:            sql,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
 	}
 
-	if err := store.authInfoUserUIDMigration(); err != nil {
+	if err := store.authInfoUserUIDMigration(ctx); err != nil {
 		return nil, err
 	}
 
 	return store, nil
 }
 
-// GetAuthInfo returns the auth info for a user
-// It will return the latest auth info for a user
+type getAuthInfoQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserID        int64
+	AuthModule    string
+	AuthID        string
+}
+
+func (q getAuthInfoQuery) Validate() error { return nil }
+
+// GetAuthInfo returns the latest auth info for a user.
 func (s *Store) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
 	if query.UserId == 0 && query.AuthId == "" {
 		return nil, user.ErrUserNotFound
 	}
 
-	userAuth := &login.UserAuth{
-		UserId:     query.UserId,
-		AuthModule: query.AuthModule,
-		AuthId:     query.AuthId,
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
 	}
 
+	userAuth := &login.UserAuth{}
 	var has bool
-	var err error
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		dbQuery := getAuthInfoQuery{
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			UserID:        query.UserId,
+			AuthModule:    query.AuthModule,
+			AuthID:        query.AuthId,
+		}
+		querySQL, err := sqltemplate.Execute(getAuthInfoTemplate, dbQuery)
+		if err != nil {
+			return err
+		}
 
-	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err = sess.Desc("created").Get(userAuth)
+		has, err = sess.SQL(querySQL, dbQuery.GetArgs()...).Get(userAuth)
 		return err
 	})
 	if err != nil {
@@ -89,15 +110,33 @@ func (s *Store) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) 
 	return userAuth, nil
 }
 
+type getUsersRecentlyUsedLabelQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserIDs       []int64
+}
+
+func (q getUsersRecentlyUsedLabelQuery) Validate() error { return nil }
+
 func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	userAuths := []login.UserAuth{}
-	params := make([]interface{}, 0, len(query.UserIDs))
-	for _, id := range query.UserIDs {
-		params = append(params, id)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Table("user_auth").In("user_id", params).OrderBy("created").Find(&userAuths)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		dbQuery := getUsersRecentlyUsedLabelQuery{
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			UserIDs:       query.UserIDs,
+		}
+		querySQL, err := sqltemplate.Execute(getUsersRecentlyUsedLabelTemplate, dbQuery)
+		if err != nil {
+			return err
+		}
+
+		return sess.SQL(querySQL, dbQuery.GetArgs()...).Find(&userAuths)
 	})
 	if err != nil {
 		return nil, err
@@ -112,13 +151,36 @@ func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUs
 	return labelMap, nil
 }
 
+type getUserAuthModulesQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserID        int64
+}
+
+func (q getUserAuthModulesQuery) Validate() error { return nil }
+
 // GetUserAuthModules returns all auth modules a user has used ordered by most recently used first.
 func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string, error) {
 	rows := make([]struct {
 		AuthModule string `xorm:"auth_module"`
 	}, 0)
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Table("user_auth").Where("user_id = ?", userID).Desc("created").Cols("auth_module").Find(&rows)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		dbQuery := getUserAuthModulesQuery{
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			UserID:        userID,
+		}
+		querySQL, err := sqltemplate.Execute(getUserAuthModulesTemplate, dbQuery)
+		if err != nil {
+			return err
+		}
+
+		return sess.SQL(querySQL, dbQuery.GetArgs()...).Find(&rows)
 	})
 	if err != nil {
 		return nil, err
@@ -134,6 +196,24 @@ func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string,
 	}
 	return modules, nil
 }
+
+type insertAuthInfoQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable     string
+	UserID            int64
+	UserUID           string
+	AuthModule        string
+	AuthID            string
+	Created           legacysql.DBTime
+	OAuthAccessToken  string
+	OAuthRefreshToken string
+	OAuthIDToken      string
+	OAuthTokenType    string
+	OAuthExpiry       legacysql.DBTime
+	ExternalUID       string
+}
+
+func (q insertAuthInfoQuery) Validate() error { return nil }
 
 func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
@@ -174,11 +254,71 @@ func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) 
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Insert(authUser)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		dbQuery := insertAuthInfoQuery{
+			SQLTemplate:       sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable:     dbHelper.Table("user_auth"),
+			UserID:            authUser.UserId,
+			UserUID:           authUser.UserUID,
+			AuthModule:        authUser.AuthModule,
+			AuthID:            authUser.AuthId,
+			Created:           legacysql.NewDBTime(authUser.Created),
+			OAuthAccessToken:  authUser.OAuthAccessToken,
+			OAuthRefreshToken: authUser.OAuthRefreshToken,
+			OAuthIDToken:      authUser.OAuthIdToken,
+			OAuthTokenType:    authUser.OAuthTokenType,
+			OAuthExpiry:       legacysql.NewDBTime(authUser.OAuthExpiry),
+			ExternalUID:       authUser.ExternalUID,
+		}
+		querySQL, err := sqltemplate.Execute(insertAuthInfoTemplate, dbQuery)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec(append([]any{querySQL}, dbQuery.GetArgs()...)...)
 		return err
 	})
 }
+
+type updateAuthInfoQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable     string
+	UserID            int64
+	AuthModule        string
+	OAuthAccessToken  string
+	OAuthRefreshToken string
+	OAuthIDToken      string
+	OAuthTokenType    string
+	OAuthExpiry       legacysql.DBTime
+}
+
+func (q updateAuthInfoQuery) Validate() error { return nil }
+
+type findDuplicateAuthInfoQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserID        int64
+	AuthModule    string
+	AuthID        string
+}
+
+func (q findDuplicateAuthInfoQuery) Validate() error { return nil }
+
+type deleteDuplicateAuthInfoQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserID        int64
+	AuthModule    string
+	AuthID        string
+	ID            int64
+}
+
+func (q deleteDuplicateAuthInfoQuery) Validate() error { return nil }
 
 func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	authUser := &login.UserAuth{
@@ -218,20 +358,55 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		upd, err := sess.MustCols("o_auth_expiry", "o_auth_access_token", "o_auth_refresh_token", "o_auth_id_token", "o_auth_token_type").
-			Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).
-			Update(authUser)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		updateQuery := updateAuthInfoQuery{
+			SQLTemplate:       sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable:     dbHelper.Table("user_auth"),
+			UserID:            authUser.UserId,
+			AuthModule:        authUser.AuthModule,
+			OAuthAccessToken:  authUser.OAuthAccessToken,
+			OAuthRefreshToken: authUser.OAuthRefreshToken,
+			OAuthIDToken:      authUser.OAuthIdToken,
+			OAuthTokenType:    authUser.OAuthTokenType,
+			OAuthExpiry:       legacysql.NewDBTime(authUser.OAuthExpiry),
+		}
+		updateSQL, err := sqltemplate.Execute(updateAuthInfoTemplate, updateQuery)
+		if err != nil {
+			return err
+		}
+
+		result, err := sess.Exec(append([]any{updateSQL}, updateQuery.GetArgs()...)...)
+		if err != nil {
+			return err
+		}
+		upd, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
 
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 
 		// Clean up duplicated entries
 		if upd > 1 {
 			var id int64
-			ok, err := sess.SQL(
-				"SELECT id FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ?",
-				cmd.UserId, cmd.AuthModule, cmd.AuthId,
-			).Get(&id)
+			findQuery := findDuplicateAuthInfoQuery{
+				SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+				UserAuthTable: dbHelper.Table("user_auth"),
+				UserID:        cmd.UserId,
+				AuthModule:    cmd.AuthModule,
+				AuthID:        cmd.AuthId,
+			}
+			findSQL, err := sqltemplate.Execute(findDuplicateAuthInfoTemplate, findQuery)
+			if err != nil {
+				return err
+			}
+
+			ok, err := sess.SQL(findSQL, findQuery.GetArgs()...).Get(&id)
 			if err != nil {
 				return err
 			}
@@ -240,21 +415,53 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 				return nil
 			}
 
-			_, err = sess.Exec(
-				"DELETE FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ? AND id != ?",
-				cmd.UserId, cmd.AuthModule, cmd.AuthId, id,
-			)
+			deleteQuery := deleteDuplicateAuthInfoQuery{
+				SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+				UserAuthTable: dbHelper.Table("user_auth"),
+				UserID:        cmd.UserId,
+				AuthModule:    cmd.AuthModule,
+				AuthID:        cmd.AuthId,
+				ID:            id,
+			}
+			deleteSQL, err := sqltemplate.Execute(deleteDuplicateAuthInfoTemplate, deleteQuery)
+			if err != nil {
+				return err
+			}
+
+			_, err = sess.Exec(append([]any{deleteSQL}, deleteQuery.GetArgs()...)...)
 			return err
 		}
 
-		return err
+		return nil
 	})
 }
 
+type deleteUserAuthInfoQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserID        int64
+}
+
+func (q deleteUserAuthInfoQuery) Validate() error { return nil }
+
 func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
-	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		rawSQL := "DELETE FROM user_auth WHERE user_id = ?"
-		_, err := sess.Exec(rawSQL, userID)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		dbQuery := deleteUserAuthInfoQuery{
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			UserID:        userID,
+		}
+		querySQL, err := sqltemplate.Execute(deleteUserAuthInfoTemplate, dbQuery)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec(append([]any{querySQL}, dbQuery.GetArgs()...)...)
 		return err
 	})
 }
@@ -286,23 +493,32 @@ func (s *Store) encryptAndEncode(str string) (string, error) {
 	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
 
-// authInfoUserUIDMigration ensures that all auth_info user_uids are set.
-// To protect against upgrade / downgrade we need to run this for a couple of releases.
-func (s *Store) authInfoUserUIDMigration() error {
-	return s.sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		switch s.sqlStore.GetDBType() {
-		case migrator.SQLite:
-			_, err := sess.Exec("UPDATE user_auth SET user_uid = (SELECT uid FROM user WHERE user.id = user_auth.user_id) WHERE user_id IN (SELECT id FROM user) AND user_uid IS NULL;")
-			return err
-		case migrator.Postgres:
-			_, err := sess.Exec("UPDATE user_auth SET user_uid = u.uid FROM \"user\" u WHERE u.id = user_auth.user_id AND user_auth.user_uid IS NULL")
-			return err
-		case migrator.MySQL:
-			_, err := sess.Exec("UPDATE user_auth INNER JOIN user ON user_auth.user_id = user.id SET user_auth.user_uid = user.uid WHERE user_auth.user_uid IS NULL")
-			return err
-		default:
-			// this branch should be unreachable
-			return nil
+type authInfoUserUIDMigrationQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserTable     string
+}
+
+func (q authInfoUserUIDMigrationQuery) Validate() error { return nil }
+
+func (s *Store) authInfoUserUIDMigration(ctx context.Context) error {
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		dbQuery := authInfoUserUIDMigrationQuery{
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			UserTable:     dbHelper.Table("user"),
 		}
+		querySQL, err := sqltemplate.Execute(authInfoUserUIDMigrationTemplate, dbQuery)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec(append([]any{querySQL}, dbQuery.GetArgs()...)...)
+		return err
 	})
 }
