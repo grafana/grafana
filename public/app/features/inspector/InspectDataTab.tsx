@@ -101,10 +101,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { transformId } = this.state;
     const dataFrame = dataFrames[this.state.dataFrameIndex];
 
-    if (hasLogs) {
-      reportInteraction('grafana_logs_download_clicked', { app: this.props.app, format: 'csv' });
-    }
-
     downloadDataFrameAsCsv(dataFrame, dataName, {}, transformId, this.state.excelCompatibilityMode);
   }
 
