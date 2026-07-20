@@ -72,6 +72,61 @@ describe('RecentJobs', () => {
 
       expect(await screen.findByText('System')).toBeInTheDocument();
     });
+
+    it('shows the webhook sender', async () => {
+      setup([
+        createJob({
+          metadata: {
+            name: 'job-1',
+            uid: 'uid-1',
+            annotations: { 'provisioning.grafana.app/webhookSender': 'amalavet' },
+          },
+        }),
+      ]);
+
+      expect(await screen.findByText('amalavet (via Webhook)')).toBeInTheDocument();
+    });
+
+    it('shows webhook attribution in the expanded job specification', async () => {
+      const { user } = setup([
+        createJob({
+          metadata: {
+            name: 'job-1',
+            uid: 'uid-1',
+            annotations: {
+              'provisioning.grafana.app/webhookSender': 'amalavet',
+              'provisioning.grafana.app/webhookSenderId': '12345',
+            },
+          },
+        }),
+      ]);
+
+      await user.click(await screen.findByRole('button', { name: /toggle row expanded/i }));
+
+      expect(await screen.findByText('triggeredBy')).toBeInTheDocument();
+      expect(screen.getByText(/amalavet \(via Webhook\) GitHub ID:12345/)).toBeInTheDocument();
+    });
+
+    it('shows user attribution in the expanded job specification', async () => {
+      const { user } = setup([
+        createJob({
+          metadata: {
+            name: 'job-1',
+            uid: 'uid-1',
+            annotations: {
+              'provisioning.grafana.app/author': 'Ada Lovelace',
+              'provisioning.grafana.app/authorEmail': 'ada@example.com',
+              'grafana.app/createdBy': 'user:abc123',
+            },
+          },
+        }),
+      ]);
+
+      await user.click(await screen.findByRole('button', { name: /toggle row expanded/i }));
+
+      expect(await screen.findByText('triggeredBy')).toBeInTheDocument();
+      expect(screen.getByText(/Ada Lovelace, ada@example\.com, user:abc123/)).toBeInTheDocument();
+    });
   });
 
   describe('with the userAttribution flag disabled', () => {

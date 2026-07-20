@@ -11,6 +11,7 @@ import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimel
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { getStatusColor } from '../utils/repositoryStatus';
+import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { formatTimestamp } from '../utils/time';
 
 import { JobAlerts } from './JobAlerts';
@@ -22,6 +23,9 @@ interface Props {
 
 const AnnoAuthor = 'provisioning.grafana.app/author';
 const AnnoAuthorEmail = 'provisioning.grafana.app/authorEmail';
+const AnnoWebhookSender = 'provisioning.grafana.app/webhookSender';
+const AnnoWebhookSenderId = 'provisioning.grafana.app/webhookSenderId';
+const AnnoCreatedBy = 'grafana.app/createdBy';
 
 type JobCell = {
   row: {
@@ -73,6 +77,10 @@ const getJobColumns = (showAuthor: boolean) => [
           header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
           cell: ({ row: { original: job } }: JobCell) => {
             const annotations = job.metadata?.annotations;
+            const sender = annotations?.[AnnoWebhookSender];
+            if (sender) {
+              return t('provisioning.recent-jobs.triggered-by-webhook', '{{sender}} (via Webhook)', { sender });
+            }
             const author = annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
             return author || t('provisioning.recent-jobs.triggered-by-system', 'System');
           },
@@ -98,9 +106,10 @@ const getJobColumns = (showAuthor: boolean) => [
 
 interface ExpandedRowProps {
   row: Job;
+  repo: Repository;
 }
 
-function ExpandedRow({ row }: ExpandedRowProps) {
+function ExpandedRow({ row, repo }: ExpandedRowProps) {
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
   const hasWarnings = Boolean(row.status?.warnings?.length);
@@ -123,6 +132,21 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       pull: spec.pull,
       push: spec.push,
     };
+    const annotations = row.metadata?.annotations;
+    const sender = annotations?.[AnnoWebhookSender];
+    const senderId = annotations?.[AnnoWebhookSenderId];
+    if (sender) {
+      const provider = repo.spec ? getRepositoryTypeConfig(repo.spec.type)?.label : undefined;
+      const id = senderId && provider ? ` ${provider} ID:${senderId}` : '';
+      v.push({ key: 'triggeredBy', value: `${sender} (via Webhook)${id}` });
+    } else {
+      const user = [annotations?.[AnnoAuthor], annotations?.[AnnoAuthorEmail], annotations?.[AnnoCreatedBy]]
+        .filter(Boolean)
+        .join(', ');
+      if (user) {
+        v.push({ key: 'triggeredBy', value: user });
+      }
+    }
     const def = actionOptions[action];
     if (!def) {
       return v;
@@ -131,7 +155,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       v.push({ key, value });
     }
     return v;
-  }, [row.spec]);
+  }, [row.spec, row.metadata?.annotations, repo.spec]);
 
   if (!hasSummary && !hasErrors && !hasWarnings && !hasSpec) {
     return null;
@@ -226,7 +250,7 @@ export function RecentJobs({ repo }: Props) {
         data={jobs}
         columns={jobColumns}
         getRowId={(item) => `${item.metadata?.uid}`}
-        renderExpandedRow={(row) => <ExpandedRow row={row} />}
+        renderExpandedRow={(row) => <ExpandedRow row={row} repo={repo} />}
         pageSize={10}
       />
     );
