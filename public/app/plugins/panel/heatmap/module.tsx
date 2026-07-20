@@ -447,14 +447,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
     });
 
-    builder.addBooleanSwitch({
-      path: 'tooltip.showColorScale',
-      name: t('heatmap.name-show-color-scale', 'Show color scale'),
-      defaultValue: defaultOptions.tooltip.showColorScale,
-      category,
-      showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
-    });
-
     builder.addNumberInput({
       path: 'tooltip.maxWidth',
       name: t('heatmap.name-max-width', 'Max width'),
