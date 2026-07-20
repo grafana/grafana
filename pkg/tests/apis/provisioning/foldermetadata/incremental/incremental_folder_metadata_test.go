@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -429,11 +428,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
-		_, err = helper.Folders.Resource.Get(t.Context(), oldParentUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old parent folder should be deleted")
+		helper.RequireFoldersNotFound(t, oldParentUID)
 
-		_, err = helper.Folders.Resource.Get(t.Context(), oldChildUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old child folder should be deleted")
+		helper.RequireFoldersNotFound(t, oldChildUID)
 
 		common.RequireFolderState(t, helper.Folders, "p-new", "Parent", "parent", "")
 		common.RequireFolderState(t, helper.Folders, "c-new", "Child", "parent/child", "p-new")
@@ -906,8 +903,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		title, _, _ := unstructured.NestedString(folderAfter.Object, "spec", "title")
 		require.Equal(t, "Alpha", title)
 
-		_, err = helper.Folders.Resource.Get(t.Context(), oldUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old folder UID should be deleted after UID change")
+		helper.RequireFoldersNotFound(t, oldUID)
 
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"uid-dash-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: newUID},
@@ -954,8 +950,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = helper.Folders.Resource.Get(t.Context(), parentNewUID, metav1.GetOptions{})
 		require.NoError(t, err, "parent folder with new UID should exist")
 
-		_, err = helper.Folders.Resource.Get(t.Context(), parentOldUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old parent folder UID should be deleted after UID change")
+		helper.RequireFoldersNotFound(t, parentOldUID)
 
 		childAfter, err := helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child folder should still exist")
@@ -1001,8 +996,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		title, _, _ := unstructured.NestedString(folderAfter.Object, "spec", "title")
 		require.Equal(t, "Team Rebranded", title)
 
-		_, err = helper.Folders.Resource.Get(t.Context(), oldUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old folder UID should be deleted after UID change")
+		helper.RequireFoldersNotFound(t, oldUID)
 
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"uid-combo-001": {Title: "Updated Dashboard", SourcePath: "team/dash.json", Folder: newUID},
@@ -1035,8 +1029,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 
 		_, err = helper.Folders.Resource.Get(t.Context(), "uid-v2", metav1.GetOptions{})
 		require.NoError(t, err, "v2 folder should exist")
-		_, err = helper.Folders.Resource.Get(t.Context(), "uid-v1", metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "v1 folder should be deleted")
+		helper.RequireFoldersNotFound(t, "uid-v1")
 		helper.RequireRepoFolderCount(t, repoName, 1)
 
 		// v2 -> v3
@@ -1052,10 +1045,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 
 		_, err = helper.Folders.Resource.Get(t.Context(), "uid-v3", metav1.GetOptions{})
 		require.NoError(t, err, "v3 folder should exist")
-		_, err = helper.Folders.Resource.Get(t.Context(), "uid-v2", metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "v2 folder should be deleted")
-		_, err = helper.Folders.Resource.Get(t.Context(), "uid-v1", metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "v1 folder should still be deleted")
+		helper.RequireFoldersNotFound(t, "uid-v2")
+		helper.RequireFoldersNotFound(t, "uid-v1")
 		helper.RequireRepoFolderCount(t, repoName, 1)
 
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
@@ -1094,8 +1085,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 
 		_, err = helper.Folders.Resource.Get(t.Context(), "cleanup-v2", metav1.GetOptions{})
 		require.NoError(t, err, "current folder should still exist")
-		_, err = helper.Folders.Resource.Get(t.Context(), "cleanup-v1", metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old folder should not reappear")
+		helper.RequireFoldersNotFound(t, "cleanup-v1")
 
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"cleanup-dash": {Title: "Dashboard", SourcePath: "team/dash.json", Folder: "cleanup-v2"},
@@ -1144,8 +1134,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		})
 
 		// Old stable UID folder should be deleted
-		_, err = helper.Folders.Resource.Get(t.Context(), stableUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted after metadata deletion")
+		helper.RequireFoldersNotFound(t, stableUID)
 
 		// New folder should exist with hash-based UID and directory name as title
 		newFolderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "alpha")
@@ -1192,8 +1181,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		})
 
 		// Old parent folder should be gone
-		_, err = helper.Folders.Resource.Get(t.Context(), parentStableUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old parent folder should be deleted")
+		helper.RequireFoldersNotFound(t, parentStableUID)
 
 		// New parent folder should exist with hash-based UID
 		newParentUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "parent")
@@ -1259,8 +1247,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		})
 
 		// Old stable UID folder should be deleted
-		_, err = helper.Folders.Resource.Get(t.Context(), stableUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted")
+		helper.RequireFoldersNotFound(t, stableUID)
 
 		// New folder should exist with hash-based UID
 		newFolderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
@@ -1311,8 +1298,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		})
 
 		// Old folder should be gone
-		_, err = helper.Folders.Resource.Get(t.Context(), stableUID, metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted")
+		helper.RequireFoldersNotFound(t, stableUID)
 
 		// New folder with hash-based UID
 		newFolderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
