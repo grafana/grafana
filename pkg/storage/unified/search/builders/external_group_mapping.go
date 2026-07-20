@@ -7,7 +7,7 @@ import (
 
 // externalGroupMappingSearchFields are read from the generated IAM manifest,
 // where they are declared in apps/iam/kinds/externalgroupmapping.cue.
-var externalGroupMappingSearchFields = resource.NewManifestBackedProvider(iamManifests).Fields(
+var externalGroupMappingSearchFields = iamProvider.Fields(
 	iamv0.ExternalGroupMappingResourceInfo.GroupVersionResource(),
 )
 
