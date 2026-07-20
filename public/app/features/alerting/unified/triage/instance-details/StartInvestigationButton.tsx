@@ -53,9 +53,10 @@ export function StartInvestigationButton({
   const featureEnabled = isManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
 
-  // Stable identity for RTK Query cache keys — omit startsAt/status (set only on create).
-  // Wait for rule identity when the instance has no labels, otherwise early Start/lookup
-  // can hash a different group key than later requests once the rule arrives.
+  // Stable identity for RTK Query cache keys — omit startsAt/status/name/generatorURL
+  // (those are attached only on create). Wait for rule identity when the instance has
+  // no labels, otherwise early Start/lookup can hash a different group key once the
+  // rule arrives.
   const hasStableIdentity = Object.keys(instanceLabels).length > 0 || Boolean(rule?.uid) || Boolean(rule?.title);
 
   const requestBody = useMemo(
@@ -73,7 +74,7 @@ export function StartInvestigationButton({
     assistantApi.useStartInvestigationFromAlertMutation();
 
   // Mutation result is shared RTK state. Only trust it for the current alert identity
-  // (startsAt/status are set only on create, so strip them before comparing).
+  // (create-only fields stripped via stableFromAlertRequest).
   const mutationMatchesCurrent = useMemo(() => {
     if (!originalArgs || !requestBodyKey) {
       return false;
@@ -141,9 +142,11 @@ export function StartInvestigationButton({
     }
     const startsAt = new Date().toISOString();
     const status = alertState === GrafanaAlertState.Normal ? 'resolved' : 'firing';
+    const generatorURL = rule?.uid ? createAbsoluteUrl(`/alerting/grafana/${rule.uid}/view`) : undefined;
     startInvestigation({
       ...requestBody,
-      alerts: requestBody.alerts.map((alert) => ({ ...alert, startsAt, status })),
+      name: rule?.title,
+      alerts: requestBody.alerts.map((alert) => ({ ...alert, startsAt, status, generatorURL })),
     });
   };
 
@@ -310,23 +313,24 @@ export function StartInvestigationButton({
 }
 
 /**
- * Strips per-delivery alert fields so create/lookup share one RTK cache identity.
- * startsAt and status change while the drawer is open; group identity does not.
+ * Strips per-delivery / rule-metadata fields so create/lookup share one RTK cache
+ * identity. startsAt, status, name, and generatorURL can appear after Start or when
+ * the rule query resolves; group identity (labels) must not change mid-drawer.
  */
 export function stableFromAlertRequest(body: StartInvestigationFromAlertRequest): StartInvestigationFromAlertRequest {
+  const { name: _name, ...rest } = body;
   return {
-    ...body,
-    alerts: body.alerts.map(({ startsAt: _startsAt, status: _status, ...alert }) => alert),
+    ...rest,
+    alerts: body.alerts.map(({ startsAt: _startsAt, status: _status, generatorURL: _generatorURL, ...alert }) => alert),
   };
 }
 
-/** Exported for unit tests — builds the stable from-alert payload (no startsAt/status). */
+/** Exported for unit tests — builds the stable from-alert payload (no startsAt/status/name/generatorURL). */
 export function buildFromAlertRequest({
   instanceLabels,
   commonLabels,
   rule,
 }: Omit<StartInvestigationButtonProps, 'alertState'>): StartInvestigationFromAlertRequest {
-  const generatorURL = rule?.uid ? createAbsoluteUrl(`/alerting/grafana/${rule.uid}/view`) : undefined;
   const externalURL = config.appUrl.replace(/\/$/, '');
 
   // Stable alert-group identity for Assistant dedup/lookup. Prefer instance labels;
@@ -340,11 +344,9 @@ export function buildFromAlertRequest({
         };
 
   return {
-    name: rule?.title,
     alerts: [
       {
         labels: instanceLabels,
-        generatorURL,
       },
     ],
     commonLabels,

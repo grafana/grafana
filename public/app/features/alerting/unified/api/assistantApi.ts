@@ -110,11 +110,14 @@ export const assistantApi = alertingApi.injectEndpoints({
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          // Lookup cache keys omit startsAt/status (set only at create time). Normalize
-          // so the drawer's lookup query sees this result immediately.
+          // Lookup cache keys omit startsAt/status/name/generatorURL (set at create or
+          // when the rule loads). Normalize so the drawer's lookup query stays keyed.
+          const { name: _name, ...rest } = arg;
           const lookupArg: StartInvestigationFromAlertRequest = {
-            ...arg,
-            alerts: arg.alerts.map(({ startsAt: _startsAt, status: _status, ...alert }) => alert),
+            ...rest,
+            alerts: arg.alerts.map(
+              ({ startsAt: _startsAt, status: _status, generatorURL: _generatorURL, ...alert }) => alert
+            ),
           };
           dispatch(assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', lookupArg, data));
         } catch {
