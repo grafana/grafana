@@ -727,6 +727,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           loadingStrategy: 'script',
         },
         baseURL: 'app/plugins/panel/annolist',
+        aliasIds: ['ryantxu-annolist-panel'],
         signature: {
           status: 'internal',
         },
@@ -2413,79 +2414,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           status: 'valid',
           type: 'grafana',
           org: 'Grafana Labs',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
-        name: 'grafana-pyroscope-datasource',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'grafana-pyroscope-datasource',
-          type: 'datasource',
-          name: 'Grafana Pyroscope',
-          info: {
-            keywords: [
-              'grafana',
-              'datasource',
-              'phlare',
-              'flamegraph',
-              'profiling',
-              'continuous profiling',
-              'pyroscope',
-            ],
-            logos: {
-              small: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/img/grafana_pyroscope_icon.svg',
-              large: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/img/grafana_pyroscope_icon.svg',
-            },
-            updated: '',
-            version: '12.4.0-pre',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://www.grafana.com',
-            },
-            description:
-              'Data source for Grafana Pyroscope, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system.',
-            links: [
-              {
-                name: 'GitHub Project',
-                url: 'https://github.com/grafana/pyroscope',
-              },
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/pyroscope/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/datasources/pyroscope/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '>=10.3.0-0',
-            grafanaVersion: '*',
-          },
-          backend: true,
-          category: 'profiling',
-          executable: 'gpx_grafana-pyroscope-datasource',
-          metrics: true,
-        },
-        class: 'core',
-        module: {
-          path: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/module.js',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/datasource/grafana-pyroscope-datasource/dist',
-        signature: {
-          status: 'internal',
         },
         angular: {
           detected: false,

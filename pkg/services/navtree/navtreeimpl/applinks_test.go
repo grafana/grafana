@@ -376,6 +376,88 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestAssistantStubNav(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	onboardingPlugin := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:          assistantOnboardingAppID,
+			Name:        "Grafana Assistant Onboarding",
+			Type:        plugins.TypeApp,
+			AutoEnabled: true,
+		},
+	}
+	assistantPlugin := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:          assistantAppID,
+			Name:        "Grafana Assistant",
+			Type:        plugins.TypeApp,
+			AutoEnabled: true,
+		},
+	}
+	appAccess := ac.Permission{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"}
+	installAccess := ac.Permission{Action: pluginaccesscontrol.ActionInstall, Scope: "*"}
+
+	tests := []struct {
+		name        string
+		plugins     []pluginstore.Plugin
+		permissions []ac.Permission
+		wantStub    bool
+	}{
+		{
+			name:        "adds stub when onboarding plugin is enabled and Assistant is absent",
+			plugins:     []pluginstore.Plugin{onboardingPlugin},
+			permissions: []ac.Permission{appAccess, installAccess},
+			wantStub:    true,
+		},
+		{
+			name:        "suppresses stub when Assistant is enabled",
+			plugins:     []pluginstore.Plugin{onboardingPlugin, assistantPlugin},
+			permissions: []ac.Permission{appAccess, installAccess},
+		},
+		{
+			name:        "suppresses stub when onboarding plugin is absent",
+			permissions: []ac.Permission{appAccess, installAccess},
+		},
+		{
+			name:        "adds stub when user cannot install plugins",
+			plugins:     []pluginstore.Plugin{onboardingPlugin},
+			permissions: []ac.Permission{appAccess},
+			wantStub:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := ServiceImpl{
+				log:            log.New("navtree"),
+				cfg:            setting.NewCfg(),
+				accessControl:  accesscontrolmock.New().WithPermissions(tt.permissions),
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{}},
+				features:       featuremgmt.WithFeatures(),
+				pluginStore:    &pluginstore.FakePluginStore{PluginList: tt.plugins},
+			}
+
+			treeRoot := navtree.NavTreeRoot{}
+			err := service.addAppLinks(&treeRoot, reqCtx)
+			require.NoError(t, err)
+
+			node := treeRoot.FindById("plugin-page-" + assistantAppID)
+			if !tt.wantStub {
+				require.Nil(t, node)
+				return
+			}
+
+			require.NotNil(t, node)
+			require.Equal(t, "Assistant", node.Text)
+			require.Equal(t, "/a/"+assistantAppID, node.Url)
+			require.Equal(t, "ai-sparkle", node.Icon)
+			require.Equal(t, assistantAppID, node.PluginID)
+			require.Equal(t, int64(navtree.WeightAssistant), node.SortWeight)
+		})
+	}
+}
+
 func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

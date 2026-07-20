@@ -85,8 +85,6 @@ linters:
           files:
             - '**/pkg/tsdb/grafana-postgresql-datasource/*'
             - '**/pkg/tsdb/grafana-postgresql-datasource/**/*'
-            - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
-            - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/**/*'
             - '**/pkg/tsdb/azuremonitor/*'
