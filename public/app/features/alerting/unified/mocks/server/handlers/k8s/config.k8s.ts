@@ -8,18 +8,24 @@ const CONFIG_URL = `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/config
 
 interface AutoSyncConfigOptions {
   /**
-   * UID on status.externalAlertmanagerSync — what's actually synced, and the only field
+   * UID on spec.externalAlertmanagerSync — the desired configuration, and the field
    * `useIsAutoSyncActive` reads. Set it to simulate an active sync; omit it for an inactive sync.
+   */
+  specUid?: string;
+  /**
+   * UID on status.externalAlertmanagerSync — the last sync attempt, which can lag spec.
+   * `useIsAutoSyncActive` does NOT read this; set it (with specUid omitted) to simulate a stale
+   * status that must not be treated as an active sync.
    */
   statusUid?: string;
 }
 
-function buildConfig(name: string, { statusUid }: AutoSyncConfigOptions = {}): Config {
+function buildConfig(name: string, { specUid, statusUid }: AutoSyncConfigOptions = {}): Config {
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Config',
     metadata: { name },
-    spec: {},
+    spec: specUid ? { externalAlertmanagerSync: { datasourceUid: specUid } } : {},
     status: statusUid ? { externalAlertmanagerSync: { datasourceUid: statusUid, origin: 'api' } } : {},
   };
 }
@@ -31,8 +37,9 @@ const configHandler = (options: AutoSyncConfigOptions = {}, onRequest?: () => vo
   });
 
 /**
- * Override the Config GET to drive external Alertmanager auto-sync state. Pass `statusUid` to
+ * Override the Config GET to drive external Alertmanager auto-sync state. Pass `specUid` to
  * simulate an active sync (what `useIsAutoSyncActive` reads); omit it for an inactive, empty Config.
+ * Pass `statusUid` alone to simulate a stale status that must not count as active.
  *
  * Returns a `requestSpy` that fires on every GET, so a test can assert the query was — or, when a
  * permission gate should short-circuit it, was not — made.

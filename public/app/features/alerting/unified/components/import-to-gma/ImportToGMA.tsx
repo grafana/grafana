@@ -34,6 +34,7 @@ import {
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
+import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { ALERTING_SETTINGS_URL } from '../../settings/navigation';
 import { type Folder } from '../../types/rule-form';
@@ -43,7 +44,6 @@ import { createListFilterLink } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
-import { hasConfiguredUid, useAutoSyncConfiguration } from '../settings/useAutoSyncConfiguration';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
 import { PolicyTreeNameHelp } from './PolicyTreeNameHelp';
@@ -127,21 +127,14 @@ function Wizard() {
   );
 }
 
-// Blocks the whole import flow while auto-sync is active
+// Blocks the whole import flow while auto-sync is active. Mirrors how the menu entry point (useImportEntrypointState) gates the same action.
 export function ImportWizardGate() {
-  if (!isAutoSyncSegmentEnabled()) {
-    return <Wizard />;
-  }
-  return <ImportWizardAutoSyncGuard />;
-}
-
-function ImportWizardAutoSyncGuard() {
-  const { state, isLoading } = useAutoSyncConfiguration();
+  const { isActive, isLoading } = useIsAutoSyncActive();
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.import-to-gma.loading', 'Loading…')} />;
   }
-  if (hasConfiguredUid(state)) {
+  if (isActive) {
     return <AutoSyncActiveBlock />;
   }
   return <Wizard />;
