@@ -33,6 +33,18 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
 
   const closeDeleteModal = () => setShowDeleteDrawer(false);
 
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteMuteTiming.execute({
+        name: muteTiming?.metadata?.name ?? muteTiming.name,
+      });
+    } catch (error) {
+      setDeleteError(error);
+    } finally {
+      closeDeleteModal();
+    }
+  };
+
   const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
   const viewOrEditHref = makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
     muteName: muteTiming.id,
@@ -96,17 +108,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
           { muteTiming: muteTiming.name }
         )}
         confirmText={t('alerting.common.delete', 'Delete')}
-        onConfirm={async () => {
-          try {
-            await deleteMuteTiming.execute({
-              name: muteTiming?.metadata?.name ?? muteTiming.name,
-            });
-          } catch (error) {
-            setDeleteError(error);
-          } finally {
-            closeDeleteModal();
-          }
-        }}
+        onConfirm={handleDeleteConfirm}
         onDismiss={closeDeleteModal}
       />
       <ErrorModal isOpen={deleteError !== undefined} onDismiss={() => setDeleteError(undefined)} error={deleteError} />
