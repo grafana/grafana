@@ -112,15 +112,15 @@ export const assistantApi = alertingApi.injectEndpoints({
         method: 'POST',
         notificationOptions: { showErrorAlert: false },
       }),
-      transformResponse: (response: AssistantDataResponse) => response.data,
+      transformResponse: (response: unknown) => unwrapAssistantDataResponse(response),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          // Lookup cache keys omit startsAt (set only at create time). Normalize so
-          // the drawer's lookup query sees this result immediately.
+          // Lookup cache keys omit startsAt/status (set only at create time). Normalize
+          // so the drawer's lookup query sees this result immediately.
           const lookupArg: StartInvestigationFromAlertRequest = {
             ...arg,
-            alerts: arg.alerts.map(({ startsAt: _startsAt, ...alert }) => alert),
+            alerts: arg.alerts.map(({ startsAt: _startsAt, status: _status, ...alert }) => alert),
           };
           dispatch(assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', lookupArg, data));
         } catch {
@@ -162,7 +162,7 @@ export const assistantApi = alertingApi.injectEndpoints({
         method: 'GET',
         notificationOptions: { showErrorAlert: false },
       }),
-      transformResponse: (response: AssistantDataResponse) => response.data,
+      transformResponse: (response: unknown) => unwrapAssistantDataResponse(response),
     }),
   }),
 });

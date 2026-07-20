@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo, useState } from 'react';
 
 import { type Labels } from '@grafana/data';
@@ -11,7 +12,6 @@ import {
   type StartInvestigationFromAlertRequest,
   assistantApi,
   getAssistantInvestigationUrl,
-  isAssistantInvestigationActive,
   isAssistantInvestigationCompleted,
   isAssistantInvestigationFailed,
   isAssistantInvestigationTerminal,
@@ -53,31 +53,32 @@ export function StartInvestigationButton({
   const featureEnabled = isManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
 
-  // Stable identity for RTK Query cache keys — omit startsAt (set only on create).
+  // Stable identity for RTK Query cache keys — omit startsAt/status (set only on create).
+  // Wait for rule identity when the instance has no labels, otherwise early Start/lookup
+  // can hash a different group key than later requests once the rule arrives.
+  const hasStableIdentity = Object.keys(instanceLabels).length > 0 || Boolean(rule?.uid) || Boolean(rule?.title);
+
   const requestBody = useMemo(
-    () => buildFromAlertRequest({ instanceLabels, commonLabels, rule, alertState }),
+    () => (hasStableIdentity ? buildFromAlertRequest({ instanceLabels, commonLabels, rule }) : null),
     // Labels are plain objects from parents; stringify keeps the body stable across
-    // equivalent re-renders so lookup does not thrash.
+    // equivalent re-renders so lookup does not thrash. alertState is intentionally
+    // excluded — firing↔resolved must not change the cache key mid-drawer.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(instanceLabels), JSON.stringify(commonLabels), rule?.uid, rule?.title, alertState]
+    [JSON.stringify(instanceLabels), JSON.stringify(commonLabels), rule?.uid, rule?.title, hasStableIdentity]
   );
 
-  const requestBodyKey = useMemo(() => JSON.stringify(requestBody), [requestBody]);
+  const requestBodyKey = useMemo(() => (requestBody ? JSON.stringify(requestBody) : ''), [requestBody]);
 
   const [startInvestigation, { isLoading, data, isError, reset, originalArgs }] =
     assistantApi.useStartInvestigationFromAlertMutation();
 
   // Mutation result is shared RTK state. Only trust it for the current alert identity
-  // (startsAt is set only on create, so strip it before comparing).
+  // (startsAt/status are set only on create, so strip them before comparing).
   const mutationMatchesCurrent = useMemo(() => {
-    if (!originalArgs) {
+    if (!originalArgs || !requestBodyKey) {
       return false;
     }
-    const normalized = {
-      ...originalArgs,
-      alerts: originalArgs.alerts.map(({ startsAt: _startsAt, ...alert }) => alert),
-    };
-    return JSON.stringify(normalized) === requestBodyKey;
+    return JSON.stringify(stableFromAlertRequest(originalArgs)) === requestBodyKey;
   }, [originalArgs, requestBodyKey]);
 
   const startedInvestigation = mutationMatchesCurrent ? data : undefined;
@@ -96,7 +97,9 @@ export function StartInvestigationButton({
     isLoading: isLookingUp,
     isError: isLookupError,
     refetch: refetchLookup,
-  } = assistantApi.useLookupInvestigationFromAlertQuery(requestBody, { skip: !featureEnabled || !installed });
+  } = assistantApi.useLookupInvestigationFromAlertQuery(requestBody ?? skipToken, {
+    skip: !featureEnabled || !installed,
+  });
 
   const knownId = startedInvestigation?.id ?? lookedUpInvestigation?.id;
   const [shouldPoll, setShouldPoll] = useState(false);
@@ -124,14 +127,18 @@ export function StartInvestigationButton({
   }
 
   const handleStart = () => {
+    if (!requestBody) {
+      return;
+    }
     const startsAt = new Date().toISOString();
+    const status = alertState === GrafanaAlertState.Normal ? 'resolved' : 'firing';
     startInvestigation({
       ...requestBody,
-      alerts: requestBody.alerts.map((alert) => ({ ...alert, startsAt })),
+      alerts: requestBody.alerts.map((alert) => ({ ...alert, startsAt, status })),
     });
   };
 
-  if (isLookingUp && !investigation) {
+  if ((!hasStableIdentity || isLookingUp) && !investigation) {
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <Spinner size="sm" inline />
@@ -178,32 +185,6 @@ export function StartInvestigationButton({
     );
   }
 
-  if (investigation && isAssistantInvestigationActive(investigation.state)) {
-    return (
-      <Stack direction="row" alignItems="center" gap={1}>
-        <Spinner size="sm" inline />
-        <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-running">
-            Generating investigation report…
-          </Trans>
-        </Text>
-        <LinkButton
-          icon="comment-alt"
-          variant="primary"
-          fill="text"
-          size="sm"
-          href={getAssistantInvestigationUrl(investigation.id)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-watch-live">
-            Watch live in assistant workspace
-          </Trans>
-        </LinkButton>
-      </Stack>
-    );
-  }
-
   if (isStarting) {
     return (
       <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" disabled>
@@ -242,7 +223,34 @@ export function StartInvestigationButton({
     );
   }
 
-  // Known investigation in an unexpected state — open it; never offer Start (would mislead).
+  // Active, paused, or any non-terminal/unknown state — keep generating UI while polling.
+  if (investigation && !isAssistantInvestigationTerminal(investigation.state)) {
+    return (
+      <Stack direction="row" alignItems="center" gap={1}>
+        <Spinner size="sm" inline />
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-running">
+            Generating investigation report…
+          </Trans>
+        </Text>
+        <LinkButton
+          icon="comment-alt"
+          variant="primary"
+          fill="text"
+          size="sm"
+          href={getAssistantInvestigationUrl(investigation.id)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-watch-live">
+            Watch live in assistant workspace
+          </Trans>
+        </LinkButton>
+      </Stack>
+    );
+  }
+
+  // Known investigation in an unexpected terminal state — open it; never offer Start.
   if (investigation) {
     return (
       <LinkButton
@@ -275,13 +283,23 @@ export function StartInvestigationButton({
   );
 }
 
-/** Exported for unit tests — builds the stable from-alert payload (no startsAt). */
+/**
+ * Strips per-delivery alert fields so create/lookup share one RTK cache identity.
+ * startsAt and status change while the drawer is open; group identity does not.
+ */
+export function stableFromAlertRequest(body: StartInvestigationFromAlertRequest): StartInvestigationFromAlertRequest {
+  return {
+    ...body,
+    alerts: body.alerts.map(({ startsAt: _startsAt, status: _status, ...alert }) => alert),
+  };
+}
+
+/** Exported for unit tests — builds the stable from-alert payload (no startsAt/status). */
 export function buildFromAlertRequest({
   instanceLabels,
   commonLabels,
   rule,
-  alertState,
-}: StartInvestigationButtonProps): StartInvestigationFromAlertRequest {
+}: Omit<StartInvestigationButtonProps, 'alertState'>): StartInvestigationFromAlertRequest {
   const generatorURL = rule?.uid ? createAbsoluteUrl(`/alerting/grafana/${rule.uid}/view`) : undefined;
   const externalURL = config.appUrl.replace(/\/$/, '');
 
@@ -300,7 +318,6 @@ export function buildFromAlertRequest({
     alerts: [
       {
         labels: instanceLabels,
-        status: alertState === GrafanaAlertState.Normal ? 'resolved' : 'firing',
         generatorURL,
       },
     ],
