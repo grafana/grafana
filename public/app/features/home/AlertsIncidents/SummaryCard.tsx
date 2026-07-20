@@ -172,10 +172,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   row: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(0.5, 0),
+    // gap: theme.spacing(1),
+    // padding: theme.spacing(0.5, 0),
     minWidth: 0,
   }),
+  // this moved to ListRow
   title: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
