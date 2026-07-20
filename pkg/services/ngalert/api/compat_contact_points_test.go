@@ -2,13 +2,18 @@ package api
 
 import (
 	"encoding/base64"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	alertingmodels "github.com/grafana/alerting/models"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/schema"
 
 	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -16,8 +21,95 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
-// Test that conversion alertingmodels.ReceiverConfig -> definitions.ContactPoint -> alertingmodels.ReceiverConfig does not lose data
-func TestContactPointFromContactPointExports(t *testing.T) {
+// TestContactPointDefinitionsMatchSchema asserts that every field declared in the v1 schema of an integration
+// (github.com/grafana/alerting) has a matching field in the corresponding definitions.XXXIntegration struct below.
+// Without this check, a new or renamed field in alerting's schema could silently fail to round-trip through
+// Grafana's contact point API (provisioning, export, Terraform) without any test noticing.
+func TestContactPointDefinitionsMatchSchema(t *testing.T) {
+	for _, integrationSchema := range alertingNotify.GetSchemaForAllIntegrations() {
+		v1, ok := integrationSchema.GetVersion(schema.V1)
+		if !ok {
+			continue
+		}
+		t.Run(string(integrationSchema.Type), func(t *testing.T) {
+			goType := definitionsStructFor(t, integrationSchema.Type)
+			assertFieldsMatchSchema(t, integrationSchema.Type, v1.Options, goType)
+		})
+	}
+}
+
+// definitionsStructFor returns the definitions.XXXIntegration struct type that
+// ContactPointFromContactPointExport populates for the given integration type.
+func definitionsStructFor(t *testing.T, integrationType schema.IntegrationType) reflect.Type {
+	t.Helper()
+	export := definitions.ContactPointExport{
+		Receivers: []definitions.ReceiverExport{{Type: string(integrationType), Settings: definitions.RawMessage(`{}`)}},
+	}
+	cp, err := ContactPointFromContactPointExport(export)
+	require.NoError(t, err)
+
+	for _, f := range reflect.ValueOf(cp).Fields() {
+		if f.Kind() == reflect.Slice && f.Len() == 1 {
+			return f.Index(0).Type()
+		}
+	}
+	t.Fatalf("no definitions.ContactPoint field is populated for integration type %q; add it to ContactPointFromContactPointExport", integrationType)
+	return nil
+}
+
+// assertFieldsMatchSchema asserts that every field declared in fields has a matching JSON field in goType,
+// recursing into the nested struct for subform fields.
+func assertFieldsMatchSchema(t *testing.T, integrationType schema.IntegrationType, fields []schema.Field, goType reflect.Type) {
+	t.Helper()
+	for _, field := range fields {
+		structField, ok := jsonField(goType, field.PropertyName)
+		if !assert.Truef(t, ok, "%s: schema field %q has no matching field in definitions.%s", integrationType, field.PropertyName, goType.Name()) {
+			continue
+		}
+		if field.Element != schema.ElementTypeSubform {
+			continue
+		}
+		nested := structType(structField.Type)
+		if !assert.NotNilf(t, nested, "%s: schema field %q is a subform but definitions.%s.%s is not a struct", integrationType, field.PropertyName, goType.Name(), structField.Name) {
+			continue
+		}
+		assertFieldsMatchSchema(t, integrationType, field.SubformOptions, nested)
+	}
+}
+
+// jsonField returns the field of struct type t whose JSON tag matches name.
+func jsonField(t reflect.Type, name string) (reflect.StructField, bool) {
+	for f := range t.Fields() {
+		tag, ok := f.Tag.Lookup("json")
+		if !ok {
+			continue
+		}
+		tagName, _, _ := strings.Cut(tag, ",")
+		if tagName == name {
+			return f, true
+		}
+	}
+	return reflect.StructField{}, false
+}
+
+// structType returns the underlying struct type of t (dereferencing a pointer), or nil if t is not a struct.
+func structType(t reflect.Type) reflect.Type {
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	if t.Kind() == reflect.Struct {
+		return t
+	}
+	return nil
+}
+
+// TestContactPointRoundTrip complements TestContactPointDefinitionsMatchSchema: that test checks the definitions
+// structs declare every field the schema knows about, but says nothing about whether values actually survive the
+// conversion (ContactPointToContactPointExport, the custom jsoniter codecs, secret-setting handling). This test
+// covers that: it converts a fully-populated config to a typed ContactPoint and back to raw settings, then
+// re-imports those raw settings and asserts the result is unchanged. A field that is declared but dropped or
+// mis-serialized during the round trip will show up as a diff here.
+func TestContactPointRoundTrip(t *testing.T) {
 	getContactPointExport := func(t *testing.T, receiver *alertingmodels.ReceiverConfig) definitions.ContactPointExport {
 		export := make([]definitions.ReceiverExport, 0, len(receiver.Integrations))
 		for _, integrationConfig := range receiver.Integrations {
@@ -67,8 +159,9 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			back, err := ContactPointToContactPointExport(expected)
 			require.NoError(t, err)
 
-			// Re-run export/import on the round-tripped receiver config and assert the typed ContactPoint is unchanged
-			// (i.e., the conversion is idempotent in the ContactPoint representation).
+			// Run the export/import conversion a second time on the round-tripped config. If the conversion
+			// lost or altered any data, re-importing it will no longer match `expected`.
+			actual, err := ContactPointFromContactPointExport(getContactPointExport(t, &back))
 			require.NoError(t, err)
 
 			diff := cmp.Diff(expected, actual)
@@ -77,7 +170,9 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestContactPointFromContactPointExport(t *testing.T) {
 	t.Run("pushover optional numbers as string", func(t *testing.T) {
 		export := definitions.ContactPointExport{
 			Name: "test",
