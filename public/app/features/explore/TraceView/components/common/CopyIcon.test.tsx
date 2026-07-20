@@ -58,7 +58,7 @@ describe('<CopyIcon />', () => {
     });
   });
 
-   describe('in an insecure context', () => {
+  describe('in an insecure context', () => {
     beforeEach(() => {
       Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
       document.execCommand = jest.fn();
