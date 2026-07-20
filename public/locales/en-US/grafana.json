@@ -15370,6 +15370,29 @@
         "label-none": "None"
       }
     },
+    "inline": {
+      "colorMode": {
+        "backgroundGradient": "Background gradient",
+        "backgroundSolid": "Background solid",
+        "none": "None",
+        "value": "Value"
+      },
+      "quickEdit": {
+        "colorMode": "Color mode",
+        "panelTitle": "Stat: {{title}}",
+        "panelTitleUntitled": "Stat: Untitled",
+        "textMode": "Text mode",
+        "title": "Quick edit",
+        "tooltip": "Quick edit"
+      },
+      "textMode": {
+        "auto": "Auto",
+        "name": "Name",
+        "none": "None",
+        "value": "Value",
+        "valueAndName": "Value and name"
+      }
+    },
     "name-color-modcolor-mode-options": {
       "label": "Color mode"
     },
@@ -15873,6 +15896,31 @@
           "label-constant": "Constant",
           "label-style": "Negative Y"
         }
+      }
+    },
+    "inline": {
+      "legend": {
+        "list": "List",
+        "off": "Off",
+        "placement": {
+          "bottom": "Bottom",
+          "right": "Right"
+        },
+        "table": "Table"
+      },
+      "quickEdit": {
+        "button": "Quick edit",
+        "legend": "Legend",
+        "legendPlacement": "Legend placement",
+        "panelTitle": "Time series: {{title}}",
+        "panelTitleUntitled": "Time series: Untitled",
+        "title": "Quick edit",
+        "tooltip": "Tooltip"
+      },
+      "tooltip": {
+        "multi": "All",
+        "none": "Off",
+        "single": "Single"
       }
     },
     "insert-nulls-editor": {
