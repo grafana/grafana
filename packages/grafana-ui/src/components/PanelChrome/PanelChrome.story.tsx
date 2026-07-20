@@ -289,7 +289,14 @@ export const Examples = () => {
           })}
           {renderPanel('Not ideal as the space in header does not fit inputs', {
             title: 'With select in header',
-            actions: <Combobox value="Hello" options={[{ label: 'hello', value: 'Hello' }]} onChange={() => {}} />,
+            actions: (
+              <Combobox
+                value="Hello"
+                options={[{ label: 'hello', value: 'Hello' }]}
+                onChange={() => {}}
+                aria-label="Select option"
+              />
+            ),
           })}
         </Stack>
       </div>
