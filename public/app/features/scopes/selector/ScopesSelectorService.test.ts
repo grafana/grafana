@@ -3,6 +3,7 @@ import { locationService } from '@grafana/runtime';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopeNavigation } from '../dashboards/types';
 
 import { ScopesSelectorService } from './ScopesSelectorService';
 import { RECENT_SCOPES_KEY } from './recentScopesStorage';
@@ -998,6 +999,61 @@ describe('ScopesSelectorService', () => {
       // Disable, then re-enable — the flag should be toggleable back on.
       service.setRedirectEnabled(false);
       service.setRedirectEnabled(true);
+
+      await service.apply();
+
+      expect(locationService.push).toHaveBeenCalledWith('/custom-redirect-url');
+    });
+
+    it('should redirect to redirectPath after resolving scope node from defaultPath', async () => {
+      const scope: Scope = {
+        metadata: { name: 'scope-sea-1' },
+        spec: {
+          title: 'Seattle Datacenter 1',
+          defaultPath: ['region-us-west', 'country-usa', 'city-seattle', 'datacenter-sea-1'],
+          filters: [],
+        },
+      };
+      const nodeWithRedirect: ScopeNode = {
+        metadata: { name: 'datacenter-sea-1' },
+        spec: {
+          nodeType: 'leaf',
+          title: 'SEA-1',
+          parentName: 'city-seattle',
+          linkType: 'scope',
+          linkId: 'scope-sea-1',
+          redirectPath: '/d/from-default-path',
+        },
+      };
+
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scope]);
+      apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([nodeWithRedirect]);
+      dashboardsService.state.scopeNavigations = [];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
+
+      await service.changeScopes(['scope-sea-1']);
+
+      expect(locationService.push).toHaveBeenCalledWith('/d/from-default-path');
+    });
+
+    it('should NOT redirect when scope navigation entry has no url property', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ] as unknown as ScopeNavigation[];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
       await service.apply();
 

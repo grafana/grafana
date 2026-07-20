@@ -407,17 +407,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // Apply the scopes right away even though we don't have the metadata yet.
     this.updateState({ appliedScopes: scopes, selectedScopes: scopes, loading: scopes.length > 0 });
 
-    // Fetches both dashboards and scope navigations
-    // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
-    // Only fetch dashboards based on the scopes if we don't have a navigation scope set.
-    if (!this.dashboardsService.state.navigationScope) {
-      this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
-        const selectedScopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-        if (redirectOnApply) {
-          this.redirectAfterApply(selectedScopeNode);
-        }
-      });
-    }
+    const shouldFetchDashboards = !this.dashboardsService.state.navigationScope;
+    const dashboardsPromise = shouldFetchDashboards
+      ? this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId))
+      : undefined;
 
     if (scopes.length > 0) {
       const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
@@ -439,6 +432,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       if (!Array.isArray(fetchedScopes)) {
         console.error('Expected fetchedScopes to be an array, got:', typeof fetchedScopes);
         this.updateState({ scopes: newScopesState, loading: false });
+        if (dashboardsPromise) {
+          await dashboardsPromise;
+        }
         return;
       }
 
@@ -478,8 +474,28 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         scopes[0] = { ...scopes[0], scopeNodeId };
       }
 
+      let scopeNodeForRedirect =
+        scopeNodeId != null ? (newNodesState[scopeNodeId] ?? this.state.nodes[scopeNodeId]) : undefined;
+
+      if (!scopeNodeForRedirect && scopeNodeId) {
+        scopeNodeForRedirect = await this.apiClient.fetchScopeNode(scopeNodeId);
+        if (scopeNodeForRedirect) {
+          newNodesState[scopeNodeForRedirect.metadata.name] = scopeNodeForRedirect;
+        }
+      }
+
       writeRecentScope(this.store, fetchedScopes, scopeNodeId);
       this.updateState({ appliedScopes: scopes, selectedScopes: scopes, scopes: newScopesState, loading: false });
+
+      if (dashboardsPromise) {
+        await dashboardsPromise;
+      }
+
+      if (redirectOnApply && shouldFetchDashboards) {
+        this.redirectAfterApply(scopeNodeForRedirect);
+      }
+    } else if (dashboardsPromise) {
+      await dashboardsPromise;
     }
   };
 

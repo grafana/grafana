@@ -228,7 +228,7 @@ test.describe('Scope Redirect Functionality', () => {
     await test.step('Change scope while in edit mode and verify no redirect', async () => {
       // Select and apply a scope that would normally trigger a redirect
       await openScopesSelector(page, scopes);
-      expect(page.getByText('Select scopes')).toBeVisible();
+      await expect(page.getByText('Select scopes')).toBeVisible();
       await selectScope(page, 'sn-redirect-custom', scopes[0]);
       await applyScopes(page, [scopes[0]]);
 
