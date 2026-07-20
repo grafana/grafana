@@ -36,12 +36,6 @@ export interface AssistantInvestigation {
   chatId?: string;
 }
 
-// The Assistant API wraps handler results in { status, data }.
-interface AssistantDataResponse {
-  status: string;
-  data: AssistantInvestigation;
-}
-
 function unwrapAssistantDataResponse(response: unknown): AssistantInvestigation {
   if (typeof response !== 'object' || response === null || !('data' in response)) {
     throw new Error('Invalid Assistant investigation response');
