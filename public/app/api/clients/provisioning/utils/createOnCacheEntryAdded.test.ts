@@ -1,192 +1,149 @@
-import { produce } from 'immer';
-import { Subject } from 'rxjs';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
+import { getWrapper } from 'test/test-utils';
 
-import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { type GeneratedResourceList, type Resource, type ResourceEvent } from 'app/features/apiserver/types';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
+import { createJob } from 'app/features/provisioning/mocks/factories';
+import { getMockLiveSrv, setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
-import { createOnCacheEntryAdded } from './createOnCacheEntryAdded';
+import { type Job, useListJobQuery } from '../v0alpha1';
 
-jest.mock('app/features/apiserver/client', () => ({
-  ScopedResourceClient: jest.fn(),
-}));
+setupProvisioningMswServer();
 
-interface TestSpec {
-  title: string;
+function job(name: string, resourceVersion?: string, state = 'working'): Job {
+  return createJob({ metadata: { name, resourceVersion }, status: { state } });
 }
 
-interface TestStatus {
-  state: string;
+async function setup(...items: Job[]) {
+  server.use(http.get(`${BASE}/jobs`, () => HttpResponse.json({ items, metadata: { resourceVersion: '10' } })));
+
+  const getStream = jest.spyOn(getMockLiveSrv(), 'getStream');
+  const callsBefore = getStream.mock.calls.length;
+
+  const { result } = renderHook(() => useListJobQuery({ watch: true }), { wrapper: getWrapper({}) });
+
+  await waitFor(() => expect(result.current.data).toBeDefined());
+  // the handler only subscribes to the watch stream after the initial list resolves;
+  // events emitted before that are lost, so wait for the subscription to attach
+  await waitFor(() => expect(getStream.mock.calls.length).toBeGreaterThan(callsBefore));
+
+  return result;
 }
 
-type List = GeneratedResourceList<TestSpec, TestStatus>;
-
-function makeObject(name: string, resourceVersion?: string, state = 'working'): Resource<TestSpec, TestStatus> {
-  return {
-    apiVersion: 'provisioning.grafana.app/v0alpha1',
-    kind: 'Job',
-    metadata: { name, resourceVersion, creationTimestamp: '2024-01-01T00:00:00Z' },
-    spec: { title: name },
-    status: { state },
-  } as unknown as Resource<TestSpec, TestStatus>;
-}
-
-async function flush() {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-}
-
-function setup(initial: List) {
-  const events = new Subject<ResourceEvent<TestSpec, TestStatus>>();
-  jest
-    .mocked(ScopedResourceClient)
-    .mockImplementation(() => ({ watch: () => events.asObservable() }) as unknown as ScopedResourceClient);
-
-  let state = initial;
-  let resolveCacheEntryRemoved = () => {};
-  const done = createOnCacheEntryAdded<TestSpec, TestStatus>('jobs')(
-    { watch: true },
-    {
-      updateCachedData: (fn: (draft: List) => void) => {
-        state = produce(state, fn);
-      },
-      cacheDataLoaded: Promise.resolve({ data: initial }),
-      cacheEntryRemoved: new Promise<void>((resolve) => {
-        resolveCacheEntryRemoved = resolve;
-      }),
-      dispatch: jest.fn(),
-    }
-  );
-
-  return {
-    events,
-    getState: () => state,
-    resolveCacheEntryRemoved: () => resolveCacheEntryRemoved(),
-    done,
-  };
+function emit(type: 'ADDED' | 'MODIFIED' | 'DELETED', object: Job) {
+  act(() => {
+    getMockLiveSrv().emitWatchEvent('jobs', { type, object });
+  });
 }
 
 describe('createOnCacheEntryAdded', () => {
-  it('appends an ADDED event for a name not in the cache', async () => {
-    const { events, getState } = setup({ metadata: { resourceVersion: '10' }, items: [makeObject('a', '5')] });
-    await flush();
+  it('appends an ADDED event for a job not in the cache', async () => {
+    const result = await setup(job('a', '5'));
 
-    events.next({ type: 'ADDED', object: makeObject('b', '11') });
+    emit('ADDED', job('b', '11'));
 
-    expect(getState().items).toHaveLength(2);
-    expect(getState().items?.[1].metadata?.name).toBe('b');
+    await waitFor(() => expect(result.current.data?.items).toHaveLength(2));
+    expect(result.current.data?.items[1].metadata?.name).toBe('b');
   });
 
   it('applies a MODIFIED event with a newer resourceVersion', async () => {
-    const { events, getState } = setup({ metadata: { resourceVersion: '10' }, items: [makeObject('a', '5')] });
-    await flush();
+    const result = await setup(job('a', '5'));
 
-    events.next({ type: 'MODIFIED', object: makeObject('a', '11', 'success') });
+    emit('MODIFIED', job('a', '11', 'success'));
 
-    expect(getState().items?.[0].metadata?.resourceVersion).toBe('11');
-    expect(getState().items?.[0].status?.state).toBe('success');
+    await waitFor(() => expect(result.current.data?.items[0].status?.state).toBe('success'));
+    expect(result.current.data?.items[0].metadata?.resourceVersion).toBe('11');
   });
 
   it('compares resourceVersions numerically, not lexicographically', async () => {
-    const { events, getState } = setup({ metadata: { resourceVersion: '10' }, items: [makeObject('a', '9')] });
-    await flush();
+    const result = await setup(job('a', '9'));
 
     // '10' < '9' as strings, but 10 > 9 numerically — the event must apply
-    events.next({ type: 'MODIFIED', object: makeObject('a', '10', 'success') });
+    emit('MODIFIED', job('a', '10', 'success'));
 
-    expect(getState().items?.[0].metadata?.resourceVersion).toBe('10');
+    await waitFor(() => expect(result.current.data?.items[0].metadata?.resourceVersion).toBe('10'));
   });
 
-  it('skips a stale MODIFIED event with an older resourceVersion, leaving state untouched', async () => {
-    const { events, getState } = setup({
-      metadata: { resourceVersion: '10' },
-      items: [makeObject('a', '8', 'success')],
-    });
-    await flush();
-    const before = getState();
+  it('skips a stale MODIFIED event with an older resourceVersion', async () => {
+    const result = await setup(job('a', '5'));
 
-    events.next({ type: 'MODIFIED', object: makeObject('a', '5', 'working') });
+    emit('MODIFIED', job('a', '8', 'success'));
+    await waitFor(() => expect(result.current.data?.items[0].metadata?.resourceVersion).toBe('8'));
+
+    const before = result.current.data;
+    emit('MODIFIED', job('a', '6', 'working'));
 
     // same reference: no store update, no re-render for subscribers
-    expect(getState()).toBe(before);
-    expect(getState().items?.[0].status?.state).toBe('success');
+    expect(result.current.data).toBe(before);
+    expect(result.current.data?.items[0].status?.state).toBe('success');
   });
 
-  it('skips a duplicate MODIFIED event with an equal resourceVersion, leaving state untouched', async () => {
-    const { events, getState } = setup({ metadata: { resourceVersion: '10' }, items: [makeObject('a', '8')] });
-    await flush();
-    const before = getState();
+  it('skips a duplicate MODIFIED event with an equal resourceVersion', async () => {
+    const result = await setup(job('a', '5'));
 
-    events.next({ type: 'MODIFIED', object: makeObject('a', '8') });
+    emit('MODIFIED', job('a', '8', 'success'));
+    await waitFor(() => expect(result.current.data?.items[0].metadata?.resourceVersion).toBe('8'));
 
-    expect(getState()).toBe(before);
+    const before = result.current.data;
+    emit('MODIFIED', job('a', '8', 'success'));
+
+    expect(result.current.data).toBe(before);
   });
 
-  it('skips a duplicate ADDED event for an item already in the cache with the same resourceVersion', async () => {
-    const { events, getState } = setup({ metadata: { resourceVersion: '10' }, items: [makeObject('a', '8')] });
-    await flush();
-    const before = getState();
+  it('skips a duplicate ADDED event for a job already in the cache', async () => {
+    const result = await setup(job('a', '8'));
 
-    events.next({ type: 'ADDED', object: makeObject('a', '8') });
+    emit('ADDED', job('b', '9'));
+    await waitFor(() => expect(result.current.data?.items).toHaveLength(2));
 
-    expect(getState()).toBe(before);
-    expect(getState().items).toHaveLength(1);
+    const before = result.current.data;
+    emit('ADDED', job('a', '8'));
+
+    expect(result.current.data).toBe(before);
   });
 
-  it('applies a MODIFIED event when the event has no resourceVersion (fail open)', async () => {
-    const { events, getState } = setup({ metadata: { resourceVersion: '10' }, items: [makeObject('a', '8')] });
-    await flush();
+  it('applies a MODIFIED event without a resourceVersion (fail open)', async () => {
+    const result = await setup(job('a', '8'));
 
-    events.next({ type: 'MODIFIED', object: makeObject('a', undefined, 'success') });
+    emit('MODIFIED', job('a', undefined, 'success'));
 
-    expect(getState().items?.[0].status?.state).toBe('success');
+    await waitFor(() => expect(result.current.data?.items[0].status?.state).toBe('success'));
   });
 
-  it('applies a MODIFIED event when the cached item has no resourceVersion (fail open)', async () => {
-    const { events, getState } = setup({ metadata: { resourceVersion: '10' }, items: [makeObject('a', undefined)] });
-    await flush();
+  it('applies a MODIFIED event when the cached job has no resourceVersion (fail open)', async () => {
+    const result = await setup(job('a'));
 
-    events.next({ type: 'MODIFIED', object: makeObject('a', '2', 'success') });
+    emit('MODIFIED', job('a', '2', 'success'));
 
-    expect(getState().items?.[0].status?.state).toBe('success');
+    await waitFor(() => expect(result.current.data?.items[0].status?.state).toBe('success'));
   });
 
-  it('removes an item on DELETED and ignores a duplicate DELETED', async () => {
-    const { events, getState } = setup({
-      metadata: { resourceVersion: '10' },
-      items: [makeObject('a', '5'), makeObject('b', '7')],
-    });
-    await flush();
+  it('removes a job on DELETED and ignores a duplicate DELETED', async () => {
+    const result = await setup(job('a', '5'), job('b', '7'));
 
-    events.next({ type: 'DELETED', object: makeObject('a', '11') });
+    emit('DELETED', job('a', '11'));
 
-    expect(getState().items).toHaveLength(1);
-    expect(getState().items?.[0].metadata?.name).toBe('b');
+    await waitFor(() => expect(result.current.data?.items).toHaveLength(1));
+    expect(result.current.data?.items[0].metadata?.name).toBe('b');
 
-    const before = getState();
-    events.next({ type: 'DELETED', object: makeObject('a', '11') });
+    const before = result.current.data;
+    emit('DELETED', job('a', '11'));
 
-    expect(getState()).toBe(before);
+    expect(result.current.data).toBe(before);
   });
 
-  it('skips a stale DELETED event older than the cached item', async () => {
-    const { events, getState } = setup({ metadata: { resourceVersion: '10' }, items: [makeObject('a', '9')] });
-    await flush();
-    const before = getState();
+  it('skips a stale DELETED event older than the cached job', async () => {
+    const result = await setup(job('a', '5'));
 
-    // the object was re-created after this delete was emitted
-    events.next({ type: 'DELETED', object: makeObject('a', '4') });
+    emit('MODIFIED', job('a', '9', 'success'));
+    await waitFor(() => expect(result.current.data?.items[0].metadata?.resourceVersion).toBe('9'));
 
-    expect(getState()).toBe(before);
-    expect(getState().items).toHaveLength(1);
-  });
+    const before = result.current.data;
+    // the job was re-created after this delete was emitted
+    emit('DELETED', job('a', '4'));
 
-  it('unsubscribes from the watch when the cache entry is removed', async () => {
-    const { events, resolveCacheEntryRemoved, done } = setup({ metadata: { resourceVersion: '10' }, items: [] });
-    await flush();
-    expect(events.observed).toBe(true);
-
-    resolveCacheEntryRemoved();
-    await done;
-
-    expect(events.observed).toBe(false);
+    expect(result.current.data).toBe(before);
+    expect(result.current.data?.items).toHaveLength(1);
   });
 });
