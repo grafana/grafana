@@ -131,6 +131,25 @@ describe('runInstantQueries', () => {
   });
 });
 
+it('rejects with a custom timeout when the runner never reaches a terminal state', async () => {
+  jest.useFakeTimers();
+
+  try {
+    mockCreateQueryRunner.mockReturnValue({ run, get: () => NEVER, cancel: jest.fn(), destroy });
+
+    const assertion = expect(
+      runInstantQueries({ A: 'up' }, { uid: 'prom', type: 'prometheus' }, 10_000)
+    ).rejects.toThrow();
+
+    jest.advanceTimersByTime(10_000);
+
+    await assertion;
+    expect(destroy).toHaveBeenCalled();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
 describe('runRangeQuery', () => {
   it('runs a single range target over the last N hours with a stable step and parses the series', async () => {
     setRunnerResult([seriesFrame('cpu', [0, 1000, 2000], [1, 2, 3])]);

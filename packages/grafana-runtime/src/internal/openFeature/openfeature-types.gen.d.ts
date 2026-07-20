@@ -26,6 +26,7 @@ declare module "@openfeature/core" {
     | "stateTimeline.nameAboveBars"
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsCodeMirror"
+    | "dashboards.filterablePanels"
     | "grafana.savedQueriesPage"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
