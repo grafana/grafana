@@ -38,24 +38,32 @@ func TestParseWebhooks(t *testing.T) {
 			PRURL:     "https://github.com/grafana/git-ui-sync-demo/pull/12",
 			SourceRef: "dashboard/1733653266690",
 			Hash:      "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
+			Sender:    "ryantxu",
+			SenderID:  "705951",
 		}},
 		{"push", "different_branch", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
 			RepoSlug:     "grafana/git-ui-sync-demo",
 			Branch:       "not-main",
 			TotalChanges: 1,
+			Sender:       "ryantxu",
+			SenderID:     "705951",
 		}},
 		{"push", "nothing_relevant", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
 			RepoSlug:     "grafana/git-ui-sync-demo",
 			Branch:       "main",
 			TotalChanges: 1,
+			Sender:       "ryantxu",
+			SenderID:     "705951",
 		}},
 		{"push", "nested", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
 			RepoSlug:     "grafana/git-ui-sync-demo",
 			Branch:       "main",
 			TotalChanges: 5,
+			Sender:       "ryantxu",
+			SenderID:     "705951",
 		}},
 		{"push", "keep_file_only", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
@@ -63,6 +71,8 @@ func TestParseWebhooks(t *testing.T) {
 			Branch:       "main",
 			DeletedPaths: []string{"empty-folder/.keep"},
 			TotalChanges: 1,
+			Sender:       "testuser",
+			SenderID:     "123456",
 		}},
 		{"push", "keep_file_with_others", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
@@ -70,6 +80,8 @@ func TestParseWebhooks(t *testing.T) {
 			Branch:       "main",
 			DeletedPaths: []string{"dashboards/.keep", "dashboards/dashboard1.json", "dashboards/dashboard2.json"},
 			TotalChanges: 3,
+			Sender:       "testuser",
+			SenderID:     "123456",
 		}},
 		{"push", "multiple_keep_files", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
@@ -77,6 +89,8 @@ func TestParseWebhooks(t *testing.T) {
 			Branch:       "main",
 			DeletedPaths: []string{"empty-folder1/.keep", "dashboards-to-delete/.keep", "dashboards-to-delete/dashboard.json"},
 			TotalChanges: 3,
+			Sender:       "testuser",
+			SenderID:     "123456",
 		}},
 		{"issue_comment", "created", repo.WebhookEvent{
 			Type:    repo.WebhookEventUnsupported,
@@ -215,6 +229,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				Type:     repo.WebhookEventPush,
 				RepoSlug: "grafana/grafana",
 				Branch:   "main",
+				SenderID: "0",
 			},
 		},
 		{
@@ -278,6 +293,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				PRURL:     "https://github.com/grafana/grafana/pull/123",
 				SourceRef: "feature-branch",
 				Hash:      "abcdef1234567890",
+				SenderID:  "0",
 			},
 		},
 		{
@@ -321,6 +337,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				PRURL:     "https://github.com/grafana/grafana/pull/123",
 				SourceRef: "feature-branch",
 				Hash:      "abcdef1234567890",
+				SenderID:  "0",
 			},
 		},
 		{
@@ -420,6 +437,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				Type:     repo.WebhookEventPush,
 				RepoSlug: "grafana/grafana",
 				Branch:   "main",
+				SenderID: "0",
 			},
 		},
 		{

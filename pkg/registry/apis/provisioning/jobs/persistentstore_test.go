@@ -15,6 +15,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -416,5 +417,43 @@ func TestGenerateJobName(t *testing.T) {
 			"two test jobs on the same repository must not collide on name")
 		assert.Contains(t, first.Name, "repo-test-")
 		assert.Contains(t, second.Name, "repo-test-")
+	})
+}
+
+func TestWebhookAttribution(t *testing.T) {
+	t.Run("no attribution in context", func(t *testing.T) {
+		require.Nil(t, webhookAttributionFromContext(context.Background()))
+	})
+
+	t.Run("empty sender is not recorded", func(t *testing.T) {
+		ctx := WithWebhookAttribution(context.Background(), "", "123")
+		require.Nil(t, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("sender without id", func(t *testing.T) {
+		ctx := WithWebhookAttribution(context.Background(), "grot", "")
+		require.Equal(t, map[string]string{appjobs.AnnoWebhookSender: "grot"}, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("sender with id", func(t *testing.T) {
+		ctx := WithWebhookAttribution(context.Background(), "grot", "123")
+		require.Equal(t, map[string]string{
+			appjobs.AnnoWebhookSender:   "grot",
+			appjobs.AnnoWebhookSenderID: "123",
+		}, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("insert stamps annotations on the job", func(t *testing.T) {
+		client := fakeclientset.NewSimpleClientset()
+		store := newTestStore(client.ProvisioningV0alpha1())
+
+		ctx := WithWebhookAttribution(context.Background(), "grot", "123")
+		job, err := store.Insert(ctx, "default", provisioning.JobSpec{
+			Repository: "repo",
+			Action:     provisioning.JobActionPull,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "grot", job.Annotations[appjobs.AnnoWebhookSender])
+		require.Equal(t, "123", job.Annotations[appjobs.AnnoWebhookSenderID])
 	})
 }

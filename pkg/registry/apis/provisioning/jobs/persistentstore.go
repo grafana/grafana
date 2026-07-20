@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
@@ -546,6 +547,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 			Labels: map[string]string{
 				LabelRepository: spec.Repository,
 			},
+			Annotations: webhookAttributionFromContext(ctx),
 		},
 		Spec: spec,
 	}
@@ -620,4 +622,24 @@ func mutateJobAction(job *provisioning.Job) error {
 		return apierrors.NewBadRequest("multiple job types found")
 	}
 	return nil
+}
+
+type webhookAttributionCtxKey struct{}
+
+// WithWebhookAttribution attaches the webhook request's identity to the
+// context. Insert stamps it onto the created job as annotations.
+func WithWebhookAttribution(ctx context.Context, sender, senderID string) context.Context {
+	if sender == "" {
+		return ctx
+	}
+	annotations := map[string]string{appjobs.AnnoWebhookSender: sender}
+	if senderID != "" {
+		annotations[appjobs.AnnoWebhookSenderID] = senderID
+	}
+	return context.WithValue(ctx, webhookAttributionCtxKey{}, annotations)
+}
+
+func webhookAttributionFromContext(ctx context.Context) map[string]string {
+	annotations, _ := ctx.Value(webhookAttributionCtxKey{}).(map[string]string)
+	return annotations
 }
