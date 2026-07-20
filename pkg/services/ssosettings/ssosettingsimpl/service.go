@@ -616,7 +616,7 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 			if isMergingAllowed(k) {
 				settings[k] = v
 			}
-		} else if isURL(k) && isEmptyString(settings[k]) {
+		} else if isURL(k) && isEmptyString(settings[k]) && isMergingAllowed(k) {
 			// Overwrite all URL settings from the DB containing an empty string with their value
 			// from the system settings. This fixes an issue with empty auth_url, api_url and token_url
 			// from the DB not being replaced with their values defined in the system settings for
@@ -629,10 +629,12 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 }
 
 // isMergingAllowed returns true if the field provided can be merged from the system settings.
-// It won't allow SAML fields that are part of a group of settings to be merged from system settings
-// because the DB settings already contain one valid setting from each group.
+// It won't allow fields that are part of a mutually exclusive group to be merged from system
+// settings, because the DB settings already contain one valid setting from each group. This
+// covers SAML certificate/key/metadata groups and the JWT key-source group (jwk_set_* and
+// key_file/key_value), where merging a system value back in would make the key source ambiguous.
 func isMergingAllowed(fieldName string) bool {
-	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata"}
+	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata", "jwk_set", "key_file", "key_value"}
 
 	for _, v := range forbiddenMergePatterns {
 		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {

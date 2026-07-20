@@ -48,10 +48,15 @@ type JWT struct {
 	tracer        trace.Tracer
 }
 
-// settings returns the live JWT settings snapshot. Reading through the
-// jwtService rather than s.cfg.JWTAuth ensures that updates pushed via the
-// SSO settings API are picked up at auth time.
-func (s *JWT) settings() setting.AuthJWTSettings {
+// settings returns the JWT settings for the current request. It prefers the
+// per-request snapshot frozen on the context (see jwt.WithSettings) so that
+// authentication and outbound header clearing agree even across a concurrent
+// reload, and falls back to the live snapshot when none was frozen (e.g. paths
+// that do not go through the context handler).
+func (s *JWT) settings(ctx context.Context) setting.AuthJWTSettings {
+	if snapshot, ok := authJWT.SettingsFromContext(ctx); ok {
+		return snapshot
+	}
 	return s.jwtService.Settings()
 }
 
@@ -63,7 +68,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	ctx, span := s.tracer.Start(ctx, "authn.jwt.Authenticate")
 	defer span.End()
 
-	jwtSettings := s.settings()
+	jwtSettings := s.settings(ctx)
 
 	jwtToken := retrieveToken(r.HTTPRequest, jwtSettings)
 	stripSensitiveParam(r.HTTPRequest, jwtSettings)
@@ -156,7 +161,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 }
 
 func (s *JWT) IsEnabled() bool {
-	return s.settings().Enabled
+	return s.jwtService.Settings().Enabled
 }
 
 // stripSensitiveParam removes the auth_token query parameter when URL login is
@@ -182,7 +187,7 @@ func retrieveToken(httpRequest *http.Request, settings setting.AuthJWTSettings) 
 }
 
 func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
-	jwtSettings := s.settings()
+	jwtSettings := s.settings(ctx)
 	if !jwtSettings.Enabled || (jwtSettings.HeaderName == "" && !jwtSettings.URLLogin) {
 		return false
 	}

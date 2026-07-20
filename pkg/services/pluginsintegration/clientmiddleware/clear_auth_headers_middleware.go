@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewClearAuthHeadersMiddleware creates a new backend.HandlerMiddleware
@@ -32,12 +33,14 @@ func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend
 
 	// Strip the auth-header snapshot frozen at request start (see
 	// contexthandler.WithAuthHTTPHeaders) so clearing always matches the headers
-	// that authenticated this request, regardless of any concurrent reload.
-	list := contexthandler.AuthHTTPHeaderListFromContext(reqCtx.Req.Context())
-	if list == nil {
-		return
+	// that authenticated this request, regardless of any concurrent reload. When
+	// no snapshot is present (request paths that bypass the context handler),
+	// fall back to the unconditional auth headers rather than forwarding them.
+	items := contexthandler.GetAuthHTTPHeaders(&setting.AuthJWTSettings{}, &setting.AuthProxySettings{})
+	if list := contexthandler.AuthHTTPHeaderListFromContext(reqCtx.Req.Context()); list != nil {
+		items = list.Items
 	}
-	for _, k := range list.Items {
+	for _, k := range items {
 		h.DeleteHTTPHeader(k)
 	}
 }

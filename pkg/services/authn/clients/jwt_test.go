@@ -506,6 +506,30 @@ func TestJWTTest(t *testing.T) {
 	}
 }
 
+func TestJWTUsesRequestScopedSettings(t *testing.T) {
+	// #nosec G101 -- This is a dummy/test token with a non-empty "sub" claim.
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
+
+	cfg := &setting.Cfg{}
+	jwtService := &jwt.FakeJWTService{SettingsValue: setting.AuthJWTSettings{Enabled: true, HeaderName: "X-Service-JWT"}}
+	jwtClient := ProvideJWT(jwtService,
+		connectors.ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{}),
+		tracing.InitializeTracerForTest())
+
+	httpReq := &http.Request{Header: http.Header{}}
+	httpReq.Header.Set("X-Ctx-JWT", token)
+	req := &authn.Request{HTTPRequest: httpReq}
+
+	// Without a request-scoped snapshot the live service header (X-Service-JWT) is
+	// used, so the token carried in X-Ctx-JWT is not found.
+	require.False(t, jwtClient.Test(context.Background(), req))
+
+	// A snapshot on the context overrides the header name, so the same request
+	// authenticates against X-Ctx-JWT.
+	ctx := jwt.WithSettings(context.Background(), setting.AuthJWTSettings{Enabled: true, HeaderName: "X-Ctx-JWT"})
+	require.True(t, jwtClient.Test(ctx, req))
+}
+
 func TestJWTStripParam(t *testing.T) {
 	t.Parallel()
 	jwtHeaderName := "X-Forwarded-User"

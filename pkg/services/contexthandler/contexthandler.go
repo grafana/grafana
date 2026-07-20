@@ -123,8 +123,12 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 
 	// inject ReqContext in the context
 	ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
+	// Snapshot the JWT settings once so authentication and outbound header
+	// clearing observe the same values for the whole request.
+	jwtSettings := h.jwtService.Settings()
+	ctx = jwt.WithSettings(ctx, jwtSettings)
 	// store list of possible auth header in context
-	ctx = WithAuthHTTPHeaders(ctx, h.cfg, h.jwtService.Settings())
+	ctx = WithAuthHTTPHeaders(ctx, h.cfg, jwtSettings)
 	// Set the context for the http.Request.Context
 	// This modifies both r and reqContext.Req since they point to the same value
 	*reqContext.Req = *reqContext.Req.WithContext(ctx)

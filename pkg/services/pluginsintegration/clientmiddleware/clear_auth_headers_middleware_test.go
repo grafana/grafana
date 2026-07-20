@@ -264,6 +264,27 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		require.Empty(t, cdt.QueryDataReq.Headers["X-Frozen-JWT"])
 		require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
 	})
+
+	t.Run("Fails closed and strips baseline auth headers when no snapshot is present", func(t *testing.T) {
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
+		)
+
+		_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Headers: map[string]string{
+				otherHeader:           "test",
+				"Authorization":       "secret",
+				"X-Grafana-Device-Id": "secret",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, cdt.QueryDataReq)
+		require.Empty(t, cdt.QueryDataReq.Headers["Authorization"])
+		require.Empty(t, cdt.QueryDataReq.Headers["X-Grafana-Device-Id"])
+		require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
+	})
 }
 
 // withAuthHTTPHeaders seeds the request context with the auth-header snapshot
