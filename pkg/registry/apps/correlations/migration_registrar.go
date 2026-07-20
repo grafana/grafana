@@ -33,6 +33,6 @@ func CorrelationMigration(m migrator.CorrelationMigrator) migrations.MigrationDe
 				},
 			}),
 		},
-		RenameTables: []string{"correlation"},
+		RenameTables: []string{},
 	}
 }
