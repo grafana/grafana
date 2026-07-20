@@ -26,7 +26,7 @@ describe('useImportEntrypointState', () => {
     testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
     it('returns disabled with a localized reason when the Config status reports an active sync', async () => {
-      setupAutoSyncConfig(server, { statusUid: 'mimir-uid' });
+      setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       const { result } = renderUseImportEntrypointState();
 
@@ -38,7 +38,7 @@ describe('useImportEntrypointState', () => {
 
     it('blocks non-admins with read access too (the gap this fixes)', async () => {
       grantUserRole(OrgRole.Viewer);
-      setupAutoSyncConfig(server, { statusUid: 'mimir-uid' });
+      setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       const { result } = renderUseImportEntrypointState();
 
@@ -47,7 +47,7 @@ describe('useImportEntrypointState', () => {
       });
     });
 
-    it('returns not disabled when the Config status reports no active sync', async () => {
+    it('returns not disabled when the Config spec reports no active sync', async () => {
       setupAutoSyncConfig(server, {});
 
       const { result } = renderUseImportEntrypointState();
@@ -59,9 +59,23 @@ describe('useImportEntrypointState', () => {
       expect(result.current.reason).toBeUndefined();
     });
 
+    it('ignores a stale status when spec has no sync configured, so imports stay enabled', async () => {
+      // status lags spec: it still reports the last synced UID after sync was disabled. The hook
+      // must read spec, not status, so imports stay enabled here.
+      setupAutoSyncConfig(server, { statusUid: 'mimir-uid' });
+
+      const { result } = renderUseImportEntrypointState();
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+      expect(result.current.disabled).toBe(false);
+      expect(result.current.reason).toBeUndefined();
+    });
+
     it('skips the Config query when the user lacks read access, so imports stay enabled', async () => {
       grantUserPermissions([]);
-      const { requestSpy } = setupAutoSyncConfig(server, { statusUid: 'mimir-uid' });
+      const { requestSpy } = setupAutoSyncConfig(server, { specUid: 'mimir-uid', statusUid: 'mimir-uid' });
 
       const { result } = renderUseImportEntrypointState();
 
@@ -79,7 +93,7 @@ describe('useImportEntrypointState', () => {
     });
 
     it('reports isLoading while the Config query is in flight, then false', async () => {
-      setupAutoSyncConfig(server, { statusUid: 'mimir-uid' });
+      setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       const { result } = renderUseImportEntrypointState();
 
@@ -93,7 +107,7 @@ describe('useImportEntrypointState', () => {
 
   describe('with alerting.syncExternalAlertmanager feature flag disabled', () => {
     it('returns not disabled regardless of Config state', () => {
-      setupAutoSyncConfig(server, { statusUid: 'mimir-uid' });
+      setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       const { result } = renderUseImportEntrypointState();
 

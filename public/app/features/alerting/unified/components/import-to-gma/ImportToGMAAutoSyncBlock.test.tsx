@@ -1,12 +1,12 @@
 import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { OrgRole } from '@grafana/data';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { grantUserRole } from '../../mocks';
-import { setupAdminConfigGet, setupAlertmanagersStatus } from '../../mocks/server/configure/admin_config';
-import { mimirAlertmanagerDataSourcePayload, setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
+import { grantUserPermissions, grantUserRole } from '../../mocks';
+import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { ImportWizardGate } from './ImportToGMA';
 
@@ -21,28 +21,31 @@ const ui = {
 };
 
 describe('Import wizard auto-sync gate', () => {
-  it('renders the wizard normally when auto-sync is unavailable to the user (flag off)', async () => {
+  it('renders the wizard normally when the sync feature is off, regardless of config', async () => {
+    setupAutoSyncConfig(server, { specUid: MIMIR_DS_UID });
+
     render(<ImportWizardGate />);
 
-    // No auto-sync block; the method selector is shown.
+    // Flag off -> the sync query is skipped and the wizard renders.
     expect(await ui.stageRadio.find()).toBeInTheDocument();
     expect(ui.blockTitle.query()).not.toBeInTheDocument();
   });
 
-  describe('when auto-sync is available (flag on + org admin)', () => {
+  describe('when the sync feature is enabled', () => {
     testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
     beforeEach(() => {
-      grantUserRole('Admin');
-      setupAlertmanagersStatus(server);
-      setupDatasourcesEndpoint(server, [mimirAlertmanagerDataSourcePayload({ uid: MIMIR_DS_UID })]);
+      // Read access to the sync Config plus the permissions the wizard itself needs. Note: no admin
+      // role — the block must apply to any user allowed to reach the wizard.
+      grantUserPermissions([
+        AccessControlAction.ActionAlertingNotificationsConfigRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]);
     });
 
     it('blocks the whole wizard and links to Settings when auto-sync is active', async () => {
-      setupAdminConfigGet(server, {
-        alertmanagersChoice: AlertmanagerChoice.Internal,
-        external_alertmanager_uid: MIMIR_DS_UID,
-      });
+      setupAutoSyncConfig(server, { specUid: MIMIR_DS_UID });
 
       render(<ImportWizardGate />);
 
@@ -52,8 +55,18 @@ describe('Import wizard auto-sync gate', () => {
       expect(ui.stageRadio.query()).not.toBeInTheDocument();
     });
 
+    it('blocks non-admins with read access too (the gap this fixes)', async () => {
+      grantUserRole(OrgRole.Viewer);
+      setupAutoSyncConfig(server, { specUid: MIMIR_DS_UID });
+
+      render(<ImportWizardGate />);
+
+      expect(await ui.blockTitle.find()).toBeInTheDocument();
+      expect(ui.stageRadio.query()).not.toBeInTheDocument();
+    });
+
     it('renders the wizard when auto-sync is not active', async () => {
-      setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+      setupAutoSyncConfig(server, {});
 
       render(<ImportWizardGate />);
 
