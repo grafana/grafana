@@ -10844,6 +10844,10 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "alerts-incidents": {
+      "alert-tab-label": "Firing alerts",
+      "title": "Alerts & incidents"
+    },
     "dashboard-tabs": {
       "most-used": "Most used",
       "most-used-active": "Most used dashboards",
