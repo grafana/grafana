@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -189,7 +190,8 @@ func TestDiagnosticsJobStore_lifecycle(t *testing.T) {
 	creator := &user.SignedInUser{OrgID: 1, UserUID: "creator"}
 	someoneElse := &user.SignedInUser{OrgID: 1, UserUID: "someone-else"}
 
-	job := s.create(3, creator)
+	job, ok := s.create(3, creator)
+	require.True(t, ok)
 	require.NotEmpty(t, job.UID)
 
 	snap, ok := s.snapshot(job.UID, creator)
@@ -220,7 +222,7 @@ func TestDiagnosticsJobStore_lifecycle(t *testing.T) {
 	require.False(t, ok, "a different identity must not download another creator's archive")
 
 	// A failed job carries its error and stays without an archive.
-	otherJob := s.create(1, creator)
+	otherJob, _ := s.create(1, creator)
 	s.fail(otherJob.UID, errors.New("boom"))
 	snap, _ = s.snapshot(otherJob.UID, creator)
 	require.Equal(t, jobError, snap.State)
@@ -238,12 +240,12 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 	// the store can't accumulate finished/abandoned jobs (and their archive bytes) forever.
 	t.Run("evicts terminal jobs past the retention TTL", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
-		stale := s.create(1, creator)
+		stale, _ := s.create(1, creator)
 		s.complete(stale.UID, []byte("done"))
 		// Retention is measured from finishedAt, so age that (not CreatedAt).
 		s.jobs[stale.UID].finishedAt = time.Now().Add(-diagnosticsJobRetention - time.Minute)
 
-		fresh := s.create(1, creator) // triggers pruneLocked
+		fresh, _ := s.create(1, creator) // triggers pruneLocked
 		_, ok := s.snapshot(stale.UID, creator)
 		require.False(t, ok, "stale terminal job should have been pruned")
 		_, ok = s.snapshot(fresh.UID, creator)
@@ -254,7 +256,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 	// after it completes: retention runs from finishedAt, not CreatedAt.
 	t.Run("keeps a slow job that just finished even if created long ago", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
-		slow := s.create(1, creator)
+		slow, _ := s.create(1, creator)
 		s.jobs[slow.UID].CreatedAt = time.Now().Add(-diagnosticsJobRetention - time.Hour) // long run
 		s.complete(slow.UID, []byte("done"))                                              // finishedAt = now
 
@@ -267,7 +269,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 	// writing to it, so dropping it would orphan the run.
 	t.Run("never evicts a pending in-flight job", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
-		pending := s.create(1, creator)
+		pending, _ := s.create(1, creator)
 		s.jobs[pending.UID].CreatedAt = time.Now().Add(-diagnosticsJobRetention - time.Hour)
 
 		s.create(1, creator) // triggers pruneLocked
@@ -282,7 +284,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		base := time.Now()
 		var oldest string
 		for i := 0; i < diagnosticsJobMaxEntries; i++ {
-			j := s.create(1, creator)
+			j, _ := s.create(1, creator)
 			s.complete(j.UID, nil) // only terminal jobs count against the cap
 			// Age them deterministically so eviction order is well-defined.
 			s.jobs[j.UID].CreatedAt = base.Add(time.Duration(i) * time.Second)
@@ -294,7 +296,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 
 		// One more terminal job pushes over the cap and must evict exactly the oldest. complete()
 		// itself prunes, so no external sweep is needed.
-		newest := s.create(1, creator)
+		newest, _ := s.create(1, creator)
 		s.complete(newest.UID, nil)
 		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
 		_, ok := s.snapshot(oldest, creator)
@@ -303,21 +305,80 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		require.True(t, ok, "newest job should remain")
 	})
 
-	// Pruning must also happen when a job goes terminal, not only on create: after a burst of runs
-	// all finish and no new job is ever created, the cap still bounds the store.
+	// Max-entries eviction orders by finishedAt, not CreatedAt: a slow run created long ago but
+	// finished most recently is the freshest result and must survive, while a run created recently but
+	// finished earliest is the one to evict. Ordering by CreatedAt would 404 the just-finished bundle.
+	t.Run("evicts oldest by finishedAt not CreatedAt beyond the cap", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+		base := time.Now()
+		add := func(uid string, created, finished time.Time) {
+			s.jobs[uid] = &diagnosticsJob{
+				UID:            uid,
+				State:          jobComplete,
+				CreatedAt:      created,
+				finishedAt:     finished,
+				createdByOrgID: creator.GetOrgID(),
+				createdByUID:   creator.GetUID(),
+			}
+		}
+		// Fill exactly to the cap with baseline terminal jobs all finished at base.
+		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+			add(fmt.Sprintf("fill-%d", i), base, base)
+		}
+		add("slow-but-fresh", base.Add(-time.Hour), base.Add(time.Minute))  // oldest CreatedAt, newest finishedAt
+		add("quick-but-stale", base.Add(time.Hour), base.Add(-time.Minute)) // newest CreatedAt, oldest finishedAt
+
+		s.pruneLocked(base.Add(2 * time.Minute)) // cap+2 terminal jobs -> evict the 2 oldest by finishedAt
+		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
+		require.Contains(t, s.jobs, "slow-but-fresh",
+			"a job finished most recently must survive even if created long ago")
+		require.NotContains(t, s.jobs, "quick-but-stale",
+			"a job finished earliest must be evicted even if created most recently")
+	})
+
+	// Pruning must also happen when a job goes terminal, not only on create: if the store is already
+	// at the cap and one more job completes, complete() itself must evict down to the cap with no
+	// intervening create(). The store is built directly (bypassing create/complete) so the cap is only
+	// exercised by the single complete() under test.
 	t.Run("enforces the cap on complete without a later create", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
-		// Start every job first (all pending -> none evictable), then finish them all with no
-		// intervening create(). Each complete() must keep the store within the cap.
-		jobs := make([]*diagnosticsJob, 0, diagnosticsJobMaxEntries+5)
-		for i := 0; i < diagnosticsJobMaxEntries+5; i++ {
-			jobs = append(jobs, s.create(1, creator))
+		base := time.Now()
+		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+			uid := fmt.Sprintf("term-%d", i)
+			s.jobs[uid] = &diagnosticsJob{UID: uid, State: jobComplete, finishedAt: base}
 		}
-		require.Len(t, s.jobs, diagnosticsJobMaxEntries+5, "pending jobs are never pruned")
-		for _, j := range jobs {
-			s.complete(j.UID, nil)
+		// One extra in-flight job, also built directly so no prune has run yet.
+		s.jobs["pending"] = &diagnosticsJob{UID: "pending", State: jobPending, CreatedAt: base}
+		require.Len(t, s.jobs, diagnosticsJobMaxEntries+1)
+
+		// Completing it makes it terminal, pushing terminal jobs one over the cap; complete()'s own
+		// prune must bring the store back down without any create() being called.
+		s.complete("pending", nil)
+		require.Len(t, s.jobs, diagnosticsJobMaxEntries, "complete() must evict down to the cap on its own")
+		require.Contains(t, s.jobs, "pending", "the just-completed job is the newest by finishedAt and must survive")
+	})
+
+	// In-flight cap: only diagnosticsMaxInFlightJobs generations may be pending at once. Further
+	// creates are rejected (ok=false, nil job) until one finishes, so an admin repeatedly POSTing
+	// large dashboards can't spawn unbounded long-lived goroutines.
+	t.Run("caps concurrent in-flight jobs", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+		var last *diagnosticsJob
+		for i := 0; i < diagnosticsMaxInFlightJobs; i++ {
+			j, ok := s.create(1, creator)
+			require.True(t, ok, "creates within the in-flight cap must succeed")
+			last = j
 		}
-		require.Len(t, s.jobs, diagnosticsJobMaxEntries, "completing beyond the cap must evict down to it")
+
+		j, ok := s.create(1, creator)
+		require.False(t, ok, "a create beyond the in-flight cap must be rejected")
+		require.Nil(t, j)
+		require.Len(t, s.jobs, diagnosticsMaxInFlightJobs, "a rejected create must not add a job")
+
+		// Finishing one frees a slot, so a new create succeeds again.
+		s.complete(last.UID, nil)
+		_, ok = s.create(1, creator)
+		require.True(t, ok, "a slot frees up once an in-flight job finishes")
 	})
 }
 

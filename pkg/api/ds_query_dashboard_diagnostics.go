@@ -25,8 +25,10 @@ import (
 )
 
 // NOTE (MVP scope): resource limits are intentionally deferred to a follow-up PR (tracked) to keep
-// this experimental feature small: no panel-count cap, no bundle retention/TTL, and no per-run
-// timeout. See the "dashboard-level limits" follow-up.
+// this experimental feature small: no panel-count cap, no per-run timeout, and no per-body/
+// per-request byte caps. See the "dashboard-level limits" follow-up. The in-memory job store is
+// still bounded (retention TTL + max-entries + in-flight caps below) so it can't grow without limit;
+// that is a correctness guard against unbounded memory, not one of the deferred resource limits.
 
 // diagnosticsEnabled reports whether the grafana.onDemandDiagnostics feature flag is on for the
 // current request. It reuses the shared OpenFeature client (see ds_query_diagnostics.go).
@@ -116,11 +118,34 @@ const (
 	// feature); finer-grained retention is part of the limits follow-up.
 	diagnosticsJobRetention = time.Hour
 	// diagnosticsJobMaxEntries is a hard cap on retained jobs so a burst of creations within the
-	// retention window still can't grow the store without bound. Oldest jobs are evicted first.
+	// retention window still can't grow the store without bound. The oldest jobs by completion time
+	// are evicted first.
 	diagnosticsJobMaxEntries = 100
+	// diagnosticsMaxInFlightJobs caps concurrently generating (pending) jobs. Pending jobs are never
+	// pruned -- their background goroutine is still writing to them -- so without this cap an admin
+	// repeatedly POSTing large dashboards could spawn unbounded long-lived goroutines, each holding
+	// capture buffers and query responses. create() rejects further starts until one finishes.
+	diagnosticsMaxInFlightJobs = 4
 )
 
-func (s *diagnosticsJobStore) create(total int, creator identity.Requester) *diagnosticsJob {
+// create registers a new pending job for total panels, owned by creator. It returns ok=false without
+// creating anything when diagnosticsMaxInFlightJobs generations are already pending: pending jobs are
+// exempt from retention/max-entries pruning (their goroutine is still writing), so this in-flight cap
+// is the only bound on concurrent generation work.
+func (s *diagnosticsJobStore) create(total int, creator identity.Requester) (job *diagnosticsJob, ok bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	inFlight := 0
+	for _, j := range s.jobs {
+		if j.State == jobPending {
+			inFlight++
+		}
+	}
+	if inFlight >= diagnosticsMaxInFlightJobs {
+		return nil, false
+	}
+
 	j := &diagnosticsJob{
 		UID:            util.GenerateShortUID(),
 		State:          jobPending,
@@ -129,11 +154,9 @@ func (s *diagnosticsJobStore) create(total int, creator identity.Requester) *dia
 		createdByOrgID: creator.GetOrgID(),
 		createdByUID:   creator.GetUID(),
 	}
-	s.mu.Lock()
 	s.jobs[j.UID] = j
 	s.pruneLocked(j.CreatedAt) // after insert, so the cap is exact (this job is newest, never evicted)
-	s.mu.Unlock()
-	return j
+	return j, true
 }
 
 // pruneLocked drops terminal jobs past the retention TTL, then evicts the oldest terminal jobs
@@ -141,8 +164,8 @@ func (s *diagnosticsJobStore) create(total int, creator identity.Requester) *dia
 //
 // A still-pending job is never evicted: its background goroutine is still writing to it, so dropping
 // it would orphan the run -- complete/fail would no-op and status/download would 404 after expensive
-// generation. Only complete/error jobs are eligible, so the store is bounded by (finished jobs) plus
-// however many runs are genuinely in flight.
+// generation. Only complete/error jobs are eligible here, so the store is bounded by (finished jobs
+// up to the cap) plus at most diagnosticsMaxInFlightJobs runs in flight (capped in create).
 //
 // Retention is measured from finishedAt (not CreatedAt): a run that takes longer than the retention
 // window would otherwise be prunable the instant it completes, 404-ing a download for a job that just
@@ -163,8 +186,12 @@ func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
 	if len(terminal) <= diagnosticsJobMaxEntries {
 		return
 	}
+	// Evict by finishedAt, not CreatedAt: retention is measured from finishedAt, so a slow run with an
+	// old CreatedAt but a just-set finishedAt is genuinely the freshest result and must outlive older
+	// completions -- ordering by CreatedAt would evict it first and 404 an immediate download. Every
+	// job here is terminal, so finishedAt is always set.
 	sort.Slice(terminal, func(a, b int) bool {
-		return s.jobs[terminal[a]].CreatedAt.Before(s.jobs[terminal[b]].CreatedAt)
+		return s.jobs[terminal[a]].finishedAt.Before(s.jobs[terminal[b]].finishedAt)
 	})
 	for _, uid := range terminal[:len(terminal)-diagnosticsJobMaxEntries] {
 		delete(s.jobs, uid)
@@ -249,7 +276,10 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 		return response.Error(http.StatusBadRequest, "at least one panel is required", nil)
 	}
 
-	job := dashboardDiagnosticsJobs.create(len(reqDTO.Panels), c.SignedInUser)
+	job, ok := dashboardDiagnosticsJobs.create(len(reqDTO.Panels), c.SignedInUser)
+	if !ok {
+		return response.Error(http.StatusTooManyRequests, "too many dashboard diagnostics jobs are already in progress; try again once one finishes", nil)
+	}
 
 	// Snapshot the identity + cache flag + Query V2 signal; the goroutine must not touch the request
 	// or its context (both are tied to the HTTP request's lifetime, which ends when we return 202).
