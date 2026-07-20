@@ -392,7 +392,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   inlineControls: css({
     position: 'absolute',
     // PoC positioning: align near the panel menu ("...") without taking up space.
-    top: theme.spacing(-3.4),
+    top: theme.spacing(-4.5),
     right: theme.spacing(4.25),
     zIndex: theme.zIndex.dropdown,
     pointerEvents: 'auto',
