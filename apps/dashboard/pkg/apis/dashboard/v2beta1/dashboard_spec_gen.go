@@ -59,9 +59,10 @@ func (DashboardAnnotationQuerySpec) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardDataQueryKind struct {
-	Kind    string `json:"kind"`
-	Group   string `json:"group"`
-	Version string `json:"version"`
+	Kind    string            `json:"kind"`
+	Group   string            `json:"group"`
+	Version string            `json:"version"`
+	Labels  map[string]string `json:"labels,omitempty"`
 	// New type for datasource reference
 	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
 	Datasource *DashboardV2beta1DataQueryKindDatasource `json:"datasource,omitempty"`
@@ -87,14 +88,14 @@ type DashboardAnnotationPanelFilter struct {
 	// Should the specified panels be included or excluded
 	Exclude *bool `json:"exclude,omitempty"`
 	// Panel IDs that should be included or excluded
-	Ids []uint32 `json:"ids"`
+	Ids []float64 `json:"ids"`
 }
 
 // NewDashboardAnnotationPanelFilter creates a new DashboardAnnotationPanelFilter object.
 func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
-		Ids:     []uint32{},
+		Ids:     []float64{},
 	}
 }
 
@@ -351,6 +352,8 @@ func (DashboardDataTransformerConfig) OpenAPIModelName() string {
 type DashboardMatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	Id string `json:"id"`
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	Scope *DashboardMatcherScope `json:"scope,omitempty"`
 	// The matcher options. This is specific to the matcher implementation.
 	Options interface{} `json:"options,omitempty"`
 }
@@ -365,6 +368,21 @@ func NewDashboardMatcherConfig() *DashboardMatcherConfig {
 // OpenAPIModelName returns the OpenAPI model name for DashboardMatcherConfig.
 func (DashboardMatcherConfig) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardMatcherConfig"
+}
+
+// +k8s:openapi-gen=true
+type DashboardMatcherScope string
+
+const (
+	DashboardMatcherScopeSeries     DashboardMatcherScope = "series"
+	DashboardMatcherScopeNested     DashboardMatcherScope = "nested"
+	DashboardMatcherScopeAnnotation DashboardMatcherScope = "annotation"
+	DashboardMatcherScopeExemplar   DashboardMatcherScope = "exemplar"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardMatcherScope.
+func (DashboardMatcherScope) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardMatcherScope"
 }
 
 // A topic is attached to DataFrame metadata in query results.
@@ -757,6 +775,8 @@ type DashboardFieldColor struct {
 	Mode DashboardFieldColorModeId `json:"mode"`
 	// The fixed color value for fixed or shades color modes.
 	FixedColor *string `json:"fixedColor,omitempty"`
+	// The end color for the gradient color mode (smallest value). Only used when mode is gradient.
+	GradientColorTo *string `json:"gradientColorTo,omitempty"`
 	// Some visualizations need to know how to assign a series color from by value color schemes.
 	SeriesBy *DashboardFieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
@@ -777,6 +797,10 @@ func (DashboardFieldColor) OpenAPIModelName() string {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+// `palette-colorblind`: Color blind safe palette. A discrete palette whose colors are distinguishable under common forms of color vision deficiency. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next-2`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next-3`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
 // `continuous-viridis`: Continuous Viridis palette mode
 // `continuous-magma`: Continuous Magma palette mode
 // `continuous-plasma`: Continuous Plasma palette mode
@@ -794,30 +818,36 @@ func (DashboardFieldColor) OpenAPIModelName() string {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
+// `gradient`: Gradient color mode. Interpolate between two colors based on value order; the start color is taken from fixedColor and the end color from gradientColorTo.
 // +k8s:openapi-gen=true
 type DashboardFieldColorModeId string
 
 const (
-	DashboardFieldColorModeIdThresholds           DashboardFieldColorModeId = "thresholds"
-	DashboardFieldColorModeIdPaletteClassic       DashboardFieldColorModeId = "palette-classic"
-	DashboardFieldColorModeIdPaletteClassicByName DashboardFieldColorModeId = "palette-classic-by-name"
-	DashboardFieldColorModeIdContinuousViridis    DashboardFieldColorModeId = "continuous-viridis"
-	DashboardFieldColorModeIdContinuousMagma      DashboardFieldColorModeId = "continuous-magma"
-	DashboardFieldColorModeIdContinuousPlasma     DashboardFieldColorModeId = "continuous-plasma"
-	DashboardFieldColorModeIdContinuousInferno    DashboardFieldColorModeId = "continuous-inferno"
-	DashboardFieldColorModeIdContinuousCividis    DashboardFieldColorModeId = "continuous-cividis"
-	DashboardFieldColorModeIdContinuousGrYlRd     DashboardFieldColorModeId = "continuous-GrYlRd"
-	DashboardFieldColorModeIdContinuousRdYlGr     DashboardFieldColorModeId = "continuous-RdYlGr"
-	DashboardFieldColorModeIdContinuousBlYlRd     DashboardFieldColorModeId = "continuous-BlYlRd"
-	DashboardFieldColorModeIdContinuousYlRd       DashboardFieldColorModeId = "continuous-YlRd"
-	DashboardFieldColorModeIdContinuousBlPu       DashboardFieldColorModeId = "continuous-BlPu"
-	DashboardFieldColorModeIdContinuousYlBl       DashboardFieldColorModeId = "continuous-YlBl"
-	DashboardFieldColorModeIdContinuousBlues      DashboardFieldColorModeId = "continuous-blues"
-	DashboardFieldColorModeIdContinuousReds       DashboardFieldColorModeId = "continuous-reds"
-	DashboardFieldColorModeIdContinuousGreens     DashboardFieldColorModeId = "continuous-greens"
-	DashboardFieldColorModeIdContinuousPurples    DashboardFieldColorModeId = "continuous-purples"
-	DashboardFieldColorModeIdFixed                DashboardFieldColorModeId = "fixed"
-	DashboardFieldColorModeIdShades               DashboardFieldColorModeId = "shades"
+	DashboardFieldColorModeIdThresholds              DashboardFieldColorModeId = "thresholds"
+	DashboardFieldColorModeIdPaletteClassic          DashboardFieldColorModeId = "palette-classic"
+	DashboardFieldColorModeIdPaletteClassicByName    DashboardFieldColorModeId = "palette-classic-by-name"
+	DashboardFieldColorModeIdPaletteColorblind       DashboardFieldColorModeId = "palette-colorblind"
+	DashboardFieldColorModeIdPaletteCategoricalNext  DashboardFieldColorModeId = "palette-categorical-next"
+	DashboardFieldColorModeIdPaletteCategoricalNext2 DashboardFieldColorModeId = "palette-categorical-next-2"
+	DashboardFieldColorModeIdPaletteCategoricalNext3 DashboardFieldColorModeId = "palette-categorical-next-3"
+	DashboardFieldColorModeIdContinuousViridis       DashboardFieldColorModeId = "continuous-viridis"
+	DashboardFieldColorModeIdContinuousMagma         DashboardFieldColorModeId = "continuous-magma"
+	DashboardFieldColorModeIdContinuousPlasma        DashboardFieldColorModeId = "continuous-plasma"
+	DashboardFieldColorModeIdContinuousInferno       DashboardFieldColorModeId = "continuous-inferno"
+	DashboardFieldColorModeIdContinuousCividis       DashboardFieldColorModeId = "continuous-cividis"
+	DashboardFieldColorModeIdContinuousGrYlRd        DashboardFieldColorModeId = "continuous-GrYlRd"
+	DashboardFieldColorModeIdContinuousRdYlGr        DashboardFieldColorModeId = "continuous-RdYlGr"
+	DashboardFieldColorModeIdContinuousBlYlRd        DashboardFieldColorModeId = "continuous-BlYlRd"
+	DashboardFieldColorModeIdContinuousYlRd          DashboardFieldColorModeId = "continuous-YlRd"
+	DashboardFieldColorModeIdContinuousBlPu          DashboardFieldColorModeId = "continuous-BlPu"
+	DashboardFieldColorModeIdContinuousYlBl          DashboardFieldColorModeId = "continuous-YlBl"
+	DashboardFieldColorModeIdContinuousBlues         DashboardFieldColorModeId = "continuous-blues"
+	DashboardFieldColorModeIdContinuousReds          DashboardFieldColorModeId = "continuous-reds"
+	DashboardFieldColorModeIdContinuousGreens        DashboardFieldColorModeId = "continuous-greens"
+	DashboardFieldColorModeIdContinuousPurples       DashboardFieldColorModeId = "continuous-purples"
+	DashboardFieldColorModeIdFixed                   DashboardFieldColorModeId = "fixed"
+	DashboardFieldColorModeIdShades                  DashboardFieldColorModeId = "shades"
+	DashboardFieldColorModeIdGradient                DashboardFieldColorModeId = "gradient"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardFieldColorModeId.
@@ -2139,6 +2169,7 @@ func (DashboardCustomVariableSpec) OpenAPIModelName() string {
 type DashboardGroupByVariableKind struct {
 	Kind       string                                         `json:"kind"`
 	Group      string                                         `json:"group"`
+	Labels     map[string]string                              `json:"labels,omitempty"`
 	Datasource *DashboardV2beta1GroupByVariableKindDatasource `json:"datasource,omitempty"`
 	Spec       DashboardGroupByVariableSpec                   `json:"spec"`
 }
@@ -2200,6 +2231,7 @@ func (DashboardGroupByVariableSpec) OpenAPIModelName() string {
 type DashboardAdhocVariableKind struct {
 	Kind       string                                       `json:"kind"`
 	Group      string                                       `json:"group"`
+	Labels     map[string]string                            `json:"labels,omitempty"`
 	Datasource *DashboardV2beta1AdhocVariableKindDatasource `json:"datasource,omitempty"`
 	Spec       DashboardAdhocVariableSpec                   `json:"spec"`
 }
@@ -2229,7 +2261,9 @@ type DashboardAdhocVariableSpec struct {
 	SkipUrlSync      bool                             `json:"skipUrlSync"`
 	Description      *string                          `json:"description,omitempty"`
 	AllowCustomValue bool                             `json:"allowCustomValue"`
-	Origin           *DashboardControlSourceRef       `json:"origin,omitempty"`
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	EnableGroupBy *bool                      `json:"enableGroupBy,omitempty"`
+	Origin        *DashboardControlSourceRef `json:"origin,omitempty"`
 }
 
 // NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
@@ -2242,6 +2276,7 @@ func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 		Hide:             DashboardVariableHideDontHide,
 		SkipUrlSync:      false,
 		AllowCustomValue: true,
+		EnableGroupBy:    (func(input bool) *bool { return &input })(false),
 	}
 }
 

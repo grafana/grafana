@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import {
   AzureQueryType,
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorOrderByExpression,
+  type BuilderQueryEditorOrderByExpression,
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorQuery } from '../../types/query';
 
 import { OrderBySection } from './OrderBySection';
 

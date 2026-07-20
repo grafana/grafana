@@ -1,7 +1,6 @@
-import { cloneDeep } from 'lodash';
 import { lazy, Suspense, useMemo } from 'react';
 
-import { applyFieldOverrides, PrometheusQueryResultsV1Props } from '@grafana/data';
+import { applyFieldOverrides, type PrometheusQueryResultsV1Props } from '@grafana/data';
 import { config, getTemplateSrv } from '@grafana/runtime';
 
 const RawPrometheusContainerPureLazy = lazy(() =>
@@ -37,14 +36,12 @@ export const PrometheusQueryResultsContainer = (props: PrometheusQueryResultsV1P
   const width = props.width ?? 800;
   const timeZone = props.timeZone ?? 'browser';
 
-  // Memoize cloneDeep + applyFieldOverrides to avoid expensive operations on every render
-  // cloneDeep is needed to avoid mutating frozen props from plugin extension system
+  // Memoize applyFieldOverrides to avoid expensive operations on every render
   const processedData = useMemo(() => {
     const tableResult = props.tableResult ?? [];
-    const cloned = cloneDeep(tableResult);
-    if (cloned?.length) {
+    if (tableResult.length) {
       return applyFieldOverrides({
-        data: cloned,
+        data: tableResult,
         timeZone,
         theme: config.theme2,
         replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
@@ -52,7 +49,7 @@ export const PrometheusQueryResultsContainer = (props: PrometheusQueryResultsV1P
         dataLinkPostProcessor: props.dataLinkPostProcessor,
       });
     }
-    return cloned;
+    return tableResult;
   }, [props.tableResult, timeZone, props.dataLinkPostProcessor]);
 
   return (

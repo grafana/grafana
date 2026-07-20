@@ -2,17 +2,17 @@ import { isEmpty } from 'lodash';
 
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';
-import { GrafanaTheme2 } from '../themes/types';
+import { type GrafanaTheme2 } from '../themes/types';
 import { isReducerID, reduceField, ReducerID } from '../transformations/fieldReducer';
 import { getFieldMatcher } from '../transformations/matchers';
 import { FieldMatcherID } from '../transformations/matchers/ids';
-import { ScopedVars } from '../types/ScopedVars';
-import { DataFrame, Field, FieldConfig, FieldType } from '../types/dataFrame';
-import { LinkModel } from '../types/dataLink';
-import { DisplayValue, DisplayValueAlignmentFactors } from '../types/displayValue';
-import { FieldConfigSource } from '../types/fieldOverrides';
-import { InterpolateFunction } from '../types/panel';
-import { TimeRange, TimeZone } from '../types/time';
+import { type ScopedVars } from '../types/ScopedVars';
+import { type DataFrame, type Field, type FieldConfig, FieldType } from '../types/dataFrame';
+import { type LinkModel } from '../types/dataLink';
+import { type DisplayValue, type DisplayValueAlignmentFactors } from '../types/displayValue';
+import { type FieldConfigSource } from '../types/fieldOverrides';
+import { type InterpolateFunction } from '../types/panel';
+import { type TimeRange, type TimeZone } from '../types/time';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFieldDisplayName } from './fieldState';

@@ -4,14 +4,14 @@ import { memo, useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import {
   CoreApp,
-  DisplayValueAlignmentFactors,
-  FieldDisplay,
+  type DisplayValueAlignmentFactors,
+  type FieldDisplay,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
-  NumericRange,
-  PanelProps,
+  type NumericRange,
+  type PanelProps,
 } from '@grafana/data';
 import { findNumericFieldMinMax } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
@@ -27,11 +27,11 @@ import {
   usePanelContext,
   useTheme2,
   VizRepeater,
-  VizRepeaterRenderValueProps,
+  type VizRepeaterRenderValueProps,
 } from '@grafana/ui';
-import { DataLinksContextMenuApi } from '@grafana/ui/internal';
+import { type DataLinksContextMenuApi } from '@grafana/ui/internal';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 // PoC: this flag is injected by Scenes dashboard via `setDashboardPanelContext`.
 // It should become a real `PanelContext` field if we turn this into a feature.

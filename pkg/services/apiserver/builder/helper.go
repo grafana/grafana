@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -54,9 +55,6 @@ var PathRewriters = []filters.PathRewriter{
 		Pattern: regexp.MustCompile(`/apis/datasource.grafana.app/v0alpha1(.*$)`),
 		ReplaceFunc: func(matches []string) string {
 			result := "/apis/query.grafana.app/v0alpha1" + matches[1]
-			if strings.HasSuffix(matches[1], "/query") {
-				result += "/name" // same as the rewrite pattern below
-			}
 			if strings.HasSuffix(matches[1], "/sqlschemas") && !strings.Contains(matches[1], "/query/") {
 				result = strings.Replace(result, "/sqlschemas", "/query/sqlschemas", 1)
 			}
@@ -64,9 +62,9 @@ var PathRewriters = []filters.PathRewriter{
 		},
 	},
 	{
-		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/query$)`),
+		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/)query/name$`),
 		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
+			return matches[1] + "query" // redirect from with-name to without-name
 		},
 	},
 	{
@@ -84,11 +82,24 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+	{
+		// Rewrite the deprecated query path
+		// NOTE, this should be removed after the enterprise changes are running in hosted grafana
+		Pattern: regexp.MustCompile(`(/apis/.*.datasource.grafana.app/v0alpha1/namespaces/.*/connections/.*/query$)`),
+		ReplaceFunc: func(matches []string) string {
+			return strings.Replace(matches[0], "connections", "datasources", 1)
+		},
+	},
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
+
+		// auditing.HTTPInjectAuditAnnotationMiddleware extracts the innermost service caller identity from the request
+		// and injects it into the k8s audit event context (used for audit log suppression).
+		// Runs after WithRequester so auth info is available for the first-hop fallback.
+		handler = auditing.HTTPInjectAuditAnnotationMiddleware(handler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
@@ -265,6 +276,19 @@ func SetupConfig(
 	return nil
 }
 
+// servedVersionsForResource returns the versions the scheme registers for this resource's
+// kind, falling back to the group's prioritized versions if the kind cannot be resolved.
+func servedVersionsForResource(scheme *runtime.Scheme, gr schema.GroupResource, storage grafanarest.Storage) []schema.GroupVersion {
+	if gvks, _, err := scheme.ObjectKinds(storage.New()); err == nil {
+		for _, gvk := range gvks {
+			if gvk.Group == gr.Group {
+				return scheme.VersionsForGroupKind(gvk.GroupKind())
+			}
+		}
+	}
+	return scheme.PrioritizedVersionsForGroup(gr.Group)
+}
+
 func InstallAPIs(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
@@ -279,45 +303,22 @@ func InstallAPIs(
 	builderMetrics *BuilderMetrics,
 	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
-	// dual writing is only enabled when the storage type is not legacy.
-	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
-	// support the legacy storage type.
-	var dualWrite grafanarest.DualWriteBuilder
-
-	// nolint:staticcheck
-	if storageOpts.StorageType != options.StorageTypeLegacy {
-		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
-			// Dashboards + Folders may be managed (depends on feature toggles and database state)
-			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
-				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
-			}
-
-			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
-
-			// Get the option from custom.ini/command line
-			// when missing this will default to mode zero (legacy only)
-			var mode = grafanarest.DualWriterMode(0)
-
-			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
-			if resourceExists {
-				mode = resourceConfig.DualWriterMode
-			}
-
-			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode)
-
-			if dualWriteService != nil {
-				dualWriteService.LogStorageModeComparison(gr, mode)
-			}
-
-			switch mode {
-			case grafanarest.Mode0:
-				return legacy, nil
-			case grafanarest.Mode4, grafanarest.Mode5:
-				return storage, nil
-			default:
-				return dualwrite.NewStaticStorage(gr, mode, legacy, storage)
-			}
+	dualWrite := func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+		key := gr.String()
+		if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
+			builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 		}
+		// unified must never serve an apiVersion the scheme never registered; with no
+		// legacy fallback there is nothing safe to serve, so refuse to install.
+		served := servedVersionsForResource(scheme, gr, storage)
+		if err := dualWriteService.ValidateServedVersions(context.Background(), gr, served); err != nil {
+			if legacy == nil {
+				return nil, fmt.Errorf("cannot serve %q from unified storage: %w", gr.String(), err)
+			}
+			klog.Warningf("serving legacy storage for %q: %v", gr.String(), err)
+			return legacy, nil
+		}
+		return dualWriteService.NewStorage(gr, legacy, storage)
 	}
 
 	// NOTE: we build a map structure by version only for the purposes of InstallAPIGroup

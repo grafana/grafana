@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LinkModel, ActionModel } from '@grafana/data';
+import { type LinkModel, type ActionModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DataLinksActionsTooltip } from './DataLinksActionsTooltip';
@@ -85,6 +85,22 @@ describe('DataLinksActionsTooltip', () => {
     await userEvent.click(document.body);
 
     expect(onTooltipClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should apply viewport-constrained scroll styles to the tooltip wrapper', () => {
+    const manyLinks = Array.from({ length: 20 }, (_, index) => ({
+      ...mockLink,
+      title: `Data Link ${index + 1}`,
+      href: `http://link${index + 1}.com`,
+    }));
+
+    render(<DataLinksActionsTooltip links={manyLinks} coords={mockCoords} />);
+
+    const tooltipWrapper = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+    expect(tooltipWrapper).toHaveStyle({
+      maxHeight: 'calc(100vh - 32px)',
+      overflowX: 'hidden',
+    });
   });
 
   it('should render custom value', () => {

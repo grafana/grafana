@@ -1,4 +1,4 @@
-import { ComponentType, ReactNode, type JSX } from 'react';
+import { type ComponentType, type ReactNode, type JSX } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 

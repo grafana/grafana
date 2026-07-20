@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -36,6 +36,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -51,6 +52,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "invalid-url",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -64,6 +66,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -79,6 +82,7 @@ func TestNewGitHub(t *testing.T) {
 			factory.Client = http.DefaultClient
 
 			gitRepo := git.NewMockGitRepository(t)
+			gitRepo.EXPECT().URL().Return(tt.config.Spec.GitHub.URL).Maybe()
 
 			// Call the function under test
 			repo, err := NewRepository(
@@ -176,6 +180,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 				Secure: provisioning.SecureValues{
 					Token: common.InlineSecureValue{
@@ -202,6 +207,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 						URL:    "invalid-url",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 				Secure: provisioning.SecureValues{
 					Token: common.InlineSecureValue{
@@ -283,6 +289,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -305,7 +312,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 					},
 				}
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(commits, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{
@@ -331,15 +338,16 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "nonexistent.json",
 			ref:  "main",
 			mockSetup: func(m *MockClient) {
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/nonexistent.json", "main").
-					Return(nil, ErrResourceNotFound)
+				m.On("Commits", mock.Anything, "dashboards/nonexistent.json", "main").
+					Return(nil, repo.ErrFileNotFound)
 			},
-			expectedError: repository.ErrFileNotFound,
+			expectedError: repo.ErrFileNotFound,
 		},
 		{
 			name: "use default branch when ref is empty",
@@ -349,6 +357,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -366,7 +375,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 					},
 				}
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(commits, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{
@@ -392,6 +401,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -414,7 +424,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 					},
 				}
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(commits, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{
@@ -445,6 +455,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -459,7 +470,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 					},
 				}
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(commits, nil)
 			},
 			expectedResult: []provisioning.HistoryItem{
@@ -479,15 +490,92 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
 			ref:  "main",
 			mockSetup: func(m *MockClient) {
-				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "main").
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "main").
 					Return(nil, errors.New("API error"))
 			},
 			expectedError: errors.New("get commits: API error"),
+		},
+		{
+			name: "valid branch name with slashes is accepted",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+					Type: provisioning.GitHubRepositoryType,
+				},
+			},
+			path: "dashboard.json",
+			ref:  "feature/my-branch",
+			mockSetup: func(m *MockClient) {
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "feature/my-branch").
+					Return([]Commit{}, nil)
+			},
+			expectedResult: []provisioning.HistoryItem{},
+		},
+		{
+			name: "valid short commit SHA is accepted",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+					Type: provisioning.GitHubRepositoryType,
+				},
+			},
+			path: "dashboard.json",
+			ref:  "abc1234",
+			mockSetup: func(m *MockClient) {
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "abc1234").
+					Return([]Commit{}, nil)
+			},
+			expectedResult: []provisioning.HistoryItem{},
+		},
+		{
+			name: "valid full commit SHA is accepted",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+					Type: provisioning.GitHubRepositoryType,
+				},
+			},
+			path: "dashboard.json",
+			ref:  "abcdef0123456789abcdef0123456789abcdef01",
+			mockSetup: func(m *MockClient) {
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "abcdef0123456789abcdef0123456789abcdef01").
+					Return([]Commit{}, nil)
+			},
+			expectedResult: []provisioning.HistoryItem{},
+		},
+		{
+			name: "6-char hex ref is treated as a valid branch name and forwarded",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+					Type: provisioning.GitHubRepositoryType,
+				},
+			},
+			path: "dashboard.json",
+			ref:  "abcdef",
+			mockSetup: func(m *MockClient) {
+				m.On("Commits", mock.Anything, "dashboards/dashboard.json", "abcdef").
+					Return([]Commit{}, nil)
+			},
+			expectedResult: []provisioning.HistoryItem{},
 		},
 	}
 
@@ -530,14 +618,14 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 func TestGitHubRepositoryResourceURLs(t *testing.T) {
 	tests := []struct {
 		name          string
-		file          *repository.FileInfo
+		file          *repo.FileInfo
 		config        *provisioning.Repository
 		expectedURLs  *provisioning.RepositoryURLs
 		expectedError error
 	}{
 		{
 			name: "file with ref",
-			file: &repository.FileInfo{
+			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "feature-branch",
 			},
@@ -557,8 +645,51 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 		},
 		{
+			name: "scoped repo includes configured path",
+			file: &repo.FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/grafana/dashboards/test.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
+			name: "path with URL-reserved characters is encoded",
+			file: &repo.FileInfo{
+				Path: "dashboards/a #b?.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/a%20%23b%3F.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
 			name: "file without ref uses default branch",
-			file: &repository.FileInfo{
+			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "",
 			},
@@ -577,7 +708,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 		},
 		{
 			name: "empty path returns nil",
-			file: &repository.FileInfo{
+			file: &repo.FileInfo{
 				Path: "",
 				Ref:  "feature-branch",
 			},
@@ -593,7 +724,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 		},
 		{
 			name: "nil github config returns nil",
-			file: &repository.FileInfo{
+			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "feature-branch",
 			},
@@ -608,6 +739,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.config.Spec.Type = provisioning.GitHubRepositoryType
 			repo := &githubRepository{
 				config: tt.config,
 				owner:  "grafana",
@@ -694,6 +826,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.config.Spec.Type = provisioning.GitHubRepositoryType
 			repo := &githubRepository{
 				config: tt.config,
 				owner:  "grafana",
@@ -723,6 +856,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
 			},
+			Type: provisioning.GitHubRepositoryType,
 		},
 		Secure: provisioning.SecureValues{
 			Token: common.InlineSecureValue{
@@ -747,7 +881,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	t.Run("Read delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
-		expectedFileInfo := &repository.FileInfo{
+		expectedFileInfo := &repo.FileInfo{
 			Path: "test.yaml",
 			Data: []byte("test data"),
 			Ref:  "main",
@@ -768,7 +902,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	t.Run("ReadTree delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
-		expectedEntries := []repository.FileTreeEntry{
+		expectedEntries := []repo.FileTreeEntry{
 			{Path: "file1.yaml", Size: 100, Hash: "hash1", Blob: true},
 		}
 		mockGitRepo.On("ReadTree", ctx, "main").Return(expectedEntries, nil)
@@ -895,9 +1029,9 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	t.Run("CompareFiles delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
-		expectedChanges := []repository.VersionedFileChange{
+		expectedChanges := []repo.VersionedFileChange{
 			{
-				Action: repository.FileActionCreated,
+				Action: repo.FileActionCreated,
 				Path:   "new-file.yaml",
 				Ref:    "feature-branch",
 			},
@@ -917,9 +1051,9 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	t.Run("Stage delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
-		mockStagedRepo := repository.NewMockStagedRepository(t)
-		opts := repository.StageOptions{
-			Mode:    repository.StageModeCommitOnEach,
+		mockStagedRepo := repo.NewMockStagedRepository(t)
+		opts := repo.StageOptions{
+			Mode:    repo.StageModeCommitOnEach,
 			Timeout: 10 * time.Second,
 		}
 		mockGitRepo.On("Stage", ctx, opts).Return(mockStagedRepo, nil)
@@ -944,6 +1078,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
 			},
+			Type: provisioning.GitHubRepositoryType,
 		},
 	}
 
@@ -1001,6 +1136,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 					URL:    "https://github.com/grafana/grafana",
 					Branch: "",
 				},
+				Type: provisioning.GitHubRepositoryType,
 			},
 		}
 
@@ -1042,7 +1178,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "successfully gets default branch",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{DefaultBranch: "main"}, nil)
 			},
 			expectedBranch: "main",
@@ -1050,7 +1186,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "gets default branch as develop",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{DefaultBranch: "develop"}, nil)
 			},
 			expectedBranch: "develop",
@@ -1058,7 +1194,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "gets default branch as master",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{DefaultBranch: "master"}, nil)
 			},
 			expectedBranch: "master",
@@ -1066,7 +1202,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "handles API error",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+				m.On("GetRepository", mock.Anything).
 					Return(Repository{}, errors.New("API rate limit exceeded"))
 			},
 			expectedError: "failed to get repository metadata: API rate limit exceeded",
@@ -1074,8 +1210,8 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 		{
 			name: "handles not found error",
 			mockSetup: func(m *MockClient) {
-				m.On("GetRepository", mock.Anything, "grafana", "grafana").
-					Return(Repository{}, ErrResourceNotFound)
+				m.On("GetRepository", mock.Anything).
+					Return(Repository{}, repo.ErrFileNotFound)
 			},
 			expectedError: "failed to get repository metadata:",
 		},
@@ -1206,6 +1342,548 @@ func TestGithubRepository_Move(t *testing.T) {
 	}
 }
 
+func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
+	tests := []struct {
+		name             string
+		workflows        []provisioning.Workflow
+		branch           string
+		bpResult         *BranchProtection
+		bpError          error
+		expectBPCall     bool
+		expectedSuccess  bool
+		expectedErrField string
+		expectedDetail   string
+	}{
+		{
+			name:      "protected branch with required PR reviews and write workflow",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+			},
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetail:   "required pull request reviews",
+		},
+		{
+			name:      "protected branch with lock and write workflow",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				LockBranch: true,
+			},
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetail:   "branch is locked (read-only)",
+		},
+		{
+			name:      "both protection rules reported together",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+				LockBranch:                 true,
+			},
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetail:   "required pull request reviews",
+		},
+		{
+			name:            "unprotected branch with write workflow succeeds",
+			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:          "main",
+			bpResult:        nil,
+			expectBPCall:    true,
+			expectedSuccess: true,
+		},
+		{
+			name:      "protected branch without write workflow succeeds",
+			workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+			},
+			expectBPCall:    false,
+			expectedSuccess: true,
+		},
+		{
+			name:            "no workflows configured skips check",
+			workflows:       nil,
+			branch:          "main",
+			expectBPCall:    false,
+			expectedSuccess: true,
+		},
+		{
+			name:             "GetBranchProtection error returns test failure",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpError:          errors.New("failed to get branch protection: API error"),
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.github.branch",
+			expectedDetail:   "failed to check branch protection",
+		},
+		{
+			name:             "GetBranchProtection unauthorized (401) returns test failure",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpError:          repo.ErrUnauthorized,
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.github.branch",
+			expectedDetail:   "failed to check branch protection",
+		},
+		{
+			name:            "protection with no blocking rules does not block",
+			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:          "main",
+			bpResult:        &BranchProtection{},
+			expectBPCall:    true,
+			expectedSuccess: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockClient := NewMockClient(t)
+
+			config := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: tt.workflows,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: tt.branch,
+					},
+					Type: provisioning.GitHubRepositoryType,
+				},
+			}
+
+			mockGitRepo.EXPECT().
+				Test(mock.Anything).
+				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
+				Once()
+
+			if tt.expectBPCall {
+				mockClient.EXPECT().
+					GetBranchProtection(mock.Anything, tt.branch).
+					Return(tt.bpResult, tt.bpError).
+					Once()
+
+				// If branch protection check succeeded, also expect rulesets check
+				if tt.bpError == nil {
+					mockClient.EXPECT().
+						GetRulesets(mock.Anything, tt.branch).
+						Return(nil, nil).
+						Once()
+				}
+			}
+
+			repo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				gh:            mockClient,
+				owner:         "grafana",
+				repo:          "grafana",
+			}
+
+			result, err := repo.Test(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, tt.expectedSuccess, result.Success)
+
+			if !tt.expectedSuccess {
+				require.NotEmpty(t, result.Errors)
+				assert.Equal(t, tt.expectedErrField, result.Errors[0].Field)
+				assert.Contains(t, result.Errors[0].Detail, tt.expectedDetail)
+				assert.Equal(t, metav1.CauseTypeFieldValueInvalid, result.Errors[0].Type)
+			}
+		})
+	}
+}
+
+func TestBranchProtection_BlocksDirectPush(t *testing.T) {
+	tests := []struct {
+		name     string
+		bp       *BranchProtection
+		expected []string
+	}{
+		{
+			name:     "nil protection returns nil",
+			bp:       nil,
+			expected: nil,
+		},
+		{
+			name:     "no blocking rules",
+			bp:       &BranchProtection{},
+			expected: nil,
+		},
+		{
+			name:     "required PR reviews blocks",
+			bp:       &BranchProtection{RequiredPullRequestReviews: true},
+			expected: []string{"required pull request reviews"},
+		},
+		{
+			name:     "lock branch blocks",
+			bp:       &BranchProtection{LockBranch: true},
+			expected: []string{"branch is locked (read-only)"},
+		},
+		{
+			name: "both blocking rules",
+			bp: &BranchProtection{
+				RequiredPullRequestReviews: true,
+				LockBranch:                 true,
+			},
+			expected: []string{"required pull request reviews", "branch is locked (read-only)"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.bp.BlocksDirectPush()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestRulesets_BlocksDirectPush(t *testing.T) {
+	tests := []struct {
+		name     string
+		rulesets *Rulesets
+		expected []string
+	}{
+		{
+			name:     "nil rulesets returns nil",
+			rulesets: nil,
+			expected: nil,
+		},
+		{
+			name:     "no blocking rules",
+			rulesets: &Rulesets{},
+			expected: nil,
+		},
+		{
+			name:     "requires pull request blocks",
+			rulesets: &Rulesets{RequiresPullRequest: true},
+			expected: []string{"ruleset requires pull request"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.rulesets.BlocksDirectPush()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGitHubRepository_Test_Rulesets(t *testing.T) {
+	tests := []struct {
+		name               string
+		workflows          []provisioning.Workflow
+		branch             string
+		rulesetsResult     *Rulesets
+		rulesetsError      error
+		expectRulesetsCall bool
+		expectedSuccess    bool
+		expectedErrField   string
+		expectedDetail     string
+	}{
+		{
+			name:      "rulesets require pull request with write workflow",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectRulesetsCall: true,
+			expectedSuccess:    false,
+			expectedErrField:   "spec.workflows",
+			expectedDetail:     "ruleset requires pull request",
+		},
+		{
+			name:      "rulesets requiring pull request blocks write workflow",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectRulesetsCall: true,
+			expectedSuccess:    false,
+			expectedErrField:   "spec.workflows",
+			expectedDetail:     "ruleset requires pull request",
+		},
+		{
+			name:               "no blocking rulesets with write workflow succeeds",
+			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:             "main",
+			rulesetsResult:     nil,
+			expectRulesetsCall: true,
+			expectedSuccess:    true,
+		},
+		{
+			name:      "rulesets without write workflow succeeds",
+			workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+			branch:    "main",
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectRulesetsCall: false,
+			expectedSuccess:    true,
+		},
+		{
+			name:               "GetRulesets error returns test failure",
+			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:             "main",
+			rulesetsError:      errors.New("failed to get rulesets: API error"),
+			expectRulesetsCall: true,
+			expectedSuccess:    false,
+			expectedErrField:   "spec.github.branch",
+			expectedDetail:     "failed to check repository rulesets",
+		},
+		{
+			name:               "GetRulesets unauthorized (401) returns test failure",
+			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:             "main",
+			rulesetsError:      repo.ErrUnauthorized,
+			expectRulesetsCall: true,
+			expectedSuccess:    false,
+			expectedErrField:   "spec.github.branch",
+			expectedDetail:     "failed to check repository rulesets",
+		},
+		{
+			name:      "rulesets with no blocking rules does not block",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: false,
+			},
+			expectRulesetsCall: true,
+			expectedSuccess:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockClient := NewMockClient(t)
+
+			config := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: tt.workflows,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: tt.branch,
+					},
+					Type: provisioning.GitHubRepositoryType,
+				},
+			}
+
+			mockGitRepo.EXPECT().
+				Test(mock.Anything).
+				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
+				Once()
+
+			// Branch protection check always happens first
+			mockClient.EXPECT().
+				GetBranchProtection(mock.Anything, tt.branch).
+				Return(nil, nil).
+				Maybe()
+
+			if tt.expectRulesetsCall {
+				mockClient.EXPECT().
+					GetRulesets(mock.Anything, tt.branch).
+					Return(tt.rulesetsResult, tt.rulesetsError).
+					Once()
+			}
+
+			repo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				gh:            mockClient,
+				owner:         "grafana",
+				repo:          "grafana",
+			}
+
+			result, err := repo.Test(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, tt.expectedSuccess, result.Success)
+
+			if !tt.expectedSuccess {
+				require.NotEmpty(t, result.Errors)
+				assert.Equal(t, tt.expectedErrField, result.Errors[0].Field)
+				assert.Contains(t, result.Errors[0].Detail, tt.expectedDetail)
+				assert.Equal(t, metav1.CauseTypeFieldValueInvalid, result.Errors[0].Type)
+			}
+		})
+	}
+}
+
+func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
+	tests := []struct {
+		name             string
+		workflows        []provisioning.Workflow
+		branch           string
+		bpResult         *BranchProtection
+		bpError          error
+		rulesetsResult   *Rulesets
+		rulesetsError    error
+		expectedSuccess  bool
+		expectedErrField string
+		expectedDetails  []string
+	}{
+		{
+			name:      "both classic protection and rulesets block",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+			},
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetails:  []string{"required pull request reviews", "ruleset requires pull request"},
+		},
+		{
+			name:      "classic protection blocks, rulesets clean",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				LockBranch: true,
+			},
+			rulesetsResult:   nil,
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetails:  []string{"branch is locked (read-only)"},
+		},
+		{
+			name:      "rulesets block, classic protection clean",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult:  nil,
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetails:  []string{"ruleset requires pull request"},
+		},
+		{
+			name:            "both classic protection and rulesets clean",
+			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:          "main",
+			bpResult:        nil,
+			rulesetsResult:  nil,
+			expectedSuccess: true,
+		},
+		{
+			name:      "multiple rules from both sources combined",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+				LockBranch:                 true,
+			},
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetails: []string{
+				"required pull request reviews",
+				"branch is locked (read-only)",
+				"ruleset requires pull request",
+			},
+		},
+		{
+			name:             "branch protection error stops check",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpError:          errors.New("API error"),
+			expectedSuccess:  false,
+			expectedErrField: "spec.github.branch",
+			expectedDetails:  []string{"failed to check branch protection"},
+		},
+		{
+			name:             "rulesets error after clean branch protection",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpResult:         nil,
+			rulesetsError:    errors.New("API error"),
+			expectedSuccess:  false,
+			expectedErrField: "spec.github.branch",
+			expectedDetails:  []string{"failed to check repository rulesets"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockClient := NewMockClient(t)
+
+			config := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: tt.workflows,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: tt.branch,
+					},
+					Type: provisioning.GitHubRepositoryType,
+				},
+			}
+
+			mockGitRepo.EXPECT().
+				Test(mock.Anything).
+				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
+				Once()
+
+			mockClient.EXPECT().
+				GetBranchProtection(mock.Anything, tt.branch).
+				Return(tt.bpResult, tt.bpError).
+				Once()
+
+			// Only call GetRulesets if branch protection didn't error
+			if tt.bpError == nil {
+				mockClient.EXPECT().
+					GetRulesets(mock.Anything, tt.branch).
+					Return(tt.rulesetsResult, tt.rulesetsError).
+					Once()
+			}
+
+			repo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				gh:            mockClient,
+				owner:         "grafana",
+				repo:          "grafana",
+			}
+
+			result, err := repo.Test(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, tt.expectedSuccess, result.Success)
+
+			if !tt.expectedSuccess {
+				require.NotEmpty(t, result.Errors)
+				assert.Equal(t, tt.expectedErrField, result.Errors[0].Field)
+
+				// Check that all expected details are present in the error message
+				for _, expectedDetail := range tt.expectedDetails {
+					assert.Contains(t, result.Errors[0].Detail, expectedDetail)
+				}
+
+				assert.Equal(t, metav1.CauseTypeFieldValueInvalid, result.Errors[0].Type)
+			}
+		})
+	}
+}
+
 func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -1216,7 +1894,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 		gitTestError   error
 		expectGetRepo  bool
 		expectedBranch string
-		expectedError  bool
+		expectedResult *provisioning.TestResults
 	}{
 		{
 			name:          "empty branch triggers GetDefaultBranch and sets default branch",
@@ -1227,7 +1905,6 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			},
 			expectGetRepo:  true,
 			expectedBranch: "develop",
-			expectedError:  false,
 		},
 		{
 			name:          "non-empty branch does not trigger GetDefaultBranch",
@@ -1237,14 +1914,81 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			},
 			expectGetRepo:  false,
 			expectedBranch: "feature-branch",
-			expectedError:  false,
 		},
 		{
-			name:          "GetDefaultBranch failure returns error",
+			name:          "GetDefaultBranch returns ErrFileNotFound (404) → URL field error",
+			initialBranch: "",
+			getRepoError:  repo.ErrFileNotFound,
+			expectGetRepo: true,
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusBadRequest,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.url",
+					Detail: `repository "https://github.com/grafana/grafana" not found, or the configured token does not have access to it`,
+				}},
+			},
+		},
+		{
+			name:          "GetDefaultBranch returns ErrUnauthorized (401) → token field error",
+			initialBranch: "",
+			getRepoError:  repo.ErrUnauthorized,
+			expectGetRepo: true,
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.token",
+					Detail: "authentication failed: the configured token is invalid or expired",
+				}},
+			},
+		},
+		{
+			name:          "GetDefaultBranch returns ErrPermissionDenied (403) → token field error",
+			initialBranch: "",
+			getRepoError:  repo.ErrPermissionDenied,
+			expectGetRepo: true,
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusForbidden,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.token",
+					Detail: `the configured token lacks permission to access "https://github.com/grafana/grafana"`,
+				}},
+			},
+		},
+		{
+			name:          "GetDefaultBranch returns ErrServerUnavailable → 503 result",
+			initialBranch: "",
+			getRepoError:  repo.ErrServerUnavailable,
+			expectGetRepo: true,
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusServiceUnavailable,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.url",
+					Detail: "GitHub is currently unavailable, please try again later",
+				}},
+			},
+		},
+		{
+			name:          "GetDefaultBranch returns unclassified error → generic 400 result",
 			initialBranch: "",
 			getRepoError:  errors.New("API rate limit exceeded"),
 			expectGetRepo: true,
-			expectedError: true, // Error is returned as error, not in TestResults
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusBadRequest,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.url",
+					Detail: "failed to get repository metadata: API rate limit exceeded",
+				}},
+			},
 		},
 		{
 			name:          "empty branch with git test failure after branch detection",
@@ -1261,7 +2005,6 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			},
 			expectGetRepo:  true,
 			expectedBranch: "main",
-			expectedError:  false,
 		},
 	}
 
@@ -1278,6 +2021,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 						Branch: tt.initialBranch,
 						Path:   "grafana/",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
@@ -1293,12 +2037,12 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			if tt.expectGetRepo {
 				if tt.getRepoError != nil {
 					mockClient.EXPECT().
-						GetRepository(mock.Anything, "grafana", "grafana").
+						GetRepository(mock.Anything).
 						Return(Repository{}, tt.getRepoError).
 						Once()
 				} else {
 					mockClient.EXPECT().
-						GetRepository(mock.Anything, "grafana", "grafana").
+						GetRepository(mock.Anything).
 						Return(Repository{DefaultBranch: tt.defaultBranch}, nil).
 						Once()
 
@@ -1325,20 +2069,20 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			result, err := githubRepo.Test(context.Background())
 
 			// Verify
-			if tt.expectedError {
-				require.Error(t, err)
-				if tt.getRepoError != nil {
-					assert.Contains(t, err.Error(), "failed to get repository metadata")
-				}
-			} else {
-				require.NoError(t, err)
-				if tt.expectedBranch != "" {
-					// Verify branch was updated in config
-					assert.Equal(t, tt.expectedBranch, config.Spec.GitHub.Branch)
+			require.NoError(t, err, "Test() must surface failures via TestResults, not Go errors")
 
-					if result != nil {
-						assert.Equal(t, tt.gitTestResults.Success, result.Success)
-					}
+			if tt.expectedResult != nil {
+				require.NotNil(t, result)
+				assert.Equal(t, tt.expectedResult, result)
+				return
+			}
+
+			if tt.expectedBranch != "" {
+				// Verify branch was updated in config
+				assert.Equal(t, tt.expectedBranch, config.Spec.GitHub.Branch)
+
+				if result != nil {
+					assert.Equal(t, tt.gitTestResults.Success, result.Success)
 				}
 			}
 		})

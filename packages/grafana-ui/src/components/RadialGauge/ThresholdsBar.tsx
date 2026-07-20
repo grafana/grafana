@@ -1,7 +1,7 @@
-import { FieldDisplay, Threshold, ThresholdsMode } from '@grafana/data';
+import { type FieldDisplay, type Threshold, ThresholdsMode } from '@grafana/data';
 
 import { RadialArcPath } from './RadialArcPath';
-import { GradientStop, RadialGaugeDimensions, RadialShape } from './types';
+import { type GradientStop, type RadialGaugeDimensions, type RadialShape } from './types';
 import { getThresholdPercentageValue } from './utils';
 
 interface ThresholdsBarProps {
@@ -57,11 +57,11 @@ export function ThresholdsBar({
       <g key={i} data-testid="radial-gauge-thresholds-bar">
         <RadialArcPath
           arcLengthDeg={lengthDeg}
-          barEndcaps={shape === 'circle' && roundedBars}
           dimensions={thresholdDimensions}
           fieldDisplay={fieldDisplay}
           glowFilter={glowFilter}
-          roundedBars={roundedBars}
+          barEndcaps={false}
+          roundedBars={false}
           shape={shape}
           startAngle={currentStart}
           {...colorProps}

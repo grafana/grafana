@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ResourcePermission } from './types';
+import { type ResourcePermission } from './types';
 
 interface Props {
   item: ResourcePermission;

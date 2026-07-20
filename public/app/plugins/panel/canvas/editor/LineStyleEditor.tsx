@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
@@ -19,7 +19,7 @@ export interface LineStyleConfig {
 
 type Props = StandardEditorProps<LineStyleConfig>;
 
-export const defaultLineStyleConfig: LineStyleConfig = {
+const defaultLineStyleConfig: LineStyleConfig = {
   style: LineStyle.Solid,
   animate: false,
 };

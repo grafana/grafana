@@ -20,9 +20,8 @@ import (
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -36,28 +35,16 @@ func TestIntegrationFolderTreeZanzana(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	runIntegrationFolderTree(t, testinfra.GrafanaOpts{
-		DisableDataMigrations:               true,
 		AppModeProduction:                   true,
 		DisableAnonymous:                    true,
 		DisableAuthZClientCache:             true,
 		DisableZanzanaServerCheckQueryCache: true,
 		APIServerStorageType:                "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
-			},
-			folderV1.RESOURCEGROUP: {
-				DualWriterMode: grafanarest.Mode5,
-			},
-		},
-		EnableFeatureToggles: []string{
-			"zanzana",
-			"zanzanaNoLegacyClient",
-			"kubernetesAuthzZanzanaSync",
-		},
-		UnifiedStorageEnableSearch:    true,
-		ZanzanaReconciliationInterval: 100 * time.Millisecond,
-		DisableZanzanaCache:           true,
+		RBACSingleOrganization:              true,
+		ZanzanaReconcilerMode:               setting.ZanzanaReconcilerModeMT,
+		EnableFeatureToggles:                apis.ZanzanaMTReconcilerFeatureToggles,
+		ZanzanaReconciliationInterval:       100 * time.Millisecond,
+		DisableZanzanaCache:                 true,
 	})
 }
 
@@ -68,29 +55,13 @@ func TestIntegrationFolderTree(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	modes := []grafanarest.DualWriterMode{
-		grafanarest.Mode0, // legacy only
-		grafanarest.Mode2, // write both, read legacy
-		grafanarest.Mode3, // write both, read unified
-		grafanarest.Mode4,
-		grafanarest.Mode5,
-	}
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
+	for _, search := range []bool{false, true} {
+		t.Run(fmt.Sprintf("search enabled %v", search), func(t *testing.T) {
 			runIntegrationFolderTree(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: mode,
-					},
-				},
-				UnifiedStorageEnableSearch: mode >= grafanarest.Mode3, // make sure modes 0-3 work without search enabled
+				AppModeProduction:           true,
+				DisableAnonymous:            true,
+				APIServerStorageType:        "unified",
+				UnifiedStorageDisableSearch: !search,
 			})
 		})
 	}

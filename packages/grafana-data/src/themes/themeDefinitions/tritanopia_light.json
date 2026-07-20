@@ -1,0 +1,114 @@
+{
+  "name": "Tritanopia Light",
+  "id": "tritanopia_light",
+  "colors": {
+    "mode": "light",
+    "warning": {
+      "main": "#C8E020",
+      "text": "#687200"
+    },
+    "error": {
+      "main": "#C01030"
+    },
+    "success": {
+      "main": "#207810"
+    },
+    "contrastThreshold": 4.5
+  },
+  "visualization": {
+    "hues": [
+      {
+        "name": "red",
+        "shades": [
+          { "color": "#FF5068", "name": "super-light-red" },
+          { "color": "#E82040", "name": "light-red" },
+          { "color": "#C01030", "name": "red", "primary": true },
+          { "color": "#980820", "name": "semi-dark-red" },
+          { "color": "#780618", "name": "dark-red" }
+        ]
+      },
+      {
+        "name": "orange",
+        "shades": [
+          { "color": "#FF9868", "name": "super-light-orange" },
+          { "color": "#F07838", "name": "light-orange" },
+          { "color": "#C86020", "name": "orange", "primary": true },
+          { "color": "#A04810", "name": "semi-dark-orange" },
+          { "color": "#803808", "name": "dark-orange" }
+        ]
+      },
+      {
+        "name": "yellow",
+        "shades": [
+          { "color": "#E0F060", "name": "super-light-yellow" },
+          { "color": "#C8E020", "name": "light-yellow" },
+          { "color": "#A0B800", "name": "yellow", "primary": true },
+          { "color": "#808E00", "name": "semi-dark-yellow" },
+          { "color": "#687200", "name": "dark-yellow" }
+        ]
+      },
+      {
+        "name": "green",
+        "shades": [
+          { "color": "#88D068", "name": "super-light-green" },
+          { "color": "#58B838", "name": "light-green" },
+          { "color": "#389820", "name": "green", "primary": true },
+          { "color": "#207810", "name": "semi-dark-green" },
+          { "color": "#106008", "name": "dark-green" }
+        ]
+      },
+      {
+        "name": "blue",
+        "shades": [
+          { "color": "#48B0D8", "name": "super-light-blue" },
+          { "color": "#1890C0", "name": "light-blue" },
+          { "color": "#0870A0", "name": "blue", "primary": true },
+          { "color": "#005078", "name": "semi-dark-blue" },
+          { "color": "#003858", "name": "dark-blue" }
+        ]
+      },
+      {
+        "name": "purple",
+        "shades": [
+          { "color": "#AA6BC7", "name": "super-light-purple" },
+          { "color": "#9240B8", "name": "light-purple" },
+          { "color": "#7410A3", "name": "purple", "primary": true },
+          { "color": "#560880", "name": "semi-dark-purple" },
+          { "color": "#3C0560", "name": "dark-purple" }
+        ]
+      }
+    ],
+    "palette": [
+      "red",
+      "green",
+      "blue",
+      "yellow",
+      "purple",
+      "orange",
+      "light-red",
+      "semi-dark-green",
+      "light-blue",
+      "semi-dark-yellow",
+      "light-purple",
+      "semi-dark-orange",
+      "dark-red",
+      "dark-green",
+      "dark-blue",
+      "dark-yellow",
+      "dark-purple",
+      "dark-orange",
+      "super-light-red",
+      "super-light-green",
+      "super-light-blue",
+      "super-light-yellow",
+      "super-light-purple",
+      "super-light-orange",
+      "semi-dark-red",
+      "light-green",
+      "semi-dark-blue",
+      "light-yellow",
+      "semi-dark-purple",
+      "light-orange"
+    ]
+  }
+}

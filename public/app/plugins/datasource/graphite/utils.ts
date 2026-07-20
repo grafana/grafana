@@ -1,6 +1,6 @@
 import { last } from 'lodash';
 
-import { GraphiteParserError } from './types';
+import { type GraphiteParserError } from './types';
 
 /**
  * Graphite-web before v1.6 returns HTTP 500 with full stack traces in an HTML page

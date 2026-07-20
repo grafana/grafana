@@ -1,16 +1,22 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { render as RTLRender } from '@testing-library/react';
+import * as React from 'react';
 import { of } from 'rxjs';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -19,6 +25,14 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
+
+function render(component: React.ReactNode) {
+  return RTLRender(
+    <TestProvider>
+      <OpenFeatureProvider>{component}</OpenFeatureProvider>
+    </TestProvider>
+  );
+}
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -66,6 +80,12 @@ const runRequestMock = jest.fn().mockReturnValue(
 setRunRequest(runRequestMock);
 
 describe('VariablesEditView', () => {
+  beforeAll(() => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+  });
+  afterAll(() => {
+    setTestFlags({});
+  });
   describe('Dashboard Variables state', () => {
     let dashboard: DashboardScene;
     let variableView: VariablesEditView;
@@ -202,6 +222,38 @@ describe('VariablesEditView', () => {
 
     afterEach(() => {
       jest.clearAllMocks();
+    });
+  });
+
+  describe('Provisioned by data source section', () => {
+    let variableView: VariablesEditView;
+
+    beforeEach(async () => {
+      const result = await buildTestScene();
+      variableView = result.variableView;
+    });
+
+    it('should not show Provisioned by data source section when no variables have origin', () => {
+      const { queryByText } = render(<variableView.Component model={variableView} />);
+
+      expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
+    });
+
+    // remove test when we remove the variable tab in dashboard settings
+    it('should show Provisioned by data source section when at least one variable has origin', async () => {
+      const variables = variableView.getVariableSet().state.variables;
+      const originVariable = new CustomVariable({
+        name: 'dsVar',
+        query: 'val1, val2',
+        value: 'val1',
+        text: 'val1',
+        origin: { type: 'datasource', group: 'prometheus' },
+      });
+      variableView.getVariableSet().setState({ variables: [...variables, originVariable] });
+
+      const { getByText } = render(<variableView.Component model={variableView} />);
+
+      expect(getByText('Provisioned by data source')).toBeInTheDocument();
     });
   });
 

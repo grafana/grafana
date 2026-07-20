@@ -1,14 +1,16 @@
-import { fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import type { DataSourceApi } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
-import { DataSourceRef, type DataQuery } from '@grafana/schema';
+import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { QueryEditorRows, Props } from './QueryEditorRows';
+import { QueryEditorRows, type Props } from './QueryEditorRows';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
@@ -21,7 +23,9 @@ const mockVariable = mockDataSource({
 });
 
 const dsSrvMock: Pick<DataSourceSrv, 'get' | 'getList' | 'getInstanceSettings'> = {
-  get: jest.fn(async () => ({ getDefaultQuery: undefined }) as unknown as DataSourceApi),
+  get: jest.fn(
+    async () => ({ getDefaultQuery: undefined, type: DataSourceType.Alertmanager }) as unknown as DataSourceApi
+  ),
   getList: jest.fn((filters?: GetDataSourceListFilters) => (filters?.variables ? [mockDS, mockVariable] : [mockDS])),
   getInstanceSettings: jest.fn(() => mockDS),
 };
@@ -87,6 +91,79 @@ describe('QueryEditorRows', () => {
       ],
       { skipAutoImport: true }
     );
+  });
+
+  it('Should replace a single query with multiple queries in place, preserving the original refId for the first', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: jest.fn(),
+      onRunQueries: onRunQueriesMock,
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacements = [
+      { refId: 'X', datasource: mockDS, expr: 'q1' },
+      { refId: 'Y', datasource: mockDS, expr: 'q2' },
+      { refId: 'Z', datasource: mockDS, expr: 'q3' },
+    ];
+
+    component.onReplaceQueries(replacements, 0);
+
+    expect(onQueriesChangeMock).toHaveBeenCalledWith(
+      [
+        { ...replacements[0], refId: 'A' }, // first reuses the replaced query's refId
+        { ...replacements[1], refId: 'C' }, // rest get fresh refIds that don't collide with B
+        { ...replacements[2], refId: 'D' },
+        props.queries[1], // second query (B) unchanged
+      ],
+      { skipAutoImport: true }
+    );
+    expect(onRunQueriesMock).toHaveBeenCalled();
+  });
+
+  it('Should be a no-op when replacing with an empty query list', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
+
+    const component = new QueryEditorRows({
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: jest.fn(),
+      onRunQueries: onRunQueriesMock,
+    });
+
+    component.onReplaceQueries([], 0);
+
+    expect(onQueriesChangeMock).not.toHaveBeenCalled();
+    expect(onRunQueriesMock).not.toHaveBeenCalled();
+  });
+
+  it('Should switch to mixed datasource when replacing with multiple queries spanning datasources', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onUpdateDatasourcesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: onUpdateDatasourcesMock,
+      onRunQueries: jest.fn(),
+      dsSettings: { ...props.dsSettings, uid: 'current-datasource' },
+      queries: [{ datasource: { uid: 'current-datasource', type: 'prometheus' }, refId: 'A' }],
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacements = [
+      { refId: 'X', datasource: { uid: 'prom', type: 'prometheus' }, expr: 'q1' },
+      { refId: 'Y', datasource: { uid: 'loki', type: 'loki' }, expr: 'q2' },
+    ];
+
+    component.onReplaceQueries(replacements, 0);
+
+    expect(onUpdateDatasourcesMock).toHaveBeenCalledWith({ uid: MIXED_DATASOURCE_NAME });
   });
 
   it('Should call onUpdateDatasources when replacing query with different datasource creates mixed scenario', () => {
@@ -212,7 +289,7 @@ describe('QueryEditorRows', () => {
     const {
       renderResult: { rerender },
     } = renderScenario();
-    expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(2);
+    expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(2);
 
     rerender(
       <QueryEditorRows
@@ -226,12 +303,24 @@ describe('QueryEditorRows', () => {
       />
     );
 
-    expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(1);
+    expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
+  });
+
+  it('Should mark each query row with the datasource plugin boundary', async () => {
+    renderScenario();
+
+    const rowA = await screen.findByTestId(
+      selectors.components.Plugins.queryEditorRow(DataSourceType.Alertmanager, 'A')
+    );
+    expect(rowA).toHaveAttribute('data-plugin-id', DataSourceType.Alertmanager);
+    expect(
+      await screen.findByTestId(selectors.components.Plugins.queryEditorRow(DataSourceType.Alertmanager, 'B'))
+    ).toBeInTheDocument();
   });
 
   it('Should be able to expand and collapse queries', async () => {
     renderScenario();
-    const queryEditorRows = await screen.findAllByTestId('query-editor-row');
+    const queryEditorRows = await screen.findAllByTestId(selectors.components.QueryEditorRows.rows);
 
     for (const childQuery of queryEditorRows) {
       const toggleExpandButton = queryByLabelText(childQuery, 'Collapse query row') as HTMLElement;
@@ -245,12 +334,32 @@ describe('QueryEditorRows', () => {
     }
   });
 
+  it('Should have proper keyboard navigation for expand/collapse buttons', async () => {
+    const user = userEvent.setup();
+    renderScenario();
+    const queryEditorRows = await screen.findAllByTestId(selectors.components.QueryEditorRows.rows);
+
+    for (const childQuery of queryEditorRows) {
+      const toggleExpandButton = queryByLabelText(childQuery, 'Collapse query row') as HTMLElement;
+      act(() => toggleExpandButton.focus());
+      expect(toggleExpandButton).toHaveAttribute('aria-expanded', 'true');
+
+      // Toggle with Enter
+      await user.keyboard('{Enter}');
+      expect(toggleExpandButton).toHaveAttribute('aria-expanded', 'false');
+
+      // Toggle with Space
+      await user.keyboard(' ');
+      expect(toggleExpandButton).toHaveAttribute('aria-expanded', 'true');
+    }
+  });
+
   it('Should be able to duplicate queries', async () => {
     const onAddQuery = jest.fn();
     const onQueryCopied = jest.fn();
 
     renderScenario({ onAddQuery, onQueryCopied });
-    const queryEditorRows = await screen.findAllByTestId('query-editor-row');
+    const queryEditorRows = await screen.findAllByTestId(selectors.components.QueryEditorRows.rows);
     queryEditorRows.map(async (childQuery) => {
       const duplicateQueryButton = queryByLabelText(childQuery, 'Duplicate query') as HTMLElement;
 
@@ -268,7 +377,7 @@ describe('QueryEditorRows', () => {
     const onQueryRemoved = jest.fn();
     renderScenario({ onQueriesChange, onQueryRemoved });
 
-    const queryEditorRows = await screen.findAllByTestId('query-editor-row');
+    const queryEditorRows = await screen.findAllByTestId(selectors.components.QueryEditorRows.rows);
     queryEditorRows.map(async (childQuery) => {
       const deleteQueryButton = queryByLabelText(childQuery, 'Remove query') as HTMLElement;
 

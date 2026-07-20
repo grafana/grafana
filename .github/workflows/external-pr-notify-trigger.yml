@@ -1,0 +1,76 @@
+name: External PR Notify Trigger
+
+on:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers]
+    # Fire when an external PR is opened. Previously this keyed off the
+    # 'pr/external' labeled event, but that label is applied downstream (by the
+    # handler, once org membership is confirmed) rather than up front, so the
+    # labeled event no longer arrives. Firing on 'opened' is safe: this job runs
+    # base-ref code only, and the authoritative external check (org-membership)
+    # gates all downstream work in the handler.
+    types: [opened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notify-pr-trigger-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    name: Capture PR metadata for handler
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read       # checkout champions list
+      pull-requests: write # apply community/champion label
+    if: |
+      !contains(github.event.pull_request.labels.*.name, 'pr/auto-triaged') &&
+      contains(fromJSON('["NONE", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER", "CONTRIBUTOR"]'), github.event.pull_request.author_association)
+
+    steps:
+      - name: Checkout community champions list
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/community-champions.json
+
+      - name: Apply community/champion label if author is a known champion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ ! -f ".github/community-champions.json" ]; then
+            echo "::notice::No community-champions.json found, skipping champion check"
+          else
+            IS_CHAMPION=$(node -e "
+              const data = JSON.parse(require('fs').readFileSync('.github/community-champions.json', 'utf-8'));
+              const list = Array.isArray(data.champions) ? data.champions : [];
+              const author = process.env.PR_AUTHOR || '';
+              const match = list.some(h => typeof h === 'string' && h.toLowerCase() === author.toLowerCase());
+              process.stdout.write(match ? 'true' : 'false');
+            ")
+            echo "Author: $PR_AUTHOR | Champion: $IS_CHAMPION"
+            if [ "$IS_CHAMPION" = "true" ]; then
+              gh label create "community/champion" \
+                --color "FFD700" \
+                --description "Opened by a community champion" \
+                --repo "$REPO" 2>/dev/null || true
+              gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "community/champion"
+            fi
+          fi
+
+      - name: Save PR number for handler workflow
+        run: |
+          echo '${{ github.event.pull_request.number }}' > pr-number.txt
+          echo "PR number: $(cat pr-number.txt)"
+
+      - name: Upload PR number
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: pr-number
+          path: pr-number.txt
+          retention-days: 1

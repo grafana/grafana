@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
-import { SetupServer } from 'msw/node';
+import { type SetupServer } from 'msw/node';
 
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from '../../../../types/unified-alerting-dto';
+import { type RulerRuleGroupDTO, type RulerRulesConfigDTO } from '../../../../types/unified-alerting-dto';
 
 export function mockRulerRulesApiResponse(server: SetupServer, rulesSourceName: string, response: RulerRulesConfigDTO) {
   server.use(http.get(`/api/ruler/${rulesSourceName}/api/v1/rules`, () => HttpResponse.json(response)));

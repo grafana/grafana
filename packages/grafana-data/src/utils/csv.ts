@@ -1,13 +1,13 @@
 // Libraries
 import { defaults, isObject } from 'lodash';
-import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
+import Papa, { type ParseConfig, type Parser, type ParseResult } from 'papaparse';
 
 // Types
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
-import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { guessFieldTypeFromValue } from '../dataframe/guessFieldType';
 import { getFieldDisplayName } from '../field/fieldState';
-import { DataFrame, Field, FieldConfig, FieldType } from '../types/dataFrame';
-import { formattedValueToString } from '../valueFormats/valueFormats';
+import { type DataFrame, type Field, type FieldConfig, FieldType } from '../types/dataFrame';
+import { formattedValueToString } from '../valueFormats/baseFormatters';
 
 export enum CSVHeaderStyle {
   full,

@@ -293,7 +293,7 @@ func readValues(iter *sdkjsoniter.Iterator, hasTimeColumn bool) (valueFields dat
 				}
 				valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableBool, colIdx)
 				maybeFixValueFieldType(valueFields, data.FieldTypeNullableBool, colIdx)
-				tryToAppendValue(valueFields, util.ToPtr(b.ToBool()), colIdx)
+				tryToAppendValue(valueFields, new(b.ToBool()), colIdx)
 			case jsoniter.NilValue:
 				_, _ = iter.Read()
 				if len(valueFields) <= colIdx {

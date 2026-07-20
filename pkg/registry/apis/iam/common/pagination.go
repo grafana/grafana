@@ -15,7 +15,11 @@ type Pagination struct {
 func PaginationFromListOptions(options *internalversion.ListOptions) Pagination {
 	limit := options.Limit
 	if limit < 1 {
-		limit = 50
+		limit = DefaultListLimit
+	}
+
+	if limit > MaxListLimit {
+		limit = MaxListLimit
 	}
 
 	return Pagination{
@@ -26,7 +30,7 @@ func PaginationFromListOptions(options *internalversion.ListOptions) Pagination 
 
 func PaginationFromListQuery(query url.Values) Pagination {
 	return Pagination{
-		Limit:    parseIntWithFallback(query.Get("limit"), 1, 50),
+		Limit:    parseIntWithFallback(query.Get("limit"), 1, DefaultListLimit),
 		Continue: parseIntWithFallback(query.Get("continue"), 0, 0),
 	}
 }

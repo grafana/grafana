@@ -5,7 +5,7 @@ import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@gr
 import * as helpers from '../helpers';
 import * as hooks from '../state/hooks';
 import { initialState } from '../state/reducer';
-import { CatalogPlugin, PluginStatus, ReducerState, Version } from '../types';
+import { type CatalogPlugin, PluginStatus, type ReducerState, type Version } from '../types';
 
 import { getInstallControlsDisabled, getPluginStatus, PluginActions } from './PluginActions';
 
@@ -233,6 +233,10 @@ describe('PluginActions', () => {
 
 function createPluginStub(overrides?: Partial<CatalogPlugin>): CatalogPlugin {
   return {
+    managed: {
+      enabled: false,
+      strategy: undefined,
+    },
     name: 'Test Plugin',
     id: 'test-plugin',
     description: 'Test plugin',
@@ -258,7 +262,6 @@ function createPluginStub(overrides?: Partial<CatalogPlugin>): CatalogPlugin {
     isDev: false,
     isEnterprise: false,
     isDeprecated: false,
-    isManaged: false,
     isPreinstalled: { found: false, withVersion: false },
     ...overrides,
   };

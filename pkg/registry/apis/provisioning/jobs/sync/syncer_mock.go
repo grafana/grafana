@@ -8,6 +8,8 @@ import (
 	jobs "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	mock "github.com/stretchr/testify/mock"
 
+	quotas "github.com/grafana/grafana/apps/provisioning/pkg/quotas"
+
 	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
 	resources "github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -28,9 +30,9 @@ func (_m *MockSyncer) EXPECT() *MockSyncer_Expecter {
 	return &MockSyncer_Expecter{mock: &_m.Mock}
 }
 
-// Sync provides a mock function with given fields: ctx, repo, options, repositoryResources, clients, progress
-func (_m *MockSyncer) Sync(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder) (string, error) {
-	ret := _m.Called(ctx, repo, options, repositoryResources, clients, progress)
+// Sync provides a mock function with given fields: ctx, repo, options, repositoryResources, clients, progress, quotaTracker
+func (_m *MockSyncer) Sync(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error) {
+	ret := _m.Called(ctx, repo, options, repositoryResources, clients, progress, quotaTracker)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Sync")
@@ -38,17 +40,17 @@ func (_m *MockSyncer) Sync(ctx context.Context, repo repository.ReaderWriter, op
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) (string, error)); ok {
-		return rf(ctx, repo, options, repositoryResources, clients, progress)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) (string, error)); ok {
+		return rf(ctx, repo, options, repositoryResources, clients, progress, quotaTracker)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) string); ok {
-		r0 = rf(ctx, repo, options, repositoryResources, clients, progress)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) string); ok {
+		r0 = rf(ctx, repo, options, repositoryResources, clients, progress, quotaTracker)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) error); ok {
-		r1 = rf(ctx, repo, options, repositoryResources, clients, progress)
+	if rf, ok := ret.Get(1).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) error); ok {
+		r1 = rf(ctx, repo, options, repositoryResources, clients, progress, quotaTracker)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -68,13 +70,14 @@ type MockSyncer_Sync_Call struct {
 //   - repositoryResources resources.RepositoryResources
 //   - clients resources.ResourceClients
 //   - progress jobs.JobProgressRecorder
-func (_e *MockSyncer_Expecter) Sync(ctx interface{}, repo interface{}, options interface{}, repositoryResources interface{}, clients interface{}, progress interface{}) *MockSyncer_Sync_Call {
-	return &MockSyncer_Sync_Call{Call: _e.mock.On("Sync", ctx, repo, options, repositoryResources, clients, progress)}
+//   - quotaTracker quotas.QuotaTracker
+func (_e *MockSyncer_Expecter) Sync(ctx interface{}, repo interface{}, options interface{}, repositoryResources interface{}, clients interface{}, progress interface{}, quotaTracker interface{}) *MockSyncer_Sync_Call {
+	return &MockSyncer_Sync_Call{Call: _e.mock.On("Sync", ctx, repo, options, repositoryResources, clients, progress, quotaTracker)}
 }
 
-func (_c *MockSyncer_Sync_Call) Run(run func(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder)) *MockSyncer_Sync_Call {
+func (_c *MockSyncer_Sync_Call) Run(run func(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker)) *MockSyncer_Sync_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.ReaderWriter), args[2].(v0alpha1.SyncJobOptions), args[3].(resources.RepositoryResources), args[4].(resources.ResourceClients), args[5].(jobs.JobProgressRecorder))
+		run(args[0].(context.Context), args[1].(repository.ReaderWriter), args[2].(v0alpha1.SyncJobOptions), args[3].(resources.RepositoryResources), args[4].(resources.ResourceClients), args[5].(jobs.JobProgressRecorder), args[6].(quotas.QuotaTracker))
 	})
 	return _c
 }
@@ -84,7 +87,7 @@ func (_c *MockSyncer_Sync_Call) Return(_a0 string, _a1 error) *MockSyncer_Sync_C
 	return _c
 }
 
-func (_c *MockSyncer_Sync_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) (string, error)) *MockSyncer_Sync_Call {
+func (_c *MockSyncer_Sync_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) (string, error)) *MockSyncer_Sync_Call {
 	_c.Call.Return(run)
 	return _c
 }

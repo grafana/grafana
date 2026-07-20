@@ -4,6 +4,7 @@ import { FrameMatcherID } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
+import { trackTransformationToolAction } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 export function TransformationActionButtons() {
@@ -39,7 +40,6 @@ export function TransformationActionButtons() {
     return null;
   }
 
-  const hasHelp = selectedTransformation.registryItem?.help;
   const config = selectedTransformation.transformConfig;
 
   // Show filter button as active if filter property exists on the transformation config
@@ -64,17 +64,18 @@ export function TransformationActionButtons() {
 
   return (
     <Stack gap={1}>
-      {hasHelp && (
-        <Button
-          size="sm"
-          fill="text"
-          icon="question-circle"
-          variant={transformToggles.showHelp ? 'primary' : 'secondary'}
-          onClick={transformToggles.toggleHelp}
-          tooltip={helpLabel}
-          aria-label={helpLabel}
-        />
-      )}
+      <Button
+        size="sm"
+        fill="text"
+        icon="question-circle"
+        variant={transformToggles.showHelp ? 'primary' : 'secondary'}
+        onClick={() => {
+          trackTransformationToolAction('toggle_help');
+          transformToggles.toggleHelp();
+        }}
+        tooltip={helpLabel}
+        aria-label={helpLabel}
+      />
 
       {showFilterButton && (
         <Button
@@ -82,7 +83,10 @@ export function TransformationActionButtons() {
           fill="text"
           icon="filter"
           variant={isFilterActive ? 'primary' : 'secondary'}
-          onClick={handleFilterToggle}
+          onClick={() => {
+            trackTransformationToolAction('toggle_filter');
+            handleFilterToggle();
+          }}
           tooltip={filterLabel}
           aria-label={filterLabel}
         />
@@ -93,7 +97,10 @@ export function TransformationActionButtons() {
         fill="text"
         icon="bug"
         variant={transformToggles.showDebug ? 'primary' : 'secondary'}
-        onClick={transformToggles.toggleDebug}
+        onClick={() => {
+          trackTransformationToolAction('toggle_debug');
+          transformToggles.toggleDebug();
+        }}
         tooltip={t('query-editor-next.action.transformation-debug', 'Debug')}
         aria-label={t('query-editor-next.action.transformation-debug', 'Debug')}
       />

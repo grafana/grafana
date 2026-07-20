@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"iter"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
@@ -29,43 +27,27 @@ var (
 )
 
 type ResourcePermSqlBackend struct {
+	resource.UnimplementedStorageBackend
+
 	dbProvider    legacysql.LegacyDatabaseProvider
 	identityStore IdentityStore
 	logger        log.Logger
-
-	mappers        map[schema.GroupResource]Mapper // group/resource -> rbac mapper
-	reverseMappers map[string]schema.GroupResource // rbac kind -> group/resource
+	mappers       *MappersRegistry
 
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *ResourcePermSqlBackend {
+func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers *MappersRegistry) *ResourcePermSqlBackend {
+	store := idStore.NewLegacySQLStores(dbProvider)
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
-		identityStore: idStore.NewLegacySQLStores(dbProvider),
+		identityStore: store,
 		logger:        log.New("resourceperm_storage_backend"),
-
-		mappers: map[schema.GroupResource]Mapper{
-			{Group: "folder.grafana.app", Resource: "folders"}:       NewMapper("folders", defaultLevels),
-			{Group: "dashboard.grafana.app", Resource: "dashboards"}: NewMapper("dashboards", defaultLevels),
-		},
-		reverseMappers: map[string]schema.GroupResource{
-			"folders":    {Group: "folder.grafana.app", Resource: "folders"},
-			"dashboards": {Group: "dashboard.grafana.app", Resource: "dashboards"},
-		},
-
-		subscribers: make([]chan *resource.WrittenEvent, 0),
-		mutex:       sync.Mutex{},
+		mappers:       mappers,
+		subscribers:   make([]chan *resource.WrittenEvent, 0),
+		mutex:         sync.Mutex{},
 	}
-}
-
-func (s *ResourcePermSqlBackend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
-	return []resource.ResourceStats{}, errNotImplemented
-}
-
-func (s *ResourcePermSqlBackend) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
-	return 0, errNotImplemented
 }
 
 func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(resource.ListIterator) error) (int64, error) {
@@ -104,6 +86,10 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+			logger.Warn("Namespace not found", "error", err)
+			return 0, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), opts.Key.Namespace)
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return 0, apierrors.NewInternalError(errDatabaseHelper)
 	}
@@ -124,12 +110,6 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	}
 
 	return s.latestUpdate(ctx, dbHelper, ns), nil
-}
-
-func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
-	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
-		yield(nil, errNotImplemented)
-	}
 }
 
 func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
@@ -153,8 +133,12 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	ctx = request.WithNamespace(ctx, ns.Value)
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+			logger.Warn("Namespace not found", "error", err)
+			rsp.Error = resource.AsErrorResult(apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), req.Key.Namespace))
+			return rsp
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return rsp
 	}
@@ -179,11 +163,6 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	}
 
 	return rsp
-}
-
-func (s *ResourcePermSqlBackend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	stream := make(chan *resource.WrittenEvent, 10)
-	return stream, nil
 }
 
 func isValidKey(key *resourcepb.ResourceKey, requireName bool) error {
@@ -229,8 +208,11 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	ctx = request.WithNamespace(ctx, ns.Value)
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+			logger.Warn("Namespace not found", "error", err)
+			return 0, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Namespace)
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return 0, errDatabaseHelper
 	}
@@ -295,10 +277,4 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	}
 
 	return rv, err
-}
-
-func (s *ResourcePermSqlBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	return func(yield func(resource.ResourceLastImportTime, error) bool) {
-		yield(resource.ResourceLastImportTime{}, errNotImplemented)
-	}
 }

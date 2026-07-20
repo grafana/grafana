@@ -4,13 +4,13 @@ import { base64UrlEncode } from '@grafana/alerting';
 import {
   API_GROUP,
   API_VERSION,
-  ObjectMeta,
-  TimeInterval,
+  type ObjectMeta,
+  type TimeInterval,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
 import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';
-import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
+import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import {
   isK8sEntityProvisioned,
@@ -18,7 +18,7 @@ import {
   shouldUseK8sApi,
   stringifyFieldSelector,
 } from 'app/features/alerting/unified/utils/k8s/utils';
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';

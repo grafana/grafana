@@ -1,10 +1,16 @@
 import { store } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { SceneGridItemLike } from '@grafana/scenes';
-import { isTemplateDashboardAssistantEnabled } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
+import { config, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { type SceneGridItemLike } from '@grafana/scenes';
+import {
+  isTemplateDashboardAssistantEnabled,
+  isSuggestedDashboardAssistantEnabled,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
+import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 
@@ -47,6 +53,7 @@ export async function trackDashboardSceneCreatedOrSaved(
   initialProperties: {
     name: string;
     url: string;
+    diff_count: number;
     transformation_counts?: Record<string, number>;
     expression_counts?: Record<string, number>;
   }
@@ -87,6 +94,18 @@ export async function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }),
   });
+
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) && isNew) {
+    const { pathname, search } = locationService.getLocation();
+    const isOnTemplateRoute = pathname === DASHBOARD_LIBRARY_ROUTES.Template;
+    const templateUid = new URLSearchParams(search).get('dashboardTemplateUid');
+    if (isOnTemplateRoute && templateUid) {
+      CustomDashboardTemplateInteractions.dashboardSavedFromTemplate({
+        dashboardUid: dashboard.state.uid ?? '',
+        templateUid,
+      });
+    }
+  }
 }
 
 export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
@@ -120,10 +139,12 @@ async function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) 
   const datasourceTypes = getDatasourceTypes(dashboard);
 
   const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
+  const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
 
   return {
     isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
     isDashboardTemplatesAssistantEnabled,
+    isSuggestedDashboardAssistantButtonEnabled,
     datasourceTypes,
     sourceEntryPoint,
     libraryItemId,

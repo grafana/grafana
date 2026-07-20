@@ -1,8 +1,0 @@
-{
-  "RefId": "A",
-  "ExemplarQuery": true,
-  "Start": 1654086510,
-  "End": 1654086810,
-  "Step": 15,
-  "Expr": "histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))"
-}

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import ReactDiffViewer, { ReactDiffViewerProps, DiffMethod } from 'react-diff-viewer-continued';
+import ReactDiffViewer, { type ReactDiffViewerProps, DiffMethod } from 'react-diff-viewer-continued';
 import tinycolor from 'tinycolor2';
 
 import { useTheme2 } from '@grafana/ui';
 
+// NOTE: Wrap LazyDiffViewer with <Suspense>
 export const DiffViewer = ({ oldValue, newValue, ...diffProps }: ReactDiffViewerProps) => {
   const theme = useTheme2();
 

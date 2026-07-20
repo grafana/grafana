@@ -1,5 +1,13 @@
 import { Chance } from 'chance';
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
+
+import type {
+  DescendantCounts,
+  Folder,
+  FolderInfoList,
+  FolderList,
+  OwnerReference,
+} from '@grafana/api-clients/rtkq/folder/v1beta1';
 
 import { wellFormedTree } from '../../../../fixtures/folders';
 import { MOCK_TEAMS } from '../../../../fixtures/teams';
@@ -12,7 +20,7 @@ const baseResponse = {
   apiVersion: 'folder.grafana.app/v1beta1',
 };
 
-const specialCaseOwnerRef = [
+const specialCaseOwnerRef: OwnerReference[] = [
   {
     apiVersion: 'iam.grafana.app/v0alpha1',
     kind: 'Team',
@@ -23,7 +31,7 @@ const specialCaseOwnerRef = [
   },
 ];
 
-const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string) => {
+const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string): Folder => {
   return {
     ...baseResponse,
 
@@ -36,12 +44,12 @@ const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: num
         // TODO: Generalise annotations in fixture data
         'grafana.app/createdBy': 'user:1',
         'grafana.app/updatedBy': 'user:2',
-        'grafana.app/managedBy': 'managedBy' in folder ? folder.managedBy : 'user',
+        'grafana.app/managedBy': ('managedBy' in folder ? folder.managedBy : 'user') ?? 'user',
         'grafana.app/updatedTimestamp': '2024-01-01T00:00:00Z',
-        'grafana.app/folder': folder.kind === 'folder' ? folder.parentUID : undefined,
+        ...(folder.kind === 'folder' && folder.parentUID ? { 'grafana.app/folder': folder.parentUID } : {}),
       },
       labels: {
-        'grafana.app/deprecatedInternalID': id ?? '123',
+        'grafana.app/deprecatedInternalID': String(id ?? '123'),
       },
       ...(folder.uid === folderA.item.uid ? { ownerReferences: specialCaseOwnerRef } : {}),
     },
@@ -49,112 +57,104 @@ const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: num
   };
 };
 
+export const BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
+export const FOLDERS = `${BASE}/folders`;
+export const FOLDER_BY_NAME = `${FOLDERS}/:folderUid`;
+
 const folderNotFoundError = getErrorResponse('folder not found', 404);
 
 const getFolderHandler = () =>
-  http.get<{ folderUid: string; namespace: string }>(
-    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid',
-    ({ params }) => {
-      const { folderUid, namespace } = params;
-      const response = mockTree.find(({ item }) => {
-        return item.uid === folderUid;
-      });
+  http.get<{ folderUid: string; namespace: string }>(FOLDER_BY_NAME, ({ params }) => {
+    const { folderUid, namespace } = params;
+    const response = mockTree.find(({ item }) => {
+      return item.uid === folderUid;
+    });
 
-      if (!response) {
-        return HttpResponse.json(folderNotFoundError, { status: 404 });
-      }
-
-      const appPlatformFolder = folderToAppPlatform(response.item, undefined, namespace);
-
-      return HttpResponse.json(appPlatformFolder);
+    if (!response) {
+      return HttpResponse.json(folderNotFoundError, { status: 404 });
     }
-  );
+
+    const appPlatformFolder = folderToAppPlatform(response.item, undefined, namespace);
+
+    return HttpResponse.json(appPlatformFolder);
+  });
 
 const getFolderParentsHandler = () =>
-  http.get<{ folderUid: string; namespace: string }>(
-    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid/parents',
-    ({ params }) => {
-      const { folderUid } = params;
+  http.get<{ folderUid: string; namespace: string }>(`${FOLDER_BY_NAME}/parents`, ({ params }) => {
+    const { folderUid } = params;
 
-      const folder = mockTree.find(({ item }) => {
+    const folder = mockTree.find(({ item }) => {
+      return item.kind === 'folder' && item.uid === folderUid;
+    });
+    if (!folder || folder.item.kind !== 'folder') {
+      return HttpResponse.json(folderNotFoundError, { status: 404 });
+    }
+
+    const findParents = (parents: Array<(typeof mockTree)[number]>, folderUid?: string) => {
+      if (!folderUid) {
+        return parents;
+      }
+
+      const parent = mockTree.find(({ item }) => {
         return item.kind === 'folder' && item.uid === folderUid;
       });
-      if (!folder || folder.item.kind !== 'folder') {
-        return HttpResponse.json(folderNotFoundError, { status: 404 });
+
+      if (parent) {
+        parents.push(parent);
+        return findParents(parents, parent.item.kind === 'folder' ? parent.item.parentUID : undefined);
       }
+      return parents;
+    };
 
-      const findParents = (parents: Array<(typeof mockTree)[number]>, folderUid?: string) => {
-        if (!folderUid) {
-          return parents;
-        }
+    const parents = findParents([], folder?.item?.parentUID);
 
-        const parent = mockTree.find(({ item }) => {
-          return item.kind === 'folder' && item.uid === folderUid;
-        });
+    const mapped = parents.map((parent) => ({
+      name: parent.item.uid,
+      title: parent.item.title!,
+      parent: parent.item.kind === 'folder' ? parent.item.parentUID : undefined,
+    }));
 
-        if (parent) {
-          parents.push(parent);
-          return findParents(parents, parent.item.kind === 'folder' ? parent.item.parentUID : undefined);
-        }
-        return parents;
-      };
-
-      const parents = findParents([], folder?.item?.parentUID);
-
-      const mapped = parents.map((parent) => ({
-        name: parent.item.uid,
-        title: parent.item.title,
-        parentUid: parent.item.kind === 'folder' ? parent.item.parentUID : undefined,
-      }));
-
-      if (folder) {
-        mapped.push({
-          name: folder.item.uid,
-          title: folder.item.title,
-          parentUid: folder.item.parentUID,
-        });
-      }
-
-      return HttpResponse.json({
-        ...baseResponse,
-        kind: 'FolderInfoList',
-        metadata: {},
-        items: mapped,
+    if (folder) {
+      mapped.push({
+        name: folder.item.uid,
+        title: folder.item.title!,
+        parent: folder.item.parentUID,
       });
     }
-  );
 
-// TODO: Pull this from common API types rather than partially redefining here
-type PartialFolderPayload = { spec: { title: string }; metadata: { annotations: Record<string, string> } };
+    const response: FolderInfoList = {
+      ...baseResponse,
+      kind: 'FolderInfoList',
+      metadata: {},
+      items: mapped,
+    };
+
+    return HttpResponse.json(response);
+  });
+
+type PartialFolderPayload = Pick<Folder, 'spec' | 'metadata'>;
 
 const createFolderHandler = () =>
-  http.post<{ namespace: string }, PartialFolderPayload>(
-    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders',
-    async ({ params, request }) => {
-      const { namespace } = params;
-      const body = await request.json();
-      const title = body?.spec?.title;
-      if (!body || !title) {
-        return HttpResponse.json(getErrorResponse('folder title cannot be empty', 400), { status: 400 });
-      }
-
-      const parentUid = body?.metadata?.annotations?.['grafana.app/folder'];
-      const random = Chance(title);
-      const uid = random.string({ length: 45 });
-      const id = random.integer({ min: 1, max: 1000 });
-
-      const appPlatformFolder = folderToAppPlatform(
-        { uid, title, parentUID: parentUid, kind: 'folder' },
-        id,
-        namespace
-      );
-      return HttpResponse.json(appPlatformFolder);
+  http.post<{ namespace: string }, PartialFolderPayload>(FOLDERS, async ({ params, request }) => {
+    const { namespace } = params;
+    const body = await request.json();
+    const title = body?.spec?.title;
+    if (!body || !title) {
+      return HttpResponse.json(getErrorResponse('folder title cannot be empty', 400), { status: 400 });
     }
-  );
+
+    const parentUid = body?.metadata?.annotations?.['grafana.app/folder'];
+    const random = Chance(title);
+    const uid = random.string({ length: 45 });
+    const id = random.integer({ min: 1, max: 1000 });
+
+    const appPlatformFolder = folderToAppPlatform({ uid, title, parentUID: parentUid, kind: 'folder' }, id, namespace);
+    return HttpResponse.json(appPlatformFolder);
+  });
 
 const replaceFolderHandler = () =>
   http.put<{ folderUid: string; namespace: string }, PartialFolderPayload>(
-    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid',
+    FOLDER_BY_NAME,
     async ({ params, request }) => {
       const body = await request.json();
       const { folderUid } = params;
@@ -185,7 +185,7 @@ type JsonPatchPayload = Array<{
 
 const updateFolderHandler = () =>
   http.patch<{ folderUid: string; namespace: string }, PartialFolderPayload | JsonPatchPayload>(
-    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid',
+    FOLDER_BY_NAME,
     async ({ params, request }) => {
       const body = await request.json();
       const { folderUid } = params;
@@ -227,7 +227,12 @@ const updateFolderHandler = () =>
     }
   );
 
-const getMockFolderCounts = (folders: number, dashboards: number, library_elements: number, alertrules: number) => {
+const getMockFolderCounts = (
+  folders: number,
+  dashboards: number,
+  library_elements: number,
+  alertrules: number
+): DescendantCounts => {
   return {
     kind: 'DescendantCounts',
     apiVersion: 'folder.grafana.app/v1beta1',
@@ -263,7 +268,7 @@ const getMockFolderCounts = (folders: number, dashboards: number, library_elemen
 
 const folderCountsHandler = () =>
   http.get<{ folderUid: string; namespace: string }, PartialFolderPayload>(
-    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid/counts',
+    `${FOLDER_BY_NAME}/counts`,
     async ({ params }) => {
       const { folderUid } = params;
       const matchedFolder = mockTree.find(({ item }) => {
@@ -284,17 +289,39 @@ const folderCountsHandler = () =>
   );
 
 const getFolderListHandler = () =>
-  http.get<{ namespace: string }>('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', ({ params }) => {
+  http.get<{ namespace: string }>(FOLDERS, ({ params }) => {
     const { namespace } = params;
     const folders = mockTree.map(({ item }, index) => folderToAppPlatform(item, index + 1, namespace));
 
-    return HttpResponse.json({
+    const response: FolderList = {
       kind: 'FolderList',
       apiVersion: 'folder.grafana.app/v1beta1',
       metadata: {},
       items: folders,
-    });
+    };
+
+    return HttpResponse.json(response);
   });
+
+export const customCreateFolderHandler = (resolver: HttpResponseResolver) => http.post(FOLDERS, resolver);
+
+const customFolderCountsHandler = (resolver: HttpResponseResolver) =>
+  http.get('/apis/folder.grafana.app/:version/namespaces/:namespace/folders/:folderUid/counts', resolver);
+
+export const mockFolderCountsHandler = (panels: number, rules: number) =>
+  customFolderCountsHandler(() =>
+    HttpResponse.json({
+      kind: 'DescendantCounts',
+      apiVersion: 'folder.grafana.app/v1beta1',
+      counts: [
+        { group: 'sql-fallback', resource: 'library_elements', count: panels },
+        { group: 'sql-fallback', resource: 'alertrules', count: rules },
+      ],
+    })
+  );
+
+export const mockFolderCountsErrorHandler = (status = 500) =>
+  customFolderCountsHandler(() => HttpResponse.json({ message: 'error' }, { status }));
 
 export default [
   getFolderListHandler(),

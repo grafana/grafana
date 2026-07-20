@@ -3,6 +3,7 @@ package quotas
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -119,22 +120,26 @@ type QuotaGetter interface {
 
 // FixedQuotaGetter returns fixed quota values from static configuration.
 type FixedQuotaGetter struct {
-	quotaStatus provisioning.QuotaStatus
+	quotaStatus atomic.Value // stores provisioning.QuotaStatus
 }
 
 // NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaStatus.
 func NewFixedQuotaGetter(quotaStatus provisioning.QuotaStatus) *FixedQuotaGetter {
-	return &FixedQuotaGetter{
-		quotaStatus: quotaStatus,
-	}
+	f := &FixedQuotaGetter{}
+	f.quotaStatus.Store(quotaStatus)
+	return f
 }
 
 // GetQuotaStatus returns the configured quota limits as a QuotaStatus.
-func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error) {
-	return f.quotaStatus, nil
+func (f *FixedQuotaGetter) GetQuotaStatus(_ context.Context, _ string) (provisioning.QuotaStatus, error) {
+	return f.quotaStatus.Load().(provisioning.QuotaStatus), nil
 }
 
-// Ensure FixedQuotaGetter implements QuotaGetter interface.
+// SetQuotaStatus updates the quota status, allowing runtime changes (primarily for testing).
+func (f *FixedQuotaGetter) SetQuotaStatus(status provisioning.QuotaStatus) {
+	f.quotaStatus.Store(status)
+}
+
 var _ QuotaGetter = (*FixedQuotaGetter)(nil)
 
 func NewQuotaExceededError(err error) *QuotaExceededError {

@@ -1,15 +1,19 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { DataLink, RegistryItem, Action } from '@grafana/data';
-import { PanelOptionsSupplier } from '@grafana/data/internal';
+import { type DataLink, type PanelOptionsSupplier, type RegistryItem, type Action } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ColorDimensionConfig, ScaleDimensionConfig, DirectionDimensionConfig } from '@grafana/schema';
-import { BackgroundConfig, Constraint, LineConfig, Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
+import { type ColorDimensionConfig, type ScaleDimensionConfig, type DirectionDimensionConfig } from '@grafana/schema';
+import {
+  type BackgroundConfig,
+  type Constraint,
+  type LineConfig,
+  type Placement,
+} from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
-import { DimensionContext } from '../dimensions/context';
+import { type LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
+import { type DimensionContext } from '../dimensions/context';
 
-import { StandardEditorConfig } from './types';
+import { type StandardEditorConfig } from './types';
 
 /**
  * This gets saved in panel json
@@ -45,13 +49,6 @@ export interface ConnectionCoordinates {
 
 export enum ConnectionPath {
   Straight = 'straight',
-}
-
-export enum ConnectionDirection {
-  Forward = 'forward',
-  Reverse = 'reverse',
-  Both = 'both',
-  None = 'none',
 }
 
 export interface CanvasConnection {

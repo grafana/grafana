@@ -14,6 +14,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		FindDefaultScope{}.OpenAPIModelName():                  schema_pkg_apis_scope_v0alpha1_FindDefaultScope(ref),
 		FindScopeDashboardBindingsResults{}.OpenAPIModelName(): schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref),
 		FindScopeNavigationsResults{}.OpenAPIModelName():       schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref),
 		FindScopeNodeChildrenResults{}.OpenAPIModelName():      schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref),
@@ -26,12 +27,53 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ScopeList{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
 		ScopeNavigation{}.OpenAPIModelName():                   schema_pkg_apis_scope_v0alpha1_ScopeNavigation(ref),
 		ScopeNavigationList{}.OpenAPIModelName():               schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref),
+		ScopeNavigationOptions{}.OpenAPIModelName():            schema_pkg_apis_scope_v0alpha1_ScopeNavigationOptions(ref),
 		ScopeNavigationSpec{}.OpenAPIModelName():               schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref),
 		ScopeNavigationStatus{}.OpenAPIModelName():             schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref),
 		ScopeNode{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
 		ScopeNodeList{}.OpenAPIModelName():                     schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
 		ScopeNodeSpec{}.OpenAPIModelName():                     schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
 		ScopeSpec{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_FindDefaultScope(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(Scope{}.OpenAPIModelName()),
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			Scope{}.OpenAPIModelName()},
 	}
 }
 
@@ -612,6 +654,33 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			ScopeNavigation{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_ScopeNavigationOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ScopeNavigationOptions documents the optional query parameters accepted by the /find/scope_dashboard_bindings and /find/scope_navigations connect endpoints. This type is not a runtime.Object — it defines the API contract for backends (including external implementations) to support as query params. The Grafana connect handlers do not currently consume these via NewConnectOptions; they parse query params from the request URL directly.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"depth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Depth represents the current nesting level in the rendered navigation tree. 0 or omitted means the request is for a top-level (non-nested) navigation. 1 means the first level of sub-scope expansion, 2 means a sub-scope within a sub-scope, and so on.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"rootScope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RootScope identifies the top-level navigation scope the user started from. When navigating into sub-scopes, this stays constant and tells the backend which scope initiated the navigation session. This allows the backend to tailor its response based on the navigation origin. Omitted for top-level navigation requests.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

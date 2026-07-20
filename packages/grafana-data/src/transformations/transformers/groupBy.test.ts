@@ -1,11 +1,17 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType, Field } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { FieldType, type Field } from '../../types/dataFrame';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
 
-import { GroupByOperationID, groupByTransformer, GroupByTransformerOptions, shouldCalculateField } from './groupBy';
+import {
+  GroupByOperationID,
+  groupByTransformer,
+  type GroupByTransformerOptions,
+  groupValuesByKey,
+  shouldCalculateField,
+} from './groupBy';
 import { DataTransformerID } from './ids';
 
 // returns a simple group by / reducer pair
@@ -558,5 +564,26 @@ describe('shouldCalculateField()', () => {
       fields: { testField: { aggregations, operation } },
     };
     expect(shouldCalculateField(field, options)).toBe(expected);
+  });
+});
+
+describe('groupValuesByKey', () => {
+  it('should set the displayName but not the name', () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [{ name: 'message', type: FieldType.string, values: ['A', 'A'], config: { displayName: 'MyMessage' } }],
+    });
+
+    const result = groupValuesByKey(testSeries, [testSeries.fields[0]]);
+
+    expect(result.get('A')).toMatchObject({
+      MyMessage: {
+        name: 'message',
+        type: FieldType.string,
+        values: ['A', 'A'],
+        config: expect.objectContaining({ displayName: 'MyMessage' }),
+        state: expect.objectContaining({ displayName: 'MyMessage' }),
+      },
+    });
   });
 });

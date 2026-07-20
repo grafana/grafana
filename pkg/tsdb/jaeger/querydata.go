@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
 )
@@ -46,12 +47,12 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 			continue
 		}
 
-		cfg := backend.GrafanaConfigFromContext(ctx)
+		cfg := config.GrafanaConfigFromContext(ctx)
 		useGrpc := cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint")
 		// Handle "Search" query type
 		if query.QueryType == "search" {
 			// TODO: enable routing to gRPC when ready, currently pending on: https://github.com/jaegertracing/jaeger/issues/7594
-			frames, err := dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
+			frames, err := dsInfo.JaegerClient.Search(ctx, &query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue

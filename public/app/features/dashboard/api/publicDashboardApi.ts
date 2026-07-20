@@ -2,21 +2,21 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { t } from '@grafana/i18n';
-import { config, FetchError, isFetchError } from '@grafana/runtime';
+import { config, type FetchError, isFetchError } from '@grafana/runtime';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import {
-  PublicDashboard,
-  PublicDashboardSettings,
+  type PublicDashboard,
+  type PublicDashboardSettings,
   PublicDashboardShareType,
-  SessionDashboard,
-  SessionUser,
+  type SessionDashboard,
+  type SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import {
-  PublicDashboardListWithPagination,
-  PublicDashboardListWithPaginationResponse,
+  type PublicDashboardListWithPagination,
+  type PublicDashboardListWithPaginationResponse,
 } from 'app/features/manage-dashboards/types';
 
 function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {

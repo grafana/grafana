@@ -56,15 +56,12 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper2.timepicker.hidden).toEqual(false);
   });
 
-  it('Shared tooltip functions', () => {
+  it('graphTooltip reflects CursorSync behavior', () => {
     const { scene, wrapper } = setup();
-    expect(wrapper.sharedTooltipModeEnabled()).toBe(false);
-    expect(wrapper.sharedCrosshairModeOnly()).toBe(false);
+    expect(wrapper.graphTooltip).toBe(DashboardCursorSync.Off);
 
     scene.setState({ $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Crosshair })] });
 
-    expect(wrapper.sharedTooltipModeEnabled()).toBe(true);
-    expect(wrapper.sharedCrosshairModeOnly()).toBe(true);
     expect(wrapper.graphTooltip).toBe(DashboardCursorSync.Crosshair);
   });
 
@@ -102,17 +99,21 @@ describe('DashboardModelCompatibilityWrapper', () => {
   it('Checks if annotations are editable', () => {
     const { wrapper, scene } = setup();
 
-    expect(wrapper.canEditAnnotations()).toBe(true);
+    expect(wrapper.canEditAnnotations()).toBe(false);
     expect(wrapper.canEditAnnotations(scene.state.uid)).toBe(false);
 
     scene.setState({
       meta: {
         canEdit: false,
         canMakeEditable: false,
+        annotationsPermissions: {
+          dashboard: { canAdd: true, canEdit: true, canDelete: true },
+        },
       },
     });
 
-    expect(wrapper.canEditAnnotations()).toBe(false);
+    expect(wrapper.canEditAnnotations()).toBe(true);
+    expect(wrapper.canEditAnnotations(scene.state.uid)).toBe(true);
   });
 });
 
@@ -128,11 +129,6 @@ function setup() {
       canEdit: true,
       canMakeEditable: true,
       annotationsPermissions: {
-        organization: {
-          canEdit: true,
-          canAdd: true,
-          canDelete: true,
-        },
         dashboard: {
           canEdit: false,
           canAdd: false,

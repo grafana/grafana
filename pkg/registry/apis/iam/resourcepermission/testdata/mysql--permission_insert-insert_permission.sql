@@ -1,4 +1,4 @@
-INSERT INTO `grafana`.`permission` (role_id, action, scope, created, updated, kind, attribute, identifier)
+INSERT INTO `grafana`.`permission` (role_id, action, scope, created, updated, kind, attribute, identifier, datasource_type)
 VALUES (
     23,
     'dashboards:view',
@@ -7,5 +7,6 @@ VALUES (
     '2025-08-27 21:35:00',
     'dashboard',
     'uid',
-    'dash1'
+    'dash1',
+    ''
 )

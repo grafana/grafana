@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { DraggableProvided } from '@hello-pangea/dnd';
-import { MouseEventHandler } from 'react';
+import { type DraggableProvided } from '@hello-pangea/dnd';
+import { type MouseEventHandler } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -65,6 +66,7 @@ export const QueryOperationRowHeader = ({
             onClick={onRowToggle}
             aria-expanded={isContentVisible}
             aria-controls={id}
+            tabIndex={0}
           />
         )}
         {title && (
@@ -81,7 +83,7 @@ export const QueryOperationRowHeader = ({
       <Stack gap={1} alignItems="center">
         {actionsElement}
         {draggable && (
-          <div onMouseMove={reportDragMousePosition} {...dragHandleProps}>
+          <div onMouseMove={reportDragMousePosition} className={styles.dragHandle} {...dragHandleProps}>
             <Icon title={dragAndDropLabel} name="draggabledots" size="lg" className={styles.dragIcon} />
           </div>
         )}
@@ -112,6 +114,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     overflow: 'hidden',
+  }),
+  dragHandle: css({
+    borderRadius: theme.shape.radius.default,
+    '&:focus-visible': {
+      ...getFocusStyles(theme),
+    },
   }),
   dragIcon: css({
     cursor: 'grab',

@@ -67,7 +67,7 @@ func (h *LokiJobHistory) WriteJob(ctx context.Context, job *provisioning.Job) er
 	writeCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	logger.Debug("Saving job history to Loki", "namespace", jobCopy.Namespace, "repository", jobCopy.Spec.Repository, "job", jobCopy.Name)
+	logger.Debug("Saving job history to Loki")
 
 	if err := h.client.Push(writeCtx, []loki.Stream{stream}); err != nil {
 		logger.Error("Failed to save job history to Loki", "error", err)

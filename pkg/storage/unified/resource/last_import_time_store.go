@@ -92,7 +92,11 @@ func (s *lastImportStore) Save(ctx context.Context, time ResourceLastImportTime)
 	if err != nil {
 		return err
 	}
-	// There's no data.
+	// kv doesn't support value-less keys, so we write a single byte to work around it
+	_, err = writer.Write([]byte{1})
+	if err != nil {
+		return err
+	}
 	return writer.Close()
 }
 

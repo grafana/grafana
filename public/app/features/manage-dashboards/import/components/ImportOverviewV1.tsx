@@ -1,17 +1,21 @@
 import { useState } from 'react';
 
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
+import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { addLibraryPanel } from 'app/features/library-panels/state/api';
+import { useDispatch } from 'app/types/store';
 
-import { DashboardInputs, DashboardSource, ImportDashboardDTO, LibraryPanelInputState } from '../../types';
-import { applyV1Inputs } from '../utils/inputs';
+import { type DashboardInputs, DashboardSource, type ImportDashboardDTO, LibraryPanelInputState } from '../../types';
+import { applyV1Inputs, interpolateLibraryPanelDatasources, stripExportMetadata } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
 import { ImportForm } from './ImportForm';
@@ -24,10 +28,12 @@ type Props = {
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
   folderUid: string;
+  onFolderChange?: (uid: string) => void;
   onCancel: () => void;
 };
 
-export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
+export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, onFolderChange, onCancel }: Props) {
+  const dispatch = useDispatch();
   const [uidReset, setUidReset] = useState(false);
   const folder = { uid: folderUid };
 
@@ -37,10 +43,13 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
     try {
       const dashboardWithDataSources = applyV1Inputs(dashboard, inputs, form);
 
-      // Import new library panels first
+      // Import new library panels first.
+      // Library panel models from __elements may contain ${DS_...} placeholders
+      // that need to be resolved before creating the library element.
       const newLibraryPanels = inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New);
       for (const lp of newLibraryPanels) {
-        const libPanelWithPanelModel = new PanelModel(lp.model.model);
+        const interpolatedModel = interpolateLibraryPanelDatasources(lp.model.model, inputs, form);
+        const libPanelWithPanelModel = new PanelModel(interpolatedModel);
         let { scopedVars, ...panelSaveModel } = libPanelWithPanelModel.getSaveModel();
         panelSaveModel = {
           libraryPanel: {
@@ -51,7 +60,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         };
 
         try {
-          await addLibraryPanel(panelSaveModel, form.folder.uid);
+          await addLibraryPanel(panelSaveModel, form.folder.uid, lp.model.uid);
         } catch (error) {
           appEvents.emit(AppEvents.alertWarning, [
             'Library panel import failed',
@@ -60,8 +69,10 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         }
       }
 
+      const cleanDashboard = stripExportMetadata(dashboardWithDataSources);
+
       const dashboardK8SPayload: SaveDashboardCommand<Dashboard> = {
-        dashboard: dashboardWithDataSources,
+        dashboard: cleanDashboard,
         k8s: {
           annotations: {
             'grafana.app/folder': form.folder.uid,
@@ -69,7 +80,14 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         },
       };
 
-      const result = await getDashboardAPI('v1').saveDashboard(dashboardK8SPayload);
+      const api = await getDashboardAPI('v1');
+      const result = await api.saveDashboard(dashboardK8SPayload);
+
+      // The v1 k8s save path goes directly through the app-platform Dashboard client and bypasses
+      // RTK Query, so we have to invalidate the browse-folder cache ourselves. Otherwise the
+      // newly-imported dashboard does not appear in the destination folder until a hard refresh.
+      dispatch(refetchChildren({ parentUID: form.folder.uid, pageSize: PAGE_SIZE }));
+      invalidateQuotaUsage(dispatch);
 
       if (result.url) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(result.url);
@@ -105,6 +123,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
             onUidReset={() => setUidReset(true)}
             onSubmit={onSubmit}
             watch={watch}
+            onFolderChange={onFolderChange}
           />
         )}
       </Form>

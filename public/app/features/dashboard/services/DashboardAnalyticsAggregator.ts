@@ -1,5 +1,5 @@
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
-import { performanceUtils } from '@grafana/scenes';
+import { type performanceUtils } from '@grafana/scenes';
 
 import { SLOW_OPERATION_THRESHOLD_MS } from './performanceConstants';
 import {
@@ -213,6 +213,13 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
       // logMeasurement requires numeric values in second parameter, metadata in third
       const measurementValues = {
         totalTime: Math.round(totalPanelTime * 10) / 10,
+        // Per-phase breakdown of total_time. networkDuration is the data-fetch (query) time; the
+        // remaining four are the panel processing/render phases. Together they sum to total_time.
+        networkDuration: Math.round(panel.totalQueryTime * 10) / 10,
+        renderDuration: Math.round(panel.totalRenderTime * 10) / 10,
+        transformDuration: Math.round(panel.totalTransformationTime * 10) / 10,
+        fieldConfigDuration: Math.round(panel.totalFieldConfigTime * 10) / 10,
+        pluginLoadDuration: Math.round(panel.pluginLoadTime * 10) / 10,
         queryCount: panel.queryOperations.length,
         transformCount: panel.transformationOperations.length,
         renderCount: panel.renderOperations.length,

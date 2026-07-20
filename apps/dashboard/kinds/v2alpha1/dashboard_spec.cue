@@ -78,7 +78,7 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint32]
+	ids: [...number]
 }
 
 // Annotation event field source. Defines how to obtain the value for an annotation event field.
@@ -178,7 +178,7 @@ FieldConfigSource: {
 	overrides: [...{
 		// Describes config override rules created when interacting with Grafana.
 		"__systemRef"?: string
-		matcher: MatcherConfig
+		matcher:        MatcherConfig
 		properties: [...DynamicConfigValue]
 	}]
 }
@@ -271,11 +271,15 @@ DynamicConfigValue: {
 	value?: _
 }
 
+MatcherScope: "series" | "nested" | "annotation" | "exemplar"
+
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 // It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 MatcherConfig: {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string | *""
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	scope?: MatcherScope
 	// The matcher options. This is specific to the matcher implementation.
 	options?: _
 }
@@ -372,6 +376,10 @@ ValueMappingResult: {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+// `palette-colorblind`: Color blind safe palette. A discrete palette whose colors are distinguishable under common forms of color vision deficiency. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next-2`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next-3`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
 // `continuous-viridis`: Continuous Viridis palette mode
 // `continuous-magma`: Continuous Magma palette mode
 // `continuous-plasma`: Continuous Plasma palette mode
@@ -389,7 +397,8 @@ ValueMappingResult: {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
+// `gradient`: Gradient color mode. Interpolate between two colors based on value order; the start color is taken from fixedColor and the end color from gradientColorTo.
+FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "palette-colorblind" | "palette-categorical-next" | "palette-categorical-next-2" | "palette-categorical-next-3" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" | "gradient"
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 FieldColorSeriesByMode: "min" | "max" | "last"
@@ -400,6 +409,8 @@ FieldColor: {
 	mode: FieldColorModeId
 	// The fixed color value for fixed or shades color modes.
 	fixedColor?: string
+	// The end color for the gradient color mode (smallest value). Only used when mode is gradient.
+	gradientColorTo?: string
 	// Some visualizations need to know how to assign a series color from by value color schemes.
 	seriesBy?: FieldColorSeriesByMode
 }
@@ -411,8 +422,8 @@ ActionType: "fetch" | "infinity"
 
 FetchOptions: {
 	method: HttpRequestMethod
-	url: string
-	body?: string
+	url:    string
+	body?:  string
 	// These are 2D arrays of strings, each representing a key-value pair
 	// We are defining them this way because we can't generate a go struct that
 	// that would have exactly two strings in each sub-array
@@ -430,18 +441,18 @@ HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH"
 ActionVariableType: "string"
 
 ActionVariable: {
-	key: string
+	key:  string
 	name: string
 	type: ActionVariableType
 }
 
 Action: {
-	type: ActionType
-	title: string
-	fetch?: FetchOptions
-	infinity?: InfinityOptions
+	type:          ActionType
+	title:         string
+	fetch?:        FetchOptions
+	infinity?:     InfinityOptions
 	confirmation?: string
-	oneClick?: bool
+	oneClick?:     bool
 	variables?: [...ActionVariable]
 	style?: {
 		backgroundColor?: string
@@ -478,9 +489,9 @@ AnnotationQuerySpec: {
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
 	// Mappings define how to convert data frame fields to annotation event fields.
-	mappings?:   [string]: AnnotationEventFieldMapping
+	mappings?: [string]: AnnotationEventFieldMapping
 	// Catch-all field for datasource-specific properties
-	legacyOptions?:     [string]: _
+	legacyOptions?: [string]: _
 }
 
 AnnotationQueryKind: {
@@ -492,6 +503,7 @@ QueryOptionsSpec: {
 	timeFrom?:         string
 	maxDataPoints?:    int
 	timeShift?:        string
+	timeCompare?:      string
 	queryCachingTTL?:  int
 	interval?:         string
 	cacheTimeout?:     string
@@ -646,10 +658,10 @@ AutoGridLayoutKind: {
 AutoGridLayoutSpec: {
 	maxColumnCount?: number | *3
 	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
-	columnWidth?: number
-	rowHeightMode: "short" | *"standard" | "tall" | "custom"
-	rowHeight?: number
-	fillScreen?: bool | *false
+	columnWidth?:    number
+	rowHeightMode:   "short" | *"standard" | "tall" | "custom"
+	rowHeight?:      number
+	fillScreen?:     bool | *false
 	items: [...AutoGridLayoutItemKind]
 }
 
@@ -775,8 +787,8 @@ VariableSort: "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAs
 VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
 // Determine whether regex applies to variable value or display text
 // Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
@@ -811,22 +823,22 @@ QueryVariableSpec: {
 		text:  ""
 		value: ""
 	}
-	label?:       string
-	hide:         VariableHide
-	refresh:      VariableRefresh
-	skipUrlSync:  bool | *false
-	description?: string
-	datasource?:  DataSourceRef
-	query:        DataQueryKind
-	regex:        string | *""
+	label?:        string
+	hide:          VariableHide
+	refresh:       VariableRefresh
+	skipUrlSync:   bool | *false
+	description?:  string
+	datasource?:   DataSourceRef
+	query:         DataQueryKind
+	regex:         string | *""
 	regexApplyTo?: VariableRegexApplyTo
-	sort:         VariableSort
-	definition?:  string
+	sort:          VariableSort
+	definition?:   string
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	placeholder?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	placeholder?:     string
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
@@ -889,13 +901,13 @@ DatasourceVariableSpec: {
 		value: ""
 	}
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
 }
 
@@ -936,15 +948,15 @@ CustomVariableSpec: {
 	query:   string | *""
 	current: VariableOption
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
-	valuesFormat?: "csv" | "json"
+	valuesFormat?:    "csv" | "json"
 }
 
 // Custom variable kind
@@ -955,8 +967,8 @@ CustomVariableKind: {
 
 // GroupBy variable specification
 GroupByVariableSpec: {
-	name:        string | *""
-	datasource?: DataSourceRef
+	name:          string | *""
+	datasource?:   DataSourceRef
 	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
@@ -983,11 +995,13 @@ AdhocVariableSpec: {
 	baseFilters: [...AdHocFilterWithLabels] | *[]
 	filters: [...AdHocFilterWithLabels] | *[]
 	defaultKeys: [...MetricFindValue] | *[]
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	enableGroupBy?: bool | *false
 }
 
 // Define the MetricFindValue type
@@ -1007,7 +1021,7 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
-	origin?: FilterOrigin
+	origin?:    FilterOrigin
 	// @deprecated
 	condition?: string
 }
@@ -1020,8 +1034,8 @@ AdhocVariableKind: {
 
 // Switch variable specification
 SwitchVariableSpec: {
-	name:         string | *""
-	current:      string | *"false"
+	name:          string | *""
+	current:       string | *"false"
 	enabledValue:  string | *"true"
 	disabledValue: string | *"false"
 	label?:        string
@@ -1042,7 +1056,7 @@ ConditionalRenderingGroupKind: {
 
 ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
-	condition: "and" | "or"
+	condition:  "and" | "or"
 	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 

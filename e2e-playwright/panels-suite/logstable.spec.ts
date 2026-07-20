@@ -15,8 +15,8 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      // View log line button should be defined by default
-      await expect(page.getByLabel('View log line').first(), 'View log line button defined by default').toBeVisible();
+      // Show details button should be defined by default
+      await expect(page.getByLabel('Show details').first(), 'Show details button defined by default').toBeVisible();
 
       // timestamp and log body headers should be visible
       await expect(
@@ -112,7 +112,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       await page.getByRole('button', { name: 'Collapse sidebar' }).click();
       await expect(page.getByText('Selected fields'), 'Field selector title is no longer visible').not.toBeVisible();
     });
-    test('Show inspect button', async ({ page, gotoDashboardPage, selectors }) => {
+    test('Show details button', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '2' }),
@@ -141,26 +141,15 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         )
         .toEqual(false);
 
-      // Click inspect on 9th row
-      await page.getByRole('gridcell').getByLabel('View log line').nth(9).click();
+      // Click details on 9th row
+      await page.getByRole('gridcell').getByLabel('Show details').nth(9).click();
 
-      // Assert drawer header is visible
-      await expect(
-        page.getByRole('heading', { name: 'Inspect value' }),
-        'Inspect drawer title is visible'
-      ).toBeVisible();
-
-      // Assert the inspect drawer shows the correct log line body
-      await expect(
-        page.getByRole('dialog', { name: 'Inspect value' }).locator('.view-lines'),
-        'Drawer contains correct log line'
-      ).toContainText(
-        `level=info ts=2026-02-06T18:42:46.211051027Z caller=poller.go:133 msg="blocklist poll complete" seconds=526`
-      );
+      // Assert header is visible
+      await expect(page.getByPlaceholder('Search field names and values'), 'Log details is visible').toBeVisible();
     });
   });
   test.describe('Options', () => {
-    test('Inspect button', async ({ page, gotoDashboardPage, selectors }) => {
+    test('Log details', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '2' }),
@@ -170,15 +159,12 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      const optionWrapper = page.getByLabel('Logs Table Show inspect button field property editor');
-      const option = optionWrapper.getByLabel(/Show inspect button/);
-      const inspectLogLineButton = page.getByLabel('View log line');
-      await expect(option, 'Inspect button panel option is in the document').toHaveCount(1);
-      await expect(option, 'Inspect button panel option is initially checked').toBeChecked();
-      await expect(inspectLogLineButton.nth(0), 'Inspect button is visible in the logs table viz').toBeVisible();
+      const optionWrapper = page.getByTestId('data-testid Logs Table Enable log details field property editor');
+      const option = optionWrapper.getByLabel(/Enable log details/);
+      await expect(option, 'Enable log details is in the document').toHaveCount(1);
+      await expect(option, 'Enable log details panel option is initially checked').toBeChecked();
       await optionWrapper.click();
-      await expect(option, 'Inspect button panel option is no longer checked').not.toBeChecked({ timeout: 400 });
-      await expect(inspectLogLineButton, 'Inspect button is no longer in the logs table viz').toHaveCount(0);
+      await expect(option, 'Enable log details panel option is no longer checked').not.toBeChecked({ timeout: 400 });
     });
     test('Copy log line button', async ({ page, gotoDashboardPage, selectors, context }) => {
       const dashboardPage = await gotoDashboardPage({
@@ -190,7 +176,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      const optionWrapper = page.getByLabel('Logs Table Show copy log link button field property editor');
+      const optionWrapper = page.getByTestId('data-testid Logs Table Show copy log link button field property editor');
       const option = optionWrapper.getByLabel(/Show copy log link button/);
       const copyLogLineButton = page.getByLabel('Copy link to log line');
 
@@ -224,7 +210,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      const optionWrapper = page.getByLabel('Logs Table Show controls field property editor');
+      const optionWrapper = page.getByTestId('data-testid Logs Table Show controls field property editor');
       const optionLabel = optionWrapper.getByText(/Show controls/);
       const option = optionWrapper.getByLabel(/Show controls/);
       const controlsExpandButtonDefault = page.getByLabel('Collapse', { exact: true });

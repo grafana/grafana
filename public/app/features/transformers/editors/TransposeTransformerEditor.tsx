@@ -1,18 +1,8 @@
-import {
-  DataTransformerID,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-  SpecialValue,
-  SelectableValue,
-} from '@grafana/data';
-import { TransposeTransformerOptions } from '@grafana/data/internal';
+import { type TransformerUIProps, type SpecialValue, type SelectableValue } from '@grafana/data';
+import { type TransposeTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-import darkImage from '../images/dark/transpose.svg';
-import lightImage from '../images/light/transpose.svg';
 import { getEmptyOptions } from '../utils';
 
 export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
@@ -60,22 +50,3 @@ export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIP
     </>
   );
 };
-
-export const getTransposeTransformerRegistryItem: () => TransformerRegistryItem<TransposeTransformerOptions> = () => ({
-  id: DataTransformerID.transpose,
-  editor: TransposeTransformerEditor,
-  transformation: standardTransformers.transposeTransformer,
-  name: t('transformers.transpose-transformer-editor.name.transpose', 'Transpose'),
-  description: t(
-    'transformers.transpose-transformer-editor.description.transpose-data-frame',
-    'Transpose the data frame.'
-  ),
-  categories: new Set([TransformerCategory.Reformat]),
-  tags: new Set([
-    t('transformers.transpose-transformer-editor.tags.pivot', 'Pivot'),
-    t('transformers.transpose-transformer-editor.tags.translate', 'Translate'),
-    t('transformers.transpose-transformer-editor.tags.transform', 'Transform'),
-  ]),
-  imageDark: darkImage,
-  imageLight: lightImage,
-});

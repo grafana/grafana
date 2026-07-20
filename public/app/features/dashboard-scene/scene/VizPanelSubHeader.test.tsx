@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState } from '@grafana/data';
+import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
@@ -10,7 +10,7 @@ import {
   SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
-  VizPanelState,
+  type VizPanelState,
 } from '@grafana/scenes';
 
 import { activateFullSceneTree } from '../utils/test-utils';

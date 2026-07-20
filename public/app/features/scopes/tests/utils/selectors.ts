@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 
-import { ScopesService } from '../../ScopesService';
+import { type ScopesService } from '../../ScopesService';
 
 const selectors = {
   tree: {
@@ -49,7 +49,6 @@ export const queryRecentScopeSet = (scope: string) => screen.queryByRole('button
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
-export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
 export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
 export const queryDashboardFolderExpand = (uid: string) =>
   screen.queryByTestId(selectors.dashboards.dashboardExpand(uid));
@@ -65,7 +64,6 @@ export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dash
 export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
 export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
 
-export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
 export const findResultApplicationsExpand = async () =>
   await screen.findByTestId(selectors.tree.expand('applications'));
 
@@ -75,16 +73,10 @@ export const getResultApplicationsGrafanaSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const findResultApplicationsGrafanaSelect = () =>
   screen.findByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
-export const queryPersistedApplicationsGrafanaSelect = () =>
-  screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
-export const getPersistedApplicationsGrafanaSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-grafana'));
 export const queryResultApplicationsMimirSelect = () =>
   screen.queryByTestId(selectors.tree.select('applications-mimir'));
 export const getResultApplicationsMimirSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-mimir'));
-export const queryPersistedApplicationsMimirSelect = () =>
-  screen.queryByTestId(selectors.tree.select('applications-mimir'));
 export const getPersistedApplicationsMimirSelect = () =>
   screen.getByTestId(selectors.tree.select('applications-mimir'));
 export const queryResultApplicationsCloudSelect = () =>
@@ -104,7 +96,5 @@ export const getResultEnvironmentsDevSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('environments-dev'));
 export const getResultEnvironmentsProdSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('environments-prod'));
-export const queryResultEnvironmentsDevSelect = () => screen.queryByTestId(selectors.tree.radio('environments-dev'));
-export const queryResultEnvironmentsProdSelect = () => screen.queryByTestId(selectors.tree.radio('environments-prod'));
 
 export const getListOfScopes = (service: ScopesService) => service.state.value;

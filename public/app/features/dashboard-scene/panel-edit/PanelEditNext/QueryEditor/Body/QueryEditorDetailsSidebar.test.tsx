@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react';
 
-import { PanelData } from '@grafana/data';
-import { QueryGroupOptions } from 'app/types/query';
+import { type PanelData } from '@grafana/data';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { renderWithQueryEditorProvider, mockOptions, mockActions } from '../testUtils';
 
@@ -10,7 +10,7 @@ import { QueryEditorDetailsSidebar } from './QueryEditorDetailsSidebar';
 describe('QueryEditorDetailsSidebar', () => {
   const mockCloseSidebar = jest.fn();
 
-  const defaultQrState: { queries: never[]; data: PanelData | undefined; isLoading: boolean } = {
+  const defaultQrState: { queries: never[]; data: PanelData | undefined } = {
     queries: [],
     data: {
       request: {
@@ -18,7 +18,6 @@ describe('QueryEditorDetailsSidebar', () => {
         interval: '15s',
       },
     } as unknown as PanelData,
-    isLoading: false,
   };
 
   beforeEach(() => {
@@ -27,7 +26,7 @@ describe('QueryEditorDetailsSidebar', () => {
 
   const renderSidebar = (
     options: QueryGroupOptions = mockOptions,
-    qrState: { queries: never[]; data: PanelData | undefined; isLoading: boolean } = defaultQrState
+    qrState: { queries: never[]; data: PanelData | undefined } = defaultQrState
   ) => {
     return renderWithQueryEditorProvider(<QueryEditorDetailsSidebar />, {
       qrState,
@@ -212,7 +211,6 @@ describe('QueryEditorDetailsSidebar', () => {
       const qrStateWithoutInterval = {
         queries: [],
         data: undefined,
-        isLoading: false,
       };
 
       renderSidebar(mockOptions, qrStateWithoutInterval);

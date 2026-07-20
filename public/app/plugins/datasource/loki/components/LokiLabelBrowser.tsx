@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type CoreApp, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
-  HighlightPart,
+  type HighlightPart,
   Input,
   Label,
   LoadingPlaceholder,
@@ -18,7 +18,7 @@ import {
   Stack,
 } from '@grafana/ui';
 
-import LokiLanguageProvider from '../LanguageProvider';
+import type LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
 // Hard limit on labels to render

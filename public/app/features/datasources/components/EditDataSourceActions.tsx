@@ -1,14 +1,16 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { usePluginLinks, useFavoriteDatasources, reportInteraction } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
-import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
+import { trackDsConfigClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
+import { BuildDashboardButton } from './BuildDashboardButton';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './picker/DataSourcePicker';
 
 interface Props {
@@ -17,7 +19,7 @@ interface Props {
 
 const FavoriteButton = ({ uid }: { uid: string }) => {
   const favoriteDataSources = useFavoriteDatasources();
-  const dataSourceInstance = getDataSourceSrv().getInstanceSettings(uid);
+  const { settings: dataSourceInstance } = useDataSourceInstanceSettings(uid);
   const isFavorite = dataSourceInstance ? favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid) : false;
 
   return (
@@ -75,12 +77,6 @@ export function EditDataSourceActions({ uid }: Props) {
 
   const handleExploreClick = () => {
     trackDsConfigClicked('explore');
-    trackExploreClicked({
-      grafana_version: config.buildInfo.version,
-      datasource_uid: dataSource.uid,
-      plugin_name: dataSource.typeName,
-      path: window.location.pathname,
-    });
   };
 
   const exploreMenu = (
@@ -125,22 +121,7 @@ export function EditDataSourceActions({ uid }: Props) {
           )}
         </>
       )}
-      <LinkButton
-        size="sm"
-        variant="secondary"
-        href={`dashboard/new-with-ds/${dataSource.uid}`}
-        onClick={() => {
-          trackDsConfigClicked('build_a_dashboard');
-          trackCreateDashboardClicked({
-            grafana_version: config.buildInfo.version,
-            datasource_uid: dataSource.uid,
-            plugin_name: dataSource.typeName,
-            path: window.location.pathname,
-          });
-        }}
-      >
-        <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
-      </LinkButton>
+      <BuildDashboardButton dataSource={dataSource} size="sm" fill="solid" context="datasource_page" />
     </>
   );
 }

@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // shortURLsTestCase tests the "shorturls" ResourceMigration
@@ -31,7 +32,11 @@ func (tc *shortURLsTestCase) Name() string {
 }
 
 func (tc *shortURLsTestCase) FeatureToggles() []string {
-	return []string{featuremgmt.FlagKubernetesShortURLs}
+	return []string{}
+}
+
+func (tc *shortURLsTestCase) RenameTables() []string {
+	return []string{"short_url"}
 }
 
 func (tc *shortURLsTestCase) Resources() []schema.GroupVersionResource {
@@ -44,7 +49,11 @@ func (tc *shortURLsTestCase) Resources() []schema.GroupVersionResource {
 	}
 }
 
-func (tc *shortURLsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
+func (tc *shortURLsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
+	// nothing
+}
+
+func (tc *shortURLsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	t.Helper()
 
 	env := helper.GetEnv()
@@ -62,6 +71,8 @@ func (tc *shortURLsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
 	// Create short URL pointing to an alerting path
 	uid3 := createTestShortURL(t, shortURLSvc, user, "alerting/list?search=cpu&state=firing")
 	tc.shortURLUIDs = append(tc.shortURLUIDs, uid3)
+
+	return true // Mode0 is supported
 }
 
 func (tc *shortURLsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {

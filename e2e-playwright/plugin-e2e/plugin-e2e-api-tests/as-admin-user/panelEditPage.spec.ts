@@ -97,8 +97,8 @@ test.describe(
         const axisOptions = await panelEditPage.getCustomOptions('Axis');
         const timeZonePicker = axisOptions.getSelect('Time zone');
 
-        await timeZonePicker.selectOption('Europe/Stockholm');
-        await expect(timeZonePicker).toHaveSelected('Europe/Stockholm');
+        await timeZonePicker.selectOption('Stockholm');
+        await expect(timeZonePicker).toHaveSelected('Stockholm');
       });
 
       test('select unit in unit picker', async ({ panelEditPage }) => {
@@ -209,6 +209,50 @@ test.describe(
       const panelEditPage = await gotoPanelEditPage({ dashboard: REACT_TABLE_DASHBOARD, id: '4' });
       await panelEditPage.backToDashboard();
       await expect(page.url()).not.toContain('editPanel');
+    });
+
+    test.describe('getVisualizationName', () => {
+      test('should return the current visualization name', async ({ panelEditPage }) => {
+        await panelEditPage.setVisualization(TABLE_VIZ_NAME);
+        await expect(
+          panelEditPage.getVisualizationName(),
+          formatExpectError('Expected getVisualizationName to return the current visualization')
+        ).toHaveText(TABLE_VIZ_NAME);
+      });
+
+      test('should update after changing visualization', async ({ panelEditPage }) => {
+        await panelEditPage.setVisualization(TABLE_VIZ_NAME);
+        await expect(panelEditPage.getVisualizationName()).toHaveText(TABLE_VIZ_NAME);
+        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await expect(
+          panelEditPage.getVisualizationName(),
+          formatExpectError('Expected visualization name to update after changing visualization')
+        ).toHaveText(TIME_SERIES_VIZ_NAME);
+      });
+    });
+
+    test.describe('PanelEditOptionsGroup', () => {
+      test('should expand and collapse options group', async ({ panelEditPage }) => {
+        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        const graphStyles = panelEditPage.getCustomOptions('Graph styles');
+
+        await expect(
+          await graphStyles.isExpanded(),
+          formatExpectError('Expected Graph styles options group to be expanded by default')
+        ).toBe(true);
+
+        await graphStyles.collapse();
+        await expect(
+          await graphStyles.isExpanded(),
+          formatExpectError('Expected Graph styles options group to be collapsed')
+        ).toBe(false);
+
+        await graphStyles.expand();
+        await expect(
+          await graphStyles.isExpanded(),
+          formatExpectError('Expected Graph styles options group to be expanded after expanding')
+        ).toBe(true);
+      });
     });
   }
 );

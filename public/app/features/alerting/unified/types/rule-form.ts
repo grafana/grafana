@@ -1,4 +1,5 @@
-import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
+import { type EvalFunction } from 'app/features/alerting/state/alertDef';
+import { type AlertQuery, type GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
   grafana = 'grafana-alerting',
@@ -38,6 +39,8 @@ export interface RuleFormValues {
   type?: RuleFormType;
   dataSourceName: string | null;
   group: string;
+  // True when this Grafana-managed rule is saved without a real group (synthetic `no_group_for_rule_<uid>` group on the wire).
+  isUngroupedRuleGroup: boolean;
 
   labels: Array<{ key: string; value: string }>;
   annotations: Array<{ key: string; value: string }>;
@@ -54,6 +57,7 @@ export interface RuleFormValues {
   isPaused?: boolean;
   manualRouting: boolean; // if true contactPoints are used. This field will not be used for saving the rule
   contactPoints?: AlertManagerManualRouting;
+  selectedPolicy?: string; // named notification policy for routing
   editorSettings?: SimplifiedEditor;
   metric?: string;
   targetDatasourceUid?: string;
@@ -68,3 +72,11 @@ export interface RuleFormValues {
 }
 
 export type Folder = { title: string; uid: string };
+
+export interface SimpleCondition {
+  whenField?: string;
+  evaluator: {
+    params: number[];
+    type: EvalFunction;
+  };
+}

@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { FormEvent, memo } from 'react';
+import { type FormEvent, memo } from 'react';
 import * as React from 'react';
 
 import { t } from '@grafana/i18n';

@@ -14,41 +14,44 @@
 
 import { css, cx } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import useMeasure from 'react-use/lib/useMeasure';
 
 import {
-  CoreApp,
-  DataFrame,
+  type CoreApp,
+  type DataFrame,
   dateTimeFormat,
-  GrafanaTheme2,
-  LinkModel,
-  TimeRange,
-  TraceKeyValuePair,
-  TraceLog,
-  PluginExtensionResourceAttributesContext,
+  type GrafanaTheme2,
+  type LinkModel,
+  type TimeRange,
+  type TraceKeyValuePair,
+  type TraceLog,
+  type PluginExtensionResourceAttributesContext,
   PluginExtensionPoints,
-  IconName,
+  type IconName,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc } from '../../types/links';
-import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { type SpanLinkFunc } from '../../types/links';
+import { type TraceProcess, type TraceSpan, type TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
+import { getServiceDisplayName } from '../../utils/service-name';
 
-import AccordianKeyValues from './AccordianKeyValues';
-import AccordianLogs from './AccordianLogs';
-import AccordianReferences from './AccordianReferences';
-import DetailState from './DetailState';
+import AccordionCategorizedKeyValues from './AccordionCategorizedKeyValues';
+import AccordionKeyValues from './AccordionKeyValues';
+import AccordionLogs from './AccordionLogs';
+import AccordionReferences from './AccordionReferences';
+import type DetailState from './DetailState';
 import { ShareSpanButton } from './ShareSpanButton';
-import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
+import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
 const useResourceAttributesExtensionLinks = ({
@@ -59,6 +62,7 @@ const useResourceAttributesExtensionLinks = ({
   timeRange,
   traceID,
   spanID,
+  spanStartTime,
 }: {
   process: TraceProcess;
   spanTags: TraceKeyValuePair[];
@@ -67,6 +71,7 @@ const useResourceAttributesExtensionLinks = ({
   timeRange: TimeRange;
   traceID: string;
   spanID: string;
+  spanStartTime: number;
 }) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
@@ -98,8 +103,9 @@ const useResourceAttributesExtensionLinks = ({
       },
       traceID,
       spanID,
+      spanStartTime,
     };
-  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange, traceID, spanID]);
+  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange, traceID, spanID, spanStartTime]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
@@ -175,23 +181,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       flexShrink: 0,
     }),
-    AccordianWarnings: css({
-      label: 'AccordianWarnings',
+    AccordionWarnings: css({
+      label: 'AccordionWarnings',
       background: autoColor(theme, '#fafafa'),
       border: `1px solid ${autoColor(theme, '#e4e4e4')}`,
       marginBottom: '0.25rem',
     }),
-    AccordianWarningsHeader: css({
-      label: 'AccordianWarningsHeader',
+    AccordionWarningsHeader: css({
+      label: 'AccordionWarningsHeader',
       background: autoColor(theme, '#fff7e6'),
       padding: '0.25rem 0.5rem',
     }),
-    AccordianWarningsHeaderOpen: css({
-      label: 'AccordianWarningsHeaderOpen',
+    AccordionWarningsHeaderOpen: css({
+      label: 'AccordionWarningsHeaderOpen',
       borderBottom: `1px solid ${autoColor(theme, '#e8e8e8')}`,
     }),
-    AccordianWarningsLabel: css({
-      label: 'AccordianWarningsLabel',
+    AccordionWarningsLabel: css({
+      label: 'AccordionWarningsLabel',
       color: autoColor(theme, '#d36c08'),
     }),
     Textarea: css({
@@ -215,7 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     debugLabel: css({
       label: 'debugLabel',
       '&::before': {
-        color: autoColor(theme, '#bbb'),
+        color: theme.colors.text.secondary,
         content: 'attr(data-label)',
       },
     }),
@@ -320,7 +326,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'svc',
       label: t('explore.span-detail.overview-items.label.service', 'Service:'),
-      value: process.serviceName,
+      value: getServiceDisplayName(process),
     },
     {
       key: 'duration',
@@ -345,7 +351,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
-  const mainContainerRef = useRef<HTMLDivElement>(null);
+  const [mainContainerRef, { width: mainContainerWidth }] = useMeasure<HTMLDivElement>();
 
   const styles = useStyles2(getStyles);
   if (span.kind) {
@@ -400,23 +406,15 @@ export default function SpanDetail(props: SpanDetailProps) {
     timeRange,
     traceID,
     spanID,
-  });
-
-  const linksComponent = getSpanDetailLinkButtons({
-    span,
-    createSpanLink,
-    datasourceType,
-    traceToProfilesOptions,
-    timeRange,
-    app,
-    shareButton: <ShareSpanButton focusSpanLink={focusSpanLink} />,
+    spanStartTime: startTime,
   });
 
   const listOfContentCards = [];
 
   listOfContentCards.push(
-    <AccordianKeyValues
+    <AccordionCategorizedKeyValues
       data={tags}
+      sectionType="span"
       label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
       isOpen={isTagsOpen}
       linksGetter={resourceLinksGetter}
@@ -426,8 +424,9 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (process.tags) {
     listOfContentCards.push(
-      <AccordianKeyValues
+      <AccordionCategorizedKeyValues
         data={process.tags}
+        sectionType="resource"
         label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
         linksGetter={resourceLinksGetter}
         isOpen={isProcessOpen}
@@ -438,7 +437,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (logs && logs.length > 0) {
     listOfContentCards.push(
-      <AccordianLogs
+      <AccordionLogs
         logs={logs}
         isOpen={logsState.isOpen}
         openedItems={logsState.openedItems}
@@ -451,7 +450,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (warnings && warnings.length > 0) {
     listOfContentCards.push(
-      <AccordianKeyValues
+      <AccordionKeyValues
         data={warnings.map((warning) => ({
           key: '',
           value: warning,
@@ -469,7 +468,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (stackTraces?.length) {
     listOfContentCards.push(
-      <AccordianKeyValues
+      <AccordionKeyValues
         data={stackTraces.map((stackTrace) => ({
           key: '',
           value: stackTrace,
@@ -487,7 +486,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   if (references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF')) {
     listOfContentCards.push(
-      <AccordianReferences
+      <AccordionReferences
         data={references}
         isOpen={referencesState.isOpen}
         openedItems={referencesState.openedItems}
@@ -520,14 +519,23 @@ export default function SpanDetail(props: SpanDetailProps) {
           <h6 className={styles.operationName} title={operationName}>
             {operationName}
           </h6>
-          {linksComponent}
+          <SpanDetailLinkButtons
+            span={span}
+            createSpanLink={createSpanLink}
+            datasourceType={datasourceType}
+            datasourceUid={datasourceUid}
+            traceToProfilesOptions={traceToProfilesOptions}
+            timeRange={timeRange}
+            app={app}
+            shareButton={<ShareSpanButton focusSpanLink={focusSpanLink} />}
+          />
         </div>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
         </div>
       </div>
       <div className={styles.content}>
-        <CardsContainer listOfContentCards={listOfContentCards} mainContainerRef={mainContainerRef} />
+        <CardsContainer listOfContentCards={listOfContentCards} containerWidth={mainContainerWidth} />
 
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
@@ -566,20 +574,19 @@ export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
 
 const CardsContainer = ({
   listOfContentCards,
-  mainContainerRef,
+  containerWidth,
 }: {
   listOfContentCards: React.ReactNode[];
-  mainContainerRef?: React.RefObject<HTMLDivElement | null>;
+  containerWidth: number;
 }) => {
   const styles = useStyles2(getStyles);
 
-  const useTwoColumns =
-    mainContainerRef && mainContainerRef.current && mainContainerRef.current.getBoundingClientRect().width > 1000;
+  const useTwoColumns = containerWidth > 1000;
 
   if (useTwoColumns) {
     return (
       <>
-        <div className={css({ float: 'left', width: '50%' })}>
+        <div data-testid="span-detail-cards-column" className={css({ float: 'left', width: '50%' })}>
           {listOfContentCards.map((card, index) =>
             index % 2 === 0 ? (
               <div className={styles.card} key={index}>
@@ -589,7 +596,7 @@ const CardsContainer = ({
           )}
         </div>
 
-        <div className={css({ float: 'right', width: '50%' })}>
+        <div data-testid="span-detail-cards-column" className={css({ float: 'right', width: '50%' })}>
           {listOfContentCards.map((card, index) =>
             index % 2 === 1 ? (
               <div className={styles.card} key={index}>
@@ -603,7 +610,7 @@ const CardsContainer = ({
   }
 
   return (
-    <div className={css({ clear: 'both', width: '100%' })}>
+    <div data-testid="span-detail-cards-column" className={css({ clear: 'both', width: '100%' })}>
       {listOfContentCards.map((card, index) => (
         <div className={styles.card} key={index}>
           {card}

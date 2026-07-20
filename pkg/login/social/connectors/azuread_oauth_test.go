@@ -1613,3 +1613,57 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		require.Contains(t, err.Error(), "unable to unmarshal raw response body")
 	})
 }
+
+func TestSocialAzureAD_TokenSource_ManagedIdentity(t *testing.T) {
+	info := &social.OAuthInfo{
+		ClientId:                    "some-client-id",
+		ClientAuthentication:        social.ManagedIdentity,
+		ManagedIdentityClientID:     "managed-identity-client-id",
+		FederatedCredentialAudience: "api://AzureADTokenExchange",
+		TokenUrl:                    "https://login.microsoftonline.com/token",
+	}
+
+	t.Run("returns valid token without refresh", func(t *testing.T) {
+		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+
+		// Create a valid (not expired) token
+		token := &oauth2.Token{
+			AccessToken:  "valid-access-token",
+			RefreshToken: "some-refresh-token",
+			Expiry:       time.Now().Add(time.Hour),
+		}
+
+		ts := s.TokenSource(context.Background(), token)
+		got, err := ts.Token()
+		require.NoError(t, err)
+		assert.Equal(t, "valid-access-token", got.AccessToken)
+	})
+
+	t.Run("returns correct token source type", func(t *testing.T) {
+		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+
+		token := &oauth2.Token{
+			AccessToken: "some-token",
+			Expiry:      time.Now().Add(time.Hour),
+		}
+
+		ts := s.TokenSource(context.Background(), token)
+		_, ok := ts.(*azureADManagedIdentityTokenSource)
+		require.True(t, ok, "expected azureADManagedIdentityTokenSource type")
+	})
+
+	t.Run("error when missing refresh token", func(t *testing.T) {
+		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+
+		// Expired token with no refresh token
+		token := &oauth2.Token{
+			AccessToken: "old-access-token",
+			Expiry:      time.Now().Add(-time.Hour),
+		}
+
+		ts := s.TokenSource(context.Background(), token)
+		_, err := ts.Token()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no refresh token available to refresh the access token")
+	})
+}

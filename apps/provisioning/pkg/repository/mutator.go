@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/apiserver/pkg/admission"
@@ -57,6 +58,10 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
+	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseURL != "" {
+		r.Spec.Webhook.BaseURL = strings.TrimRight(r.Spec.Webhook.BaseURL, "/")
+	}
+
 	// Extra mutators from factory
 	if err := m.factory.Mutate(ctx, r); err != nil {
 		return fmt.Errorf("failed to mutate repository: %w", err)
@@ -77,4 +82,11 @@ func CopySecureValues(new, old *provisioning.Repository) {
 	if new.Secure.WebhookSecret.IsZero() {
 		new.Secure.WebhookSecret = old.Secure.WebhookSecret
 	}
+	if new.Secure.CommitSigningKey.IsZero() {
+		new.Secure.CommitSigningKey = old.Secure.CommitSigningKey
+	}
+}
+
+func RequiresNewTokenForURLChange(new, old *provisioning.Repository) bool {
+	return old != nil && new.URL() != old.URL() && new.Secure.Token.IsZero()
 }

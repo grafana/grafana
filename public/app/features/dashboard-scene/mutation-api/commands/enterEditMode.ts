@@ -14,6 +14,7 @@ export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
 
   payloadSchema: payloads.enterEditMode,
   permission: requiresEdit,
+  readOnly: false,
 
   handler: async (_payload, context) => {
     const { scene } = context;
@@ -22,7 +23,7 @@ export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
       const wasEditing = scene.state.isEditing ?? false;
 
       if (!wasEditing) {
-        scene.onEnterEditMode();
+        scene.onEnterEditMode('assistant');
       }
 
       return {

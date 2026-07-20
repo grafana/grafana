@@ -1,10 +1,10 @@
 import { useAsync } from 'react-use';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
-import { DB, ResourceSelectorProps, SQLDialect, toOption } from '../types';
+import { type DB, type ResourceSelectorProps, type SQLDialect, toOption } from '../types';
 
 export interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;

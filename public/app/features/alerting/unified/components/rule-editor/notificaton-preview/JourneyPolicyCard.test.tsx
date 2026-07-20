@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
-import { LabelMatcher, RouteWithID } from '@grafana/alerting';
+import { type LabelMatcher, type RouteWithID } from '@grafana/alerting';
+
+import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 import { JourneyPolicyCard } from './JourneyPolicyCard';
+
+jest.mock('../../../useRouteGroupsMatcher');
 
 describe('JourneyPolicyCard', () => {
   const mockMatchers: LabelMatcher[] = [
@@ -72,10 +76,42 @@ describe('JourneyPolicyCard', () => {
     expect(screen.queryByText(/alertname/)).not.toBeInTheDocument();
   });
 
-  it('should show DefaultPolicyIndicator when isRoot is true', () => {
+  it('should show DefaultPolicyIndicator when isRoot is true and policyName is not provided', () => {
     render(<JourneyPolicyCard route={mockRoute} isRoot={true} />);
 
     expect(screen.getByRole('heading', { name: 'Default policy' })).toBeInTheDocument();
+  });
+
+  it('renders the tree name as heading for a named root route', () => {
+    render(<JourneyPolicyCard route={mockRoute} isRoot={true} policyName="team-frontend" />);
+
+    expect(screen.getByRole('heading', { name: 'team-frontend' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Default policy' })).not.toBeInTheDocument();
+  });
+
+  it('filters the internal routing matcher from the root card display', () => {
+    const routeWithInternalMatcher: RouteWithID = {
+      ...mockRoute,
+      matchers: [
+        { label: NAMED_ROOT_LABEL_NAME, type: '=', value: 'team-a' },
+        { label: 'severity', type: '=', value: 'critical' },
+      ],
+    };
+    render(<JourneyPolicyCard route={routeWithInternalMatcher} isRoot={true} />);
+
+    expect(screen.queryByText(NAMED_ROOT_LABEL_NAME)).not.toBeInTheDocument();
+    // user-defined matcher is still shown
+    expect(screen.getByTestId('label-matchers')).toBeInTheDocument();
+  });
+
+  it('does not filter the internal routing matcher from non-root cards', () => {
+    const routeWithInternalMatcher: RouteWithID = {
+      ...mockRoute,
+      matchers: [{ label: NAMED_ROOT_LABEL_NAME, type: '=', value: 'team-a' }],
+    };
+    render(<JourneyPolicyCard route={routeWithInternalMatcher} isRoot={false} />);
+
+    expect(screen.getByTestId('label-matchers')).toBeInTheDocument();
   });
 
   describe('isFinalRoute prop', () => {

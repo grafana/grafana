@@ -1,15 +1,18 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { t } from '@grafana/i18n';
-import { Field, RadioButtonGroup, Stack } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Field, RadioButtonGroup, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
+import { isGitHubBased } from '../utils/repositoryTypes';
 
 import { GitHubAppFields } from './GitHubAppFields';
 import { RepositoryField } from './components/RepositoryField';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
-import { ConnectionCreationResult, GitHubAuthType, WizardFormData } from './types';
+import { type ConnectionCreationResult, type GitHubAuthType, type WizardFormData } from './types';
 
 interface AuthTypeOption {
   id: GitHubAuthType;
@@ -44,6 +47,7 @@ const getAuthTypeOptions = (): AuthTypeOption[] => [
 ];
 
 export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
+  const styles = useStyles2(getStyles);
   const { control, watch } = useFormContext<WizardFormData>();
   const [githubAuthType, githubAppMode, githubAppConnectionName, repoType] = watch([
     'githubAuthType',
@@ -53,16 +57,41 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   ]);
   const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
   const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
-  const isGitHub = repoType === 'github';
+  const isGitHubBasedRepo = isGitHubBased(repoType);
 
   const { isConnected: isSelectedConnectionReady } = useConnectionStatus(
     githubAuthType === 'github-app' ? githubAppConnectionName : undefined
   );
 
+  const isGit = repoType === 'git';
+
   return (
     <Stack direction="column" gap={2}>
-      {/* PAT & Github App Switch - only for GitHub repositories */}
-      {isGitHub && (
+      {isGit && (
+        <Alert
+          severity="info"
+          title={t('provisioning.wizard.git-protocol-alert-title', 'Only Git v2 Smart HTTP protocol is supported')}
+        >
+          <Trans i18nKey="provisioning.wizard.git-protocol-alert-body">
+            The Pure Git repository type communicates with your Git server using the{' '}
+            <TextLink external href="https://git-scm.com/docs/protocol-v2">
+              Git v2 Smart HTTP protocol
+            </TextLink>
+            . SSH and the legacy v1 protocol are not supported. Make sure your Git server supports Smart HTTP before
+            proceeding. For more details, see the{' '}
+            <TextLink
+              external
+              href="https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/git-sync/usage-limits/#the-pure-git-repository-type"
+            >
+              usage limits documentation
+            </TextLink>
+            .
+          </Trans>
+        </Alert>
+      )}
+
+      {/* PAT & Github App Switch - only for GitHub / GitHub Enterprise repositories */}
+      {isGitHubBasedRepo && (
         <Field
           noMargin
           label={t('provisioning.wizard.auth-type-label', 'Authentication method')}
@@ -76,6 +105,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
             control={control}
             render={({ field: { onChange, value } }) => (
               <RadioButtonGroup<GitHubAuthType>
+                className={styles.authTypeRadios}
                 value={value}
                 onChange={onChange}
                 options={authTypeOptions.map((option) => ({
@@ -89,13 +119,24 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Field>
       )}
 
-      {githubAuthType === 'github-app' ? (
-        <GitHubAppFields onGitHubAppSubmit={onGitHubAppSubmit} />
+      {isGitHubBased(repoType) && githubAuthType === 'github-app' ? (
+        <>
+          <GitHubAppFields connectionType={repoType} onGitHubAppSubmit={onGitHubAppSubmit} />
+          {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
+        </>
       ) : (
-        <RepositoryTokenInput />
+        <>
+          <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />
+          <RepositoryTokenInput />
+        </>
       )}
-
-      {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
     </Stack>
   );
 }
+
+const getStyles = (_theme: GrafanaTheme2) => ({
+  authTypeRadios: css({
+    maxWidth: '100%',
+    overflowX: 'auto',
+  }),
+});

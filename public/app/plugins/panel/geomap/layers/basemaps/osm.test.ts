@@ -1,8 +1,8 @@
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 
-import { EventBus, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
+import { type EventBus, type MapLayerOptions, type GrafanaTheme2 } from '@grafana/data';
 
 import { standard } from './osm';
 

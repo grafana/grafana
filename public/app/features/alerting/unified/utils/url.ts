@@ -2,6 +2,10 @@ import { config } from '@grafana/runtime';
 
 export type RelativeUrl = `/${string}`;
 
+export function isRelativeUrl(url: string): url is RelativeUrl {
+  return url.startsWith('/') && !url.startsWith('//');
+}
+
 interface CreateRelativeUrlOptions {
   /**
    * If true, the sub path will not be added to the URL

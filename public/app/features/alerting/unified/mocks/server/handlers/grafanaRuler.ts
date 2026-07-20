@@ -4,31 +4,31 @@ import { HttpResponse, delay, http } from 'msw';
 export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
 
 import {
-  GrafanaAlertState,
-  GrafanaRuleDefinition,
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type GrafanaAlertState,
+  type GrafanaRuleDefinition,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
   isGrafanaAlertState,
 } from '../../../../../../types/unified-alerting-dto';
-import { GrafanaGroupUpdatedResponse } from '../../../api/alertRuleModel';
+import { type GrafanaGroupUpdatedResponse } from '../../../api/alertRuleModel';
 import { getHistoryResponse, grafanaRulerRule, rulerTestDb, time_0, time_plus_30 } from '../../grafanaRulerApi';
-import { HandlerOptions } from '../configure';
+import { type HandlerOptions } from '../configure';
 
-export const rulerRulesHandler = () => {
+const rulerRulesHandler = () => {
   return http.get(`/api/ruler/grafana/api/v1/rules`, () =>
     HttpResponse.json<RulerRulesConfigDTO>(rulerTestDb.getRulerConfig())
   );
 };
 
-export const prometheusRulesHandler = () => {
+const prometheusRulesHandler = () => {
   return http.get('/api/prometheus/grafana/api/v1/rules', () => {
     return HttpResponse.json<PromRulesResponse>({ status: 'success', data: { groups: [] } });
   });
 };
 
-export const getRulerRuleNamespaceHandler = () =>
+const getRulerRuleNamespaceHandler = () =>
   http.get<{ folderUid: string }>(`/api/ruler/grafana/api/v1/rules/:folderUid`, ({ params: { folderUid } }) => {
     // This mimic API response as closely as possible - Invalid folderUid returns 403
     const namespace = rulerTestDb.getNamespace(folderUid);
@@ -93,7 +93,7 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
   );
 };
 
-export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
+const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
   http.delete<{ folderUid: string; groupName: string }>(
     `/api/ruler/grafana/api/v1/rules/:folderUid/:groupName`,
     ({ params: { folderUid } }) => {
@@ -115,7 +115,7 @@ export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
     }
   );
 
-export const deleteRulerRulePermanentlyHandler = (options?: HandlerOptions) =>
+const deleteRulerRulePermanentlyHandler = (options?: HandlerOptions) =>
   http.delete<{ ruleGuid: string }>(
     `/api/ruler/grafana/api/v1/trash/rule/guid/:ruleGuid`,
     ({ params: { ruleGuid } }) => {
@@ -131,7 +131,7 @@ export const deleteRulerRulePermanentlyHandler = (options?: HandlerOptions) =>
     }
   );
 
-export const rulerRuleHandler = () => {
+const rulerRuleHandler = () => {
   const grafanaRules = new Map<string, RulerGrafanaRuleDTO>(
     [grafanaRulerRule].map((rule) => [rule.grafana_alert.uid, rule])
   );
@@ -145,7 +145,7 @@ export const rulerRuleHandler = () => {
   });
 };
 
-export const rulerRuleVersionHistoryHandler = () => {
+const rulerRuleVersionHistoryHandler = () => {
   const grafanaRuleVersions = [
     produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
       draft.grafana_alert.version = 6;
@@ -248,7 +248,7 @@ const filterHistoryByState = (
   };
 };
 
-export const historyHandler = () => {
+const historyHandler = () => {
   return http.get('/api/v1/rules/history', ({ request }) => {
     const url = new URL(request.url);
     const previousParam = url.searchParams.get('previous');

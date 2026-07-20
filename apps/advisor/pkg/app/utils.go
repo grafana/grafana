@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -47,6 +48,14 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 	c, ok := obj.(*advisorv0alpha1.Check)
 	if !ok {
 		return fmt.Errorf("invalid object type")
+	}
+	// processCheck is invoked from the validating admission webhook in a
+	// goroutine, so it can race with the apiserver finishing the write of
+	// the Check resource. Wait for the object to be persisted before any
+	// PATCH below (including the SetStatusAnnotation calls in the error
+	// paths) can hit a "not found" against the in-flight create.
+	if err := waitForItem(ctx, log, client, obj); err != nil {
+		return err
 	}
 	// Get the items to check
 	err := check.Init(ctx)
@@ -82,11 +91,6 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 			return setErr
 		}
 		return fmt.Errorf("error running steps: %w", err)
-	}
-	// Wait for the item to be persisted before patching the object
-	err = waitForItem(ctx, log, client, obj)
-	if err != nil {
-		return err
 	}
 	report := &advisorv0alpha1.CheckReport{
 		Failures: failures,
@@ -163,21 +167,11 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 			return fmt.Errorf("error running steps: %w", err)
 		}
 	}
-	// Pull failures from the report for the items to retry
-	c.Status.Report.Failures = slices.DeleteFunc(c.Status.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
-		if f.ItemID == itemToRetry {
-			for _, newFailure := range failures {
-				if newFailure.StepID == f.StepID {
-					// Same failure found, keep it
-					return false
-				}
-			}
-			// Failure no longer found, remove it
-			return true
-		}
-		// Failure not in the list of items to retry, keep it
-		return false
+	// Pull this item's failures and replace them with the retry result
+	currentFailures := slices.DeleteFunc(slices.Clone(c.Status.Report.Failures), func(f advisorv0alpha1.CheckReportFailure) bool {
+		return f.ItemID == itemToRetry
 	})
+	c.Status.Report.Failures = append(currentFailures, failures...)
 	// Wait for the retry annotation to be persisted before patching the object
 	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
 	if err != nil {
@@ -218,6 +212,7 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 					defer func() {
 						if r := recover(); r != nil {
 							log.Error("panic recovered in step", "step", step.ID(), "error", r, "item", item)
+							metrics.StepPanicsTotal.WithLabelValues(step.ID()).Inc()
 						}
 					}()
 					logger := log.With("step", step.ID())

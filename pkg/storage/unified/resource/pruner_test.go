@@ -19,13 +19,13 @@ func TestPrunerValidate(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "missing namespace",
+			name: "valid cluster-scoped key (no namespace)",
 			key: PruningKey{
 				Group:    "apps",
 				Resource: "deployments",
 				Name:     "my-deployment",
 			},
-			expected: false,
+			expected: true,
 		},
 		{
 			name: "missing group",

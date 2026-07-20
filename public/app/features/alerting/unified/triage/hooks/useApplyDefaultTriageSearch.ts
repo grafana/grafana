@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { shouldUseTriageSavedSearches } from '../../featureToggles';
 import { useAsync } from '../../hooks/useAsync';
 import { applySavedSearch, serializeCurrentSearchState } from '../scene/triageSavedSearchUtils';
 
@@ -13,11 +12,10 @@ import { loadDefaultTriageSavedSearch, trackTriageSavedSearchAutoApply } from '.
 const SESSION_VISITED_KEY = 'grafana.alerting.triagePage.visited';
 
 /**
- * Check if the triage page has active filters, groupBy, or non-default time range.
+ * Check if the triage page has active filters (including groupBy entries) or non-default time range.
  *
  * This uses the URL parameters to determine if filters are active:
- * - var-filters: Ad-hoc filters
- * - var-groupBy: Group by selection
+ * - var-filters: Ad-hoc filters and groupBy selections (unified into one param)
  *
  * Time range (from/to) is not considered when checking for active filters,
  * since the default time range is always applied.
@@ -32,18 +30,14 @@ function hasActiveTriageFilters(): boolean {
 
   const params = new URLSearchParams(currentState);
 
-  // Check for filters or groupBy - these indicate user has active selections
-  const hasFilters = params.has('var-filters');
-  const hasGroupBy = params.has('var-groupBy') && params.get('var-groupBy') !== '';
-
-  return hasFilters || hasGroupBy;
+  // var-filters contains both regular filters and groupBy entries (key|groupBy format)
+  return params.has('var-filters');
 }
 
 /**
  * Hook that automatically applies the default saved search on first visit to the triage page.
  *
  * This hook:
- * - Checks if the saved searches feature is enabled (alertingTriageSavedSearches toggle)
  * - Detects if this is the first visit in the current session
  * - Only applies default if no filters/groupBy are currently active
  * - Loads and applies the default saved search if one exists
@@ -70,7 +64,6 @@ function hasActiveTriageFilters(): boolean {
  * ```
  */
 export function useApplyDefaultTriageSearch(): { isApplying: boolean } {
-  const savedSearchesEnabled = shouldUseTriageSavedSearches();
   const hasActiveFilters = hasActiveTriageFilters();
 
   // Use the internal useAsync hook which doesn't auto-execute
@@ -90,7 +83,7 @@ export function useApplyDefaultTriageSearch(): { isApplying: boolean } {
   }, []);
 
   const isFirstVisit = isFirstVisitInSession();
-  const shouldLoadDefault = savedSearchesEnabled && !hasActiveFilters && isFirstVisit;
+  const shouldLoadDefault = !hasActiveFilters && isFirstVisit;
 
   // Mark as visited on first visit, regardless of whether we load defaults
   if (isFirstVisit && state.status === 'not-executed') {

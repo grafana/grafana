@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
@@ -65,9 +67,12 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
+	hostEnv = append(hostEnv, p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.secureSocksProxyEnvVars()...)
-	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(p.getAzureSettings())...)
+	azureSettings := p.getAzureSettings()
+	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(azureSettings)...)
+	hostEnv = append(hostEnv, p.azureHostEnvVars(azureSettings, plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
 
@@ -79,6 +84,44 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	return hostEnv
+}
+
+func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
+	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] || p.cfg.MarketplaceLicenseDirectory == "" {
+		return nil
+	}
+	if p.license == nil || !p.license.HasValidLicense() {
+		return nil
+	}
+
+	licensePath, ok := marketplaceLicenseFilePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
+	if !ok {
+		return nil
+	}
+
+	return []string{
+		p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath),
+		p.envVar("GF_MARKETPLACE_APP_URL", p.cfg.GrafanaAppURL),
+	}
+}
+
+func marketplaceLicenseFilePath(directory, pluginID string) (string, bool) {
+	if pluginID == "" || pluginID == "." || pluginID == ".." || strings.Contains(pluginID, "\x00") ||
+		strings.ContainsAny(pluginID, "/\\:") || filepath.IsAbs(pluginID) || filepath.Base(pluginID) != pluginID {
+		return "", false
+	}
+
+	absDirectory, err := filepath.Abs(directory)
+	if err != nil {
+		return "", false
+	}
+	absDirectory = filepath.Clean(absDirectory)
+	licensePath := filepath.Join(absDirectory, "license-"+pluginID+".jwt")
+	if filepath.Dir(licensePath) != absDirectory {
+		return "", false
+	}
+
+	return licensePath, true
 }
 
 func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
@@ -125,6 +168,81 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 		variables = append(variables, p.envVar(awsds.ListMetricsPageLimitKeyName, p.cfg.AWSListMetricsPageLimit))
 	}
 
+	// Forward AWS SDK credential chain env vars from the host so that plugins can use
+	// EKS IRSA, ECS task roles, and other environment-based credential providers.
+	for _, envVarName := range awsHostEnvVarNames {
+		if v, ok := os.LookupEnv(envVarName); ok {
+			variables = append(variables, p.envVar(envVarName, v))
+		}
+	}
+
+	return variables
+}
+
+// awsHostEnvVarNames are the host environment variables forwarded to AWS plugins.
+// These are needed for the AWS SDK default credential chain to resolve credentials
+// in container environments (EKS with IRSA, ECS Fargate).
+var awsHostEnvVarNames = []string{
+	// EKS IRSA
+	"AWS_ROLE_ARN",
+	"AWS_WEB_IDENTITY_TOKEN_FILE",
+	// ECS (Fargate / EC2)
+	"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+	"AWS_CONTAINER_CREDENTIALS_FULL_URI",
+	"AWS_CONTAINER_AUTHORIZATION_TOKEN",
+	"AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+	// Region
+	"AWS_REGION",
+	"AWS_DEFAULT_REGION",
+}
+
+// azureManagedIdentityHostEnvVarNames are host vars injected by Azure
+// platforms (App Service, Container Apps, Service Fabric, Arc, Cloud Shell)
+// that the azidentity SDK reads to locate the local managed identity
+// token endpoint. Without them the SDK falls back to IMDS, which is not
+// reachable on platforms like Azure Container Apps.
+var azureManagedIdentityHostEnvVarNames = []string{
+	"IDENTITY_ENDPOINT",
+	"IDENTITY_HEADER",
+	"IDENTITY_SERVER_THUMBPRINT",
+	"IMDS_ENDPOINT",
+	"MSI_ENDPOINT",
+	"MSI_SECRET",
+}
+
+// azureWorkloadIdentityHostEnvVarNames are host vars injected by the AKS
+// azure-workload-identity mutating webhook into pods that use Azure AD
+// Workload Identity federation.
+var azureWorkloadIdentityHostEnvVarNames = []string{
+	"AZURE_TENANT_ID",
+	"AZURE_CLIENT_ID",
+	"AZURE_FEDERATED_TOKEN_FILE",
+	"AZURE_AUTHORITY_HOST",
+}
+
+func (p *EnvVarsProvider) azureHostEnvVars(azureSettings *azsettings.AzureSettings, pluginID string) []string {
+	if azureSettings == nil {
+		return nil
+	}
+	if !slices.Contains(azureSettings.ForwardSettingsPlugins, pluginID) {
+		return nil
+	}
+
+	var variables []string
+	if azureSettings.ManagedIdentityEnabled {
+		for _, envVarName := range azureManagedIdentityHostEnvVarNames {
+			if v, ok := os.LookupEnv(envVarName); ok {
+				variables = append(variables, p.envVar(envVarName, v))
+			}
+		}
+	}
+	if azureSettings.WorkloadIdentityEnabled {
+		for _, envVarName := range azureWorkloadIdentityHostEnvVarNames {
+			if v, ok := os.LookupEnv(envVarName); ok {
+				variables = append(variables, p.envVar(envVarName, v))
+			}
+		}
+	}
 	return variables
 }
 

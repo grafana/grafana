@@ -42,8 +42,8 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			Small: jsonData.Info.Logos.Small,
 			Large: jsonData.Info.Logos.Large,
 		},
-		Updated: jsonData.Info.Updated,
-		Version: jsonData.Info.Version,
+		Updated: blankPluginPlaceholder(jsonData.Info.Updated, placeholderUpdated),
+		Version: blankPluginPlaceholder(jsonData.Info.Version, placeholderVersion),
 	}
 
 	if jsonData.Info.Description != "" {
@@ -176,32 +176,9 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 		meta.Suggestions = &jsonData.Suggestions
 	}
 
-	// Map category
+	// Map category - pass through any string value (even custom ones)
 	if jsonData.Category != "" {
-		var category pluginsv0alpha1.MetaJSONDataCategory
-		switch jsonData.Category {
-		case "tsdb":
-			category = pluginsv0alpha1.MetaJSONDataCategoryTsdb
-		case "logging":
-			category = pluginsv0alpha1.MetaJSONDataCategoryLogging
-		case "cloud":
-			category = pluginsv0alpha1.MetaJSONDataCategoryCloud
-		case "tracing":
-			category = pluginsv0alpha1.MetaJSONDataCategoryTracing
-		case "profiling":
-			category = pluginsv0alpha1.MetaJSONDataCategoryProfiling
-		case "sql":
-			category = pluginsv0alpha1.MetaJSONDataCategorySql
-		case "enterprise":
-			category = pluginsv0alpha1.MetaJSONDataCategoryEnterprise
-		case "iot":
-			category = pluginsv0alpha1.MetaJSONDataCategoryIot
-		case "other":
-			category = pluginsv0alpha1.MetaJSONDataCategoryOther
-		default:
-			category = pluginsv0alpha1.MetaJSONDataCategoryOther
-		}
-		meta.Category = &category
+		meta.Category = &jsonData.Category
 	}
 
 	// Map state
@@ -560,6 +537,12 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
 	}
 
+	// Nested (child) plugins often ship an empty version in their plugin.json and
+	// inherit it from their parent app. Mirror that so the frontend can cache assets.
+	if metaSpec.PluginJson.Info.Version == "" && plugin.Parent != nil {
+		metaSpec.PluginJson.Info.Version = plugin.Parent.Version
+	}
+
 	// Set Class - default to External if not specified
 	var c pluginsv0alpha1.MetaSpecClass
 	if plugin.Class == plugins.ClassCore {
@@ -618,6 +601,10 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 		metaSpec.Translations = plugin.Translations
 	}
 
+	if len(plugin.AliasIDs) > 0 {
+		metaSpec.AliasIds = plugin.AliasIDs
+	}
+
 	return metaSpec
 }
 
@@ -661,6 +648,12 @@ func convertSignatureType(sigType plugins.SignatureType) pluginsv0alpha1.MetaV0a
 func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
+	}
+
+	// Nested (child) plugins often ship an empty version in their plugin.json and
+	// inherit it from their parent app. Mirror that so the frontend can cache assets.
+	if metaSpec.PluginJson.Info.Version == "" && plugin.Parent != nil {
+		metaSpec.PluginJson.Info.Version = plugin.Parent.Info.Version
 	}
 
 	// Set Class - default to External if not specified
@@ -717,33 +710,44 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 		metaSpec.Translations = plugin.Translations
 	}
 
+	if len(plugin.AliasIDs) > 0 {
+		metaSpec.AliasIds = plugin.AliasIDs
+	}
+
 	return metaSpec
+}
+
+// grafanaComPluginVersionMetaJSON is a wrapper around MetaJSONData that includes
+// additional fields like aliasIDs which are not part of the official plugin.json schema
+type grafanaComPluginVersionMetaJSON struct {
+	pluginsv0alpha1.MetaJSONData
+	AliasIDs []string `json:"aliasIDs,omitempty"`
 }
 
 // grafanaComPluginVersionMeta represents the response from grafana.com API
 // GET /api/plugins/{pluginId}/versions/{version}
 type grafanaComPluginVersionMeta struct {
-	PluginSlug          string                         `json:"pluginSlug"`
-	Version             string                         `json:"version"`
-	JSON                pluginsv0alpha1.MetaJSONData   `json:"json"`
-	SignatureType       string                         `json:"signatureType"`
-	SignedByOrg         string                         `json:"signedByOrg"`
-	SignedByOrgName     string                         `json:"signedByOrgName"`
-	Manifest            grafanaComPluginManifest       `json:"manifest"`
-	AngularDetected     bool                           `json:"angularDetected"`
-	CDNURL              string                         `json:"cdnUrl"`
-	CreatePluginVersion string                         `json:"createPluginVersion"`
-	Children            []grafanaComChildPluginVersion `json:"children,omitempty"`
+	PluginSlug          string                          `json:"pluginSlug"`
+	Version             string                          `json:"version"`
+	JSON                grafanaComPluginVersionMetaJSON `json:"json"`
+	SignatureType       string                          `json:"signatureType"`
+	SignedByOrg         string                          `json:"signedByOrg"`
+	SignedByOrgName     string                          `json:"signedByOrgName"`
+	Manifest            grafanaComPluginManifest        `json:"manifest"`
+	AngularDetected     bool                            `json:"angularDetected"`
+	CDNURL              string                          `json:"cdnUrl"`
+	CreatePluginVersion string                          `json:"createPluginVersion"`
+	Children            []grafanaComChildPluginVersion  `json:"children,omitempty"`
 }
 
 // grafanaComChildPluginVersion represents a child plugin in the parent's version response.
 type grafanaComChildPluginVersion struct {
-	ID              int                          `json:"id"`
-	PluginID        int                          `json:"pluginId"`
-	PluginVersionID int                          `json:"pluginVersionId"`
-	Path            string                       `json:"path"`
-	Slug            string                       `json:"slug"`
-	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
+	ID              int                             `json:"id"`
+	PluginID        int                             `json:"pluginId"`
+	PluginVersionID int                             `json:"pluginVersionId"`
+	Path            string                          `json:"path"`
+	Slug            string                          `json:"slug"`
+	JSON            grafanaComPluginVersionMetaJSON `json:"json"`
 }
 
 type grafanaComPluginManifest struct {
@@ -783,11 +787,46 @@ func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafana
 	return grafanaComPluginVersionMetaToMetaSpec(logger, childMeta, child.Path)
 }
 
+// placeholderVersion and placeholderUpdated are the unsubstituted plugin.json
+// placeholders that the build system leaves in place for nested plugins.
+// We need to blank them out so that downstream version handling
+// is not defeated by a literal "%VERSION%".
+const (
+	placeholderVersion = "%VERSION%"
+	placeholderUpdated = "%TODAY%"
+)
+
+// blankPluginPlaceholder returns "" when v is the given unsubstituted placeholder.
+func blankPluginPlaceholder(v, placeholder string) string {
+	if v == placeholder {
+		return ""
+	}
+	return v
+}
+
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
 func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) (pluginsv0alpha1.MetaSpec, error) {
 	metaSpec := pluginsv0alpha1.MetaSpec{
-		PluginJson: gcomMeta.JSON,
+		PluginJson: gcomMeta.JSON.MetaJSONData,
 		Class:      pluginsv0alpha1.MetaSpecClassExternal,
+	}
+
+	// This path uses the embedded plugin.json verbatim, so normalise the version/updated
+	// placeholders here (jsonDataToMetaJSONData handles the other provider paths).
+	metaSpec.PluginJson.Info.Version = blankPluginPlaceholder(metaSpec.PluginJson.Info.Version, placeholderVersion)
+	metaSpec.PluginJson.Info.Updated = blankPluginPlaceholder(metaSpec.PluginJson.Info.Updated, placeholderUpdated)
+
+	// The plugin.json embedded in the grafana.com response often omits the version
+	// (especially for nested/child plugins, which inherit it from the parent). Fall
+	// back to the authoritative version from the grafana.com versions endpoint. For
+	// child plugins this is set to the parent's version in grafanaComChildPluginVersionToMetaSpec.
+	if metaSpec.PluginJson.Info.Version == "" {
+		metaSpec.PluginJson.Info.Version = gcomMeta.Version
+	}
+
+	// Extract aliasIDs from the JSON wrapper
+	if len(gcomMeta.JSON.AliasIDs) > 0 {
+		metaSpec.AliasIds = gcomMeta.JSON.AliasIDs
 	}
 
 	if gcomMeta.SignatureType != "" {
@@ -851,7 +890,7 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 	}
 	metaSpec.Children = children
 
-	translations, err := translationsFromManifest(gcomMeta.CDNURL, gcomMeta.Manifest.Files, pluginRelBasePath, gcomMeta.JSON)
+	translations, err := translationsFromManifest(gcomMeta.CDNURL, gcomMeta.Manifest.Files, pluginRelBasePath, gcomMeta.JSON.MetaJSONData)
 	if err != nil {
 		logger.Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
 	}

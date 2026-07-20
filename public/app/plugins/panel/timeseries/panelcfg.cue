@@ -22,16 +22,21 @@ composableKinds: PanelCfg: lineage: {
 	schemas: [{
 		version: [0, 0]
 		schema: {
+			TimeSeriesLegendOptions: {
+				common.VizLegendOptions
+				enableFacetedFilter?: bool | *false
+				facetedFilterPinned?: bool | *false
+			} @cuetsy(kind="interface")
 			Options: {
 				common.OptionsWithTimezones
 				common.OptionsWithAnnotations
 
-				legend:       common.VizLegendOptions
-				tooltip:      common.VizTooltipOptions
-				timeCompare?: common.TimeCompareOptions
-				orientation?: common.VizOrientation
-				annotations?: common.VizAnnotations
-        disableKeyboardEvents?: bool
+				legend:                 TimeSeriesLegendOptions
+				tooltip:                common.VizTooltipOptions
+				timeCompare?:           common.TimeCompareOptions
+				orientation?:           common.VizOrientation
+				annotations?:           common.VizAnnotations
+				disableKeyboardEvents?: bool
 			} @cuetsy(kind="interface")
 
 			FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")

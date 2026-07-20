@@ -2,6 +2,7 @@ package git
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,19 +31,28 @@ import (
 	"github.com/grafana/nanogit/retry"
 )
 
+// ErrNoBranches is returned when a repository has no branches (e.g., a completely empty repository).
+var ErrNoBranches = errors.New("no branches found in repository")
+
 type RepositoryConfig struct {
-	URL       string
-	Branch    string
-	TokenUser string
-	Token     common.RawSecureValue
-	Path      string
+	URL              string
+	Branch           string
+	TokenUser        string
+	Token            common.RawSecureValue
+	CommitSigningKey common.RawSecureValue
+	SigningMethod    provisioning.SigningMethod
+	SMIMECertificate string
+	Path             string
+	SkipGitSuffix    bool
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
 type gitRepository struct {
-	config    *provisioning.Repository
-	gitConfig RepositoryConfig
-	client    nanogit.Client
+	config        *provisioning.Repository
+	gitConfig     RepositoryConfig
+	client        nanogit.Client
+	writerOptions []nanogit.WriterOption
+	maxBytes      atomic.Int64
 }
 
 func NewRepository(
@@ -49,7 +60,10 @@ func NewRepository(
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
-	var opts []options.Option
+	opts := []options.Option{options.WithCapabilityNegotiation()}
+	if gitConfig.SkipGitSuffix {
+		opts = append(opts, options.WithoutGitSuffix())
+	}
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
 		if tokenUser == "" {
@@ -64,10 +78,23 @@ func NewRepository(
 		return nil, fmt.Errorf("create nanogit client: %w", err)
 	}
 
+	var writerOptions []nanogit.WriterOption
+	if gitConfig.SigningMethod != "" {
+		if gitConfig.CommitSigningKey.IsZero() {
+			return nil, fmt.Errorf("signing method %q requires secure.commitSigningKey", gitConfig.SigningMethod)
+		}
+		signer, err := signingOption(gitConfig)
+		if err != nil {
+			return nil, fmt.Errorf("configure commit signing: %w", err)
+		}
+		writerOptions = append(writerOptions, signer)
+	}
+
 	return &gitRepository{
-		config:    config,
-		gitConfig: gitConfig,
-		client:    client,
+		config:        config,
+		gitConfig:     gitConfig,
+		client:        client,
+		writerOptions: writerOptions,
 	}, nil
 }
 
@@ -88,7 +115,8 @@ func (r *gitRepository) GetCurrentBranch() string {
 }
 
 func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
-	ctx, _ = r.withGitContext(ctx, "")
+	ctx, logger := r.withGitContext(ctx, "")
+	logger.Info("get default branch")
 
 	// Get all refs to find the default branch
 	refs, err := r.client.ListRefs(ctx)
@@ -123,7 +151,7 @@ func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
 
 	// No branches found
 	if firstBranch == "" {
-		return "", fmt.Errorf("no branches found in repository")
+		return "", ErrNoBranches
 	}
 
 	// Prefer main, then master, then first branch alphabetically
@@ -172,7 +200,8 @@ func isValidGitURL(gitURL string) bool {
 
 // Test implements provisioning.Repository.
 func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	ctx, _ = r.withGitContext(ctx, "")
+	ctx, logger := r.withGitContext(ctx, "")
+	logger.Info("test repository connection")
 
 	t := string(r.config.Spec.Type)
 
@@ -180,6 +209,17 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	if r.GetCurrentBranch() == "" {
 		branch, err := r.GetDefaultBranch(ctx)
 		if err != nil {
+			if errors.Is(err, ErrNoBranches) {
+				return &provisioning.TestResults{
+					Code:    http.StatusBadRequest,
+					Success: false,
+					Errors: []provisioning.ErrorDetails{{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", t, "branch").String(),
+						Detail: "repository has no branches; push at least one commit before configuring sync",
+					}},
+				}, nil
+			}
 			return nil, err
 		}
 
@@ -243,13 +283,17 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	if err != nil {
 		// Check for branch not found first (before mapping)
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
+			detail := fmt.Sprintf("branch %q not found", r.gitConfig.Branch)
+			if _, dbErr := r.GetDefaultBranch(ctx); errors.Is(dbErr, ErrNoBranches) {
+				detail = "repository has no branches; push at least one commit before configuring sync"
+			}
 			return &provisioning.TestResults{
 				Code:    http.StatusBadRequest,
 				Success: false,
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("spec", t, "branch").String(),
-					Detail: "branch not found",
+					Detail: detail,
 				}},
 			}, nil
 		}
@@ -273,6 +317,42 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		}, nil
 	}
 
+	// Check write permissions if workflows are configured (repository is not read-only)
+	if len(r.config.Spec.Workflows) > 0 {
+		ok, err := r.client.CanWrite(ctx)
+
+		// Handle CanWrite errors
+		if err != nil {
+			err = mapNanogitError(err)
+			if result := checkHTTPError(err, field.NewPath("secure", "token")); result != nil {
+				return result, nil
+			}
+
+			return &provisioning.TestResults{
+				Code:    http.StatusForbidden,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("secure", "token").String(),
+					Detail: fmt.Sprintf("failed to check write permission: %v", err),
+				}},
+			}, nil
+		}
+
+		// Check if write permission was denied
+		if !ok {
+			return &provisioning.TestResults{
+				Code:    http.StatusForbidden,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("secure", "token").String(),
+					Detail: "write permission denied",
+				}},
+			}, nil
+		}
+	}
+
 	return &provisioning.TestResults{
 		Code:    http.StatusOK,
 		Success: true,
@@ -281,7 +361,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 
 // Read implements provisioning.Repository.
 func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
-	ctx, _ = r.withGitContext(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("read repository path", "path", filePath)
 	finalPath := safepath.Join(r.gitConfig.Path, filePath)
 
 	// Resolve ref to commit hash
@@ -326,6 +407,12 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
 	}
 
+	if max := r.maxBytes.Load(); max > 0 && int64(len(blob.Content)) > max {
+		return nil, apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", filePath, len(blob.Content), max),
+		)
+	}
+
 	return &repository.FileInfo{
 		Path: filePath,
 		Ref:  ref,
@@ -334,8 +421,13 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 	}, nil
 }
 
+func (r *gitRepository) WithMaxFileSize(maxBytes int64) {
+	r.maxBytes.Store(maxBytes)
+}
+
 func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
-	ctx, _ = r.withGitContext(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("read repository tree")
 
 	// Resolve ref to commit hash
 	refHash, err := r.resolveRefToHash(ctx, ref)
@@ -383,13 +475,14 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	ctx, _ = r.withGitContext(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("create repository path", "path", path)
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
 		return err
 	}
 
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -428,7 +521,8 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	ctx, _ = r.withGitContext(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("update repository path", "path", path)
 
 	// Check if trying to update a directory
 	if safepath.IsDir(path) {
@@ -440,7 +534,7 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 		return err
 	}
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -475,9 +569,10 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 		ref = r.gitConfig.Branch
 	}
 
-	ctx, _ = r.withGitContext(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("write repository path", "path", path)
 	info, err := r.Read(ctx, path, ref)
-	if err != nil && !(errors.Is(err, repository.ErrFileNotFound)) {
+	if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
 		return fmt.Errorf("check if file exists before writing: %w", err)
 	}
 	if err == nil {
@@ -495,14 +590,15 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	ctx, _ = r.withGitContext(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("delete repository path", "path", path)
 
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
 		return err
 	}
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -518,7 +614,8 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	ctx, _ = r.withGitContext(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("move repository path", "old_path", oldPath, "new_path", newPath)
 
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
@@ -526,7 +623,7 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 	}
 
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -609,7 +706,8 @@ func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provis
 }
 
 func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
-	ctx, _ = r.withGitContext(ctx, "")
+	ctx, logger := r.withGitContext(ctx, "")
+	logger.Info("list refs")
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list refs: %w", err)
@@ -631,7 +729,8 @@ func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, e
 }
 
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
-	ctx, _ = r.withGitContext(ctx, "")
+	ctx, logger := r.withGitContext(ctx, "")
+	logger.Info("get latest ref")
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
 		return "", fmt.Errorf("get branch ref: %w", err)
@@ -649,6 +748,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	}
 
 	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("compare files")
 
 	// Resolve base ref to hash
 	var baseHash hash.Hash
@@ -666,9 +766,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 		return nil, fmt.Errorf("resolve ref: %w", err)
 	}
 
-	// Get commit hashes for base and ref
-	// Compare commits using nanogit
-	files, err := r.client.CompareCommits(ctx, baseHash, refHash)
+	files, err := r.client.CompareCommits(ctx, baseHash, refHash, nanogit.WithRenameDetection())
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
@@ -696,9 +794,10 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 			}
 
 			changes = append(changes, repository.VersionedFileChange{
-				Path:   currentPath,
-				Ref:    ref,
-				Action: repository.FileActionUpdated,
+				Path:        currentPath,
+				Ref:         ref,
+				PreviousRef: base,
+				Action:      repository.FileActionUpdated,
 			})
 		case protocol.FileStatusDeleted:
 			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
@@ -727,6 +826,51 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Ref:    ref,
 				Action: repository.FileActionUpdated,
 			})
+		case protocol.FileStatusRenamed:
+			newPath, newPathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+			oldPath, oldPathErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
+
+			// A rename may span the repository boundary: one side inside the
+			// configured path and the other outside. Resolve this upfront so
+			// the switch below only deals with the four semantic cases.
+			newInsidePath := newPathErr == nil
+			oldInsidePath := oldPathErr == nil
+
+			// Tree entries (directories) are emitted with trailing slashes so
+			// downstream code can identify them via safepath.IsDir.
+			if f.Type == protocol.ObjectTypeTree {
+				if newInsidePath {
+					newPath = safepath.EnsureTrailingSlash(newPath)
+				}
+				if oldInsidePath {
+					oldPath = safepath.EnsureTrailingSlash(oldPath)
+				}
+			}
+
+			switch {
+			case newInsidePath && oldInsidePath:
+				changes = append(changes, repository.VersionedFileChange{
+					Action:       repository.FileActionRenamed,
+					Path:         newPath,
+					PreviousPath: oldPath,
+					Ref:          ref,
+					PreviousRef:  base,
+				})
+			case newInsidePath:
+				changes = append(changes, repository.VersionedFileChange{
+					Action: repository.FileActionCreated,
+					Path:   newPath,
+					Ref:    ref,
+				})
+			case oldInsidePath:
+				changes = append(changes, repository.VersionedFileChange{
+					Action:       repository.FileActionDeleted,
+					Path:         oldPath,
+					PreviousPath: oldPath,
+					Ref:          ref,
+					PreviousRef:  base,
+				})
+			}
 		default:
 			logger.Error("ignore unhandled file", "file", f.Path, "status", string(f.Status))
 		}
@@ -737,7 +881,8 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 
 func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
 	ctx = ensureRetryContext(ctx)
-	ctx, _ = r.withGitContext(ctx, "")
+	ctx, logger := r.withGitContext(ctx, "")
+	logger.Info("stage repository")
 	return NewStagedGitRepository(ctx, r, opts)
 }
 
@@ -820,7 +965,10 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 }
 
 // createSignature creates author and committer signatures using the context signature if available,
-// falling back to default Grafana signature
+// falling back to default Grafana signature. The committer is overridden by
+// spec.commit.signerName/Email when set; that identity must match the signing
+// key for providers to mark commits as Verified. The author is overridden by
+// the signer identity when spec.commit.signerIsAuthor is true.
 func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, nanogit.Committer) {
 	author := nanogit.Author{
 		Name:  "Grafana",
@@ -845,8 +993,17 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 		author.Time = time.Now()
 	}
 
-	// Author and committer are always the same (for now)
-	return author, nanogit.Committer(author)
+	committer := nanogit.Committer(author)
+	if commit := r.config.Spec.Commit; commit != nil && (commit.SignerName != "" || commit.SignerEmail != "") {
+		committer.Name = cmp.Or(commit.SignerName, "Grafana")
+		committer.Email = cmp.Or(commit.SignerEmail, "noreply@grafana.com")
+		if commit.SignerIsAuthor {
+			author.Name = committer.Name
+			author.Email = committer.Email
+		}
+	}
+
+	return author, committer
 }
 
 func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
@@ -935,7 +1092,13 @@ func (r *gitRepository) withGitContext(ctx context.Context, ref string) (context
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	logger = logger.With(slog.Group("git_repository", "url", r.gitConfig.URL, "ref", ref, "nanogit", true))
+	logger = logger.With(slog.Group("git_repository",
+		"url", r.gitConfig.URL,
+		"ref", ref,
+		"namespace", r.config.Namespace,
+		"repository_name", r.config.Name,
+		"nanogit", true,
+	))
 	ctx = logging.Context(ctx, logger)
 	// We want to ensure we don't add multiple git_repository keys. With doesn't deduplicate the keys...
 	ctx = context.WithValue(ctx, containsGitKey, true)

@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -19,14 +20,28 @@ func (DashboardSnapshotWithDeleteKey) OpenAPIModelName() string {
 	return OpenAPIPrefix + "DashboardSnapshotWithDeleteKey"
 }
 
+func (in *DashboardSnapshotWithDeleteKey) DeepCopyObject() runtime.Object {
+	if in == nil {
+		return nil
+	}
+	// nolint:staticcheck // explicit selector needed to avoid recursion with promoted DeepCopy
+	out := &DashboardSnapshotWithDeleteKey{
+		Snapshot:  *in.Snapshot.DeepCopy(),
+		DeleteKey: in.DeleteKey,
+	}
+	return out
+}
+
 // Each tenant, may have different sharing options
 // This is currently set using custom.ini, but multi-tenant support will need
 // to be managed differently
 type SnapshotSharingOptions struct {
-	SnapshotsEnabled     bool   `json:"snapshotEnabled"`
-	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
-	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
-	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
+	SnapshotsEnabled      bool   `json:"snapshotEnabled"`
+	ExternalSnapshotURL   string `json:"externalSnapshotURL,omitempty"`
+	ExternalSnapshotName  string `json:"externalSnapshotName,omitempty"`
+	ExternalEnabled       bool   `json:"externalEnabled,omitempty"`
+	ExternalSnapshotToken string `json:"-"`
+	PublicMode            bool   `json:"publicMode,omitempty"`
 }
 
 func (SnapshotSharingOptions) OpenAPIModelName() string {

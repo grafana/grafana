@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,20 +32,23 @@ func TestIntegrationStars(t *testing.T) {
 
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode0,
-		grafanarest.Mode2,
-		grafanarest.Mode3,
+		grafanarest.Mode1,
 		grafanarest.Mode5,
 	} {
 		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
-		if mode > grafanarest.Mode2 {
-			flags = append(flags, featuremgmt.FlagKubernetesStars)
+
+		// Provisioning requires dashboards/folders in unified storage (Mode4+).
+		// Disable it for legacy modes to avoid startup failures.
+		var disableFlags []string
+		if mode < grafanarest.Mode5 {
+			disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
 		}
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
 			AppModeProduction:     false, // required for experimental APIs
 			DisableAnonymous:      true,
 			EnableFeatureToggles:  flags,
+			DisableFeatureToggles: disableFlags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,
@@ -222,6 +225,29 @@ func TestIntegrationStars(t *testing.T) {
 			rspObj, err = starsClientViewer.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
 			require.Error(t, err)
 			require.Nil(t, rspObj)
+
+			// An org admin can star a dashboard on behalf of another user
+			viewerStarName := "user-" + starsClientViewer.Args.User.Identity.GetIdentifier()
+			res = client.Put().AbsPath("apis", "collections.grafana.app", "v1alpha1",
+				"namespaces", "default",
+				"stars", viewerStarName,
+				"update", "dashboard.grafana.app", "Dashboard", "test-2").Do(ctx)
+			require.NoError(t, res.Error(), "org admin can star for another user")
+
+			// The star landed on the target user's stars object, not the admin's
+			rspObj, err = starsClientViewer.Resource.Get(ctx, viewerStarName, metav1.GetOptions{})
+			require.NoError(t, err)
+			viewerStars := typed(t, rspObj, &collections.Stars{})
+			require.Len(t, viewerStars.Spec.Resource, 1)
+			require.Contains(t, viewerStars.Spec.Resource[0].Names, "test-2")
+
+			// A non-admin still cannot star on behalf of another user
+			viewerClient := helper.Org1.Viewer.RESTClient(t, &collections.GroupVersion)
+			res = viewerClient.Put().AbsPath("apis", "collections.grafana.app", "v1alpha1",
+				"namespaces", "default",
+				"stars", adminStarName,
+				"update", "dashboard.grafana.app", "Dashboard", "test-2").Do(ctx)
+			require.Error(t, res.Error(), "viewer cannot star for another user")
 
 			// Use the API to star a non-dashboard resource
 			res = client.Put().AbsPath("apis", "collections.grafana.app", "v1alpha1",

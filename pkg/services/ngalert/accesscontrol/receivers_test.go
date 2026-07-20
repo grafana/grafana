@@ -132,34 +132,62 @@ func TestReceiverAccess(t *testing.T) {
 				recv3.UID: permissions(models.ReceiverPermissionTest),
 			},
 		},
-		// {
-		//	name: "legacy global notifications provisioning writer should have full write on provisioning only",
-		//	user: newViewUser(ac.Permission{Action: ac.ActionAlertingNotificationsProvisioningWrite}),
-		//	expected: map[string]models.ReceiverPermissionSet{
-		//		recv1.UID: permissions(),
-		//		recv2.UID: permissions(),
-		//		recv3.UID: permissions(),
-		//	},
-		//	expectedWithProvisioning: map[string]models.ReceiverPermissionSet{
-		//		recv1.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
-		//		recv2.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
-		//		recv3.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
-		//	},
-		// },
-		// {
-		//	name: "legacy global provisioning writer should have full write on provisioning only",
-		//	user: newViewUser(ac.Permission{Action: ac.ActionAlertingProvisioningWrite}),
-		//	expected: map[string]models.ReceiverPermissionSet{
-		//		recv1.UID: permissions(),
-		//		recv2.UID: permissions(),
-		//		recv3.UID: permissions(),
-		//	},
-		//	expectedWithProvisioning: map[string]models.ReceiverPermissionSet{
-		//		recv1.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
-		//		recv2.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
-		//		recv3.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
-		//	},
-		// },
+		{
+			name: "legacy global notifications provisioning writer should have full write on provisioning only",
+			user: newViewUser(ac.Permission{Action: ac.ActionAlertingNotificationsProvisioningWrite}),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+			expectedWithProvisioning: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete, models.ReceiverPermissionModifyProtected),
+				recv2.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete, models.ReceiverPermissionModifyProtected),
+				recv3.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete, models.ReceiverPermissionModifyProtected),
+			},
+		},
+		{
+			name: "legacy global provisioning writer should have full write on provisioning only",
+			user: newViewUser(ac.Permission{Action: ac.ActionAlertingProvisioningWrite}),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+			expectedWithProvisioning: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete, models.ReceiverPermissionModifyProtected),
+				recv2.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete, models.ReceiverPermissionModifyProtected),
+				recv3.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete, models.ReceiverPermissionModifyProtected),
+			},
+		},
+		{
+			name: "notifications provisioning writer should require read",
+			user: newEmptyUser(ac.Permission{Action: ac.ActionAlertingNotificationsProvisioningWrite}),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+			expectedWithProvisioning: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+		},
+		{
+			name: "provisioning writer should require read",
+			user: newEmptyUser(ac.Permission{Action: ac.ActionAlertingProvisioningWrite}),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+			expectedWithProvisioning: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+		},
 		// Receiver create
 		{
 			name: "receiver create should not have write",

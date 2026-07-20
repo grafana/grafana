@@ -50,7 +50,6 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	}
 	dataSource = ctx.createDs(createDsCommand)
 	writableDs := dataSource.UID
-	writableDsId := dataSource.ID
 	writableDsOrgId := dataSource.OrgID
 
 	t.Run("Unauthenticated users shouldn't be able to delete correlations", func(t *testing.T) {
@@ -240,7 +239,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 
 		res := ctx.Delete(DeleteParams{
-			url:  fmt.Sprintf("/api/datasources/%d", writableDsId),
+			url:  fmt.Sprintf("/api/datasources/uid/%s", writableDs),
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)

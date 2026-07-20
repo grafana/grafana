@@ -27,21 +27,31 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
+weight: 100
 ---
 
 # Secrets Management API
 
-> If you are running Grafana Enterprise, you need to have specific permissions for some endpoints . Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
+{{< admonition type="note" >}}
+Available in Grafana 12 and later.
 
-> To view more about the new API structure, refer to [API overview](ref:api-overview).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [secret.grafana.app/v1](https://play.grafana.org/swagger?api=secret.grafana.app-v1beta1) in Swagger.**
+
+{{< /admonition >}}
+
+The Grafana Secrets Management API allows you to manage secrets that are used by other services and applications within your Grafana instance.
 
 {{< admonition type="caution" >}}
 The API is currently in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview) and might be subject to changes.
 {{< /admonition >}}
 
-The Grafana Secrets Management API allows you to manage secrets that are used by other services and applications within your Grafana instance.
+## Requirements
 
-### Decrypters
+If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
+
+## Decrypters
 
 The decrypters field is an allowlist that lets the secure value know which services and apps can decrypt the secret value.
 
@@ -85,7 +95,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 POST /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "metadata": {
@@ -166,7 +176,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response**:
@@ -235,7 +245,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response**:
@@ -303,7 +313,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 PUT /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "metadata": {
@@ -376,7 +386,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 DELETE /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response**:

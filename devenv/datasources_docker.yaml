@@ -60,14 +60,6 @@ datasources:
     secureJsonData:
       httpHeaderValue1: "Token mytoken"
 
-  - name: gdev-opentsdb
-    type: opentsdb
-    access: proxy
-    url: http://opentsdb:4242
-    jsonData:
-      tsdbResolution: 1
-      tsdbVersion: 1
-
   - name: gdev-elasticsearch
     type: elasticsearch
     access: proxy
@@ -115,33 +107,6 @@ datasources:
     secureJsonData:
       password: password
 
-  - name: gdev-mssql
-    type: mssql
-    url: mssql:1433
-    database: grafana
-    user: grafana
-    secureJsonData:
-      password: Password!
-
-  - name: gdev-mssql-tls
-    type: mssql
-    url: localhost:1434
-    database: grafana
-    user: grafana
-    jsonData:
-      encrypt: "true"
-      tlsSkipVerify: true
-    secureJsonData:
-      password: Password!
-
-  - name: gdev-mssql-ds-tests
-    type: mssql
-    url: mssqltests:1433
-    database: grafanatest
-    user: grafana
-    secureJsonData:
-      password: Password!
-
   - name: gdev-postgres
     type: postgres
     url: postgres:5432
@@ -175,46 +140,3 @@ datasources:
     access: proxy
     url: http://loki:3100
     editable: false
-
-  - name: gdev-pyroscope
-    type: grafana-pyroscope-datasource
-    uid: gdev-pyroscope
-    access: proxy
-    url: http://pyroscope:4040
-    editable: false
-
-  - name: gdev-tempo
-    type: tempo
-    uid: gdev-tempo
-    access: proxy
-    url: http://tempo:3200
-    editable: false
-    correlations:
-      - targetUID: gdev-loki
-        label: 'Logs (correlation)'
-        description: 'Correlation to logs stored in Loki'
-        config:
-          type: query
-          target:
-            expr: '{ job="job" }'
-          field: 'traceID'
-    jsonData:
-      tracesToLogsV2:
-        datasourceUid: gdev-loki
-        spanStartTimeShift: '5m'
-        spanEndTimeShift: '-5m'
-        customQuery: true
-        query: '{filename="/var/log/grafana/grafana.log"} |="$${__span.traceId}"'
-      tracesToProfiles:
-        datasourceUid: gdev-pyroscope
-        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
-      tracesToMetrics:
-        datasourceUid: gdev-prometheus
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
-        tags: [{ key: 'job' }]
-        queries:
-          - name: 'Metrics'
-            query: 'sum(rate({$$__tags}[5m]))'
-      serviceMap:
-        datasourceUid: 'gdev-prometheus'

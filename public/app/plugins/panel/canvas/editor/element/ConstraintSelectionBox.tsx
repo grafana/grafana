@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { VerticalConstraint, HorizontalConstraint, Constraint } from '../../panelcfg.gen';
+import { VerticalConstraint, HorizontalConstraint, type Constraint } from '../../panelcfg.gen';
 
 interface Props {
   onVerticalConstraintChange: (v: VerticalConstraint) => void;

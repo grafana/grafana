@@ -10,7 +10,7 @@ jobs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -20,7 +20,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
+          fetch-depth: 0
+          filter: blob:none
       - name: Detect changes
         id: detect-changes
         uses: ./.github/actions/change-detection
@@ -33,7 +34,7 @@ jobs:
 
     name: Feature toggles documentation is in sync with source
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
 
     permissions:
       contents: read
@@ -43,11 +44,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Go
-        uses: actions/setup-go@v6.0.0
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
         with:
-          go-version-file: 'go.mod'
-          cache: true
+          cache-build: 'false'
 
       - name: Run feature toggle tests
         run: go test -v -run TestFeatureToggleFiles ./pkg/services/featuremgmt/

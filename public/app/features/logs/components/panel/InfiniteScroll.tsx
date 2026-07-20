@@ -1,18 +1,24 @@
-import { ReactNode, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { usePrevious } from 'react-use';
-import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
+import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
-import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
+import { type AbsoluteTimeRange, LogsSortOrder, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
 
-import { canScrollBottom, canScrollTop, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
+import {
+  canScrollBottom,
+  canScrollTop,
+  getVisibleRange,
+  ScrollDirection,
+  shouldLoadMore,
+} from '../infiniteScrollUtils';
 
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
-import { LogListModel } from './processing';
-import { LogLineVirtualization } from './virtualization';
+import { type LogListModel } from './processing';
+import { type LogLineVirtualization } from './virtualization';
 
 interface ChildrenProps {
   itemCount: number;

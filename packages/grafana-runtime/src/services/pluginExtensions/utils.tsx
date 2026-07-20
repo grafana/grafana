@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  ComponentTypeWithExtensionMeta,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtension,
   type PluginExtensionComponent,
   type PluginExtensionLink,
@@ -81,11 +81,13 @@ export function renderLimitedComponents<Props extends {}>({
   components,
   limit,
   pluginId,
+  wrapper: Wrapper,
 }: {
   props: Props;
   components: Array<ComponentTypeWithExtensionMeta<Props>>;
   limit?: number;
   pluginId?: string | string[] | RegExp;
+  wrapper?: (props: { children: React.ReactNode }) => React.ReactNode;
 }) {
   const limitedComponents = getLimitedComponentsToRender({ props, components, limit, pluginId });
 
@@ -95,9 +97,15 @@ export function renderLimitedComponents<Props extends {}>({
 
   return (
     <>
-      {limitedComponents.map((Component) => (
-        <Component key={Component.meta.id} {...props} />
-      ))}
+      {limitedComponents.map((Component) =>
+        Wrapper ? (
+          <Wrapper key={Component.meta.id}>
+            <Component {...props} />
+          </Wrapper>
+        ) : (
+          <Component key={Component.meta.id} {...props} />
+        )
+      )}
     </>
   );
 }

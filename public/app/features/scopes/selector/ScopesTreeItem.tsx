@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import Highlighter from 'react-highlight-words';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, RadioButtonDot, useStyles2, Text } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
 import { ScopesTree } from './ScopesTree';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
-import { NodesMap, SelectedScope, TreeNode } from './types';
+import { type NodesMap, type SelectedScope, type TreeNode } from './types';
 import { useScopeActions } from './useScopeActions';
 
 // Helper components for rendering different selectable content types

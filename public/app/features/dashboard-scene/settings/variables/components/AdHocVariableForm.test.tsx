@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { AdHocVariableForm, AdHocVariableFormProps } from './AdHocVariableForm';
+import { AdHocVariableForm, type AdHocVariableFormProps } from './AdHocVariableForm';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -29,6 +30,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('AdHocVariableForm', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   const onDataSourceChange = jest.fn();
   const defaultProps: AdHocVariableFormProps = {
     datasource: defaultDatasource,

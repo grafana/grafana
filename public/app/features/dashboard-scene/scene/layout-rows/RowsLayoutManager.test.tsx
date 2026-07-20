@@ -1,6 +1,11 @@
+import { VariableHide } from '@grafana/data';
+import { ConstantVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -31,13 +36,58 @@ jest.mock('../layouts-shared/utils', () => ({
   }),
 }));
 
-function buildRowsLayoutManager() {
-  const rowsLayoutManager = new RowsLayoutManager({ rows: [] });
+function buildRowsLayoutManager(rows: RowItem[] = []) {
+  const rowsLayoutManager = new RowsLayoutManager({ key: 'test-RowsLayoutManager', rows });
   new DashboardScene({ body: rowsLayoutManager });
   return rowsLayoutManager;
 }
 
 describe('RowsLayoutManager', () => {
+  describe('getSlug', () => {
+    it('generates slugs based on row titles', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const row1 = rowsLayoutManager.addNewRow(new RowItem({ title: 'My Row Title' }));
+      const row2 = rowsLayoutManager.addNewRow(new RowItem({ title: 'Another Row!' }));
+
+      expect(row1.getSlug()).toBe('My-Row-Title');
+      expect(row2.getSlug()).toBe('Another-Row!');
+    });
+
+    it('disambiguates slugs when multiple titles are encoded to the same value', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const firstRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'New row 1' }));
+      const secondRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'New row-1' }));
+
+      expect(firstRow.getSlug()).toBe('New-row-1');
+      expect(secondRow.getSlug()).toBe('New-row-1__2');
+    });
+
+    it('keeps clean slugs when there is no slug duplication', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const firstRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'Row One' }));
+      const secondRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'Row Two' }));
+
+      expect(firstRow.getSlug()).toBe('Row-One');
+      expect(secondRow.getSlug()).toBe('Row-Two');
+    });
+
+    it('keeps slug values stable across different row layout instances', () => {
+      const titles = ['New row 1', 'New row-1', 'Other row'];
+
+      const getSlugsFromFreshLayout = () => {
+        const rows = titles.map((title) => new RowItem({ title }));
+        buildRowsLayoutManager(rows);
+        return rows.map((row) => row.getSlug());
+      };
+
+      const firstRunSlugs = getSlugsFromFreshLayout();
+      const secondRunSlugs = getSlugsFromFreshLayout();
+
+      expect(firstRunSlugs).toEqual(['New-row-1', 'New-row-1__2', 'Other-row']);
+      expect(secondRunSlugs).toEqual(firstRunSlugs);
+    });
+  });
+
   describe('addNewRow', () => {
     beforeEach(() => {
       lastUndo = undefined;
@@ -95,6 +145,40 @@ describe('RowsLayoutManager', () => {
       lastUndo!();
 
       expect(rowsLayoutManager.state.rows).toHaveLength(0);
+    });
+
+    it('should sync edit mode to a new row inner layout when the dashboard is already editing', () => {
+      // New rows use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
+      // RowItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
+      // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
+      const defaultLayoutTemplate = new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [],
+          isDraggable: false,
+          isResizable: false,
+        }),
+      });
+
+      const rowsLayoutManager = new RowsLayoutManager({
+        key: 'test-RowsLayoutManager',
+        rows: [new RowItem({ title: 'First' })],
+      });
+      new DashboardScene({
+        body: rowsLayoutManager,
+        isEditing: true,
+        editable: true,
+        preferences: { defaultLayoutTemplate },
+      });
+
+      rowsLayoutManager.editModeChanged(true);
+
+      const newRow = rowsLayoutManager.addNewRow();
+      const layout = newRow.getLayout();
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+
+      const grid = (layout as DefaultGridLayoutManager).state.grid;
+      expect(grid.state.isDraggable).toBe(true);
+      expect(grid.state.isResizable).toBe(true);
     });
   });
 
@@ -168,6 +252,109 @@ describe('RowsLayoutManager', () => {
         expect(parent.state.body).toBe(rowsLayoutManager);
         expect(rowsLayoutManager.state.rows).toHaveLength(1);
         expect(rowsLayoutManager.state.rows[0]).toBe(row);
+      });
+    });
+  });
+
+  describe('duplicate', () => {
+    it('should return a new RowsLayoutManager instance', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+
+      const duplicated = rowsLayoutManager.duplicate() as RowsLayoutManager;
+
+      expect(duplicated).toBeInstanceOf(RowsLayoutManager);
+      expect(duplicated).not.toBe(rowsLayoutManager);
+      expect(duplicated.state.key).not.toBe(rowsLayoutManager.state.key);
+    });
+
+    it('should duplicate each row', () => {
+      const rows = [new RowItem({ title: 'Row 1' }), new RowItem({ title: 'Row 2' }), new RowItem({ title: 'Row 3' })];
+      const rowDuplicateSpies = rows.map((row) => jest.spyOn(row, 'duplicate'));
+      const rowsLayoutManager = buildRowsLayoutManager(rows);
+
+      const duplicated = rowsLayoutManager.duplicate() as RowsLayoutManager;
+
+      expect(rowDuplicateSpies[0]).toHaveBeenCalledTimes(1);
+      expect(rowDuplicateSpies[1]).toHaveBeenCalledTimes(1);
+      expect(rowDuplicateSpies[2]).toHaveBeenCalledTimes(1);
+
+      expect(duplicated.state.rows.length).toBe(3);
+      expect(duplicated.state.rows[0]).not.toBe(rows[0]);
+      expect(duplicated.state.rows[1]).not.toBe(rows[1]);
+      expect(duplicated.state.rows[2]).not.toBe(rows[2]);
+    });
+
+    it('should clone section constant variables as independent instances with the same name', () => {
+      const constantVar = new ConstantVariable({
+        name: 'env',
+        type: 'constant',
+        value: 'prod',
+        hide: VariableHide.hideVariable,
+      });
+      const originalRow = new RowItem({
+        title: 'Row 1',
+        layout: AutoGridLayoutManager.createEmpty(),
+        $variables: new SceneVariableSet({ variables: [constantVar] }),
+      });
+      buildRowsLayoutManager([originalRow]);
+
+      const duplicatedRow = originalRow.duplicate();
+
+      const originalConstant = originalRow.state.$variables!.state.variables[0] as ConstantVariable;
+      const duplicatedConstant = duplicatedRow.state.$variables!.state.variables[0] as ConstantVariable;
+
+      expect(duplicatedConstant).not.toBe(originalConstant);
+      expect(duplicatedConstant.state.key).not.toBe(originalConstant.state.key);
+      expect(originalConstant.state.name).toBe('env');
+      expect(duplicatedConstant.state.name).toBe('env');
+      expect(originalConstant.state.value).toBe('prod');
+      expect(duplicatedConstant.state.value).toBe('prod');
+
+      duplicatedConstant.setState({ value: 'staging' });
+
+      expect(originalConstant.state.value).toBe('prod');
+      expect(duplicatedConstant.state.value).toBe('staging');
+    });
+
+    describe('when rows contain panels', () => {
+      it('should assign unique panel keys across all rows, starting after the highest existing id', () => {
+        const rowsLayoutManager = buildRowsLayoutManager([
+          new RowItem({
+            title: 'Row 1',
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-1', title: 'Panel A' }),
+                  }),
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-2', title: 'Panel B' }),
+                  }),
+                ],
+              }),
+            }),
+          }),
+          new RowItem({
+            title: 'Row 2',
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-3', title: 'Panel C', pluginId: 'table' }),
+                  }),
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-4', title: 'Panel D', pluginId: 'table' }),
+                  }),
+                ],
+              }),
+            }),
+          }),
+        ]);
+
+        const duplicated = rowsLayoutManager.duplicate();
+
+        const panelKeys = duplicated.getVizPanels().map((p) => p.state.key);
+        expect(panelKeys).toEqual(['panel-5', 'panel-6', 'panel-7', 'panel-8']);
       });
     });
   });

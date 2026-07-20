@@ -1,35 +1,41 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
+import {
+  type MultiValueVariable,
+  NewSceneObjectAddedEvent,
+  SceneVariableSet,
+  sceneGraph,
+  type VariableValueSingle,
+} from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
-import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
+import { DashboardStateChangedEvent } from '../../edit-pane/events';
+import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
+import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
+import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
-import { RowItem } from './RowItem';
-import { RowsLayoutManager } from './RowsLayoutManager';
+import { type RowItem } from './RowItem';
+import { type RowsLayoutManager } from './RowsLayoutManager';
 
-export interface Props {
+interface Props {
   row: RowItem;
   manager: RowsLayoutManager;
   variable: MultiValueVariable;
 }
 
-export function RowItemRepeater({
-  row,
-  variable,
-}: {
-  row: RowItem;
-  manager: RowsLayoutManager;
-  variable: MultiValueVariable;
-}) {
+export function RowItemRepeater({ row, variable }: Props) {
   const { repeatedRows } = row.useState();
 
-  // Subscribe to variable state changes and perform repeats when the variable changes
+  // Subscribe to variable state changes and perform repeats when the variable changes.
+  // Defer the initial performRowRepeats to the next macrotask so the parent SceneVariableSet
+  // can activate first under RENDER_BEFORE_ACTIVATION).
+  // A sync call here can early-return while the set is inactive; if the later options update
+  // does not notify subscribeToState (URL value already set), repeatedRows stays undefined
+  // and the row spinner never clears.
   useEffect(() => {
-    performRowRepeats(variable, row, false);
+    const timeoutId = setTimeout(() => performRowRepeats(variable, row, false), 0);
 
     const variableChangeSub = variable.subscribeToState((state) => performRowRepeats(variable, row, false));
     const editEventSub = row.subscribeToEvent(DashboardStateChangedEvent, (e) =>
@@ -37,6 +43,7 @@ export function RowItemRepeater({
     );
 
     return () => {
+      clearTimeout(timeoutId);
       editEventSub.unsubscribe();
       variableChangeSub.unsubscribe();
     };
@@ -89,6 +96,7 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   const variableValues = values.length ? values : [''];
   const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
   const clonedRows: RowItem[] = [];
+  const baseSectionVariables = getSectionBaseVariables(row);
 
   // Loop through variable values and create repeats
   for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
@@ -105,9 +113,31 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
         });
 
     const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);
+    const sourceVariables = row.state.$variables;
+    const localSet = getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]);
+    const localVariables = localSet.state.variables.map((v) => v.clone());
+    let repeatedVariableSet: SceneVariableSet;
+    // First iteration reuses the original row and updates its variable set in place.
+    // Cloned rows must get an isolated variable set so each repeat keeps its own selected value/text.
+    if (isSourceRow && sourceVariables instanceof SceneVariableSet) {
+      sourceVariables.setState({
+        variables: [
+          ...filterSectionRepeatLocalVariables(sourceVariables.state.variables, sourceVariables),
+          ...localVariables,
+        ],
+      });
+      repeatedVariableSet = sourceVariables;
+    } else {
+      repeatedVariableSet = getRepeatVariableValueSet(
+        variable,
+        variableValues[rowIndex],
+        variableTexts[rowIndex],
+        baseSectionVariables
+      );
+    }
 
     rowClone.setState({
-      $variables: getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]),
+      $variables: repeatedVariableSet,
       layout,
     });
 
@@ -120,25 +150,24 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   }
 
   row.setState({ repeatedRows: clonedRows });
+  // Rehydrate from a stable parent subtree to keep duplicate var-* key mapping consistent.
+  row.publishEvent(new NewSceneObjectAddedEvent(row.parent ?? row), true);
 }
 
 /**
  * Get previous variable values given the current repeated state
  */
-function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSingle[] {
+function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSingle[] | undefined {
   const values: VariableValueSingle[] = [];
 
   if (!mainRow.state.repeatedRows) {
-    return [];
+    return undefined;
   }
 
   function collectVariableValue(row: RowItem) {
-    const variable = sceneGraph.lookupVariable(varName, row);
-    if (variable) {
-      const value = variable.getValue();
-      if (value != null && !Array.isArray(value)) {
-        values.push(value);
-      }
+    const value = getRepeatLocalVariableValue(row, varName);
+    if (value != null && !Array.isArray(value)) {
+      values.push(value);
     }
   }
 

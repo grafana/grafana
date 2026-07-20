@@ -10,13 +10,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	annotationapp "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -39,6 +39,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		To:           c.QueryInt64("to"),
 		OrgID:        c.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
+		UserUID:      c.Query("userUID"),
 		AlertID:      c.QueryInt64("alertId"),
 		AlertUID:     c.Query("alertUID"),
 		DashboardID:  c.QueryInt64("dashboardId"),
@@ -159,20 +160,10 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
 
-	startID := item.ID
-
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Annotation added",
-		"id":      startID,
+		"id":      item.ID,
 	})
-}
-
-func formatGraphiteAnnotation(what string, data string) string {
-	text := what
-	if data != "" {
-		text = text + "\n" + data
-	}
-	return text
 }
 
 // swagger:route POST /annotations/graphite annotations postGraphiteAnnotation
@@ -188,40 +179,16 @@ func formatGraphiteAnnotation(what string, data string) string {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) response.Response {
-	cmd := dtos.PostGraphiteAnnotationsCmd{}
+	cmd := annotationapp.PostGraphiteAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if cmd.What == "" {
-		err := &AnnotationError{"what field should not be empty"}
+	tagsArray, err := cmd.Validate()
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
-	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
-
-	// Support tags in prior to Graphite 0.10.0 format (string of tags separated by space)
-	var tagsArray []string
-	switch tags := cmd.Tags.(type) {
-	case string:
-		if tags != "" {
-			tagsArray = strings.Split(tags, " ")
-		} else {
-			tagsArray = []string{}
-		}
-	case []any:
-		for _, t := range tags {
-			if tagStr, ok := t.(string); ok {
-				tagsArray = append(tagsArray, tagStr)
-			} else {
-				err := &AnnotationError{"tag should be a string"}
-				return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
-			}
-		}
-	default:
-		err := &AnnotationError{"unsupported tags format"}
-		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
-	}
-
+	text := annotationapp.FormatGraphiteText(cmd.What, cmd.Data)
 	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:  c.GetOrgID(),
@@ -264,12 +231,12 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
-	if resp != nil {
+	userID, _ := identity.UserIdentifier(c.GetID())
+
+	if _, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser); resp != nil {
 		return resp
 	}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:    c.GetOrgID(),
 		UserID:   userID,
@@ -278,9 +245,8 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		EpochEnd: cmd.TimeEnd,
 		Text:     cmd.Text,
 		Tags:     cmd.Tags,
-		Data:     annotation.Data,
 	}
-
+	// Data is omitted unless supplied; the repository preserves the stored value.
 	if cmd.Data != nil {
 		item.Data = cmd.Data
 	}
@@ -316,12 +282,14 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	userID, _ := identity.UserIdentifier(c.GetID())
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
+	// Start from the stored annotation, then apply the supplied fields.
 	existing := annotations.Item{
 		OrgID:    c.GetOrgID(),
 		UserID:   userID,
@@ -330,31 +298,30 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		EpochEnd: annotation.TimeEnd,
 		Text:     annotation.Text,
 		Tags:     annotation.Tags,
-		Data:     annotation.Data,
+		PanelID:  annotation.PanelID,
+	}
+	if annotation.DashboardUID != nil {
+		existing.DashboardUID = *annotation.DashboardUID
 	}
 
 	if cmd.Tags != nil {
 		existing.Tags = cmd.Tags
 	}
-
-	if cmd.Text != "" && cmd.Text != existing.Text {
+	if cmd.Text != "" {
 		existing.Text = cmd.Text
 	}
-
-	if cmd.Time > 0 && cmd.Time != existing.Epoch {
+	if cmd.Time > 0 {
 		existing.Epoch = cmd.Time
 	}
-
-	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
+	if cmd.TimeEnd > 0 {
 		existing.EpochEnd = cmd.TimeEnd
 	}
-
 	if cmd.Data != nil {
 		existing.Data = cmd.Data
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 	}
 
 	return response.Success("Annotation patched")
@@ -495,10 +462,10 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 	return response.Success("Annotation deleted")
 }
 
-func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *user.SignedInUser) (*annotations.ItemDTO, response.Response) {
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user identity.Requester) (*annotations.ItemDTO, response.Response) {
 	query := &annotations.ItemQuery{
 		AnnotationID: annotationID,
-		OrgID:        user.OrgID,
+		OrgID:        user.GetOrgID(),
 		SignedInUser: user,
 	}
 	items, err := repo.Find(ctx, query)
@@ -560,16 +527,9 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 
 		// tempUser is used to resolve annotation type.
 		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
-		tempUser := &user.SignedInUser{
-			OrgID: orgID,
-			Permissions: map[int64]map[string][]string{
-				orgID: {
-					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeDashboardsAll},
-				},
-			},
-		}
+		tmpCtx, tempUser := identity.WithServiceIdentity(ctx, orgID)
 
-		annotation, resp := findAnnotationByID(ctx, annotationsRepo, int64(annotationId), tempUser)
+		annotation, resp := findAnnotationByID(tmpCtx, annotationsRepo, int64(annotationId), tempUser)
 		if resp != nil {
 			return nil, errors.New("could not resolve annotation type")
 		}
@@ -585,14 +545,14 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 				scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
 				// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
 				if dashboard.FolderUID != "" {
-					scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
-					inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
+					inheritedScopes, err := folder.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
 					if err != nil {
 						return nil, err
 					}
 					scopes = append(scopes, inheritedScopes...)
 				} else {
-					scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
 				}
 				return scopes, nil
 			})
@@ -648,6 +608,10 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	UserID int64 `json:"userId"`
+	// Limit response to annotations created by a specific user, identified by UID.
+	// in:query
+	// required:false
+	UserUID string `json:"userUID"`
 	// Find annotations for a specified alert rule by its ID.
 	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
 	// in:query
@@ -724,7 +688,7 @@ type PostAnnotationParams struct {
 type PostGraphiteAnnotationParams struct {
 	// in:body
 	// required:true
-	Body dtos.PostGraphiteAnnotationsCmd `json:"body"`
+	Body annotationapp.PostGraphiteAnnotationsCmd `json:"body"`
 }
 
 // swagger:parameters updateAnnotation

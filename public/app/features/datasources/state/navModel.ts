@@ -1,4 +1,10 @@
-import { DataSourceSettings, PluginType, PluginInclude, NavModel, NavModelItem } from '@grafana/data';
+import {
+  type DataSourceSettings,
+  PluginType,
+  type PluginInclude,
+  type NavModel,
+  type NavModelItem,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
@@ -9,7 +15,7 @@ import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
-import { GenericDataSourcePlugin } from '../types';
+import { type GenericDataSourcePlugin } from '../types';
 
 const loadingDSType = 'Loading';
 

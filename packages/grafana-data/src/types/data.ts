@@ -1,9 +1,9 @@
-import { DataFrameDTO, FieldConfig } from './dataFrame';
-import { DataFrameType } from './dataFrameTypes';
-import { ApplyFieldOverrideOptions } from './fieldOverrides';
-import { PanelPluginDataSupport } from './panel';
-import { DataTopic } from './query';
-import { DataTransformerConfig } from './transformations';
+import { type DataFrameDTO, type FieldConfig } from './dataFrame';
+import { type DataFrameType } from './dataFrameTypes';
+import { type ApplyFieldOverrideOptions } from './fieldOverrides';
+import { type PanelPluginDataSupport } from './panel';
+import { type DataTopic } from './query';
+import { type DataTransformerConfig } from './transformations';
 
 export type KeyValue<T = any> = Record<string, T>;
 

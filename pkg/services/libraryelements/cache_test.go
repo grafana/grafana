@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -152,6 +153,99 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 		_, err = cache.get(ctx, user2)
 		require.NoError(t, err)
 		assert.Equal(t, 2, trackingSvc.GetCallCount(), "Different user should trigger a new GetFolders call")
+	})
+}
+
+func TestIntegration_SkipFolderTreeForAdmin(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	createPanels := func(t *testing.T, sc scenarioContext, count int) {
+		t.Helper()
+		for i := 0; i < count; i++ {
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel "+string(rune('A'+i)))
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+		}
+	}
+
+	replaceWithTrackingFolderSvc := func(sc scenarioContext) *trackingFolderService {
+		trackingSvc := newTrackingFolderService()
+		trackingSvc.ExpectedFolders = []*folder.Folder{sc.folder}
+		trackingSvc.AddFolder(sc.folder)
+		sc.service.folderService = trackingSvc
+		sc.service.treeCache = newFolderTreeCache(trackingSvc)
+		return trackingSvc
+	}
+
+	t.Run("admin with SkipFolderTreeForAdmin skips GetFolders", func(t *testing.T) {
+		sc := setupTestScenario(t)
+		createPanels(t, sc, 3)
+
+		trackingSvc := replaceWithTrackingFolderSvc(sc)
+
+		result, err := sc.service.getAllLibraryElements(context.Background(), sc.reqContext.SignedInUser, model.SearchLibraryElementsQuery{
+			PerPage:                100,
+			Page:                   1,
+			SkipFolderTreeForAdmin: true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(result.Elements))
+		assert.Equal(t, 0, trackingSvc.GetCallCount(), "GetFolders should not be called for admin with SkipFolderTreeForAdmin")
+
+		// FolderName should be empty since folder tree was not fetched
+		for _, elem := range result.Elements {
+			assert.Empty(t, elem.Meta.FolderName, "FolderName should be empty when SkipFolderTreeForAdmin is set")
+		}
+	})
+
+	t.Run("admin without SkipFolderTreeForAdmin fetches folder tree", func(t *testing.T) {
+		sc := setupTestScenario(t)
+		createPanels(t, sc, 3)
+
+		trackingSvc := replaceWithTrackingFolderSvc(sc)
+
+		result, err := sc.service.getAllLibraryElements(context.Background(), sc.reqContext.SignedInUser, model.SearchLibraryElementsQuery{
+			PerPage:                100,
+			Page:                   1,
+			SkipFolderTreeForAdmin: false,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(result.Elements))
+		assert.Equal(t, 1, trackingSvc.GetCallCount(), "GetFolders should be called once")
+
+		for _, elem := range result.Elements {
+			assert.Equal(t, sc.folder.Title, elem.Meta.FolderName, "FolderName should be populated")
+		}
+	})
+
+	t.Run("non-admin with SkipFolderTreeForAdmin still fetches folder tree", func(t *testing.T) {
+		sc := setupTestScenario(t)
+		createPanels(t, sc, 3)
+
+		trackingSvc := replaceWithTrackingFolderSvc(sc)
+
+		viewer := &user.SignedInUser{
+			UserID:  sc.user.UserID,
+			UserUID: sc.user.UserUID,
+			OrgID:   sc.user.OrgID,
+			OrgRole: org.RoleViewer,
+			Permissions: map[int64]map[string][]string{
+				sc.user.OrgID: {
+					folder.ActionFoldersRead: {folder.ScopeFoldersAll},
+				},
+			},
+		}
+
+		result, err := sc.service.getAllLibraryElements(context.Background(), viewer, model.SearchLibraryElementsQuery{
+			PerPage:                100,
+			Page:                   1,
+			SkipFolderTreeForAdmin: true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(result.Elements))
+		assert.Equal(t, 1, trackingSvc.GetCallCount(), "GetFolders should still be called for non-admin")
 	})
 }
 

@@ -26,3 +26,19 @@ func (f FakeReceiverPermissionsService) CopyPermissions(ctx context.Context, org
 }
 
 var _ accesscontrol.ReceiverPermissionsService = new(FakeReceiverPermissionsService)
+
+type FakeRoutePermissionsService struct {
+	*actest.FakePermissionsService
+}
+
+func NewFakeRoutePermissionsService() *FakeRoutePermissionsService {
+	return &FakeRoutePermissionsService{
+		FakePermissionsService: &actest.FakePermissionsService{},
+	}
+}
+
+func (f FakeRoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, name string) error {
+	return f.ExpectedErr
+}
+
+var _ accesscontrol.RoutePermissionsService = new(FakeRoutePermissionsService)

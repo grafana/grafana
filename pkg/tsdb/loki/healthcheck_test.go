@@ -75,7 +75,7 @@ func (provider *healthCheckProvider[T]) GetTransport(opts ...httpclient.Options)
 
 // Return a mocked HTTP client provider.
 //
-// Example taken from `pkg/promlib/healthcheck_test.go`
+// Example taken from `https://github.com/grafana/grafana-prometheus-datasource/pkg/promlib/healthcheck_test.go`
 func getMockProvider[T http.RoundTripper]() *httpclient.Provider {
 	p := &healthCheckProvider[T]{
 		RoundTripper: new(T),
@@ -92,7 +92,7 @@ func Test_healthcheck(t *testing.T) {
 	t.Run("should do a successful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
 		s := &Service{
-			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "loki test"), tracing.DefaultTracer())),
 			tracer: tracing.DefaultTracer(),
 			logger: backend.NewLoggerWith("logger", "loki test"),
 		}
@@ -110,7 +110,7 @@ func Test_healthcheck(t *testing.T) {
 	t.Run("should return an error for an unsuccessful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
 		s := &Service{
-			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "loki test"), tracing.DefaultTracer())),
 			tracer: tracing.DefaultTracer(),
 			logger: backend.NewLoggerWith("logger", "loki test"),
 		}

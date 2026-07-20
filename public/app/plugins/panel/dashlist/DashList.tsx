@@ -2,17 +2,17 @@ import { take } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
-import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
+import { type InterpolateFunction, type PanelProps, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScrollContainer, Box, Text, EmptyState } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import impressionSrv from 'app/core/services/impression_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, QueryResponse, SearchQuery } from 'app/features/search/service/types';
+import { type DashboardQueryResult, type QueryResponse, type SearchQuery } from 'app/features/search/service/types';
 
 import { DashListItem } from './DashListItem';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { useDashListUrlParams } from './utils';
 
 export type Dashboard = DashboardQueryResult & {

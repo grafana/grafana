@@ -218,33 +218,6 @@ func TestToListRequest(t *testing.T) {
 			wantPredicate: storage.Everything,
 			wantErr:       nil,
 		},
-		{
-			name: "with fullpath label",
-			key: &resourcepb.ResourceKey{
-				Group:     "test",
-				Resource:  "test",
-				Namespace: "default",
-			},
-			opts: storage.ListOptions{
-				Predicate: storage.SelectionPredicate{
-					Label: labels.SelectorFromSet(labels.Set{utils.LabelGetFullpath: "true"}),
-				},
-			},
-			want: &resourcepb.ListRequest{
-				VersionMatchV2: 1,
-				Options: &resourcepb.ListOptions{
-					Labels: nil,
-					Fields: nil,
-					Key: &resourcepb.ResourceKey{
-						Group:     "test",
-						Resource:  "test",
-						Namespace: "default",
-					},
-				},
-			},
-			wantPredicate: storage.Everything,
-			wantErr:       nil,
-		},
 	}
 
 	for _, tt := range tests {

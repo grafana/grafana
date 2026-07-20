@@ -20,7 +20,7 @@ labels:
 menuTitle: Configure
 title: Configure the Azure Monitor data source
 weight: 200
-last_reviewed: 2025-12-04
+review_date: 2026-05-12
 ---
 
 # Configure the Azure Monitor data source
@@ -67,20 +67,25 @@ You're taken to the **Settings** tab where you can configure the data source.
 
 ## Choose an authentication method
 
-The Azure Monitor data source supports four authentication methods. Choose based on where Grafana is hosted and your security requirements:
+The Azure Monitor data source supports five authentication methods. Choose based on where Grafana is hosted, your security requirements, and whether you need alerting:
 
-| Authentication method | Best for                                   | Requirements                                                   |
-| --------------------- | ------------------------------------------ | -------------------------------------------------------------- |
-| **App Registration**  | Any Grafana deployment                     | Microsoft Entra ID app registration with client secret         |
-| **Managed Identity**  | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource                 |
-| **Workload Identity** | Grafana in Kubernetes (AKS)                | Workload identity federation configured                        |
-| **Current User**      | User-level access control                  | Microsoft Entra ID authentication configured for Grafana login |
+| Authentication method                     | Best for                                   | Grafana Cloud | Supports alerting | Server configuration required |
+| ----------------------------------------- | ------------------------------------------ | ------------- | ----------------- | ----------------------------- |
+| **App Registration (client secret)**      | Any Grafana deployment                     | ✓             | ✓                 | No                            |
+| **App Registration (client certificate)** | Any Grafana deployment                     | ✓             | ✓                 | No                            |
+| **Managed Identity**                      | Grafana hosted in Azure (VMs, App Service) | ✗             | ✓                 | Yes                           |
+| **Workload Identity**                     | Grafana in Kubernetes (AKS)                | ✗             | ✓                 | Yes                           |
+| **Current User**                          | User-level access control                  | ✓             | Partial           | Yes                           |
+
+{{< admonition type="note" >}}
+**Current User** authentication doesn't support background operations like alerting, reporting, and recording rules. To use alerting with Current User, you must configure **fallback service credentials**. Alerts then run under the fallback credential's permissions. Refer to [Limitations and fallback credentials](#limitations-and-fallback-credentials) for details.
+{{< /admonition >}}
 
 ## Configure authentication
 
 Select one of the following authentication methods and complete the configuration.
 
-### App Registration
+### App Registration (client secret)
 
 Use a Microsoft Entra ID app registration (service principal) to authenticate. This method works with any Grafana deployment.
 
@@ -126,12 +131,119 @@ datasources:
     version: 1
 ```
 
+### App Registration (client certificate)
+
+Use a Microsoft Entra ID app registration with a certificate.
+
+#### App Registration (client certificate) prerequisites
+
+1. Create an app registration in Microsoft Entra ID.
+   Refer to the [Azure documentation for creating a service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in).
+1. Create or retrieve an existing certificate (see examples below for creating self-signed PEM or PFX certificates).
+1. Upload a certificate to the app registration in PEM or PFX format. Refer to the [Azure documentation here](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials?source=recommendations&tabs=certificate).
+1. Assign the `Reader` role to the app registration on the subscription or resources you want to monitor.
+   Refer to the [Azure documentation for role assignments](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal?tabs=current).
+
+#### Add the certificate to the app registration
+
+Add the public certificate to your app registration in the Azure portal:
+
+1. Open the app registration in Azure.
+1. Select **Certificates & secrets**.
+1. Select **Certificates**.
+1. Click **Upload certificate**.
+1. Upload the certificate file that contains the public certificate (`.cer`, `.crt`, or `.pem`).
+1. Save your changes.
+
+The uploaded certificate is used by Microsoft Entra ID to validate the client assertion signature from Grafana.
+
+#### Certificate formats
+
+The Azure Monitor data source supports the following certificate formats:
+
+- **PEM:** Provide both the certificate and private key in PEM text format.
+- **PFX:** Provide a base64-encoded PFX payload in the **Client Certificate** field, and provide the certificate password.
+
+#### Create self-signed certificates
+
+The following examples are for test and lab environments. For production, use certificates from your internal or public certificate authority.
+
+Create a self-signed PEM certificate and private key with OpenSSL:
+
+```sh
+openssl genrsa -out key.pem 2048
+openssl req -new -sha256 -key key.pem -out csr.csr
+openssl req -x509 -sha256 -days 365 -key key.pem -in csr.csr -out certificate.pem
+```
+
+In this example:
+
+- `certificate.pem` is uploaded to **Certificates & secrets** in Azure.
+- `certificate.pem` is the client certificate added to Grafana.
+- `key.pem` is the private key added to Grafana.
+
+Create an encrypted, base64 encoded PFX certificate:
+
+```sh
+openssl genrsa -out key.pem 2048
+openssl req -new -sha256 -key key.pem -out csr.csr
+openssl req -x509 -sha256 -days 365 -key key.pem -in csr.csr -out certificate.pem
+openssl pkcs12 -export -inkey key.pem -in certificate.pem -out certificate.pfx
+openssl base64 -in certificate.pfx -out certificate.b64
+```
+
+Ensure you make note of the password you use to encrypt the certificate.
+
+In this example:
+
+- `certificate.pem` is uploaded to **Certificates & secrets** in Azure.
+- `certificate.b64` is the encrypted, encoded file added to Grafana (in the client certificate field).
+
+#### App Registration (client certificate) UI configuration
+
+| Setting                     | Description                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Authentication**          | Select **App Registration (Client Certificate)**.                                                                                          |
+| **Azure Cloud**             | The Azure environment to connect to. Select **Azure** for the public cloud, or choose Azure Government or Azure China for national clouds. |
+| **Directory (tenant) ID**   | The GUID that identifies your Microsoft Entra ID tenant.                                                                                   |
+| **Application (client) ID** | The GUID for the app registration you created.                                                                                             |
+| **Format**                  | Select **PEM** or **PFX**.                                                                                                                 |
+| **Client Certificate**      | Paste the certificate content (PEM text or base64-encoded PFX payload).                                                                    |
+| **Private Key**             | Required only for PEM. Paste the private key PEM.                                                                                          |
+| **Certificate Password**    | Required for encrypted PFX files.                                                                                                          |
+| **Default Subscription**    | Click **Load Subscriptions** to populate available subscriptions, then select your default.                                                |
+
+#### Provision App Registration (client certificate) with YAML
+
+To provision the Azure Monitor data source with client certificate authentication, use the following configuration:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: clientcertificate
+      cloudName: azuremonitor # See supported cloud names below
+      tenantId: <tenant-id>
+      clientId: <client-id>
+      certificateFormat: pem # Use pem or pfx
+      subscriptionId: <subscription-id> # Optional, default subscription
+    secureJsonData:
+      clientCertificate: <certificate-content>
+      privateKey: <private-key-content> # pem only
+      certificatePassword: <certificate-password> # pfx only, if set
+    version: 1
+```
+
 ### Managed Identity
 
 Use Azure Managed Identity for secure, credential-free authentication when Grafana is hosted in Azure.
 
 {{< admonition type="note" >}}
-Managed Identity is available in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or self-hosted Grafana deployed in Azure. It is not available in Grafana Cloud.
+Managed Identity is available in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or self-managed Grafana deployed in Azure. It is not available in Grafana Cloud.
 {{< /admonition >}}
 
 #### Managed Identity prerequisites
@@ -158,6 +270,10 @@ To use a user-assigned managed identity instead of the system-assigned identity,
 managed_identity_enabled = true
 managed_identity_client_id = <USER_ASSIGNED_IDENTITY_CLIENT_ID>
 ```
+
+{{< admonition type="caution" >}}
+If you've customized the `forward_settings_to_plugins` setting under `[azure]`, verify that `grafana-azure-monitor-datasource` is included. This setting controls which plugins receive the Azure configuration from the Grafana server. By default, all Grafana Labs Azure plugins are included. Missing this setting causes `401 Unauthorized` errors even when Managed Identity is correctly configured on your Azure resource.
+{{< /admonition >}}
 
 Refer to [Grafana Azure configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) for more details.
 
@@ -215,6 +331,10 @@ workload_identity_client_id = <IDENTITY_CLIENT_ID>    # Client ID if different f
 workload_identity_token_file = <TOKEN_FILE_PATH>      # Path to the token file
 ```
 
+{{< admonition type="caution" >}}
+If you've customized the `forward_settings_to_plugins` setting under `[azure]`, verify that `grafana-azure-monitor-datasource` is included. Refer to [Managed Identity Grafana server configuration](#managed-identity-grafana-server-configuration) for details.
+{{< /admonition >}}
+
 Refer to [Grafana Azure configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) and the [Azure workload identity documentation](https://azure.github.io/azure-workload-identity/docs/) for more details.
 
 #### Workload Identity UI configuration
@@ -245,8 +365,8 @@ datasources:
 
 Forward the logged-in Grafana user's Azure credentials to the data source for user-level access control.
 
-{{< admonition type="warning" >}}
-Current User authentication is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is limited. No SLA is provided. Contact Grafana Support to enable this feature in Grafana Cloud.
+{{< admonition type="note" >}}
+Current User authentication is a [generally available feature](/docs/release-life-cycle/). Contact Grafana Support to enable this feature in Grafana Cloud.
 {{< /admonition >}}
 
 #### Current User prerequisites
@@ -300,15 +420,19 @@ user_identity_enabled = true
 user_identity_fallback_credentials_enabled = false
 ```
 
-{{< admonition type="note" >}}
-To use fallback service credentials, the [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) `idForwarding` must be set to `true`.
+{{< admonition type="caution" >}}
+If you've customized the `forward_settings_to_plugins` setting under `[azure]`, verify that `grafana-azure-monitor-datasource` is included. Refer to [Managed Identity Grafana server configuration](#managed-identity-grafana-server-configuration) for details.
 {{< /admonition >}}
 
 #### Limitations and fallback credentials
 
 Current User authentication doesn't support backend functionality like alerting, reporting, and recorded queries because user credentials aren't available for background operations.
 
-To support these features, configure **fallback service credentials**. When enabled, Grafana uses the fallback credentials for backend operations. Note that operations using fallback credentials are limited to the permissions of those credentials, not the user's permissions.
+To support these features, you must configure **fallback service credentials**, typically an App Registration with client secret. When enabled, Grafana uses the fallback credentials for backend operations. Operations using fallback credentials are limited to the permissions of those credentials, not the user's permissions.
+
+{{< admonition type="caution" >}}
+If you use Current User authentication without configuring fallback service credentials, alerting rules, recording rules, and reports fail with authentication errors. Refer to the [alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/) for more details.
+{{< /admonition >}}
 
 {{< admonition type="note" >}}
 Query and resource caching is disabled by default for data sources using Current User authentication.
@@ -356,6 +480,32 @@ These settings apply to all authentication methods.
 | **Name**    | The data source name used in panels and queries. Example: `azure-monitor-prod`. |
 | **Default** | Toggle to make this the default data source for new panels.                     |
 
+### Query timeout
+
+The default data source timeout is 30 seconds. Azure Log Analytics queries can take up to 3 minutes on the Azure side, especially for complex KQL queries, large time ranges, or queries across multiple workspaces. If queries fail with `DatasourceError`, `context deadline exceeded`, or timeout errors, increase the timeout.
+
+To change the timeout:
+
+1. Open your Azure Monitor data source settings.
+1. Scroll to the **Misc** section at the bottom of the configuration page.
+1. Set the **Timeout** value. A value of `300` (300 seconds / 5 minutes) accommodates the maximum Azure Log Analytics server-side query duration.
+1. Click **Save & test**.
+
+{{< admonition type="caution" >}}
+This timeout also affects alerting evaluations. If your alert rules use Log Analytics queries that exceed 30 seconds, you must increase this setting or alert evaluations fail with timeout errors. For alerting, also ensure your alert evaluation interval is long enough to accommodate the query duration.
+{{< /admonition >}}
+
+To set the timeout in a provisioning file, add `timeout` to the `jsonData` section:
+
+```yaml
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      timeout: 300
+```
+
 ### Enable Basic Logs
 
 Toggle **Enable Basic Logs** to allow queries against [Basic Logs tables](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1) in supported Log Analytics Workspaces.
@@ -372,6 +522,21 @@ If you're using Grafana Cloud and need to connect to Azure resources in a privat
 1. Click **Manage private data source connect** to view your PDC connection details.
 
 For more information, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
+
+### Configure exemplars
+
+You can link Azure Monitor metrics to traces in a tracing data source by configuring exemplars. This lets you navigate from a metric data point directly to related traces for deeper investigation.
+
+To configure exemplars:
+
+1. Open your Azure Monitor data source settings.
+1. Scroll to the **Exemplar** configuration section.
+1. Click **Add**.
+1. Select a **Data source** from the drop-down. The data source must be a tracing backend such as Tempo, Zipkin, Jaeger, or X-Ray.
+1. (Optional) Configure a **URL** label to customize the link.
+1. Click **Save & test**.
+
+After configuration, exemplar links appear on supported Azure Monitor metrics visualizations, allowing you to jump to the corresponding trace in your tracing data source.
 
 ## Supported cloud names
 
@@ -393,7 +558,7 @@ After configuring the data source, click **Save & test**. A successful connectio
 
 If the test fails, verify:
 
-- Your credentials are correct (tenant ID, client ID, client secret)
+- Your credentials are correct (tenant ID, client ID, and client secret or certificate fields)
 - The identity has the required Azure RBAC permissions
 - For Managed Identity or Workload Identity, that the Grafana server configuration is correct
 - Network connectivity to Azure endpoints
@@ -405,12 +570,13 @@ For more information about provisioning, refer to [Provisioning Grafana](https:/
 
 ### Provision quick reference
 
-| Authentication method | `azureAuthType` value | Required fields                                    |
-| --------------------- | --------------------- | -------------------------------------------------- |
-| App Registration      | `clientsecret`        | `tenantId`, `clientId`, `clientSecret`             |
-| Managed Identity      | `msi`                 | None (uses VM identity)                            |
-| Workload Identity     | `workloadidentity`    | None (uses pod identity)                           |
-| Current User          | `currentuser`         | `oauthPassThru: true`, `disableGrafanaCache: true` |
+| Authentication method            | `azureAuthType` value | Required fields                                                  |
+| -------------------------------- | --------------------- | ---------------------------------------------------------------- |
+| App Registration (client secret) | `clientsecret`        | `tenantId`, `clientId`, `clientSecret`                           |
+| App Registration (certificate)   | `clientcertificate`   | `tenantId`, `clientId`, `certificateFormat`, `clientCertificate` |
+| Managed Identity                 | `msi`                 | None (uses VM identity)                                          |
+| Workload Identity                | `workloadidentity`    | None (uses Pod identity)                                         |
+| Current User                     | `currentuser`         | `oauthPassThru: true`, `disableGrafanaCache: true`               |
 
 All methods support the optional `subscriptionId` field to set a default subscription.
 
@@ -478,6 +644,52 @@ resource "grafana_data_source" "azure_monitor" {
 }
 ```
 
+**App Registration (client certificate with PEM):**
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType     = "clientcertificate"
+    cloudName         = "azuremonitor"
+    tenantId          = "<TENANT_ID>"
+    clientId          = "<CLIENT_ID>"
+    certificateFormat = "pem"
+    subscriptionId    = "<SUBSCRIPTION_ID>"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    clientCertificate = "<CERTIFICATE_CONTENT>"
+    privateKey        = "<PRIVATE_KEY_CONTENT>"
+  })
+}
+```
+
+**App Registration (client certificate with PFX):**
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType     = "clientcertificate"
+    cloudName         = "azuremonitor"
+    tenantId          = "<TENANT_ID>"
+    clientId          = "<CLIENT_ID>"
+    certificateFormat = "pfx"
+    subscriptionId    = "<SUBSCRIPTION_ID>"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    clientCertificate = "<CERTIFICATE_CONTENT_BASE64_ENCODED>"
+    certificatePassword = "<CERTIFICATE_PASSWORD>"
+  })
+}
+```
+
 **Managed Identity:**
 
 ```hcl
@@ -524,7 +736,7 @@ resource "grafana_data_source" "azure_monitor" {
 
 **With Basic Logs enabled:**
 
-Add `enableBasicLogs = true` to any of the above configurations:
+Add `basicLogsEnabled = true` to any of the above configurations:
 
 ```hcl
 resource "grafana_data_source" "azure_monitor" {
@@ -537,7 +749,7 @@ resource "grafana_data_source" "azure_monitor" {
     tenantId        = "<TENANT_ID>"
     clientId        = "<CLIENT_ID>"
     subscriptionId  = "<SUBSCRIPTION_ID>"
-    enableBasicLogs = true
+    basicLogsEnabled = true
   })
 
   secure_json_data_encoded = jsonencode({
@@ -546,4 +758,4 @@ resource "grafana_data_source" "azure_monitor" {
 }
 ```
 
-For more information about the Grafana Terraform provider, refer to the [provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs) and the [grafana_data_source resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
+For more information about the Grafana Terraform provider, refer to the [provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs) and the [`grafana_data_source` resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).

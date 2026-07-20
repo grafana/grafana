@@ -25,7 +25,6 @@ const getRepeatedPanelTitle = (row: number, panel: number) => `repeated-row-${ro
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },
@@ -95,7 +94,7 @@ test.describe(
         .click();
 
       // blur to close dropdown
-      await page.keyboard.press('Escape');
+      await page.locator('body').click();
 
       // verify that repeats are present for last 3 values
       await checkRepeatedRowTitles(dashboardPage, selectors, repeatTitleBase, repeatOptions.slice(1));
@@ -506,14 +505,15 @@ test.describe(
 
     test('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
       // collapse rows so it's easier to move them without simulating scrolling
-      const dashboardWithCollapsedRows = V2DashWithRowRepeats;
+      // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
+      const dashboardWithCollapsedRows = structuredClone(V2DashWithRowRepeats);
       dashboardWithCollapsedRows.spec.layout.spec.rows[0].spec.collapse = true;
 
       await importTestDashboard(
         page,
         selectors,
         'Row layout repeats - move repeated rows',
-        JSON.stringify(V2DashWithRowRepeats),
+        JSON.stringify(dashboardWithCollapsedRows),
         // there are no panels to show, since all rows are collapsed
         { checkPanelsVisible: false }
       );

@@ -86,7 +86,8 @@ type schedule struct {
 
 	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore RulesStore
+	ruleStore         RulesStore
+	ruleSequenceStore RuleSequenceStore
 
 	stateManager *state.Manager
 
@@ -131,6 +132,7 @@ type SchedulerCfg struct {
 	JitterEvaluations      JitterStrategy
 	EvaluatorFactory       eval.EvaluatorFactory
 	RuleStore              RulesStore
+	RuleSequenceStore      RuleSequenceStore
 	Metrics                *metrics.Scheduler
 	AlertSender            AlertsSender
 	Tracer                 tracing.Tracer
@@ -147,6 +149,9 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.RetryConfig.MaxAttempts, "actual", minMaxAttempts)
 		cfg.RetryConfig.MaxAttempts = minMaxAttempts
 	}
+	if cfg.RuleSequenceStore == nil {
+		cfg.RuleSequenceStore = &NoopRuleSequenceStore{}
+	}
 
 	sch := schedule{
 		registry:               newRuleRegistry(),
@@ -156,6 +161,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		log:                    cfg.Log,
 		evaluatorFactory:       cfg.EvaluatorFactory,
 		ruleStore:              cfg.RuleStore,
+		ruleSequenceStore:      cfg.RuleSequenceStore,
 		metrics:                cfg.Metrics,
 		appURL:                 cfg.AppURL,
 		disableGrafanaFolder:   cfg.DisableGrafanaFolder,
@@ -263,6 +269,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 		case <-ctx.Done():
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
+			sch.metrics.ResetOnStop()
 			return waitErr
 		}
 	}

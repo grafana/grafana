@@ -53,7 +53,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceStats"),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.ResourceStats{}.OpenAPIModelName()),
 																},
 															},
 														},
@@ -101,7 +101,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryViewList"),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.RepositoryViewList{}.OpenAPIModelName()),
 																},
 															},
 														},
@@ -170,10 +170,20 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	availableResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
+	for _, r := range b.supportedResources {
+		availableResources = append(availableResources, provisioning.SupportedResource{
+			Group:    r.Group,
+			Kind:     r.Kind,
+			Disabled: !r.IsActive(),
+		})
+	}
+
 	settings := provisioning.RepositoryViewList{
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AvailableResources:       availableResources,
 		AllowImageRendering:      b.allowImageRendering,
 		MaxRepositories:          quotaStatus.MaxRepositories,
 	}
@@ -184,14 +194,17 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		path := val.Path()
 
 		settings.Items[i] = provisioning.RepositoryView{
-			Name:      val.Name,
-			Title:     val.Spec.Title,
-			Type:      val.Spec.Type,
-			Target:    val.Spec.Sync.Target,
-			Branch:    branch,
-			URL:       url,
-			Path:      path,
-			Workflows: val.Spec.Workflows,
+			Name:          val.Name,
+			Title:         val.Spec.Title,
+			Type:          val.Spec.Type,
+			Target:        val.Spec.Sync.Target,
+			Branch:        branch,
+			URL:           url,
+			Path:          path,
+			Workflows:     val.Spec.Workflows,
+			Commit:        val.Spec.Commit,
+			BranchOptions: val.Spec.Branch,
+			PullRequest:   val.Spec.PullRequest,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

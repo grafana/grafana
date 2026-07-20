@@ -1,4 +1,4 @@
-import { DataFrame } from '../../types/dataFrame';
+import { type DataFrame } from '../../types/dataFrame';
 import { SpecialValue } from '../../types/transformations';
 
 /**

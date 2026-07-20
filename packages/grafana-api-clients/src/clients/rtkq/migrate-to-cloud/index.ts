@@ -1,4 +1,4 @@
-import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/query';
+import { type BaseQueryFn, type EndpointDefinition } from '@reduxjs/toolkit/query';
 
 import { generatedAPI as rawAPI } from './endpoints.gen';
 

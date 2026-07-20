@@ -64,7 +64,7 @@ func TestMutate(t *testing.T) {
 			obj:  &runtime.Unknown{},
 		},
 		{
-			name: "URL normalization - add .git suffix",
+			name: "URL normalization - keep URL as-is",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-repo",
@@ -77,7 +77,7 @@ func TestMutate(t *testing.T) {
 					},
 				},
 			},
-			expectedURL: "https://github.com/grafana/grafana.git",
+			expectedURL: "https://github.com/grafana/grafana",
 		},
 		{
 			name: "URL normalization - keep existing .git suffix",
@@ -96,7 +96,7 @@ func TestMutate(t *testing.T) {
 			expectedURL: "https://github.com/grafana/grafana.git",
 		},
 		{
-			name: "URL normalization - remove trailing slash and add .git",
+			name: "URL normalization - remove trailing slash",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-repo",
@@ -109,10 +109,10 @@ func TestMutate(t *testing.T) {
 					},
 				},
 			},
-			expectedURL: "https://github.com/grafana/grafana.git",
+			expectedURL: "https://github.com/grafana/grafana",
 		},
 		{
-			name: "URL normalization - trim whitespace and add .git",
+			name: "URL normalization - trim whitespace",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-repo",
@@ -125,7 +125,7 @@ func TestMutate(t *testing.T) {
 					},
 				},
 			},
-			expectedURL: "https://github.com/grafana/grafana.git",
+			expectedURL: "https://github.com/grafana/grafana",
 		},
 		{
 			name: "URL normalization - empty URL after trim",

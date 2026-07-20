@@ -2,6 +2,8 @@ package v0alpha1
 
 TeamBindingSpec: {
 	#Subject: {
+		// kind of the identity
+		kind: "User"
 		// uid of the identity
 		name: string
 	}
@@ -15,9 +17,7 @@ TeamBindingSpec: {
 	external: bool
 }
 
-TeamRef:{
+TeamRef: {
 	// Name is the unique identifier for a team.
 	name: string
 }
-
-TeamPermission: "admin" | "member"

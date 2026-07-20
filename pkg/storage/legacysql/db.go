@@ -2,12 +2,16 @@ package legacysql
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+// ErrNamespaceNotFound indicates the namespace does not exist (e.g. deleted or archived).
+var ErrNamespaceNotFound = errors.New("namespace not found")
 
 // The database may depend on the request context
 type LegacyDatabaseProvider func(ctx context.Context) (*LegacyDatabaseHelper, error)

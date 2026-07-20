@@ -1,7 +1,7 @@
-import { Decorator } from '@storybook/react';
+import { type Decorator } from '@storybook/react';
 import * as React from 'react';
 
-import { getThemeById, GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { getThemeById, type GrafanaTheme2, ThemeContext } from '@grafana/data';
 
 import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
 
@@ -11,7 +11,10 @@ interface ThemeableStoryProps {
   handleSassThemeChange: SassThemeChangeHandler;
 }
 const ThemeableStory = ({ children, handleSassThemeChange, themeId }: React.PropsWithChildren<ThemeableStoryProps>) => {
-  const theme = getThemeById(themeId);
+  let theme = getThemeById(themeId);
+  if (theme.name === 'Visual Refresh (Light)' || theme.name === 'Visual Refresh (Dark)') {
+    theme.flags.visualDesignRefresh = true;
+  }
 
   handleSassThemeChange(theme);
 

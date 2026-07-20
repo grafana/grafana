@@ -1,14 +1,16 @@
-import { VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { getLegacySlugForRowOrTab } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 
 import { TabItem } from './TabItem';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManager';
 
 let lastUndo: (() => void) | undefined;
 
@@ -33,8 +35,8 @@ jest.mock('../../edit-pane/shared', () => ({
   ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
 }));
 
-function buildTabsLayoutManager(tabs: TabItem[]) {
-  const tabsLayoutManager = new TabsLayoutManager({ tabs });
+function buildTabsLayoutManager(tabs: TabItem[] = []) {
+  const tabsLayoutManager = new TabsLayoutManager({ key: 'test-TabsLayoutManager', tabs });
   new DashboardScene({ body: tabsLayoutManager });
   return tabsLayoutManager;
 }
@@ -48,7 +50,7 @@ describe('TabsLayoutManager', () => {
       tabsLayoutManager.setState({ currentTabSlug: tabsLayoutManager.getCurrentTab()?.getSlug() });
 
       const urlState = tabsLayoutManager.getUrlState();
-      expect(urlState).toEqual({ dtab: 'performance' });
+      expect(urlState).toEqual({ dtab: 'Performance' });
     });
 
     it('when nested under row and parent tab', () => {
@@ -72,7 +74,68 @@ describe('TabsLayoutManager', () => {
 
       const urlState = innerMostTabsLayoutManager.getUrlState();
       expect(urlState).toEqual({
-        ['overview-frontend-dtab']: 'performance',
+        ['Overview-Frontend-dtab']: 'Performance',
+      });
+    });
+  });
+
+  describe('getSlug', () => {
+    it('generates slugs based on tab titles', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'My Tab Title' }));
+      const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Another Tab!' }));
+
+      expect(tab1.getSlug()).toBe('My-Tab-Title');
+      expect(tab2.getSlug()).toBe('Another-Tab!');
+    });
+
+    it('disambiguates slugs when multiple titles are encoded to the same value', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'New tab 1' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'New tab-1' }));
+
+      expect(firstTab.getSlug()).toBe('New-tab-1');
+      expect(secondTab.getSlug()).toBe('New-tab-1__2');
+    });
+
+    it('keeps clean slugs when there is no slug duplication', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab One' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab Two' }));
+
+      expect(firstTab.getSlug()).toBe('Tab-One');
+      expect(secondTab.getSlug()).toBe('Tab-Two');
+    });
+
+    it('keeps slug values stable across different tab layout instances', () => {
+      const titles = ['New tab 1', 'New tab-1', 'Other tab'];
+
+      const getSlugsFromFreshLayout = () => {
+        const tabs = titles.map((title) => new TabItem({ title }));
+        buildTabsLayoutManager(tabs);
+        return tabs.map((tab) => tab.getSlug());
+      };
+
+      const firstRunSlugs = getSlugsFromFreshLayout();
+      const secondRunSlugs = getSlugsFromFreshLayout();
+
+      expect(firstRunSlugs).toEqual(['New-tab-1', 'New-tab-1__2', 'Other-tab']);
+      expect(secondRunSlugs).toEqual(firstRunSlugs);
+    });
+
+    it('skips empty primary query value and falls back to legacy slugified key', () => {
+      const tab1 = new TabItem({ title: 'question?' });
+      const tab2 = new TabItem({ title: 'Performance' });
+      const [tabManager, urlKeys] = setupRowWithTabs([tab1, tab2]);
+
+      const updateFromUrlArgs = {
+        [urlKeys[0]]: '',
+        [urlKeys[1]]: getLegacySlugForRowOrTab(tab2),
+      };
+
+      assertSelectedTab(tabManager, updateFromUrlArgs, {
+        slug: getLegacySlugForRowOrTab(tab2),
+        title: tab2.state.title!,
       });
     });
   });
@@ -138,6 +201,40 @@ describe('TabsLayoutManager', () => {
       lastUndo!();
 
       expect(tabsLayoutManager.state.tabs).toHaveLength(0);
+    });
+
+    it('should sync edit mode to a new tab inner layout when the dashboard is already editing', () => {
+      // New tabs use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
+      // TabItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
+      // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
+      const defaultLayoutTemplate = new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [],
+          isDraggable: false,
+          isResizable: false,
+        }),
+      });
+
+      const tabsLayoutManager = new TabsLayoutManager({
+        key: 'test-TabsLayoutManager',
+        tabs: [new TabItem({ title: 'First' })],
+      });
+      new DashboardScene({
+        body: tabsLayoutManager,
+        isEditing: true,
+        editable: true,
+        preferences: { defaultLayoutTemplate },
+      });
+
+      tabsLayoutManager.editModeChanged(true);
+
+      const newTab = tabsLayoutManager.addNewTab();
+      const layout = newTab.getLayout();
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+
+      const grid = (layout as DefaultGridLayoutManager).state.grid;
+      expect(grid.state.isDraggable).toBe(true);
+      expect(grid.state.isResizable).toBe(true);
     });
   });
 
@@ -304,6 +401,69 @@ describe('TabsLayoutManager', () => {
     });
   });
 
+  describe('mapTabInsertIndex', () => {
+    it('maps indices correctly with no repeated tabs', () => {
+      const a = new TabItem({ title: 'A' });
+      const b = new TabItem({ title: 'B' });
+      const c = new TabItem({ title: 'C' });
+      const manager = new TabsLayoutManager({ tabs: [a, b, c] });
+
+      // allTabs: [A, B, C]
+      expect(manager.mapTabInsertIndex(-5)).toBe(0); // clamped to 0 -> before A
+      expect(manager.mapTabInsertIndex(0)).toBe(0); // before A
+      expect(manager.mapTabInsertIndex(1)).toBe(1); // between A|B -> after A
+      expect(manager.mapTabInsertIndex(2)).toBe(2); // between B|C -> after B
+      expect(manager.mapTabInsertIndex(3)).toBe(3); // after C
+      expect(manager.mapTabInsertIndex(99)).toBe(3); // clamped to length -> after C
+    });
+
+    it('maps before, inside, and after a repeated group', () => {
+      const a = new TabItem({ title: 'A' });
+      const b = new TabItem({ title: 'B' });
+      const c = new TabItem({ title: 'C' });
+
+      // A has two repeats -> A group occupies indices [0,1,2] in allTabs
+      const aClone1 = new TabItem({ title: 'A1', repeatSourceKey: a.state.key });
+      const aClone2 = new TabItem({ title: 'A2', repeatSourceKey: a.state.key });
+      a.setState({ repeatedTabs: [aClone1, aClone2] });
+
+      const manager = new TabsLayoutManager({ tabs: [a, b, c] });
+
+      // allTabs: [A, A1, A2, B, C]
+      expect(manager.mapTabInsertIndex(0)).toBe(0); // before A group -> before A
+      expect(manager.mapTabInsertIndex(1)).toBe(1); // inside A group -> after A
+      expect(manager.mapTabInsertIndex(2)).toBe(1); // inside A group -> after A
+      expect(manager.mapTabInsertIndex(3)).toBe(1); // boundary after A group -> before B (index 1)
+      expect(manager.mapTabInsertIndex(4)).toBe(2); // between B|C -> after B
+      expect(manager.mapTabInsertIndex(5)).toBe(3); // after C -> at end
+    });
+
+    it('handles multiple repeated groups correctly', () => {
+      const a = new TabItem({ title: 'A' });
+      const b = new TabItem({ title: 'B' });
+      const c = new TabItem({ title: 'C' });
+
+      // A x3 total
+      const aClone1 = new TabItem({ title: 'A1', repeatSourceKey: a.state.key });
+      const aClone2 = new TabItem({ title: 'A2', repeatSourceKey: a.state.key });
+      a.setState({ repeatedTabs: [aClone1, aClone2] });
+
+      // B x2 total
+      const bClone1 = new TabItem({ title: 'B1', repeatSourceKey: b.state.key });
+      b.setState({ repeatedTabs: [bClone1] });
+
+      const manager = new TabsLayoutManager({ tabs: [a, b, c] });
+
+      // allTabs: [A, A1, A2, B, B1, C]
+      expect(manager.mapTabInsertIndex(0)).toBe(0); // before A group
+      expect(manager.mapTabInsertIndex(2)).toBe(1); // inside A group -> after A
+      expect(manager.mapTabInsertIndex(3)).toBe(1); // before B group -> before B (index 1)
+      expect(manager.mapTabInsertIndex(4)).toBe(2); // inside B group -> after B (index 2)
+      expect(manager.mapTabInsertIndex(5)).toBe(2); // before C -> index 2
+      expect(manager.mapTabInsertIndex(6)).toBe(3); // after C -> end
+    });
+  });
+
   describe('createFromLayout', () => {
     it('should convert rows with titles to tabs', () => {
       const rowsLayout = new RowsLayoutManager({
@@ -356,4 +516,106 @@ describe('TabsLayoutManager', () => {
       expect(tabsManager.state.tabs[1].state.title).toBe('New tab');
     });
   });
+
+  describe('duplicate', () => {
+    it('should return a new TabsLayoutManager instance', () => {
+      const tabsLayoutManager = buildTabsLayoutManager();
+
+      const duplicated = tabsLayoutManager.duplicate() as TabsLayoutManager;
+
+      expect(duplicated).toBeInstanceOf(TabsLayoutManager);
+      expect(duplicated).not.toBe(tabsLayoutManager);
+      expect(duplicated.state.key).not.toBe(tabsLayoutManager.state.key);
+    });
+
+    it('should duplicate each tab', () => {
+      const tabs = [new TabItem({ title: 'Tab 1' }), new TabItem({ title: 'Tab 2' }), new TabItem({ title: 'Tab 3' })];
+      const tabDuplicateSpies = tabs.map((row) => jest.spyOn(row, 'duplicate'));
+      const tabsLayoutManager = buildTabsLayoutManager(tabs);
+
+      const duplicated = tabsLayoutManager.duplicate() as TabsLayoutManager;
+
+      expect(tabDuplicateSpies[0]).toHaveBeenCalledTimes(1);
+      expect(tabDuplicateSpies[1]).toHaveBeenCalledTimes(1);
+      expect(tabDuplicateSpies[2]).toHaveBeenCalledTimes(1);
+
+      expect(duplicated.state.tabs.length).toBe(3);
+      expect(duplicated.state.tabs[0]).not.toBe(tabs[0]);
+      expect(duplicated.state.tabs[1]).not.toBe(tabs[1]);
+      expect(duplicated.state.tabs[2]).not.toBe(tabs[2]);
+    });
+
+    describe('when tabs contain panels', () => {
+      it('should assign unique panel keys across all tabs, starting after the highest existing id', () => {
+        const tabsLayoutManager = buildTabsLayoutManager([
+          new TabItem({
+            title: 'Tab 1',
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-1', title: 'Panel A' }),
+                  }),
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-2', title: 'Panel B' }),
+                  }),
+                ],
+              }),
+            }),
+          }),
+          new TabItem({
+            title: 'Tab 2',
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-3', title: 'Panel C', pluginId: 'table' }),
+                  }),
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-4', title: 'Panel D', pluginId: 'table' }),
+                  }),
+                ],
+              }),
+            }),
+          }),
+        ]);
+
+        const duplicated = tabsLayoutManager.duplicate();
+
+        const panelKeys = duplicated.getVizPanels().map((p) => p.state.key);
+        expect(panelKeys).toEqual(['panel-5', 'panel-6', 'panel-7', 'panel-8']);
+      });
+    });
+  });
 });
+
+function setupRowWithTabs(tabs: TabItem[]): [TabsLayoutManager, string[]] {
+  const tabManager = new TabsLayoutManager({
+    tabs: [...tabs],
+  });
+  new RowsLayoutManager({
+    rows: [
+      new RowItem({
+        title: 'UPPER row!',
+        layout: tabManager,
+      }),
+    ],
+  });
+
+  const possibleKeys = getTabsLayoutUrlKeysToTry(tabManager);
+  expect(possibleKeys).toEqual(['UPPER-row!-dtab', 'upper-row-dtab']);
+
+  return [tabManager, possibleKeys];
+}
+
+function assertSelectedTab(
+  manager: TabsLayoutManager,
+  updateFromUrlValues: Record<string, string>,
+  { slug, title }: { slug: string; title: string }
+) {
+  manager.setState({ currentTabSlug: undefined });
+  manager.updateFromUrl(updateFromUrlValues);
+
+  expect(manager.state.currentTabSlug).toBe(slug);
+  expect(manager.getCurrentTab()?.state.title).toBe(title);
+}

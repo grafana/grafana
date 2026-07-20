@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { DataSourceInformation } from '../home/Insights';
+import { type DataSourceInformation } from '../home/Insights';
 
 export function DataSourcesInfo({ datasources }: { datasources: DataSourceInformation[] }) {
   const styles = useStyles2(getStyles);

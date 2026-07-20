@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { defaultTimeZone, TimeZone } from '@grafana/schema';
-import { TabbedContainer, TabConfig, useStyles2 } from '@grafana/ui';
+import { defaultTimeZone, type TimeZone } from '@grafana/schema';
+import { TabbedContainer, type TabConfig, useStyles2 } from '@grafana/ui';
 import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -15,10 +15,10 @@ import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { mixedRequestId } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
-import { GetDataOptions } from '../query/state/PanelQueryRunner';
+import { type GetDataOptions } from '../query/state/PanelQueryRunner';
 
 import { runQueries } from './state/query';
 

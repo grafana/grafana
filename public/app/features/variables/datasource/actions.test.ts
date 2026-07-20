@@ -1,21 +1,16 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
-import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
-import { getRootReducer, RootReducerType } from '../state/helpers';
+import { getRootReducer, type RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
-import {
-  DataSourceVariableActionDependencies,
-  initDataSourceVariableEditor,
-  updateDataSourceVariableOptions,
-} from './actions';
+import { type DataSourceVariableActionDependencies, updateDataSourceVariableOptions } from './actions';
 import { createDataSourceVariableAdapter } from './adapter';
 import { createDataSourceOptions } from './reducer';
 
@@ -153,37 +148,6 @@ describe('data source actions', () => {
         expect(getListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
         expect(getDatasourceSrvMock).toHaveBeenCalledTimes(1);
       });
-    });
-  });
-
-  describe('when initDataSourceVariableEditor is dispatched', () => {
-    it('then the correct actions are dispatched', () => {
-      const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
-      const sources: DataSourceInstanceSettings[] = [
-        getDataSourceInstanceSetting('first-name', meta),
-        getDataSourceInstanceSetting('second-name', meta),
-      ];
-
-      const { dependencies, getListMock, getDatasourceSrvMock } = getTestContext({ sources });
-
-      reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(initDataSourceVariableEditor('key', dependencies))
-        .thenDispatchedActionsShouldEqual(
-          toKeyedAction(
-            'key',
-            changeVariableEditorExtended({
-              dataSourceTypes: [
-                { text: '', value: '' },
-                { text: 'mock-data-name', value: 'mock-data-id' },
-              ],
-            })
-          )
-        );
-
-      expect(getListMock).toHaveBeenCalledTimes(1);
-      expect(getListMock).toHaveBeenCalledWith({ metrics: true, variables: true });
-      expect(getDatasourceSrvMock).toHaveBeenCalledTimes(1);
     });
   });
 });

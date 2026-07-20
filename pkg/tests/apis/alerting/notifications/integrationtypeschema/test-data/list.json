@@ -1,8 +1,8 @@
 {
-  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
   "items": [
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "LINE",
@@ -75,7 +75,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "dingding",
@@ -175,7 +175,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "discord",
@@ -264,6 +264,22 @@
                 "label": "Use Discord's Webhook Username",
                 "placeholder": "",
                 "propertyName": "use_discord_username",
+                "required": false,
+                "secure": false,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
+                "description": "Show the message inside the embed instead of above it. Note: mentions (@ or \u003c@ID\u003e) in the message will not trigger Discord notifications when this is enabled, as Discord only pings for mentions in the main message content.",
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Show Message in Embed",
+                "placeholder": "",
+                "propertyName": "use_embed_description",
                 "required": false,
                 "secure": false,
                 "showWhen": {
@@ -737,7 +753,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -811,6 +827,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -825,7 +905,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "email",
@@ -1192,7 +1272,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "googlechat",
@@ -1296,7 +1376,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "jira",
@@ -2178,7 +2258,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -2252,6 +2332,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -2266,7 +2410,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "kafka",
@@ -2430,7 +2574,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "mqtt",
@@ -2710,7 +2854,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "oncall",
@@ -2890,7 +3034,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "opsgenie",
@@ -3810,7 +3954,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -3884,6 +4028,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -3898,7 +4106,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "pagerduty",
@@ -4816,7 +5024,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -4890,6 +5098,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -4904,7 +5176,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "prometheus-alertmanager",
@@ -4976,7 +5248,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "pushover",
@@ -6081,7 +6353,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -6155,6 +6427,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -6169,7 +6505,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "sensugo",
@@ -6305,7 +6641,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "slack",
@@ -7531,7 +7867,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -7605,6 +7941,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -7619,7 +8019,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "sns",
@@ -7889,7 +8289,7 @@
                     "inputType": "text",
                     "label": "Region",
                     "placeholder": "",
-                    "propertyName": "Region",
+                    "propertyName": "region",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -7905,7 +8305,7 @@
                     "inputType": "text",
                     "label": "Access key",
                     "placeholder": "",
-                    "propertyName": "AccessKey",
+                    "propertyName": "access_key",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -7921,7 +8321,7 @@
                     "inputType": "password",
                     "label": "Secret key",
                     "placeholder": "",
-                    "propertyName": "SecretKey",
+                    "propertyName": "secret_key",
                     "required": false,
                     "secure": true,
                     "showWhen": {
@@ -7937,7 +8337,7 @@
                     "inputType": "text",
                     "label": "Profile",
                     "placeholder": "",
-                    "propertyName": "Profile",
+                    "propertyName": "profile",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -7953,7 +8353,7 @@
                     "inputType": "text",
                     "label": "Role ARN",
                     "placeholder": "",
-                    "propertyName": "RoleARN",
+                    "propertyName": "role_arn",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -8472,7 +8872,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -8546,6 +8946,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -8560,7 +9024,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "teams",
@@ -9106,7 +9570,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -9179,6 +9643,70 @@
                             "validationRule": ""
                           }
                         ],
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
                         "validationRule": ""
                       }
                     ],
@@ -9669,7 +10197,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -9743,6 +10271,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -9758,7 +10350,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "telegram",
@@ -10459,7 +11051,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -10533,6 +11125,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -10547,7 +11203,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "threema",
@@ -10651,7 +11307,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "victorops",
@@ -11289,7 +11945,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -11363,6 +12019,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -11377,7 +12097,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "webex",
@@ -11924,7 +12644,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -11998,6 +12718,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -12012,7 +12796,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "webhook",
@@ -13146,7 +13930,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -13220,6 +14004,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -13234,7 +14082,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "wechat",
@@ -13817,7 +14665,7 @@
                         "inputType": "",
                         "label": "TLS config",
                         "placeholder": "",
-                        "propertyName": "TLSConfig",
+                        "propertyName": "tls_config",
                         "required": false,
                         "secure": false,
                         "showWhen": {
@@ -13891,6 +14739,70 @@
                           }
                         ],
                         "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "placeholder": "",
+                        "propertyName": "proxy_url",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Comma-separated list of domains for which the proxy should not be used.",
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "placeholder": "",
+                        "propertyName": "no_proxy",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy From Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
+                      },
+                      {
+                        "dependsOn": "",
+                        "description": "Headers to send to proxies during CONNECT requests.",
+                        "element": "key_value_map",
+                        "inputType": "",
+                        "label": "Proxy Header Environment",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "required": false,
+                        "secure": false,
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "validationRule": ""
                       }
                     ],
                     "validationRule": ""
@@ -13905,7 +14817,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "wecom",

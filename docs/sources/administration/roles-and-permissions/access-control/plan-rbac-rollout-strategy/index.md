@@ -10,7 +10,7 @@ labels:
     - enterprise
 menuTitle: Plan your RBAC rollout strategy
 title: Plan your Grafana RBAC rollout strategy
-weight: 20
+weight: 10
 refs:
   api-rbac-update-a-role:
     - pattern: /docs/grafana/
@@ -57,7 +57,7 @@ Your rollout strategy should help you answer the following questions:
 
 ## Review basic role and fixed role definitions
 
-As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use. Keep in mind that `No Basic Role`, which is a role without permissions, cannot be modified or updated.
+As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use. Keep in mind that the `None` basic role, which is a role without permissions, cannot be modified or updated.
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
@@ -437,10 +437,10 @@ A user will be added to the default organization automatically but won't have an
 
 ### Reduce scope of service accounts
 
-Using Service Accounts is an efficient way to facilitate M2M communications. However, they can pose a security threat if not scoped appropriately. To limit the scope of a service account, you can begin by creating a Service Account with `No Basic Role` and then assign the necessary permissions for the account.
+Using Service Accounts is an efficient way to facilitate M2M communications. However, they can pose a security threat if not scoped appropriately. To limit the scope of a service account, you can begin by creating a Service Account with `None` basic role and then assign the necessary permissions for the account.
 
 1. Refer to [Service Accounts](ref:service-accounts) and add a new Service Account.
-1. Set the basic role to `No Basic Role`.
+1. Set the basic role to `None`.
 1. Set the fixed roles needed for the Service Account.
 
 This will reduce the required permissions for the Service Account and minimize the risk of compromise.

@@ -1,11 +1,11 @@
 import { defaultsDeep } from 'lodash';
 
-import { DataTransformerConfig } from '@grafana/schema';
+import { type DataTransformerConfig } from '@grafana/schema';
 
-import { getPanelDataSummary, PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
+import { getPanelDataSummary, type PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 
-import { DataFrame } from './dataFrame';
-import { FieldConfigSource } from './fieldOverrides';
+import { type DataFrame } from './dataFrame';
+import { type FieldConfigSource } from './fieldOverrides';
 
 /**
  * @internal
@@ -49,11 +49,10 @@ function deterministicObjectHash<T extends Record<string, any>>(obj: T): string 
 }
 
 /**
- * @alpha
  * A suggestion for a visualization given some data. This represents the shape of the panel (including options and field config)
  * that will be used to show a small preview in the Grafana UI when suggesting visualizations in the Panel Editor.
  */
-export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}> {
+export interface VisualizationSuggestion<TOptions = {}, TFieldConfig extends {} = {}> {
   /** Name of suggestion */
   name?: string;
   /** Description */
@@ -74,6 +73,14 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
      * mutate the suggestion object which is passed in as the first argument.
      */
     previewModifier?: (suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) => void;
+    /**
+     * Limits the number of data frames passed to the panel when rendering the preview card.
+     */
+    maxSeries?: number;
+    /**
+     * Limits the number of rows per data frame passed to the panel when rendering the preview card.
+     */
+    maxRows?: number;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */
     icon?: string;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */
@@ -85,7 +92,7 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
  * @internal
  * the internal interface that the PanelPlugin transforms the supplied suggestions into.
  */
-export interface PanelPluginVisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}>
+export interface PanelPluginVisualizationSuggestion<TOptions = {}, TFieldConfig extends {} = {}>
   extends VisualizationSuggestion<TOptions, TFieldConfig> {
   /** Name of suggestion */
   name: string;
@@ -95,9 +102,6 @@ export interface PanelPluginVisualizationSuggestion<TOptions extends unknown = {
   hash: string;
 }
 
-/**
- * @alpha
- */
 export enum VisualizationSuggestionScore {
   /** We are pretty sure this is the best possible option */
   Best = 100,
@@ -108,17 +112,28 @@ export enum VisualizationSuggestionScore {
 }
 
 /**
- * @alpha
- * TODO: this name is temporary; it will become just "VisualizationSuggestionsSupplier" when the other interface is deleted.
- *
  * executed while rendering suggestions each time the DataFrame changes, this method
  * determines which suggestions can be shown for this PanelPlugin given the PanelDataSummary.
  *
  * - returns an array of VisualizationSuggestions
  * - boolean return equates to "show a single suggestion card for this panel plugin with the default options" (true = show, false or void = hide)
  */
-export type VisualizationSuggestionsSupplier<TOptions extends unknown, TFieldConfig extends {} = {}> = (
+export type VisualizationSuggestionsSupplier<TOptions, TFieldConfig extends {} = {}> = (
   panelDataSummary: PanelDataSummary
+) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
+
+/**
+ * Context for VisualizationPresetsSupplier
+ */
+export interface VisualizationPresetsContext {
+  dataSummary?: PanelDataSummary;
+}
+
+/**
+ * Returns presets for a panel plugin
+ */
+export type VisualizationPresetsSupplier<TOptions extends unknown = {}, TFieldConfig extends {} = {}> = (
+  context: VisualizationPresetsContext
 ) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
 
 /**

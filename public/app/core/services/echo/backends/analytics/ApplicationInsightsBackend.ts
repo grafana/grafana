@@ -1,10 +1,10 @@
 import {
-  EchoBackend,
+  type EchoBackend,
   EchoEventType,
-  InteractionEchoEvent,
+  type InteractionEchoEvent,
   isInteractionEvent,
   isPageviewEvent,
-  PageviewEchoEvent,
+  type PageviewEchoEvent,
 } from '@grafana/runtime';
 
 interface ApplicationInsights {

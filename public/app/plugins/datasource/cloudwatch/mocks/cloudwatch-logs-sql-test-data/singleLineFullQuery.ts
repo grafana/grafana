@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 export const singleLineFullQuery = {
   query:
     "SELECT A.transaction_id AS txn_id_a, A.user_id, A.instance_id AS inst_id_a, B.instance_id AS inst_id_b FROM `LogGroupA` AS A INNER JOIN `LogGroupB` AS B ON A.userId = B.userId WHERE B.Status = 'ERROR' -- comment at the end",

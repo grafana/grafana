@@ -48,7 +48,7 @@ type TraceSpanReference struct {
 
 type TraceLog struct {
 	// Millisecond epoch time
-	Timestamp int64          `json:"timestamp"`
+	Timestamp float64        `json:"timestamp"`
 	Fields    []KeyValueType `json:"fields"`
 	Name      string         `json:"name"`
 }

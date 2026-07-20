@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import React, { AriaAttributes, ReactNode } from 'react';
-import Skeleton from 'react-loading-skeleton';
+import React, { type AriaAttributes, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 interface ListItemProps extends AriaAttributes {
@@ -60,16 +59,6 @@ export const ListItem = (props: ListItemProps) => {
   );
 };
 
-export const SkeletonListItem = () => {
-  return (
-    <ListItem
-      icon={<Skeleton width={16} height={16} circle />}
-      title={<Skeleton height={16} width={350} />}
-      actions={<Skeleton height={10} width={200} />}
-    />
-  );
-};
-
 const Separator = () => (
   <Text color="secondary" variant="bodySmall">
     {'|'}
@@ -78,13 +67,14 @@ const Separator = () => (
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({
-    position: 'relative',
     listStyle: 'none',
+    position: 'relative',
 
     padding: theme.spacing(1),
 
     '&:hover': {
       background: theme.colors.action.hover,
+      borderRadius: theme.shape.radius.default,
     },
   }),
   textOverflow: css({

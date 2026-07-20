@@ -3,6 +3,7 @@ package backgroundsvcs
 import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/folderreconcile"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -37,12 +39,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	samanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -58,10 +61,11 @@ func ProvideBackgroundServiceRegistry(
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
 	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
-	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService, entityEventsService store.EntityEventsService,
+	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	StorageService store.StorageService, // nolint:staticcheck
 	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
-	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboardsmetric.Service,
+	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboards.MetricsService,
 	keyRetriever *dynamic.KeyRetriever, dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	grafanaAPIServer grafanaapiserver.Service,
 	anon *anonimpl.AnonDeviceService,
@@ -74,8 +78,15 @@ func ProvideBackgroundServiceRegistry(
 	dashboardServiceImpl *service.DashboardServiceImpl,
 	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
+	noopIAMRolesSyncer *accesscontrol.NoopIAMRolesSyncer,
+	noopGlobalRoleSeeder *accesscontrol.NoopGlobalRoleSeeder,
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
+	natsServer *infranats.Server,
+	natsPublisher *infranats.PublisherService,
+	natsSubscriber *infranats.SubscriberService,
+	sqlStore *sqlstore.SQLStore,
+	folderReconciler *folderreconcile.Reconciler,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -100,9 +111,11 @@ func ProvideBackgroundServiceRegistry(
 		statsCollector,
 		tracing,
 		remoteCache,
+		natsServer,
+		natsPublisher,
+		natsSubscriber,
 		secretsService,
 		StorageService,
-		entityEventsService,
 		grpcServerProvider,
 		saService,
 		pluginStore,
@@ -123,8 +136,12 @@ func ProvideBackgroundServiceRegistry(
 		dashboardServiceImpl,
 		secretsGarbageCollectionWorker,
 		fixedRolesLoader,
+		noopIAMRolesSyncer,
+		noopGlobalRoleSeeder,
 		installSync,
 		zanzanaService,
+		sqlStore,
+		folderReconciler,
 	)
 }
 

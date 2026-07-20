@@ -53,7 +53,7 @@ func TestOpenAPI_GetPathOperations(t *testing.T) {
 				expect[k] = true
 			}
 
-			for k, op := range GetPathOperations(tt.input) {
+			for k, op := range GetPathOperations(&tt.input.PathProps) {
 				require.NotNil(t, op)
 				require.Equal(t, strings.ToLower(k), op.Summary)
 

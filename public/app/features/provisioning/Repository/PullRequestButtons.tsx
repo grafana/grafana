@@ -1,15 +1,18 @@
+import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
-import { RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
+
+import { type JobType } from '../types';
 
 interface Props {
-  jobType?: 'sync' | 'delete' | 'move';
+  jobType?: JobType;
   urls?: RepositoryUrLs;
 }
 export function PullRequestButtons({ urls, jobType }: Props) {
-  const pullRequestURL = urls?.newPullRequestURL;
-  const compareURL = urls?.compareURL;
-  const branchURL = urls?.sourceURL;
+  const pullRequestURL = urls?.newPullRequestURL ? textUtil.sanitizeUrl(urls.newPullRequestURL) : undefined;
+  const compareURL = urls?.compareURL ? textUtil.sanitizeUrl(urls.compareURL) : undefined;
+  const branchURL = urls?.sourceURL ? textUtil.sanitizeUrl(urls.sourceURL) : undefined;
 
   if (jobType === 'sync') {
     return null;

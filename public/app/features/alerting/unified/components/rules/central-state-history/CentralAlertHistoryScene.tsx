@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { CentralAlertHistorySceneV1Props, GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type CentralAlertHistorySceneV1Props, type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
   EmbeddedScene,
   PanelBuilders,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
@@ -29,7 +29,6 @@ import {
   Button,
   GraphGradientMode,
   Icon,
-  LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
@@ -93,7 +92,7 @@ export const CentralAlertHistoryScene = ({
         'End state:'
       ),
       hide: VariableHide.dontHide,
-      query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending},To Recovering : ${StateFilterValues.recovering}`,
+      query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending},To NoData : ${StateFilterValues.noData},To Error : ${StateFilterValues.error},To Recovering : ${StateFilterValues.recovering}`,
     });
 
     //custom variable for filtering by the previous state
@@ -105,7 +104,7 @@ export const CentralAlertHistoryScene = ({
         'Start state:'
       ),
       hide: VariableHide.dontHide,
-      query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending},From Recovering : ${StateFilterValues.recovering}`,
+      query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending},From NoData : ${StateFilterValues.noData},From Error : ${StateFilterValues.error},From Recovering : ${StateFilterValues.recovering}`,
     });
 
     return new EmbeddedScene({
@@ -198,7 +197,7 @@ export function getEventsScenesFlexItem() {
       .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
       .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
       .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+      .setOption('legend', { showLegend: false })
       .setOption('tooltip', { mode: TooltipDisplayMode.Single })
       .setNoValue('No events found')
       .build(),

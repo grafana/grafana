@@ -3,9 +3,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import {
-  NotificationChannelOption,
-  NotificationChannelSecureFields,
-  OptionMeta,
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
 } from 'app/features/alerting/unified/types/alerting';
 
 import { OptionField } from './OptionField';
@@ -199,6 +199,78 @@ describe('OptionField', () => {
       // Lock icon should be displayed
       const lockIcon = screen.getByTestId('lock-icon');
       expect(lockIcon).toBeInTheDocument();
+    });
+  });
+
+  describe('Read-only encrypted fields', () => {
+    const secureInputOption: NotificationChannelOption = {
+      propertyName: 'apiKey',
+      label: 'API Key',
+      description: 'Secret API key',
+      element: 'input',
+      inputType: 'text',
+      placeholder: '',
+      required: false,
+      secure: true,
+      secureFieldKey: 'apiKey',
+      showWhen: { field: '', is: '' },
+      validationRule: '',
+      protected: false,
+      dependsOn: '',
+    };
+
+    const secureTextareaOption: NotificationChannelOption = {
+      propertyName: 'privateKey',
+      label: 'Private Key',
+      description: 'Secret private key',
+      element: 'textarea',
+      inputType: '',
+      placeholder: '',
+      required: false,
+      secure: true,
+      secureFieldKey: 'privateKey',
+      showWhen: { field: '', is: '' },
+      validationRule: '',
+      protected: false,
+      dependsOn: '',
+    };
+
+    it('should show Reset button for encrypted input field when NOT readOnly', () => {
+      renderOptionField(secureInputOption, {
+        secureFields: { apiKey: true },
+      });
+
+      expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+      expect(screen.getByDisplayValue('configured')).toBeInTheDocument();
+    });
+
+    it('should NOT show Reset button for encrypted input field when readOnly', () => {
+      renderOptionField(secureInputOption, {
+        readOnly: true,
+        secureFields: { apiKey: true },
+      });
+
+      expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue('configured')).toBeInTheDocument();
+    });
+
+    it('should show Reset button for encrypted textarea field when NOT readOnly', () => {
+      renderOptionField(secureTextareaOption, {
+        secureFields: { privateKey: true },
+      });
+
+      expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+      expect(screen.getByDisplayValue('configured')).toBeInTheDocument();
+    });
+
+    it('should NOT show Reset button for encrypted textarea field when readOnly', () => {
+      renderOptionField(secureTextareaOption, {
+        readOnly: true,
+        secureFields: { privateKey: true },
+      });
+
+      expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue('configured')).toBeInTheDocument();
     });
   });
 

@@ -1,24 +1,30 @@
 package iam
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -30,17 +36,9 @@ var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
 
-// CoreRoleStorageBackend uses the resource.StorageBackend interface to provide storage for core roles.
-// Used by wire to identify the storage backend for core roles.
-type CoreRoleStorageBackend interface{ resource.StorageBackend }
-
 // RoleStorageBackend uses the resource.StorageBackend interface to provide storage for custom roles.
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
-
-// RoleBindingStorageBackend uses the resource.StorageBackend interface to provide storage for role bindings.
-// Used by wire to identify the storage backend for role bindings.
-type RoleBindingStorageBackend interface{ resource.StorageBackend }
 
 // ExternalGroupMappingStorageBackend uses the resource.StorageBackend interface to provide storage for external group mappings.
 // Used by wire to identify the storage backend for external group mappings.
@@ -51,18 +49,19 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Stores
 	store legacy.LegacyIdentityStore
 
-	userLegacyStore                  *user.LegacyStore
-	saLegacyStore                    *serviceaccount.LegacyStore
-	legacyTeamStore                  *team.LegacyStore
-	teamBindingLegacyStore           *teambinding.LegacyBindingStore
-	ssoLegacyStore                   *sso.LegacyStore
-	coreRolesStorage                 CoreRoleStorageBackend
-	roleApiInstaller                 RoleApiInstaller
-	globalRoleApiInstaller           GlobalRoleApiInstaller
-	teamLBACApiInstaller             TeamLBACApiInstaller
-	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
-	resourcePermissionsStorage       resource.StorageBackend
-	roleBindingsStorage              RoleBindingStorageBackend
+	userLegacyStore            *user.LegacyStore
+	saLegacyStore              *serviceaccount.LegacyStore
+	legacyTeamStore            *team.LegacyStore
+	externalGroupReconciler    legacy.ExternalGroupReconciler
+	teamBindingLegacyStore     *teambinding.LegacyBindingStore
+	ssoLegacyStore             *sso.LegacyStore
+	ssoUseMTSettings           bool
+	roleApiInstaller           RoleApiInstaller
+	globalRoleApiInstaller     GlobalRoleApiInstaller
+	teamLBACApiInstaller       TeamLBACApiInstaller
+	resourcePermissionsStorage resource.StorageBackend
+	mappers                    *resourcepermission.MappersRegistry
+	roleBindingsApiInstaller   RoleBindingApiInstaller
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
@@ -88,20 +87,41 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
+	teamSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
-	teamSearch                        *TeamSearchHandler
+	teamSearchHandler                 *team.SearchHandler
+	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
-	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
+	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider
 
 	// non-k8s api route
-	display *user.LegacyDisplayREST
+	display *display.DisplayHandler
+
+	// ac is used for legacy permission checks in role bindings.
+	// nil where only k8s-mapped permissions are supported.
+	ac accesscontrol.AccessControl
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
 
-	// Toggle for enabling authz management apis
-	features featuremgmt.FeatureToggles
+	tracing tracing.Tracer
 
-	tracing *tracing.TracingService
+	// Getters for existence validation during TeamBinding create
+	teamGetter rest.Getter
+	userGetter rest.Getter
+
+	cfgProvider    configprovider.ConfigProvider
+	settingService settingsvc.Service
+
+	// ofClient evaluates the feature flags gating the IAM APIs. The default
+	// client resolves the globally-registered provider at evaluation time.
+	ofClient openfeature.IClient
+
+	apiConfig Config
+}
+
+// Config holds IAM-specific configuration
+type Config struct {
+	SingleOrganization bool
 }

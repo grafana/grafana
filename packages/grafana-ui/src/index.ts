@@ -36,6 +36,7 @@ export { ButtonCascader } from './components/ButtonCascader/ButtonCascader';
 export { InlineToast } from './components/InlineToast/InlineToast';
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './components/LoadingPlaceholder/LoadingPlaceholder';
 export { LoadingBar, type LoadingBarProps } from './components/LoadingBar/LoadingBar';
+export { PageLoader } from './components/PageLoader/PageLoader';
 export { ColorPicker, SeriesColorPicker } from './components/ColorPicker/ColorPicker';
 export { ColorPickerInput } from './components/ColorPicker/ColorPickerInput';
 export {
@@ -45,7 +46,7 @@ export {
 export { EmptySearchResult } from './components/EmptySearchResult/EmptySearchResult';
 export { EmptyState } from './components/EmptyState/EmptyState';
 export { UnitPicker } from './components/UnitPicker/UnitPicker';
-export { StatsPicker } from './components/StatsPicker/StatsPicker';
+export { StatsPicker, type StatsPickerProps } from './components/StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './components/RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './components/DateTimePickers/TimeRangePicker';
 export { TimeRangeProvider } from './components/DateTimePickers/TimeRangeContext';
@@ -79,6 +80,7 @@ export { TagList } from './components/Tags/TagList';
 export { FilterPill } from './components/FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
+/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; this export may be removed in a future release. */
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
@@ -120,7 +122,7 @@ export {
   type TableJsonViewCellOptions,
 } from './components/Table/types';
 
-export { TableInputCSV } from './components/TableInputCSV/TableInputCSV';
+export { TableInputCSV } from './graveyard/TableInputCSV/TableInputCSV';
 export { TabsBar } from './components/Tabs/TabsBar';
 export { Tab, type TabProps } from './components/Tabs/Tab';
 export { VerticalTab } from './components/Tabs/VerticalTab';
@@ -129,20 +131,37 @@ export { Counter } from './components/Tabs/Counter';
 export { RenderUserContentAsHTML } from './components/RenderUserContentAsHTML/RenderUserContentAsHTML';
 
 // Visualizations
+export { BigValue } from './components/BigValue/BigValue';
 export {
-  BigValue,
   BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-} from './components/BigValue/BigValue';
+} from './components/BigValue/BigValueTypes';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
-export { Gauge } from './components/Gauge/Gauge';
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
   VizTooltip,
   VizTooltipContainer,
+  VizTooltipContent,
+  VizTooltipRow,
+  VizTooltipWrapper,
+  type VizTooltipWrapperProps,
+  VizTooltipFooter,
+  type VizTooltipFooterProps,
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
+  VizTooltipHeader,
+  type VizTooltipHeaderProps,
+  VizTooltipColorIndicator,
+  VizTooltipColorPlacement,
+  type VizTooltipItem,
+  DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR,
+  getFieldDisplayItems,
+  getFieldDisplayLinks,
+  isTooltipScrollable,
+  type TooltipScrollableOptions,
   SeriesTable,
   type SeriesTableProps,
   SeriesTableRow,
@@ -201,6 +220,7 @@ export {
   DataLinksContextMenu,
   type DataLinksContextMenuProps,
   type DataLinksContextMenuApi,
+  type DataLinksMenuTriggerProps,
 } from './components/DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './components/VizLegend/SeriesIcon';
 export { InfoBox } from './components/InfoBox/InfoBox';
@@ -249,7 +269,12 @@ export { ButtonGroup } from './components/Button/ButtonGroup';
 export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';
 export { ToolbarButtonRow } from './components/ToolbarButton/ToolbarButtonRow';
 export { ValuePicker } from './components/ValuePicker/ValuePicker';
-export { fieldMatchersUI } from './components/MatchersUI/fieldMatchersUI';
+export { fieldMatchersUI, useFieldMatchersOptions } from './components/MatchersUI/fieldMatchersUI';
+export {
+  MatcherScopeSelector,
+  getUniqueMatcherScopes,
+  buildScopeOptions,
+} from './components/MatchersUI/MatcherScopeSelector';
 export { Link } from './components/Link/Link';
 export { TextLink } from './components/Link/TextLink';
 export { Text } from './components/Text/Text';
@@ -261,6 +286,7 @@ export { ScrollContainer } from './components/ScrollContainer/ScrollContainer';
 
 export { Label } from './components/Forms/Label';
 export { Field, type FieldProps } from './components/Forms/Field';
+export { FieldContext, useFieldContext, type FieldContextType } from './components/Forms/FieldContext';
 export { Legend } from './components/Forms/Legend';
 export { FieldSet } from './components/Forms/FieldSet';
 export { FieldValidationMessage } from './components/Forms/FieldValidationMessage';
@@ -351,6 +377,7 @@ export { XYCanvas } from './components/uPlot/geometries/XYCanvas';
 export { Marker } from './components/uPlot/geometries/Marker';
 export { EventsCanvas } from './components/uPlot/geometries/EventsCanvas';
 export { TooltipPlugin2 } from './components/uPlot/plugins/TooltipPlugin2';
+export { CloseButton } from './components/uPlot/plugins/CloseButton';
 export { EventBusPlugin } from './components/uPlot/plugins/EventBusPlugin';
 export { KeyboardPlugin } from './components/uPlot/plugins/KeyboardPlugin';
 export { XAxisInteractionAreaPlugin } from './components/uPlot/plugins/XAxisInteractionAreaPlugin';
@@ -366,12 +393,6 @@ export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 // Graveyard: exported, but no longer used internally
 // These will be removed in the future
 // -----------------------------------------------------
-
-export { Graph } from './graveyard/Graph/Graph';
-export { GraphWithLegend } from './graveyard/Graph/GraphWithLegend';
-export { GraphContextMenu, GraphContextMenuHeader } from './graveyard/Graph/GraphContextMenu';
-export { graphTimeFormat, graphTickFormatter } from './graveyard/Graph/utils';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './graveyard/Graph/GraphSeriesToggler';
 
 export { GraphNG, type GraphNGProps } from './graveyard/GraphNG/GraphNG';
 export { TimeSeries } from './graveyard/TimeSeries/TimeSeries';
@@ -393,15 +414,9 @@ export {
 
 export type { Themeable, Themeable2 } from './types/theme';
 export type { ValidationRule, ValidationEvents } from './types/input';
-export type {
-  SearchFunction,
-  CompletionItemGroup,
-  HighlightPart,
-  CompletionItem,
-  TypeaheadOutput,
-  TypeaheadInput,
-  SuggestionsState,
-} from './types/completion';
+export type { SearchFunction, CompletionItemGroup, HighlightPart, CompletionItem } from './types/completion';
+/** @deprecated Slate typeahead types are being removed from `@grafana/ui`. Migrate to CodeMirror; these may be removed in a future release. */
+export type { TypeaheadOutput, TypeaheadInput, SuggestionsState } from './types/completion';
 export { CompletionItemKind } from './types/completion';
 export type { FormsOnSubmit, FormFieldErrors, FormAPI, FieldArrayApi } from './types/forms';
 export type { IconName, IconType, IconSize } from './types/icon';
@@ -424,6 +439,7 @@ export {
   sortedColors,
 } from './utils/colors';
 export { EventsWithValidation, validate, hasValidationEvent, regexValidation } from './utils/validate';
+/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; these exports may be removed in a future release. */
 export { SCHEMA, makeFragment, makeValue } from './utils/slate';
 export { linkModelToContextMenuItems } from './utils/dataLinks';
 export { getTagColorIndexFromName, getTagColorsFromName, getTagColor } from './utils/tags';
@@ -457,16 +473,31 @@ export { GlobalStyles } from './themes/GlobalStyles/GlobalStyles';
 
 export { styleMixins, commonOptionsBuilder };
 
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { BracesPlugin } from './slate-plugins/braces';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { ClearPlugin } from './slate-plugins/clear';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { ClipboardPlugin } from './slate-plugins/clipboard';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { IndentationPlugin } from './slate-plugins/indentation';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { NewlinePlugin } from './slate-plugins/newline';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { RunnerPlugin } from './slate-plugins/runner';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { SlatePrism, type Token } from './slate-plugins/slate-prism';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { SuggestionsPlugin } from './slate-plugins/suggestions';
-export { Sidebar, useSidebar, type SidebarPosition, type SidebarContextValue } from './components/Sidebar/Sidebar';
+export {
+  Sidebar,
+  useSidebar,
+  type SidebarPosition,
+  type SidebarContextValue,
+  useSidebarContext,
+} from './components/Sidebar/Sidebar';
 
 // @deprecated import from @grafana/schema
 export {

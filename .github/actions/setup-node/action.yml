@@ -1,11 +1,21 @@
 name: Setup Node.js
 description: Sets up a node.js environment with presets for the Grafana repository.
 
+inputs:
+  cache:
+    description: Whether to cache the yarn dependencies. Note, its recommended to use .github/actions/yarn-install instead as it has better caching.
+    required: false
+    default: 'false'
+  cwd:
+    description: "Changes node's process.cwd() if the project is not located on the root. Default to process.cwd()"
+    required: false
+    default: '.'
+
 runs:
   using: "composite"
   steps:
     - uses: actions/setup-node@v6
       with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+        node-version-file: '${{ inputs.cwd }}/.nvmrc'
+        cache: ${{ inputs.cache == 'true' && 'yarn' || '' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && format('{0}/yarn.lock', inputs.cwd) || 'false' }}

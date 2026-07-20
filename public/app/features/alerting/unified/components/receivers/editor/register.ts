@@ -1,6 +1,6 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
-import { Monaco } from '@grafana/ui';
+import { type Monaco } from '@grafana/ui';
 
 export type LanguageDefinition = {
   id: string;

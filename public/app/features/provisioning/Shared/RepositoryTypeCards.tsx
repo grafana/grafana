@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL } from '../constants';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
-import { FreeTierLimitNote } from './FreeTierLimitNote';
+import { QuotaLimitNote } from './QuotaLimitNote';
 import { RepoIcon } from './RepoIcon';
 
 interface RepositoryTypeCardsProps {
@@ -41,13 +41,22 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
               >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
-                    <RepoIcon type={config.type} />
+                    <RepoIcon type={config.type} autoHeight />
                     <Trans
                       i18nKey="provisioning.repository-type-cards.configure-with-provider"
                       values={{ provider: config.label }}
                     >
                       Configure with {'{{ provider }}'}
                     </Trans>
+                    {config.tooltip && (
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                        variant="secondary"
+                      />
+                    )}
                   </Stack>
                 </Card.Heading>
               </Card>
@@ -75,7 +84,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
               >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
-                    <RepoIcon type={config.type} />
+                    <RepoIcon type={config.type} autoHeight />
                     {config.type === 'local' ? (
                       <Trans i18nKey="provisioning.repository-type-cards.configure-file">
                         Configure file provisioning
@@ -88,6 +97,15 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                         Configure with {'{{ provider }}'}
                       </Trans>
                     )}
+                    {config.tooltip && (
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                        variant="secondary"
+                      />
+                    )}
                   </Stack>
                 </Card.Heading>
               </Card>
@@ -96,7 +114,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
         </Stack>
       )}
 
-      {disabled && <FreeTierLimitNote limitType="connection" />}
+      {disabled && <QuotaLimitNote maxRepositories={frontendSettings?.maxRepositories} />}
     </Stack>
   );
 }
@@ -112,6 +130,9 @@ function getStyles(theme: GrafanaTheme2, disabled?: boolean) {
           color: theme.colors.text.secondary,
         },
       }),
+    }),
+    infoIcon: css({
+      zIndex: 1,
     }),
   };
 }

@@ -4,11 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func TestValidate(t *testing.T) {
@@ -49,16 +48,21 @@ func TestValidate(t *testing.T) {
 			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel)),
 		},
 		{
+			name:                 "group by with duplicate values is invalid",
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel, FolderTitleLabel, model.AlertNameLabel)),
+			expErrorContains:     "duplicate",
+		},
+		{
 			name:                 "group wait empty is valid",
 			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(nil)),
 		},
 		{
 			name:                 "group wait positive is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(util.Pointer(1*time.Second))),
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(new(1*time.Second))),
 		},
 		{
 			name:                 "group wait negative is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(util.Pointer(-1*time.Second))),
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(new(-1*time.Second))),
 			expErrorContains:     "group wait",
 		},
 		{
@@ -67,16 +71,16 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:                 "group interval positive is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(util.Pointer(1*time.Second))),
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(new(1*time.Second))),
 		},
 		{
 			name:                 "group interval negative is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(util.Pointer(-1*time.Second))),
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(new(-1*time.Second))),
 			expErrorContains:     "group interval",
 		},
 		{
 			name:                 "group interval zero is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(util.Pointer(0*time.Second))),
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(new(0*time.Second))),
 			expErrorContains:     "group interval",
 		},
 		{
@@ -85,17 +89,40 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:                 "repeat interval positive is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(util.Pointer(1*time.Second))),
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(new(1*time.Second))),
 		},
 		{
 			name:                 "repeat interval negative is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(util.Pointer(-1*time.Second))),
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(new(-1*time.Second))),
 			expErrorContains:     "repeat interval",
 		},
 		{
 			name:                 "repeat interval zero is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(util.Pointer(0*time.Second))),
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(new(0*time.Second))),
 			expErrorContains:     "repeat interval",
+		},
+		{
+			name:                 "valid notification settings with policy routing",
+			notificationSettings: NotificationSettingsFromPolicy("policy"),
+		},
+		{
+			name:                 "empty policy is invalid",
+			notificationSettings: NotificationSettingsFromPolicy(""),
+			expErrorContains:     "policy must be specified",
+		},
+		{
+			name:                 "default policy is invalid",
+			notificationSettings: NotificationSettingsFromPolicy(DefaultRoutingTreeName),
+			expErrorContains:     "default",
+		},
+		{
+			name:                 "contact point and policy routing both unspecific is valid",
+			notificationSettings: NotificationSettings{}, // Additional checks are done at the API level to reject this, but at the model level it's ok to ignore this state.
+		},
+		{
+			name:                 "contact point and policy routing both specific is invalid",
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithPolicy("policy")),
+			expErrorContains:     "only one of policy routing or contact point routing can be specified",
 		},
 	}
 
@@ -145,9 +172,9 @@ func TestContactPointRoutingLabels(t *testing.T) {
 			notificationSettings: ContactPointRouting{
 				Receiver:          "receiver name",
 				GroupBy:           []string{"label1", "label2"},
-				GroupWait:         util.Pointer(model.Duration(1 * time.Minute)),
-				GroupInterval:     util.Pointer(model.Duration(2 * time.Minute)),
-				RepeatInterval:    util.Pointer(model.Duration(3 * time.Minute)),
+				GroupWait:         new(model.Duration(1 * time.Minute)),
+				GroupInterval:     new(model.Duration(2 * time.Minute)),
+				RepeatInterval:    new(model.Duration(3 * time.Minute)),
 				MuteTimeIntervals: []string{"maintenance1", "maintenance2"},
 			},
 			labels: data.Labels{
@@ -161,9 +188,9 @@ func TestContactPointRoutingLabels(t *testing.T) {
 			notificationSettings: ContactPointRouting{
 				Receiver:            "receiver name",
 				GroupBy:             []string{"label1", "label2"},
-				GroupWait:           util.Pointer(model.Duration(1 * time.Minute)),
-				GroupInterval:       util.Pointer(model.Duration(2 * time.Minute)),
-				RepeatInterval:      util.Pointer(model.Duration(3 * time.Minute)),
+				GroupWait:           new(model.Duration(1 * time.Minute)),
+				GroupInterval:       new(model.Duration(2 * time.Minute)),
+				RepeatInterval:      new(model.Duration(3 * time.Minute)),
 				MuteTimeIntervals:   []string{"maintenance1", "maintenance2"},
 				ActiveTimeIntervals: []string{"active1", "active2"},
 			},
@@ -269,6 +296,16 @@ func TestNormalizedGroupBy(t *testing.T) {
 			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy("custom", model.AlertNameLabel, "something", FolderTitleLabel, "other")),
 			expectedNormalizedGroupBy: []string{FolderTitleLabel, model.AlertNameLabel, "custom", "other", "something"},
 		},
+		{
+			name:                      "deduplicates repeated labels",
+			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel, "custom", model.AlertNameLabel, "custom")),
+			expectedNormalizedGroupBy: []string{FolderTitleLabel, model.AlertNameLabel, "custom"},
+		},
+		{
+			name:                      "deduplicates ... leaving only ...",
+			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(GroupByAll, GroupByAll)),
+			expectedNormalizedGroupBy: []string{GroupByAll},
+		},
 	}
 
 	for _, tt := range testCases {
@@ -277,4 +314,11 @@ func TestNormalizedGroupBy(t *testing.T) {
 			require.Equal(t, normalized, tt.expectedNormalizedGroupBy)
 		})
 	}
+}
+
+func TestFingerprintStabilityWithDuplicateGroupBy(t *testing.T) {
+	withDups := ContactPointRouting{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, "custom", model.AlertNameLabel, "custom"}}
+	withoutDups := ContactPointRouting{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, "custom"}}
+	require.Equal(t, withDups.Fingerprint(nil), withoutDups.Fingerprint(nil),
+		"fingerprint should be identical for semantically equivalent group_by regardless of duplicates")
 }

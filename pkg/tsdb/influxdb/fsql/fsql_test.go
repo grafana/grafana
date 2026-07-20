@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net"
+	"strings"
 	"testing"
 
 	"github.com/apache/arrow-go/v18/arrow/flight"
@@ -12,12 +13,12 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/flight/flightsql/example"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type FSQLTestSuite struct {
@@ -57,7 +58,12 @@ func (suite *FSQLTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func TestIntegrationFSQLTestSuite(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if !strings.HasPrefix(t.Name(), "TestIntegration") {
+		t.Fatal("test is not an integration test")
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 
 	suite.Run(t, new(FSQLTestSuite))
 }
@@ -88,6 +94,7 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 					},
 				},
 			},
+			log.NewNullLogger(),
 		)
 
 		require.NoError(suite.T(), err)
@@ -154,6 +161,7 @@ func TestInvalidSchema(t *testing.T) {
 				},
 			},
 		},
+		log.NewNullLogger(),
 	)
 	require.Equal(t, backend.ErrorSourceDownstream, resp.Responses["A"].ErrorSource)
 }

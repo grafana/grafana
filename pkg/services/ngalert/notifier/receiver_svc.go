@@ -4,20 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
+
+	"github.com/grafana/alerting/receivers/schema"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -36,12 +39,14 @@ type ReceiverService struct {
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
 	includeImported        bool
+	allowedIntegrations    map[schema.IntegrationType]struct{}
+	emailValidator         EmailIntegrationValidator
 }
 
 type routeService interface {
 	ReceiverUseByName(ctx context.Context, rev *legacy_storage.ConfigRevision) map[string]int
 	ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool
-	RenameReceiverInRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*definitions.Route]int
+	RenameReceiverInRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*v1.Route]int
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -99,7 +104,10 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	provenanceValidator validation.ProvenanceStatusTransitionValidator,
 	includeStaged bool,
+	allowedIntegrations map[schema.IntegrationType]struct{},
+	emailValidator EmailIntegrationValidator,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -110,11 +118,26 @@ func NewReceiverService(
 		encryptionService:      encryptionService,
 		xact:                   xact,
 		log:                    log,
-		provenanceValidator:    validation.ValidateProvenanceRelaxed,
+		provenanceValidator:    provenanceValidator,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
 		includeImported:        includeStaged,
+		allowedIntegrations:    allowedIntegrations,
+		emailValidator:         emailValidator,
 	}
+}
+
+func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
+	if rs.allowedIntegrations == nil {
+		return nil
+	}
+	for _, integration := range r.Integrations {
+		iType := integration.Config.Type()
+		if _, allowed := rs.allowedIntegrations[iType]; !allowed {
+			return fmt.Errorf("integration type %s is not allowed", iType)
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
@@ -306,7 +329,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, callerProvenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, callerProvenance); err != nil {
 		return err
 	}
 
@@ -354,6 +377,15 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
+	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
+		return nil, err
+	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
+	}
+
+	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "integrations", r.GetIntegrationTypes())
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -362,12 +394,17 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	span.AddEvent("Loaded Alertmanager configuration", trace.WithAttributes(attribute.String("concurrency_token", revision.ConcurrencyToken)))
 
 	createdReceiver := r.Clone()
+	for _, integration := range createdReceiver.Integrations {
+		if err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings); err != nil {
+			return nil, models.ErrReceiverInvalid(err)
+		}
+	}
 	err = createdReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
 	}
 
-	if err := createdReceiver.Validate(rs.decryptor(ctx)); err != nil {
+	if err := rs.validateReceiver(ctx, orgID, createdReceiver, logger); err != nil {
 		span.RecordError(err)
 		return nil, models.ErrReceiverInvalid(err)
 	}
@@ -396,7 +433,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		attribute.String("uid", result.UID),
 		attribute.String("version", result.Version),
 	))
-	rs.log.FromContext(ctx).Info("Created a new receiver", "receiver", result.Name, "uid", result.UID, "fingerprint", result.Version, "integrations", result.GetIntegrationTypes())
+	logger.Info("Created a new receiver", "uid", result.UID, "fingerprint", result.Version)
 	return result, nil
 }
 
@@ -415,6 +452,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
+	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
 	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())
@@ -464,7 +504,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, r.Provenance); err != nil {
 		return nil, err
 	}
 
@@ -480,11 +520,17 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		}
 	}
 
-	// We need to perform two important steps to process settings on an updated integration:
-	// 1. Encrypt new or updated secret fields as they will arrive in plain text.
-	// 2. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
-	//      to load these secure settings from the existing integration.
+	// We need to perform three important steps to process settings on an updated integration:
+	// 1. Validate no duplicate settings field exists (could happen if the user uses different casing)
+	// 2. Encrypt new or updated secret fields as they will arrive in plain text.
+	// 3. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
+	//    to load these secure settings from the existing integration.
 	updatedReceiver := r.Clone()
+	for _, integration := range updatedReceiver.Integrations {
+		if err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings); err != nil {
+			return nil, models.ErrReceiverInvalid(err)
+		}
+	}
 	err = updatedReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
@@ -493,7 +539,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		updatedReceiver.WithExistingSecureFields(existing, storedSecureFields)
 	}
 
-	if err := updatedReceiver.Validate(rs.decryptor(ctx)); err != nil {
+	if err := rs.validateReceiver(ctx, orgID, updatedReceiver, logger); err != nil {
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
@@ -546,7 +592,7 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name st
 		return nil, err
 	}
 
-	return maps.Keys(keys), nil
+	return slices.Collect(maps.Keys(keys)), nil
 }
 
 // AccessControlMetadata returns access control metadata for the given Receivers.
@@ -831,4 +877,45 @@ func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.
 		))
 	}
 	return result
+}
+
+func (rs *ReceiverService) validateReceiver(ctx context.Context, orgID int64, receiver models.Receiver, l log.Logger) error {
+	if err := receiver.Validate(rs.decryptor(ctx)); err != nil {
+		return err
+	}
+	for idx, integration := range receiver.Integrations {
+		if integration == nil || integration.Config.Type() != schema.EmailType {
+			continue
+		}
+		if err := rs.emailValidator.ValidateIntegration(ctx, orgID, *integration, rs.decryptor(ctx), l); err != nil {
+			return fmt.Errorf("invalid email integration[%d]: %w", idx, err)
+		}
+	}
+	return nil
+}
+
+func (rs *ReceiverService) validateNoDuplicateSecretFields(typeSchema schema.IntegrationSchemaVersion, settings map[string]any) error {
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		node := settings
+		for _, segment := range secretPath {
+			var matches []string
+			for k := range node {
+				if strings.EqualFold(k, segment) {
+					matches = append(matches, k)
+				}
+			}
+			if len(matches) == 0 {
+				break
+			}
+			if len(matches) > 1 {
+				return fmt.Errorf("duplicate keys found for secret field %s", secretPath.String())
+			}
+			next, ok := node[matches[0]].(map[string]any)
+			if !ok {
+				break
+			}
+			node = next
+		}
+	}
+	return nil
 }

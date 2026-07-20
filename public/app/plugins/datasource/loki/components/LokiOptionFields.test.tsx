@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { LokiOptionFieldsProps, LokiOptionFields, preprocessMaxLines } from './LokiOptionFields';
+import { type LokiOptionFieldsProps, LokiOptionFields, preprocessMaxLines } from './LokiOptionFields';
 
 const setup = () => {
   const lineLimitValue = '1';

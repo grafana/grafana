@@ -6,6 +6,13 @@ import { config } from '@grafana/runtime';
 
 import { ProfileButton } from './ProfileButton';
 
+// Mock the news feed to avoid real network requests that can cause flaky
+// moment.js deprecation warnings when parsing RSS pubDate values.
+jest.mock('app/plugins/panel/news/feed', () => ({
+  ...jest.requireActual('app/plugins/panel/news/feed'),
+  loadFeed: jest.fn().mockResolvedValue({ items: [] }),
+}));
+
 describe('ProfileButton', () => {
   let mainView: HTMLDivElement;
   let user: ReturnType<typeof userEvent.setup>;
@@ -18,10 +25,13 @@ describe('ProfileButton', () => {
     },
     onToggleKioskMode: jest.fn(),
   };
+  const originalNewsFeedEnabled = config.newsFeedEnabled;
+  const originalDisableSignoutMenu = config.auth.disableSignoutMenu;
 
   beforeEach(() => {
     user = userEvent.setup();
     config.newsFeedEnabled = true;
+    config.auth.disableSignoutMenu = false;
 
     // Drawer portals into .main-view
     mainView = document.createElement('div');
@@ -30,7 +40,22 @@ describe('ProfileButton', () => {
   });
 
   afterEach(() => {
+    config.newsFeedEnabled = originalNewsFeedEnabled;
+    config.auth.disableSignoutMenu = originalDisableSignoutMenu;
     document.body.removeChild(mainView);
+  });
+
+  it('should not render the sign out divider when the sign out menu is disabled', async () => {
+    config.auth.disableSignoutMenu = true;
+
+    render(<ProfileButton {...defaultProps} />);
+
+    await user.click(screen.getByRole('button', { name: /profile/i }));
+
+    const menu = await screen.findByRole('menu');
+    expect(screen.queryByRole('menuitem', { name: /sign out/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+    expect(Array.from(menu.children)).toHaveLength(4);
   });
 
   it('should return focus to the profile button when the news feed drawer is closed', async () => {

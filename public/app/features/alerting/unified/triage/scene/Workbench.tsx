@@ -1,25 +1,31 @@
 import { useEffect, useState, useTransition } from 'react';
 
-import { DataFrame } from '@grafana/data';
-import { SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
-import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
+import { type DataFrame } from '@grafana/data';
+import {
+  AdHocFiltersVariable,
+  SceneObjectBase,
+  type SceneObjectState,
+  isGroupByFilter,
+  sceneGraph,
+} from '@grafana/scenes';
+import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
 import { DEFAULT_FIELDS, VARIABLES } from '../constants';
 
 import { convertToWorkbenchRows } from './dataTransform';
 import { getWorkbenchQueries } from './queries';
-import { convertTimeRangeToDomain, useQueryFilter } from './utils';
+import { convertTimeRangeToDomain, useGroupByKeys, useQueryFilter } from './utils';
 
 export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
 }
 
-export function WorkbenchRenderer() {
+function WorkbenchRenderer() {
   const [timeRange] = useTimeRange();
   const domain = convertTimeRangeToDomain(timeRange);
 
-  const [groupByKeys = []] = useVariableValues<string>(VARIABLES.groupBy);
+  const groupByKeys = useGroupByKeys();
   const countBy = [...DEFAULT_FIELDS, ...groupByKeys].join(',');
   const queryFilter = useQueryFilter();
 
@@ -43,15 +49,14 @@ export function WorkbenchRenderer() {
         return;
       }
 
-      // Get the groupBy from the scene directly to avoid having groupByVariable in the dependency array
+      // Get the groupBy keys from the unified AdHocFiltersVariable directly,
+      // avoiding groupByKeys in the dependency array.
       let currentGroupByKeys: string[] = [];
-      const groupByVariable = sceneGraph.lookupVariable(VARIABLES.groupBy, runner);
-
-      if (groupByVariable && sceneUtils.isGroupByVariable(groupByVariable)) {
-        const value = groupByVariable.getValue();
-        if (Array.isArray(value)) {
-          currentGroupByKeys = value.map((value) => String(value));
-        }
+      const filtersVar = sceneGraph.lookupVariable(VARIABLES.filters, runner);
+      if (filtersVar instanceof AdHocFiltersVariable) {
+        currentGroupByKeys = filtersVar.state.filters
+          .filter((f) => isGroupByFilter(f) && !f.dismissedGroupBy)
+          .map((f) => f.key);
       }
 
       const { series } = newState.data;
@@ -76,8 +81,9 @@ export function WorkbenchRenderer() {
     return () => subscription.unsubscribe();
   }, [runner]);
 
-  const isDataLoading = data?.state === 'Loading';
-  const isLoading = isDataLoading || isPending;
+  const isDataLoading = data?.state === 'Loading' || data?.state === 'NotStarted' || data === undefined;
+  const isInitialLoading = (isDataLoading || isPending) && rows.length === 0;
+  const isRefreshing = isDataLoading && rows.length > 0;
 
   return (
     <Workbench
@@ -85,7 +91,8 @@ export function WorkbenchRenderer() {
       domain={domain}
       queryRunner={runner}
       groupBy={groupByKeys}
-      isLoading={isLoading}
+      isInitialLoading={isInitialLoading}
+      isRefreshing={isRefreshing}
       hasActiveFilters={hasFiltersApplied}
     />
   );

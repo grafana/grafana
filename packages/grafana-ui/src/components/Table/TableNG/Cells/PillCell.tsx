@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
+import memoize from 'micro-memoize';
 import { useMemo } from 'react';
 
 import {
-  GrafanaTheme2,
+  type GrafanaTheme2,
   classicColors,
-  Field,
+  type Field,
   getColorByStringHash,
   FALLBACK_COLOR,
   fieldColorModeRegistry,
@@ -12,8 +13,9 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { getActiveCellSelector } from '../styles';
-import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
+import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
+import { type PillCellProps, type TableCellStyles } from '../types';
+import { inferPills } from '../utils';
 
 export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
   const value = field.values[rowIdx];
@@ -59,30 +61,7 @@ interface Pill {
   color: string;
 }
 
-const SPLIT_RE = /\s*,\s*/;
 const TRANSPARENT = 'rgba(0,0,0,0)';
-
-export function inferPills(rawValue: TableCellValue): unknown[] {
-  if (rawValue === '' || rawValue == null) {
-    return [];
-  }
-
-  if (Array.isArray(rawValue)) {
-    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
-  }
-
-  const value = String(rawValue);
-
-  if (value[0] === '[') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value.trim().split(SPLIT_RE);
-    }
-  }
-
-  return value.trim().split(SPLIT_RE);
-}
 
 // FIXME: this does not yet support "shades of a color"
 function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): string {
@@ -108,24 +87,27 @@ function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): strin
   return getColorByStringHash(colors, String(value));
 }
 
-export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow, maxHeight }) =>
-  css({
-    display: 'inline-flex',
-    gap: theme.spacing(0.5),
-    flexWrap: textWrap ? 'wrap' : 'nowrap',
+export const getStyles: TableCellStyles = memoize(
+  (theme, { textWrap, shouldOverflow, maxHeight }) =>
+    css({
+      display: 'inline-flex',
+      gap: theme.spacing(0.5),
+      flexWrap: textWrap ? 'wrap' : 'nowrap',
 
-    ...(shouldOverflow && {
-      [getActiveCellSelector(Boolean(maxHeight))]: {
-        flexWrap: 'wrap',
+      ...(shouldOverflow && {
+        [getActiveCellSelector(Boolean(maxHeight))]: {
+          flexWrap: 'wrap',
+        },
+      }),
+
+      '> span': {
+        display: 'flex',
+        padding: theme.spacing(0.25, 0.75),
+        borderRadius: theme.shape.radius.default,
+        fontSize: theme.typography.bodySmall.fontSize,
+        lineHeight: theme.typography.bodySmall.lineHeight,
+        whiteSpace: 'nowrap',
       },
     }),
-
-    '> span': {
-      display: 'flex',
-      padding: theme.spacing(0.25, 0.75),
-      borderRadius: theme.shape.radius.default,
-      fontSize: theme.typography.bodySmall.fontSize,
-      lineHeight: theme.typography.bodySmall.lineHeight,
-      whiteSpace: 'nowrap',
-    },
-  });
+  { isMatchingKey: isTableCellStylesKeyEqual }
+);

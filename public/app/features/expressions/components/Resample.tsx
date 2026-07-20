@@ -1,10 +1,10 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-import { downsamplingTypes, ExpressionQuery, upsamplingTypes } from '../types';
+import { downsamplingTypes, type ExpressionQuery, upsamplingTypes } from '../types';
 
 interface Props {
   refIds: Array<SelectableValue<string>>;

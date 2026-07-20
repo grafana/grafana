@@ -1,4 +1,4 @@
-import { LanguageDefinition } from '../monarch/register';
+import { type LanguageDefinition } from '../monarch/register';
 
 import { CLOUDWATCH_PPL_LANGUAGE_DEFINITION_ID } from './language';
 

@@ -4,6 +4,9 @@ metadata:
   name: test-v2
 spec:
   title: Test dashboard. Created at v2
+  tags:
+    - ccc
+    - ddd
   layout:
     kind: GridLayout
     spec:

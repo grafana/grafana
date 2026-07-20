@@ -64,6 +64,26 @@ const (
 	// JobActionFixFolderMetadata is a placeholder job that will eventually regenerate folder metadata files.
 	// Currently a no-op to unblock frontend development.
 	JobActionFixFolderMetadata JobAction = "fixFolderMetadata"
+
+	// JobActionReleaseResources removes ownership annotations from all resources
+	// managed by a repository that no longer exists or is stuck in Terminating state.
+	// Resources remain in Grafana but become unmanaged.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionReleaseResources JobAction = "releaseResources"
+
+	// JobActionDeleteResources deletes all resources managed by a repository
+	// that no longer exists or is stuck in Terminating state.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionDeleteResources JobAction = "deleteResources"
+
+	// JobActionTest is a synthetic job that does no real work: it simply sleeps
+	// for a configurable duration and then completes successfully. It exists only
+	// to generate controlled load on the job queue and controllers for
+	// performance testing, and is gated behind the provisioning.performance
+	// feature flag.
+	JobActionTest JobAction = "test"
 )
 
 // +enum
@@ -97,6 +117,13 @@ type JobSpec struct {
 	// This value is required, but will be popuplated from the job making the request
 	Repository string `json:"repository,omitempty"`
 
+	// Commit message for this job. Applies to job actions that produce
+	// commits (delete, move, migrate, push, fixFolderMetadata).
+	// When empty, the backend falls back to the action-specific message
+	// field (ExportJobOptions.Message, MigrateJobOptions.Message) for
+	// backwards compatibility, then to a built-in default.
+	Message string `json:"message,omitempty"`
+
 	// Pull request options
 	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
 
@@ -117,6 +144,9 @@ type JobSpec struct {
 
 	// Options when the action is `fix-folder-metadata`
 	FixFolderMetadata *FixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
+
+	// Required when the action is `test`
+	Test *TestJobOptions `json:"test,omitempty"`
 }
 
 func (JobSpec) OpenAPIModelName() string {
@@ -151,7 +181,9 @@ func (SyncJobOptions) OpenAPIModelName() string {
 }
 
 type ExportJobOptions struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message string `json:"message,omitempty"`
 
 	// The source folder (or empty) to export
@@ -164,6 +196,19 @@ type ExportJobOptions struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
+
+	// Resources to export. When empty, every unmanaged resource in the namespace
+	// is exported (legacy behavior). When non-empty, only the listed resources
+	// are exported — the folder hierarchy is still emitted so parent paths resolve.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
+
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. Use this to produce a portable export that creates
+	// new folders on a subsequent sync rather than taking over the originals.
+	// Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (ExportJobOptions) OpenAPIModelName() string {
@@ -171,8 +216,24 @@ func (ExportJobOptions) OpenAPIModelName() string {
 }
 
 type MigrateJobOptions struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message string `json:"message,omitempty"`
+
+	// Resources to migrate. When empty, every unmanaged resource in the namespace
+	// is migrated (legacy behavior). When non-empty, only the listed resources
+	// are exported to the repository — the folder hierarchy is still emitted so
+	// parent paths resolve, and the subsequent pull phase only takes ownership
+	// of those resources.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
+
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. The subsequent pull creates new folders rather than
+	// taking over the originals. Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {
@@ -246,6 +307,24 @@ type FixFolderMetadataJobOptions struct {
 
 func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
+}
+
+// TestJobOptions configures a synthetic performance-testing job. The job does
+// no real work; it sleeps for Duration and then completes. It is only usable
+// when the provisioning.performance feature flag is enabled.
+type TestJobOptions struct {
+	// Duration is how long the job should sleep before completing, expressed as
+	// a Go duration string (for example "10s" or "2m"). It must be positive and
+	// is capped by the server to keep a single job's runtime predictable.
+	Duration metav1.Duration `json:"duration,omitempty"`
+
+	// ProgressUpdates controls how many progress notifications the job emits
+	// while running. A value of 0 uses the server default.
+	ProgressUpdates int `json:"progressUpdates,omitempty"`
+}
+
+func (TestJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "TestJobOptions"
 }
 
 // The job status

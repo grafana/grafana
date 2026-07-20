@@ -3,14 +3,82 @@
  *
  * These functions handle the conversion between URL parameters and saved search
  * query strings, preserving filters, groupBy selections, and time range.
+ *
+ * GroupBy keys are stored as entries in the same `var-filters` URL parameter using the
+ * `key|groupBy` 2-part format defined by Scenes' AdHocFiltersVariable URL sync handler.
  */
 
-import { AdHocVariableFilter, RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
+import { type AdHocVariableFilter, type RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { AdHocFiltersVariable, GroupByVariable, SceneObject, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, GROUP_BY_OPERATOR, type SceneObject, sceneGraph } from '@grafana/scenes';
 
-import { toFilters, toUrl } from '../../../../variables/adhoc/urlParser';
+import { toFilter, toUrl } from '../../../../variables/adhoc/urlParser';
+import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
+
+/**
+ * Merges predefined and user saved searches, with the default search first.
+ *
+ * @param predefinedSearches - Predefined searches (with isDefault applied)
+ * @param userSavedSearches - User-created saved searches (with isDefault applied)
+ * @param defaultId - ID of the search set as default, or null
+ * @returns Merged list with default item first, then predefined, then user
+ */
+export function mergeTriageSavedSearches(
+  predefinedSearches: SavedSearch[],
+  userSavedSearches: SavedSearch[],
+  defaultId: string | null
+): SavedSearch[] {
+  const merged = [...predefinedSearches, ...userSavedSearches];
+  const defaultIndex = merged.findIndex((s) => s.id === defaultId);
+  if (defaultIndex <= 0) {
+    return merged;
+  }
+  const defaultItem = merged[defaultIndex];
+  return [defaultItem, ...merged.slice(0, defaultIndex), ...merged.slice(defaultIndex + 1)];
+}
+
+/** Filter shape compatible with AdHocVariableFilter (key, operator, value). Used for building query strings. */
+export interface TriageFilterInput {
+  key: string;
+  operator: string;
+  value: string;
+}
+
+/**
+ * Builds a triage saved search query string from filters, groupBy, and time range.
+ * Shared by serializeTriageState (Scene state) and triagePredefinedSearches (static definitions).
+ * Uses URL_PARAMS and toUrl so format stays in sync across all triage saved searches.
+ *
+ * GroupBy keys are appended to var-filters as `key|groupBy` (2-part, no value), matching
+ * the Scenes AdHocFiltersVariable URL sync format.
+ */
+export function buildTriageQueryStringFromParts(input: {
+  filters?: TriageFilterInput[];
+  groupBy: string[];
+  timeRange: RawTimeRange;
+}): string {
+  const params = new URLSearchParams();
+
+  if (input.filters?.length) {
+    toUrl(input.filters).forEach((filterStr) => {
+      params.append(URL_PARAMS.filters, filterStr);
+    });
+  }
+
+  // Encode groupBy keys as `key|groupBy` filter entries (Scenes AdHocFiltersVariable URL format).
+  input.groupBy.filter(Boolean).forEach((key) => {
+    params.append(URL_PARAMS.filters, `${key}|${GROUP_BY_OPERATOR}`);
+  });
+
+  const fromValue =
+    typeof input.timeRange.from === 'string' ? input.timeRange.from : input.timeRange.from.toISOString();
+  const toValue = typeof input.timeRange.to === 'string' ? input.timeRange.to : input.timeRange.to.toISOString();
+  params.set(URL_PARAMS.timeFrom, fromValue);
+  params.set(URL_PARAMS.timeTo, toValue);
+
+  return params.toString();
+}
 
 /**
  * Serializes the current triage page state from the URL to a query string.
@@ -18,12 +86,12 @@ import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
  * This function reads the current URL parameters that define the triage view state
  * and returns them as a serialized query string suitable for storage.
  *
- * @returns Serialized query string containing filters, groupBy, and time range
+ * @returns Serialized query string containing filters (including groupBy entries) and time range
  *
  * @example
- * // URL: /alerting/alerts?var-filters=alertname|=|test&var-groupBy=severity&from=now-1h&to=now
+ * // URL: /alerting/alerts?var-filters=alertname|=|test&var-filters=grafana_folder|groupBy&from=now-1h&to=now
  * serializeCurrentSearchState()
- * // Returns: "var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now"
+ * // Returns: "var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy&from=now-1h&to=now"
  */
 export function serializeCurrentSearchState(): string {
   const currentParams = locationService.getSearch();
@@ -42,35 +110,27 @@ export function serializeCurrentSearchState(): string {
  * Serializes triage state (filters, groupBy, time range) into a query string.
  * This is used by the component to serialize the current Scene state for saved searches.
  *
- * @param filters - Array of AdHocVariableFilter objects
- * @param groupBy - Array of groupBy keys (or single string)
+ * @param filters - Array of AdHocVariableFilter objects (both regular filters and groupBy entries)
  * @param timeRange - Raw time range with from/to as strings, Date, or DateTime objects
  * @returns Serialized query string
  */
-export function serializeTriageState(
-  filters: AdHocVariableFilter[],
-  groupBy: string | string[],
-  timeRange: RawTimeRange
-): string {
+export function serializeTriageState(filters: AdHocVariableFilter[], timeRange: RawTimeRange): string {
   const params = new URLSearchParams();
 
-  // Add filters using toUrl (properly escapes pipes in values with __gfp__)
-  toUrl(filters).forEach((filterStr) => {
-    params.append(URL_PARAMS.filters, filterStr);
-  });
-
-  // Add groupBy
-  const groupByArray = Array.isArray(groupBy) ? groupBy : [groupBy].filter(Boolean);
-  groupByArray.forEach((key) => {
-    if (key) {
-      params.append(URL_PARAMS.groupBy, key);
+  filters.forEach((f) => {
+    if (f.operator === GROUP_BY_OPERATOR) {
+      // GroupBy entry: serialize as key|groupBy (2-part, no value)
+      params.append(URL_PARAMS.filters, `${f.key}|${GROUP_BY_OPERATOR}`);
+    } else {
+      // Regular filter: use standard toUrl serialization
+      toUrl([f]).forEach((filterStr) => {
+        params.append(URL_PARAMS.filters, filterStr);
+      });
     }
   });
 
-  // Add time range
   const fromValue = typeof timeRange.from === 'string' ? timeRange.from : timeRange.from.toISOString();
   const toValue = typeof timeRange.to === 'string' ? timeRange.to : timeRange.to.toISOString();
-
   params.set(URL_PARAMS.timeFrom, fromValue);
   params.set(URL_PARAMS.timeTo, toValue);
 
@@ -79,11 +139,14 @@ export function serializeTriageState(
 
 /**
  * Applies a saved search query to Scene variables.
- * Updates filters, groupBy, and time range by directly calling variable methods.
+ * Updates filters (including groupBy entries) and time range by directly calling variable methods.
  *
  * This uses direct state updates instead of URL navigation because Scenes' URL sync
  * has a limitation: updateFromUrl() only receives CHANGED values. When a parameter
  * is absent from the saved search (e.g., to clear groupBy), it won't trigger an update.
+ *
+ * Backward compatibility: also reads legacy `var-groupBy` params and converts them to
+ * groupBy filter entries, so searches saved before the unified variable migration still work.
  *
  * @param scene - The scene object containing the variables
  * @param query - The saved search query string
@@ -91,16 +154,10 @@ export function serializeTriageState(
 export function applyTriageSavedSearchState(scene: SceneObject, query: string): void {
   const params = new URLSearchParams(query);
 
-  // Update filters
+  // Update filters (includes groupBy entries encoded as key|groupBy)
   const filtersVar = sceneGraph.lookupVariable(VARIABLES.filters, scene);
   if (filtersVar instanceof AdHocFiltersVariable) {
     filtersVar.updateFilters(extractFilterObjects(query));
-  }
-
-  // Update groupBy (explicitly set to empty array if absent)
-  const groupByVar = sceneGraph.lookupVariable(VARIABLES.groupBy, scene);
-  if (groupByVar instanceof GroupByVariable) {
-    groupByVar.changeValueTo(params.getAll(URL_PARAMS.groupBy).filter(Boolean));
   }
 
   // Update time range
@@ -116,24 +173,44 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
 }
 
 /**
- * Extracts and parses filter values from a saved search query into filter objects.
- * Uses the standard toFilters utility which properly handles __gfp__ escaped pipes.
- * Converts to AdHocVariableFilter format with values array for Scenes compatibility.
+ * Parses a saved search query string into AdHocVariableFilter objects.
+ * Handles both regular 3-part filter entries (`key|operator|value`) and 2-part groupBy
+ * entries (`key|groupBy`) from the unified var-filters param.
+ *
+ * Also migrates legacy `var-groupBy` entries (saved before the unified variable migration)
+ * by converting them to groupBy filter objects.
  *
  * @param query - The saved search query string
- * @returns Array of filter objects compatible with AdHocFiltersVariable
+ * @returns Array of filter objects compatible with AdHocFiltersVariable.updateFilters()
  */
 export function extractFilterObjects(query: string): AdHocVariableFilter[] {
   const params = new URLSearchParams(query);
-  const filterValues = params.getAll(URL_PARAMS.filters);
-  const filters = toFilters(filterValues);
 
-  // Add values array for Scenes URL sync compatibility
-  // Scenes expects both value (for single operators) and values (for multi-value operators)
-  return filters.map((filter) => ({
-    ...filter,
-    values: [filter.value],
+  const filterEntries: AdHocVariableFilter[] = params
+    .getAll(URL_PARAMS.filters)
+    .map(parseFilterEntry)
+    .filter((f): f is AdHocVariableFilter => f !== null);
+
+  // Backward compat: migrate legacy var-groupBy entries (written before the unified variable).
+  const legacyGroupByKeys = params.getAll('var-groupBy').filter(Boolean);
+  const legacyGroupByFilters: AdHocVariableFilter[] = legacyGroupByKeys.map((key) => ({
+    key,
+    operator: GROUP_BY_OPERATOR,
+    value: '',
   }));
+
+  return [...filterEntries, ...legacyGroupByFilters];
+}
+
+function parseFilterEntry(raw: string): AdHocVariableFilter | null {
+  if (!raw || raw.split('|').length < 2) {
+    return null;
+  }
+
+  // Normalize 2-part entries (e.g. key|groupBy) to 3-part (key|groupBy|)
+  // so toFilter can parse all formats uniformly.
+  const normalized = raw.split('|').length === 2 ? raw + '|' : raw;
+  return toFilter(normalized);
 }
 
 /**
@@ -165,7 +242,7 @@ export function generateTriageUrl(query: string, basePath = '/alerting/alerts'):
  *
  * @example
  * // Apply a saved search
- * applySavedSearch("var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now");
+ * applySavedSearch("var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy&from=now-1h&to=now");
  * // URL is updated and Scene variables are synced
  */
 export function applySavedSearch(query: string): void {

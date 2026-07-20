@@ -1,9 +1,12 @@
-import { useCallback } from 'react';
+import { Suspense, useCallback } from 'react';
 
-import { DataTransformerConfig, DataFrame } from '@grafana/data';
+import { DataTransformerID, type DataTransformerConfig, type DataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
+import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
 
-import { Transformation } from './types';
+import { NoOptionsIndicator } from './NoOptionsIndicator';
+import { type Transformation } from './types';
 
 interface TransformationEditorProps {
   transformation: Transformation;
@@ -22,15 +25,26 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
     [transformConfig, onUpdate]
   );
 
+  const showNoOptions =
+    transformConfig.id === DataTransformerID.seriesToRows ||
+    (transformConfig.id === DataTransformerID.merge && inputData.length > 1);
+
   const Editor = registryItem!.editor!;
 
   return (
     <div data-testid={selectors.components.TransformTab.transformationEditor(registryItem?.name || '')}>
-      <Editor
-        input={inputData}
-        onChange={handleChange}
-        options={{ ...registryItem!.transformation.defaultOptions, ...transformConfig.options }}
-      />
+      <ErrorBoundaryAlert>
+        <Suspense
+          fallback={<LoadingPlaceholder text={t('transformers.transformation-editor.loading', 'Loading editor...')} />}
+        >
+          <Editor
+            input={inputData}
+            onChange={handleChange}
+            options={{ ...registryItem!.defaultOptions, ...transformConfig.options }}
+          />
+        </Suspense>
+      </ErrorBoundaryAlert>
+      {showNoOptions && <NoOptionsIndicator name={registryItem?.name ?? ''} />}
     </div>
   );
 }

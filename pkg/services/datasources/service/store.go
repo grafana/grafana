@@ -78,6 +78,7 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		UID:   query.UID,
 		Name:  query.Name, // nolint:staticcheck
 		ID:    query.ID,   // nolint:staticcheck
+		Type:  query.Type,
 	}
 	has, err := sess.Get(datasource)
 
@@ -221,6 +222,7 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 				ID:        ds.ID,
 				UID:       ds.UID,
 				OrgID:     ds.OrgID,
+				Type:      ds.Type,
 			})
 		}
 

@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
-import { RowExpanderNGProps } from '../types';
+import { type RowExpanderNGProps } from '../types';
 
 export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGProps) {
   const styles = useStyles2(getStyles);
@@ -36,11 +35,13 @@ export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGPr
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2) => ({
+const styles = {
   expanderCell: css({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     cursor: 'pointer',
   }),
-});
+};
+
+const getStyles = () => styles;

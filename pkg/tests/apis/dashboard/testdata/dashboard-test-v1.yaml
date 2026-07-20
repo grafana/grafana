@@ -1,4 +1,4 @@
-apiVersion: dashboard.grafana.app/v1beta1
+apiVersion: dashboard.grafana.app/v1
 kind: Dashboard
 metadata:
   name: test-v1
@@ -7,3 +7,6 @@ spec:
   uid: test-v1 # will be removed by mutation hook
   version: 1234567 # will be removed by mutation hook
   schemaVersion: 42
+  tags:
+    - bbb
+    - ccc

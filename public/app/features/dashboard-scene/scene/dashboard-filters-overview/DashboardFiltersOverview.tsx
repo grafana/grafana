@@ -3,12 +3,13 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
+import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
+import { reportFiltersOverviewInteraction } from './interactions';
 import { useFiltersOverviewState } from './useFiltersOverviewState';
 import { MULTI_OPERATOR_VALUES } from './utils';
 
@@ -33,11 +34,12 @@ export const DashboardFiltersOverview = ({
   const styles = useStyles2(getStyles);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters } = useFiltersOverviewState({
-    adhocFilters,
-    groupByVariable,
-    searchQuery,
-  });
+  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters, hasGroupBy } =
+    useFiltersOverviewState({
+      adhocFilters,
+      groupByVariable,
+      searchQuery,
+    });
 
   const virtualizer = useVirtualizer({
     count: listItems.length,
@@ -49,7 +51,7 @@ export const DashboardFiltersOverview = ({
   });
 
   if (!hasAdhocFilters) {
-    return <div>{t('dashboard.filters-overview.missing-adhoc', 'No ad hoc filters available')}</div>;
+    return <div>{t('dashboard.filters-overview.missing-adhoc', 'No filters available')}</div>;
   }
 
   if (loading) {
@@ -124,12 +126,17 @@ export const DashboardFiltersOverview = ({
                   multiValues={state.multiValuesByKey[keyValue] ?? []}
                   isGroupBy={state.isGrouped[keyValue] ?? false}
                   isOrigin={state.isOriginByKey[keyValue] ?? false}
-                  hasGroupByVariable={Boolean(groupByVariable)}
+                  isRestorable={
+                    (state.isOriginByKey[keyValue] ?? false) &&
+                    (state.singleValuesByKey[keyValue] ?? '') !== (state.defaultValuesByKey[keyValue] ?? '')
+                  }
+                  hasGroupByVariable={hasGroupBy}
                   operatorOptions={operatorConfig.options}
                   onOperatorChange={actions.setOperator}
                   onSingleValueChange={actions.setSingleValue}
                   onMultiValuesChange={actions.setMultiValues}
                   onGroupByToggle={actions.toggleGroupBy}
+                  onRestore={actions.restoreDefault}
                   getValueOptions={actions.getValueOptionsForKey}
                 />
               </div>
@@ -139,12 +146,19 @@ export const DashboardFiltersOverview = ({
       </div>
 
       <Footer
-        onApply={actions.applyChanges}
+        onApply={() => {
+          const counts = actions.applyChanges();
+          reportFiltersOverviewInteraction('applied', { action: 'apply', ...counts });
+        }}
         onApplyAndClose={() => {
-          actions.applyChanges();
+          const counts = actions.applyChanges();
+          reportFiltersOverviewInteraction('applied', { action: 'apply_and_close', ...counts });
           onClose();
         }}
-        onClose={onClose}
+        onClose={() => {
+          reportFiltersOverviewInteraction('closed');
+          onClose();
+        }}
       />
     </div>
   );
@@ -183,6 +197,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     minHeight: 0,
+    overflow: 'hidden',
   }),
   skeletonContainer: css({
     display: 'flex',
@@ -201,6 +216,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowY: 'auto',
   }),
   footer: css({
+    flexShrink: 0,
     marginTop: theme.spacing(2),
     paddingTop: theme.spacing(1.5),
     borderTop: `1px solid ${theme.colors.border.weak}`,

@@ -32,7 +32,7 @@ func (n *NoopREST) NewList() runtime.Object {
 }
 
 func (n *NoopREST) NamespaceScoped() bool {
-	return true
+	return !n.ResourceInfo.IsClusterScoped()
 }
 
 func (n *NoopREST) GetSingularName() string {
@@ -59,10 +59,6 @@ func (n *NoopREST) Update(ctx context.Context, name string, objInfo rest.Updated
 
 func (n *NoopREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	return nil, false, errNoopStorage
-}
-
-func (n *NoopREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errNoopStorage
 }
 
 func (n *NoopREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {

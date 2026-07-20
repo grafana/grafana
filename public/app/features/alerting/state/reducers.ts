@@ -1,13 +1,13 @@
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { type PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { dateTime } from '@grafana/data';
 import {
-  AlertRule,
-  AlertRuleDTO,
-  AlertRulesState,
-  NotificationChannelOption,
-  NotificationChannelState,
-  NotifierDTO,
+  type AlertRule,
+  type AlertRuleDTO,
+  type AlertRulesState,
+  type NotificationChannelOption,
+  type NotificationChannelState,
+  type NotifierDTO,
 } from 'app/features/alerting/unified/types/alerting';
 
 import unifiedAlertingReducer from '../unified/state/reducers';
@@ -114,8 +114,7 @@ const notificationChannelSlice = createSlice({
 
 export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
 
-export const { setNotificationChannels, notificationChannelLoaded, resetSecureField } =
-  notificationChannelSlice.actions;
+export const { notificationChannelLoaded } = notificationChannelSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;

@@ -1,4 +1,4 @@
-import { Field, FieldType, PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
+import { type Field, FieldType, PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { TrendPanel } from './TrendPanel';
-import { FieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig, type Options } from './panelcfg.gen';
 import { prepSeries } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
@@ -29,7 +29,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .setSuggestionsSupplier((ds) => {
     if (

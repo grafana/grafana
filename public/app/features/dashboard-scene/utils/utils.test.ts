@@ -1,12 +1,16 @@
-import { config } from '@grafana/runtime';
-import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+import { VizPanel, SceneGridLayout } from '@grafana/scenes';
+import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 
-import {
-  isDashboardSceneEnabled,
-  isPublicDashboardsSceneEnabled,
-  isValidLibraryPanelRef,
-  hasLibraryPanelsInV1Dashboard,
-} from './utils';
+import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+
+import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard, getLayoutForObject } from './utils';
 
 describe('utils', () => {
   describe('isValidLibraryPanelRef', () => {
@@ -376,39 +380,99 @@ describe('utils', () => {
     });
   });
 
-  describe('isDashboardSceneEnabled', () => {
-    it.each([
-      { dashboardScene: true, dashboardNewLayouts: false, expected: true },
-      { dashboardScene: false, dashboardNewLayouts: true, expected: true },
-      { dashboardScene: true, dashboardNewLayouts: true, expected: true },
-      { dashboardScene: false, dashboardNewLayouts: false, expected: false },
-    ])(
-      'should return $expected when dashboardScene=$dashboardScene and dashboardNewLayouts=$dashboardNewLayouts',
-      ({ dashboardScene, dashboardNewLayouts, expected }) => {
-        config.featureToggles = {
-          dashboardScene,
-          dashboardNewLayouts,
-        };
-        expect(isDashboardSceneEnabled()).toBe(expected);
-      }
-    );
-  });
+  describe('getLayoutForObject', () => {
+    it('returns the DefaultGridLayoutManager when given the dashboard', () => {
+      const { grid: defaultGrid } = getDefaultGrid();
+      const dashboard = getDashboardWithGrid(defaultGrid);
 
-  describe('isPublicDashboardsSceneEnabled', () => {
-    it.each([
-      { publicDashboardsScene: true, dashboardNewLayouts: false, expected: true },
-      { publicDashboardsScene: false, dashboardNewLayouts: true, expected: true },
-      { publicDashboardsScene: true, dashboardNewLayouts: true, expected: true },
-      { publicDashboardsScene: false, dashboardNewLayouts: false, expected: false },
-    ])(
-      'should return $expected when publicDashboardsScene=$publicDashboardsScene and dashboardNewLayouts=$dashboardNewLayouts',
-      ({ publicDashboardsScene, dashboardNewLayouts, expected }) => {
-        config.featureToggles = {
-          publicDashboardsScene,
-          dashboardNewLayouts,
-        };
-        expect(isPublicDashboardsSceneEnabled()).toBe(expected);
-      }
-    );
+      const layout = getLayoutForObject(dashboard);
+
+      expect(layout).toBe(defaultGrid);
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('returns the AutoGridLayoutManager when given the dashboard', () => {
+      const { grid: autoGrid } = getAutoGrid();
+      const dashboard = getDashboardWithGrid(autoGrid);
+
+      const layout = getLayoutForObject(dashboard);
+
+      expect(layout).toBe(autoGrid);
+      expect(layout).toBeInstanceOf(AutoGridLayoutManager);
+    });
+
+    it('when passed a RowItem, returns its layout', () => {
+      const { grid } = getDefaultGrid();
+      const row = new RowItem({ layout: grid });
+
+      const layout = getLayoutForObject(row);
+
+      expect(layout).toBe(grid);
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('when passed a TabItem, returns its layout', () => {
+      const { grid } = getDefaultGrid();
+      const tab = new TabItem({ layout: grid });
+
+      const layout = getLayoutForObject(tab);
+
+      expect(layout).toBe(grid);
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('when passed a DefaultGridLayoutManager, returns the DefaultGridManager', () => {
+      const { grid: defaultGrid } = getDefaultGrid();
+      const layout = getLayoutForObject(defaultGrid);
+
+      expect(layout).toBe(defaultGrid);
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('when passed an AutoGridLayoutManager, returns the AutoGridManager', () => {
+      const { grid: autoGrid } = getAutoGrid();
+      const layout = getLayoutForObject(autoGrid);
+
+      expect(layout).toBe(autoGrid);
+      expect(layout).toBeInstanceOf(AutoGridLayoutManager);
+    });
+
+    it('whe passed a panel in default grid, returns the default grid', () => {
+      const { grid: defaultGrid, panel } = getDefaultGrid();
+
+      const layout = getLayoutForObject(panel);
+
+      expect(layout).toBe(defaultGrid);
+    });
+
+    it('when passed a panel in auto grid, returns the auto grid', () => {
+      const { grid: autoGrid, panel } = getAutoGrid();
+
+      const layout = getLayoutForObject(panel);
+
+      expect(layout).toBe(autoGrid);
+      expect(layout).toBeInstanceOf(AutoGridLayoutManager);
+    });
   });
 });
+
+const getDashboardWithGrid = (grid: DefaultGridLayoutManager | AutoGridLayoutManager) =>
+  new DashboardScene({ title: 'Test', uid: 'dash-1', body: grid });
+
+const getDefaultGrid = () => {
+  const panel = new VizPanel({ title: 'P', key: 'p1', pluginId: 'table' });
+  const gridItem = new DashboardGridItem({ key: 'gi1', body: panel });
+  const grid = new SceneGridLayout({ children: [gridItem] });
+  return { grid: new DefaultGridLayoutManager({ grid }), panel };
+};
+
+const getAutoGrid = () => {
+  const panel = new VizPanel({ title: 'P', key: 'p1', pluginId: 'table' });
+  const autoGridItem = new AutoGridItem({ key: 'agi1', body: panel });
+  return {
+    grid: new AutoGridLayoutManager({
+      layout: new AutoGridLayout({ children: [autoGridItem] }),
+    }),
+    panel,
+  };
+};

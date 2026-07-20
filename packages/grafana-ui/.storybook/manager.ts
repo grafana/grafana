@@ -1,4 +1,4 @@
-import { addons } from '@storybook/manager-api';
+import { addons } from 'storybook/manager-api';
 import { getThemeById } from '@grafana/data';
 import { createStorybookTheme } from './storybookTheme';
 

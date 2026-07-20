@@ -1,27 +1,28 @@
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { PureComponent, ReactNode, type JSX, createRef } from 'react';
+import { PureComponent, type ReactNode, type JSX, createRef } from 'react';
 
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
-  PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
-  EventBusExtended,
-  HistoryItem,
+  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
+  type EventBusExtended,
+  type HistoryItem,
   LoadingState,
-  PanelData,
-  QueryResultMetaNotice,
-  TimeRange,
+  type PanelData,
+  type QueryResultMetaNotice,
+  type ScopedVars,
+  type TimeRange,
   getDataSourceRef,
   PluginExtensionPoints,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -30,14 +31,14 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
-  QueryOperationRowRenderProps,
+  type QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
+import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
 import { ExpressionDatasourceUID } from '../../expressions/types';
 
-import { QueryActionAssistantButton } from './QueryActionAssistantButton';
-import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
+import { type QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
@@ -56,6 +57,7 @@ export interface Props<TQuery extends DataQuery> {
   onRemoveQuery: (query: TQuery) => void;
   onChange: (query: TQuery) => void;
   onReplace?: (query: DataQuery) => void;
+  onReplaceQueries?: (queries: DataQuery[]) => void;
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideHideQueryButton?: boolean;
@@ -74,6 +76,10 @@ export interface Props<TQuery extends DataQuery> {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  /**
+   * Required to resolve section-scoped (row/tab) datasource variables
+   */
+  scopedVars?: ScopedVars;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -114,7 +120,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
    */
   getInterpolatedDataSourceUID(): string | undefined {
     if (this.props.query.datasource) {
-      const instanceSettings = this.dataSourceSrv.getInstanceSettings(this.props.query.datasource);
+      const instanceSettings = this.dataSourceSrv.getInstanceSettings(
+        this.props.query.datasource,
+        this.props.scopedVars
+      );
       return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
     }
 
@@ -310,6 +319,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.props.onReplace?.(query);
   };
 
+  onSelectQueriesFromLibrary = (queries: DataQuery[]) => {
+    this.props.onQueryReplacedFromLibrary?.();
+    this.props.onReplaceQueries?.(queries);
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
 
@@ -420,6 +434,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             app={app}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
+            onSelectQueries={this.onSelectQueriesFromLibrary}
             datasourceFilters={datasource?.name ? [datasource.name] : []}
             parentRef={this.editorRef}
           />
@@ -468,7 +483,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
     const { app, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, hideRefId } = this.props;
-    const { datasource } = this.state;
 
     return (
       <QueryEditorRowHeader
@@ -479,18 +493,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         hidden={query.hide}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
-        renderExtras={() => (
-          <>
-            <QueryActionAssistantButton
-              query={query}
-              queries={queries}
-              dataSourceInstanceSettings={this.props.dataSource}
-              datasourceApi={datasource}
-              app={app}
-            />
-            {renderHeaderExtras && renderHeaderExtras()}
-          </>
-        )}
+        renderExtras={() => <>{renderHeaderExtras && renderHeaderExtras()}</>}
         alerting={app === CoreApp.UnifiedAlerting}
         hideRefId={hideRefId}
       />
@@ -537,7 +540,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
       >
-        <div className={rowClasses} id={this.id}>
+        <div
+          className={rowClasses}
+          id={this.id}
+          data-testid={selectors.components.Plugins.queryEditorRow(datasource.type, query.refId)}
+          data-plugin-id={datasource.type}
+        >
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>
@@ -557,7 +565,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows} ref={this.editorRef}>
+      <div data-testid={selectors.components.QueryEditorRows.rows} ref={this.editorRef}>
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
             query={query}
@@ -625,18 +633,19 @@ function SavedQueryButtons(props: {
   app?: CoreApp;
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
+  onSelectQueries?: OnSelectQueriesType;
   datasourceFilters: string[];
   parentRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
-  return renderSavedQueryButtons(
-    props.query,
-    props.app,
-    props.onUpdateSuccess,
-    props.onSelectQuery,
-    undefined,
-    props.parentRef
-  );
+  return renderSavedQueryButtons({
+    query: props.query,
+    app: props.app,
+    onUpdateSuccess: props.onUpdateSuccess,
+    onSelectQuery: props.onSelectQuery,
+    parentRef: props.parentRef,
+    onSelectQueries: props.onSelectQueries,
+  });
 }
 
 // Will render editing header only if query library is enabled

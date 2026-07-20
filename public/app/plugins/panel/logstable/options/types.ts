@@ -1,4 +1,4 @@
-import { TableOptions } from '@grafana/schema';
+import { type TableOptions } from '@grafana/schema';
 
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
 

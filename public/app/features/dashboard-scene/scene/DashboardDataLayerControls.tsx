@@ -1,41 +1,76 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
+import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
+import { annotationEditActions } from '../settings/annotations/actions';
+
+import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet, isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 import { DataLayerControl } from './DataLayerControl';
 
-export function DashboardDataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
+type DashboardDataLayerControlsProps = {
+  dashboard: DashboardScene;
+  inMenu?: boolean;
+};
+
+export function DashboardDataLayerControls({ dashboard, inMenu }: DashboardDataLayerControlsProps) {
   // We render controls here (instead of the data layer set's default renderer) to
   // respect per-layer `placement` and edit-mode visibility rules.
   const dataLayerSet = sceneGraph.getData(dashboard);
   const state = dataLayerSet.useState();
-  const { isEditing } = dashboard.useState();
-  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
-  const styles = useStyles2(getStyles);
 
   const visibleLayers = useMemo(() => {
     if (!isDashboardDataLayerSetState(state) || !isDashboardDataLayerSet(dataLayerSet)) {
       return [];
     }
-    return state.annotationLayers.filter(
-      (layer) => layer.state.placement === undefined && (!layer.state.isHidden || isEditingNewLayouts)
-    );
-  }, [state, dataLayerSet, isEditingNewLayouts]);
+    return state.annotationLayers.filter((layer) => !layer.state.isHidden && layer.state.placement === undefined);
+  }, [state, dataLayerSet]);
 
   return useMemo(
     () =>
       visibleLayers.map((layer) => (
-        <div key={layer.state.key} className={styles.container}>
-          <DataLayerControl layer={layer} isEditingNewLayouts={isEditingNewLayouts} />
-        </div>
+        <DataLayerControlEditWrapper key={layer.state.key!} layer={layer} inMenu={inMenu} />
       )),
-    [visibleLayers, styles.container, isEditingNewLayouts]
+    [inMenu, visibleLayers]
+  );
+}
+
+export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDataLayerProvider; inMenu?: boolean }) {
+  const styles = useStyles2(getStyles);
+  const { isSelectable } = useElementSelection(layer.state.key);
+
+  const onClickEditLayer = useCallback(() => {
+    const dashboard = sceneGraph.getAncestor(layer, DashboardScene);
+    dashboard.state.editPane.selectObject(layer);
+  }, [layer]);
+
+  const onClickDeleteLayer = useCallback(() => {
+    const dataLayerSet = layer.parent;
+
+    if (dataLayerSet instanceof DashboardDataLayerSet && layer instanceof DashboardAnnotationsDataLayer) {
+      annotationEditActions.removeAnnotation({
+        source: dataLayerSet,
+        removedObject: layer,
+      });
+    }
+  }, [layer]);
+
+  const editActions = useMemo(
+    () => <ControlEditActions element={layer} onClickEdit={onClickEditLayer} onClickDelete={onClickDeleteLayer} />,
+    [layer, onClickEditLayer, onClickDeleteLayer]
+  );
+
+  return (
+    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+      <div className={styles.container}>
+        <DataLayerControl layer={layer} inMenu={inMenu} />
+      </div>
+    </ControlActionsPopover>
   );
 }
 

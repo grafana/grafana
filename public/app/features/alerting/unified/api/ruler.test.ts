@@ -1,11 +1,24 @@
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { of } from 'rxjs';
+
+import { getBackendSrv } from '@grafana/runtime';
+import { type RulerDataSourceConfig } from 'app/types/unified-alerting';
 
 import { mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType } from '../utils/datasource';
 
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
-import { rulerUrlBuilder } from './ruler';
+import {
+  RULER_CONFIG_API_PROBE_GROUP,
+  RULER_CONFIG_API_PROBE_NAMESPACE,
+  fetchTestRulerRulesGroup,
+  rulerUrlBuilder,
+} from './ruler';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: jest.fn(),
+}));
 
 const mimirConfig: RulerDataSourceConfig = {
   dataSourceName: 'Mimir-cloud',
@@ -18,6 +31,10 @@ beforeAll(() => {
     mockDataSource({ type: DataSourceType.Prometheus, name: 'Mimir-cloud', uid: 'mimir-1' }),
     mockDataSource({ type: DataSourceType.Prometheus, name: 'Cortex', uid: 'cortex-1' })
   );
+});
+
+beforeEach(() => {
+  jest.mocked(getBackendSrv).mockReset();
 });
 
 describe('rulerUrlBuilder', () => {
@@ -128,5 +145,24 @@ describe('rulerUrlBuilder', () => {
       expect(group.params).toHaveProperty('group');
       expect(group.params).not.toHaveProperty('namespace');
     });
+  });
+});
+
+describe('fetchTestRulerRulesGroup', () => {
+  it('passes the Mimir subtype parameter when probing a Mimir ruler', async () => {
+    const fetch = jest.fn().mockReturnValue(of({ data: null }));
+    jest.mocked(getBackendSrv).mockReturnValue({ fetch } as unknown as ReturnType<typeof getBackendSrv>);
+
+    await fetchTestRulerRulesGroup('Mimir-cloud', 'mimir');
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: `/api/ruler/mimir-1/api/v1/rules/${RULER_CONFIG_API_PROBE_NAMESPACE}/${RULER_CONFIG_API_PROBE_GROUP}`,
+        params: { subtype: 'mimir' },
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      })
+    );
   });
 });

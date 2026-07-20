@@ -10,7 +10,7 @@ jobs:
       contents: read
       id-token: write # Needed for Vault access
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
 
     steps:
       - name: Checkout

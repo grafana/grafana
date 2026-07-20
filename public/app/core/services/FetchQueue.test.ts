@@ -1,8 +1,8 @@
 import { take } from 'rxjs/operators';
 
-import { BackendSrvRequest } from '@grafana/runtime';
+import { type BackendSrvRequest } from '@grafana/runtime';
 
-import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
+import { FetchQueue, type FetchQueueUpdate, FetchStatus } from './FetchQueue';
 import { subscribeTester } from './mocks/subscribeTester';
 
 describe('FetchQueue', () => {

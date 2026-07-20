@@ -1,5 +1,7 @@
-import { Page, Response, Request } from '@playwright/test';
+import { type Page, type Response, type Request } from '@playwright/test';
 import * as prom from 'prom-client';
+
+type LabelKeys = 'type' | 'host_type' | 'plugin_name';
 
 /**
  * Records and tracks network request body sizes.
@@ -16,9 +18,9 @@ export class RequestsRecorder {
 
   #currentRequests: Set<Request> = new Set<Request>();
 
-  #inflatedSizeBytesCounter: prom.Counter<'type' | 'host_type'>;
-  #transferSizeBytesCounter: prom.Counter<'type' | 'host_type'>;
-  #requestCountCounter: prom.Counter<'type' | 'host_type'>;
+  #inflatedSizeBytesCounter: prom.Counter<LabelKeys>;
+  #transferSizeBytesCounter: prom.Counter<LabelKeys>;
+  #requestCountCounter: prom.Counter<LabelKeys>;
   #resolve?: () => void;
 
   constructor(page: Page) {
@@ -27,21 +29,21 @@ export class RequestsRecorder {
     this.#inflatedSizeBytesCounter = new prom.Counter({
       name: 'fe_perf_inflated_size_bytes',
       help: 'The size of the inflated response body in bytes',
-      labelNames: ['type', 'host_type'],
+      labelNames: ['type', 'host_type', 'plugin_name'],
       registers: [],
     });
 
     this.#transferSizeBytesCounter = new prom.Counter({
       name: 'fe_perf_transfer_size_bytes',
       help: 'The size of the transfered response body in bytes',
-      labelNames: ['type', 'host_type'],
+      labelNames: ['type', 'host_type', 'plugin_name'],
       registers: [],
     });
 
     this.#requestCountCounter = new prom.Counter({
       name: 'fe_perf_request_count',
       help: 'The number of requests made',
-      labelNames: ['type', 'host_type'],
+      labelNames: ['type', 'host_type', 'plugin_name'],
       registers: [],
     });
   }
@@ -91,6 +93,7 @@ export class RequestsRecorder {
 
     const url = response.url();
     const type = response.request().resourceType();
+    const plugin_name = getPluginName(url);
 
     // Record when a document response comes in so we can keep track of future requests
     if (type === 'document') {
@@ -107,35 +110,49 @@ export class RequestsRecorder {
     }
 
     this.#requestsInFlight += 1;
-    const hostType = getHostType(response.url(), this.#documentUrl ?? '');
+    const host_type = getHostType(response.url(), this.#documentUrl ?? '');
+
+    const labels: prom.LabelValues<LabelKeys> = { type, host_type };
 
     // Attempting to get the body of an empty response results in an error, so guess if the response will be empty or not
     const statusCode = response.status();
     const noBodyStatusCode = statusCode <= 199 || statusCode === 204 || statusCode === 205 || statusCode === 304;
 
-    if (!noBodyStatusCode) {
-      const body = await response.body();
-      this.#inflatedSizeBytesCounter.inc({ type, host_type: hostType }, body.length);
+    if (plugin_name) {
+      labels.plugin_name = plugin_name;
     }
 
-    const sizes = await response.request().sizes();
+    try {
+      if (!noBodyStatusCode) {
+        const body = await response.body();
+        this.#inflatedSizeBytesCounter.inc(labels, body.length);
+      }
 
-    this.#transferSizeBytesCounter.inc(
-      { type, host_type: hostType },
-      sizes.responseBodySize + sizes.responseHeadersSize
-    );
-    this.#requestCountCounter.inc({ type, host_type: hostType });
+      const sizes = await response.request().sizes();
 
-    this.#requestsInFlight -= 1;
+      this.#transferSizeBytesCounter.inc(labels, sizes.responseBodySize + sizes.responseHeadersSize);
+      this.#requestCountCounter.inc(labels);
+    } catch (e) {
+      console.warn('Failed to record metrics for response', response.url(), e);
+    } finally {
+      this.#requestsInFlight -= 1;
 
-    if (this.#requestsInFlight === 0 && this.#resolve) {
-      this.#resolve();
+      if (this.#requestsInFlight === 0 && this.#resolve) {
+        this.#resolve();
+      }
     }
   }
 
   getMetrics() {
     return [this.#inflatedSizeBytesCounter, this.#transferSizeBytesCounter, this.#requestCountCounter];
   }
+}
+
+const PLUGIN_NAME_REGEXP = /([\w-]+?-app)\//i;
+
+function getPluginName(url: string) {
+  const m = url.match(PLUGIN_NAME_REGEXP);
+  return m?.[1];
 }
 
 /**

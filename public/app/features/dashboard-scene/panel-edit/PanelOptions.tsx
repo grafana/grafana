@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import { PanelData } from '@grafana/data';
+import { type PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
@@ -13,7 +13,7 @@ import {
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
-import { getPanelFrameOptions } from './getPanelFrameOptions';
+import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
 
 interface Props {
   panel: VizPanel;
@@ -26,6 +26,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
+  const panelStylesOptions = useMemo(() => getPanelStylesOptions(panel), [panel]);
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();
@@ -39,8 +40,10 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
       instanceState: _pluginInstanceState,
+      currentOptions: options,
+      currentFieldConfig: fieldConfig,
+      reportInteractionUI: 'panel-edit',
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
@@ -67,7 +70,6 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
           panel.onFieldConfigChange(newConfig, true);
         }
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, searchQuery, panel, fieldConfig]
   );
 
@@ -77,7 +79,12 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
   if (isSearching) {
     mainBoxElements.push(
       renderSearchHits(
-        [panelFrameOptions, ...(libraryPanelOptions ? [libraryPanelOptions] : []), ...(visualizationOptions ?? [])],
+        [
+          panelFrameOptions,
+          ...(panelStylesOptions ? [panelStylesOptions] : []),
+          ...(libraryPanelOptions ? [libraryPanelOptions] : []),
+          ...(visualizationOptions ?? []),
+        ],
         justOverrides,
         searchQuery
       )
@@ -90,6 +97,9 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
           mainBoxElements.push(libraryPanelOptions.renderElement());
         }
         mainBoxElements.push(panelFrameOptions.renderElement());
+        if (panelStylesOptions) {
+          mainBoxElements.push(panelStylesOptions.renderElement());
+        }
 
         for (const item of visualizationOptions ?? []) {
           mainBoxElements.push(item.renderElement());

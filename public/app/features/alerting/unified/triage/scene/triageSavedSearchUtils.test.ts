@@ -1,9 +1,12 @@
+import { dateTime } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import {
   applySavedSearch,
+  buildTriageQueryStringFromParts,
   extractFilterObjects,
   generateTriageUrl,
+  mergeTriageSavedSearches,
   serializeCurrentSearchState,
 } from './triageSavedSearchUtils';
 
@@ -39,44 +42,106 @@ describe('triageSavedSearchUtils', () => {
     });
   });
 
+  describe('buildTriageQueryStringFromParts', () => {
+    it('builds query string with string time range', () => {
+      const result = buildTriageQueryStringFromParts({
+        filters: [{ key: 'alertstate', operator: '=', value: 'firing' }],
+        groupBy: ['grafana_folder'],
+        timeRange: { from: 'now-1h', to: 'now' },
+      });
+      const params = new URLSearchParams(result);
+      expect(params.get('from')).toBe('now-1h');
+      expect(params.get('to')).toBe('now');
+      // groupBy is encoded inside var-filters as key|groupBy
+      expect(params.getAll('var-filters')).toContain('grafana_folder|groupBy');
+      expect(params.has('var-groupBy')).toBe(false);
+    });
+
+    it('builds query string with DateTime time range', () => {
+      const fromDateTime = dateTime('2025-01-15T10:00:00Z');
+      const toDateTime = dateTime('2025-01-15T11:00:00Z');
+      const result = buildTriageQueryStringFromParts({
+        groupBy: [],
+        timeRange: { from: fromDateTime, to: toDateTime },
+      });
+      const params = new URLSearchParams(result);
+      expect(params.get('from')).toBe('2025-01-15T10:00:00.000Z');
+      expect(params.get('to')).toBe('2025-01-15T11:00:00.000Z');
+    });
+
+    it('handles empty filters and groupBy', () => {
+      const result = buildTriageQueryStringFromParts({
+        groupBy: [],
+        timeRange: { from: 'now-4h', to: 'now' },
+      });
+      const params = new URLSearchParams(result);
+      expect(params.get('from')).toBe('now-4h');
+      expect(params.get('to')).toBe('now');
+      expect(params.has('var-filters')).toBe(false);
+      expect(params.has('var-groupBy')).toBe(false);
+    });
+  });
+
   describe('extractFilterObjects', () => {
     it('should extract and parse filter objects from query', () => {
       const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=severity%7C!%3D%7Cwarning';
       const result = extractFilterObjects(query);
       expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test', values: ['test'] },
-        { key: 'severity', operator: '!=', value: 'warning', values: ['warning'] },
+        { key: 'alertname', operator: '=', value: 'test' },
+        { key: 'severity', operator: '!=', value: 'warning' },
+      ]);
+    });
+
+    it('should extract groupBy entries encoded as key|groupBy in var-filters', () => {
+      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy';
+      const result = extractFilterObjects(query);
+      expect(result).toEqual([
+        { key: 'alertname', operator: '=', value: 'test' },
+        { key: 'grafana_folder', operator: 'groupBy', value: '' },
       ]);
     });
 
     it('should return empty array if no filters', () => {
-      const query = 'var-groupBy=severity&from=now-1h&to=now';
+      const query = 'from=now-1h&to=now';
       const result = extractFilterObjects(query);
       expect(result).toEqual([]);
+    });
+
+    it('should migrate legacy var-groupBy entries to groupBy filter objects', () => {
+      const query = 'var-groupBy=severity&from=now-1h&to=now';
+      const result = extractFilterObjects(query);
+      expect(result).toEqual([{ key: 'severity', operator: 'groupBy', value: '' }]);
     });
 
     it('should handle filters with pipes in values (__gfp__ escaped)', () => {
       const query = 'var-filters=alertname%7C%3D~%7Ccritical__gfp__warning';
       const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=~', value: 'critical|warning', values: ['critical|warning'] },
-      ]);
+      expect(result).toEqual([{ key: 'alertname', operator: '=~', value: 'critical|warning' }]);
     });
 
     it('should filter out invalid filter strings', () => {
       const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=invalid&var-filters=severity%7C%3D%7Ccritical';
       const result = extractFilterObjects(query);
       expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test', values: ['test'] },
-        { key: 'severity', operator: '=', value: 'critical', values: ['critical'] },
+        { key: 'alertname', operator: '=', value: 'test' },
+        { key: 'severity', operator: '=', value: 'critical' },
+      ]);
+    });
+
+    it('should handle combined query with both legacy var-groupBy and var-filters', () => {
+      const query = 'var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity';
+      const result = extractFilterObjects(query);
+      expect(result).toEqual([
+        { key: 'alertname', operator: '=', value: 'test' },
+        { key: 'severity', operator: 'groupBy', value: '' },
       ]);
     });
   });
 
   describe('generateTriageUrl', () => {
     it('should generate URL with query', () => {
-      const query = 'var-filters=test&var-groupBy=severity';
-      expect(generateTriageUrl(query)).toBe('/alerting/alerts?var-filters=test&var-groupBy=severity');
+      const query = 'var-filters=test&var-filters=grafana_folder%7CgroupBy';
+      expect(generateTriageUrl(query)).toBe('/alerting/alerts?var-filters=test&var-filters=grafana_folder%7CgroupBy');
     });
 
     it('should return base path for empty query', () => {
@@ -90,15 +155,18 @@ describe('triageSavedSearchUtils', () => {
   });
 
   describe('serializeCurrentState', () => {
-    it('should serialize URL params', () => {
-      const params = new URLSearchParams('var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now');
+    it('should serialize var-filters and time range params', () => {
+      const params = new URLSearchParams(
+        'var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy&from=now-1h&to=now'
+      );
       mockGetSearch.mockReturnValueOnce(params);
 
       const result = serializeCurrentSearchState();
       expect(result).toContain('var-filters=');
-      expect(result).toContain('var-groupBy=severity');
       expect(result).toContain('from=now-1h');
       expect(result).toContain('to=now');
+      // groupBy is in var-filters, not var-groupBy
+      expect(result).not.toContain('var-groupBy');
     });
 
     it('should handle multiple var-filters', () => {
@@ -118,29 +186,77 @@ describe('triageSavedSearchUtils', () => {
       expect(result).toBe('');
     });
 
-    it('should ignore non-triage params', () => {
+    it('should ignore non-triage params and legacy var-groupBy', () => {
       const params = new URLSearchParams('unrelated=param&var-groupBy=severity');
       mockGetSearch.mockReturnValueOnce(params);
 
       const result = serializeCurrentSearchState();
-      expect(result).toBe('var-groupBy=severity');
+      // var-groupBy is no longer in TRIAGE_STATE_URL_PARAMS; groupBy now lives in var-filters
+      expect(result).toBe('');
       expect(result).not.toContain('unrelated');
+    });
+  });
+
+  describe('mergeTriageSavedSearches', () => {
+    const mkSearch = (id: string, name: string, isDefault = false) => ({
+      id,
+      name,
+      query: `query-${id}`,
+      isDefault,
+    });
+
+    it('returns predefined then user when no default', () => {
+      const predefined = [mkSearch('p1', 'Predefined 1'), mkSearch('p2', 'Predefined 2')];
+      const user = [mkSearch('u1', 'User 1')];
+      const result = mergeTriageSavedSearches(predefined, user, null);
+      expect(result.map((s) => s.id)).toEqual(['p1', 'p2', 'u1']);
+    });
+
+    it('puts default first when it is in predefined', () => {
+      const predefined = [
+        mkSearch('p1', 'Predefined 1'),
+        mkSearch('p2', 'Predefined 2', true),
+        mkSearch('p3', 'Predefined 3'),
+      ];
+      const user = [mkSearch('u1', 'User 1')];
+      const result = mergeTriageSavedSearches(predefined, user, 'p2');
+      expect(result.map((s) => s.id)).toEqual(['p2', 'p1', 'p3', 'u1']);
+    });
+
+    it('puts default first when it is in user saves', () => {
+      const predefined = [mkSearch('p1', 'Predefined 1')];
+      const user = [mkSearch('u1', 'User 1'), mkSearch('u2', 'User 2'), mkSearch('u3', 'User 3')];
+      const result = mergeTriageSavedSearches(predefined, user, 'u2');
+      expect(result.map((s) => s.id)).toEqual(['u2', 'p1', 'u1', 'u3']);
+    });
+
+    it('returns merged order when default is already first (index 0)', () => {
+      const predefined = [mkSearch('p1', 'Predefined 1', true), mkSearch('p2', 'Predefined 2')];
+      const user = [mkSearch('u1', 'User 1')];
+      const result = mergeTriageSavedSearches(predefined, user, 'p1');
+      expect(result.map((s) => s.id)).toEqual(['p1', 'p2', 'u1']);
+    });
+
+    it('handles empty predefined', () => {
+      const user = [mkSearch('u1', 'User 1'), mkSearch('u2', 'User 2')];
+      const result = mergeTriageSavedSearches([], user, 'u2');
+      expect(result.map((s) => s.id)).toEqual(['u2', 'u1']);
+    });
+
+    it('handles empty user', () => {
+      const predefined = [mkSearch('p1', 'Predefined 1'), mkSearch('p2', 'Predefined 2')];
+      const result = mergeTriageSavedSearches(predefined, [], 'p2');
+      expect(result.map((s) => s.id)).toEqual(['p2', 'p1']);
     });
   });
 
   describe('applySavedSearch', () => {
     it('should call locationService.push with saved search params', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now';
+      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy&from=now-1h&to=now';
 
       applySavedSearch(query);
 
       expect(locationService.push).toHaveBeenCalledWith(`/alerting/alerts?${query}`);
-    });
-
-    it('should call locationService.push with correct URL', () => {
-      applySavedSearch('var-groupBy=severity');
-
-      expect(locationService.push).toHaveBeenCalledWith('/alerting/alerts?var-groupBy=severity');
     });
 
     it('should handle empty query by navigating to base path', () => {

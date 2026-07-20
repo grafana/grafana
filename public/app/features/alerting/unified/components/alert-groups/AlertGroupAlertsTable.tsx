@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
-import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { AmAlertStateTag } from '../silences/AmAlertStateTag';
 

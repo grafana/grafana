@@ -42,6 +42,10 @@ type SyncWorker struct {
 	tracer tracing.Tracer
 
 	maxSyncWorkers int
+
+	// maxFileSize caps the size in bytes of files read from the repository
+	// during sync. <=0 disables the check.
+	maxFileSize int64
 }
 
 func NewSyncWorker(
@@ -52,6 +56,7 @@ func NewSyncWorker(
 	metrics jobs.JobMetrics,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
+	maxFileSize int64,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -61,6 +66,7 @@ func NewSyncWorker(
 		metrics:             metrics,
 		tracer:              tracer,
 		maxSyncWorkers:      maxSyncWorkers,
+		maxFileSize:         maxFileSize,
 	}
 }
 
@@ -70,7 +76,8 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 
 func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx).With("options", job.Spec.Pull)
+	ctx = logging.Context(ctx, logger)
 	ctx, span := r.tracer.Start(ctx, "provisioning.sync.process",
 		trace.WithAttributes(
 			attribute.String("job.name", job.GetName()),
@@ -78,6 +85,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 			attribute.String("job.action", string(job.Spec.Action)),
 			attribute.String("repository.name", cfg.Name),
 			attribute.String("repository.namespace", cfg.Namespace),
+			attribute.Bool("sync.incremental", job.Spec.Pull != nil && job.Spec.Pull.Incremental),
 		),
 	)
 	defer span.End()
@@ -98,6 +106,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		err := fmt.Errorf("sync job submitted for repository that does not support read-write")
 		return tracing.Error(span, err)
 	}
+	if r.maxFileSize > 0 {
+		if m, ok := rw.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(r.maxFileSize)
+		}
+	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
 	// Preserve last ref
@@ -107,6 +120,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	// Ensure the sync state is set to 'working' if not already set or still pending.
 	// FIXME: This should not be needed as the progress recorder should have set it to 'working' by now.
 	syncStatus.State = provisioning.JobStateWorking
+
+	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
+	quotaTracker := quotas.NewInMemoryQuotaTracker(usage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository)
 
 	// Update sync status at start using granular JSON patch operations
 	// Only patch fields that are actually being set to avoid overwriting with zero values
@@ -139,7 +155,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	statusSpan.End()
 
 	setupCtx, setupSpan := r.tracer.Start(ctx, "provisioning.sync.setup_clients")
-	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw)
+	beforeCreateOptions := resources.WithFolderManagerOptions(resources.WithBeforeCreate(func(ctx context.Context, folder resources.Folder) error {
+		if !quotaTracker.TryAcquire() {
+			return quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded while creating folder %s", folder.Path))
+		}
+		return nil
+	}))
+	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw, beforeCreateOptions)
 	if err != nil {
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
@@ -160,7 +182,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	syncCtx, syncSpan := r.tracer.Start(ctx, "provisioning.sync.execute")
 	progress.SetMessage(ctx, "execute sync job")
 	progress.StrictMaxErrors(20) // make it stop after 20 errors
-	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress)
+	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress, quotaTracker)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
 	resultReasons := progress.ResultReasons()
@@ -181,7 +203,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		syncStatus.LastRef = currentRef
 	} else {
 		if isQuotaWarning {
-			logger.Info("repository is over quota, preserving lastRef", "repository", cfg.Name)
+			logger.Info("repository is over quota, preserving lastRef")
 		}
 		syncStatus.LastRef = lastRef
 	}

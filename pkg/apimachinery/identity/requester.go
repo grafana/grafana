@@ -61,6 +61,10 @@ type Requester interface {
 	// Retrieve the teams from the team service instead of using this method.
 	GetTeams() []int64
 
+	// GetExternalGroups returns the groups asserted by the external IdP
+	// (SAML/OIDC/LDAP). Distinct from GetGroups, which carries team UIDs.
+	GetExternalGroups() []string
+
 	// DEPRECATED: GetOrgName returns the name of the active organization.
 	// Retrieve the organization name from the organization service instead of using this method.
 	GetOrgName() string
@@ -74,6 +78,8 @@ type Requester interface {
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface
 	IsNil() bool
+	// GetAccessToken returns the access token that went into authenticating this identity. This will be empty for legacy auth mechanisms and in-process service identities.
+	GetAccessToken() string
 	// GetIDToken returns a signed token representing the identity that can be forwarded to plugins and external services.
 	GetIDToken() string
 

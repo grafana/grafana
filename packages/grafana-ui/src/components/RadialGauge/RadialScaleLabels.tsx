@@ -1,12 +1,12 @@
-import { memo } from 'react';
+import { memo, useId } from 'react';
 
-import { FieldDisplay, GrafanaTheme2, Threshold, ThresholdsMode } from '@grafana/data';
+import { type FieldDisplay, type GrafanaTheme2, type Threshold, ThresholdsMode } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { measureText } from '../../utils/measureText';
 
-import { RadialGaugeDimensions } from './types';
-import { getFieldConfigMinMax, toCartesian } from './utils';
+import { type RadialGaugeDimensions } from './types';
+import { getFieldConfigMinMax, drawRadialArcPath, getFieldDisplayProcessor } from './utils';
 
 interface RadialScaleLabelsProps {
   fieldDisplay: FieldDisplay;
@@ -15,15 +15,13 @@ interface RadialScaleLabelsProps {
   thresholdsMode: ThresholdsMode;
   dimensions: RadialGaugeDimensions;
   startAngle: number;
-  endAngle: number;
   angleRange: number;
   neutral?: number;
 }
 
 interface RadialScaleLabel {
-  value: number;
-  labelValue?: string;
-  pos: { x: number; y: number; transform: string };
+  labelValue: string;
+  startOffset: number;
   label: string;
 }
 
@@ -41,12 +39,14 @@ export const RadialScaleLabels = memo(
     theme,
     dimensions,
     startAngle,
-    endAngle,
     angleRange,
     neutral: rawNeutral,
   }: RadialScaleLabelsProps) => {
-    const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius } = dimensions;
+    const pathId = useId();
+
+    const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius, barWidth } = dimensions;
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    const displayProcessor = getFieldDisplayProcessor(fieldDisplay);
     const thresholds = rawThresholds.filter(
       (threshold) =>
         resolvedThresholdValue(threshold.value, thresholdsMode, min, max) >= min &&
@@ -66,73 +66,86 @@ export const RadialScaleLabels = memo(
     const fontSize = scaleLabelsFontSize;
     const textLineHeight = scaleLabelsFontSize * LINE_HEIGHT_FACTOR;
     const radius = scaleLabelsRadius - textLineHeight;
+    const labelsPath = drawRadialArcPath(startAngle, angleRange, radius, centerX, centerY);
+    const pathLength = (angleRange / 360) * 2 * Math.PI * radius;
+
+    const isFullCircle = angleRange >= 360;
 
     const minLabelValue = allValues.reduce((min, value) => Math.min(value, min), allValues[0]);
     const maxLabelValue = allValues.reduce((max, value) => Math.max(value, max), allValues[0]);
 
-    function getTextPosition(text: string, value: number) {
+    function getStartOffset(text: string, value: number): number {
       const isLast = value === maxLabelValue;
       const isFirst = value === minLabelValue;
 
-      let valueDeg = ((value - min) / (max - min)) * angleRange;
-      let finalAngle = startAngle + valueDeg;
+      const fraction = (value - min) / (max - min);
+      let offset = fraction * pathLength;
 
-      // Now adjust the final angle based on the label text width and the labels position on the arc
-      let measure = measureText(text, fontSize, theme.typography.fontWeightMedium);
-      let textWidthAngle = (measure.width / (2 * Math.PI * radius)) * angleRange;
+      const measure = measureText(text, fontSize, theme.typography.fontWeightMedium);
 
-      // the centering is different for gauge or circle shapes for some reason
-      finalAngle -= endAngle < 180 ? textWidthAngle : textWidthAngle / 2;
-
-      // For circle gauges we need to shift the first label more
-      if (isFirst) {
-        finalAngle += textWidthAngle;
+      // labels at the beginning and end of the path need to be adjusted to avoid clipping
+      if (isFullCircle) {
+        // For full circle: nudge labels near the top at the end of the circle
+        // counter-clockwise along the path to create extra space at 12 o'clock
+        const paddingFactor = 0.65; // needs to be >= 0.5 so that center-to-center gap (2x factor x width) >= label width
+        const padding = measure.width * paddingFactor;
+        if (isFirst) {
+          offset += padding;
+        } else if (isLast) {
+          offset -= padding;
+        }
+      } else {
+        const halfWidth = measure.width * 0.5;
+        // for non-circle, avoid clipping the bottom:
+        // keep first label's start at least halfWidth from path start
+        if (isFirst && offset - halfWidth < 0) {
+          offset += halfWidth;
+        }
+        // Keep last label's end at least halfWidth before path end
+        if (isLast && offset + halfWidth > pathLength) {
+          offset -= halfWidth;
+        }
       }
 
-      // Remove a bit of the angle for the last label to avoid clipping.
-      // for circles, we shift it over the entire width of the label.
-      // for arcs, we shift by half the label width.
-      if (isLast) {
-        finalAngle -= endAngle === 360 ? textWidthAngle : textWidthAngle / 2;
-      }
-
-      const position = toCartesian(centerX, centerY, radius, finalAngle);
-
-      return { ...position, transform: `rotate(${finalAngle}, ${position.x}, ${position.y})` };
+      return offset;
     }
 
     const labels: RadialScaleLabel[] = thresholds.map((threshold) => {
       const resolvedValue = resolvedThresholdValue(threshold.value, thresholdsMode, min, max);
-      const labelText = thresholdsMode === ThresholdsMode.Percentage ? `${threshold.value}%` : String(threshold.value);
+      const labelText =
+        thresholdsMode === ThresholdsMode.Percentage ? `${threshold.value}%` : displayProcessor(resolvedValue).text;
       return {
-        value: resolvedValue,
         labelValue: labelText,
-        pos: getTextPosition(labelText, resolvedValue),
+        startOffset: getStartOffset(labelText, resolvedValue),
         label: t(`gauge.threshold`, 'Threshold {{value}}', { value: labelText }),
       };
     });
 
     if (neutral !== undefined) {
+      const labelText = displayProcessor(neutral).text;
       labels.push({
-        value: neutral,
-        pos: getTextPosition(String(neutral), neutral),
-        label: t(`gauge.neutral`, 'Neutral {{value}}', { value: neutral }),
+        labelValue: labelText,
+        startOffset: getStartOffset(labelText, neutral),
+        label: t(`gauge.neutral`, 'Neutral {{value}}', { value: labelText }),
       });
     }
 
     return (
       <g>
+        <defs>
+          <path id={pathId} d={labelsPath} fill="none" strokeWidth={barWidth} />
+        </defs>
         {labels.map((label) => (
           <text
             key={label.label}
-            x={label.pos.x}
-            y={label.pos.y}
             fontSize={fontSize}
             fill={theme.colors.text.primary}
-            transform={label.pos.transform}
+            textAnchor="middle"
             aria-label={label.label}
           >
-            {label.labelValue ?? label.value}
+            <textPath href={`#${pathId}`} startOffset={label.startOffset}>
+              {label.labelValue}
+            </textPath>
           </text>
         ))}
       </g>

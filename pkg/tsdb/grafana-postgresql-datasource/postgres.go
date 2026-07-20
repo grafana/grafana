@@ -9,14 +9,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
@@ -56,8 +57,7 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	}
 
 	queryResultTransformer := postgresQueryResultTransformer{}
-	pgxConf.MaxConnLifetime = time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second
-	pgxConf.MaxConns = int32(config.DSInfo.JsonData.MaxOpenConns)
+	applyPoolConfig(pgxConf, config.DSInfo.JsonData)
 
 	p, err := pgxpool.NewWithConfig(ctx, pgxConf)
 	if err != nil {
@@ -78,7 +78,7 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 
 func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		cfg := backend.GrafanaConfigFromContext(ctx)
+		cfg := config.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := cfg.SQL()
 		if err != nil {
 			return nil, err
@@ -341,5 +341,16 @@ func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConv
 				},
 			},
 		},
+	}
+}
+
+// applyPoolConfig applies pool-related settings from JsonData to pgxConf.
+// MaxOpenConns <= 0 means "use driver default" — leave MaxConns unset so
+// pgxpool uses its own default (max(4, NumCPU)) instead of failing with
+// "MaxSize must be >= 1".
+func applyPoolConfig(pgxConf *pgxpool.Config, jsonData sqleng.JsonData) {
+	pgxConf.MaxConnLifetime = time.Duration(jsonData.ConnMaxLifetime) * time.Second
+	if jsonData.MaxOpenConns > 0 {
+		pgxConf.MaxConns = int32(jsonData.MaxOpenConns)
 	}
 }

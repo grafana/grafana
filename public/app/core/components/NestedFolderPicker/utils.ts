@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
-import { ManagerKind } from 'app/features/apiserver/types';
-import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type ManagerKind } from 'app/features/apiserver/types';
+import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 
 export const getRootFolderItem = (): DashboardsTreeItem => ({
   isOpen: true,

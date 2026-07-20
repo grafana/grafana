@@ -2,20 +2,20 @@ import { escape, isString } from 'lodash';
 
 import {
   deprecationWarning,
-  ScopedVars,
-  TimeRange,
-  AdHocVariableFilter,
-  AdHocVariableModel,
-  TypedVariableModel,
-  ScopedVar,
+  type ScopedVars,
+  type TimeRange,
+  type AdHocVariableFilter,
+  type AdHocVariableModel,
+  type TypedVariableModel,
+  type ScopedVar,
 } from '@grafana/data';
 import {
   getDataSourceSrv,
   setTemplateSrv,
-  TemplateSrv as BaseTemplateSrv,
-  VariableInterpolation,
+  type TemplateSrv as BaseTemplateSrv,
+  type VariableInterpolation,
 } from '@grafana/runtime';
-import { sceneGraph, VariableCustomFormatterFn, SceneObject } from '@grafana/scenes';
+import { sceneGraph, type VariableCustomFormatterFn, type SceneObject } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';

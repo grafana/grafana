@@ -1,16 +1,30 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  Box,
+  Card,
+  type CellProps,
+  Grid,
+  Icon,
+  InteractiveTable,
+  LinkButton,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
+import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
-import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
-import { useRepoMetadataStatus } from '../hooks/useRepoMetadataStatus';
+import { hasMissingFolderMetadata } from '../utils/folderMetadata';
+import { isQuotaReachedOrExceeded } from '../utils/quota';
+import { isGitHubBased } from '../utils/repositoryTypes';
+import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -28,12 +42,12 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const repoName = repo.metadata?.name ?? '';
-  const showFolderMetadataCheck = config.featureToggles.provisioningFolderMetadata;
-  const { status: folderMetadataStatus } = useRepoMetadataStatus(showFolderMetadataCheck ? repoName : '');
+  const showFolderMetadataCheck = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const status = repo.status;
+  const { conditions, quota } = status ?? {};
   const webhookURL = getWebhookURL(repo);
-  const { lgColumn, xxlColumn } = getColumnCount(Boolean(repo.status?.webhook));
+  const { lgColumn, xxlColumn } = getColumnCount(Boolean(status?.webhook));
 
   const resourceColumns = useMemo(
     () => [
@@ -41,7 +55,13 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'Resource',
         header: 'Resource Type',
         cell: ({ row: { original } }: StatCell<'resource'>) => {
-          return <span>{original.resource}</span>;
+          const info = getKindInfoByStat(original);
+          return (
+            <Stack direction="row" gap={1} alignItems="center">
+              <Icon name={info?.icon ?? 'file-alt'} />
+              <span>{info?.kind ?? original.resource}</span>
+            </Stack>
+          );
         },
         size: 'auto',
       },
@@ -53,13 +73,32 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         },
         size: 100,
       },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row: { original } }: StatCell) => {
+          const info = getKindInfoByStat(original);
+          // Unknown kinds have no destination, so no action.
+          if (!info) {
+            return null;
+          }
+          return (
+            <Stack justifyContent="flex-end">
+              <LinkButton href={getRepositoryRoute(info, repo)} size="sm" variant="secondary">
+                <Trans i18nKey="provisioning.repository-overview.view-resource">View</Trans>
+              </LinkButton>
+            </Stack>
+          );
+        },
+        size: 100,
+      },
     ],
-    []
+    [repo]
   );
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        {showFolderMetadataCheck && folderMetadataStatus === 'missing' && (
+        {showFolderMetadataCheck && hasMissingFolderMetadata(conditions) && (
           <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
@@ -69,33 +108,30 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
               <Card.Description>
-                {repo.status?.stats ? (
+                {status?.stats ? (
                   <InteractiveTable
                     columns={resourceColumns}
-                    data={repo.status.stats}
+                    data={status.stats}
                     getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
                   />
                 ) : null}
-                <Box paddingTop={2}>
-                  <FreeTierLimitNote limitType="resource" />
-                </Box>
+                {isQuotaReachedOrExceeded(conditions, 'ResourceQuota') && (
+                  <Box paddingTop={2}>
+                    <QuotaLimitNote maxResourcesPerRepository={quota?.maxResourcesPerRepository} />
+                  </Box>
+                )}
               </Card.Description>
-              <Card.Actions className={styles.actions}>
-                <LinkButton size="md" href={getFolderURL(repo)} icon="folder-open" variant="secondary">
-                  <Trans i18nKey="provisioning.repository-overview.view-folder">View Folder</Trans>
-                </LinkButton>
-              </Card.Actions>
             </Card>
           </div>
 
-          {repo.status?.health && (
+          {status?.health && (
             <div className={styles.cardContainer}>
               <RepositoryHealthCard repo={repo} />
             </div>
           )}
 
           {/* Webhook */}
-          {repo.status?.webhook && (
+          {status?.webhook && (
             <div className={styles.cardContainer}>
               <Card noMargin className={styles.card}>
                 <Card.Heading>
@@ -109,7 +145,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </Text>
                     </div>
                     <div className={styles.valueColumn}>
-                      <Text variant="body">{status?.webhook?.id ?? 'N/A'}</Text>
+                      <Text variant="body">
+                        {status?.webhook?.id ?? status?.webhook?.uuid?.replace(/[{}]/g, '') ?? 'N/A'}
+                      </Text>
                     </div>
                     <div className={styles.labelColumn}>
                       <Text color="secondary">
@@ -131,7 +169,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 </Card.Description>
                 {webhookURL && (
                   <Card.Actions className={styles.actions}>
-                    <LinkButton fill="outline" href={webhookURL} icon="external-link-alt">
+                    <LinkButton fill="outline" href={webhookURL} icon="external-link-alt" target="_blank">
                       <Trans i18nKey="provisioning.repository-overview.webhook-url">View Webhook</Trans>
                     </LinkButton>
                   </Card.Actions>
@@ -144,7 +182,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           <div
             className={cx(
               styles.pullStatusCard,
-              repo.status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
+              status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
             )}
           >
             <RepositoryPullStatusCard repo={repo} />
@@ -157,13 +195,6 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
       </Stack>
     </Box>
   );
-}
-
-function getFolderURL(repo: Repository) {
-  if (repo.spec?.sync.target === 'folder') {
-    return `/dashboards/f/${repo.metadata?.name}`;
-  }
-  return '/dashboards';
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -210,8 +241,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function getWebhookURL(repo: Repository) {
   const { status, spec } = repo;
-  if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
-    return `${spec.github.url}/settings/hooks/${status.webhook?.id}`;
+  const repoUrl = spec?.github?.url ?? spec?.githubEnterprise?.url ?? spec?.gitlab?.url;
+  if (isGitHubBased(spec?.type) && status?.webhook?.url && repoUrl) {
+    return textUtil.sanitizeUrl(`${repoUrl}/settings/hooks/${status.webhook?.id}`);
+  }
+  if (spec?.type === 'gitlab' && status?.webhook?.url && repoUrl) {
+    return textUtil.sanitizeUrl(`${repoUrl}/-/hooks/${status.webhook?.id}/edit`);
+  }
+  if (spec?.type === 'bitbucket' && status?.webhook?.uuid && spec.bitbucket?.url) {
+    return textUtil.sanitizeUrl(`${spec.bitbucket.url}/admin/webhooks/${encodeURIComponent(status.webhook.uuid)}/edit`);
   }
   return undefined;
 }

@@ -2,10 +2,10 @@ import { of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import {
-  DataSourceApi,
+  type DataSourceApi,
   getDefaultTimeRange,
   LoadingState,
-  QueryVariableModel,
+  type QueryVariableModel,
   VariableSupportType,
 } from '@grafana/data';
 
@@ -13,11 +13,11 @@ import { queryBuilder } from '../shared/testing/builders';
 import { getPreloadedState } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { initialTransactionState } from '../state/transactionReducer';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
-import { QueryRunner, QueryRunners } from './queryRunners';
+import { type UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
+import { type QueryRunner, type QueryRunners } from './queryRunners';
 import { updateVariableOptions } from './reducer';
 
 function expectOnResults(args: {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -123,7 +122,7 @@ func newMockStore() *mockZanzanaPermissionStore {
 
 type mockZanzanaPermissionStore struct {
 	mock.Mock
-	reconcilers.PermissionStore
+	PermissionStore
 }
 
 func (m *mockZanzanaPermissionStore) SetFolderParent(_ context.Context, _, _, _ string) error {

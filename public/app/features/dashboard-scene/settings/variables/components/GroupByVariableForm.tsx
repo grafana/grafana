@@ -1,14 +1,14 @@
-import { FormEvent, useCallback } from 'react';
+import { type FormEvent, useCallback } from 'react';
 
-import { DataSourceInstanceSettings, MetricFindValue, SelectableValue, readCSV } from '@grafana/data';
+import { type DataSourceInstanceSettings, type MetricFindValue, type SelectableValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { Alert, Stack, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DefaultValueEditor } from './DefaultValueEditor';
+import { DefaultGroupByValueEditor } from './DefaultGroupByValueEditor';
 import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
 
@@ -89,7 +89,11 @@ export function GroupByVariableForm({
       ) : null}
 
       {datasourceSupported && onDefaultValueChange && (
-        <DefaultValueEditor values={defaultValue ?? []} options={defaultValueOptions} onChange={onDefaultValueChange} />
+        <DefaultGroupByValueEditor
+          values={defaultValue ?? []}
+          options={defaultValueOptions}
+          onChange={onDefaultValueChange}
+        />
       )}
 
       {datasourceSupported && (
@@ -136,10 +140,10 @@ export function GroupByVariableForm({
       {datasourceSupported && !inline && onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue}
-          name={t('dashboard-scene.group-by-variable-form.name-allow-custom-values', 'Allow custom values')}
+          name={t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values')}
           description={t(
-            'dashboard-scene.group-by-variable-form.description-enables-users-custom-values',
-            'Enables users to add custom values to the list'
+            'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
+            'Enables users to enter values'
           )}
           onChange={onAllowCustomValueChange}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}

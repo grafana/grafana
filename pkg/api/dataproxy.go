@@ -2,8 +2,6 @@ package api
 
 import contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 
-// swagger:route GET /datasources/proxy/{id}/{datasource_proxy_route} datasources datasourceProxyGETcalls
-//
 // Data source proxy GET calls.
 //
 // Proxies all calls to the actual data source.
@@ -20,8 +18,6 @@ import contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/mode
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /datasources/proxy/{id}/{datasource_proxy_route} datasources datasourceProxyPOSTcalls
-//
 // Data source proxy POST calls.
 //
 // Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined
@@ -39,8 +35,6 @@ import contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/mode
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route DELETE /datasources/proxy/{id}/{datasource_proxy_route} datasources datasourceProxyDELETEcalls
-//
 // Data source proxy DELETE calls.
 //
 // Proxies all calls to the actual data source.

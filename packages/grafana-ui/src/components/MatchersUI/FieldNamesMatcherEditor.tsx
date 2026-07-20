@@ -1,19 +1,19 @@
 import { memo, useCallback } from 'react';
 
-import { FieldMatcherID, fieldMatchers, SelectableValue, ByNamesMatcherOptions } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, type SelectableValue, type ByNamesMatcherOptions } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Input } from '../Input/Input';
 import { MultiSelect } from '../Select/Select';
 
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
+import { type MatcherUIProps, type FieldMatcherUIRegistryItem } from './types';
+import { useFieldDisplayNames, useMatcherSelectOptions, frameHasName } from './utils';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
-  const { data, options, onChange: onChangeFromProps } = props;
+  const { id, data, options, onChange: onChangeFromProps, scope } = props;
   const { readOnly, prefix } = options;
-  const names = useFieldDisplayNames(data);
-  const selectOptions = useSelectOptions(names, undefined);
+  const names = useFieldDisplayNames(data, undefined, scope);
+  const selectOptions = useMatcherSelectOptions(names, undefined, { scope });
 
   const onChange = useCallback(
     (selections: Array<SelectableValue<string>>) => {
@@ -37,10 +37,10 @@ export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions
 
   if (readOnly) {
     const displayNames = (options.names ?? []).join(', ');
-    return <Input value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
+    return <Input id={id} value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
   }
 
-  return <MultiSelect value={options.names} options={selectOptions} onChange={onChange} />;
+  return <MultiSelect inputId={id} value={options.names} options={selectOptions} onChange={onChange} />;
 });
 FieldNamesMatcherEditor.displayName = 'FieldNameMatcherEditor';
 

@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
 import { useCallback, useId, useState } from 'react';
 import * as React from 'react';
 
-import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { getTimeZoneInfo, type GrafanaTheme2, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -17,7 +16,7 @@ import { TabsBar } from '../../Tabs/TabsBar';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
-import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
+import { getTimeZoneTitle, TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
 import { getMonthOptions } from '../options';
 
 interface Props {
@@ -42,6 +41,7 @@ export const TimePickerFooter = (props: Props) => {
   const timeSettingsId = useId();
   const timeZoneSettingsId = useId();
   const fiscalYearSettingsId = useId();
+  const fiscalYearStartMonthId = useId();
 
   const onToggleChangeTimeSettings = useCallback(
     (event?: React.MouseEvent) => {
@@ -55,7 +55,7 @@ export const TimePickerFooter = (props: Props) => {
 
   const style = useStyles2(getStyle);
 
-  if (!isString(timeZone)) {
+  if (typeof timeZone !== 'string') {
     return null;
   }
 
@@ -73,7 +73,7 @@ export const TimePickerFooter = (props: Props) => {
       >
         <div className={style.timeZoneContainer}>
           <div className={style.timeZone}>
-            <TimeZoneTitle title={info.name} />
+            <TimeZoneTitle title={getTimeZoneTitle(info)} />
             <div className={style.spacer} />
             <TimeZoneDescription info={info} />
           </div>
@@ -123,13 +123,10 @@ export const TimePickerFooter = (props: Props) => {
                 <TimeZonePicker
                   includeInternal={true}
                   onChange={(timeZone) => {
-                    onToggleChangeTimeSettings();
-
-                    if (isString(timeZone)) {
+                    if (typeof timeZone === 'string') {
                       onChangeTimeZone(timeZone);
                     }
                   }}
-                  onBlur={onToggleChangeTimeSettings}
                   menuShouldPortal={false}
                 />
               </section>
@@ -145,6 +142,7 @@ export const TimePickerFooter = (props: Props) => {
                   label={t('time-picker.footer.fiscal-year-start', 'Fiscal year start month')}
                 >
                   <Combobox
+                    id={fiscalYearStartMonthId}
                     value={fiscalYearStartMonth ?? null}
                     options={getMonthOptions()}
                     onChange={(value) => {

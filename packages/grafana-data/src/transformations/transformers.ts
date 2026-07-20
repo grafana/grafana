@@ -27,6 +27,11 @@ import { seriesToRowsTransformer } from './transformers/seriesToRows';
 import { sortByTransformer } from './transformers/sortBy';
 import { transposeTransformer } from './transformers/transpose';
 
+/**
+ * @deprecated - we will stop exporting this in the near future, as we don't think it's
+ * necessary to expose these transformers to the public API. They can still be accessed
+ * in the Grafana app using `standardTransformerRegistry` by calling the `transform()` method.
+ */
 export const standardTransformers = {
   noopTransformer,
   filterFieldsTransformer,

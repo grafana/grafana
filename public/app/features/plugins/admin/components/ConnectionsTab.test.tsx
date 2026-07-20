@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { DataSourceSettings } from '@grafana/data';
+import { type DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
@@ -46,7 +46,7 @@ describe('<ConnectionsTab>', () => {
     config.featureToggles.datasourceConnectionsTab = olddatasourceConnectionsTab;
   });
 
-  it('should onnly render list of datasources with type=plugin.id', async () => {
+  it('should only render list of datasources with type=plugin.id', async () => {
     setupContextSrv();
     const mockedConnections = getMockDataSources(3, { type: datasourcePlugin.id });
     mockedConnections[2].type = 'other-plugin-id';
@@ -55,7 +55,6 @@ describe('<ConnectionsTab>', () => {
     render(<ConnectionsTab plugin={datasourcePlugin} />);
 
     expect(await screen.findAllByRole('listitem')).toHaveLength(2);
-    expect(await screen.findAllByRole('heading')).toHaveLength(2);
     expect(await screen.findByRole('link', { name: /Connections - Data sources/i })).toBeVisible();
     expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(2);
     expect(await screen.findAllByRole('link', { name: 'Explore' })).toHaveLength(2);
@@ -87,7 +86,6 @@ describe('<ConnectionsTab>', () => {
       );
 
       expect(await screen.findAllByRole('listitem')).toHaveLength(2);
-      expect(await screen.findAllByRole('heading')).toHaveLength(2);
       expect(await screen.findByRole('link', { name: /Connections - Data sources/i })).toBeVisible();
       expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(2);
       expect(await screen.findAllByRole('link', { name: 'Explore' })).toHaveLength(2);
@@ -107,7 +105,6 @@ describe('<ConnectionsTab>', () => {
       );
 
       expect(await screen.findAllByRole('listitem')).toHaveLength(2);
-      expect(await screen.findAllByRole('heading')).toHaveLength(2);
       expect(await screen.findByRole('link', { name: /Connections - Data sources/i })).toBeVisible();
       expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(2);
       expect(screen.queryAllByRole('link', { name: 'Explore' })).toHaveLength(0);

@@ -15,7 +15,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type RuleLimits struct {
@@ -193,6 +192,9 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 
 func validateLabels(l map[string]string) error {
 	for key := range l {
+		if key == "" {
+			return fmt.Errorf("label key cannot be empty")
+		}
 		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
 			return fmt.Errorf("system reserved labels cannot be defined in the rule. Label %s is the reserved", key)
 		}
@@ -311,7 +313,7 @@ func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode)
 func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int64, error) {
 	if ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
-			return util.Pointer[int64](-1), nil // will be patched later with the real value of the current version of the rule
+			return new(int64(-1)), nil // will be patched later with the real value of the current version of the rule
 		}
 		return nil, nil // if it's a new rule, use nil as the default
 	}
@@ -394,8 +396,11 @@ func ValidateRuleGroup(
 }
 
 func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) (*ngmodels.NotificationSettings, error) {
-	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
+	if n.Policy == nil && n.Receiver == "" {
+		return nil, errors.New("notification policy or receiver must be specified")
+	}
 
+	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
 	if err := s.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid notification settings: %w", err)
 	}

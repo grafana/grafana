@@ -20,7 +20,7 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(3.14)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(3.14)}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -56,8 +56,8 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField("host", nil, []*string{new("a"), new("b")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -80,9 +80,9 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField("env", nil, []*string{nil, sp("prod")}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField("env", nil, []*string{nil, new("prod")}),
+			data.NewField("host", nil, []*string{new("a"), new("b")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -105,8 +105,8 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "mem"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(4.0)}),
-			data.NewField("host", nil, []*string{sp("a"), sp("a")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(4.0)}),
+			data.NewField("host", nil, []*string{new("a"), new("a")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -129,9 +129,9 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "mem"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(4.0)}),
-			data.NewField("env", nil, []*string{nil, sp("prod")}),
-			data.NewField("host", nil, []*string{sp("a"), nil}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(4.0)}),
+			data.NewField("env", nil, []*string{nil, new("prod")}),
+			data.NewField("host", nil, []*string{new("a"), nil}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -156,7 +156,7 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.23)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.23)}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -184,8 +184,8 @@ func TestConvertNumericWideToFullLongWithDisplayName(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(3.14)}),
-			data.NewField(SQLDisplayFieldName, nil, []*string{sp("CPU Display")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(3.14)}),
+			data.NewField(SQLDisplayFieldName, nil, []*string{new("CPU Display")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -212,9 +212,9 @@ func TestConvertNumericWideToFullLongWithDisplayName(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField(SQLDisplayFieldName, nil, []*string{sp("CPU A"), nil}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField(SQLDisplayFieldName, nil, []*string{new("CPU A"), nil}),
+			data.NewField("host", nil, []*string{new("a"), new("b")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -238,7 +238,7 @@ func TestConvertNumericMultiToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(3.14)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(3.14)}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -265,8 +265,8 @@ func TestConvertNumericMultiToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField("host", nil, []*string{new("a"), new("b")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -293,9 +293,9 @@ func TestConvertNumericMultiToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField("env", nil, []*string{nil, sp("prod")}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField("env", nil, []*string{nil, new("prod")}),
+			data.NewField("host", nil, []*string{new("a"), new("b")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -322,8 +322,8 @@ func TestConvertNumericMultiToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "mem"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(4.0)}),
-			data.NewField("host", nil, []*string{sp("a"), sp("a")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(4.0)}),
+			data.NewField("host", nil, []*string{new("a"), new("a")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -350,9 +350,9 @@ func TestConvertNumericMultiToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "mem"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(4.0)}),
-			data.NewField("env", nil, []*string{nil, sp("prod")}),
-			data.NewField("host", nil, []*string{sp("a"), nil}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(4.0)}),
+			data.NewField("env", nil, []*string{nil, new("prod")}),
+			data.NewField("host", nil, []*string{new("a"), nil}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
@@ -382,7 +382,7 @@ func TestConvertTimeSeriesWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField("time", nil, times),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
 		)
 		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
@@ -407,9 +407,9 @@ func TestConvertTimeSeriesWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(3.0), fp(2.0), fp(4.0)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(3.0), new(2.0), new(4.0)}),
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu", "cpu", "cpu"}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b"), sp("a"), sp("b")}),
+			data.NewField("host", nil, []*string{new("a"), new("b"), new("a"), new("b")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
 
@@ -433,9 +433,9 @@ func TestConvertTimeSeriesWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(3.0), fp(2.0), fp(4.0)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(3.0), new(2.0), new(4.0)}),
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "mem", "cpu", "mem"}),
-			data.NewField("host", nil, []*string{sp("a"), sp("a"), sp("a"), sp("a")}),
+			data.NewField("host", nil, []*string{new("a"), new("a"), new("a"), new("a")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
 
@@ -459,10 +459,10 @@ func TestConvertTimeSeriesWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(3.0), fp(2.0), fp(4.0)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(3.0), new(2.0), new(4.0)}),
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu", "cpu", "cpu"}),
-			data.NewField("env", nil, []*string{nil, sp("prod"), nil, sp("prod")}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b"), sp("a"), sp("b")}),
+			data.NewField("env", nil, []*string{nil, new("prod"), nil, new("prod")}),
+			data.NewField("host", nil, []*string{new("a"), new("b"), new("a"), new("b")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
 
@@ -486,10 +486,10 @@ func TestConvertTimeSeriesWideToFullLong(t *testing.T) {
 
 		expected := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(3.0), fp(2.0), fp(4.0)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(3.0), new(2.0), new(4.0)}),
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "mem", "cpu", "mem"}),
-			data.NewField("env", nil, []*string{nil, sp("prod"), nil, sp("prod")}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b"), sp("a"), sp("b")}),
+			data.NewField("env", nil, []*string{nil, new("prod"), nil, new("prod")}),
+			data.NewField("host", nil, []*string{new("a"), new("b"), new("a"), new("b")}),
 		)
 		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
 
@@ -500,8 +500,4 @@ func TestConvertTimeSeriesWideToFullLong(t *testing.T) {
 			require.FailNowf(t, "Mismatch (-want +got):\n%s", diff)
 		}
 	})
-}
-
-func sp(s string) *string {
-	return &s
 }

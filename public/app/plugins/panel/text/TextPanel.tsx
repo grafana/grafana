@@ -5,9 +5,9 @@ import { useDebounce } from 'react-use';
 
 import {
   CoreApp,
-  GrafanaTheme2,
-  InterpolateFunction,
-  PanelProps,
+  type GrafanaTheme2,
+  type InterpolateFunction,
+  type PanelProps,
   renderTextPanelMarkdown,
   textUtil,
 } from '@grafana/data';
@@ -21,7 +21,7 @@ import {
 } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { defaultCodeOptions, Options, TextMode } from './panelcfg.gen';
+import { defaultCodeOptions, type Options, TextMode } from './panelcfg.gen';
 
 export interface Props extends PanelProps<Options> {}
 

@@ -1,11 +1,9 @@
 import * as React from 'react';
 
-import { FieldConfigSource, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { type FieldConfigSource, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 
 /**
  * Describes the properties that can be passed to the PanelDataErrorView.
- *
- * @alpha
  */
 export interface PanelDataErrorViewProps {
   message?: string;
@@ -23,13 +21,11 @@ export interface PanelDataErrorViewProps {
  *
  * @internal
  */
-export type PanelDataErrorViewType = React.ComponentType<PanelDataErrorViewProps>;
+type PanelDataErrorViewType = React.ComponentType<PanelDataErrorViewProps>;
 
 /**
  * PanelDataErrorView allows panels to show a consistent error message when
  * the result structure does not meet expected criteria
- *
- * @alpha
  */
 export let PanelDataErrorView: PanelDataErrorViewType = ({ message }) => {
   return <div>Unable to render data: {message}.</div>;

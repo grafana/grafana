@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Drawer, useStyles2, Text } from '@grafana/ui';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';

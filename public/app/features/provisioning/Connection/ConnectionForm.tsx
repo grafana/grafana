@@ -1,26 +1,27 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
-import { Button, Combobox, Field, Stack } from '@grafana/ui';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
+import { type Connection, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
+import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
-import { ConnectionFormData } from '../types';
-import { getConnectionFormErrors } from '../utils/getFormErrors';
+import { type ConnectionFormData } from '../types';
+import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
+import { isGitHubBased } from '../utils/repositoryTypes';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
 interface ConnectionFormProps {
   data?: Connection;
 }
-
-const providerOptions = [{ value: 'github', label: 'GitHub' }];
 
 export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
@@ -29,25 +30,53 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
   const navigate = useNavigate();
 
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
+  const availableTypes = frontendSettings?.availableRepositoryTypes ?? [];
+  const providerOptions = [
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    { value: 'github', label: 'GitHub' },
+    ...(availableTypes.includes('githubEnterprise')
+      ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        [{ value: 'githubEnterprise', label: 'GitHub Enterprise' }]
+      : []),
+  ];
+
   const formMethods = useForm<ConnectionFormData>({
-    defaultValues: {
-      type: data?.spec?.type || 'github',
-      title: data?.spec?.title || '',
-      description: data?.spec?.description || '',
-      appID: data?.spec?.github?.appID || '',
-      installationID: data?.spec?.github?.installationID || '',
-      privateKey: '',
-    },
+    defaultValues:
+      data?.spec?.type === 'githubEnterprise'
+        ? {
+            type: 'githubEnterprise',
+            title: data?.spec?.title || '',
+            description: data?.spec?.description || '',
+            appID: data?.spec?.githubEnterprise?.appID || '',
+            installationID: data?.spec?.githubEnterprise?.installationID || '',
+            privateKey: '',
+            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
+            serverUrl: data?.spec?.githubEnterprise?.serverUrl || '',
+          }
+        : {
+            type: 'github',
+            title: data?.spec?.title || '',
+            description: data?.spec?.description || '',
+            appID: data?.spec?.github?.appID || '',
+            installationID: data?.spec?.github?.installationID || '',
+            privateKey: '',
+            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
+          },
   });
 
   const {
     handleSubmit,
     reset,
+    register,
     control,
-    formState: { isDirty },
+    watch,
+    formState: { isDirty, errors },
     getValues,
     setError,
   } = formMethods;
+
+  const selectedType = watch('type');
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -73,16 +102,30 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     }
   }, [isEdit, data?.status?.fieldErrors, setError]);
 
+  const [submitError, setSubmitError] = useState<string>();
+
   const onSubmit = async (form: ConnectionFormData) => {
+    setSubmitError(undefined);
     try {
       const spec = {
         title: form.title,
         type: form.type,
         ...(form.description && { description: form.description }),
-        github: {
-          appID: form.appID,
-          installationID: form.installationID,
-        },
+        ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
+        ...(form.type === 'githubEnterprise'
+          ? {
+              githubEnterprise: {
+                appID: form.appID,
+                installationID: form.installationID,
+                serverUrl: form.serverUrl,
+              },
+            }
+          : {
+              github: {
+                appID: form.appID,
+                installationID: form.installationID,
+              },
+            }),
       };
 
       await submitData(spec, form.privateKey);
@@ -96,7 +139,19 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           }
           return;
         }
+
+        // Show unmapped error details as a top-level form error
+        const allErrors = extractFormErrors(err.data);
+        const detail = allErrors.find((e) => e.detail)?.detail;
+        if (detail) {
+          setSubmitError(detail);
+          return;
+        }
       }
+
+      setSubmitError(
+        extractErrorMessage(err) || t('provisioning.connection-form.error-submit', 'Failed to save connection')
+      );
     }
   };
 
@@ -105,6 +160,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
         <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
         <Stack direction="column" gap={2}>
+          {submitError && <Alert severity="error" title={submitError} />}
           <Field
             noMargin
             htmlFor="type"
@@ -117,7 +173,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
                   id="type"
-                  disabled // TODO enable when other providers are supported
+                  disabled={isEdit || providerOptions.length <= 1}
                   options={providerOptions}
                   onChange={(option) => onChange(option?.value)}
                   {...field}
@@ -126,7 +182,15 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             />
           </Field>
 
-          <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
+          {isGitHubBased(selectedType) && (
+            <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} type={selectedType} />
+          )}
+
+          <WebhookDisabledField
+            registration={register('webhookDisabled')}
+            invalid={!!errors.webhookDisabled}
+            error={errors.webhookDisabled?.message}
+          />
 
           <Stack gap={2}>
             <Button type="submit" disabled={request.isLoading}>

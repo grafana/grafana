@@ -12,14 +12,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// mockProvider implements MetricsProvider for testing
-type mockProvider struct {
+// mockProviderBase holds the synchronized call-counter shared by all test providers.
+type mockProviderBase struct {
 	mu        sync.Mutex
 	callCount int
-	metrics   []string
-	ttl       time.Duration
-	err       error
 }
+
+func (m *mockProviderBase) getCallCount() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.callCount
+}
+
+// mockProvider implements MetricsProvider for testing
+type mockProvider struct {
+	mockProviderBase
+	metrics []string
+	ttl     time.Duration
+	err     error
+}
+
+var _ MetricsProvider = (*mockProvider)(nil)
 
 func (m *mockProvider) GetMetrics(ctx context.Context, datasourceUID, datasourceURL string,
 	client *http.Client) (*MetricsResult, error) {
@@ -33,12 +46,6 @@ func (m *mockProvider) GetMetrics(ctx context.Context, datasourceUID, datasource
 		Metrics: m.metrics,
 		TTL:     m.ttl,
 	}, nil
-}
-
-func (m *mockProvider) getCallCount() int {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.callCount
 }
 
 // setupTest creates a new MetricsCache and registers a mock provider for "test" type
@@ -59,7 +66,7 @@ func TestMetricsCache_CacheMiss_FetchesFromProvider(t *testing.T) {
 	}
 	cache := setupTest(mockProv)
 
-	metrics, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	metrics, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"metric_a", "metric_b"}, metrics)
@@ -74,12 +81,12 @@ func TestMetricsCache_CacheHit_DoesNotFetchAgain(t *testing.T) {
 	cache := setupTest(mockProv)
 
 	// First call - cache miss
-	metrics1, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	metrics1, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 1, mockProv.getCallCount())
 
 	// Second call - cache hit
-	metrics2, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	metrics2, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.NoError(t, err)
 	require.ElementsMatch(t, metrics1, metrics2)
 	require.Equal(t, 1, mockProv.getCallCount()) // Still 1, no new call
@@ -93,17 +100,17 @@ func TestMetricsCache_DifferentDatasources_SeparateCacheEntries(t *testing.T) {
 	cache := setupTest(mockProv)
 
 	// First datasource
-	_, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom1:9090", nil)
+	_, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom1:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 1, mockProv.getCallCount())
 
 	// Second datasource - separate cache entry
-	_, err = cache.GetMetrics(context.Background(), "test", "ds-uid-2", "http://prom2:9090", nil)
+	_, err = cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-2", "http://prom2:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 2, mockProv.getCallCount())
 
 	// First datasource again - cache hit
-	_, err = cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom1:9090", nil)
+	_, err = cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom1:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 2, mockProv.getCallCount()) // Still 2
 }
@@ -120,7 +127,7 @@ func TestMetricsCache_ExpiredEntry_FetchesAgain(t *testing.T) {
 	cache := setupTest(mockProv)
 
 	// First call
-	_, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	_, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 1, mockProv.getCallCount())
 
@@ -128,7 +135,7 @@ func TestMetricsCache_ExpiredEntry_FetchesAgain(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 
 	// Second call after expiration
-	_, err = cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	_, err = cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 2, mockProv.getCallCount()) // New call made
 }
@@ -141,12 +148,12 @@ func TestMetricsCache_ZeroTTL_DoesNotCache(t *testing.T) {
 	cache := setupTest(mockProv)
 
 	// First call
-	_, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	_, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 1, mockProv.getCallCount())
 
 	// Second call - should fetch again since zero TTL means no caching
-	_, err = cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	_, err = cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 2, mockProv.getCallCount())
 }
@@ -162,7 +169,7 @@ func TestMetricsCache_ProviderError_ReturnsError(t *testing.T) {
 	}
 	cache := setupTest(mockProv)
 
-	metrics, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	metrics, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 
 	require.Error(t, err)
 	require.ErrorIs(t, err, providerErr)
@@ -178,7 +185,7 @@ func TestMetricsCache_ProviderError_DoesNotCache(t *testing.T) {
 	cache := setupTest(mockProv)
 
 	// First call - error
-	_, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	_, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.Error(t, err)
 	require.Equal(t, 1, mockProv.getCallCount())
 
@@ -190,7 +197,7 @@ func TestMetricsCache_ProviderError_DoesNotCache(t *testing.T) {
 	mockProv.mu.Unlock()
 
 	// Second call - should fetch again (error not cached)
-	metrics, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	metrics, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.NoError(t, err)
 	require.NotNil(t, metrics)
 	require.Equal(t, 2, mockProv.getCallCount())
@@ -220,7 +227,7 @@ func TestMetricsCache_ConcurrentAccess_ThreadSafe(t *testing.T) {
 			if idx%2 == 0 {
 				uid = "ds-uid-2"
 			}
-			metrics, err := cache.GetMetrics(context.Background(), "test", uid, "http://prom:9090", nil)
+			metrics, err := cache.GetMetrics(context.Background(), int64(1), "test", uid, "http://prom:9090", nil)
 			if err != nil {
 				errCount.Add(1)
 				return
@@ -254,13 +261,13 @@ func TestMetricsCache_CleanupRemovesExpiredEntries(t *testing.T) {
 	cache := setupTest(mockProv)
 
 	// Populate cache
-	_, err := cache.GetMetrics(context.Background(), "test", "ds-uid-1", "http://prom:9090", nil)
+	_, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
 	require.NoError(t, err)
 	require.Equal(t, 1, mockProv.getCallCount())
 
 	// Verify entry exists
 	cache.mu.RLock()
-	_, exists := cache.entries["ds-uid-1"]
+	_, exists := cache.entries["1/ds-uid-1"]
 	cache.mu.RUnlock()
 	require.True(t, exists)
 
@@ -272,7 +279,7 @@ func TestMetricsCache_CleanupRemovesExpiredEntries(t *testing.T) {
 
 	// Verify entry was removed
 	cache.mu.RLock()
-	_, exists = cache.entries["ds-uid-1"]
+	_, exists = cache.entries["1/ds-uid-1"]
 	cache.mu.RUnlock()
 	require.False(t, exists)
 }
@@ -322,4 +329,223 @@ func TestMetricsCache_RegisterProvider_DuplicateType_Panics(t *testing.T) {
 	require.Panics(t, func() {
 		cache.RegisterProvider("duplicate", mockProv)
 	})
+}
+
+// ============================================================================
+// Category 7: GetMetricsSet Behavior
+// ============================================================================
+
+func TestMetricsCache_GetMetricsSet_CacheMiss_ReturnsSet(t *testing.T) {
+	mockProv := &mockProvider{
+		metrics: []string{"metric_a", "metric_b"},
+		ttl:     5 * time.Minute,
+	}
+	cache := setupTest(mockProv)
+
+	set, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+
+	require.NoError(t, err)
+	require.Len(t, set, 2)
+	require.True(t, set["metric_a"])
+	require.True(t, set["metric_b"])
+	require.False(t, set["nonexistent"])
+	require.Equal(t, 1, mockProv.getCallCount())
+}
+
+func TestMetricsCache_GetMetricsSet_CacheHit_ReturnsCachedSet(t *testing.T) {
+	mockProv := &mockProvider{
+		metrics: []string{"metric_a", "metric_b"},
+		ttl:     5 * time.Minute,
+	}
+	cache := setupTest(mockProv)
+
+	// First call - cache miss
+	set1, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, mockProv.getCallCount())
+
+	// Second call - cache hit
+	set2, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, mockProv.getCallCount()) // Still 1, no new call
+	require.Equal(t, set1, set2)
+}
+
+func TestMetricsCache_GetMetricsSet_ZeroTTL_BuildsSetOnTheFly(t *testing.T) {
+	mockProv := &mockProvider{
+		metrics: []string{"metric_a", "metric_b"},
+		ttl:     0, // Zero TTL - don't cache
+	}
+	cache := setupTest(mockProv)
+
+	// First call - provider returns TTL=0, so GetMetrics skips caching.
+	// GetMetricsSet falls through to toMetricsSet() on the returned slice.
+	set, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+	require.NoError(t, err)
+	require.Len(t, set, 2)
+	require.True(t, set["metric_a"])
+	require.True(t, set["metric_b"])
+	require.Equal(t, 1, mockProv.getCallCount())
+
+	// Second call - no cache entry exists, so provider is called again
+	set2, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+	require.NoError(t, err)
+	require.Len(t, set2, 2)
+	require.True(t, set2["metric_a"])
+	require.Equal(t, 2, mockProv.getCallCount())
+}
+
+func TestMetricsCache_GetMetricsSet_ProviderError_ReturnsError(t *testing.T) {
+	providerErr := errors.New("connection refused")
+	mockProv := &mockProvider{
+		err: providerErr,
+	}
+	cache := setupTest(mockProv)
+
+	set, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+
+	require.Error(t, err)
+	require.ErrorIs(t, err, providerErr)
+	require.Nil(t, set)
+}
+
+func TestMetricsCache_GetMetricsSet_ExpiredEntry_FetchesAgain(t *testing.T) {
+	mockProv := &mockProvider{
+		metrics: []string{"metric_a"},
+		ttl:     10 * time.Millisecond, // Very short TTL
+	}
+	cache := setupTest(mockProv)
+
+	// First call
+	set1, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+	require.NoError(t, err)
+	require.True(t, set1["metric_a"])
+	require.Equal(t, 1, mockProv.getCallCount())
+
+	// Wait for TTL to expire
+	time.Sleep(20 * time.Millisecond)
+
+	// Second call after expiration
+	set2, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+	require.NoError(t, err)
+	require.True(t, set2["metric_a"])
+	require.Equal(t, 2, mockProv.getCallCount())
+}
+
+func TestMetricsCache_GetMetricsSet_AfterGetMetrics_UsesCachedSet(t *testing.T) {
+	mockProv := &mockProvider{
+		metrics: []string{"metric_a", "metric_b"},
+		ttl:     5 * time.Minute,
+	}
+	cache := setupTest(mockProv)
+
+	// Populate cache via GetMetrics (builds metricsSet eagerly)
+	_, err := cache.GetMetrics(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, mockProv.getCallCount())
+
+	// GetMetricsSet should return the pre-built set without calling the provider
+	set, err := cache.GetMetricsSet(context.Background(), int64(1), "test", "ds-uid-1", "http://prom:9090", nil)
+	require.NoError(t, err)
+	require.Len(t, set, 2)
+	require.True(t, set["metric_a"])
+	require.True(t, set["metric_b"])
+	require.Equal(t, 1, mockProv.getCallCount()) // No additional provider call
+}
+
+// Cache tenant isolation
+
+// mockURLProvider returns metrics keyed by datasource URL.
+type mockURLProvider struct {
+	mockProviderBase
+	metricsMap map[string][]string // key: datasourceURL → metrics
+	ttl        time.Duration
+}
+
+var _ MetricsProvider = (*mockURLProvider)(nil)
+
+func (m *mockURLProvider) GetMetrics(_ context.Context, _, datasourceURL string,
+	_ *http.Client) (*MetricsResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.callCount++
+	metrics, ok := m.metricsMap[datasourceURL]
+	if !ok {
+		return nil, errors.New("unknown URL: " + datasourceURL)
+	}
+	return &MetricsResult{Metrics: metrics, TTL: m.ttl}, nil
+}
+
+func TestMetricsCache_CrossTenantIsolation(t *testing.T) {
+	const sharedUID = "shared-uid"
+	org1Metrics := []string{"org1_metric_a", "org1_metric_b"}
+	org2Metrics := []string{"org2_metric_x"}
+
+	prov := &mockURLProvider{
+		metricsMap: map[string][]string{
+			"http://org1-prom:9090": org1Metrics,
+			"http://org2-prom:9090": org2Metrics,
+		},
+		ttl: 5 * time.Minute,
+	}
+	cache := NewMetricsCache()
+	cache.RegisterProvider("test", prov)
+
+	got1, err := cache.GetMetrics(context.Background(), int64(1), "test", sharedUID, "http://org1-prom:9090", nil)
+	require.NoError(t, err)
+	require.ElementsMatch(t, org1Metrics, got1)
+	require.Equal(t, 1, prov.getCallCount())
+
+	got2, err := cache.GetMetrics(context.Background(), int64(2), "test", sharedUID, "http://org2-prom:9090", nil)
+	require.NoError(t, err)
+	require.ElementsMatch(t, org2Metrics, got2)
+	require.Equal(t, 2, prov.getCallCount())
+
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+	entry1, ok1 := cache.entries["1/"+sharedUID]
+	entry2, ok2 := cache.entries["2/"+sharedUID]
+	require.True(t, ok1)
+	require.True(t, ok2)
+	require.ElementsMatch(t, org1Metrics, entry1.metrics)
+	require.ElementsMatch(t, org2Metrics, entry2.metrics)
+
+	_, unscopedKey := cache.entries[sharedUID]
+	require.False(t, unscopedKey)
+}
+
+func TestMetricsCache_GetMetricsSet_ConcurrentAccess_ThreadSafe(t *testing.T) {
+	mockProv := &mockProvider{
+		metrics: []string{"metric_a", "metric_b"},
+		ttl:     5 * time.Minute,
+	}
+	cache := setupTest(mockProv)
+
+	var wg sync.WaitGroup
+	errCount := atomic.Int32{}
+
+	for i := range 100 {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			uid := "ds-uid-1"
+			if idx%2 == 0 {
+				uid = "ds-uid-2"
+			}
+			set, err := cache.GetMetricsSet(context.Background(), int64(1), "test", uid, "http://prom:9090", nil)
+			if err != nil {
+				errCount.Add(1)
+				return
+			}
+			if len(set) != 2 || !set["metric_a"] || !set["metric_b"] {
+				errCount.Add(1)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	require.Equal(t, int32(0), errCount.Load())
+	callCount := mockProv.getCallCount()
+	require.GreaterOrEqual(t, callCount, 2, "should have at least 2 calls (one per UID)")
+	require.LessOrEqual(t, callCount, 10, "should have at most 10 calls (cache should help)")
 }

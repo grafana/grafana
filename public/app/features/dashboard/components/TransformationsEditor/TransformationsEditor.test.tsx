@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
+import { type DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -27,14 +27,14 @@ describe('TransformationsEditor', () => {
   });
 
   describe('when transformations configured', () => {
-    it('renders transformation editors', () => {
+    it('renders transformation editors', async () => {
       setup([
         {
           id: 'reduce',
           options: {},
         },
       ]);
-      const editors = screen.getAllByTestId(/Transformation editor/);
+      const editors = await screen.findAllByTestId(/Transformation editor/);
       expect(editors).toHaveLength(1);
     });
   });

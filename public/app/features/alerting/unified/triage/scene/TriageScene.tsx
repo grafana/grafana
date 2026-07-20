@@ -1,9 +1,9 @@
 import { DashboardCursorSync } from '@grafana/data';
 import {
   AdHocFiltersVariable,
-  GroupByVariable,
   SceneControlsSpacer,
   SceneFlexLayout,
+  SceneReactObject,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -12,6 +12,7 @@ import {
   behaviors,
 } from '@grafana/scenes';
 import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
+import { useTheme2 } from '@grafana/ui';
 
 import { DATASOURCE_UID } from '../constants';
 
@@ -23,6 +24,11 @@ import { defaultTimeRange } from './utils';
 
 const cursorSync = new behaviors.CursorSync({ key: 'triage-cursor-sync', sync: DashboardCursorSync.Crosshair });
 
+function TimePickerSpacer() {
+  const theme = useTheme2();
+  return <div style={{ width: theme.spacing(20) }} />;
+}
+
 export const triageScene = new EmbeddedSceneWithContext({
   // this will allow us to share the cursor between all vizualizations
   $behaviors: [cursorSync],
@@ -30,23 +36,14 @@ export const triageScene = new EmbeddedSceneWithContext({
     new VariableValueSelectors({}),
     new TriageSavedSearchesControl({}),
     new SceneControlsSpacer(),
+    // Keep a fixed spacer before the time picker to align with row content.
+    new SceneReactObject({ component: TimePickerSpacer }),
     new SceneTimePicker({}),
     new SceneRefreshPicker({}),
   ],
   $timeRange: new SceneTimeRange(defaultTimeRange),
   $variables: new SceneVariableSet({
     variables: [
-      new GroupByVariable({
-        name: 'groupBy',
-        label: 'Group by',
-        datasource: {
-          type: 'prometheus',
-          uid: DATASOURCE_UID,
-        },
-        allowCustomValue: true,
-        applyMode: 'manual',
-        getTagKeysProvider: getGroupByTagKeysProvider,
-      }),
       new AdHocFiltersVariable({
         name: 'filters',
         label: 'Filters',
@@ -58,12 +55,14 @@ export const triageScene = new EmbeddedSceneWithContext({
         allowCustomValue: true,
         useQueriesAsFilterForOptions: true,
         supportsMultiValueOperators: true,
+        enableGroupBy: true,
+        groupByInputPlaceholder: 'Group by',
         filters: [],
         baseFilters: [],
-        layout: 'combobox',
         expressionBuilder: prometheusExpressionBuilder,
         getTagKeysProvider: getAdHocTagKeysProvider,
         getTagValuesProvider: getAdHocTagValuesProvider,
+        getGroupByKeysProvider: getGroupByTagKeysProvider,
       }),
     ],
   }),

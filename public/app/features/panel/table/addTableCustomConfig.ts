@@ -1,6 +1,6 @@
-import { FieldConfigEditorBuilder } from '@grafana/data';
+import { type FieldConfigEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableFieldOptions, defaultTableFieldOptions } from '@grafana/schema';
+import { type TableFieldOptions, defaultTableFieldOptions } from '@grafana/schema';
 
 export function addTableCustomConfig<T extends TableFieldOptions>(
   builder: FieldConfigEditorBuilder<T>,

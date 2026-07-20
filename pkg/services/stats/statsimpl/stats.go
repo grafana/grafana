@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	provisioningv1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -51,19 +54,6 @@ type sqlStatsService struct {
 	unifiedStorage resource.ResourceClient
 }
 
-func (ss *sqlStatsService) getDashboardCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
-	count := int64(0)
-	for _, org := range orgs {
-		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
-		dashsCount, err := ss.dashSvc.CountDashboardsInOrg(ctx, org.ID)
-		if err != nil {
-			return 0, err
-		}
-		count += dashsCount
-	}
-	return count, nil
-}
-
 func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
 	total := 0
 	for _, org := range orgs {
@@ -80,37 +70,37 @@ func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) 
 	return int64(total), nil
 }
 
-func (ss *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
-	total := int64(0)
+func (ss *sqlStatsService) getProvisionedDashboardCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
+	var total int64
 	for _, org := range orgs {
 		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
-		folderCount, err := ss.folderSvc.CountFoldersInOrg(ctx, org.ID)
+		n, err := ss.dashSvc.CountProvisionedDashboardsInOrg(ctx, org.ID)
 		if err != nil {
 			return 0, err
 		}
-		total += folderCount
+		total += n
 	}
 	return total, nil
 }
 
-func (ss *sqlStatsService) getRepositoryCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
-	total := int64(0)
+func (ss *sqlStatsService) getResourceCounts(ctx context.Context, orgs []*org.OrgDTO, kinds []string) (map[string]int64, error) {
+	totals := make(map[string]int64, len(kinds))
 	for _, org := range orgs {
 		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
 		resp, err := ss.unifiedStorage.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: ss.namespacer(org.ID),
-			Kinds: []string{
-				provisioningv1.GROUP + "/" + provisioningv1.RepositoryResourceInfo.GroupResource().Resource,
-			},
+			Kinds:     kinds,
 		})
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
-		if len(resp.Stats) != 0 {
-			total += resp.Stats[0].Count
+		for i, s := range resp.Stats {
+			if s != nil && i < len(kinds) {
+				totals[kinds[i]] += s.Count
+			}
 		}
 	}
-	return total, nil
+	return totals, nil
 }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {
@@ -150,13 +140,13 @@ func notServiceAccount(dialect migrator.Dialect) string {
 
 func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) (result *stats.SystemStats, err error) {
 	dialect := ss.db.GetDialect()
+
 	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sb := &db.SQLBuilder{}
 		sb.Write("SELECT ")
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("correlation") + `) AS correlations,`)
 
@@ -172,9 +162,7 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
 			notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("annotation") + `) AS annotations,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
@@ -213,24 +201,26 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 	}
 	result.Orgs = int64(len(orgs))
 
-	// for services in unified storage, get the stats through the service rather than the db directly
-	dashCount, err := ss.getDashboardCount(ctx, orgs)
+	// for resources in unified storage
+	kindRepository := provisioningv1.GROUP + "/" + provisioningv1.RepositoryResourceInfo.GroupResource().Resource
+	kindPlaylist := playlistv1.APIGroup + "/playlists"
+	kindFolder := folderv1.APIGroup + "/folders"
+	kindDashboard := dashboardv1.APIGroup + "/dashboards"
+	unifiedKinds := []string{kindRepository, kindPlaylist, kindFolder, kindDashboard}
+	resourceCounts, err := ss.getResourceCounts(ctx, orgs, unifiedKinds)
 	if err != nil {
 		return result, err
 	}
-	result.Dashboards = dashCount
+	result.Repositories = resourceCounts[kindRepository]
+	result.Playlists = resourceCounts[kindPlaylist]
+	result.Folders = resourceCounts[kindFolder]
+	result.Dashboards = resourceCounts[kindDashboard]
 
-	folderCount, err := ss.getFolderCount(ctx, orgs)
+	provisioned, err := ss.getProvisionedDashboardCount(ctx, orgs)
 	if err != nil {
 		return result, err
 	}
-	result.Folders = folderCount
-
-	repositoryCount, err := ss.getRepositoryCount(ctx, orgs)
-	if err != nil {
-		return result, err
-	}
-	result.Repositories = repositoryCount
+	result.ProvisionedDashboards = provisioned
 
 	return result, err
 }
@@ -276,10 +266,6 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("data_source") + `
 		) AS datasources,
-		(
-			SELECT COUNT(*)
-			FROM ` + dialect.Quote("playlist") + `
-		) AS playlists,
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("star") + `
@@ -330,18 +316,22 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 	}
 	result.Orgs = int64(len(orgs))
 
-	// for services in unified storage, get the stats through the service rather than the db directly
-	dashCount, err := ss.getDashboardCount(ctx, orgs)
-	if err != nil {
-		return result, err
-	}
-	result.Dashboards = dashCount
-
+	// tags are on the dashboard itself, need to search through unified storage to find the stats
 	tagCount, err := ss.getTagCount(ctx, orgs)
 	if err != nil {
 		return result, err
 	}
 	result.Tags = tagCount
+
+	// resources in unified storage
+	kindPlaylist := playlistv1.APIGroup + "/playlists"
+	kindDashboard := dashboardv1.APIGroup + "/dashboards"
+	resourceCounts, err := ss.getResourceCounts(ctx, orgs, []string{kindPlaylist, kindDashboard})
+	if err != nil {
+		return result, err
+	}
+	result.Playlists = resourceCounts[kindPlaylist]
+	result.Dashboards = resourceCounts[kindDashboard]
 
 	return result, err
 }

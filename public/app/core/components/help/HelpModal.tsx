@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
-import { FeatureState, GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Grid, Modal, useStyles2, Text, FeatureBadge } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
@@ -17,7 +16,11 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const shortcuts = useShortcuts();
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-      <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
+      <Grid
+        columns={{ xs: 1, sm: 2 }}
+        gap={3}
+        aria-label={t('help-modal.shortcuts-aria-label', 'List of keyboard shortcuts')}
+      >
         {Object.values(shortcuts).map(({ category, shortcuts }) => (
           <section key={category}>
             <table className={styles.table}>
@@ -108,25 +111,16 @@ export const useShortcuts = () => {
       {
         category: t('help-modal.shortcuts-category.time-range', 'Time range'),
         shortcuts: [
-          ...(config.featureToggles.newTimeRangeZoomShortcuts
-            ? [
-                {
-                  keys: ['t', '+'],
-                  description: t('help-modal.shortcuts-description.zoom-in-time-range', 'Zoom in time range'),
-                  isNew: true,
-                },
-                {
-                  keys: ['t', '-'],
-                  description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
-                  isNew: true,
-                },
-              ]
-            : [
-                {
-                  keys: ['t', 'z'],
-                  description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
-                },
-              ]),
+          {
+            keys: ['t', '+'],
+            description: t('help-modal.shortcuts-description.zoom-in-time-range', 'Zoom in time range'),
+            isNew: true,
+          },
+          {
+            keys: ['t', '-'],
+            description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
+            isNew: true,
+          },
           {
             keys: ['t', '←'],
             description: t('help-modal.shortcuts-description.move-time-range-back', 'Move time range back'),
@@ -217,7 +211,7 @@ export const useShortcuts = () => {
           },
           {
             keys: ['p', 'u'],
-            description: t('help-modal.shortcuts-description.open-share-link-drawer', 'Share panel link'),
+            description: t('help-modal.shortcuts-description.copy-share-link', 'Copy panel share link'),
           },
           {
             keys: ['p', 'e'],
@@ -235,6 +229,8 @@ export const useShortcuts = () => {
             keys: ['i'],
             description: t('help-modal.shortcuts-description.inspect-panel', 'Inspect panel'),
           },
+          { keys: ['p', 'c'], description: t('help-modal.shortcuts-description.copy-panel', 'Copy Panel') },
+          { keys: ['p', 'v'], description: t('help-modal.shortcuts-description.paste-panel', 'Paste Panel') },
           { keys: ['p', 'd'], description: t('help-modal.shortcuts-description.duplicate-panel', 'Duplicate Panel') },
           { keys: ['p', 'r'], description: t('help-modal.shortcuts-description.remove-panel', 'Remove Panel') },
           {
@@ -303,7 +299,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'nowrap',
     }),
     shortcutTableKey: css({
-      display: 'inline-block',
       textAlign: 'center',
       marginRight: theme.spacing(0.5),
       padding: '3px 5px',

@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { type DataSourceJsonData, type DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConfigSection } from '@grafana/plugin-ui';
 import { Field, Switch } from '@grafana/ui';
 

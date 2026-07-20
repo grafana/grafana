@@ -1,17 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  CoreApp,
-  PanelProps,
-  DataFrameType,
-  DashboardCursorSync,
-  DataFrame,
   alignTimeRangeCompareData,
+  CoreApp,
+  DashboardCursorSync,
+  type DataFrame,
+  DataFrameType,
+  FieldType,
+  type PanelProps,
+  type SelectableValue,
   shouldAlignTimeCompare,
   useDataLinksContext,
-  FieldType,
-  SelectableValue,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, PanelDataErrorView } from '@grafana/runtime';
@@ -25,19 +25,18 @@ import {
   Stack,
   Text,
   TooltipPlugin2,
-  XAxisInteractionAreaPlugin,
   usePanelContext,
   useTheme2,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
-import { Options } from './panelcfg.gen';
-import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
+import { type Options } from './panelcfg.gen';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
-import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getGroupedFilters, getTimezones, prepareGraphableFields } from './utils';
@@ -63,10 +62,10 @@ export const TimeSeriesPanel = ({
   options,
   fieldConfig,
   onChangeTimeRange,
+  onOptionsChange,
   replaceVariables,
   id,
   title,
-  onOptionsChange,
 }: TimeSeriesPanelProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -80,9 +79,6 @@ export const TimeSeriesPanel = ({
     sync,
     eventsScope,
     canAddAnnotations,
-    onThresholdsChange,
-    canEditThresholds,
-    showThresholds,
     eventBus,
     canExecuteActions,
     getFiltersBasedOnGrouping,
@@ -141,6 +137,13 @@ export const TimeSeriesPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+
+  const onPinnedToSidebarChange = useCallback(
+    (pinned: boolean) => {
+      onOptionsChange({ ...options, legend: { ...options.legend, facetedFilterPinned: pinned } });
+    },
+    [onOptionsChange, options]
+  );
 
   // Quick edit popover (edit mode only)
   const [isPopoverVisible, setPopoverVisible] = useState(false);
@@ -235,7 +238,9 @@ export const TimeSeriesPanel = ({
   ];
 
   const currentLegendMode: LegendMode =
-    options.legend.showLegend === false || options.legend.displayMode === LegendDisplayMode.Hidden
+    options.legend.showLegend === false ||
+    !options.legend.displayMode ||
+    options.legend.displayMode === LegendDisplayMode.Hidden
       ? 'off'
       : options.legend.displayMode;
 
@@ -396,6 +401,7 @@ export const TimeSeriesPanel = ({
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
         annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
+        onPinnedToSidebarChange={onPinnedToSidebarChange}
       >
         {(uplotConfig, alignedFrame) => {
           return (
@@ -433,11 +439,14 @@ export const TimeSeriesPanel = ({
                     };
 
                     const groupingFilters =
-                      seriesIdx !== null && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
+                      seriesIdx !== null &&
+                      config.featureToggles.dashboardUnifiedDrilldownControls &&
+                      getFiltersBasedOnGrouping
                         ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
                         : [];
 
                     return (
+                      // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                       <TimeSeriesTooltip
                         series={alignedFrame}
                         dataIdxs={dataIdxs}
@@ -451,13 +460,18 @@ export const TimeSeriesPanel = ({
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
                         filterByGroupedLabels={
-                          config.featureToggles.perPanelFiltering && groupingFilters.length && onAddAdHocFilters
+                          config.featureToggles.dashboardUnifiedDrilldownControls &&
+                          groupingFilters.length &&
+                          onAddAdHocFilters
                             ? {
-                                onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
-                                onFilterOutGroupedLabels: () =>
+                                onFilterForGroupedLabels: () => {
+                                  onAddAdHocFilters(groupingFilters);
+                                },
+                                onFilterOutGroupedLabels: () => {
                                   onAddAdHocFilters(
                                     groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                  ),
+                                  );
+                                },
                               }
                             : undefined
                         }
@@ -471,10 +485,10 @@ export const TimeSeriesPanel = ({
               )}
               {!isVerticallyOriented && (
                 <>
-                  <AnnotationsPlugin2
+                  <AnnotationsPlugin
                     replaceVariables={replaceVariables}
-                    multiLane={options.annotations?.multiLane}
-                    annotations={data.annotations ?? []}
+                    options={options.annotations}
+                    annotations={data.annotations}
                     config={uplotConfig}
                     timeZone={timeZone}
                     newRange={newAnnotationRange}
@@ -489,13 +503,6 @@ export const TimeSeriesPanel = ({
                       timeZone={timeZone}
                       maxHeight={options.tooltip.maxHeight}
                       maxWidth={options.tooltip.maxWidth}
-                    />
-                  )}
-                  {((canEditThresholds && onThresholdsChange) || showThresholds) && (
-                    <ThresholdControlsPlugin
-                      config={uplotConfig}
-                      fieldConfig={fieldConfig}
-                      onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
                     />
                   )}
                 </>

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
 import { getDOMId } from './NestedFolderList';
 

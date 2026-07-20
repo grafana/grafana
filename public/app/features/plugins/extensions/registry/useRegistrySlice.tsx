@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { useObservable } from 'react-use';
+
+import { useObservable } from '@grafana/data/unstable';
 
 import {
   useAddedComponentsRegistry,
@@ -8,11 +9,11 @@ import {
   useExposedComponentsRegistry,
 } from '../ExtensionRegistriesContext';
 
-import { AddedComponentRegistryItem } from './AddedComponentsRegistry';
-import { AddedFunctionsRegistryItem } from './AddedFunctionsRegistry';
-import { AddedLinkRegistryItem } from './AddedLinksRegistry';
-import { ExposedComponentRegistryItem } from './ExposedComponentsRegistry';
-import { Registry } from './Registry';
+import { type AddedComponentRegistryItem } from './AddedComponentsRegistry';
+import { type AddedFunctionsRegistryItem } from './AddedFunctionsRegistry';
+import { type AddedLinkRegistryItem } from './AddedLinksRegistry';
+import { type ExposedComponentRegistryItem } from './ExposedComponentsRegistry';
+import { type Registry } from './Registry';
 
 export function useAddedComponentsRegistrySlice<Props>(
   extensionPointId: string

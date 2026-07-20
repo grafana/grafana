@@ -3,25 +3,26 @@ import uPlot from 'uplot';
 
 import {
   FALLBACK_COLOR,
-  Field,
+  type Field,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   MappingType,
   SpecialValueMatch,
   ThresholdsMode,
   colorManipulator,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import { FacetedData, FacetSeries } from '@grafana/ui/internal';
+import { type FacetedData, type FacetSeries } from '@grafana/ui/internal';
 
-import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
+import { pointWithin, Quadtree, type Rect } from '../barchart/quadtree';
 import { valuesToFills } from '../heatmap/utils';
 
 import { PointShape } from './panelcfg.gen';
-import { XYSeries } from './types2';
+import { type XYSeries } from './types2';
 import { getCommonPrefixSuffix } from './utils';
 
 interface DrawBubblesOpts {
@@ -39,7 +40,7 @@ interface DrawBubblesOpts {
 
 export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
   if (xySeries.length === 0) {
-    return { builder: null, prepData: () => [] };
+    return { builder: null, prepData: () => [], warn: t('xychart.errors.nodata', 'No data') };
   }
 
   let qt: Quadtree;
@@ -506,7 +507,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     ];
   }
 
-  return { builder, prepData };
+  return { builder, prepData, warn: null };
 };
 
 export type PrepData = (xySeries: XYSeries[]) => FacetedData;
@@ -554,7 +555,7 @@ function getHex8Color(color: string, theme: GrafanaTheme2) {
   return tinycolor(theme.visualization.getColorByName(color)).toHex8String();
 }
 
-interface FieldColorValues {
+export interface FieldColorValues {
   index: unknown[];
   getOne: GetOneValue;
   getAll: GetAllValues;
@@ -567,7 +568,9 @@ type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
-function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
+// exported for golden tests that freeze its palette+index output ahead of the
+// field.display.colors() migration
+export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
   let index: unknown[] = [];
   let getAll: GetAllValues = () => [];
   let getOne: GetOneValue = () => -1;

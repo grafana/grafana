@@ -1,6 +1,6 @@
 import { SegmentSection } from '@grafana/ui';
 
-import { FuncDefs, FuncInstance } from '../gfunc';
+import { type FuncDefs, type FuncInstance } from '../gfunc';
 
 import { AddGraphiteFunction } from './AddGraphiteFunction';
 import { GraphiteFunctionEditor } from './GraphiteFunctionEditor';

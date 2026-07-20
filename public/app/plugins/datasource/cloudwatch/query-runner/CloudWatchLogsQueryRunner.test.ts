@@ -1,16 +1,21 @@
 import { lastValueFrom, of } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  Field,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type Field,
   FieldType,
   LogLevel,
   LogRowContextQueryDirection,
-  LogRowModel,
+  type LogRowModel,
 } from '@grafana/data';
 
-import { CloudWatchLogsAnomaliesQuery, CloudWatchLogsQuery, LogsMode, LogsQueryLanguage } from '../dataquery.gen';
+import {
+  type CloudWatchLogsAnomaliesQuery,
+  type CloudWatchLogsQuery,
+  LogsMode,
+  LogsQueryLanguage,
+} from '../dataquery.gen';
 import { logGroupNamesVariable, regionVariable } from '../mocks/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
 import { LogsRequestMock } from '../mocks/Request';
@@ -448,6 +453,38 @@ describe('CloudWatchLogsQueryRunner', () => {
         .mockReturnValueOnce(of(getQuerySuccessResponseStub));
       await expect(runner.handleLogQueries([queryWithAllLogGroups], options, queryFn)).toEmitValuesWith(() => {
         expect(queryFn).toHaveBeenCalled();
+      });
+    });
+
+    it('allows query with data sources and no log groups', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithDataSources: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        logDataSources: [{ name: 'amazon_vpc', type: 'flow' }],
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithDataSources],
+      };
+
+      const queryFn = jest
+        .fn()
+        .mockReturnValueOnce(of(startQuerySuccessResponseStub))
+        .mockReturnValueOnce(of(getQuerySuccessResponseStub));
+      await expect(runner.handleLogQueries([queryWithDataSources], options, queryFn)).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: expect.arrayContaining([
+              expect.objectContaining({
+                subtype: 'StartQuery',
+                logDataSources: [{ name: 'amazon_vpc', type: 'flow' }],
+              }),
+            ]),
+          })
+        );
       });
     });
 

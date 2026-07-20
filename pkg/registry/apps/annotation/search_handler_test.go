@@ -2,42 +2,57 @@ package annotation
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
 	"testing"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func TestSearchHandler(t *testing.T) {
-	ctx := context.Background()
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), metav1.NamespaceDefault)
 
-	// create several test annotations with different tags and scopes
-	store := NewMemoryStore()
-	annotations := []*annotationV0.Annotation{
-		createTestAnnotation("a-1", "test", []string{"tag1"}, []string{"scope1"}),
-		createTestAnnotation("a-2", "test", []string{"tag2"}, []string{"scope2"}),
-		createTestAnnotation("a-3", "test", []string{"tag3"}, []string{"scope3"}),
-		createTestAnnotation("a-4", "test", []string{"tag1", "tag2"}, []string{"scope1", "scope2"}),
-		createTestAnnotation("a-5", "test", []string{}, []string{}),
-	}
-	for _, anno := range annotations {
-		_, err := store.Create(ctx, anno)
-		require.NoError(t, err)
+	seedAnnotations := []*annotationV0.Annotation{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: metav1.NamespaceDefault},
+			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1"}, Scopes: []string{"scope1"}},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-2", Namespace: metav1.NamespaceDefault},
+			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag2"}, Scopes: []string{"scope2"}},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-3", Namespace: metav1.NamespaceDefault},
+			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag3"}, Scopes: []string{"scope3"}},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-4", Namespace: metav1.NamespaceDefault},
+			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1", "tag2"}, Scopes: []string{"scope1", "scope2"}},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-5", Namespace: metav1.NamespaceDefault},
+			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{}, Scopes: []string{}},
+		},
 	}
 
-	handler := newSearchHandler(store)
+	accessClient := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+	dashClient := newFakeFolderResolver(nil)
 
 	tests := []struct {
 		name          string
 		queryParams   url.Values
+		deleteFirst   []string
 		expectedNames []string
 	}{
 		{
@@ -125,10 +140,44 @@ func TestSearchHandler(t *testing.T) {
 			},
 			expectedNames: []string{"a-1", "a-4"},
 		},
+		{
+			name:          "Soft-deleted annotations are excluded by default",
+			queryParams:   url.Values{"tag": []string{"tag1"}},
+			deleteFirst:   []string{"a-1"},
+			expectedNames: []string{"a-4"},
+		},
+		{
+			name: "Soft-deleted annotations are included with deleted=include",
+			queryParams: url.Values{
+				"tag":     []string{"tag1"},
+				"deleted": []string{"include"},
+			},
+			deleteFirst:   []string{"a-1"},
+			expectedNames: []string{"a-1", "a-4"},
+		},
+		{
+			name: "Only soft-deleted annotations are returned with deleted=only",
+			queryParams: url.Values{
+				"tag":     []string{"tag1"},
+				"deleted": []string{"only"},
+			},
+			deleteFirst:   []string{"a-1"},
+			expectedNames: []string{"a-1"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			store := NewMemoryStore()
+			for _, anno := range seedAnnotations {
+				_, err := store.Create(ctx, anno.DeepCopy())
+				require.NoError(t, err)
+			}
+			for _, name := range tt.deleteFirst {
+				require.NoError(t, store.Delete(ctx, metav1.NamespaceDefault, name))
+			}
+			handler := newSearchHandler(store, accessClient, dashClient, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+
 			u := &url.URL{
 				Scheme:   "http",
 				Host:     "localhost",
@@ -167,22 +216,6 @@ func TestSearchHandler(t *testing.T) {
 				assert.Empty(t, result.Items, "Expected no results")
 			}
 		})
-	}
-}
-
-func createTestAnnotation(name, text string, tags []string, scopes []string) *annotationV0.Annotation {
-	return &annotationV0.Annotation{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: metav1.NamespaceDefault,
-		},
-		Spec: annotationV0.AnnotationSpec{
-			Text:   text,
-			Time:   1000,
-			Tags:   tags,
-			Scopes: scopes,
-		},
 	}
 }
 

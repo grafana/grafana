@@ -58,15 +58,8 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 		for _, r := range requirements {
 			v := r.Key()
 
-			// Parse the history request from labels
-			// TODO: for LabelGetFullpath, we just skip this for unistore. We need a better solution for
-			// getting the full path for folders in unistore, without making a request for each parent folder.
-			// In modes 0-2 we added this label to indicate that the sql query should return that data as
-			// an annotation on the folder. However, this annotation cannot be saved to unified storage, otherwise
-			// we will have to recompute annotations for all descendants of a folder during a folder move.
-			// While we look for a better solution, unified storage will continue to return all folders & the folder
-			// service will get the full path by retrieving each parent folder.
-			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash || v == utils.LabelGetFullpath {
+			// Parse the history/trash request from labels
+			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash {
 				if len(requirements) != 1 {
 					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
 				}

@@ -1,9 +1,9 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import {
   EnrichmentDrawerExtension,
-  EnrichmentDrawerExtensionProps,
+  type EnrichmentDrawerExtensionProps,
   addEnrichmentDrawerExtension,
 } from './EnrichmentDrawerExtension';
 

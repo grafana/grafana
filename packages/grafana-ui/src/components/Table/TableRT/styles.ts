@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type TableCellHeight } from '@grafana/schema';
 
 export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight) {
   const borderColor = theme.colors.border.weak;

@@ -2,17 +2,19 @@
 import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } from 'lodash';
 
 // Types
-import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { getFieldTypeFromValue } from '../dataframe/guessFieldType';
 import { toUtc } from '../datetime/moment_wrapper';
 import { dateTimeParse } from '../datetime/parser';
-import { GrafanaTheme2 } from '../themes/types';
-import { KeyValue } from '../types/data';
-import { Field, FieldType } from '../types/dataFrame';
-import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { TimeZone } from '../types/time';
+import { type GrafanaTheme2 } from '../themes/types';
+import { type KeyValue } from '../types/data';
+import { type Field, FieldType } from '../types/dataFrame';
+import { type DecimalCount, type DisplayProcessor, type DisplayValue } from '../types/displayValue';
+import { type TimeZone } from '../types/time';
+import { type FormattedValue } from '../types/valueFormats';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
-import { FormattedValue, getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
+import { isBooleanUnit } from '../valueFormats/baseFormatters';
+import { getValueFormat } from '../valueFormats/valueFormats';
 
 import { getScaleCalculator } from './scale';
 

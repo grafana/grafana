@@ -1,12 +1,13 @@
 package provisioning
 
 import (
+	"maps"
 	"math/rand"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -119,7 +120,7 @@ func TestPostableGrafanaReceiverToEmbeddedContactPoint(t *testing.T) {
 			embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(&tt.input, expectedProvenance, decrypt)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, embeddedContactPoint)
-			assert.ElementsMatch(t, maps.Values(tt.input.SecureSettings), decrypted)
+			assert.ElementsMatch(t, slices.Collect(maps.Values(tt.input.SecureSettings)), decrypted)
 		})
 	}
 }

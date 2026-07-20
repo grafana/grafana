@@ -5,15 +5,16 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestSyncWorker_IsSupported(t *testing.T) {
@@ -45,7 +46,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10)
+			worker := NewSyncWorker(nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10, 0)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -62,7 +63,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 			Title: "test-repo",
 		},
 	})
-	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10)
+	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10, 0)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
@@ -91,7 +92,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 5,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaExceeded,
@@ -102,7 +103,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 10,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaReached,
@@ -113,7 +114,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 100,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 50}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonWithinQuota,
@@ -155,7 +156,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			// Setup resources and clients
 			mockRepoResources := resources.NewMockRepositoryResources(t)
 			mockRepoResources.On("Stats", mock.Anything).Return(tt.stats, nil)
-			repoResourcesFactory.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+			repoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 			mockClients := resources.NewMockResourceClients(t)
 			clientFactory.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
@@ -163,7 +164,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			// Sync succeeds
 			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
 			progressRecorder.On("StrictMaxErrors", 20).Return()
-			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder).Return("new-ref", nil)
+			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder, mock.Anything).Return("new-ref", nil)
 			progressRecorder.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 			progressRecorder.On("ResultReasons").Return([]string(nil))
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -205,6 +206,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
 				10,
+				0,
 			)
 
 			// Create test job
@@ -300,14 +302,14 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 
 			mockRepoResources := resources.NewMockRepositoryResources(t)
 			mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-			repoResourcesFactory.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+			repoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 			mockClients := resources.NewMockResourceClients(t)
 			clientFactory.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
 
 			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
 			progressRecorder.On("StrictMaxErrors", 20).Return()
-			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder).Return("new-ref", nil)
+			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder, mock.Anything).Return("new-ref", nil)
 			progressRecorder.On("Complete", mock.Anything, nil).Return(tt.jobStatus)
 			progressRecorder.On("ResultReasons").Return(tt.resultReasons)
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -343,6 +345,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
 				10,
+				0,
 			)
 
 			job := provisioning.Job{
@@ -431,7 +434,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation fails
-				rrf.On("Client", mock.Anything, mock.Anything).Return(nil, errors.New("failed to create repository resources client"))
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("failed to create repository resources client"))
 
 				// Progress.Complete should be called with the error
 				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
@@ -465,7 +468,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation succeeds
-				rrf.On("Client", mock.Anything, mock.Anything).Return(&resources.MockRepositoryResources{}, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(&resources.MockRepositoryResources{}, nil)
 
 				// Getting clients for namespace fails
 				cf.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to get clients"))
@@ -500,7 +503,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
@@ -510,7 +513,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true // Add specific sync options validation if needed
-				}), mockRepoResources, mock.Anything, pr).Return("new-ref", nil)
+				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
 
 				// Final status updates
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
@@ -556,7 +559,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
@@ -567,7 +570,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				syncError := errors.New("sync operation failed")
 				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true // Add specific sync options validation if needed
-				}), mockRepoResources, mock.Anything, pr).Return("", syncError)
+				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("", syncError)
 
 				// Final status updates
 				pr.On("Complete", mock.Anything, syncError).Return(provisioning.JobStatus{State: provisioning.JobStateError})
@@ -603,7 +606,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, errors.New("stats error"))
-				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Simple mocks for other calls
 				mockClients := resources.NewMockResourceClients(t)
@@ -615,7 +618,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Initial patch with granular updates, final patch with sync status and conditions
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
 		},
@@ -632,7 +635,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Initial patch with granular updates
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
@@ -654,7 +657,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
-				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
 		},
@@ -686,7 +689,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 				}
 				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
-				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Verify sync status, stats, and conditions are patched
 				rpf.On("Execute", mock.Anything, mock.Anything,
@@ -721,7 +724,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
-				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
 		},
@@ -760,7 +763,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 				}
 				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
-				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Initial patch with granular updates
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
@@ -782,7 +785,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
-				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
 		},
@@ -809,7 +812,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
@@ -818,7 +821,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true
-				}), mockRepoResources, mock.Anything, pr).Return("new-ref", nil)
+				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
 
 				// Complete with warning state and QuotaExceeded reason
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateWarning})
@@ -859,7 +862,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
@@ -867,7 +870,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Sync succeeds
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
-				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
 
@@ -903,6 +906,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
 				10,
+				0,
 			)
 
 			// Create test job

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/apimachinery/pkg/types"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -29,17 +31,21 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -53,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -87,6 +94,7 @@ type K8sTestHelper struct {
 	listenerAddress string
 	env             server.TestEnv
 	Namespacer      request.NamespaceMapper
+	httpClient      *http.Client
 
 	Org1 OrgUsers // default
 	OrgB OrgUsers // some other id
@@ -104,6 +112,9 @@ type K8sTestHelperOpts struct {
 	// If provided, these users will be used instead of creating new ones
 	Org1Users *OrgUsers
 	OrgBUsers *OrgUsers
+	// CustomHTTPClient replaces the shared HTTP client for this helper only.
+	// When nil, the shared default client is used.
+	CustomHTTPClient *http.Client
 }
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
@@ -112,48 +123,90 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 
 func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
+	opts = prepareK8sOpts(t, opts)
+	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, opts.Dir, opts.DirPath)
+	if !opts.DisableDBCleanup {
+		t.Cleanup(testDB.Cleanup)
+	}
+	return buildK8sTestHelper(t, opts, listenerAddress, env)
+}
 
+// NewK8sTestHelperShared is like NewK8sTestHelperWithOpts but uses
+// StartGrafanaEnvWithManualCleanup so the server is not tied to t.Cleanup.
+// The caller is responsible for invoking the returned shutdown function
+// (typically in TestMain after m.Run).
+func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelper, func()) {
+	t.Helper()
+	ownsGrafDir := opts.Dir == "" && opts.DirPath == ""
+	opts = prepareK8sOptsShared(t, opts)
+	grafDir := opts.Dir
+	listenerAddress, env, testDB, serverShutdown := testinfra.StartGrafanaEnvWithManualCleanup(t, opts.Dir, opts.DirPath)
+	shutdownFunc := func() {
+		serverShutdown()
+		if !opts.DisableDBCleanup {
+			testDB.Cleanup()
+		}
+		if ownsGrafDir {
+			_ = os.RemoveAll(grafDir)
+		}
+	}
+	return buildK8sTestHelper(t, opts, listenerAddress, env), shutdownFunc
+}
+
+func prepareK8sOpts(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpts {
+	t.Helper()
+	return fillK8sOpts(t, opts, testinfra.CreateGrafDir)
+}
+
+func prepareK8sOptsShared(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpts {
+	t.Helper()
+	return fillK8sOpts(t, opts, testinfra.CreateGrafDirShared)
+}
+
+func fillK8sOpts(t *testing.T, opts K8sTestHelperOpts, createDir func(*testing.T, testinfra.GrafanaOpts) (string, string)) K8sTestHelperOpts {
+	t.Helper()
 	// Use GRPC server when not configured
 	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
 		// TODO, this really should be gRPC, but sometimes fails in drone
 		// the two *should* be identical, but we have seen issues when using real gRPC vs channel
 		opts.APIServerStorageType = options.StorageTypeUnified // TODO, should be GRPC
 	}
-
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
-	var (
-		dir  = opts.Dir
-		path = opts.DirPath
-	)
 	if opts.Dir == "" && opts.DirPath == "" {
-		dir, path = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
+		opts.Dir, opts.DirPath = createDir(t, opts.GrafanaOpts)
 	}
-	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, dir, path)
-	if !opts.DisableDBCleanup {
-		t.Cleanup(testDB.Cleanup)
-	}
+	return opts
+}
 
+func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress string, env *server.TestEnv) *K8sTestHelper {
+	t.Helper()
+
+	httpClient := sharedHTTPClient
+	if opts.CustomHTTPClient != nil {
+		httpClient = opts.CustomHTTPClient
+	}
 	c := &K8sTestHelper{
 		env:             *env,
 		listenerAddress: listenerAddress,
 		t:               t,
 		Namespacer:      request.GetNamespaceMapper(nil),
+		httpClient:      httpClient,
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
 	require.NoError(c.t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), c.env.SQLStore, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(c.env.SQLStore), cfgProvider)
 	orgSvc, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 
-	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
+	teamSvc, err := teamimpl.NewLegacyService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
-	userSvc, err := userimpl.ProvideService(
+	userSvc, err := userimpl.NewLegacyService(
 		c.env.SQLStore, orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
 		supportbundlestest.NewFakeBundleService())
@@ -186,7 +239,7 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 
 	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
-	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
+	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 	require.NoError(t, err, "unable to read resource client health check")
 	require.Equal(t, resourcepb.HealthCheckResponse_SERVING, rsp.Status)
 
@@ -219,6 +272,10 @@ func (c *K8sTestHelper) SetGithubConnectionFactory(f githubConnection.GithubFact
 
 func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) {
 	c.env.GithubRepoFactory = f
+}
+
+func (c *K8sTestHelper) SetQuotaStatus(status provisioning.QuotaStatus) {
+	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetQuotaStatus(status)
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {
@@ -304,10 +361,127 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 	require.NoError(c.t, clientErr)
 
 	return &K8sResourceClient{
-		t:        c.t,
-		Args:     args,
-		Resource: client.Resource(args.GVR).Namespace(args.Namespace),
+		t:    c.t,
+		Args: args,
+		Resource: retryingResourceInterface{
+			ResourceInterface: client.Resource(args.GVR).Namespace(args.Namespace),
+		},
 	}
+}
+
+// transientLockErrorRetries bounds how many times a request that fails with a
+// transient SQLite "database is locked" error is retried.
+const (
+	transientLockErrorRetries = 10
+	transientLockErrorDelay   = 20 * time.Millisecond
+)
+
+// isTransientLockError reports whether err is a transient SQLite busy/locked
+// error surfaced through the API server. SQLite permits only a single writer,
+// so a deferred read-then-write transaction can fail with SQLITE_BUSY when
+// another connection is mid-write (for example the dual writer's background
+// unified write racing a foreground legacy write). busy_timeout does not apply
+// to lock upgrades, so these surface immediately. They are always transient and
+// never an intentional API outcome, so retrying them in integration tests is
+// safe and removes a class of flakes.
+func isTransientLockError(err error) bool {
+	if err == nil {
+		return false
+	}
+	// errors.Is is not an option here: these errors reach us through the
+	// client-go dynamic client, so the original typed sqlite3.Error has already
+	// been serialized into a *apierrors.StatusError (a generic 500) by the API
+	// server. The typed sentinel does not survive the HTTP boundary, and the
+	// StatusError code is too broad to distinguish lock contention from other
+	// internal errors, so the message string is the only reliable signal left.
+	msg := err.Error()
+	return strings.Contains(msg, "database is locked") ||
+		strings.Contains(msg, "database table is locked") ||
+		strings.Contains(msg, "SQLITE_BUSY")
+}
+
+func retryOnLockError[T any](fn func() (T, error)) (T, error) {
+	var (
+		res T
+		err error
+	)
+	for i := 0; ; i++ {
+		res, err = fn()
+		if !isTransientLockError(err) || i >= transientLockErrorRetries {
+			return res, err
+		}
+		time.Sleep(transientLockErrorDelay)
+	}
+}
+
+// retryingResourceInterface decorates a dynamic.ResourceInterface so that
+// operations failing with a transient SQLite "database is locked" error are
+// retried. Methods that are not overridden are served by the embedded interface
+// unchanged.
+type retryingResourceInterface struct {
+	dynamic.ResourceInterface
+}
+
+func (r retryingResourceInterface) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Create(ctx, obj, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) Update(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Update(ctx, obj, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) UpdateStatus(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.UpdateStatus(ctx, obj, options)
+	})
+}
+
+func (r retryingResourceInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+	_, err := retryOnLockError(func() (struct{}, error) {
+		return struct{}{}, r.ResourceInterface.Delete(ctx, name, options, subresources...)
+	})
+	return err
+}
+
+func (r retryingResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	_, err := retryOnLockError(func() (struct{}, error) {
+		return struct{}{}, r.ResourceInterface.DeleteCollection(ctx, options, listOptions)
+	})
+	return err
+}
+
+func (r retryingResourceInterface) Get(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Get(ctx, name, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	return retryOnLockError(func() (*unstructured.UnstructuredList, error) {
+		return r.ResourceInterface.List(ctx, opts)
+	})
+}
+
+func (r retryingResourceInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Patch(ctx, name, pt, data, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) Apply(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Apply(ctx, name, obj, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) ApplyStatus(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.ApplyStatus(ctx, name, obj, options)
+	})
 }
 
 // Cast the error to status error
@@ -546,9 +720,12 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	// Get the URL
 	addr := c.env.Server.HTTPServer.Listener.Addr()
 	baseUrl := fmt.Sprintf("http://%s", addr)
-	login := params.User.Identity.GetLogin()
-	if login != "" && params.User.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+	// User may be zero when callers authenticate via params.Headers (bearer token).
+	if params.User.Identity != nil {
+		login := params.User.Identity.GetLogin()
+		if login != "" && params.User.password != "" {
+			baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+		}
 	}
 
 	contentType := params.ContentType
@@ -576,7 +753,7 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 		req.Header.Set(k, v)
 	}
 
-	rsp, err := sharedHTTPClient.Do(req)
+	rsp, err := c.httpClient.Do(req)
 	require.NoError(c.t, err)
 
 	r := K8sResponse[T]{
@@ -710,7 +887,9 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		OrgID:          orgId,
 		IsAdmin:        isGrafanaAdmin,
 		Name:           name,
+		Email:          fmt.Sprintf("%s@example.com", login),
 	})
+	require.NoError(c.t, err)
 
 	// for tests to work we need to add grafana admins to every org
 	if isGrafanaAdmin {
@@ -759,6 +938,19 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	return usr
 }
 
+func (c *K8sTestHelper) AddUserToOrg(u User, orgName string, role org.RoleType) {
+	c.t.Helper()
+	orgID := c.CreateOrg(orgName)
+	userID, err := identity.UserIdentifier(u.Identity.GetID())
+	require.NoError(c.t, err)
+	err = c.orgSvc.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+		OrgID:  orgID,
+		UserID: userID,
+		Role:   role,
+	})
+	require.NoError(c.t, err)
+}
+
 func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissions.SetResourcePermissionCommand) {
 	// nolint:staticcheck
 	id, err := user.Identity.GetInternalID()
@@ -787,6 +979,7 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		c.teamSvc,
 		c.userSvc,
 		resourcepermissions.NewActionSetService(),
+		apiserver.ProvideDirectRestConfigProvider(),
 	)
 	require.NoError(c.t, err)
 
@@ -1090,4 +1283,82 @@ func (c *K8sTestHelper) RequireApiErrorStatus(err error, reason metav1.StatusRea
 	}
 
 	return status
+}
+
+// SearchDownTestEnv provides a two-step test environment for graceful degradation testing.
+// Step 1 (Setup) starts Grafana normally so migrations complete and test data can be created.
+// Step 2 (RestartWithSearchDown) shuts down step 1 and restarts with search_inject_failures_percent=100,
+// so operations can be tested against a broken search indexer.
+type SearchDownTestEnv struct {
+	helper   *K8sTestHelper
+	baseOpts testinfra.GrafanaOpts
+}
+
+// Setup returns the step 1 helper where search is working normally.
+func (e *SearchDownTestEnv) Setup() *K8sTestHelper {
+	return e.helper
+}
+
+// RestartWithSearchDown shuts down helper from step 1 and starts a new Grafana instance
+// with search_inject_failures_percent=100. Returns the step 2 helper.
+func (e *SearchDownTestEnv) RestartWithSearchDown(t *testing.T) *K8sTestHelper {
+	t.Helper()
+
+	helper := e.helper
+	e.helper = nil // prevent use-after-shutdown
+
+	// Shut down step 1
+	helper.Shutdown()
+
+	// Preserve DB data across restart
+	oldSkipTruncate := os.Getenv("SKIP_DB_TRUNCATE")
+	require.NoError(t, os.Setenv("SKIP_DB_TRUNCATE", "true"))
+	t.Cleanup(func() {
+		if oldSkipTruncate == "" {
+			_ = os.Unsetenv("SKIP_DB_TRUNCATE")
+		} else {
+			_ = os.Setenv("SKIP_DB_TRUNCATE", oldSkipTruncate)
+		}
+	})
+
+	// Step 2: Start with search failures, reusing orgs/users from step 1
+	step2Opts := e.baseOpts
+	step2Opts.SearchInjectFailuresPercent = 100
+
+	return NewK8sTestHelperWithOpts(t, K8sTestHelperOpts{
+		GrafanaOpts: step2Opts,
+		Org1Users:   &helper.Org1,
+		OrgBUsers:   &helper.OrgB,
+	})
+}
+
+// NewSearchDownTestEnv creates a test environment for search graceful degradation tests.
+// Step 1 starts Grafana normally (search works). Call RestartWithSearchDown to get step 2
+// where search_inject_failures_percent=100.
+func NewSearchDownTestEnv(t *testing.T, baseOpts testinfra.GrafanaOpts) *SearchDownTestEnv {
+	t.Helper()
+
+	// Share the same SQLite DB file between steps
+	if db.IsTestDbSQLite() {
+		tmpDir := t.TempDir()
+		dbPath := tmpDir + "/no-search-graceful-degradation-test.db"
+		oldVal := os.Getenv("SQLITE_TEST_DB")
+		require.NoError(t, os.Setenv("SQLITE_TEST_DB", dbPath))
+		t.Cleanup(func() {
+			if oldVal == "" {
+				_ = os.Unsetenv("SQLITE_TEST_DB")
+			} else {
+				_ = os.Setenv("SQLITE_TEST_DB", oldVal)
+			}
+		})
+	}
+
+	// Step 1: Start normally (search working) with DB cleanup disabled
+	baseOpts.DisableDBCleanup = true
+	helper := NewK8sTestHelper(t, baseOpts)
+
+	return &SearchDownTestEnv{
+		helper:   helper,
+		baseOpts: baseOpts,
+	}
 }

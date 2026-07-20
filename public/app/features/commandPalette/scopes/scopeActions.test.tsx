@@ -2,10 +2,10 @@ import { waitFor, renderHook } from '@testing-library/react';
 import { setIn } from 'immutable';
 import { useRegisterActions } from 'kbar';
 
-import { ScopeNode } from '@grafana/data';
+import { type ScopeNode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { NodesMap, TreeNode } from '../../scopes/selector/types';
+import { type NodesMap, type TreeNode } from '../../scopes/selector/types';
 
 import { useRegisterScopesActions } from './scopeActions';
 import { useScopeServicesState } from './scopesUtils';
@@ -37,7 +37,7 @@ const mockScopeServicesState = {
   deselectScope: jest.fn(),
   apply: jest.fn(),
   searchAllNodes: jest.fn(),
-  getScopeNodes: jest.fn(),
+  getScopeNodes: jest.fn().mockResolvedValue([]),
   scopes: {},
 };
 
@@ -47,6 +47,7 @@ const rootScopeAction = {
   name: 'Scopes',
   priority: 8,
   section: 'Scopes',
+  sectionId: 'scopes',
 };
 
 const nodes: NodesMap = {
@@ -201,6 +202,7 @@ describe('useRegisterScopesActions', () => {
         perform: expect.any(Function),
         priority: 8,
         section: 'Scopes',
+        sectionId: 'scopes',
         subtitle: 'some parent',
       },
     ];
@@ -259,12 +261,13 @@ describe('useRegisterScopesActions', () => {
       expect(mockScopeServicesState.searchAllNodes).toHaveBeenCalledWith('scopes1', 10);
     });
 
-    // Checking the second call as first one registers just the global scopes action
-    expect((useRegisterActions as jest.Mock).mock.calls[1][0]).toHaveLength(2);
-    expect((useRegisterActions as jest.Mock).mock.calls[1][0]).toMatchObject([
-      { id: 'scopes' },
-      { id: 'scopes/scope1' },
-    ]);
+    // Checking the second call as first one registers just the global scopes action.
+    // The action registration happens after getScopeNodes resolves, so wait for it.
+    await waitFor(() => {
+      const registeredActions = (useRegisterActions as jest.Mock).mock.calls[1]?.[0];
+      expect(registeredActions).toHaveLength(2);
+      expect(registeredActions).toMatchObject([{ id: 'scopes' }, { id: 'scopes/scope1' }]);
+    });
   });
 
   it('should not use global scope search when searching in some deeper scope category', async () => {
@@ -384,8 +387,7 @@ describe('useRegisterScopesActions', () => {
     expect(result.current.scopesRow).toBeDefined();
   });
 
-  it('should handle useGlobalScopesSearch when useMultipleScopeNodesEndpoint is enabled', async () => {
-    config.featureToggles.useMultipleScopeNodesEndpoint = true;
+  it('should resolve parent node titles via getScopeNodes during global search', async () => {
     const mockGetScopeNodes = jest.fn().mockResolvedValue([
       {
         metadata: { name: 'parent1' },
@@ -413,10 +415,26 @@ describe('useRegisterScopesActions', () => {
     });
 
     await waitFor(() => {
-      expect(mockGetScopeNodes).toHaveBeenCalled();
+      expect(mockGetScopeNodes).toHaveBeenCalledWith(['parent1']);
     });
 
-    config.featureToggles.useMultipleScopeNodesEndpoint = false;
+    // The leaf node's subtitle resolves to the parent node's title (not its raw parentName).
+    const actions = [
+      rootScopeAction,
+      {
+        id: 'scopes/scope1',
+        keywords: 'Scope 1 scope1',
+        name: 'Scope 1',
+        perform: expect.any(Function),
+        priority: 8,
+        section: 'Scopes',
+        sectionId: 'scopes',
+        subtitle: 'Parent 1',
+      },
+    ];
+    await waitFor(() => {
+      expect(useRegisterActions).toHaveBeenLastCalledWith(actions, [actions]);
+    });
   });
 
   it('should clear actions when search query changes quickly (race condition)', async () => {

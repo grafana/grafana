@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { AITemplateButtonComponent, GenAITemplateButtonProps, addAITemplateButton } from './addAITemplateButton';
+import { AITemplateButtonComponent, type GenAITemplateButtonProps, addAITemplateButton } from './addAITemplateButton';
 
 // Component that throws an error for testing
 const ThrowingComponent: ComponentType<GenAITemplateButtonProps> = () => {

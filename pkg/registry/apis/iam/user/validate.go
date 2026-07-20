@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/selection"
@@ -86,6 +87,15 @@ func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		}
 	}
 
+	// Only service identities or Grafana admins may update profile fields (login, email, title, etc.).
+	// OrgAdmins are allowed through the RBAC gate with "org.users:write" but
+	// are restricted to only role updates.
+	if !isServiceUser && !isGrafanaAdmin && !onlyAllowedFieldsChanged(oldObj.Spec, newObj.Spec) {
+		return apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
+			newObj.Name,
+			fmt.Errorf("updating fields beyond org role requires service identity or grafana admin"))
+	}
+
 	if newObj.Spec.Login == "" && newObj.Spec.Email == "" {
 		return apierrors.NewBadRequest("user must have either login or email")
 	}
@@ -107,6 +117,31 @@ func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceI
 	}
 
 	return nil
+}
+
+// allowedFieldsForNonServiceUsers lists the UserSpec fields that non-service users
+// are allowed to change. Role is the only one for now. Any field NOT in this set requires a service identity to modify.
+var allowedFieldsForNonServiceUsers = map[string]bool{
+	"Role": true,
+}
+
+// onlyAllowedFieldsChanged iterates over all fields of UserSpec via reflection and
+// returns true only if every field that changed is in the allowed set. This is
+// forward-compatible: any new field added to UserSpec is automatically restricted
+// to service identities without needing to update this function.
+func onlyAllowedFieldsChanged(oldSpec, newSpec iamv0alpha1.UserSpec) bool {
+	oldVal := reflect.ValueOf(oldSpec)
+	newVal := reflect.ValueOf(newSpec)
+
+	for i := range oldVal.NumField() {
+		if allowedFieldsForNonServiceUsers[oldVal.Type().Field(i).Name] {
+			continue
+		}
+		if !reflect.DeepEqual(oldVal.Field(i).Interface(), newVal.Field(i).Interface()) {
+			return false
+		}
+	}
+	return true
 }
 
 func validateRole(obj *iamv0alpha1.User) error {

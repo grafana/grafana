@@ -1,5 +1,5 @@
-import { AnnotationEvent } from '../types/annotations';
-import { DataFrame } from '../types/dataFrame';
+import { type AnnotationEvent } from '../types/annotations';
+import { type DataFrame } from '../types/dataFrame';
 
 import { BusEventBase, BusEventWithPayload } from './types';
 
@@ -8,8 +8,6 @@ import { BusEventBase, BusEventWithPayload } from './types';
  *
  * For performance reasons, this object will usually be mutated between updates.  This
  * will avoid creating new objects for events that fire frequently (ie each mouse pixel)
- *
- * @alpha
  */
 export interface DataHoverPayload {
   data?: DataFrame; // source data
@@ -22,22 +20,18 @@ export interface DataHoverPayload {
   down?: Record<string, number | null>;
 }
 
-/** @alpha */
 export class DataHoverEvent extends BusEventWithPayload<DataHoverPayload> {
   static type = 'data-hover';
 }
 
-/** @alpha */
 export class DataHoverClearEvent extends BusEventBase {
   static type = 'data-hover-clear';
 }
 
-/** @alpha */
 export class DataSelectEvent extends BusEventWithPayload<DataHoverPayload> {
   static type = 'data-select';
 }
 
-/** @alpha */
 export class AnnotationChangeEvent extends BusEventWithPayload<Partial<AnnotationEvent>> {
   static type = 'annotation-event';
 }
@@ -51,7 +45,6 @@ export type DashboardLoadedEventPayload<T> = {
   queries: Record<string, T[]>;
 };
 
-/** @alpha */
 export class DashboardLoadedEvent<T> extends BusEventWithPayload<DashboardLoadedEventPayload<T>> {
   static type = 'dashboard-loaded';
 }
