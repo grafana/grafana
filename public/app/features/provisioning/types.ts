@@ -121,6 +121,10 @@ export interface TreeItem {
 export interface FlatTreeItem {
   item: TreeItem;
   level: number;
+  // Whether this row is a folder with children that can be folded/unfolded.
+  isExpandable: boolean;
+  // Whether an expandable row is currently showing its children.
+  isExpanded: boolean;
 }
 
 // External repository from the provider (e.g., GitHub)

@@ -631,6 +631,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       padding: theme.spacing(1, 1, 0, 1),
       gap: theme.spacing(1),
+      maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
     }),
     subHeader: css({
       label: 'panel-sub-header',

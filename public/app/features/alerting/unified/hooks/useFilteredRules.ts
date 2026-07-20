@@ -252,7 +252,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       if ('policy' in matchesFilterFor) {
         const policy = filterState.policy;
         if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const isDefaultPolicyFilter = isDefaultRoutingTreeName(policy);
+          const isDefaultPolicyFilter = isDefaultRoutingTreeName(policy ?? undefined);
 
           if (isDefaultPolicyFilter) {
             if (ruleUsesDefaultPolicy(rule.rulerRule.grafana_alert.notification_settings)) {

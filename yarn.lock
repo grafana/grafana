@@ -2880,13 +2880,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.13.1--canary.1579.29419019328.0":
-  version: 8.13.1--canary.1579.29419019328.0
-  resolution: "@grafana/scenes-react@npm:8.13.1--canary.1579.29419019328.0"
+"@grafana/scenes-react@npm:8.13.3":
+  version: 8.13.3
+  resolution: "@grafana/scenes-react@npm:8.13.3"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.13.1--canary.1579.29419019328.0"
+    "@grafana/scenes": "npm:8.13.3"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -2900,13 +2900,13 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/07f274471635659fb30142a0ac303fd099d972fa39b24cbb45f67bd80dee825395caa723b6e3d5a2ca4989b4d174bb0ffc69ed82312d5eb60e64cf6106fbf6c2
+  checksum: 10/bd26381e74543950ae7f9da1cd5f545a7dfc755ccc6a02a241578bb547924908e5ae82813a56055c405b42316383b6e559bc037051bcee44e9053284f3869625
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.13.1--canary.1579.29419019328.0":
-  version: 8.13.1--canary.1579.29419019328.0
-  resolution: "@grafana/scenes@npm:8.13.1--canary.1579.29419019328.0"
+"@grafana/scenes@npm:8.13.3":
+  version: 8.13.3
+  resolution: "@grafana/scenes@npm:8.13.3"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -2931,7 +2931,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/6a4064654c93aecdaa69b74fe80dabccce60e2a10e33eddc771a89c062e0623334f35372d81c37fd0a63ef44efe51bea694d2156ab92360e2bcef85d497ccbe6
+  checksum: 10/26b2b8ea2ac379c059ef0e7e626172c6d531ad4173710a911955d226a0ff17ceb7b8103940dccc9c50f902703c57942209a4fb2fd9b1b6e5484f925cf60614ab
   languageName: node
   linkType: hard
 
@@ -15654,14 +15654,14 @@ __metadata:
   linkType: hard
 
 "dompurify@npm:^3.4.0":
-  version: 3.4.11
-  resolution: "dompurify@npm:3.4.11"
+  version: 3.4.12
+  resolution: "dompurify@npm:3.4.12"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/d0473e1a22ed9cc23d86ef426717bce866913d1a725512a9478985bd917b272e0faba5f1d6ad8b2e37f3f4219206c4385162d7c984cfedcd23396e1e6ae0bc5e
+  checksum: 10/f826b68920887eb75115a162facb42380d1c3fac441548217b30068c9fadeed14f63fa1f7a1d2ab6f63613e5a0f897aa245c9224d4abf7939cd8ae58c04646af
   languageName: node
   linkType: hard
 
@@ -18568,8 +18568,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.13.1--canary.1579.29419019328.0"
-    "@grafana/scenes-react": "npm:8.13.1--canary.1579.29419019328.0"
+    "@grafana/scenes": "npm:8.13.3"
+    "@grafana/scenes-react": "npm:8.13.3"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -32991,13 +32991,13 @@ __metadata:
   linkType: hard
 
 "websocket-driver@npm:>=0.5.1":
-  version: 0.7.4
-  resolution: "websocket-driver@npm:0.7.4"
+  version: 0.7.5
+  resolution: "websocket-driver@npm:0.7.5"
   dependencies:
     http-parser-js: "npm:>=0.5.1"
     safe-buffer: "npm:>=5.1.0"
     websocket-extensions: "npm:>=0.1.1"
-  checksum: 10/17197d265d5812b96c728e70fd6fe7d067471e121669768fe0c7100c939d997ddfc807d371a728556e24fc7238aa9d58e630ea4ff5fd4cfbb40f3d0a240ef32d
+  checksum: 10/0671fef8c79ba1b1b2fa6b7d95cb034d059410e7c4cfd7ef42063a254e12ca2917806c3a5026206b33abf25a5d44a651c547b8f74d9ec94c9fe4df6fa1bc63f7
   languageName: node
   linkType: hard
 

@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -12,10 +11,9 @@ import (
 
 func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "folder-protection-test-repo"
-	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true})
+	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}})
 
 	files := helper.NewFilesClient(repo)
 
@@ -39,7 +37,7 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	})
 
 	t.Run("GET of _folder.json is still allowed", func(t *testing.T) {
-		uid := files.ReadFolderUID(t, ctx, "protected-folder/_folder.json")
+		uid := files.ReadFolderUID(t, "protected-folder/_folder.json")
 		require.NotEmpty(t, uid)
 	})
 

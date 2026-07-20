@@ -505,6 +505,7 @@ QueryOptionsSpec: {
 	timeFrom?:         string
 	maxDataPoints?:    int
 	timeShift?:        string
+	timeCompare?:      string
 	queryCachingTTL?:  int
 	interval?:         string
 	cacheTimeout?:     string
