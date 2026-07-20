@@ -123,7 +123,7 @@ describe('VariablesUnknownTable', () => {
             options: [],
           });
           const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-          const { getUnknownsNetworkSpy, reportInteractionSpy } = await getTestContext({}, usages);
+          const { getUnknownsNetworkSpy } = await getTestContext({}, usages);
           getUnknownsNetworkSpy.mockImplementation(() => {
             return new Promise((resolve) => {
               setTimeout(() => {

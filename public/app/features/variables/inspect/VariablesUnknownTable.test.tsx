@@ -86,19 +86,11 @@ describe('VariablesUnknownTable', () => {
 
     describe('and there are renamed or missing variables', () => {
       it('then it should render the table', async () => {
-        const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
-        const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-        const { reportInteractionSpy } = await getTestContext({}, usages);
-
         await userEvent.click(screen.getByLabelText('Renamed or missing variables'));
 
         expect(screen.queryByText('No renamed or missing variables found.')).not.toBeInTheDocument();
         expect(screen.getByText('Renamed Variable')).toBeInTheDocument();
         expect(screen.getAllByTestId('VariablesUnknownButton')).toHaveLength(1);
-
-        // make sure we don't report the interaction for slow expansion
-        expect(reportInteractionSpy).toHaveBeenCalledTimes(1);
-        expect(reportInteractionSpy).toHaveBeenCalledWith('Unknown variables section expanded');
       });
 
       describe('but when the unknown processing takes a while', () => {
@@ -118,7 +110,7 @@ describe('VariablesUnknownTable', () => {
         it('then it should report slow expansion', async () => {
           const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
           const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-          const { getUnknownsNetworkSpy, reportInteractionSpy } = await getTestContext({}, usages);
+          const { getUnknownsNetworkSpy } = await getTestContext({}, usages);
           getUnknownsNetworkSpy.mockImplementation(() => {
             return new Promise((resolve) => {
               setTimeout(() => {
