@@ -2051,7 +2051,7 @@ var (
 		{
 			Name:        "grafana.newTextPanel",
 			Description: "Enables the new text panel",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatavizSquad,
 			Generate:    Generate{React: true},
 			Expression:  "false",

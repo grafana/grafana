@@ -2826,15 +2826,15 @@
     {
       "metadata": {
         "name": "grafana.newTextPanel",
-        "resourceVersion": "1784315527854",
+        "resourceVersion": "1784552406696",
         "creationTimestamp": "2026-07-17T19:10:43Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-17 19:12:07.854963 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-07-20 13:00:06.696376 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the new text panel",
-        "stage": "preview",
+        "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
