@@ -79,7 +79,7 @@ describe('TableCellActions', () => {
   });
 
   it('coerces nullish values to an empty string when filtering', async () => {
-    const { onCellFilterAdded } = setup({ value: null });
+    const { onCellFilterAdded } = setup({ value: undefined });
     await userEvent.click(screen.getByLabelText('Filter for value'));
     expect(onCellFilterAdded).toHaveBeenCalledWith({
       key: 'Field1',
