@@ -109,19 +109,13 @@ export function StartInvestigationButton({
     pollingInterval: shouldPoll ? ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS : 0,
   });
 
-  // Prefer create/retry over a stale terminal poll for the same id, and over a poll
-  // for a previous investigation id (retry creates a new row).
+  // Prefer the create/retry snapshot until poll has data for that same investigation
+  // id. Do not prefer mutation over poll for the same id — that would freeze the UI
+  // on the initial pending/in_progress snapshot after the report completes. Retry
+  // after failure creates a new id, so the id mismatch branch still covers that case.
   const investigation = useMemo(() => {
-    if (startedInvestigation) {
-      if (!polledInvestigation || polledInvestigation.id !== startedInvestigation.id) {
-        return startedInvestigation;
-      }
-      if (
-        isAssistantInvestigationTerminal(polledInvestigation.state) &&
-        !isAssistantInvestigationTerminal(startedInvestigation.state)
-      ) {
-        return startedInvestigation;
-      }
+    if (startedInvestigation && (!polledInvestigation || polledInvestigation.id !== startedInvestigation.id)) {
+      return startedInvestigation;
     }
     return polledInvestigation ?? startedInvestigation ?? lookedUpInvestigation ?? undefined;
   }, [polledInvestigation, startedInvestigation, lookedUpInvestigation]);
