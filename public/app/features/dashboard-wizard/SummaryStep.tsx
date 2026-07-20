@@ -162,37 +162,43 @@ export function SummaryStep(props: Props) {
         </div>
       )}
 
-      <div className={styles.meta}>
-        <Text variant="bodySmall" weight="medium" color="secondary">
-          {t('dashboard-wizard.summary-step.refine-label', 'Not quite right? Tell the assistant what to change')}
-        </Text>
-        <Input
-          value={feedback}
-          onChange={(event) => setFeedback(event.currentTarget.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              submitFeedback();
-            }
-          }}
-          placeholder={t(
-            'dashboard-wizard.summary-step.refine-placeholder',
-            'e.g. add a section for cache hit ratio, or use a table for errors'
-          )}
-          disabled={busy}
-        />
-      </div>
+      <div className={styles.footer}>
+        <div className={styles.meta}>
+          <Text variant="bodySmall" weight="medium" color="secondary">
+            {t('dashboard-wizard.summary-step.refine-label', 'Not quite right? Tell the assistant what to change')}
+          </Text>
+          <Input
+            value={feedback}
+            onChange={(event) => setFeedback(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                submitFeedback();
+              }
+            }}
+            placeholder={t(
+              'dashboard-wizard.summary-step.refine-placeholder',
+              'e.g. add a section for cache hit ratio, or use a table for errors'
+            )}
+            disabled={busy}
+          />
+        </div>
 
-      <Stack justifyContent="space-between">
-        <Button variant="secondary" fill="outline" onClick={onBack}>
-          {t('dashboard-wizard.summary-step.back', 'Back')}
-        </Button>
-        <Button onClick={handlePrimary} icon={hasFeedback ? (busy ? 'spinner' : 'sync') : 'ai-sparkle'} disabled={busy}>
-          {hasFeedback
-            ? t('dashboard-wizard.summary-step.refine', 'Refine plan')
-            : t('dashboard-wizard.summary-step.generate', 'Generate dashboard')}
-        </Button>
-      </Stack>
+        <Stack justifyContent="space-between">
+          <Button variant="secondary" fill="outline" onClick={onBack}>
+            {t('dashboard-wizard.summary-step.back', 'Back')}
+          </Button>
+          <Button
+            onClick={handlePrimary}
+            icon={hasFeedback ? (busy ? 'spinner' : 'sync') : 'ai-sparkle'}
+            disabled={busy}
+          >
+            {hasFeedback
+              ? t('dashboard-wizard.summary-step.refine', 'Refine plan')
+              : t('dashboard-wizard.summary-step.generate', 'Generate dashboard')}
+          </Button>
+        </Stack>
+      </div>
     </div>
   );
 }
@@ -433,6 +439,23 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing(0.5),
     }),
+    // Pins the refine input and the action buttons to the bottom of the
+    // modal's scrollable content (the same sticky technique as
+    // Modal.ButtonRow), so they stay visible while the plan scrolls. The
+    // negative top margin + matching padding swallow the container gap so
+    // scrolled content can't show through it.
+    footer: css({
+      position: 'sticky',
+      bottom: 0,
+      zIndex: 1,
+      background: theme.colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+      marginTop: theme.spacing(-2),
+      paddingTop: theme.spacing(2),
+      paddingBottom: theme.spacing(0.5),
+    }),
     chips: css({
       display: 'flex',
       flexWrap: 'wrap',
@@ -445,6 +468,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.primary,
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
+      whiteSpace: 'nowrap',
     }),
   };
 }
