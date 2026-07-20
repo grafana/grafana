@@ -110,10 +110,10 @@ type diagnosticsJobStore struct {
 var dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 
 const (
-	// diagnosticsJobRetention bounds how long a job -- including its archive bytes -- is kept. Jobs are
-	// never explicitly removed on complete/download/fail, so without this the process-wide store would
-	// grow forever on a long-running server. Pruned opportunistically on create (no background sweeper
-	// for this experimental feature); finer-grained retention is part of the limits follow-up.
+	// diagnosticsJobRetention bounds how long a job -- including its archive bytes -- is kept, so the
+	// process-wide store doesn't grow forever on a long-running server. Pruned opportunistically when
+	// a job is created and when one goes terminal (no background sweeper for this experimental
+	// feature); finer-grained retention is part of the limits follow-up.
 	diagnosticsJobRetention = time.Hour
 	// diagnosticsJobMaxEntries is a hard cap on retained jobs so a burst of creations within the
 	// retention window still can't grow the store without bound. Oldest jobs are evicted first.
@@ -185,6 +185,11 @@ func (s *diagnosticsJobStore) complete(uid string, archive []byte) {
 		j.State = jobComplete
 		j.archive = archive
 		j.finishedAt = time.Now()
+		// Prune here too, not only on create: a job going terminal is when its archive bytes
+		// materialize and when it starts counting against the cap, and there may be no further
+		// create() to trigger a sweep. Without this, finished jobs accumulate unbounded once creates
+		// stop, and the cap can be exceeded after a burst of runs all finish.
+		s.pruneLocked(j.finishedAt)
 	}
 	s.mu.Unlock()
 }
@@ -195,6 +200,7 @@ func (s *diagnosticsJobStore) fail(uid string, err error) {
 		j.State = jobError
 		j.Err = err.Error()
 		j.finishedAt = time.Now()
+		s.pruneLocked(j.finishedAt)
 	}
 	s.mu.Unlock()
 }

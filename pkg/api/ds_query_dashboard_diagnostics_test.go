@@ -292,15 +292,32 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		}
 		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
 
-		// One more terminal job pushes over the cap and must evict exactly the oldest.
+		// One more terminal job pushes over the cap and must evict exactly the oldest. complete()
+		// itself prunes, so no external sweep is needed.
 		newest := s.create(1, creator)
 		s.complete(newest.UID, nil)
-		s.pruneLocked(time.Now()) // complete() doesn't prune; force a sweep as the next create would
 		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
 		_, ok := s.snapshot(oldest, creator)
 		require.False(t, ok, "oldest terminal job should have been evicted")
 		_, ok = s.snapshot(newest.UID, creator)
 		require.True(t, ok, "newest job should remain")
+	})
+
+	// Pruning must also happen when a job goes terminal, not only on create: after a burst of runs
+	// all finish and no new job is ever created, the cap still bounds the store.
+	t.Run("enforces the cap on complete without a later create", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+		// Start every job first (all pending -> none evictable), then finish them all with no
+		// intervening create(). Each complete() must keep the store within the cap.
+		jobs := make([]*diagnosticsJob, 0, diagnosticsJobMaxEntries+5)
+		for i := 0; i < diagnosticsJobMaxEntries+5; i++ {
+			jobs = append(jobs, s.create(1, creator))
+		}
+		require.Len(t, s.jobs, diagnosticsJobMaxEntries+5, "pending jobs are never pruned")
+		for _, j := range jobs {
+			s.complete(j.UID, nil)
+		}
+		require.Len(t, s.jobs, diagnosticsJobMaxEntries, "completing beyond the cap must evict down to it")
 	})
 }
 
