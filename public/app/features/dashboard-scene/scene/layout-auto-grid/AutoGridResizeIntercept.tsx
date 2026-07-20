@@ -25,6 +25,12 @@ export interface AutoGridResizeInterceptProps {
 // Movement beyond this (px) counts the gesture as a drag rather than a click.
 const DRAG_THRESHOLD = 5;
 
+// Damped follow for the resize-drag hint: moves ~a quarter of the drag distance, capped, so the
+// panel only nudges before springing back — never tracking the pointer 1:1.
+function resist(delta: number): number {
+  return Math.sign(delta) * Math.min(Math.abs(delta) * 0.25, 24);
+}
+
 /**
  * An invisible interaction zone placed where a resize handle would normally live in a custom grid.
  * Auto layout has no per-panel sizing, so instead of a dead corner we intercept the gesture and
@@ -115,12 +121,67 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
       }
 
       const start = { x: evt.clientX, y: evt.clientY };
+      // The panel wrapper is this zone's parent; drag feedback is applied to it, not neighbours.
+      const panelEl = evt.currentTarget.parentElement;
+      const rect = panelEl?.getBoundingClientRect();
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let moved = false;
+
+      const handleMove = (moveEvt: PointerEvent) => {
+        if (!panelEl || !rect) {
+          return;
+        }
+        moved = true;
+        // Stretch from the top-left so dragging the bottom-right corner grows the panel a little —
+        // a resize hint — with heavy resistance. It springs back on release. Neighbours don't reflow.
+        const sx = rect.width > 0 ? (rect.width + resist(moveEvt.clientX - start.x)) / rect.width : 1;
+        const sy = rect.height > 0 ? (rect.height + resist(moveEvt.clientY - start.y)) / rect.height : 1;
+        panelEl.style.transformOrigin = 'top left';
+        panelEl.style.transition = 'none';
+        panelEl.style.transform = `scale(${sx}, ${sy})`;
+      };
+
       const handleUp = (upEvt: PointerEvent) => {
+        window.removeEventListener('pointermove', handleMove);
         window.removeEventListener('pointerup', handleUp);
+
         const dist = Math.hypot(upEvt.clientX - start.x, upEvt.clientY - start.y);
         // Opens whether the corner was clicked or dragged (drag-end), since either is an attempt to resize.
-        openPopover(dist > DRAG_THRESHOLD ? 'drag' : 'press');
+        const trigger = dist > DRAG_THRESHOLD ? 'drag' : 'press';
+
+        // No stretch to undo (a click, or reduced motion) — open immediately at the resize corner.
+        if (!moved || !panelEl) {
+          if (panelEl) {
+            panelEl.style.transition = 'none';
+            panelEl.style.transform = '';
+            panelEl.style.transformOrigin = '';
+          }
+          openPopover(trigger);
+          return;
+        }
+
+        // Spring back, then open the popover once the corner has settled back into place so it
+        // anchors to the resize corner rather than the displaced position.
+        let opened = false;
+        const finish = () => {
+          if (opened) {
+            return;
+          }
+          opened = true;
+          panelEl.removeEventListener('transitionend', finish);
+          panelEl.style.transition = '';
+          panelEl.style.transformOrigin = '';
+          openPopover(trigger);
+        };
+        panelEl.addEventListener('transitionend', finish);
+        panelEl.style.transition = 'transform 0.2s ease-out';
+        panelEl.style.transform = '';
+        window.setTimeout(finish, 300);
       };
+
+      if (!reducedMotion) {
+        window.addEventListener('pointermove', handleMove);
+      }
       window.addEventListener('pointerup', handleUp, { once: true });
     },
     [openPopover]
