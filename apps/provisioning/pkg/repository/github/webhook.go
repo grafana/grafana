@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v82/github"
@@ -94,6 +95,8 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 			Branch:       strings.TrimPrefix(event.GetRef(), "refs/heads/"),
 			DeletedPaths: deletedPaths,
 			TotalChanges: totalChanges,
+			Sender:       event.GetSender().GetLogin(),
+			SenderID:     strconv.FormatInt(event.GetSender().GetID(), 10),
 		}, nil
 	case *github.PullRequestEvent:
 		if event.GetRepo() == nil {
@@ -112,6 +115,8 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 			PRURL:     pr.GetHTMLURL(),
 			SourceRef: pr.GetHead().GetRef(),
 			Hash:      pr.GetHead().GetSHA(),
+			Sender:    event.GetSender().GetLogin(),
+			SenderID:  strconv.FormatInt(event.GetSender().GetID(), 10),
 		}, nil
 	case *github.PingEvent:
 		return repository.WebhookEvent{Type: repository.WebhookEventPing}, nil

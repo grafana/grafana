@@ -1532,3 +1532,113 @@ func TestValidateAuthor(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateWebhookSender(t *testing.T) {
+	userCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{
+		Type:    authlib.TypeUser,
+		Name:    "Test User",
+		UserUID: "abc123",
+	})
+	serviceCtx, _, err := identity.WithProvisioningIdentity(t.Context(), "default")
+	require.NoError(t, err)
+
+	annotations := map[string]string{
+		AnnoWebhookSender:   "grot",
+		AnnoWebhookSenderID: "123",
+	}
+
+	tests := []struct {
+		name            string
+		ctx             context.Context
+		operation       admission.Operation
+		annotations     map[string]string
+		oldAnnotations  map[string]string
+		wantErrContains string
+	}{
+		{
+			name:        "create without annotations",
+			ctx:         userCtx,
+			operation:   admission.Create,
+			annotations: nil,
+		},
+		{
+			name:        "create by provisioning service identity",
+			ctx:         serviceCtx,
+			operation:   admission.Create,
+			annotations: annotations,
+		},
+		{
+			name:            "create by user",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     annotations,
+			wantErrContains: "may only be set by the provisioning service",
+		},
+		{
+			name:            "create without requester",
+			ctx:             t.Context(),
+			operation:       admission.Create,
+			annotations:     annotations,
+			wantErrContains: "may only be set by the provisioning service",
+		},
+		{
+			name:           "update with unchanged annotations",
+			ctx:            userCtx,
+			operation:      admission.Update,
+			annotations:    annotations,
+			oldAnnotations: annotations,
+		},
+		{
+			name:            "update changing sender",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoWebhookSender: "someone else", AnnoWebhookSenderID: "123"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoWebhookSender + " is immutable",
+		},
+		{
+			name:            "update removing sender id",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoWebhookSender: "grot"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoWebhookSenderID + " is immutable",
+		},
+		{
+			name:        "delete is ignored",
+			ctx:         userCtx,
+			operation:   admission.Delete,
+			annotations: annotations,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "test-job", Annotations: tt.annotations}}
+			var oldObj runtime.Object
+			if tt.oldAnnotations != nil {
+				oldObj = &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "test-job", Annotations: tt.oldAnnotations}}
+			}
+			attr := admission.NewAttributesRecord(
+				job,
+				oldObj,
+				provisioning.JobResourceInfo.GroupVersionKind(),
+				"default",
+				"test-job",
+				provisioning.JobResourceInfo.GroupVersionResource(),
+				"",
+				tt.operation,
+				nil,
+				false,
+				&user.DefaultInfo{},
+			)
+
+			err := validateWebhookSender(tt.ctx, attr, job)
+			if tt.wantErrContains != "" {
+				require.ErrorContains(t, err, tt.wantErrContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

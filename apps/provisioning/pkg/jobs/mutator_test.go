@@ -72,6 +72,28 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			expected:    map[string]string{},
 		},
 		{
+			name:        "user cannot set webhook annotations",
+			operation:   admission.Create,
+			requester:   userRequester,
+			enabled:     true,
+			annotations: map[string]string{AnnoWebhookSender: "spoof", AnnoWebhookSenderID: "1"},
+			expected: map[string]string{
+				AnnoAuthor:      "Test User",
+				AnnoAuthorEmail: "test@example.com",
+			},
+		},
+		{
+			name:      "provisioning service identity keeps webhook annotations",
+			operation: admission.Create,
+			requester: &identity.StaticRequester{
+				Type:    authlib.TypeAccessPolicy,
+				UserUID: "provisioning",
+			},
+			enabled:     false,
+			annotations: map[string]string{AnnoWebhookSender: "grot", AnnoWebhookSenderID: "123"},
+			expected:    map[string]string{AnnoWebhookSender: "grot", AnnoWebhookSenderID: "123"},
+		},
+		{
 			name:        "non-create operation is left untouched",
 			operation:   admission.Update,
 			requester:   userRequester,
@@ -102,10 +124,10 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			mutator := NewAdmissionMutator(func(context.Context) bool { return tt.enabled })
 			require.NoError(t, mutator.Mutate(ctx, attrs, nil))
 
-			// The mutator only ever touches the author annotations; assert on
-			// exactly those to confirm none are left stray.
+			// The mutator only ever touches the attribution annotations; assert
+			// on exactly those to confirm none are left stray.
 			got := map[string]string{}
-			for _, k := range []string{AnnoAuthor, AnnoAuthorEmail} {
+			for _, k := range []string{AnnoAuthor, AnnoAuthorEmail, AnnoWebhookSender, AnnoWebhookSenderID} {
 				if v, ok := job.Annotations[k]; ok {
 					got[k] = v
 				}

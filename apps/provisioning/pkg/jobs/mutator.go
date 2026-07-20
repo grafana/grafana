@@ -6,8 +6,11 @@ import (
 
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // UserAttributionEnabledFunc reports whether user attribution is enabled for the
@@ -49,6 +52,13 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	// author always reflects who actually made the request.
 	delete(job.Annotations, AnnoAuthor)
 	delete(job.Annotations, AnnoAuthorEmail)
+
+	// Webhook sender annotations are only set by the provisioning service
+	// identity (the webhook dispatcher); strip them from any other caller.
+	if info, ok := types.AuthInfoFrom(ctx); !ok || !identity.IsProvisioningServiceIdentity(info) {
+		delete(job.Annotations, AnnoWebhookSender)
+		delete(job.Annotations, AnnoWebhookSenderID)
+	}
 
 	if m.userAttributionEnabled == nil || !m.userAttributionEnabled(ctx) {
 		return nil
