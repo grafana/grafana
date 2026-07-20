@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { AppEvents, CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
@@ -256,9 +257,21 @@ export function UnconfiguredPanelComp(props: PanelProps) {
                 }
               >
                 {isCompact ? (
-                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} tooltip={button.label} />
+                  <Button
+                    icon={button.icon}
+                    variant={button.variant}
+                    onClick={button.onClick}
+                    tooltip={button.label}
+                    data-testid={selectors.components.UnconfiguredPanel.actionButton(button.key)}
+                  />
                 ) : (
-                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} fullWidth>
+                  <Button
+                    icon={button.icon}
+                    variant={button.variant}
+                    onClick={button.onClick}
+                    fullWidth
+                    data-testid={selectors.components.UnconfiguredPanel.actionButton(button.key)}
+                  >
                     {button.label}
                   </Button>
                 )}

@@ -57,6 +57,14 @@ export const versionedComponents = {
       '13.0.0': 'data-testid Card heading',
     },
   },
+  CreateNewButton: {
+    newButton: {
+      '13.2.0': 'data-testid CreateNewButton New button',
+    },
+    newDashboardLink: {
+      '13.2.0': 'data-testid CreateNewButton New dashboard link',
+    },
+  },
   DashboardEditPaneSplitter: {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
@@ -658,6 +666,11 @@ export const versionedComponents = {
       },
     },
   },
+  UnconfiguredPanel: {
+    actionButton: {
+      '13.2.0': (key: string) => `data-testid UnconfiguredPanel action-button ${key}`,
+    },
+  },
   PanelEditor: {
     General: {
       content: {
@@ -990,6 +1003,17 @@ export const versionedComponents = {
     },
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
+    },
+    FilterByValue: {
+      addConditionButton: {
+        '13.2.0': 'data-testid Transforms FilterByValue add-condition-button',
+      },
+      fieldSelect: {
+        '13.2.0': (index: number) => `data-testid Transforms FilterByValue field-select ${index}`,
+      },
+      matchSelect: {
+        '13.2.0': (index: number) => `data-testid Transforms FilterByValue match-select ${index}`,
+      },
     },
     Reduce: {
       modeLabel: {
