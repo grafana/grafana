@@ -455,6 +455,10 @@ const (
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
 
+	// FlagAzureMonitorServerSidePagination
+	// Enables server-side ARM pagination for Azure Monitor subscription and workspace listing on the passthrough resource endpoints.
+	FlagAzureMonitorServerSidePagination = "azureMonitorServerSidePagination"
+
 	// FlagPlaylistsReconciler
 	// Enables experimental reconciler for playlists
 	FlagPlaylistsReconciler = "playlistsReconciler"

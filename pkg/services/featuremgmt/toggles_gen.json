@@ -1194,6 +1194,19 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorServerSidePagination",
+        "resourceVersion": "1784586223726",
+        "creationTimestamp": "2026-07-20T22:23:43Z"
+      },
+      "spec": {
+        "description": "Enables server-side ARM pagination for Azure Monitor subscription and workspace listing on the passthrough resource endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureResourcePickerUpdates",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-31T22:56:50Z",

@@ -7,15 +7,23 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
+
+func withPaginationFlag(req *http.Request) *http.Request {
+	cfg := config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorServerSidePagination"})
+	return req.WithContext(config.WithGrafanaConfig(req.Context(), cfg))
+}
 
 func newArmPagingServer(t *testing.T, totalPages, perPage int) (srv *httptest.Server, requestCount *int, seenTokens *[]string) {
 	t.Helper()
@@ -84,14 +92,16 @@ func decodeSubscriptionIDs(t *testing.T, body []byte) []string {
 }
 
 func TestHandleSubscriptions(t *testing.T) {
+	const path = "http://foo/azuremonitor/subscriptions?api-version=2019-03-01"
+
 	t.Run("single page returns all items with no cursor", func(t *testing.T) {
 		srv, count, _ := newArmPagingServer(t, 1, 3)
 		s := newPaginationTestService(srv.URL, srv.Client())
 
 		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions", nil)
+		req, err := http.NewRequest(http.MethodGet, path, nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
+		s.handleResourceReq(azureMonitor)(rw, withPaginationFlag(req))
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -109,9 +119,9 @@ func TestHandleSubscriptions(t *testing.T) {
 		s := newPaginationTestService(srv.URL, srv.Client())
 
 		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=true", nil)
+		req, err := http.NewRequest(http.MethodGet, path+"&listAll=true", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
+		s.handleResourceReq(azureMonitor)(rw, withPaginationFlag(req))
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -131,9 +141,9 @@ func TestHandleSubscriptions(t *testing.T) {
 		s := newPaginationTestService(srv.URL, srv.Client())
 
 		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=false", nil)
+		req, err := http.NewRequest(http.MethodGet, path+"&listAll=false", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
+		s.handleResourceReq(azureMonitor)(rw, withPaginationFlag(req))
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -149,45 +159,31 @@ func TestHandleSubscriptions(t *testing.T) {
 		require.Equal(t, []string{"sub-1", "sub-2"}, decodeSubscriptionIDs(t, body))
 	})
 
-	t.Run("on-demand mode re-injects the continuation token", func(t *testing.T) {
-		srv, count, tokens := newArmPagingServer(t, 3, 2)
+	t.Run("on-demand mode re-injects the continuation token without leaking control params", func(t *testing.T) {
+		var seenQuery url.Values
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			seenQuery = r.URL.Query()
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"value":[{"subscriptionId":"sub-3"},{"subscriptionId":"sub-4"}]}`))
+		}))
+		t.Cleanup(srv.Close)
 		s := newPaginationTestService(srv.URL, srv.Client())
 
 		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=false&nextToken=page2", nil)
+		req, err := http.NewRequest(http.MethodGet, path+"&listAll=false&nextToken=page2", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
+		s.handleResourceReq(azureMonitor)(rw, withPaginationFlag(req))
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
-		require.Equal(t, 1, *count)
-		require.Equal(t, []string{"page2"}, *tokens)
+		require.Equal(t, "page2", seenQuery.Get("$skiptoken"))
+		require.Empty(t, seenQuery.Get("listAll"))
+		require.Empty(t, seenQuery.Get("nextToken"))
+		require.Equal(t, "2019-03-01", seenQuery.Get("api-version"))
 
 		body, err := readAllClose(res)
 		require.NoError(t, err)
 		require.Equal(t, []string{"sub-3", "sub-4"}, decodeSubscriptionIDs(t, body))
-	})
-
-	t.Run("default (no listAll) returns a single page plus a Link cursor", func(t *testing.T) {
-		srv, count, _ := newArmPagingServer(t, 3, 2)
-		s := newPaginationTestService(srv.URL, srv.Client())
-
-		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions", nil)
-		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
-
-		res := rw.Result()
-		require.Equal(t, http.StatusOK, res.StatusCode)
-		require.Equal(t, 1, *count)
-
-		link := res.Header.Get("Link")
-		require.Contains(t, link, `rel="next"`)
-		require.Contains(t, link, "nextToken=page2")
-
-		body, err := readAllClose(res)
-		require.NoError(t, err)
-		require.Equal(t, []string{"sub-1", "sub-2"}, decodeSubscriptionIDs(t, body))
 	})
 
 	t.Run("eager mode stops at the page cap and flags truncation", func(t *testing.T) {
@@ -195,9 +191,9 @@ func TestHandleSubscriptions(t *testing.T) {
 		s := newPaginationTestService(srv.URL, srv.Client())
 
 		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=true", nil)
+		req, err := http.NewRequest(http.MethodGet, path+"&listAll=true", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
+		s.handleResourceReq(azureMonitor)(rw, withPaginationFlag(req))
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -221,24 +217,53 @@ func TestHandleSubscriptions(t *testing.T) {
 		s := newPaginationTestService(srv.URL, srv.Client())
 
 		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions", nil)
+		req, err := http.NewRequest(http.MethodGet, path, nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
+		s.handleResourceReq(azureMonitor)(rw, withPaginationFlag(req))
 
 		require.Equal(t, http.StatusBadGateway, rw.Result().StatusCode)
+	})
+
+	t.Run("flag off proxies the request verbatim without pagination", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"value":[{"subscriptionId":"sub-1"}],"nextLink":"https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=page2"}`))
+		}))
+		t.Cleanup(srv.Close)
+		s := &Service{
+			im: &fakeInstance{
+				services: map[string]types.DatasourceService{
+					azureMonitor: {
+						URL:        srv.URL,
+						HTTPClient: srv.Client(),
+						Logger:     log.DefaultLogger,
+					},
+				},
+			},
+			executors: map[string]azDatasourceExecutor{
+				azureMonitor: &metrics.AzureMonitorDatasource{
+					Proxy: &httpServiceProxy{logger: log.DefaultLogger},
+				},
+			},
+			logger: log.DefaultLogger,
+		}
+
+		rw := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodGet, path, nil)
+		require.NoError(t, err)
+		s.handleResourceReq(azureMonitor)(rw, req)
+
+		res := rw.Result()
+		require.Equal(t, http.StatusOK, res.StatusCode)
+		require.Empty(t, res.Header.Get("Link"))
+
+		body, err := readAllClose(res)
+		require.NoError(t, err)
+		require.Contains(t, string(body), "nextLink")
 	})
 }
 
 func TestHandleWorkspaces(t *testing.T) {
-	t.Run("requires subscriptionId", func(t *testing.T) {
-		s := newPaginationTestService("https://management.azure.com", &http.Client{})
-		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/workspaces", nil)
-		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/workspaces"])(rw, req)
-		require.Equal(t, http.StatusBadRequest, rw.Result().StatusCode)
-	})
-
 	t.Run("targets the workspaces path for the subscription", func(t *testing.T) {
 		var requestedPath string
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -250,9 +275,9 @@ func TestHandleWorkspaces(t *testing.T) {
 		s := newPaginationTestService(srv.URL, srv.Client())
 
 		rw := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodGet, "http://foo/workspaces?subscriptionId=sub-42", nil)
+		req, err := http.NewRequest(http.MethodGet, "http://foo/azuremonitor/subscriptions/sub-42/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints()["/workspaces"])(rw, req)
+		s.handleResourceReq(azureMonitor)(rw, withPaginationFlag(req))
 
 		require.Equal(t, http.StatusOK, rw.Result().StatusCode)
 		require.Equal(t, "/subscriptions/sub-42/providers/Microsoft.OperationalInsights/workspaces", requestedPath)
