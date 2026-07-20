@@ -96,7 +96,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                               |
-| `grafana.newTextPanel`            | Enables the new text panel                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                           |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                           |
