@@ -9,9 +9,9 @@ func MigrateDimensionFilters(filters []dataquery.AzureMetricDimension) []dataque
 		// Ignore the deprecation check as this is a migration
 		// nolint:staticcheck
 		newFilter.Filter = nil
-		// If there is no old field and the new field is specified - append as this is valid
+		// If there is no old field, append the new field (or no filter) as valid
 		// nolint:staticcheck
-		if filter.Filter == nil && filter.Filters != nil {
+		if filter.Filter == nil {
 			newFilters = append(newFilters, newFilter)
 		} else {
 			// nolint:staticcheck
