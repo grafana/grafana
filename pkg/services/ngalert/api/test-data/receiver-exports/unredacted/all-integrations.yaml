@@ -43,9 +43,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: '{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved'
@@ -94,9 +94,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
@@ -154,9 +154,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
@@ -208,9 +208,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             issue_type: Test Issue Type
@@ -270,9 +270,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             kafkaClusterId: "12345"
@@ -322,9 +322,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             title: test-title
@@ -388,9 +388,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             httpMethod: PUT
@@ -445,9 +445,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
@@ -506,9 +506,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             integrationKey: test-api-key
@@ -567,9 +567,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
@@ -626,9 +626,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
@@ -710,9 +710,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
@@ -764,9 +764,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
@@ -817,9 +817,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             recipient_id: '*1234567'
@@ -866,9 +866,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             messageType: test-messagetype
@@ -917,9 +917,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
@@ -970,9 +970,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             httpMethod: PUT
@@ -1001,9 +1001,9 @@ contactPoints:
                     6MF9+Yw1Yy0t
                     -----END CERTIFICATE-----
                 clientKey: |-
-                    -----BEGIN EC PRIVATE KEY-----
+                    -----BEGIN FAKE TEST KEY-----
                     THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                    -----END EC PRIVATE KEY-----
+                    -----END FAKE TEST KEY-----
                 insecureSkipVerify: false
             url: grafana://noop
             username: test-user
@@ -1051,9 +1051,9 @@ contactPoints:
                             6MF9+Yw1Yy0t
                             -----END CERTIFICATE-----
                         clientKey: |-
-                            -----BEGIN EC PRIVATE KEY-----
+                            -----BEGIN FAKE TEST KEY-----
                             THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
-                            -----END EC PRIVATE KEY-----
+                            -----END FAKE TEST KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
             message: test-message
