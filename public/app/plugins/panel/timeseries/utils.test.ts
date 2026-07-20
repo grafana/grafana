@@ -3,7 +3,13 @@ import { LineInterpolation } from '@grafana/ui';
 
 import { type AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
 
-import { getGroupedFilters, getTimezones, prepareGraphableFields, setClassicPaletteIdxs } from './utils';
+import {
+  getCompareSeriesIdentityKey,
+  getGroupedFilters,
+  getTimezones,
+  prepareGraphableFields,
+  setClassicPaletteIdxs,
+} from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -384,6 +390,40 @@ describe('getTimezones', () => {
 
   it('returns all provided timezones unchanged when non-empty', () => {
     expect(getTimezones(['UTC', 'America/New_York'], 'browser')).toEqual(['UTC', 'America/New_York']);
+  });
+});
+
+describe('getCompareSeriesIdentityKey', () => {
+  it('prefers labels (with field name) when present', () => {
+    const key = getCompareSeriesIdentityKey({
+      name: 'Value',
+      type: FieldType.number,
+      config: {},
+      values: [],
+      labels: { pod: 'a' },
+    });
+    expect(key).toBe('Value{pod="a"}');
+  });
+
+  it('falls back to displayNameFromDS when there are no labels', () => {
+    const key = getCompareSeriesIdentityKey({
+      name: 'Value',
+      type: FieldType.number,
+      config: { displayNameFromDS: 'ServerA' },
+      values: [],
+    });
+    expect(key).toBe('ServerA');
+  });
+
+  it('falls back to frame name + field name when no labels or displayNameFromDS', () => {
+    const frame = toDataFrame({ name: 'B', fields: [{ name: 'Value', type: FieldType.number, values: [] }] });
+    const key = getCompareSeriesIdentityKey({ name: 'Value', type: FieldType.number, config: {}, values: [] }, frame);
+    expect(key).toBe('B:Value');
+  });
+
+  it('falls back to the field name when nothing else is available', () => {
+    const key = getCompareSeriesIdentityKey({ name: 'Value', type: FieldType.number, config: {}, values: [] });
+    expect(key).toBe('Value');
   });
 });
 
