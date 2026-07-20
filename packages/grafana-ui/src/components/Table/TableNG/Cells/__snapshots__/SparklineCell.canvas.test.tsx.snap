@@ -1,0 +1,750 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient w/ continuous color mode 1`] = `
+[
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 0,
+      "y1": 25,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 0,
+      "y1": 25,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#982287",
+          ],
+          [
+            1,
+            "#030009",
+          ],
+        ],
+      },
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "rgba(152, 34, 135, 0.17)",
+          ],
+          [
+            1,
+            "rgba(3, 0, 9, 0.17)",
+          ],
+        ],
+      },
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 285,
+            "x": -0.5,
+            "y": -0.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 284,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 0,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 0,
+            "y": 25,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 284,
+            "y": 0,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TableNG SparklineCell threshold wiring (canvas) renders none gradient w/ continuous color mode 1`] = `
+[
+  {
+    "props": {
+      "value": "#440154",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(68, 1, 84, 0.17)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 285,
+            "x": -0.5,
+            "y": -0.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 284,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 0,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 0,
+            "y": 25,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 284,
+            "y": 0,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TableNG SparklineCell threshold wiring (canvas) renders opacity gradient w/ continuous color mode 1`] = `
+[
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 0,
+      "y1": 25,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "value": "#440154",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#4401542b",
+          ],
+          [
+            1,
+            "#44015400",
+          ],
+        ],
+      },
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 285,
+            "x": -0.5,
+            "y": -0.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 284,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 0,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 0,
+            "y": 25,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 284,
+            "y": 0,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient w/ Thresholds color mode 1`] = `
+[
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 25,
+      "y1": 5,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 25,
+      "y1": 5,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#73BF69ff",
+          ],
+          [
+            1,
+            "#73BF69ff",
+          ],
+          [
+            1,
+            "#F2495Cff",
+          ],
+        ],
+      },
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#73BF692b",
+          ],
+          [
+            1,
+            "#73BF692b",
+          ],
+          [
+            1,
+            "#F2495C2b",
+          ],
+        ],
+      },
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 285,
+            "x": -0.5,
+            "y": -0.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 284,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 0,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 0,
+            "y": 25,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 284,
+            "y": 0,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient w/ continuous color mode 1`] = `
+[
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 25,
+      "y1": 0,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 25,
+      "y1": 0,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#440154ff",
+          ],
+          [
+            0.12,
+            "#472d7bff",
+          ],
+          [
+            0.24,
+            "#3b528bff",
+          ],
+          [
+            0.36,
+            "#2c728eff",
+          ],
+          [
+            0.48,
+            "#21918cff",
+          ],
+          [
+            0.64,
+            "#28ae80ff",
+          ],
+          [
+            0.76,
+            "#5ec962ff",
+          ],
+          [
+            0.88,
+            "#addc30ff",
+          ],
+          [
+            1,
+            "#fde725ff",
+          ],
+        ],
+      },
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#4401542b",
+          ],
+          [
+            0.12,
+            "#472d7b2b",
+          ],
+          [
+            0.24,
+            "#3b528b2b",
+          ],
+          [
+            0.36,
+            "#2c728e2b",
+          ],
+          [
+            0.48,
+            "#21918c2b",
+          ],
+          [
+            0.64,
+            "#28ae802b",
+          ],
+          [
+            0.76,
+            "#5ec9622b",
+          ],
+          [
+            0.88,
+            "#addc302b",
+          ],
+          [
+            1,
+            "#fde7252b",
+          ],
+        ],
+      },
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 285,
+            "x": -0.5,
+            "y": -0.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "x": 284,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 0,
+            "y": 25.255102040816325,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {
+            "x": 0,
+            "y": 25,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 284,
+            "y": 0,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;

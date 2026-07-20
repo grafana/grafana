@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
+import type * as React from 'react';
 
-import DraggableManager, { DraggableManagerOptions } from './DraggableManager';
+import DraggableManager, { type DraggableManagerOptions } from './DraggableManager';
 import EUpdateTypes from './EUpdateTypes';
 
 describe('DraggableManager', () => {

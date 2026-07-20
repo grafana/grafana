@@ -1,12 +1,12 @@
 package folder
 
-foldersV1beta1: {
+foldersV1: {
 	kind:       "Folder"
 	pluralName: "Folders"
 
-  schema: {
+	schema: {
 		spec: {
-			title:    string
+			title:        string
 			description?: string
 		}
 	}
@@ -15,3 +15,5 @@ foldersV1beta1: {
 		"spec.title",
 	]
 }
+
+foldersV1beta1: foldersV1

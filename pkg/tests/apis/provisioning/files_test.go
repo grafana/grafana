@@ -9,15 +9,15 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"sync"
+	"strings"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,18 +25,17 @@ import (
 )
 
 func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	const repo = "empty-files-repo"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:               repo,
-		Path:               helper.ProvisioningPath,
-		Target:             "instance",
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
 	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	rsp := helper.AdminREST.Get().
 		Namespace("default").
@@ -53,53 +52,26 @@ func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
+	helper := sharedHelper(t)
 
 	const repo = "delete-test-repo"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Path:   helper.ProvisioningPath,
-		Target: "instance",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"testdata/all-panels.json":    "dashboard1.json",
 			"testdata/text-options.json":  "folder/dashboard2.json",
 			"testdata/timeline-demo.json": "folder/nested/dashboard3.json",
 			"testdata/.keep":              "folder/nested/.keep",
 		},
-		SkipResourceAssertions: true, // tested below
 	})
 
-	var dashboards *unstructured.UnstructuredList
-	var folders *unstructured.UnstructuredList
-	var err error
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 3 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
-			return
-		}
-		folders, err = helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list folders: error: %s", err.Error())
-			return
-		}
-		if len(folders.Items) != 2 {
-			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
-			return
-		}
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 2)
 
-		assert.Len(collect, dashboards.Items, 3)
-		assert.Len(collect, folders.Items, 2)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
-
-	helper.ValidateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
+	helper.ValidateManagedDashboardsFolderMetadata(t, repo, dashboards)
 
 	t.Run("delete individual dashboard file on configured branch should succeed", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
@@ -107,14 +79,12 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "dashboard1.json").
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "delete file on configured branch should succeed")
 
 		// Verify the dashboard is removed from Grafana
 		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json
-		_, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		require.Error(t, err, "dashboard should be deleted from Grafana")
-		require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted dashboard")
+		helper.RequireDashboardsNotFound(t, allPanelsUID)
 	})
 
 	t.Run("delete individual dashboard file on branch should succeed", func(t *testing.T) {
@@ -129,7 +99,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 			Name(repo).
 			SubResource("files", "branch-test-delete.json").
 			Param("ref", branchRef).
-			Do(ctx)
+			Do(t.Context())
 		// Note: This might fail if branch doesn't exist, but the important thing is it doesn't return MethodNotAllowed
 		if result.Error() != nil {
 			var statusErr *apierrors.StatusError
@@ -153,8 +123,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "should return MethodNotAllowed for configured branch folder delete")
 
 		// Verify a file inside the folder still exists (operation was rejected)
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard2.json")
-		require.NoError(t, err, "file inside folder should still exist after rejected delete")
+		helper.RequireRepoFileExists(t, repo, "folder", "dashboard2.json")
 	})
 
 	t.Run("deleting a non-existent file should fail", func(t *testing.T) {
@@ -163,38 +132,34 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "non-existent.json").
-			Do(ctx)
+			Do(t.Context())
 		require.Error(t, result.Error())
 	})
 }
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedHelper(t)
 
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
 	repo := "move-test-repo"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Path:   helper.ProvisioningPath,
-		Target: "instance",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
 	})
 
-	// Validate the dashboard metadata
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 1, len(dashboards.Items))
+	movedDashboards := helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
-	helper.ValidateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
+	// Validate the dashboard metadata
+	helper.ValidateManagedDashboardsFolderMetadata(t, repo, movedDashboards)
 
 	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
 	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
-	obj, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 	require.NoError(t, err, "original dashboard should exist in Grafana")
 	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
@@ -212,12 +177,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
 		// Verify file was moved - read from new location
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
-		require.NoError(t, err, "file should exist at new location")
+		helper.RequireRepoFileExists(t, repo, "moved", "simple-move.json")
 
 		// Verify file no longer exists at old location
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
-		require.Error(t, err, "file should not exist at old location")
+		helper.RequireRepoFileNotFound(t, repo, "all-panels.json")
 	})
 
 	t.Run("move file without content change on branch should succeed", func(t *testing.T) {
@@ -240,7 +203,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 
 		// If move succeeded (not MethodNotAllowed), verify the file moved in the repository
 		if resp.StatusCode == http.StatusOK {
-			movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move-branch.json")
+			movedObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "moved", "simple-move-branch.json")
 			require.NoError(t, err, "moved file should exist in repository")
 
 			// Check the content is preserved (verify it's still the all-panels dashboard)
@@ -274,12 +237,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
 		// File should exist at new location
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
-		require.NoError(t, err, "file should exist at new nested location")
+		helper.RequireRepoFileExists(t, repo, "deep", "nested", "timeline.json")
 
 		// File should not exist at original location
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourceFile)
-		require.Error(t, err, "file should not exist at original location after move")
+		helper.RequireRepoFileNotFound(t, repo, sourceFile)
 	})
 
 	t.Run("move file with content update on configured branch should succeed", func(t *testing.T) {
@@ -301,7 +262,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update on configured branch should succeed")
 
 		// File should exist at new location with updated content
-		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "updated", "content-updated.json")
+		movedObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "updated", "content-updated.json")
 		require.NoError(t, err, "file should exist at new location")
 
 		// Verify content was updated (should be text-options dashboard now)
@@ -314,14 +275,20 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, "Text options", title, "content should be updated")
 
 		// Source file should not exist anymore
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourcePath)
-		require.Error(t, err, "source file should not exist after move")
+		helper.RequireRepoFileNotFound(t, repo, sourcePath)
 	})
 
 	t.Run("move directory on configured branch should return MethodNotAllowed", func(t *testing.T) {
-		// Create some files in a directory first using existing testdata files
-		helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "source-dir/timeline-demo.json")
-		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "source-dir/text-options.json")
+		// Create some files in a directory first using existing testdata files.
+		// Rewrite their UIDs to be unique: the default timeline-demo/text-options
+		// UIDs already exist in the repo from earlier subtests (deep/nested/timeline.json
+		// and updated/content-updated.json). Two files mapping to the same dashboard UID
+		// are written in parallel by the full sync below and would race into an
+		// optimistic-lock conflict ("the object has been modified").
+		timelineContent := strings.Replace(string(helper.LoadFile("testdata/timeline-demo.json")), `"name": "mIJjFy8Kz"`, `"name": "move-dir-timeline"`, 1)
+		helper.WriteToProvisioningPath(t, "source-dir/timeline-demo.json", []byte(timelineContent))
+		textOptionsContent := strings.Replace(string(helper.LoadFile("testdata/text-options.json")), `"name": "WZ7AhQiVz"`, `"name": "move-dir-text"`, 1)
+		helper.WriteToProvisioningPath(t, "source-dir/text-options.json", []byte(textOptionsContent))
 
 		// Sync to ensure files are recognized
 		helper.SyncAndWait(t, repo, nil)
@@ -340,8 +307,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "directory move on configured branch should return MethodNotAllowed")
 
 		// Verify files in source directory still exist (operation was rejected)
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "source-dir", "timeline-demo.json")
-		require.NoError(t, err, "file in source directory should still exist after rejected move")
+		helper.RequireRepoFileExists(t, repo, "source-dir", "timeline-demo.json")
 	})
 
 	t.Run("error cases", func(t *testing.T) {
@@ -353,7 +319,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 				SubResource("files", "target.json").
 				Body([]byte(`{"test": "content"}`)).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx)
+				Do(t.Context())
 			require.Error(t, result.Error(), "should fail without originalPath")
 		})
 
@@ -366,7 +332,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 				SubResource("files", "simple-test.json").
 				Body(helper.LoadFile("testdata/all-panels.json")).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx)
+				Do(t.Context())
 			require.NoError(t, result.Error(), "should create test file")
 
 			// Now try to move this file to a directory path using helper function
@@ -394,87 +360,41 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 				Param("originalPath", "non-existent.json").
 				Body([]byte("")).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx)
+				Do(t.Context())
 			require.Error(t, result.Error(), "should fail when source file doesn't exist")
 		})
 	})
 }
 
 func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedHelper(t)
 
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
-
-	// create both repos concurrently to reduce duration of this test
-	// Create first repository targeting "folder-1" with its own subdirectory
 	const repo1 = "ownership-repo-1"
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo1,
-			Path:   path.Join(helper.ProvisioningPath, "repo1"),
-			Target: "folder",
-			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
-			},
-			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
-		})
-	}()
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo1,
+		LocalPath:  path.Join(helper.ProvisioningPath, "repo1"),
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		Copies: map[string]string{
+			"testdata/all-panels.json": "dashboard1.json",
+		},
+	})
 
-	// Create second repository targeting "folder-2" with its own subdirectory
 	const repo2 = "ownership-repo-2"
-	path2 := path.Join(helper.ProvisioningPath, "repo2")
-	go func() {
-		defer wg.Done()
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo2,
-			Path:   path2,
-			Target: "folder",
-			Copies: map[string]string{
-				"testdata/timeline-demo.json": "dashboard2.json",
-			},
-			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
-		})
-	}()
-	wg.Wait()
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo2,
+		LocalPath:  path.Join(helper.ProvisioningPath, "repo2"),
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		Copies: map[string]string{
+			"testdata/timeline-demo.json": "dashboard2.json",
+		},
+	})
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 2 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
-			return
-		}
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list folders: error: %s", err.Error())
-			return
-		}
-		if len(folders.Items) != 2 {
-			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
-			return
-		}
-
-		assert.Len(collect, dashboards.Items, 2)
-		assert.Len(collect, folders.Items, 2)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
-
-	allDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	for _, dashboard := range allDashboards.Items {
-		annotations := dashboard.GetAnnotations()
-		// Expect to be managed by repo1 or repo2
-		managerID := annotations["grafana.app/managerId"]
-		if managerID != repo1 && managerID != repo2 {
-			t.Fatalf("dashboard %s is not managed by repo1 or repo2", dashboard.GetName())
-		}
-	}
+	helper.RequireRepoDashboardCount(t, repo1, 1)
+	helper.RequireRepoFolderCount(t, repo1, 1)
+	helper.RequireRepoDashboardCount(t, repo2, 1)
+	helper.RequireRepoFolderCount(t, repo2, 1)
 
 	t.Run("CREATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		// Try to create a dashboard in repo2 that has the same UID as the one in repo1
@@ -486,7 +406,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			SubResource("files", "conflicting-dashboard.json").
 			Body(helper.LoadFile("testdata/all-panels.json")). // Same file = same UID
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// This should fail with ownership conflict
 		require.Error(t, result.Error(), "creating resource with UID already owned by different repository should fail")
@@ -521,7 +441,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			SubResource("files", "conflicting-update.json").
 			Body(helper.LoadFile("testdata/all-panels.json")). // Same UID as repo1's dashboard
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// This should fail with ownership conflict
 		require.Error(t, result.Error(), "updating resource owned by different repository should fail")
@@ -558,7 +478,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			Name(repo2).
 			SubResource("files", "conflicting-delete.json").
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// This should fail with ownership conflict
 		require.Error(t, result.Error(), "deleting resource owned by different repository should fail")
@@ -613,50 +533,360 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		const timelineUID = "mIJjFy8Kz"  // UID from timeline-demo.json (repo2)
 
 		// Verify repo1's dashboard is still owned by repo1
-		dashboard1, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		dashboard1, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo1's dashboard should still exist")
 		require.Equal(t, repo1, dashboard1.GetAnnotations()[utils.AnnoKeyManagerIdentity], "repo1's dashboard should still be owned by repo1")
 
 		// Verify repo2's dashboard is still owned by repo2
-		dashboard2, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		dashboard2, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo2's dashboard should still exist")
 		require.Equal(t, repo2, dashboard2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "repo2's dashboard should still be owned by repo2")
 	})
 }
 
-func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
+	helper := sharedHelper(t)
 
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
+	const repo = "readme-test-repo"
+	const readmeContent = "# Test Repository\n\nThis is a test README for the provisioning API."
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+	})
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 0)
+
+	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
+
+	t.Run("GET README.md file should succeed", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "should return 200 OK for README.md")
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result map[string]interface{}
+		require.NoError(t, json.Unmarshal(body, &result))
+
+		resource, ok := result["resource"].(map[string]interface{})
+		require.True(t, ok, "response should have resource field")
+
+		file, ok := resource["file"].(map[string]interface{})
+		require.True(t, ok, "resource should have file field")
+
+		content, ok := file["content"].(string)
+		require.True(t, ok, "file should have content field")
+		require.Equal(t, readmeContent, content, "content should match the README")
+	})
+
+	t.Run("GET nested README.md should succeed", func(t *testing.T) {
+		nestedReadmeContent := "# Nested Folder README\n\nThis is inside a folder."
+		helper.WriteToProvisioningPath(t, "folder/README.md", []byte(nestedReadmeContent))
+
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "should return 200 OK for nested README.md")
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result map[string]interface{}
+		require.NoError(t, json.Unmarshal(body, &result))
+
+		resource := result["resource"].(map[string]interface{})
+		file := resource["file"].(map[string]interface{})
+		content := file["content"].(string)
+		require.Equal(t, nestedReadmeContent, content, "nested README content should match")
+	})
+
+	t.Run("GET non-existent README.md should return 404", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/nonexistent/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusNotFound, resp.StatusCode, "should return 404 for non-existent README.md")
+	})
+
+	t.Run("POST README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/new-readme.md", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBufferString("# New README"))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "text/plain")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for POST .md files")
+	})
+
+	t.Run("PUT README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodPut, url, bytes.NewBufferString("# Updated README"))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "text/plain")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for PUT .md files")
+	})
+
+	t.Run("DELETE README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for DELETE .md files")
+	})
+
+	// The folder-scoped auth check resolves the file's parent folder ID and
+	// requires folders:get on it. The default Viewer/Editor roles include
+	// folders:read, so reads at the repo root should succeed.
+	t.Run("viewer can GET README.md at the repo root", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "viewer should be able to GET README.md")
+	})
+
+	t.Run("editor can GET README.md at the repo root", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to GET README.md")
+	})
+
+	// Raw file reads on the files subresource fall back to the Viewer role for
+	// GET-family verbs, so an org Viewer can read raw files anywhere in a repo
+	// they can see — including paths whose containing directory has not been
+	// synced into Grafana as a real folder resource. Without this, the
+	// folder-scoped check is unsatisfiable on hash-based folder UIDs and the
+	// endpoint is effectively Admin-only for non-synced subfolders.
+	t.Run("viewer can GET README in an unsynced subfolder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode,
+			"viewer should be able to read README in an unsynced subfolder")
+	})
+
+	t.Run("admin can GET README in an unsynced subfolder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to GET README in any folder")
+	})
+
+	// The "viewer can GET README" subtest above relies on the Viewer role
+	// fallback. The next three subtests use users with org role None and
+	// fine-grained folder permissions to verify that the inner authz check
+	// is still authoritative when no role fallback applies — i.e. the
+	// relaxed read semantic is paid for by either basic role membership or
+	// an explicit grant, not given freely to any authenticated user.
+	rootReader := helper.CreateUser("ProvisioningRootReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"folders:read"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "general",
+		},
+	})
+
+	wildcardReader := helper.CreateUser("ProvisioningFoldersReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"folders:read"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	})
+
+	noGrants := helper.CreateUser("ProvisioningNoGrants", apis.Org1, org.RoleNone, nil)
+
+	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+
+	t.Run("RoleNone with folders:read on general can GET README at the repo root", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s:%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md",
+			rootReader.Identity.GetLogin(), "ProvisioningRootReader", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode,
+			"explicit folders:read on general should permit reading README at repo root")
+	})
+
+	t.Run("RoleNone with folders:read on general is denied for README in unsynced subfolder", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s:%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md",
+			rootReader.Identity.GetLogin(), "ProvisioningRootReader", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusForbidden, resp.StatusCode,
+			"folders:read on general should not extend to a hash-based UID for an unsynced subfolder, and there is no role fallback for org-None")
+	})
+
+	t.Run("RoleNone with folders:read wildcard can GET README in an unsynced subfolder", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s:%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md",
+			wildcardReader.Identity.GetLogin(), "ProvisioningFoldersReader", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode,
+			"folders:read wildcard should permit reading README in any (including unsynced) subfolder without role fallback")
+	})
+
+	t.Run("RoleNone with no grants is denied for README at the repo root", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s:%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md",
+			noGrants.Identity.GetLogin(), "ProvisioningNoGrants", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusForbidden, resp.StatusCode,
+			"a user without any folder grants and no basic role should be denied")
+	})
+
+	_ = t.Context(
+
+	// TestIntegrationProvisioning_ReadmeFiles_FolderTarget exercises the folder-scoped
+	// auth check on a folder-target repository, where RootFolder() resolves to the
+	// repo's name as the folder UID. This is the path that proved the new authorizer
+	// resolves the synced folder rather than always falling back to the empty root.
+	)
+}
+
+func TestIntegrationProvisioning_ReadmeFiles_FolderTarget(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "readme-folder-target-repo"
+	const readmeContent = "# Folder-target README"
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+	})
+
+	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
+
+	t.Run("admin can GET README.md", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to GET README.md on folder-target repo")
+	})
+
+	t.Run("viewer can GET README.md when they have folders:read on the synced folder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "viewer should be able to GET README.md on folder-target repo")
+	})
+}
+
+func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
+	helper := sharedHelper(t)
 
 	const repo = "auth-test-repo"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Path:   helper.ProvisioningPath,
-		Target: "instance",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"testdata/all-panels.json": "dashboard1.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
 	})
 
-	// Wait for initial sync to complete
-	var dashboardUID string
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 1 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 1)
-			return
-		}
-		assert.Len(collect, dashboards.Items, 1)
-		dashboardUID = dashboards.Items[0].GetName()
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards after sync")
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
+
+	dashboardUID := helper.RequireSingleRepoDashboard(t, repo).GetName()
 
 	// Grant permissions to Editor user for all dashboards using wildcard
 	// The access checker checks resource-level permissions, so we need to grant them
@@ -692,7 +922,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 
 	// Grant view permission to Viewer role for the initial dashboard
 	setDashboardPermissions([]map[string]interface{}{
-		{"role": "Viewer", "permission": 1}, // View permission
+		{"role": "Viewer", "permission": common.FolderPermissionView},
 	})
 
 	t.Run("GET operations", func(t *testing.T) {
@@ -703,7 +933,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				Resource("repositories").
 				Name(repo).
 				SubResource("files", "dashboard1.json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "viewer should be able to GET files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -716,7 +946,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				Resource("repositories").
 				Name(repo).
 				SubResource("files", "dashboard1.json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "editor should be able to GET files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -729,7 +959,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				Resource("repositories").
 				Name(repo).
 				SubResource("files", "dashboard1.json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "admin should be able to GET files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -746,7 +976,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				SubResource("files", "viewer-test.json").
 				Body(helper.LoadFile("testdata/text-options.json")).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "viewer should not be able to POST files")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -762,7 +992,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				SubResource("files", "editor-test.json").
 				Body(helper.LoadFile("testdata/text-options.json")).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "editor should be able to POST files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -773,7 +1003,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				Resource("repositories").
 				Name(repo).
 				SubResource("files", "editor-test.json").
-				Do(ctx)
+				Do(t.Context())
 		})
 
 		t.Run("admin can POST files", func(t *testing.T) {
@@ -785,7 +1015,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				SubResource("files", "admin-test.json").
 				Body(helper.LoadFile("testdata/text-options.json")).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "admin should be able to POST files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -796,7 +1026,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				Resource("repositories").
 				Name(repo).
 				SubResource("files", "admin-test.json").
-				Do(ctx)
+				Do(t.Context())
 		})
 	})
 
@@ -809,7 +1039,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			SubResource("files", "update-test.json").
 			Body(helper.LoadFile("testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		t.Run("viewer cannot PUT files", func(t *testing.T) {
 			var statusCode int
@@ -820,7 +1050,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				SubResource("files", "update-test.json").
 				Body(helper.LoadFile("testdata/timeline-demo.json")).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "viewer should not be able to PUT files")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -836,7 +1066,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				SubResource("files", "update-test.json").
 				Body(helper.LoadFile("testdata/timeline-demo.json")).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "editor should be able to PUT files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -851,7 +1081,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				SubResource("files", "update-test.json").
 				Body(helper.LoadFile("testdata/text-options.json")).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "admin should be able to PUT files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -863,7 +1093,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "update-test.json").
-			Do(ctx)
+			Do(t.Context())
 	})
 
 	t.Run("DELETE operations", func(t *testing.T) {
@@ -875,7 +1105,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			SubResource("files", "delete-viewer-test.json").
 			Body(helper.LoadFile("testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		helper.AdminREST.Post().
 			Namespace("default").
@@ -884,7 +1114,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			SubResource("files", "delete-editor-test.json").
 			Body(helper.LoadFile("testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		helper.AdminREST.Post().
 			Namespace("default").
@@ -893,7 +1123,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			SubResource("files", "delete-admin-test.json").
 			Body(helper.LoadFile("testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		t.Run("viewer cannot DELETE files", func(t *testing.T) {
 			var statusCode int
@@ -902,15 +1132,14 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				Resource("repositories").
 				Name(repo).
 				SubResource("files", "delete-viewer-test.json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.Error(t, result.Error(), "viewer should not be able to DELETE files")
 			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
 			require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 
 			// Verify file still exists
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "delete-viewer-test.json")
-			require.NoError(t, err, "file should still exist after failed delete")
+			helper.RequireRepoFileExists(t, repo, "delete-viewer-test.json")
 		})
 
 		t.Run("editor can DELETE files", func(t *testing.T) {
@@ -920,15 +1149,13 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				Resource("repositories").
 				Name(repo).
 				SubResource("files", "delete-editor-test.json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "editor should be able to DELETE files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 			// Verify file was deleted
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "delete-editor-test.json")
-			require.Error(t, err, "file should be deleted")
-			require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted file")
+			helper.RequireRepoFileNotFound(t, repo, "delete-editor-test.json")
 		})
 
 		t.Run("admin can DELETE files", func(t *testing.T) {
@@ -938,15 +1165,13 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 				Resource("repositories").
 				Name(repo).
 				SubResource("files", "delete-admin-test.json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 
 			require.NoError(t, result.Error(), "admin should be able to DELETE files")
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 			// Verify file was deleted
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "delete-admin-test.json")
-			require.Error(t, err, "file should be deleted")
-			require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted file")
+			helper.RequireRepoFileNotFound(t, repo, "delete-admin-test.json")
 		})
 	})
 
@@ -1037,24 +1262,13 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			SubResource("files", "security-test.json").
 			Body([]byte(dashboardContent)).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to create dashboard")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 		// Wait for dashboard to be created
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(collect, err, "should list dashboards")
-			found := false
-			for _, dash := range dashboards.Items {
-				if dash.GetName() == "security-test-dashboard" {
-					found = true
-					break
-				}
-			}
-			assert.True(collect, found, "security-test-dashboard should exist")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be created")
+		helper.RequireDashboards(t, "security-test-dashboard")
 
 		// Now try to update the dashboard as Editor, but claim it's in a different folder
 		// The file is at path "security-test.json" (root level, no folder)
@@ -1081,7 +1295,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			SubResource("files", "security-test.json").
 			Body([]byte(maliciousDashboard)).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		// The request should succeed because editor has permissions
 		// The key validation is that authorization checks the ACTUAL path location (root folder)
@@ -1095,334 +1309,146 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "security-test.json").
-			Do(ctx)
+			Do(t.Context())
 	})
 }
 
-func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+// TestIntegrationProvisioning_RefValidation exercises ref-parameter validation
+// on both the files and history endpoints. Invalid refs must be rejected at
+// the connector layer with HTTP 400 before any backend (local or git) is
+// asked to resolve them. This prevents arbitrary strings from being forwarded
+// to e.g. the GitHub REST API.
+func TestIntegrationProvisioning_RefValidation(t *testing.T) {
+	helper := sharedHelper(t)
 
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
-	ctx := context.Background()
-
-	const repo = "folder-metadata-test-repo"
-	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
-
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-
-	postFolder := func(t *testing.T, path string) *http.Response {
-		t.Helper()
-		u := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s", addr, repo, path)
-		req, err := http.NewRequest(http.MethodPost, u, nil)
-		require.NoError(t, err)
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		return resp
-	}
-
-	t.Run("simple folder creation writes _folder.json with stable UID", func(t *testing.T) {
-		resp := postFolder(t, "meta-test-folder/")
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
-
-		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/_folder.json")
-		require.NoError(t, err, "_folder.json should be readable via the files endpoint")
-
-		apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-		require.Equal(t, "folder.grafana.app/v1beta1", apiVersion)
-		kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
-		require.Equal(t, "Folder", kind)
-		folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, folderUID, "_folder.json should contain a non-empty stable UID")
-		title, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
-		require.Equal(t, "meta-test-folder", title)
-
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
-		require.Error(t, err, ".keep should not exist when flag is enabled")
-
-		_, err = helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
-		require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
+	const repo = "ref-validation-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
-	t.Run("nested creation writes _folder.json for every folder in the path", func(t *testing.T) {
-		resp := postFolder(t, "parent-folder/child-folder/")
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
-		// Parent must have _folder.json
-		parentWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
-		require.NoError(t, err, "parent _folder.json should exist")
-		parentUID, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, parentUID)
-
-		// Child must have _folder.json
-		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/child-folder/_folder.json")
-		require.NoError(t, err, "child _folder.json should exist")
-		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, childUID)
-		require.NotEqual(t, parentUID, childUID, "each folder gets a distinct UID")
-
-		childAPIVersion, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "apiVersion")
-		require.Equal(t, "folder.grafana.app/v1beta1", childAPIVersion)
-		childTitle, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "spec", "title")
-		require.Equal(t, "child-folder", childTitle)
-
-		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
-		require.NoError(t, err, "child Grafana folder should exist with the stable UID")
-	})
-
-	t.Run("duplicate folder creation returns 409 Conflict", func(t *testing.T) {
-		resp := postFolder(t, "duplicate-folder/")
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "first creation should succeed")
-
-		resp2 := postFolder(t, "duplicate-folder/")
-		// nolint:errcheck
-		defer resp2.Body.Close()
-		require.Equal(t, http.StatusConflict, resp2.StatusCode, "second creation should return 409 Conflict")
-	})
-
-	t.Run("child created inside existing managed folder gets its own _folder.json", func(t *testing.T) {
-		resp := postFolder(t, "managed-parent/")
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "creating parent folder should succeed")
-
-		parentWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
-		require.NoError(t, err, "parent _folder.json should exist")
-		parentUID, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, parentUID, "parent should have a non-empty stable UID")
-
-		resp2 := postFolder(t, "managed-parent/child-folder/")
-		// nolint:errcheck
-		defer resp2.Body.Close()
-		require.Equal(t, http.StatusOK, resp2.StatusCode, "creating child folder should succeed")
-
-		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/child-folder/_folder.json")
-		require.NoError(t, err, "child _folder.json should exist")
-		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, childUID, "child should have a non-empty stable UID")
-		require.NotEqual(t, parentUID, childUID, "child and parent UIDs must differ")
-
-		// Parent _folder.json must be unchanged.
-		parentWrap2, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
-		require.NoError(t, err, "parent _folder.json should still exist after child creation")
-		parentUID2, _, _ := unstructured.NestedString(parentWrap2.Object, "resource", "file", "metadata", "name")
-		require.Equal(t, parentUID, parentUID2, "parent UID must be unchanged after child creation")
-
-		_, err = helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
-		require.NoError(t, err, "parent Grafana folder should exist")
-		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
-		require.NoError(t, err, "child Grafana folder should exist")
-	})
-}
-
-func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
-	ctx := context.Background()
-
-	const repo = "folder-protection-test-repo"
-	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
-
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-	filesURL := func(filePath string) string {
-		return fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
-			addr, repo, filePath)
-	}
-
-	// Create a managed folder so its _folder.json exists for PUT/DELETE tests.
-	req, err := http.NewRequest(http.MethodPost, filesURL("protected-folder/"), nil)
-	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	// nolint:errcheck
-	defer resp.Body.Close()
-	require.Equal(t, http.StatusOK, resp.StatusCode, "setup: creating protected-folder should succeed")
-
-	t.Run("POST to _folder.json is blocked", func(t *testing.T) {
-		body := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"some-uid"},"spec":{"title":"attempt"}}`)
-		req, err := http.NewRequest(http.MethodPost, filesURL("new-folder/_folder.json"), bytes.NewReader(body))
-		require.NoError(t, err)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusForbidden, resp.StatusCode, "direct POST to _folder.json must be blocked")
-	})
-
-	t.Run("PUT to existing _folder.json is blocked", func(t *testing.T) {
-		body := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"tampered-uid"},"spec":{"title":"tampered"}}`)
-		req, err := http.NewRequest(http.MethodPut, filesURL("protected-folder/_folder.json"), bytes.NewReader(body))
-		require.NoError(t, err)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusForbidden, resp.StatusCode, "PUT to _folder.json must be blocked")
-	})
-
-	t.Run("DELETE of _folder.json is blocked", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodDelete, filesURL("protected-folder/_folder.json"), nil)
-		require.NoError(t, err)
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusForbidden, resp.StatusCode, "DELETE of _folder.json must be blocked")
-	})
-
-	t.Run("GET of _folder.json is still allowed", func(t *testing.T) {
-		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "protected-folder/_folder.json")
-		require.NoError(t, err, "_folder.json must remain readable")
-		uid, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, uid)
-	})
-
-	rootFolderBody := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"root-uid"},"spec":{"title":"root"}}`)
-
-	for _, tc := range []struct {
-		name   string
-		method string
-		body   []byte
+	invalidRefs := []struct {
+		name string
+		ref  string
 	}{
-		{name: "POST to root _folder.json is blocked", method: http.MethodPost, body: rootFolderBody},
-		{name: "PUT to root _folder.json is blocked", method: http.MethodPut, body: rootFolderBody},
-		{name: "DELETE of root _folder.json is blocked", method: http.MethodDelete},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			var bodyReader io.Reader
-			if tc.body != nil {
-				bodyReader = bytes.NewReader(tc.body)
-			}
-			req, err := http.NewRequest(tc.method, filesURL("_folder.json"), bodyReader)
-			require.NoError(t, err)
-			if tc.body != nil {
-				req.Header.Set("Content-Type", "application/json")
-			}
-			resp, err := http.DefaultClient.Do(req)
-			require.NoError(t, err)
-			// nolint:errcheck
-			defer resp.Body.Close()
-			require.Equal(t, http.StatusForbidden, resp.StatusCode)
-		})
+		{"shell injection semicolon", "main; rm -rf /"},
+		{"shell injection backtick", "main`whoami`"},
+		{"shell injection dollar", "main$(whoami)"},
+		{"path traversal double dots", "feature/..bad"},
+		{"contains space", "main branch"},
+		{"contains colon", "main:foo"},
+		{"contains question mark", "main?"},
+		{"contains asterisk", "main*"},
+		{"contains tilde", "main~1"},
+		{"leading slash", "/main"},
+		{"trailing slash", "main/"},
+		{"trailing dot", "main."},
+		{"double slashes", "feature//bad"},
+		{"trailing .lock", "feature.lock"},
 	}
-}
 
-func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	tests := []struct {
-		name                  string
-		folderMetadataEnabled bool
-		repoName              string
-		folderPathPrefix      string
+	validRefs := []struct {
+		name string
+		ref  string
 	}{
-		{
-			name:                  "with folder metadata enabled",
-			folderMetadataEnabled: true,
-			repoName:              "folder-auth-metadata-enabled-repo",
-			folderPathPrefix:      "parent-with-metadata",
-		},
-		{
-			name:                  "without folder metadata (hash-based IDs)",
-			folderMetadataEnabled: false,
-			repoName:              "folder-auth-hash-repo",
-			folderPathPrefix:      "parent-hash",
-		},
+		{"valid branch", "main"},
+		{"valid branch with slash", "feature/my-branch"},
+		{"valid short SHA", "abc1234"},
+		{"valid full SHA", "abcdef0123456789abcdef0123456789abcdef01"},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var helper *common.ProvisioningTestHelper
-			if tt.folderMetadataEnabled {
-				helper = common.RunGrafana(t, common.WithProvisioningFolderMetadata)
-			} else {
-				helper = common.RunGrafana(t)
-			}
-			ctx := context.Background()
+	t.Run("files GET", func(t *testing.T) {
+		for _, tc := range invalidRefs {
+			t.Run("invalid ref rejected: "+tc.name, func(t *testing.T) {
+				var statusCode int
+				result := helper.AdminREST.Get().
+					Namespace("default").
+					Resource("repositories").
+					Name(repo).
+					SubResource("files", "dashboard.json").
+					Param("ref", tc.ref).
+					Do(t.Context()).StatusCode(&statusCode)
 
-			helper.CreateRepo(t, common.TestRepo{
-				Name:                   tt.repoName,
-				Target:                 "instance",
-				SkipResourceAssertions: true,
+				require.Error(t, result.Error(), "invalid ref %q should be rejected", tc.ref)
+				require.True(t, apierrors.IsBadRequest(result.Error()) || statusCode == http.StatusBadRequest,
+					"invalid ref %q should return BadRequest, got status=%d err=%v", tc.ref, statusCode, result.Error())
 			})
+		}
 
-			// Grant permissions to Editor for folders and dashboards
-			helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
-				{
-					Actions:           []string{"folders:read", "folders:write", "folders:delete", "folders:create"},
-					Resource:          "folders",
-					ResourceAttribute: "uid",
-					ResourceID:        "*", // Grant to all folders
-				},
-				{
-					Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
-					Resource:          "dashboards",
-					ResourceAttribute: "uid",
-					ResourceID:        "*",
-				},
-			})
+		for _, tc := range validRefs {
+			t.Run("valid ref accepted (not BadRequest): "+tc.name, func(t *testing.T) {
+				var statusCode int
+				result := helper.AdminREST.Get().
+					Namespace("default").
+					Resource("repositories").
+					Name(repo).
+					SubResource("files", "dashboard.json").
+					Param("ref", tc.ref).
+					Do(t.Context()).StatusCode(&statusCode)
 
-			// Test folder creation with proper authorization
-			// Note: We test folder creation because:
-			// 1. It validates that parent folder permissions are checked correctly
-			// 2. Folder deletion on the configured branch is intentionally disabled (returns 405)
-			// 3. Testing deletion on feature branches requires git repositories with BranchWorkflow
-			t.Run("Admin and Editor can create folders", func(t *testing.T) {
-				// Admin creates a parent folder
-				parentPath := tt.folderPathPrefix + "/"
-				addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-				parentURL := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s", addr, tt.repoName, parentPath)
-				req, err := http.NewRequest(http.MethodPost, parentURL, nil)
-				require.NoError(t, err)
-				resp, err := http.DefaultClient.Do(req)
-				require.NoError(t, err)
-				// nolint:errcheck
-				defer resp.Body.Close()
-				require.Equal(t, http.StatusOK, resp.StatusCode, "Admin should be able to create parent folder")
-
-				if tt.folderMetadataEnabled {
-					// When metadata is enabled, verify _folder.json was created with stable UID
-					parentMeta, err := helper.Repositories.Resource.Get(ctx, tt.repoName, metav1.GetOptions{}, "files", tt.folderPathPrefix+"/_folder.json")
-					require.NoError(t, err, "parent _folder.json should exist when metadata is enabled")
-					parentUID, _, _ := unstructured.NestedString(parentMeta.Object, "resource", "file", "metadata", "name")
-					require.NotEmpty(t, parentUID, "parent should have stable UID")
-				}
-
-				// Editor should be able to create a child folder
-				// With metadata: validates authorization uses stable UID from parent's _folder.json
-				// Without metadata: validates authorization uses hash-based parent ID
-				childPath := tt.folderPathPrefix + "/child/"
-				childURL := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s", addr, tt.repoName, childPath)
-				childReq, err := http.NewRequest(http.MethodPost, childURL, nil)
-				require.NoError(t, err)
-				childResp, err := http.DefaultClient.Do(childReq)
-				require.NoError(t, err)
-				// nolint:errcheck
-				defer childResp.Body.Close()
-				require.Equal(t, http.StatusOK, childResp.StatusCode, "Editor should be able to create child folder")
-
-				if tt.folderMetadataEnabled {
-					// Verify child _folder.json was created with its own stable UID
-					childMeta, err := helper.Repositories.Resource.Get(ctx, tt.repoName, metav1.GetOptions{}, "files", tt.folderPathPrefix+"/child/_folder.json")
-					require.NoError(t, err, "child _folder.json should exist when metadata is enabled")
-					childUID, _, _ := unstructured.NestedString(childMeta.Object, "resource", "file", "metadata", "name")
-					require.NotEmpty(t, childUID, "child should have stable UID")
-
-					// Get parent UID to verify they're different
-					parentMeta, err := helper.Repositories.Resource.Get(ctx, tt.repoName, metav1.GetOptions{}, "files", tt.folderPathPrefix+"/_folder.json")
-					require.NoError(t, err)
-					parentUID, _, _ := unstructured.NestedString(parentMeta.Object, "resource", "file", "metadata", "name")
-					require.NotEqual(t, parentUID, childUID, "parent and child should have different UIDs")
+				// The file/branch may not exist (NotFound) or the backend may not
+				// support the ref, but the response must not be BadRequest from
+				// ref validation. We accept any non-400 status, plus 400 errors
+				// whose message is not the ref-invalid one.
+				if result.Error() != nil && apierrors.IsBadRequest(result.Error()) {
+					require.NotContains(t, result.Error().Error(), "invalid ref",
+						"valid ref %q must not be rejected as invalid", tc.ref)
 				}
 			})
-		})
-	}
+		}
+	})
+
+	t.Run("files DELETE", func(t *testing.T) {
+		// DELETE is admin-only and exercises a write path. Invalid refs must
+		// be rejected before the connector ever asks the backend to delete.
+		for _, tc := range invalidRefs {
+			t.Run("invalid ref rejected: "+tc.name, func(t *testing.T) {
+				var statusCode int
+				result := helper.AdminREST.Delete().
+					Namespace("default").
+					Resource("repositories").
+					Name(repo).
+					SubResource("files", "dashboard.json").
+					Param("ref", tc.ref).
+					Do(t.Context()).StatusCode(&statusCode)
+
+				require.Error(t, result.Error(), "invalid ref %q should be rejected", tc.ref)
+				require.True(t, apierrors.IsBadRequest(result.Error()) || statusCode == http.StatusBadRequest,
+					"invalid ref %q should return BadRequest, got status=%d err=%v", tc.ref, statusCode, result.Error())
+			})
+		}
+	})
+
+	t.Run("history endpoint", func(t *testing.T) {
+		// Local repositories don't implement Versioned, but ref validation
+		// runs *before* that check, so invalid refs must still return 400.
+		for _, tc := range invalidRefs {
+			t.Run("invalid ref rejected: "+tc.name, func(t *testing.T) {
+				var statusCode int
+				result := helper.AdminREST.Get().
+					Namespace("default").
+					Resource("repositories").
+					Name(repo).
+					SubResource("history", "dashboard.json").
+					Param("ref", tc.ref).
+					Do(t.Context()).StatusCode(&statusCode)
+
+				require.Error(t, result.Error(), "invalid ref %q should be rejected", tc.ref)
+				require.True(t, apierrors.IsBadRequest(result.Error()) || statusCode == http.StatusBadRequest,
+					"invalid ref %q should return BadRequest, got status=%d err=%v", tc.ref, statusCode, result.Error())
+				if result.Error() != nil {
+					// The error must come from ref validation, not from the
+					// "does not support history" branch, which would mask the
+					// real check.
+					require.Contains(t, result.Error().Error(), "invalid ref",
+						"invalid ref %q should fail ref validation, not history-not-supported", tc.ref)
+				}
+			})
+		}
+	})
 }

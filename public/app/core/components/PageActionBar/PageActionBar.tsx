@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, FilterInput, InlineField, Checkbox, useStyles2 } from '@grafana/ui';
 
 import { SortPicker } from '../Select/SortPicker';
@@ -61,6 +61,7 @@ export default function PageActionBar({
           onChange={sortPicker.onChange}
           value={sortPicker.value}
           getSortOptions={sortPicker.getSortOptions}
+          width={28}
         />
       )}
       {linkButton && <LinkButton {...linkProps}>{linkButton.title}</LinkButton>}

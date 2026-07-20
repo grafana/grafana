@@ -1,9 +1,10 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -70,6 +71,29 @@ describe('ConnectionForm', () => {
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toBeInTheDocument();
     });
 
+    it('should allow selecting GitHub Enterprise when creating and it is available', async () => {
+      mockComboboxRect();
+      server.use(
+        http.get(`${BASE}/settings`, () =>
+          HttpResponse.json({ availableRepositoryTypes: ['github', 'githubEnterprise'] })
+        )
+      );
+
+      const { user } = setup();
+
+      const providerField = screen.getByLabelText(/^Provider/);
+      await waitFor(() => {
+        expect(providerField).toBeEnabled();
+      });
+
+      await user.click(providerField);
+      await user.click(await screen.findByRole('option', { name: 'GitHub Enterprise' }));
+
+      expect(providerField).toHaveDisplayValue('GitHub Enterprise');
+      // Selecting GitHub Enterprise reveals the GHE-only server URL field
+      expect(await screen.findByLabelText(/^Custom server URL/)).toBeInTheDocument();
+    });
+
     it('should render Save button', () => {
       setup();
 
@@ -110,6 +134,35 @@ describe('ConnectionForm', () => {
     });
   });
 
+  describe('GitHub Enterprise', () => {
+    const createEnterpriseConnection = () =>
+      createMockConnection({
+        spec: {
+          title: 'Test GHE Connection',
+          type: 'githubEnterprise',
+          url: 'https://ghe.example.com/settings/installations/12345678',
+          githubEnterprise: {
+            appID: '123456',
+            installationID: '12345678',
+            serverUrl: 'https://ghe.example.com',
+          },
+        },
+      });
+
+    it('should render the server URL field when the connection type is githubEnterprise', () => {
+      setup({ data: createEnterpriseConnection() });
+
+      expect(screen.getByLabelText(/^Custom server URL/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Custom server URL/)).toHaveValue('https://ghe.example.com');
+    });
+
+    it('should not render the server URL field for a github connection', () => {
+      setup({ data: createMockConnection() });
+
+      expect(screen.queryByLabelText(/^Custom server URL/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('Form Validation', () => {
     it('should show required error and not submit when fields are empty', async () => {
       const { user } = setup();
@@ -120,6 +173,22 @@ describe('ConnectionForm', () => {
       await waitFor(() => {
         // Title, App ID, Installation ID, and Private Key are all required
         expect(screen.getAllByText('This field is required')).toHaveLength(4);
+      });
+    });
+
+    it('should show validation error for private key containing hidden characters', async () => {
+      const { user } = setup();
+
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.click(screen.getByLabelText(/^Private Key \(PEM\)/));
+      await user.paste('-----BEGIN RSA PRIVATE KEY-----\u200B...');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/hidden characters/i)).toBeInTheDocument();
       });
     });
   });
@@ -294,6 +363,27 @@ describe('ConnectionForm', () => {
       await waitFor(() => {
         expect(screen.getByText('Invalid Private Key format')).toBeInTheDocument();
       });
+    });
+
+    it('should show generic error when a non-fetch error occurs during submission', async () => {
+      const btoaSpy = jest.spyOn(window, 'btoa').mockImplementation(() => {
+        throw new DOMException('The string contains characters outside Latin1 range');
+      });
+
+      const { user } = setup();
+
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'some-valid-key');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      btoaSpy.mockRestore();
     });
   });
 });

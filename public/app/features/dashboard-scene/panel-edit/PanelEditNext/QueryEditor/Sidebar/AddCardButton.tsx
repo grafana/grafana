@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { Dropdown, Icon, Menu, useStyles2, useTheme2 } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { Dropdown, Icon, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
@@ -16,7 +17,7 @@ import {
   trackAddTransformationInitiated,
   trackOpenSavedQueryPicker,
 } from '../../tracking';
-import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { useActionsContext, useDatasourceContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 function getButtonAriaLabel(variant: 'query' | 'transformation', afterId?: string) {
   if (variant === 'transformation') {
@@ -40,12 +41,15 @@ interface AddCardButtonProps {
 export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }: AddCardButtonProps) => {
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
+  const { dsSettings } = useDatasourceContext();
   const { addQuery } = useActionsContext();
   const { setSelectedQuery, setPendingExpression, setPendingTransformation, setPendingSavedQuery } =
     useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const isDashboardDs = dsSettings?.name === SHARED_DASHBOARD_QUERY;
 
   // When the savedQueriesRBAC feature toggle is enabled, access to the query
   // library is governed by fine-grained RBAC permissions. Otherwise, any
@@ -99,20 +103,37 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
             }}
           />
         )}
-        <Menu.Item
-          label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
-          icon="calculator-alt"
-          onClick={() => {
-            trackAddExpressionInitiated(afterId ? 'inline' : 'section_header');
-            setPendingExpression({ insertAfter: afterId ?? '' });
-            onAdd?.();
-          }}
-        />
+        {isDashboardDs ? (
+          <Tooltip
+            content={t(
+              'query-editor-next.sidebar.add-expression-disabled',
+              'Expressions are not supported with the Dashboard data source'
+            )}
+            placement="right"
+          >
+            <Menu.Item
+              label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
+              icon="calculator-alt"
+              disabled
+            />
+          </Tooltip>
+        ) : (
+          <Menu.Item
+            label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
+            icon="calculator-alt"
+            onClick={() => {
+              trackAddExpressionInitiated(afterId ? 'inline' : 'section_header');
+              setPendingExpression({ insertAfter: afterId ?? '' });
+              onAdd?.();
+            }}
+          />
+        )}
       </Menu>
     ),
     [
       queryLibraryEnabled,
       canReadQueries,
+      isDashboardDs,
       addAndSelectQuery,
       setPendingSavedQuery,
       afterId,

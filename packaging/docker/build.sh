@@ -59,10 +59,10 @@ docker_build () {
   esac
   if [ $UBUNTU_BASE = "0" ]; then
     libc="-musl"
-    base_image="${base_arch}alpine:3.23.3"
+    target="final-alpine"
   else
     libc=""
-    base_image="${base_arch}ubuntu:22.04"
+    target="final-ubuntu"
   fi
 
   grafana_tgz=${GRAFANA_TGZ:-"grafana-latest.linux-${arch}${libc}.tar.gz"}
@@ -70,11 +70,11 @@ docker_build () {
 
   DOCKER_BUILDKIT=1 \
   docker build \
-    --build-arg BASE_IMAGE=${base_image} \
     --build-arg GRAFANA_TGZ=${grafana_tgz} \
     --build-arg GO_SRC=tgz-builder \
     --build-arg JS_SRC=tgz-builder \
     --build-arg RUN_SH=./run.sh \
+    --target ${target} \
     --tag "${tag}" \
     --no-cache=true \
     --file ../../Dockerfile \

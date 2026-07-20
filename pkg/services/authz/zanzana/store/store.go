@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	openfgaconfig "github.com/openfga/openfga/pkg/server/config"
 	"github.com/openfga/openfga/pkg/storage"
 	"github.com/openfga/openfga/pkg/storage/mysql"
 	"github.com/openfga/openfga/pkg/storage/postgres"
@@ -20,6 +21,27 @@ import (
 	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
 )
+
+// StoreProvider creates OpenFGA datastores. Enterprise builds can override
+// with an implementation that supports alternative backends (e.g. gRPC).
+type StoreProvider interface {
+	NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error)
+	NewStandaloneStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error)
+}
+
+type defaultStoreProvider struct{}
+
+func (p *defaultStoreProvider) NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error) {
+	return NewEmbeddedStore(cfg, db, logger)
+}
+
+func (p *defaultStoreProvider) NewStandaloneStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
+	return NewStore(cfg, logger)
+}
+
+func ProvideDefaultStoreProvider() StoreProvider {
+	return &defaultStoreProvider{}
+}
 
 func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
 	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
@@ -103,6 +125,15 @@ func parseConfig(cfg *setting.Cfg, logger log.Logger) (*sqlstore.DatabaseConfig,
 		MaxIdleConns:           grafanaDBCfg.MaxIdleConn,
 		ConnMaxLifetime:        time.Duration(grafanaDBCfg.ConnMaxLifetime) * time.Second,
 		ExportMetrics:          sec.Key("instrument_queries").MustBool(false),
+		// openfga's datastore constructors ping the database in a backoff.Retry
+		// loop. These fields are normally populated by openfga's NewConfig
+		// helper, but we build the Config struct directly, so we must set them
+		// ourselves. Leaving them at zero makes PingTimeout produce an
+		// already-expired context (every ping fails instantly) and
+		// PingRetryMaxElapsedTime map to backoff MaxElapsedTime=0, which retries
+		// forever and hangs startup.
+		PingTimeout:             openfgaconfig.DefaultDatastorePingTimeout,
+		PingRetryMaxElapsedTime: openfgaconfig.DefaultDatastorePingRetryMaxElapsedTime,
 	}
 
 	return grafanaDBCfg, zanzanaDBCfg, nil

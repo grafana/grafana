@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
-import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
+import { type FieldConfigOptionsRegistry, type GrafanaTheme2, type ConfigOverrideRule } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Stack, Icon, useStyles2 } from '@grafana/ui';
-import { FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
+import { type FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
 
 interface Props {
   isExpanded: boolean;
   registry: FieldConfigOptionsRegistry;
-  matcherUi: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
+  matcherUi?: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
   override: ConfigOverrideRule;
   overrideName: string;
   onOverrideRemove: () => void;
@@ -25,7 +25,8 @@ export const OverrideCategoryTitle = ({
 
   const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
   const propertyNames = properties.map((p) => p?.name).join(', ');
-  const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
+  // Fall back to the raw matcher id when the matcher type is unknown
+  const matcherOptions = matcherUi ? matcherUi.optionsToLabel(override.matcher.options) : override.matcher.id;
 
   return (
     <div>

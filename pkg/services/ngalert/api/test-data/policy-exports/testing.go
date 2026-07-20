@@ -4,13 +4,13 @@ import (
 	"embed"
 	"time"
 
-	"github.com/grafana/alerting/definition"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/alerting/definition"
+
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 //go:embed exports-*
@@ -24,8 +24,8 @@ func ReadExportResponse(routeName string, exportType string) ([]byte, error) {
 	return Responses.ReadFile(routeNameToFilename(routeName, exportType))
 }
 
-var AllRoutes = func() map[string]*definitions.Route {
-	return map[string]*definitions.Route{
+var AllRoutes = func() map[string]*v1.Route {
+	return map[string]*v1.Route{
 		"empty":            Empty(),
 		"override-inherit": OverrideInherit(),
 		"matcher-variety":  MatcherVariety(),
@@ -35,13 +35,13 @@ var AllRoutes = func() map[string]*definitions.Route {
 	}
 }
 
-var Config = func() *definitions.PostableUserConfig {
-	return &definitions.PostableUserConfig{
-		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{
+var Config = func() *v1.AMConfigV1 {
+	return &v1.AMConfigV1{
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
 				Route: Legacy(),
 				// Add time interval references to help tests avoid validation errors.
-				TimeIntervals: []prometheus.TimeInterval{
+				TimeIntervals: []v1.TimeInterval{
 					{Name: "interval"},
 					{Name: "active"},
 					{Name: "Some interval"},
@@ -51,7 +51,7 @@ var Config = func() *definitions.PostableUserConfig {
 				},
 			},
 			// Add receiver references to help tests avoid validation errors.
-			Receivers: []*definition.PostableApiReceiver{
+			Receivers: []*v1.PostableApiReceiver{
 				{Receiver: definition.Receiver{Name: "default-receiver"}},
 				{Receiver: definition.Receiver{Name: "lotsa-emails"}},
 				{Receiver: definition.Receiver{Name: "lotsa-emails-override"}},
@@ -60,7 +60,7 @@ var Config = func() *definitions.PostableUserConfig {
 				{Receiver: definition.Receiver{Name: "nested-receiver"}},
 			},
 		},
-		ManagedRoutes: map[string]*definition.Route{
+		ManagedRoutes: map[string]*v1.Route{
 			"empty":            Empty(),
 			"override-inherit": OverrideInherit(),
 			"matcher-variety":  MatcherVariety(),
@@ -70,14 +70,14 @@ var Config = func() *definitions.PostableUserConfig {
 	}
 }
 
-var Legacy = func() *definitions.Route {
-	r := &definitions.Route{
+var Legacy = func() *v1.Route {
+	r := &v1.Route{
 		Receiver:       "default-receiver",
 		GroupByStr:     []string{"g1", "g2"},
-		GroupWait:      util.Pointer(model.Duration(time.Duration(30) * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(time.Duration(1) * time.Hour)),
-		Routes: []*definitions.Route{{
+		GroupWait:      new(model.Duration(time.Duration(30) * time.Second)),
+		GroupInterval:  new(model.Duration(time.Duration(5) * time.Minute)),
+		RepeatInterval: new(model.Duration(time.Duration(1) * time.Hour)),
+		Routes: []*v1.Route{{
 			Receiver:   "nested-receiver",
 			GroupByStr: []string{"g3", "g4"},
 			Matchers: prometheus.Matchers{
@@ -87,62 +87,62 @@ var Legacy = func() *definitions.Route {
 					Value: "b",
 				},
 			},
-			ObjectMatchers:      definitions.ObjectMatchers{{Type: 0, Name: "foo", Value: "bar"}},
+			ObjectMatchers:      v1.ObjectMatchers{{Type: 0, Name: "foo", Value: "bar"}},
 			MuteTimeIntervals:   []string{"interval"},
 			ActiveTimeIntervals: []string{"active"},
 			Continue:            true,
-			GroupWait:           util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
-			GroupInterval:       util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
-			RepeatInterval:      util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
+			GroupWait:           new(model.Duration(time.Duration(5) * time.Minute)),
+			GroupInterval:       new(model.Duration(time.Duration(5) * time.Minute)),
+			RepeatInterval:      new(model.Duration(time.Duration(5) * time.Minute)),
 		}},
 	}
 	_ = r.Validate()
 	return r
 }
 
-var Empty = func() *definitions.Route {
-	r := &definitions.Route{
+var Empty = func() *v1.Route {
+	r := &v1.Route{
 		Receiver: "default-receiver",
 	}
 	_ = r.Validate()
 	return r
 }
 
-var OverrideInherit = func() *definitions.Route {
-	r := &definitions.Route{
+var OverrideInherit = func() *v1.Route {
+	r := &v1.Route{
 		Receiver:       "provisioned-contact-point",
 		GroupByStr:     []string{"alertname"},
-		GroupWait:      util.Pointer(model.Duration(time.Duration(1) * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(time.Duration(1) * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(time.Duration(1) * time.Hour)),
-		Routes: []*definitions.Route{
+		GroupWait:      new(model.Duration(time.Duration(1) * time.Second)),
+		GroupInterval:  new(model.Duration(time.Duration(1) * time.Minute)),
+		RepeatInterval: new(model.Duration(time.Duration(1) * time.Hour)),
+		Routes: []*v1.Route{
 			{
 				Receiver:            "lotsa-emails",
 				GroupByStr:          []string{"alertname", "grafana_folder"},
-				GroupWait:           util.Pointer(model.Duration(time.Duration(10) * time.Second)),
-				GroupInterval:       util.Pointer(model.Duration(time.Duration(10) * time.Minute)),
-				RepeatInterval:      util.Pointer(model.Duration(time.Duration(10) * time.Hour)),
+				GroupWait:           new(model.Duration(time.Duration(10) * time.Second)),
+				GroupInterval:       new(model.Duration(time.Duration(10) * time.Minute)),
+				RepeatInterval:      new(model.Duration(time.Duration(10) * time.Hour)),
 				Continue:            true,
 				ActiveTimeIntervals: []string{"Some interval"},
 				MuteTimeIntervals:   []string{"A provisioned interval"},
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1.ObjectMatchers{
 					{
 						Name:  "severity",
 						Type:  labels.MatchEqual,
 						Value: "critical",
 					},
 				},
-				Routes: []*definitions.Route{ // Override again.
+				Routes: []*v1.Route{ // Override again.
 					{
 						Receiver:            "lotsa-emails-override",
 						GroupByStr:          []string{"alertname", "grafana_folder", "one_more_group"},
-						GroupWait:           util.Pointer(model.Duration(time.Duration(100) * time.Second)),
-						GroupInterval:       util.Pointer(model.Duration(time.Duration(100) * time.Minute)),
-						RepeatInterval:      util.Pointer(model.Duration(time.Duration(100) * time.Hour)),
+						GroupWait:           new(model.Duration(time.Duration(100) * time.Second)),
+						GroupInterval:       new(model.Duration(time.Duration(100) * time.Minute)),
+						RepeatInterval:      new(model.Duration(time.Duration(100) * time.Hour)),
 						Continue:            false,
 						ActiveTimeIntervals: []string{"Some interval override"},
 						MuteTimeIntervals:   []string{"A provisioned interval override"},
-						ObjectMatchers: definitions.ObjectMatchers{
+						ObjectMatchers: v1.ObjectMatchers{
 							{
 								Name:  "severity",
 								Type:  labels.MatchNotEqual,
@@ -153,16 +153,16 @@ var OverrideInherit = func() *definitions.Route {
 				},
 			},
 			{ // Inherit.
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1.ObjectMatchers{
 					{
 						Name:  "severity",
 						Type:  labels.MatchEqual,
 						Value: "warn",
 					},
 				},
-				Routes: []*definitions.Route{ // Inherit again.
+				Routes: []*v1.Route{ // Inherit again.
 					{
-						ObjectMatchers: definitions.ObjectMatchers{
+						ObjectMatchers: v1.ObjectMatchers{
 							{
 								Name:  "severity",
 								Type:  labels.MatchEqual,
@@ -178,31 +178,31 @@ var OverrideInherit = func() *definitions.Route {
 	return r
 }
 
-var MatcherVariety = func() *definitions.Route {
-	r := &definitions.Route{
+var MatcherVariety = func() *v1.Route {
+	r := &v1.Route{
 		Receiver:       "lotsa-emails",
 		GroupByStr:     []string{"alertname"},
-		GroupWait:      util.Pointer(model.Duration(time.Duration(2) * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(time.Duration(2) * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(time.Duration(2) * time.Hour)),
-		Routes: []*definitions.Route{
+		GroupWait:      new(model.Duration(time.Duration(2) * time.Second)),
+		GroupInterval:  new(model.Duration(time.Duration(2) * time.Minute)),
+		RepeatInterval: new(model.Duration(time.Duration(2) * time.Hour)),
+		Routes: []*v1.Route{
 			{
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1.ObjectMatchers{
 					{Name: "severity", Type: labels.MatchEqual, Value: "warn"},
 				},
 			},
 			{
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1.ObjectMatchers{
 					{Name: "severity", Type: labels.MatchRegexp, Value: "critical"},
 				},
 			},
 			{
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1.ObjectMatchers{
 					{Name: "severity", Type: labels.MatchNotRegexp, Value: "info"},
 				},
 			},
 			{
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1.ObjectMatchers{
 					{Name: "severity", Type: labels.MatchNotEqual, Value: "debug"},
 				},
 			},
@@ -212,13 +212,13 @@ var MatcherVariety = func() *definitions.Route {
 	return r
 }
 
-var SpecialCases = func() *definitions.Route {
-	r := &definitions.Route{
+var SpecialCases = func() *v1.Route {
+	r := &v1.Route{
 		Receiver:   "default-receiver",
 		GroupByStr: []string{"..."}, // No Grouping.
-		Routes: []*definitions.Route{
+		Routes: []*v1.Route{
 			{
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1.ObjectMatchers{
 					{Name: "utf8", Type: labels.MatchEqual, Value: "🤖🔥✨👩🏽‍💻🚀🧪🧠😂💥🫠🇨🇦"},
 				},
 			},
@@ -226,7 +226,7 @@ var SpecialCases = func() *definitions.Route {
 				ObjectMatchers: nil, // Empty matchers.
 			},
 			{
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1.ObjectMatchers{
 					// Regex edge cases: Unicode class, anchors, and an anchored capture.
 					{Name: "path", Type: labels.MatchRegexp, Value: `^/api/v[0-9]+/\p{L}[\p{L}\p{N}_\-]*$`},
 					// Values containing regex metacharacters.
@@ -239,28 +239,28 @@ var SpecialCases = func() *definitions.Route {
 	return r
 }
 
-var DeeplyNested = func() *definitions.Route {
-	r := &definitions.Route{
+var DeeplyNested = func() *v1.Route {
+	r := &v1.Route{
 		Receiver:       "slack-multi-channel",
 		GroupByStr:     []string{"alertname"},
-		GroupWait:      util.Pointer(model.Duration(time.Duration(3) * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(time.Duration(3) * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(time.Duration(3) * time.Hour)),
-		Routes: []*definitions.Route{
+		GroupWait:      new(model.Duration(time.Duration(3) * time.Second)),
+		GroupInterval:  new(model.Duration(time.Duration(3) * time.Minute)),
+		RepeatInterval: new(model.Duration(time.Duration(3) * time.Hour)),
+		Routes: []*v1.Route{
 			{
-				ObjectMatchers: definitions.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "one"}},
-				Routes: []*definitions.Route{
+				ObjectMatchers: v1.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "one"}},
+				Routes: []*v1.Route{
 					{
-						ObjectMatchers: definitions.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "two"}},
-						Routes: []*definitions.Route{
+						ObjectMatchers: v1.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "two"}},
+						Routes: []*v1.Route{
 							{
-								ObjectMatchers: definitions.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "three"}},
-								Routes: []*definitions.Route{
+								ObjectMatchers: v1.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "three"}},
+								Routes: []*v1.Route{
 									{
-										ObjectMatchers: definitions.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "four"}},
-										Routes: []*definitions.Route{
+										ObjectMatchers: v1.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "four"}},
+										Routes: []*v1.Route{
 											{
-												ObjectMatchers: definitions.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "five"}},
+												ObjectMatchers: v1.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "five"}},
 											},
 										},
 									},

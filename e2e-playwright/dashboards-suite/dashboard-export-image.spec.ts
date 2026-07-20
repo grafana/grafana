@@ -4,10 +4,7 @@ const DASHBOARD_UID = 'ZqZnVvFZz';
 
 test.use({
   featureToggles: {
-    scenes: true,
-    sharingDashboardImage: true, // Enable the export image feature
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
   },
 });
 
@@ -27,8 +24,13 @@ test.describe(
         uid: DASHBOARD_UID,
       });
 
-      // Open the export dropdown
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.NewExportButton.arrowMenu).click();
+      // Open the export dropdown. Under new layouts the export control lives in the sidebar rail
+      // (NewExportButton.Menu.container), not the legacy toolbar split button (arrowMenu).
+      const exportButton = dashboardPage.getByGrafanaSelector(
+        selectors.pages.Dashboard.DashNav.NewExportButton.Menu.container
+      );
+      await expect(exportButton).toBeVisible();
+      await exportButton.click();
 
       // Click export as image option
       await dashboardPage

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { AlertingSettings, Props, AlertingConfig } from './AlertingSettings';
+import { AlertingSettings, type Props, type AlertingConfig } from './AlertingSettings';
 
 const setup = () => {
   const onOptionsChange = jest.fn();

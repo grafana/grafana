@@ -1,4 +1,4 @@
-import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
+import { PanelPlugin, type PanelPluginMeta, PluginType } from '@grafana/data';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 
 import { clearPanelPluginCache, importPanelPlugin } from './importPanelPlugin';

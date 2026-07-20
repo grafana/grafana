@@ -11,14 +11,15 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   VizPanel,
-  VizPanelState,
+  type VizPanelState,
 } from '@grafana/scenes';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
 import { contextSrv } from '../../../../../core/services/context_srv';
 import * as sharePublicDashboardUtils from '../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene, DashboardSceneState } from '../../../scene/DashboardScene';
+import { DashboardScene } from '../../../scene/DashboardScene';
+import { type DashboardSceneState } from '../../../scene/types/dashboard';
 import { activateFullSceneTree } from '../../../utils/test-utils';
 import { ShareDrawer } from '../../ShareDrawer/ShareDrawer';
 

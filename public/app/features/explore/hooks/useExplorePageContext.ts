@@ -1,37 +1,56 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { createAssistantContextItem, ChatContextItem, useProvidePageContext } from '@grafana/assistant';
-import { DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { ExploreItemState } from 'app/types/explore';
+import { createAssistantContextItem, type ChatContextItem, useProvidePageContext } from '@grafana/assistant';
+import { type DataSourceApi } from '@grafana/data';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type DataQuery } from '@grafana/schema';
+import { type ExploreItemState } from 'app/types/explore';
 
 export function useExplorePageContext(panes: Array<[string, ExploreItemState]>): void {
-  const setContext = useProvidePageContext(/^\/explore/);
+  const [items, setItems] = useState<ChatContextItem[]>([]);
 
   useEffect(() => {
-    setContext(buildContext(panes));
-  }, [panes, setContext]);
+    let cancelled = false;
+    buildContext(panes).then((built) => {
+      if (!cancelled) {
+        setItems(built);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [panes]);
+
+  // Provide the built items as the registration's context. Passing them here
+  // (rather than via the imperative setter) means the assistant SDK both
+  // re-applies them whenever they change and re-creates the registration with
+  // them if it remounts — otherwise the items are lost when the registration
+  // is re-created empty and the effect that set them
+  // doesn't re-run, leaving Explore context missing until an unrelated render.
+  useProvidePageContext(/^\/explore/, items);
 }
 
-function buildContext(panes: Array<[string, ExploreItemState]>): ChatContextItem[] {
-  return panes.flatMap(([, pane]) => {
-    const ds = pane.datasourceInstance;
-    if (!ds) {
-      return [];
-    }
+async function buildContext(panes: Array<[string, ExploreItemState]>): Promise<ChatContextItem[]> {
+  const itemsPerPane = await Promise.all(
+    panes.map(async ([, pane]) => {
+      const ds = pane.datasourceInstance;
+      if (!ds) {
+        return [];
+      }
 
-    // if `-- Mixed --` datasource, we add each data source individual
-    if (ds.meta.mixed) {
-      return buildMixedContext(pane.queries);
-    }
+      // if `-- Mixed --` datasource, we add each data source individual
+      if (ds.meta.mixed) {
+        return buildMixedContext(pane.queries);
+      }
 
-    const matchingQueries = pane.queries.filter((q) => !q.datasource?.uid || q.datasource.uid === ds.uid);
-    return buildDatasourceContext(ds.uid, ds.name, ds.meta?.info?.logos?.small, matchingQueries, ds);
-  });
+      const matchingQueries = pane.queries.filter((q) => !q.datasource?.uid || q.datasource.uid === ds.uid);
+      return buildDatasourceContext(ds.uid, ds.name, ds.meta?.info?.logos?.small, matchingQueries, ds);
+    })
+  );
+  return itemsPerPane.flat();
 }
 
-function buildMixedContext(queries: DataQuery[]): ChatContextItem[] {
+async function buildMixedContext(queries: DataQuery[]): Promise<ChatContextItem[]> {
   const grouped = new Map<string, DataQuery[]>();
   for (const query of queries) {
     const uid = query.datasource?.uid;
@@ -48,7 +67,7 @@ function buildMixedContext(queries: DataQuery[]): ChatContextItem[] {
 
   const items: ChatContextItem[] = [];
   for (const [uid, dsQueries] of grouped) {
-    const settings = getDataSourceSrv().getInstanceSettings(uid);
+    const settings = await getDataSourceInstanceSettings(uid);
     if (!settings) {
       continue;
     }

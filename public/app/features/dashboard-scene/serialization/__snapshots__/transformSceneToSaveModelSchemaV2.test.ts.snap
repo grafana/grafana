@@ -346,6 +346,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           },
         ],
         "description": "An adhoc variable",
+        "enableGroupBy": false,
         "filters": [
           {
             "condition": "AND",

@@ -1,4 +1,8 @@
-import { ContactPointsState, ReceiverState, ReceiversStateDTO } from 'app/features/alerting/unified/types/alerting';
+import {
+  type ContactPointsState,
+  type ReceiverState,
+  type ReceiversStateDTO,
+} from 'app/features/alerting/unified/types/alerting';
 
 interface IntegrationNameObject {
   type: string;

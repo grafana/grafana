@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { IconName, GrafanaTheme2 } from '@grafana/data';
+import { type IconName, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Button } from '@grafana/ui';
 
 type AddButtonProps = {
@@ -11,12 +11,26 @@ type AddButtonProps = {
   tooltip?: string;
   className?: string;
   tabIndex?: number;
+  // When disabled, callers should set tooltip to explain why.
+  disabled?: boolean;
+  testId?: string;
 };
 
-export function AddButton({ icon, label, tooltip, tabIndex, onClick, onKeyDown, className }: AddButtonProps) {
+export function AddButton({
+  icon,
+  label,
+  tooltip,
+  tabIndex,
+  onClick,
+  onKeyDown,
+  className,
+  disabled,
+  testId,
+}: AddButtonProps) {
   const styles = useStyles2(getStyles);
   return (
     <Button
+      data-testid={testId}
       className={cx(styles.iconButton, className)}
       variant="secondary"
       fill="outline"
@@ -26,6 +40,7 @@ export function AddButton({ icon, label, tooltip, tabIndex, onClick, onKeyDown, 
       tooltip={tooltip}
       onClick={onClick}
       onKeyDown={onKeyDown}
+      disabled={disabled}
     >
       {label}
     </Button>

@@ -1,7 +1,7 @@
 import {
-  QueryBuilderOperation,
-  QueryBuilderOperationDefinition,
-  QueryBuilderOperationParamDef,
+  type QueryBuilderOperation,
+  type QueryBuilderOperationDefinition,
+  type QueryBuilderOperationParamDef,
 } from '@grafana/plugin-ui';
 
 import { defaultAddOperationHandler } from './operationUtils';

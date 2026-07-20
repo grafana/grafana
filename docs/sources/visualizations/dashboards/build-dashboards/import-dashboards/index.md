@@ -17,29 +17,18 @@ menuTitle: Import dashboards
 title: Import dashboards
 description: Learn how to import dashboards and about Grafana's preconfigured dashboards
 weight: 5
-refs:
-  share-dashboards-and-panels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/
-  http-api:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/
 ---
 
 # Import dashboards
 
-You can import preconfigured dashboards into your Grafana instance or Cloud stack using the UI or the [HTTP API](ref:http-api).
+You can import preconfigured dashboards into your Grafana instance or Cloud stack using the UI or the [HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/).
 
 ## Import a dashboard
 
 To import a dashboard, follow these steps:
 
 1. Click **Dashboards** in the primary menu.
-1. Click **New** and select **Import** in the drop-down menu.
+1. Click **New** and select **Import dashboard** in the drop-down menu.
 1. Perform one of the following steps:
    - Upload a dashboard JSON file.
    - Paste a [Grafana.com dashboard](#discover-dashboards-on-grafanacom) URL or ID into the field provided.
@@ -55,7 +44,7 @@ The [Dashboards page](https://grafana.com/grafana/dashboards/) on grafana.com pr
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" alt="Preconfigured dashboards on grafana.com">}}
 
-You can also add to this library by exporting one of your own dashboards. For more information, refer to [Share dashboards and panels](ref:share-dashboards-and-panels).
+You can also add to this library by exporting one of your own dashboards. For more information, refer to [Share dashboards and panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/).
 
 ## More examples
 

@@ -5,7 +5,7 @@ export function FiringCount({ count }: { count: number }) {
     return null;
   }
   return (
-    <Text color="error" tabular>
+    <Text color="error" variant="bodySmall" tabular>
       <Stack direction="row" gap={0.25} alignItems="center">
         <Icon name="exclamation-circle" size="xs" />
         {count}
@@ -19,20 +19,11 @@ export function PendingCount({ count }: { count: number }) {
     return null;
   }
   return (
-    <Text color="warning" tabular>
+    <Text color="warning" variant="bodySmall" tabular>
       <Stack direction="row" gap={0.25} alignItems="center">
         <Icon name="circle" size="xs" />
         {count}
       </Stack>
     </Text>
-  );
-}
-
-export function LabelBadgeCounts({ firing, pending }: { firing: number; pending: number }) {
-  return (
-    <Stack direction="row" gap={0.5} alignItems="center">
-      <FiringCount count={firing} />
-      <PendingCount count={pending} />
-    </Stack>
   );
 }

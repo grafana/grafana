@@ -19,7 +19,7 @@ cards:
       height: 24
       href: ./infrastructure-as-code/
       title: Infrastructure as code
-weight: 850
+weight: 600
 canonical: https://grafana.com/docs/grafana/latest/as-code/
 ---
 
@@ -37,6 +37,12 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/
 - Standardize workflows: Ensure consistency across your teams by using repeatable, codified processes for managing Grafana resources.
 
 In Grafana Cloud, you can use **Infrastructure as code** to declaratively create and manage dashboards via configuration files in source code, and incorporate them efficiently into your own use cases. This enables you to review code, reuse it, and create better workflows. Infrastructure as code tools include Terraform, Ansible, the Grafana Operator, and Grizzly.
+
+{{< admonition type="note" >}}
+
+For basic configuration provisioning refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning).
+
+{{< /admonition >}}
 
 ## Explore
 

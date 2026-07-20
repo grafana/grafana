@@ -1,40 +1,64 @@
-import { memo, useEffect } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { memo, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Trans, t } from '@grafana/i18n';
-import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { t } from '@grafana/i18n';
+import { Checkbox, Field, Input, Stack } from '@grafana/ui';
 
+import { BranchOptionsSection } from '../Config/BranchOptionsSection';
+import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
-import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
-import { isGitProvider } from '../utils/repositoryTypes';
+import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
+import { WebhookSection } from '../Config/WebhookSection';
+import { useConnectionList } from '../hooks/useConnectionList';
+import { isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { getGitProviderFields } from './fields';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 export const FinishStep = memo(function FinishStep() {
   const { setStepStatusInfo, hasStepError } = useStepStatus();
   const {
     register,
+    control,
     watch,
     setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
-  const settings = useGetFrontendSettingsQuery();
 
-  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
+  const [type, readOnly, wizardConnectionName, githubAuthType, email] = watch([
+    'repository.type',
+    'repository.readOnly',
+    'githubApp.connectionName',
+    'githubAuthType',
+    'repository.email',
+  ]);
 
-  const isGithub = type === 'github';
+  const emailWebhookDisabled = type === 'bitbucket' && !email?.trim();
+
   const isGitBased = isGitProvider(type);
-  const isPublic = checkPublicAccess();
-  const hasImageRenderer = checkImageRenderer();
-  const imageRenderingAllowed = checkImageRenderingAllowed(settings.data);
+
+  const [connections] = useConnectionList(githubAuthType === 'github-app' ? {} : skipToken);
+  const connectionWebhookDisabled = useMemo(() => {
+    if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
+      return false;
+    }
+    const conn = connections.find((c) => c.metadata?.name === wizardConnectionName);
+    return Boolean(conn?.spec?.webhook?.disabled);
+  }, [githubAuthType, wizardConnectionName, connections]);
 
   // Set sync enabled by default
   useEffect(() => {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
+
+  // Force webhook disabled when the selected connection requires it
+  useEffect(() => {
+    if (connectionWebhookDisabled) {
+      setValue('repository.webhook.disabled', true);
+    }
+  }, [connectionWebhookDisabled, setValue]);
 
   useEffect(() => {
     if (!hasStepError) {
@@ -114,51 +138,57 @@ export const FinishStep = memo(function FinishStep() {
         />
       )}
 
-      {isGithub && imageRenderingAllowed && (
-        <Field noMargin>
-          <Checkbox
-            {...register('repository.generateDashboardPreviews')}
-            label={t('provisioning.finish-step.label-generate-dashboard-previews', 'Generate Dashboard Previews')}
-            description={
-              <>
-                <Trans i18nKey="provisioning.finish-step.description-generate-dashboard-previews">
-                  Create preview links for pull requests
-                </Trans>
-                {(!isPublic || !hasImageRenderer) && (
-                  <>
-                    {' '}
-                    <Text color="secondary">
-                      <Trans i18nKey="provisioning.finish-step.description-preview-requirements">
-                        (requires{' '}
-                        <TextLink href="https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/">
-                          image rendering
-                        </TextLink>{' '}
-                        and public access enabled)
-                      </Trans>
-                    </Text>
-                  </>
-                )}
-              </>
-            }
-            disabled={!isPublic || !hasImageRenderer}
+      {isGitBased && (
+        <>
+          <BranchOptionsSection<WizardFormData>
+            register={register}
+            nameTemplateName="repository.branchOptions.nameTemplate"
+            enforceTemplateName="repository.branchOptions.enforceTemplate"
           />
-        </Field>
+          <CommitOptionsSection<WizardFormData>
+            register={register}
+            control={control}
+            setValue={setValue}
+            messageTemplateName="repository.commit.singleResourceMessageTemplate"
+            enforceTemplateName="repository.commit.enforceTemplate"
+            type={type}
+            signingMethodName="repository.signingMethod"
+            signingKeyName="repository.commitSigningKey"
+            smimeCertificateName="repository.smimeCertificate"
+            signerNameName="repository.commit.signerName"
+            signerEmailName="repository.commit.signerEmail"
+            signerIsAuthorName="repository.commit.signerIsAuthor"
+          />
+          {/* Pull requests are not supported by the pure git type. */}
+          {type !== 'git' && (
+            <PullRequestOptionsSection<WizardFormData>
+              register={register}
+              titleTemplateName="repository.pullRequest.titleTemplate"
+              enforceTemplateName="repository.pullRequest.enforceTemplate"
+              repoType={type}
+              dashboardPreviewName="repository.generateDashboardPreviews"
+            />
+          )}
+        </>
       )}
 
-      {isGithub && (
-        <Field
-          noMargin
-          label={t('provisioning.finish-step.label-webhook-url', 'Webhook URL')}
-          description={t(
-            'provisioning.finish-step.description-webhook-url',
-            'Overrides the auto-detected URL for registering webhooks.'
-          )}
-        >
-          <Input
-            {...register('repository.webhook.baseUrl')}
-            placeholder={t('provisioning.finish-step.placeholder-webhook-url', 'https://grafana.example.com')}
-          />
-        </Field>
+      {supportsWebhooks(type) && (
+        <WebhookSection<WizardFormData>
+          register={register}
+          control={control}
+          name="repository.webhook.baseUrl"
+          disabledName="repository.webhook.disabled"
+          connectionWebhookDisabled={connectionWebhookDisabled}
+          disabledReason={
+            emailWebhookDisabled
+              ? t(
+                  'provisioning.webhook-section.description-webhook-disabled-email-step',
+                  'Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.'
+                )
+              : undefined
+          }
+          disabledError={errors?.repository?.webhook?.disabled?.message}
+        />
       )}
     </Stack>
   );

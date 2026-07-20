@@ -1,10 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AsyncState } from 'react-use/lib/useAsync';
+import { type AsyncState } from 'react-use/lib/useAsync';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 
 import { ResourceExport } from './ResourceExport';

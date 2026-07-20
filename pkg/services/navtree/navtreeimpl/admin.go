@@ -60,6 +60,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
+			Keywords: []string{"git sync", "git-sync", "repository", "version control", "as code"},
 		})
 	}
 
@@ -144,22 +145,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			SubTitle: "Use service accounts to run automated workloads in Grafana",
 			Icon:     "gf-service-account",
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
-		})
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.license.FeatureEnabled("groupsync") &&
-		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
-		hasAccess(ac.EvalAny(
-			ac.EvalPermission("groupsync.mappings:read"),
-			ac.EvalPermission("groupsync.mappings:write"),
-		)) {
-		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
-			Text:     "External group sync",
-			Id:       "groupsync",
-			SubTitle: "Manage mappings of Identity Provider groups to Grafana Roles",
-			Icon:     "",
-			Url:      s.cfg.AppSubURL + "/admin/access/groupsync",
 		})
 	}
 

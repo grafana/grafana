@@ -1,7 +1,7 @@
 import { createDataFrame } from '@grafana/data';
-import { UPlotConfigBuilder } from '@grafana/ui';
+import { type UPlotConfigBuilder } from '@grafana/ui';
 
-import { getVisibleLabels, VisibleExemplarLabels } from './ExemplarsPlugin';
+import { getVisibleLabels, type VisibleExemplarLabels } from './ExemplarsPlugin';
 
 describe('getVisibleLabels()', () => {
   const dataFrameSeries1 = createDataFrame({

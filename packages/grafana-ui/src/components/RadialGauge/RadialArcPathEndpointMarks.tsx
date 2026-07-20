@@ -1,9 +1,9 @@
 import { memo } from 'react';
 
-import { FieldDisplay } from '@grafana/data';
+import { type FieldDisplay } from '@grafana/data';
 
 import { getEndpointMarkerColors, getGuideDotColor } from './colors';
-import { GradientStop, RadialGaugeDimensions } from './types';
+import { type GradientStop, type RadialGaugeDimensions } from './types';
 import { toRad } from './utils';
 
 interface RadialArcPathEndpointMarksPropsBase {
@@ -89,7 +89,7 @@ export const RadialArcPathEndpointMarks = memo(
             fill="none"
             strokeWidth={barWidth}
             stroke={endpointMarkerGlowFilter}
-            strokeLinecap={roundedBars ? 'round' : 'butt'}
+            strokeLinecap="round"
             filter={glowFilter}
           />
         );

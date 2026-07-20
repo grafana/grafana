@@ -1,7 +1,7 @@
 import { EventBusSrv } from './EventBus';
 import { DataHoverEvent } from './common';
 import { eventFactory } from './eventFactory';
-import { BusEvent, BusEventWithPayload } from './types';
+import { type BusEvent, BusEventWithPayload } from './types';
 
 interface LoginEventPayload {
   logins: number;

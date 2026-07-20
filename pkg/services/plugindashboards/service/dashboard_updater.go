@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -180,8 +181,8 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 	_, err = du.dashboardImportService.ImportDashboard(ctx, &dashboardimport.ImportDashboardRequest{
 		PluginId: pluginDashInfo.PluginId,
 		User: accesscontrol.BackgroundUser("dashboard_updater", orgID, org.RoleAdmin, []accesscontrol.Permission{
-			{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-			{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+			{Action: dashboards.ActionDashboardsCreate, Scope: folder.ScopeFoldersAll},
+			{Action: dashboards.ActionDashboardsWrite, Scope: folder.ScopeFoldersAll},
 		}),
 		Path:      pluginDashInfo.Reference,
 		Dashboard: resp.Dashboard.Data,

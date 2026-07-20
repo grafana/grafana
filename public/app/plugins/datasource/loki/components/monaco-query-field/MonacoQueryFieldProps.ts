@@ -1,7 +1,7 @@
-import { HistoryItem, TimeRange } from '@grafana/data';
+import { type HistoryItem, type TimeRange } from '@grafana/data';
 
-import { LokiDatasource } from '../../datasource';
-import { LokiQuery } from '../../types';
+import { type LokiDatasource } from '../../datasource';
+import { type LokiQuery } from '../../types';
 
 // we need to store this in a separate file,
 // because we have an async-wrapper around,

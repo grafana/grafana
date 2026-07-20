@@ -1,16 +1,21 @@
-import { ChangeEvent, useCallback, useEffect, useState, type JSX } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useState, type JSX } from 'react';
 import * as React from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
 
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, MetricStat } from '../../../dataquery.gen';
-import { CloudWatchDatasource } from '../../../datasource';
+import {
+  type CloudWatchMetricsQuery,
+  MetricEditorMode,
+  MetricQueryType,
+  type MetricStat,
+} from '../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_METRICS_QUERY } from '../../../defaultQueries';
 import useMigratedMetricsQuery from '../../../migrations/useMigratedMetricsQuery';
-import { CloudWatchQuery, CloudWatchJsonData } from '../../../types';
+import { type CloudWatchQuery, type CloudWatchJsonData } from '../../../types';
 import { MetricStatEditor } from '../../shared/MetricStatEditor/MetricStatEditor';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
@@ -99,7 +104,6 @@ export const MetricsQueryEditor = (props: Props) => {
           body="You will lose changes made to the query if you change to Metric Insights Builder mode."
           confirmText="Yes, I am sure."
           dismissText="No, continue editing the query."
-          icon="exclamation-triangle"
           onConfirm={() => {
             setShowConfirm(false);
             setCodeEditorIsDirty(false);

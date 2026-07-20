@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
-  Action,
+  type Action,
   ActionType,
   defaultActionConfig,
-  VariableSuggestion,
+  type VariableSuggestion,
   VariableOrigin,
   HttpRequestMethod,
 } from '@grafana/data';

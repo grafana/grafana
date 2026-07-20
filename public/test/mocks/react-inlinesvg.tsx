@@ -1,4 +1,4 @@
-import { Ref, useEffect } from 'react';
+import { type Ref, useEffect } from 'react';
 
 export default function ReactInlineSVG({
   src,

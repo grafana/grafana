@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
+import { type GrafanaTheme2, MappingType, type StandardEditorProps, type ValueMapping } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Stack, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
 
@@ -120,7 +120,7 @@ export const ValueMappingsEditor = memo((props: Props) => {
 
 ValueMappingsEditor.displayName = 'ValueMappingsEditor';
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   modal: css({
     width: '980px',
   }),

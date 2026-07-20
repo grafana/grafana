@@ -259,6 +259,7 @@ test.describe('Scope Redirect Functionality', () => {
     await test.step('Change scope while in edit mode and verify no redirect', async () => {
       // Select and apply a scope that would normally trigger a redirect
       await openScopesSelector(page, scopes);
+      expect(page.getByText('Select scopes')).toBeVisible();
       await selectScope(page, 'sn-redirect-fallback', scopes[1]);
       await applyScopes(page, [scopes[1]]);
 
@@ -271,6 +272,39 @@ test.describe('Scope Redirect Functionality', () => {
       // Should still be in edit mode (Save button is still visible)
       const saveButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton);
       await expect(saveButton).toBeVisible();
+    });
+  });
+
+  test('should not redirect when the image renderer binding is present', async ({ page, gotoDashboardPage }) => {
+    const scopes = testScopesWithRedirect();
+
+    await test.step('Inject the image-renderer binding before any page script runs', async () => {
+      // Mimics what grafana-image-renderer's chromedp does on real /render calls.
+      await page.addInitScript(() => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        (
+          window as unknown as { __grafanaImageRendererMessageChannel: (m: string) => void }
+        ).__grafanaImageRendererMessageChannel = () => {};
+      });
+    });
+
+    await test.step('Set up routes and navigate to dashboard', async () => {
+      await setupScopeRoutes(page, scopes);
+      await gotoDashboardPage({ uid: 'cuj-dashboard-3' });
+    });
+
+    await test.step('Apply a scope whose redirect fallback would normally navigate away', async () => {
+      await openScopesSelector(page, scopes);
+      await selectScope(page, 'sn-redirect-fallback', scopes[1]);
+      await applyScopes(page, [scopes[1]]);
+
+      // Scope must still be applied…
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+      // …but the redirect must not fire, so we stay on cuj-dashboard-3
+      // (which is NOT in the scope's dashboard bindings — the same dashboard
+      // that causes a redirect in the non-render-target sibling test above).
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
+      await expect(page).not.toHaveURL(/\/d\/cuj-dashboard-2/);
     });
   });
 
@@ -306,11 +340,11 @@ test.describe('Scope Redirect Functionality', () => {
     await test.step('Exit edit mode', async () => {
       // Click the "Exit edit" button — the dashboard is not dirty (only scopes changed,
       // not the dashboard itself), so no confirmation dialog will appear.
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.exitButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // Verify we are no longer in edit mode: the edit button should be visible again
-      const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
-      await expect(editButton).toBeVisible();
+      // Verify we are no longer in edit mode: the save button should not be visible
+      const saveButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton);
+      await expect(saveButton).not.toBeVisible();
     });
 
     await test.step('Clear scope and re-apply to verify redirect is re-enabled', async () => {

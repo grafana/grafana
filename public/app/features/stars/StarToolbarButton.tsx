@@ -4,6 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, ToolbarButton } from '@grafana/ui';
 
+import { itemStarred } from './analytics/main';
 import { useStarItem, useStarredItems } from './hooks';
 
 const getStarTooltips = (title: string) => ({
@@ -37,6 +38,12 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
   const handleStarToggle = async () => {
     await handleItemStar({ id, title }, !isStarred);
     onStarChange?.(id, !isStarred);
+    itemStarred({
+      group,
+      kind,
+      status: !isStarred ? 'starred' : 'unstarred',
+      origin: 'StarToolbarButton',
+    });
   };
 
   const iconProps = useMemo(() => {
@@ -61,6 +68,7 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
       disabled={isLoading}
       tooltip={tooltipAndLabel.tooltip}
       aria-label={tooltipAndLabel.label}
+      aria-pressed={isStarred}
       icon={icon}
       data-testid={selectors.components.NavToolbar.markAsFavorite}
       onClick={handleStarToggle}

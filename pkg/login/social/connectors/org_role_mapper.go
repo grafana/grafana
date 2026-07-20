@@ -3,21 +3,14 @@ package connectors
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	mapperMatchAllOrgID = -1
-	escapeStr           = `\`
-)
-
-var separatorRegexp = regexp.MustCompile(":")
+const mapperMatchAllOrgID = -1
 
 // OrgRoleMapper maps external orgs/groups to Grafana orgs and basic roles.
 type OrgRoleMapper struct {
@@ -219,20 +212,30 @@ func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
 
 func splitOrgMapping(mapping string) []string {
 	result := make([]string, 0, 3)
-	matches := separatorRegexp.FindAllStringIndex(mapping, -1)
-	from := 0
+	current := ""
 
-	for _, match := range matches {
-		// match[0] is the start, match[1] is the end of the match
-		start, end := match[0], match[1]
-		// Check if the match is not preceded by two backslashes
-		if start == 0 || mapping[start-1:start] != escapeStr {
-			result = append(result, strings.ReplaceAll(mapping[from:end-1], escapeStr, ""))
-			from = end
+	for i := 0; i < len(mapping); i++ {
+		switch mapping[i] {
+		case ':':
+			// Split on unescaped separators only.
+			result = append(result, current)
+			current = ""
+		// Note that this case is matching against a single backslash.
+		case '\\':
+			// Only `\:` is a special escape sequence for org_mapping parsing.
+			// Preserve backslashes verbatim for values like domain\\group.
+			if i+1 < len(mapping) && mapping[i+1] == ':' {
+				current += ":"
+				i++
+				continue
+			}
+			current += string(mapping[i])
+		default:
+			current += string(mapping[i])
 		}
 	}
 
-	result = append(result, mapping[from:])
+	result = append(result, current)
 	if len(result) > 3 {
 		return []string{}
 	}

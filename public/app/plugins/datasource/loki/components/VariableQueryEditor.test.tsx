@@ -2,13 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { TimeRange, dateTime } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type TimeRange, dateTime } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../mocks/datasource';
 import { LokiVariableQueryType } from '../types';
 
-import { LokiVariableQueryEditor, Props } from './VariableQueryEditor';
+import { LokiVariableQueryEditor, type Props } from './VariableQueryEditor';
 
 const refId = 'LokiVariableQueryEditor-VariableQuery';
 

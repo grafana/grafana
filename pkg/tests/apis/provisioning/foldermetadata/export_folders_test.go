@@ -1,69 +1,19 @@
 package foldermetadata
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// createUnmanagedFolder creates a Grafana folder via the folders API without any
-// manager annotations, so it will be picked up by the export job.
-func createUnmanagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, name, title string) {
-	t.Helper()
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
-			"kind":       "Folder",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": "default",
-			},
-			"spec": map[string]interface{}{
-				"title": title,
-			},
-		},
-	}
-	_, err := helper.Folders.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
-	require.NoError(t, err)
-}
-
-// createUnmanagedFolderWithParent creates an unmanaged Grafana folder nested under parentUID.
-func createUnmanagedFolderWithParent(t *testing.T, helper *common.ProvisioningTestHelper, name, title, parentUID string) {
-	t.Helper()
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
-			"kind":       "Folder",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": "default",
-				"annotations": map[string]interface{}{
-					"grafana.app/folder": parentUID,
-				},
-			},
-			"spec": map[string]interface{}{
-				"title": title,
-			},
-		},
-	}
-	_, err := helper.Folders.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
-	require.NoError(t, err)
-}
-
-// triggerExport submits a push job and waits for it to complete.
 func triggerExport(t *testing.T, helper *common.ProvisioningTestHelper, repo string) *provisioning.Job {
 	t.Helper()
 	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -77,50 +27,24 @@ func triggerExport(t *testing.T, helper *common.ProvisioningTestHelper, repo str
 }
 
 // TestIntegrationProvisioning_ExportJob_FolderMetadataFlag verifies that the
-// _folder.json files are written during an export (push) job.
+// _folder.json files are written during an export (push) job when the flag is enabled.
 func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	t.Run("flag disabled does not create folder metadata", func(t *testing.T) {
-		helper := common.RunGrafana(t)
-
-		const repo = "export-no-meta-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
-		})
-
-		createUnmanagedFolder(t, helper, "no-meta-folder-uid", "no-meta-folder")
-
-		job := triggerExport(t, helper, repo)
-		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
-
-		require.DirExists(t, filepath.Join(helper.ProvisioningPath, "no-meta-folder"), "folder directory must be created by export")
-
-		// The folder directory may be created, but _folder.json must not be present.
-		metadataPath := filepath.Join(helper.ProvisioningPath, "no-meta-folder", "_folder.json")
-		_, err := os.Stat(metadataPath)
-		require.True(t, os.IsNotExist(err), "_folder.json must not be written when the feature flag is disabled")
-	})
-
 	t.Run("flag enabled creates metadata for newly exported folder", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "export-meta-new-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
 			folderUID   = "export-meta-folder-uid"
 			folderTitle = "export-meta-folder"
 		)
-		createUnmanagedFolder(t, helper, folderUID, folderTitle)
+		helper.CreateUnmanagedFolderWithName(t, folderUID, folderTitle, "")
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
@@ -140,14 +64,14 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 	})
 
 	t.Run("flag enabled does not create metadata for already-existing folder directory", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "export-existing-folder-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		// Simulate a folder directory that already exists in the repository
@@ -155,7 +79,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(helper.ProvisioningPath, folderTitle), 0o750)
 		require.NoError(t, err, "should be able to pre-create folder directory")
 
-		createUnmanagedFolder(t, helper, "existing-folder-uid", folderTitle)
+		helper.CreateUnmanagedFolderWithName(t, "existing-folder-uid", folderTitle, "")
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
@@ -172,8 +96,6 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 // TestIntegrationProvisioning_ExportJob_NestedFolders verifies that export correctly
 // handles nested folder hierarchies: paths, _folder.json placement, and UID/title content.
 func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
 		t.Helper()
 		data, err := os.ReadFile(path) //nolint:gosec
@@ -183,48 +105,15 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		return manifest
 	}
 
-	t.Run("flag disabled does not create folder metadata for nested folders", func(t *testing.T) {
-		helper := common.RunGrafana(t)
-
-		const repo = "nested-no-meta-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
-		})
-
-		const (
-			parentUID   = "nested-no-meta-parent-uid"
-			parentTitle = "nested-no-meta-parent"
-			childUID    = "nested-no-meta-child-uid"
-			childTitle  = "nested-no-meta-child"
-		)
-		createUnmanagedFolder(t, helper, parentUID, parentTitle)
-		createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
-
-		job := triggerExport(t, helper, repo)
-		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
-
-		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle), "parent folder directory must be created by export")
-		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle), "child folder directory must be created by export")
-
-		_, err := os.Stat(filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
-		require.True(t, os.IsNotExist(err), "parent _folder.json must not be written when the feature flag is disabled")
-
-		_, err = os.Stat(filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
-		require.True(t, os.IsNotExist(err), "child _folder.json must not be written when the feature flag is disabled")
-	})
-
 	t.Run("flag enabled skips metadata for all pre-existing folder directories but creates it for new child", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "nested-middle-existing-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -242,9 +131,9 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(helper.ProvisioningPath, grandparentTitle, middleTitle), 0o750)
 		require.NoError(t, err, "should be able to pre-create grandparent and middle folder directories")
 
-		createUnmanagedFolder(t, helper, grandparentUID, grandparentTitle)
-		createUnmanagedFolderWithParent(t, helper, middleUID, middleTitle, grandparentUID)
-		createUnmanagedFolderWithParent(t, helper, childUID, childTitle, middleUID)
+		helper.CreateUnmanagedFolderWithName(t, grandparentUID, grandparentTitle, "")
+		helper.CreateUnmanagedFolderWithName(t, middleUID, middleTitle, grandparentUID)
+		helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, middleUID)
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
@@ -269,14 +158,14 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for parent-child folder hierarchy", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "nested-two-level-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -285,8 +174,8 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 			childUID    = "two-level-child-uid"
 			childTitle  = "two-level-child"
 		)
-		createUnmanagedFolder(t, helper, parentUID, parentTitle)
-		createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
+		helper.CreateUnmanagedFolderWithName(t, parentUID, parentTitle, "")
+		helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, parentUID)
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
@@ -306,14 +195,14 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for three-level folder hierarchy", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "nested-three-level-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -324,9 +213,9 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 			childUID         = "three-level-child-uid"
 			childTitle       = "three-level-child"
 		)
-		createUnmanagedFolder(t, helper, grandparentUID, grandparentTitle)
-		createUnmanagedFolderWithParent(t, helper, parentUID, parentTitle, grandparentUID)
-		createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
+		helper.CreateUnmanagedFolderWithName(t, grandparentUID, grandparentTitle, "")
+		helper.CreateUnmanagedFolderWithName(t, parentUID, parentTitle, grandparentUID)
+		helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, parentUID)
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
@@ -352,14 +241,14 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for sibling folders under a common parent", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "nested-siblings-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -370,9 +259,9 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 			siblingBUID   = "sibling-b-uid"
 			siblingBTitle = "sibling-b"
 		)
-		createUnmanagedFolder(t, helper, parentUID, parentTitle)
-		createUnmanagedFolderWithParent(t, helper, siblingAUID, siblingATitle, parentUID)
-		createUnmanagedFolderWithParent(t, helper, siblingBUID, siblingBTitle, parentUID)
+		helper.CreateUnmanagedFolderWithName(t, parentUID, parentTitle, "")
+		helper.CreateUnmanagedFolderWithName(t, siblingAUID, siblingATitle, parentUID)
+		helper.CreateUnmanagedFolderWithName(t, siblingBUID, siblingBTitle, parentUID)
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
@@ -398,68 +287,164 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 }
 
-// TestIntegrationProvisioning_ExportJob_GitRepo_FolderFiles verifies the files
-// committed to a git repository when exporting Grafana folders, depending on
-// the provisioningFolderMetadata feature flag.
-//
-//   - Flag disabled: each exported folder must contain a .keep placeholder so
-//     git can track the otherwise-empty directory.
-//   - Flag enabled: each exported folder must contain a _folder.json manifest
-//     (no .keep file).
-func TestIntegrationProvisioning_ExportJob_GitRepo_FolderFiles(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	t.Run("flag disabled creates .keep files for exported folders", func(t *testing.T) {
-		helper := common.RunGrafanaWithGitServerForExport(t)
-		ctx := context.Background()
-
-		const repoName = "git-export-no-meta"
-		helper.CreateGitRepo(t, repoName)
-
-		createUnmanagedFolder(t, helper.ProvisioningTestHelper, "git-no-meta-uid", "git-no-meta-folder")
-
-		job := triggerExport(t, helper.ProvisioningTestHelper, repoName)
-		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
-
-		// Without the feature flag git cannot track an empty directory, so a
-		// .keep placeholder must be committed inside every exported folder.
-		// The files API rejects hidden-file paths, so we verify via the Gitea raw API.
-		require.True(t, helper.GitFileExists(t, ctx, repoName, "git-no-meta-folder/.keep"),
-			".keep file must be committed for an exported folder when the feature flag is disabled")
-
-		// No _folder.json must be present when the flag is off.
-		_, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "git-no-meta-folder/_folder.json")
-		require.True(t, apierrors.IsNotFound(err), "_folder.json must not exist when the feature flag is disabled")
-	})
-
-	t.Run("flag enabled creates _folder.json instead of .keep for exported folders", func(t *testing.T) {
-		helper := common.RunGrafanaWithGitServerForExport(t, common.WithProvisioningFolderMetadata)
-		ctx := context.Background()
-
-		const (
-			repoName    = "git-export-with-meta"
-			folderUID   = "git-meta-uid"
-			folderTitle = "git-meta-folder"
-		)
-		helper.CreateGitRepo(t, repoName)
-
-		createUnmanagedFolder(t, helper.ProvisioningTestHelper, folderUID, folderTitle)
-
-		job := triggerExport(t, helper.ProvisioningTestHelper, repoName)
-		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
-
-		// With the feature flag enabled, a _folder.json manifest must be committed instead of
-		// a bare .keep placeholder.  Read the file directly from the Gitea server to avoid the
-		// ownership-conflict check that the provisioning files API performs on unmanaged resources.
-		data := helper.GitReadFile(t, ctx, repoName, folderTitle+"/_folder.json")
-
+// TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs verifies that the
+// GenerateNewFolderIDs export option writes a freshly generated UID into each
+// folder's _folder.json instead of preserving the original folder identifier,
+// while leaving the directory structure (derived from titles) and the folder
+// titles untouched. The default behavior (option off) preserves the original UIDs.
+func TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs(t *testing.T) {
+	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
+		t.Helper()
+		data, err := os.ReadFile(path) //nolint:gosec
+		require.NoError(t, err, "_folder.json should exist at %s", path)
 		var manifest foldersV1.Folder
-		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json must be valid JSON")
-		require.Equal(t, folderUID, manifest.Name, "_folder.json must carry the folder's stable UID")
-		require.Equal(t, folderTitle, manifest.Spec.Title, "_folder.json must carry the folder's title")
+		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json at %s should be valid JSON", path)
+		return manifest
+	}
 
-		// No .keep file must be present when _folder.json is written.
-		require.False(t, helper.GitFileExists(t, ctx, repoName, folderTitle+"/.keep"),
-			".keep must not exist when the feature flag is enabled")
+	const (
+		parentUID   = "newids-parent-uid"
+		parentTitle = "newids-parent"
+		childUID    = "newids-child-uid"
+		childTitle  = "newids-child"
+	)
+
+	setup := func(t *testing.T, repo string) *common.ProvisioningTestHelper {
+		t.Helper()
+		helper := sharedHelper(t)
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
+		})
+		helper.CreateUnmanagedFolderWithName(t, parentUID, parentTitle, "")
+		helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, parentUID)
+		return helper
+	}
+
+	t.Run("generateNewFolderIDs writes fresh UIDs into folder metadata", func(t *testing.T) {
+		const repo = "export-newids-repo"
+		helper := setup(t, repo)
+
+		result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{GenerateNewFolderIDs: true},
+		})
+		job := &provisioning.Job{}
+		require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
+		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
+
+		// Directory structure derives from titles, so it is unaffected by the option.
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle))
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle))
+
+		parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
+		childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
+
+		// Each manifest carries a freshly generated UID, not the original one.
+		require.NotEmpty(t, parentManifest.Name, "parent _folder.json must have a UID")
+		require.NotEqual(t, parentUID, parentManifest.Name, "parent _folder.json should carry a new UID")
+		require.NotEmpty(t, childManifest.Name, "child _folder.json must have a UID")
+		require.NotEqual(t, childUID, childManifest.Name, "child _folder.json should carry a new UID")
+		require.NotEqual(t, parentManifest.Name, childManifest.Name, "each folder should get a distinct new UID")
+
+		// Titles are preserved.
+		require.Equal(t, parentTitle, parentManifest.Spec.Title)
+		require.Equal(t, childTitle, childManifest.Spec.Title)
 	})
+
+	t.Run("without generateNewFolderIDs preserves the original UIDs", func(t *testing.T) {
+		const repo = "export-keepids-repo"
+		helper := setup(t, repo)
+
+		result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{},
+		})
+		job := &provisioning.Job{}
+		require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
+		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
+
+		parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
+		childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
+
+		// Default behavior: the original folder UIDs are preserved.
+		require.Equal(t, parentUID, parentManifest.Name, "parent _folder.json should preserve the original UID")
+		require.Equal(t, childUID, childManifest.Name, "child _folder.json should preserve the original UID")
+	})
+}
+
+// TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata
+// verifies that a selective export of a single dashboard generates _folder.json
+// metadata for the dashboard's parent folder ancestry — even though those
+// folders were not named in the export — while leaving an unrelated folder
+// (and its metadata) out of the repository entirely.
+func TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata(t *testing.T) {
+	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
+		t.Helper()
+		data, err := os.ReadFile(path) //nolint:gosec
+		require.NoError(t, err, "_folder.json should exist at %s", path)
+		var manifest foldersV1.Folder
+		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json at %s should be valid JSON", path)
+		return manifest
+	}
+
+	helper := sharedHelper(t)
+
+	const repo = "selective-export-meta-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		SkipSync:   true,
+	})
+
+	const (
+		parentUID   = "selective-meta-parent-uid"
+		parentTitle = "selective-meta-parent"
+		childUID    = "selective-meta-child-uid"
+		childTitle  = "selective-meta-child"
+
+		unrelatedUID   = "selective-meta-unrelated-uid"
+		unrelatedTitle = "selective-meta-unrelated"
+	)
+	helper.CreateUnmanagedFolderWithName(t, parentUID, parentTitle, "")
+	helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, parentUID)
+	helper.CreateUnmanagedFolderWithName(t, unrelatedUID, unrelatedTitle, "")
+
+	// The dashboard lives in the child folder; only it is named in the export.
+	selectedDash := helper.CreateUnmanagedDashboard(t, "selective-meta-dash", childUID)
+
+	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: selectedDash, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	})
+	job := &provisioning.Job{}
+	require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
+	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "selective export job should succeed")
+
+	// The parent ancestry is generated with metadata even though it was not
+	// named: the dashboard's nested path must resolve to managed folders.
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle))
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle))
+
+	parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
+	require.Equal(t, parentUID, parentManifest.Name, "generated parent _folder.json should preserve the folder UID")
+	require.Equal(t, parentTitle, parentManifest.Spec.Title)
+
+	childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
+	require.Equal(t, childUID, childManifest.Name, "generated child _folder.json should preserve the folder UID")
+	require.Equal(t, childTitle, childManifest.Spec.Title)
+
+	// The dashboard itself lands inside the generated child folder.
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "selective-meta-dash.json"))
+
+	// The unrelated folder must not be exported at all: no directory, no metadata.
+	_, err := os.Stat(filepath.Join(helper.ProvisioningPath, unrelatedTitle))
+	require.True(t, os.IsNotExist(err), "unrelated folder must not be exported during a selective export")
 }

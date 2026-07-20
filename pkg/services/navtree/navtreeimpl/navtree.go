@@ -1,30 +1,32 @@
 package navtreeimpl
 
 import (
-	"sort"
+	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/navtree/navtreeimpl")
 
 type ServiceImpl struct {
 	cfg                  *setting.Cfg
@@ -33,9 +35,7 @@ type ServiceImpl struct {
 	authnService         authn.Service
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
-	starService          star.Service
 	features             featuremgmt.FeatureToggles
-	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
 	apiKeyService        apikey.Service
@@ -55,8 +55,8 @@ type NavigationAppConfig struct {
 	IsNew      bool
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
-	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service,
+	features featuremgmt.FeatureToggles, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
 	license licensing.Licensing, authnService authn.Service,
 ) navtree.Service {
 	service := &ServiceImpl{
@@ -66,9 +66,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		authnService:         authnService,
 		pluginStore:          pluginStore,
 		pluginSettings:       pluginSettings,
-		starService:          starService,
 		features:             features,
-		dashboardService:     dashboardService,
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,
 		apiKeyService:        apiKeyService,
@@ -82,30 +80,34 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 
 //nolint:gocyclo
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
+	// The context is restored on the ReqContext return so the span doesn't leak to sibling operations.
+	ctx, span := tracer.Start(c.Req.Context(), "navtree.GetNavTree")
+	defer span.End()
+	prevReq := c.Req
+	c.Req = c.Req.WithContext(ctx)
+	defer func() { c.Req = prevReq }()
+
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 
 	treeRoot.AddSection(s.getHomeNode(c, prefs))
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
-		starredItemsLinks, err := s.buildStarredItemsNavLinks(c)
-		if err != nil {
-			return nil, err
-		}
-
+		// Starred dashboards are populated client-side (useSyncStarredItemsInNav).
+		// The backend only emits the empty section as a container for the client to fill.
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Starred",
 			Id:             "starred",
 			Icon:           "star",
 			SortWeight:     navtree.WeightSavedItems,
-			Children:       starredItemsLinks,
+			Children:       []*navtree.NavLink{},
 			EmptyMessageId: "starred-empty",
 			Url:            s.cfg.AppSubURL + "/dashboards?starred",
 		})
 	}
 
 	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
-		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
+		ac.EvalPermission(folder.ActionFoldersRead), ac.EvalPermission(folder.ActionFoldersCreate),
 		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
 	) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c)
@@ -158,9 +160,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 	}
 
-	if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
-		treeRoot.AddSection(connectionsSection)
-	}
+	treeRoot.AddSection(s.buildDataConnectionsNavLink(c))
 
 	orgAdminNode, err := s.getAdminNode(c)
 
@@ -207,28 +207,13 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		}
 	}
 
-	homeNode := &navtree.NavLink{
+	return &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
 		Url:        homeUrl,
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
 	}
-	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
-		ctx := c.Req.Context()
-		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
-			children := make([]*navtree.NavLink, 0, 1)
-			// setup guide (a submenu item under Home)
-			children = append(children, &navtree.NavLink{
-				Id:         "home-setup-guide",
-				Text:       "Getting started guide",
-				Url:        "/a/grafana-setupguide-app/getting-started",
-				SortWeight: navtree.WeightHome,
-			})
-			homeNode.Children = children
-		}
-	}
-	return homeNode
 }
 
 func isSupportBundlesEnabled(s *ServiceImpl) bool {
@@ -316,66 +301,28 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 }
 
-func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
-	starredItemsChildNavs := []*navtree.NavLink{}
-
-	userID, _ := identity.UserIdentifier(c.GetID())
-	query := star.GetUserStarsQuery{
-		UserID: userID,
-	}
-
-	starredDashboardResult, err := s.starService.GetByUser(c.Req.Context(), &query)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(starredDashboardResult.UserStars) > 0 {
-		var uids []string
-		for uid := range starredDashboardResult.UserStars {
-			uids = append(uids, uid)
-		}
-		starredDashboards, err := s.dashboardService.SearchDashboards(c.Req.Context(), &dashboards.FindPersistedDashboardsQuery{
-			DashboardUIDs: uids,
-			Type:          searchstore.TypeDashboard,
-			OrgId:         c.GetOrgID(),
-			SignedInUser:  c.SignedInUser,
-		})
-		if err != nil {
-			return nil, err
-		}
-		// Set a loose limit to the first 50 starred dashboards found
-		if len(starredDashboards) > 50 {
-			starredDashboards = starredDashboards[:50]
-		}
-
-		sort.Slice(starredDashboards, func(i, j int) bool {
-			return starredDashboards[i].Title < starredDashboards[j].Title
-		})
-		for _, starredItem := range starredDashboards {
-			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   "starred/" + starredItem.UID,
-				Text: starredItem.Title,
-				Url:  starredItem.URL,
-			})
-		}
-	}
-
-	return starredItemsChildNavs, nil
-}
-
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	dashboardChildNavs := []*navtree.NavLink{}
 
-	if c.IsSignedIn {
-		if c.HasRole(org.RoleViewer) {
+	// Playlists are visible to anonymous users too, so the nav stays consistent
+	// with the playlist page and API which both serve anonymous Viewers.
+	if c.IsSignedIn || c.IsAnonymous {
+		showPlaylist := c.HasRole(org.RoleViewer)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
+		}
+		if showPlaylist {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
 		}
+	}
 
-		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
+	if c.IsSignedIn {
+		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
 				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
@@ -393,6 +340,21 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagGlobalDashboardVariables) &&
+			hasAccess(ac.EvalAny(
+				ac.EvalPermission(dashboards.ActionDashboardsCreate),
+				ac.EvalPermission(dashboards.ActionDashboardsWrite),
+			)) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Variables",
+				SubTitle: "Template variables shared across dashboards, globally or per folder",
+				Id:       "dashboards/variables",
+				Url:      s.cfg.AppSubURL + "/dashboards/variables",
+				Icon:     "brackets-curly",
+			})
+		}
+
 		if s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
@@ -402,15 +364,12 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) {
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Recently deleted",
-				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-				Id:       "dashboards/recently-deleted",
-				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
-			})
-		}
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text:     "Recently deleted",
+			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+			Id:       "dashboards/recently-deleted",
+			Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
+		})
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
@@ -499,6 +458,8 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesWrite),
 	}
 
 	hasContactPointsAccess := hasAccess(ac.EvalAny(contactPointsPerms...))
@@ -608,12 +569,11 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	var children []*navtree.NavLink
-	var navLink *navtree.NavLink
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
 	if hasAccess(datasources.ConfigurationPageAccess) {
-		// Add new connection
+		// Add new connection — requires create/write permissions
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-add-new-connection",
 			Text:     "Add new connection",
@@ -623,7 +583,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
 		})
 
-		// Data sources
+		// Data sources — also requires write permissions to be useful
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-datasources",
 			Text:     "Data sources",
@@ -633,18 +593,17 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		})
 	}
 
-	if len(children) > 0 {
-		// Connections (main)
-		navLink = &navtree.NavLink{
-			Text:       "Connections",
-			Icon:       "adjust-circle",
-			Id:         "connections",
-			Url:        baseUrl,
-			Children:   children,
-			SortWeight: navtree.WeightDataConnections,
-		}
-
-		return navLink
+	// Always return the section so that plugin pages registered under the
+	// "connections" section ID (via addAppLinks) can be attached regardless
+	// of the user's datasource permissions. The section is pruned after all
+	// app links are processed if it still has no children (see
+	// NavTreeRoot.RemoveEmptyConnectionsSection called in setIndexViewData).
+	return &navtree.NavLink{
+		Text:       "Connections",
+		Icon:       "adjust-circle",
+		Id:         "connections",
+		Url:        baseUrl,
+		Children:   children,
+		SortWeight: navtree.WeightDataConnections,
 	}
-	return nil
 }

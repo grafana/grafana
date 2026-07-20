@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 
-import { BuilderQueryEditorReduceExpression, BuilderQueryEditorReduceParameterTypes } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
+import { type BuilderQueryEditorReduceExpression, BuilderQueryEditorReduceParameterTypes } from '../../dataquery.gen';
+import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 
 import AggregateItem from './AggregateItem';
-import { BuildAndUpdateOptions, isNumericColumn } from './utils';
+import { type BuildAndUpdateOptions, isNumericColumn } from './utils';
 
 interface AggregateSectionProps {
   query: AzureMonitorQuery;

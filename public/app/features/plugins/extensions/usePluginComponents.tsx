@@ -6,9 +6,9 @@ import {
   PluginExtensionTypes,
   usePluginContext,
 } from '@grafana/data';
-import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/runtime';
+import { type UsePluginComponentsOptions, type UsePluginComponentsResult } from '@grafana/runtime';
 
-import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
+import { type AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useAddedComponentsRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';

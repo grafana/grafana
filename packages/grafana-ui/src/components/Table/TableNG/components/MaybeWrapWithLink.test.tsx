@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { ActionType, Field, FieldType, HttpRequestMethod } from '@grafana/data';
+import { ActionType, type Field, FieldType, HttpRequestMethod } from '@grafana/data';
 
 import { MaybeWrapWithLink } from './MaybeWrapWithLink';
 

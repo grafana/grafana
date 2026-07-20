@@ -1,9 +1,9 @@
-import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, ScopedVars } from '@grafana/data';
+import { AbstractLabelOperator, type DataFrame, type TimeRange, dateTime, type ScopedVars } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
 import { LokiQueryType } from './dataquery.gen';
-import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { DEFAULT_MAX_LINES_SAMPLE, type LokiDatasource } from './datasource';
 import { createDetectedFieldValuesMetadataRequest } from './mocks/createDetectedFieldValuesMetadataRequest';
 import { createDetectedFieldsMetadataRequest } from './mocks/createDetectedFieldsMetadataRequest';
 import { createLokiDatasource } from './mocks/datasource';
@@ -13,7 +13,7 @@ import {
   extractLabelKeysFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType } from './types';
+import { type DetectedFieldsResult, LabelType } from './types';
 
 jest.mock('./responseUtils');
 
@@ -288,6 +288,14 @@ describe('Language completion provider', () => {
       expect(values2).not.toStrictEqual(values3);
       expect(requestSpy).toHaveBeenCalledTimes(2);
     });
+
+    it('should return empty array when request returns non-array', async () => {
+      const datasource = setup({});
+      const provider = await getLanguageProvider(datasource);
+      jest.spyOn(provider, 'request').mockResolvedValue(null);
+      const labelValues = await provider.fetchLabelValues('testkey');
+      expect(labelValues).toEqual([]);
+    });
   });
 
   describe('fetchDetectedLabelValues', () => {
@@ -380,6 +388,16 @@ describe('Language completion provider', () => {
       expect(values2).not.toStrictEqual(values3);
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(requestSpy2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return empty array when request returns non-array', async () => {
+      const datasource = detectedLabelValuesSetup(null as unknown as string[], {
+        end: mockTimeRange.to.valueOf(),
+        start: mockTimeRange.from.valueOf(),
+      });
+      const provider = await getLanguageProvider(datasource, false);
+      const labelValues = await provider.fetchDetectedLabelValues('testkey', options);
+      expect(labelValues).toEqual([]);
     });
   });
   describe('fetchDetectedFields', () => {

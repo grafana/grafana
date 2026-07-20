@@ -1,18 +1,18 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { colorManipulator, DataFrame, Field, InterpolateFunction, LinkModel } from '@grafana/data';
+import { colorManipulator, type DataFrame, type Field, type InterpolateFunction, type LinkModel } from '@grafana/data';
 import {
+  VizTooltipColorIndicator,
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  ColorIndicator,
-  VizTooltipItem,
-} from '@grafana/ui/internal';
+} from '@grafana/ui';
 
 import { getFieldActions } from '../status-history/utils';
 
-import { XYSeries } from './types2';
+import { type XYSeries } from './types2';
 import { fmt } from './utils';
 
 export interface Props {
@@ -77,7 +77,7 @@ export const XYChartTooltip = ({
     label,
     value: '',
     color: seriesColor,
-    colorIndicator: ColorIndicator.marker_md,
+    colorIndicator: VizTooltipColorIndicator.marker_md,
   };
 
   const contentItems: VizTooltipItem[] = [];

@@ -7,7 +7,11 @@
   },
   "name": "with-login-and-email",
   "rv": 1234,
+  "title": "with-login-and-email",
+  "title_ngram": "with-login-and-email",
+  "title_phrase": "with-login-and-email",
   "fields": {
+    "disabled": false,
     "email": "user.one@test.com",
     "lastSeenAt": 0,
     "login": "user.one",

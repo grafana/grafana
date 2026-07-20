@@ -1,4 +1,4 @@
-import { PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
+import { type PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
 
 import { useSelector } from 'app/types/store';
 

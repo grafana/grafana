@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { Field, InlineLabel, InlineSwitch, Input, SecretInput, useStyles2 } from '@grafana/ui';
 
-import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
+import { type InfluxOptions, type InfluxSecureJsonData } from '../../../types';
 
 import { WIDTH_SHORT } from './constants';
 import { trackInfluxDBConfigV1SQLDatabaseInputField, trackInfluxDBConfigV1SQLTokenInputField } from './trackingv1';

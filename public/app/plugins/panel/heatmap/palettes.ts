@@ -1,10 +1,10 @@
-import * as d3 from 'd3';
+import { scaleLinear, scalePow } from 'd3-scale';
 import * as d3ScaleChromatic from 'd3-scale-chromatic';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { HeatmapColorOptions, HeatmapColorMode, HeatmapColorScale } from './panelcfg.gen';
+import { type HeatmapColorOptions, HeatmapColorMode, HeatmapColorScale } from './panelcfg.gen';
 import { defaultOptions } from './types';
 
 // https://observablehq.com/@d3/color-schemes?collection=@d3/d3-scale-chromatic
@@ -76,8 +76,8 @@ export function quantizeScheme(opts: HeatmapColorOptions, theme: GrafanaTheme2):
 
     const scale =
       options.scale === HeatmapColorScale.Exponential
-        ? d3.scalePow().exponent(options.exponent).domain([0, 1]).range([0, 1])
-        : d3.scaleLinear().domain([0, 1]).range([0, 1]);
+        ? scalePow().exponent(options.exponent).domain([0, 1]).range([0, 1])
+        : scaleLinear().domain([0, 1]).range([0, 1]);
 
     for (let i = 0; i <= steps; i++) {
       fill.a = scale(i / steps);

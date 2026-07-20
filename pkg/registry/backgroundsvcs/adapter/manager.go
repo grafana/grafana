@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -86,7 +87,18 @@ func (m *ManagerAdapter) starting(ctx context.Context) error {
 	if err := m.manager.StartAsync(ctx); err != nil {
 		return err
 	}
-	return m.manager.AwaitRunning(ctx)
+	if err := m.manager.AwaitRunning(ctx); err != nil {
+		if failure := m.manager.FailureCase(); failure != nil {
+			err = failure
+		}
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), stopTimeout)
+		defer cancel()
+		if shutdownErr := m.manager.Shutdown(shutdownCtx, err.Error()); shutdownErr != nil {
+			return errors.Join(err, shutdownErr)
+		}
+		return err
+	}
+	return nil
 }
 
 func (m *ManagerAdapter) running(ctx context.Context) error {

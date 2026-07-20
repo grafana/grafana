@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useId, useMemo, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
-import InfluxDatasource from '../../../../../datasource';
+import type InfluxDatasource from '../../../../../datasource';
 import {
   getAllMeasurements,
   getAllPolicies,
@@ -21,7 +21,7 @@ import {
   removeGroupByPart,
   removeSelectPart,
 } from '../../../../../queryUtils';
-import { InfluxQuery, InfluxQueryTag } from '../../../../../types';
+import { type InfluxQuery, type InfluxQueryTag } from '../../../../../types';
 import { DEFAULT_RESULT_FORMAT } from '../../../constants';
 import { filterTags } from '../utils/filterTags';
 import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from '../utils/partListUtils';

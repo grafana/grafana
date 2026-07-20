@@ -1,12 +1,11 @@
 import { groupBy } from 'lodash';
 
 import { t } from '@grafana/i18n';
-import { Alert, Box, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { Alert, Box, LoadingPlaceholder, Stack, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
-import { Labels } from '../../../../../../types/unified-alerting-dto';
-import { AlertManagerDataSource } from '../../../utils/datasource';
+import { type Labels } from '../../../../../../types/unified-alerting-dto';
+import { type AlertManagerDataSource } from '../../../utils/datasource';
 
 import { GrafanaContactPointGroup } from './ContactPointGroup';
 import { InstanceMatch } from './NotificationRoute';
@@ -17,13 +16,16 @@ const UNKNOWN_RECEIVER = 'unknown';
 function NotificationPreviewGrafanaManaged({
   alertManagerSource,
   instances,
+  policyName,
 }: {
   alertManagerSource: AlertManagerDataSource;
   instances: Labels[];
+  policyName?: string;
 }) {
   const { treeMatchingResults, isLoading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
-    instances
+    instances,
+    policyName
   );
 
   if (error) {
@@ -73,7 +75,6 @@ function NotificationPreviewGrafanaManaged({
                 <InstanceMatch
                   key={matchDetails.labels.join(',')}
                   matchedInstance={matchDetails}
-                  policyTreeSpec={routeTree.expandedSpec}
                   policyTreeMetadata={routeTree.metadata}
                 />
               ))}

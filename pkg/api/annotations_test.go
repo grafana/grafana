@@ -77,7 +77,7 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodGet,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to fetch dashboard annotation by id with the old dashboard scope",
@@ -119,7 +119,7 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodPut,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to update dashboard annotation with the old dashboard scope",
@@ -161,7 +161,7 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodPatch,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to patch dashboard annotation with the old dashboard scope",
@@ -206,7 +206,7 @@ func TestAPI_Annotations(t *testing.T) {
 			method:       http.MethodPost,
 			body:         "{\"dashboardId\": 2,\"text\": \"test\"}",
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to create dashboard annotation with the old dashboard scope",
@@ -251,7 +251,7 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodDelete,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to delete dashboard annotation with the old dashboard scope",
@@ -311,7 +311,7 @@ func TestAPI_Annotations(t *testing.T) {
 			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
 			method:       http.MethodPost,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to mass delete dashboard annotation with the old dashboard scope",
@@ -412,7 +412,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 			given: "annotations:id:1",
 			want: []string{
 				dashboards.ScopeDashboardsProvider.GetResourceScopeUID(rootDashUID),
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID),
+				folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID),
 			},
 			wantErr: nil,
 		},
@@ -421,7 +421,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 			given: "annotations:id:3",
 			want: []string{
 				dashboards.ScopeDashboardsProvider.GetResourceScopeUID(folderDashUID),
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+				folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
 			},
 			wantErr: nil,
 		},

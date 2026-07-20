@@ -1,4 +1,4 @@
-import { DetectedFieldsResult } from '../types';
+import { type DetectedFieldsResult } from '../types';
 
 export function createDetectedFieldsMetadataRequest(response: DetectedFieldsResult) {
   const lokiLabelsAndValuesEndpointRegex = /^detected_fields/;

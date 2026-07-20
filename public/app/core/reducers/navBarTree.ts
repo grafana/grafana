@@ -1,11 +1,9 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { NavModelItem } from '@grafana/data';
+import { type IconName, type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
-
-export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
   return navTree.map((navItem) => {
@@ -24,13 +22,27 @@ function translateNav(navTree: NavModelItem[]): NavModelItem[] {
 // this matches the prefix set in the backend navtree
 export const ID_PREFIX = 'starred/';
 
+export interface StarredNavItem {
+  id: string;
+  title: string;
+  url: string;
+  icon?: IconName;
+  sortWeight?: number;
+}
+// Single shared collator avoids per-call Intl.Collator construction
+const collator = new Intl.Collator();
+// Starred children group by sortWeight (dashboards carry none, folders a positive weight), alphabetical within a group.
+// Shared so setStarred (optimistic), setStarredItems (sync), and updateDashboardName (rename) never diverge and reorder the nav.
+const compareStarredChildren = (a: NavModelItem, b: NavModelItem): number =>
+  (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text);
+
 const navTreeSlice = createSlice({
   name: 'navBarTree',
   initialState: () => translateNav(config.bootData?.navTree ?? []),
   reducers: {
-    setStarred: (state, action: PayloadAction<{ id: string; title: string; url: string; isStarred: boolean }>) => {
+    setStarred: (state, action: PayloadAction<StarredNavItem & { isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');
-      const { id, title, url, isStarred } = action.payload;
+      const { id, title, url, icon, sortWeight, isStarred } = action.payload;
       if (starredItems) {
         if (isStarred) {
           if (!starredItems.children) {
@@ -40,9 +52,11 @@ const navTreeSlice = createSlice({
             id: ID_PREFIX + id,
             text: title,
             url,
+            icon,
+            sortWeight,
           };
           starredItems.children.push(newStarredItem);
-          starredItems.children.sort((a, b) => a.text.localeCompare(b.text));
+          starredItems.children.sort(compareStarredChildren);
         } else {
           const index = starredItems.children?.findIndex((item) => item.id === ID_PREFIX + id) ?? -1;
           if (index > -1) {
@@ -76,11 +90,11 @@ const navTreeSlice = createSlice({
       const { id, title, url } = action.payload;
       const starredItems = state.find((navItem) => navItem.id === 'starred');
       if (starredItems) {
-        const navItem = starredItems.children?.find((navItem) => navItem.id === id);
+        const navItem = starredItems.children?.find((navItem) => navItem.id === ID_PREFIX + id);
         if (navItem) {
           navItem.text = title;
           navItem.url = url;
-          starredItems.children?.sort((a, b) => a.text.localeCompare(b.text));
+          starredItems.children?.sort(compareStarredChildren);
         }
       }
     },
@@ -91,8 +105,42 @@ const navTreeSlice = createSlice({
         state.splice(pluginItemIndex, 1);
       }
     },
+    setStarredItems: (state, action: PayloadAction<{ uids: string[]; items: StarredNavItem[] }>) => {
+      const starred = state.find((n) => n.id === 'starred');
+      if (!starred) {
+        return;
+      }
+      const { uids, items } = action.payload;
+      const found = new Map(items.map((item) => [item.id, item]));
+      const existing = new Map((starred.children ?? []).map((child) => [child.id, child]));
+      const children: NavModelItem[] = [];
+      for (const uid of uids) {
+        const item = found.get(uid);
+        if (item) {
+          children.push({
+            id: ID_PREFIX + uid,
+            text: item.title,
+            url: item.url,
+            icon: item.icon,
+            sortWeight: item.sortWeight,
+          });
+        } else {
+          // A starred uid can be missing from the search response when the eventually
+          // consistent index hasn't caught up with a fresh star yet, or when the dashboard
+          // was deleted. Keep the already-rendered entry (e.g. the optimistic one from
+          // setStarred) so a just-starred item doesn't vanish; a deleted dashboard has no
+          // entry to keep and is dropped on the next full page load either way.
+          const prev = existing.get(ID_PREFIX + uid);
+          if (prev) {
+            children.push(prev);
+          }
+        }
+      }
+      starred.children = children.sort(compareStarredChildren);
+    },
   },
 });
 
-export const { setStarred, removePluginFromNavTree, updateDashboardName, setBookmark } = navTreeSlice.actions;
+export const { setStarred, setStarredItems, removePluginFromNavTree, updateDashboardName, setBookmark } =
+  navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

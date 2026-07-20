@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, IconButton, Input } from '@grafana/ui';
 
-import { JSONPath } from '../types';
+import { type JSONPath } from '../types';
 
 interface Props {
   options: JSONPath[];

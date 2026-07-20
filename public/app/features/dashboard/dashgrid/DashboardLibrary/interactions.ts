@@ -1,7 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 
-import { ContentKind, DiscoveryMethod, EventLocation, FEATURE_VARIANTS, SourceEntryPoint } from './constants';
-import { isTemplateDashboardAssistantEnabled } from './utils/assistantHelpers';
+import { type ContentKind, type DiscoveryMethod, type EventLocation, type SourceEntryPoint } from './constants';
+import { isTemplateDashboardAssistantEnabled, isSuggestedDashboardAssistantEnabled } from './utils/assistantHelpers';
 
 const SCHEMA_VERSION = 1;
 
@@ -63,7 +63,12 @@ export const DashboardLibraryInteractions = {
   }) => {
     reportDashboardLibraryInteraction('mapping_form_completed', properties);
   },
-  entryPointClicked: (properties: { entryPoint: SourceEntryPoint; contentKind: ContentKind }) => {
+  entryPointClicked: (properties: {
+    entryPoint: SourceEntryPoint;
+    /** @deprecated Use contentKinds instead. */
+    contentKind: ContentKind | undefined;
+    contentKinds: ContentKind[];
+  }) => {
     reportDashboardLibraryInteraction('entry_point_clicked', properties);
   },
 
@@ -73,8 +78,13 @@ export const DashboardLibraryInteractions = {
     datasourceType: string;
     triggerMethod: 'manual' | 'auto_initial_load';
     eventLocation: EventLocation;
+    sourceEntryPoint: SourceEntryPoint;
   }) => {
     reportDashboardLibraryInteraction('compatibility_check_triggered', properties);
+  },
+
+  createFromScratchClicked: (properties: { eventLocation: EventLocation }) => {
+    reportDashboardLibraryInteraction('create_from_scratch_clicked', properties);
   },
 
   compatibilityCheckCompleted: (properties: {
@@ -86,6 +96,7 @@ export const DashboardLibraryInteractions = {
     metricsTotal: number;
     triggerMethod: 'manual' | 'auto_initial_load';
     eventLocation: EventLocation;
+    sourceEntryPoint: SourceEntryPoint;
   }) => {
     reportDashboardLibraryInteraction('compatibility_check_completed', properties);
   },
@@ -117,32 +128,22 @@ export const TemplateDashboardInteractions = {
 
 export const SuggestedDashboardInteractions = {
   ...DashboardLibraryInteractions,
-  loaded: (properties: LoadedInteractionProperties) => {
+  loaded: async (properties: LoadedInteractionProperties) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
     reportDashboardLibraryInteraction('loaded', {
       ...properties,
-      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
+      isSuggestedDashboardAssistantButtonEnabled,
     });
   },
-  itemClicked: (properties: ItemClickedInteractionProperties) => {
+  itemClicked: async (
+    properties: ItemClickedInteractionProperties & {
+      action?: 'use_dashboard' | 'assistant';
+    }
+  ) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
     reportDashboardLibraryInteraction('item_clicked', {
       ...properties,
-      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
-    });
-  },
-};
-
-export const BasicProvisionedDashboardInteractions = {
-  ...DashboardLibraryInteractions,
-  loaded: (properties: LoadedInteractionProperties) => {
-    reportDashboardLibraryInteraction('loaded', {
-      ...properties,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    });
-  },
-  itemClicked: (properties: ItemClickedInteractionProperties) => {
-    reportDashboardLibraryInteraction('item_clicked', {
-      ...properties,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
+      isSuggestedDashboardAssistantButtonEnabled,
     });
   },
 };

@@ -1,7 +1,7 @@
 import {
-  VisualQueryBinary,
-  QueryBuilderLabelFilter,
-  QueryBuilderOperation,
+  type VisualQueryBinary,
+  type QueryBuilderLabelFilter,
+  type QueryBuilderOperation,
   BINARY_OPERATIONS_KEY,
 } from '@grafana/plugin-ui';
 

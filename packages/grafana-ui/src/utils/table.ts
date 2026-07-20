@@ -1,6 +1,6 @@
-import { Row } from 'react-table';
+import { type Row } from 'react-table';
 
-import { Field, LinkModel } from '@grafana/data';
+import { type Field, type LinkModel } from '@grafana/data';
 
 /**
  * @internal

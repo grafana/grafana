@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 
-import { RoutesMatchingFilters } from './PoliciesTree';
+import { type RoutesMatchingFilters } from './PoliciesTree';
 
 const defaultValue: RoutesMatchingFilters = {
   filtersApplied: false,

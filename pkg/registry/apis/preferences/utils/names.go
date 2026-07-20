@@ -1,6 +1,8 @@
 package utils
 
-import "strings"
+import (
+	"strings"
+)
 
 // +enum
 type ResourceOwner string
@@ -41,4 +43,25 @@ func ParseOwnerFromName(name string) (OwnerReference, bool) {
 		return OwnerReference{Owner: NamespaceResourceOwner}, true
 	}
 	return OwnerReference{}, false
+}
+
+// UserOwner returns the resource owner reference for the signed-in user.
+func UserOwner(userUID string) OwnerReference {
+	return OwnerReference{
+		Owner:      UserResourceOwner,
+		Identifier: userUID,
+	}
+}
+
+// TeamOwner returns the resource owner reference for the given team UID.
+func TeamOwner(teamUID string) OwnerReference {
+	return OwnerReference{
+		Owner:      TeamResourceOwner,
+		Identifier: teamUID,
+	}
+}
+
+// NamespaceOwner returns the resource owner reference for org-wide preferences.
+func NamespaceOwner() OwnerReference {
+	return OwnerReference{Owner: NamespaceResourceOwner}
 }

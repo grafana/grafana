@@ -1,10 +1,12 @@
-import { DataSourceApi, LoadingState, TimeRange } from '@grafana/data';
+import { useMemo } from 'react';
+
+import { type DataSourceApi, LoadingState, type TimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { QueryVariable } from '@grafana/scenes';
+import { type QueryVariable } from '@grafana/scenes';
 import { Text, Box } from '@grafana/ui';
 import { isLegacyQueryEditor, isQueryEditor } from 'app/features/variables/guard';
-import { VariableQueryEditorType } from 'app/features/variables/types';
+import { type VariableQueryEditorType } from 'app/features/variables/types';
 
 type VariableQueryType = QueryVariable['state']['query'];
 
@@ -25,15 +27,19 @@ export function QueryEditor({
   onQueryChange,
   timeRange,
 }: QueryEditorProps) {
-  let queryWithDefaults;
-  if (typeof query === 'string') {
-    queryWithDefaults = query || (datasource.variables?.getDefaultQuery?.() ?? '');
-  } else {
-    queryWithDefaults = {
+  // Keep a stable reference across renders. The underlying query editors re-initialize their
+  // internal state from this prop via useEffect, so a fresh object on every render would wipe
+  // out in-flight edits (e.g. typing a variable into a label filter) whenever the parent
+  // re-renders for an unrelated reason.
+  const queryWithDefaults = useMemo(() => {
+    if (typeof query === 'string') {
+      return query || (datasource.variables?.getDefaultQuery?.() ?? '');
+    }
+    return {
       ...datasource.variables?.getDefaultQuery?.(),
       ...query,
     };
-  }
+  }, [query, datasource]);
 
   if (VariableQueryEditor && isLegacyQueryEditor(VariableQueryEditor, datasource)) {
     return (

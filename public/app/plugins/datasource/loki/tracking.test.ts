@@ -1,11 +1,11 @@
-import { CoreApp, DashboardLoadedEvent, DataQueryRequest, dateTime } from '@grafana/data';
+import { CoreApp, DashboardLoadedEvent, type DataQueryRequest, dateTime } from '@grafana/data';
 import { QueryEditorMode } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 
 import pluginJson from './plugin.json';
 import { partitionTimeRange } from './querySplitting';
 import { onDashboardLoadedHandler, trackGroupedQueries, trackQuery } from './tracking';
-import { LokiGroupedRequest, LokiQuery } from './types';
+import { type LokiGroupedRequest, type LokiQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

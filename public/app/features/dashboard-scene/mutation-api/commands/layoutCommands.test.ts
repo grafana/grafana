@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -32,13 +33,13 @@ jest.mock('../../edit-pane/shared', () => {
   };
 });
 
+let currentTestScene: unknown;
+
 jest.mock('../../utils/utils', () => {
   const actual = jest.requireActual('../../utils/utils');
   return {
     ...actual,
-    getDashboardSceneFor: jest.fn(() => ({
-      state: { isEditing: true },
-    })),
+    getDashboardSceneFor: jest.fn(() => currentTestScene ?? { state: { isEditing: true } }),
   };
 });
 
@@ -47,9 +48,20 @@ function mockSerializer(elementMap: Record<string, number> = {}) {
   for (const [name, id] of Object.entries(elementMap)) {
     reverseMap[id] = name;
   }
+
+  function ensureMapping(panelId: number): string {
+    if (reverseMap[panelId]) {
+      return reverseMap[panelId];
+    }
+    const key = `panel-${panelId}`;
+    elementMap[key] = panelId;
+    reverseMap[panelId] = key;
+    return key;
+  }
+
   return {
     getPanelIdForElement: jest.fn((name: string) => elementMap[name]),
-    getElementIdForPanel: jest.fn((id: number) => reverseMap[id]),
+    getElementIdForPanel: jest.fn((id: number) => ensureMapping(id)),
     getDSReferencesMapping: jest.fn(() => ({})),
   };
 }
@@ -78,11 +90,14 @@ function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScen
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -112,11 +127,14 @@ function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScen
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -150,11 +168,14 @@ function buildRowsSceneWithPanels(): DashboardScene {
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -190,11 +211,14 @@ function buildSceneWithLayoutParent(
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -226,7 +250,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/rows/1' });
+      expect(result.data).toMatchObject({ path: '/rows/1', row: { kind: 'RowsLayoutRow' } });
 
       const body = scene.state.body as unknown as RowsLayoutManager;
       expect(body.state.rows).toHaveLength(2);
@@ -249,6 +273,45 @@ describe('Layout mutation commands', () => {
       expect(result.success).toBe(true);
       const body = scene.state.body as unknown as RowsLayoutManager;
       expect(body.state.rows.map((r) => r.state.title)).toEqual(['First', 'Second', 'Third']);
+    });
+
+    it('adds a row with conditionalRendering', async () => {
+      const scene = buildRowsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Conditional Row',
+              conditionalRendering: {
+                kind: 'ConditionalRenderingGroup',
+                spec: {
+                  visibility: 'hide',
+                  condition: 'or',
+                  items: [
+                    {
+                      kind: 'ConditionalRenderingTimeRangeSize',
+                      spec: { value: '1h' },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      const serialized = body.state.rows[1].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('hide');
+      expect(serialized?.spec.condition).toBe('or');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingTimeRangeSize');
     });
   });
 
@@ -329,6 +392,86 @@ describe('Layout mutation commands', () => {
       const body = scene.state.body as unknown as RowsLayoutManager;
       expect(body.state.rows[0].state.collapse).toBe(true);
     });
+
+    it('sets conditionalRendering with a variable condition', async () => {
+      const scene = buildRowsScene(['Row']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: {
+          path: '/rows/0',
+          spec: {
+            conditionalRendering: {
+              kind: 'ConditionalRenderingGroup',
+              spec: {
+                visibility: 'hide',
+                condition: 'and',
+                items: [
+                  {
+                    kind: 'ConditionalRenderingVariable',
+                    spec: { variable: 'env', operator: 'equals', value: 'prod' },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      const serialized = body.state.rows[0].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('hide');
+      expect(serialized?.spec.condition).toBe('and');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingVariable');
+    });
+
+    it('clears conditionalRendering when items is empty', async () => {
+      const scene = buildRowsScene(['Row']);
+      const executor = new DashboardMutationClient(scene);
+
+      await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: {
+          path: '/rows/0',
+          spec: {
+            conditionalRendering: {
+              kind: 'ConditionalRenderingGroup',
+              spec: {
+                visibility: 'show',
+                condition: 'and',
+                items: [
+                  {
+                    kind: 'ConditionalRenderingVariable',
+                    spec: { variable: 'env', operator: 'equals', value: 'prod' },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: {
+          path: '/rows/0',
+          spec: {
+            conditionalRendering: {
+              kind: 'ConditionalRenderingGroup',
+              spec: { visibility: 'show', condition: 'and', items: [] },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      const serialized = body.state.rows[0].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.items).toHaveLength(0);
+    });
   });
 
   describe('MOVE_ROW', () => {
@@ -378,7 +521,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/1' });
+      expect(result.data).toMatchObject({ path: '/tabs/1', tab: { kind: 'TabsLayoutTab' } });
 
       const body = scene.state.body as unknown as TabsLayoutManager;
       expect(body.state.tabs).toHaveLength(2);
@@ -401,6 +544,39 @@ describe('Layout mutation commands', () => {
       expect(result.success).toBe(true);
       const body = scene.state.body as unknown as TabsLayoutManager;
       expect(body.state.tabs.map((t) => t.state.title)).toEqual(['First', 'Second', 'Third']);
+    });
+
+    it('adds a tab with conditionalRendering', async () => {
+      const scene = buildTabsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: {
+            kind: 'TabsLayoutTab',
+            spec: {
+              title: 'Conditional Tab',
+              conditionalRendering: {
+                kind: 'ConditionalRenderingGroup',
+                spec: {
+                  visibility: 'show',
+                  condition: 'and',
+                  items: [{ kind: 'ConditionalRenderingData', spec: { value: false } }],
+                },
+              },
+            },
+          },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      const serialized = body.state.tabs[1].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('show');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingData');
     });
   });
 
@@ -463,6 +639,35 @@ describe('Layout mutation commands', () => {
       expect(result.success).toBe(true);
       const body = scene.state.body as unknown as TabsLayoutManager;
       expect(body.state.tabs[0].state.title).toBe('New Title');
+    });
+
+    it('sets conditionalRendering with a data condition', async () => {
+      const scene = buildTabsScene(['Tab']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_TAB',
+        payload: {
+          path: '/tabs/0',
+          spec: {
+            conditionalRendering: {
+              kind: 'ConditionalRenderingGroup',
+              spec: {
+                visibility: 'show',
+                condition: 'and',
+                items: [{ kind: 'ConditionalRenderingData', spec: { value: true } }],
+              },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      const serialized = body.state.tabs[0].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('show');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingData');
     });
   });
 
@@ -573,11 +778,57 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: '/rows/1' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBeDefined();
 
       // Panel moved from Row 1 to Row 2
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(0);
       expect(body.state.rows[1].state.layout.getVizPanels()).toHaveLength(2);
+    });
+
+    it('preserves panel ids and keeps grid item keys unique when moving panels', async () => {
+      const panel1 = new VizPanel({ key: 'panel-1', title: 'P1', pluginId: 'timeseries' });
+      const panel2 = new VizPanel({ key: 'panel-2', title: 'P2', pluginId: 'timeseries' });
+      const panel3 = new VizPanel({ key: 'panel-3', title: 'P3', pluginId: 'timeseries' });
+      const row = new RowItem({
+        title: 'Row',
+        layout: DefaultGridLayoutManager.fromVizPanels([panel1, panel2, panel3]),
+      });
+      const body = new RowsLayoutManager({ rows: [row] });
+      const state: Record<string, unknown> = { uid: 'test-dash', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer({ 'panel-1': 1, 'panel-2': 2, 'panel-3': 3 }),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        activateEditPane: jest.fn(),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+      };
+      currentTestScene = scene;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const executor = new DashboardMutationClient(scene as unknown as DashboardScene);
+
+      for (const name of ['panel-1', 'panel-2', 'panel-3']) {
+        const result = await executor.execute({
+          type: 'MOVE_PANEL',
+          payload: { element: { name }, toParent: '/rows/0', position: { x: 0, y: 0, width: 24, height: 8 } },
+        });
+        expect(result.success).toBe(true);
+      }
+
+      const panels = (scene.state.body as unknown as RowsLayoutManager).state.rows[0].state.layout.getVizPanels();
+      expect(panels).toHaveLength(3);
+
+      const keyToTitle = Object.fromEntries(panels.map((p) => [p.state.key, p.state.title]));
+      expect(keyToTitle).toEqual({ 'panel-1': 'P1', 'panel-2': 'P2', 'panel-3': 'P3' });
+
+      const gridItemKeys = panels.map((p) => p.parent?.state.key);
+      expect(new Set(gridItemKeys).size).toBe(3);
     });
 
     it('returns no-op when toParent is omitted and no position is provided', async () => {
@@ -592,7 +843,8 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: 'current' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBe('elem-a');
       expect(result.warnings).toBeUndefined();
     });
 
@@ -609,7 +861,8 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: 'current' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBe('elem-a');
       expect(result.changes).toHaveLength(1);
 
       // Verify the grid item was repositioned
@@ -712,12 +965,14 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       } as unknown as DashboardScene;
+      currentTestScene = scene;
 
       const executor = new DashboardMutationClient(scene);
 
@@ -756,12 +1011,14 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       } as unknown as DashboardScene;
+      currentTestScene = scene;
 
       const executor = new DashboardMutationClient(scene);
 
@@ -798,6 +1055,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -814,7 +1072,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/0/rows/1' });
+      expect(result.data).toMatchObject({ path: '/tabs/0/rows/1', row: { kind: 'RowsLayoutRow' } });
 
       const tabBody = body.state.tabs[0].state.layout as RowsLayoutManager;
       expect(tabBody.state.rows).toHaveLength(2);
@@ -845,6 +1103,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -862,7 +1121,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/1/rows/0' });
+      expect(result.data).toMatchObject({ path: '/tabs/1/rows/0', row: { kind: 'RowsLayoutRow' } });
 
       const t0Rows = (body.state.tabs[0].state.layout as RowsLayoutManager).state.rows;
       const t1Rows = (body.state.tabs[1].state.layout as RowsLayoutManager).state.rows;
@@ -888,6 +1147,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -990,6 +1250,44 @@ describe('Layout mutation commands', () => {
       expect((innerLayout as RowsLayoutManager).state.rows).toHaveLength(2);
     });
 
+    it('preserves section variable values when converting rows to tabs', async () => {
+      const sectionVariable = new CustomVariable({
+        name: 'section',
+        query: 'default',
+        value: 'fromUrl',
+        text: 'fromUrl',
+      });
+      const row = new RowItem({
+        title: 'Row 1',
+        repeatByVariable: 'server',
+        $variables: new SceneVariableSet({ variables: [sectionVariable] }),
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+      });
+      const rowsBody = new RowsLayoutManager({ rows: [row] });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Main' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      const innerRows = body.state.tabs[0].getLayout() as RowsLayoutManager;
+      const convertedRow = innerRows.state.rows[0];
+      const convertedSectionVariable = convertedRow.state.$variables?.state.variables.find(
+        (variable) => variable instanceof CustomVariable
+      ) as CustomVariable;
+
+      expect(convertedRow.state.repeatByVariable).toBe('server');
+      expect(convertedSectionVariable.getValue()).toBe('fromUrl');
+    });
+
     it('converts tabs to rows by nesting tabs inside the requested row', async () => {
       const tab1 = new TabItem({
         title: 'Tab 1',
@@ -1063,6 +1361,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1536,6 +1835,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1578,6 +1878,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1623,6 +1924,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1665,6 +1967,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1708,6 +2011,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           tabsState.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(tabsState, partial);
@@ -1741,6 +2045,171 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('insufficient permissions');
+    });
+  });
+
+  describe('section variables on row/tab specs', () => {
+    const sectionVariableKind = {
+      kind: 'CustomVariable' as const,
+      spec: {
+        name: 'secVar',
+        query: 'a,b',
+        label: '',
+        current: { text: 'a', value: 'a' },
+        options: [],
+        multi: false,
+        includeAll: false,
+        hide: 'dontHide' as const,
+        skipUrlSync: false,
+        allowCustomValue: true,
+      },
+    };
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('ADD_ROW applies spec.variables when dashboardSectionVariables is enabled', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+      const scene = buildRowsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'With vars', variables: [sectionVariableKind] } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as RowsLayoutManager;
+      const newRow = body.state.rows[1];
+      expect(newRow.state.$variables?.getByName('secVar')).toBeDefined();
+    });
+
+    it('ADD_ROW ignores spec.variables when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      const scene = buildRowsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'No vars', variables: [sectionVariableKind] } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as RowsLayoutManager;
+      expect(body.state.rows[1].state.$variables).toBeUndefined();
+    });
+
+    it('ADD_TAB applies spec.variables when dashboardSectionVariables is enabled', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+      const scene = buildTabsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'With vars', variables: [sectionVariableKind] } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as TabsLayoutManager;
+      expect(body.state.tabs[1].state.$variables?.getByName('secVar')).toBeDefined();
+    });
+
+    it('UPDATE_ROW clears section variables with variables: [] when flag is on', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+      const row = new RowItem({
+        title: 'R',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        $variables: new SceneVariableSet({
+          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
+        }),
+      });
+      const body = new RowsLayoutManager({ rows: [row] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: { path: '/rows/0', spec: { variables: [] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(row.state.$variables).toBeUndefined();
+    });
+
+    it('UPDATE_TAB clears section variables with variables: [] when flag is on', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+      const tab = new TabItem({
+        title: 'T',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        $variables: new SceneVariableSet({
+          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
+        }),
+      });
+      const body = new TabsLayoutManager({ tabs: [tab] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_TAB',
+        payload: { path: '/tabs/0', spec: { variables: [] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(tab.state.$variables).toBeUndefined();
+    });
+
+    it('UPDATE_ROW ignores spec.variables when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      const row = new RowItem({
+        title: 'R',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        $variables: new SceneVariableSet({
+          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
+        }),
+      });
+      const body = new RowsLayoutManager({ rows: [row] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: { path: '/rows/0', spec: { variables: [] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(row.state.$variables?.getByName('secVar')).toBeDefined();
+    });
+
+    it('UPDATE_TAB ignores spec.variables when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      const tab = new TabItem({
+        title: 'T',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        $variables: new SceneVariableSet({
+          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
+        }),
+      });
+      const body = new TabsLayoutManager({ tabs: [tab] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_TAB',
+        payload: { path: '/tabs/0', spec: { variables: [] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(tab.state.$variables?.getByName('secVar')).toBeDefined();
     });
   });
 

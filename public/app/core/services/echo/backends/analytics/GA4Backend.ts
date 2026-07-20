@@ -1,5 +1,5 @@
-import { CurrentUserDTO } from '@grafana/data';
-import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
+import { type CurrentUserDTO } from '@grafana/data';
+import { type EchoBackend, EchoEventType, type PageviewEchoEvent } from '@grafana/runtime';
 
 import { loadScript } from '../../utils';
 

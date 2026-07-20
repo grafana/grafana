@@ -59,9 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
-	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -125,8 +123,6 @@ var WireSet = wire.NewSet(
 	dynamic.ProvideService,
 	serviceregistration.ProvideService,
 	wire.Bind(new(auth.ExternalServiceRegistry), new(*serviceregistration.Service)),
-	renderer.ProvideService,
-	wire.Bind(new(rendering.PluginManager), new(*renderer.Manager)),
 	pluginexternal.ProvideService,
 	plugincontext.ProvideBaseService,
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
@@ -217,6 +213,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewHostedGrafanaACHeaderMiddleware(cfg))
 	}
 
+	middlewares = append(middlewares, clientmiddleware.NewHTTPCaptureMiddleware())
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
 	// ErrorSourceMiddleware should be at the very bottom, or any middlewares below it won't see the

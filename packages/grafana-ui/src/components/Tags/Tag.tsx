@@ -1,13 +1,13 @@
 import { cx, css } from '@emotion/css';
-import { forwardRef, HTMLAttributes } from 'react';
+import { forwardRef, type HTMLAttributes } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
-import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
+import { type IconName } from '../../types/icon';
+import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { getTagColor, getTagColorsFromName } from '../../utils/tags';
 import { Icon } from '../Icon/Icon';
 
@@ -71,22 +71,19 @@ const getSkeletonStyles = () => ({
 });
 
 const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
-  let colors;
-  if (colorIndex === undefined) {
-    colors = getTagColorsFromName(name);
-  } else {
-    colors = getTagColor(colorIndex);
-  }
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const { background, text } =
+    colorIndex === undefined ? getTagColorsFromName(name, theme) : getTagColor(colorIndex, theme);
   return {
     wrapper: css({
       appearance: 'none',
       borderStyle: 'none',
-      fontWeight: theme.typography.fontWeightMedium,
+      fontWeight: visualRefreshEnabled ? theme.typography.fontWeightRegular : theme.typography.fontWeightMedium,
       fontSize: theme.typography.size.sm,
       lineHeight: theme.typography.bodySmall.lineHeight,
       verticalAlign: 'baseline',
-      backgroundColor: colors.color,
-      color: theme.v1.palette.gray98,
+      backgroundColor: background,
+      color: text,
       whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',

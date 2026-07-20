@@ -1,8 +1,8 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
-import { FlameGraphDataContainer, LevelItem } from '../FlameGraph/dataTransform';
-import { ColorScheme, ColorSchemeDiff } from '../types';
+import { type FlameGraphDataContainer, type LevelItem } from '../FlameGraph/dataTransform';
+import { ColorScheme, type ColorSchemeDiff } from '../types';
 
 export interface CallTreeNode {
   id: string;
@@ -69,7 +69,7 @@ export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNo
  * Build a hierarchical call tree node from the LevelItem structure.
  * Each node gets a unique ID based on its path in the tree.
  */
-export function buildCallTreeNode(
+function buildCallTreeNode(
   data: FlameGraphDataContainer,
   rootItem: LevelItem,
   rootTotalLeft: number,

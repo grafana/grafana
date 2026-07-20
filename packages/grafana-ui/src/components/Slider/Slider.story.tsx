@@ -1,14 +1,17 @@
-import { StoryFn, Meta } from '@storybook/react';
-import { useId } from 'react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 
 import { Field } from '../Forms/Field';
 
 import { Slider } from './Slider';
+import mdx from './Slider.mdx';
 
 const meta: Meta<typeof Slider> = {
   title: 'Inputs/Slider',
   component: Slider,
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: ['formatTooltipResult', 'onChange', 'onAfterChange', 'value', 'tooltipAlwaysVisible'],
     },
@@ -32,24 +35,20 @@ const meta: Meta<typeof Slider> = {
 };
 
 export const Basic: StoryFn<typeof Slider> = (args) => {
-  const id = useId();
-
   return (
     <div style={{ width: '300px', height: '300px' }}>
       <Field label="Slider">
-        <Slider {...args} inputId={id} />
+        <Slider {...args} />
       </Field>
     </div>
   );
 };
 
 export const WithMarks: StoryFn<typeof Slider> = (args) => {
-  const id = useId();
-
   return (
     <div style={{ width: '300px', height: '300px' }}>
       <Field label="Slider">
-        <Slider {...args} inputId={id} />
+        <Slider {...args} />
       </Field>
     </div>
   );

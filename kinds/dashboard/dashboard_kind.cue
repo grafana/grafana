@@ -205,6 +205,8 @@ lineage: schemas: [{
 			multi?: bool | *false
 			// Allow custom values to be entered in the variable
 			allowCustomValue?: bool | *true
+			// Whether the group-by operator is enabled in the ad hoc filter combobox.
+			enableGroupBy?: bool | *false
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
 			// Options to config when to refresh a variable
@@ -303,7 +305,6 @@ lineage: schemas: [{
 			keepTime: bool | *false
 			// The source that registered the link (if any)
 			origin?: #ControlSourceRef
-
 		} @cuetsy(kind="interface")
 
 		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
@@ -323,8 +324,8 @@ lineage: schemas: [{
 		// Fetch options
 		#FetchOptions: {
 			method: #HttpRequestMethod
-			url: string
-			body?: string
+			url:    string
+			body?:  string
 			// These are 2D arrays of strings, each representing a key-value pair
 			// We are defining this way because we can't generate a go struct that
 			// that would have exactly two strings in each sub-array
@@ -335,8 +336,8 @@ lineage: schemas: [{
 		// Infinity options
 		#InfinityOptions: {
 			method: #HttpRequestMethod
-			url: string
-			body?: string
+			url:    string
+			body?:  string
 			// These are 2D arrays of strings, each representing a key-value pair
 			// We are defining them this way because we can't generate a go struct that
 			// that would have exactly two strings in each sub-array
@@ -351,19 +352,19 @@ lineage: schemas: [{
 		#ActionVariableType: "string" @cuetsy(kind="type")
 
 		#ActionVariable: {
-			key: string
+			key:  string
 			name: string
 			type: #ActionVariableType
 		} @cuetsy(kind="interface")
 
 		// Dashboard action
 		#Action: {
-			type: #ActionType
-			title: string
-			fetch?: #FetchOptions
-			infinity?: #InfinityOptions
+			type:          #ActionType
+			title:         string
+			fetch?:        #FetchOptions
+			infinity?:     #InfinityOptions
 			confirmation?: string
-			oneClick?: bool
+			oneClick?:     bool
 			variables?: [...#ActionVariable]
 			style?: {
 				backgroundColor?: string

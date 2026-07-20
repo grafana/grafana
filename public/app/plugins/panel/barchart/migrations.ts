@@ -1,4 +1,4 @@
-import { FieldMatcherID, PanelTypeChangedHandler, ReducerID } from '@grafana/data';
+import { FieldMatcherID, type PanelTypeChangedHandler, ReducerID } from '@grafana/data';
 import { AxisPlacement } from '@grafana/ui';
 
 /*

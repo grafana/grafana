@@ -1,12 +1,12 @@
 // import { Grammar } from 'prismjs';
 
-import { Grammar } from 'prismjs';
+import { type Grammar } from 'prismjs';
 
 import { FUNCTIONS, KEYWORDS, QUERY_COMMANDS } from '../../language/cloudwatch-logs/syntax';
 import * as sql from '../../language/cloudwatch-logs-sql/language';
 import * as ppl from '../../language/cloudwatch-ppl/language';
 
-export const baseTokenizer = (languageSpecificFeatures: Grammar): Grammar => ({
+const baseTokenizer = (languageSpecificFeatures: Grammar): Grammar => ({
   comment: {
     pattern: /^#.*/,
     greedy: true,

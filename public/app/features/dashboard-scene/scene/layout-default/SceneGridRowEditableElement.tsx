@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Alert, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -11,9 +11,9 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { getDashboardSceneFor, getLayoutManagerFor, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
-import { BulkActionElement } from '../types/BulkActionElement';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
+import { type DashboardScene } from '../DashboardScene';
+import { type BulkActionElement } from '../types/BulkActionElement';
+import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';

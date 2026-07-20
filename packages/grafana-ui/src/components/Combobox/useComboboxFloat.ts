@@ -15,7 +15,7 @@ import {
   MENU_OPTION_HEIGHT,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;

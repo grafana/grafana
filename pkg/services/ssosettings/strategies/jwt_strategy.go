@@ -19,7 +19,7 @@ func NewJWTStrategy(cfg *setting.Cfg) *JWTStrategy {
 	return &JWTStrategy{cfg: cfg}
 }
 
-func (s *JWTStrategy) IsMatch(provider string) bool {
+func (s *JWTStrategy) IsMatch(_ context.Context, provider string) bool {
 	return provider == social.JWTProviderName
 }
 

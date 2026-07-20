@@ -55,7 +55,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 
@@ -69,7 +69,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			var err error
 
 			setup := func() {
-				for i := 0; i < 5; i++ {
+				for i := range 5 {
 					userCmd = user.CreateUserCommand{
 						Email: fmt.Sprint("user", i, "@test.com"),
 						Name:  fmt.Sprint("user", i),
@@ -160,11 +160,14 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, team1.MemberCount, 2)
 
 				getIDsQuery := &team.GetTeamIDsByUserQuery{OrgID: testOrgID, UserID: userIds[0]}
-				getIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
+				getIDResult, getUIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
 				require.NoError(t, err)
 
 				require.Equal(t, len(getIDResult), 1)
 				require.Equal(t, getIDResult[0], team1.ID)
+
+				require.Equal(t, len(getUIDResult), 1)
+				require.Equal(t, getUIDResult[0], team1.UID)
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
@@ -331,6 +334,15 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, queryResult.TotalCount, 2)
 				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
 				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+
+				// Filtering by a single team id must also filter TotalCount, not
+				// return the unfiltered org total.
+				singleQuery := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, TeamIds: []int64{teamIds[0]}}
+				singleQueryResult, err := teamSvc.SearchTeams(context.Background(), singleQuery)
+				require.NoError(t, err)
+				require.Len(t, singleQueryResult.Teams, 1)
+				require.EqualValues(t, singleQueryResult.TotalCount, 1)
+				require.Equal(t, singleQueryResult.Teams[0].ID, teamIds[0])
 			})
 
 			t.Run("Should be able to query teams by UIDs", func(t *testing.T) {
@@ -351,6 +363,15 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, queryResult.TotalCount, 2)
 				assert.Contains(t, teamUIDs, queryResult.Teams[0].UID)
 				assert.Contains(t, teamUIDs, queryResult.Teams[1].UID)
+
+				// Filtering by a single UID must also filter TotalCount, not
+				// return the unfiltered org total.
+				singleQuery := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, UIDs: []string{teamUIDs[0]}}
+				singleQueryResult, err := teamSvc.SearchTeams(context.Background(), singleQuery)
+				require.NoError(t, err)
+				require.Len(t, singleQueryResult.Teams, 1)
+				require.EqualValues(t, singleQueryResult.TotalCount, 1)
+				require.Equal(t, singleQueryResult.Teams[0].UID, teamUIDs[0])
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
@@ -483,7 +504,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
 					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-					quotaService, supportbundlestest.NewFakeBundleService(),
+					quotaService, supportbundlestest.NewFakeBundleService(), nil,
 				)
 				require.NoError(t, err)
 				setup()
@@ -639,7 +660,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 

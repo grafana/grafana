@@ -1,13 +1,13 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { DataSourceApi } from '@grafana/data';
-import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/plugin-ui';
+import { type DataSourceApi } from '@grafana/data';
+import { type QueryBuilderOperation, type QueryBuilderOperationParamDef } from '@grafana/plugin-ui';
 
 import { LokiDatasource } from '../../datasource';
 import { createLokiDatasource } from '../../mocks/datasource';
-import { LokiQueryModeller } from '../LokiQueryModeller';
+import { type LokiQueryModeller } from '../LokiQueryModeller';
 import { LokiOperationId } from '../types';
 
 import { LabelParamEditor } from './LabelParamEditor';

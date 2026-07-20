@@ -1,6 +1,26 @@
-import { FieldDisplay, getDisplayProcessor, Threshold, ThresholdsMode } from '@grafana/data';
+import {
+  type FieldConfig,
+  type FieldDisplay,
+  GAUGE_DEFAULT_MAXIMUM,
+  GAUGE_DEFAULT_MINIMUM,
+  getActiveThreshold,
+  getDisplayProcessor,
+  type GrafanaTheme,
+  type GrafanaTheme2,
+  type Threshold,
+  type ThresholdsConfig,
+  ThresholdsMode,
+} from '@grafana/data';
 
-import { RadialGaugeDimensions } from './types';
+import { type RadialGaugeDimensions } from './types';
+
+const DEFAULT_THRESHOLDS: ThresholdsConfig = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 80, color: 'red' },
+  ],
+};
 
 export function getFieldDisplayProcessor(displayValue: FieldDisplay) {
   if (displayValue.view && displayValue.colIndex != null) {
@@ -203,14 +223,6 @@ export function calculateDimensions(
   };
 }
 
-export function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-  let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
-  return {
-    x: centerX + radius * Math.cos(radian),
-    y: centerY + radius * Math.sin(radian),
-  };
-}
-
 export function drawRadialArcPath(
   startAngle: number,
   endAngle: number,
@@ -270,6 +282,59 @@ export function getThresholdPercentageValue(
   }
   const [min, max] = getFieldConfigMinMax(fieldDisplay);
   return (threshold.value - min) / (max - min);
+}
+
+export function getFormattedThresholds(
+  decimals: number,
+  field: FieldConfig,
+  theme: GrafanaTheme | GrafanaTheme2,
+  offsetColor = true
+): Threshold[] {
+  const thresholds = field.thresholds ?? DEFAULT_THRESHOLDS;
+  const isPercent = thresholds.mode === ThresholdsMode.Percentage;
+  const steps = thresholds.steps;
+
+  let min = field.min ?? GAUGE_DEFAULT_MINIMUM;
+  let max = field.max ?? GAUGE_DEFAULT_MAXIMUM;
+
+  if (isPercent) {
+    min = 0;
+    max = 100;
+  }
+
+  const first = getActiveThreshold(min, steps);
+  const last = getActiveThreshold(max, steps);
+  const formatted: Threshold[] = [];
+
+  if (offsetColor) {
+    formatted.push({
+      value: parseFloat(min.toFixed(decimals)),
+      color: theme.visualization.getColorByName(first.color),
+    });
+  }
+
+  let skip = offsetColor;
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    if (skip) {
+      if (first === step) {
+        skip = false;
+      }
+      continue;
+    }
+    const prev = steps[i - 1];
+    formatted.push({
+      value: isFinite(step.value) ? step.value : min,
+      color: theme.visualization.getColorByName((offsetColor ? prev : step).color),
+    });
+    if (step === last) {
+      break;
+    }
+  }
+  if (max > last.value) {
+    formatted.push({ value: parseFloat(max.toFixed(decimals)), color: theme.visualization.getColorByName(last.color) });
+  }
+  return formatted;
 }
 
 export const IS_SAFARI = (() => {

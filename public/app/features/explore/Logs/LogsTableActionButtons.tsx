@@ -2,18 +2,18 @@ import { css } from '@emotion/css';
 import { useCallback, useState, memo } from 'react';
 
 import {
-  AbsoluteTimeRange,
-  ExploreLogsPanelState,
-  GrafanaTheme2,
-  LogRowModel,
+  type AbsoluteTimeRange,
+  type ExploreLogsPanelState,
+  type GrafanaTheme2,
+  type LogRowModel,
   serializeStateToUrlParam,
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
+import { ClipboardButton, type CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
 import { getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync/external.utils';
-import { LogsFrame, DATAPLANE_ID_NAME } from 'app/features/logs/logsFrame';
+import { type LogsFrame, DATAPLANE_ID_NAME } from 'app/features/logs/logsFrame';
 import { getState } from 'app/store/store';
 
 import { getExploreBaseUrl } from './utils/url';

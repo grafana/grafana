@@ -51,6 +51,9 @@ type ApiInstaller[T runtime.Object] interface {
 // while keeping the core IAM registration logic in OSS.
 type RoleApiInstaller ApiInstaller[*iamv0.Role]
 
+// RoleBindingApiInstaller provides RoleBinding-specific API registration and validation.
+type RoleBindingApiInstaller ApiInstaller[*iamv0.RoleBinding]
+
 // GlobalRoleApiInstaller provides GlobalRole-specific API registration and validation.
 type GlobalRoleApiInstaller ApiInstaller[*iamv0.GlobalRole]
 
@@ -137,5 +140,12 @@ func ProvideNoopTeamLBACApiInstaller() TeamLBACApiInstaller {
 func ProvideNoopExternalGroupMappingApiInstaller() ExternalGroupMappingApiInstaller {
 	return &NoopApiInstaller[*iamv0.ExternalGroupMapping]{
 		ResourceInfo: iamv0.ExternalGroupMappingResourceInfo,
+	}
+}
+
+// ProvideNoopRoleBindingApiInstaller provides a no-op RoleBinding installer.
+func ProvideNoopRoleBindingApiInstaller() RoleBindingApiInstaller {
+	return &NoopApiInstaller[*iamv0.RoleBinding]{
+		ResourceInfo: iamv0.RoleBindingInfo,
 	}
 }

@@ -7,11 +7,11 @@
  * Used by all layout mutation commands that accept a path parameter.
  */
 
-import { RowItem } from '../../scene/layout-rows/RowItem';
+import { type RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
-import { TabItem } from '../../scene/layout-tabs/TabItem';
+import { type TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
 type GroupType = 'rows' | 'tabs';
 
@@ -169,7 +169,7 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
  * Returns true if any direct child of a group layout has an inner layout
  * that is itself a group (RowsLayoutManager or TabsLayoutManager).
  */
-export function hasNestedGroups(layout: DashboardLayoutManager): boolean {
+function hasNestedGroups(layout: DashboardLayoutManager): boolean {
   if (layout instanceof RowsLayoutManager) {
     return layout.state.rows.some(
       (r) => r.state.layout instanceof RowsLayoutManager || r.state.layout instanceof TabsLayoutManager

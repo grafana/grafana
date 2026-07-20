@@ -22,7 +22,7 @@ var (
 					return "", errors.New("provided object must be of type *TeamBinding")
 				}
 
-				return cast.Spec.TeamRef.Name, nil
+				return string(cast.Spec.TeamRef.Name), nil
 			},
 		},
 			{
@@ -33,7 +33,7 @@ var (
 						return "", errors.New("provided object must be of type *TeamBinding")
 					}
 
-					return cast.Spec.Subject.Name, nil
+					return string(cast.Spec.Subject.Name), nil
 				},
 			},
 			{

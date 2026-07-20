@@ -11,7 +11,8 @@ INSERT INTO "secret_keeper" (
   "description",
   "type",
   "payload"
-) VALUES (
+)
+SELECT
   'abc',
   'name',
   'ns',
@@ -24,4 +25,8 @@ INSERT INTO "secret_keeper" (
   'description',
   'sql',
   ''
-);
+FROM
+  (SELECT 1) AS "keeper_insert_check"
+WHERE
+  1 = 1
+;

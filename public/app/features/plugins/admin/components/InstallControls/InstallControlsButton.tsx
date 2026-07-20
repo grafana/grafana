@@ -11,7 +11,8 @@ import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 import { useDispatch } from 'app/types/store';
 
-import { getExternalManageLink, isDisabledAngularPlugin } from '../../helpers';
+import { getExternalManageLink, isDisabledAngularPlugin, isMarketplacePlugin } from '../../helpers';
+import { type EntitlementState } from '../../hooks/usePluginEntitlement';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -20,8 +21,8 @@ import {
   useUnsetInstall,
   useFetchDetailsLazy,
 } from '../../state/hooks';
-import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
-import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
+import { trackPluginInstalled } from '../../tracking';
+import { type CatalogPlugin, PluginStatus, PluginTabIds, type Version } from '../../types';
 
 const PLUGIN_UPDATE_INTERACTION_EVENT_NAME = 'plugin_update_clicked';
 
@@ -31,6 +32,7 @@ type InstallControlsButtonProps = {
   latestCompatibleVersion?: Version;
   hasInstallWarning?: boolean;
   setNeedReload?: (needReload: boolean) => void;
+  entitlement?: EntitlementState;
 };
 
 export function InstallControlsButton({
@@ -39,6 +41,7 @@ export function InstallControlsButton({
   latestCompatibleVersion,
   hasInstallWarning,
   setNeedReload,
+  entitlement,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
@@ -89,7 +92,6 @@ export function InstallControlsButton({
 
   const onUninstall = async () => {
     hideConfirmModal();
-    trackPluginUninstalled(trackingProps);
     await uninstall(plugin.id);
     if (!errorUninstalling) {
       // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
@@ -144,7 +146,6 @@ export function InstallControlsButton({
           'Are you sure you want to uninstall this plugin?'
         )}
         confirmText={t('plugins.install-controls-button.uninstall-controls.confirmText-confirm', 'Confirm')}
-        icon="exclamation-triangle"
         onConfirm={onUninstall}
         onDismiss={hideConfirmModal}
       />
@@ -189,10 +190,11 @@ export function InstallControlsButton({
 
   if (pluginStatus === PluginStatus.UPDATE) {
     const disableUpdate = config.pluginAdminExternalManageEnabled ? plugin.isUpdatingFromInstance : isInstalling;
+    const isManagedPlugin = plugin.managed.enabled;
 
     return (
       <Stack alignItems="flex-start" width="auto" height="auto">
-        {!plugin.isManaged && !plugin.isPreinstalled.withVersion && (
+        {!isManagedPlugin && !plugin.isPreinstalled.withVersion && (
           <Button disabled={disableUpdate} onClick={onUpdate}>
             {isInstalling
               ? t('plugins.install-controls.updating', 'Updating')
@@ -202,6 +204,22 @@ export function InstallControlsButton({
         {uninstallControls}
       </Stack>
     );
+  }
+
+  if (isMarketplacePlugin(plugin)) {
+    if (!entitlement?.entitled) {
+      return (
+        <LinkButton
+          href={`${getExternalManageLink(plugin.id)}?tab=installation`}
+          target="_blank"
+          rel="noopener noreferrer"
+          icon={entitlement?.isLoading ? 'spinner' : 'external-link-alt'}
+          disabled={entitlement?.isLoading}
+        >
+          <Trans i18nKey="plugins.install-controls.contact-us">Contact us</Trans>
+        </LinkButton>
+      );
+    }
   }
 
   const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;

@@ -1,5 +1,11 @@
-import { VariableOption, UserProps, OrgProps, DashboardProps, ScopedVars } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import {
+  type VariableOption,
+  type UserProps,
+  type OrgProps,
+  type DashboardProps,
+  type ScopedVars,
+} from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier

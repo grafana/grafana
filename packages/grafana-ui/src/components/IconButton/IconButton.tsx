@@ -1,16 +1,16 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
+import { type GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { IconName, IconSize, IconType } from '../../types/icon';
-import { ComponentSize } from '../../types/size';
+import { type IconName, type IconSize, type IconType } from '../../types/icon';
+import { type ComponentSize } from '../../types/size';
 import { getActiveButtonStyles, IconRenderer } from '../Button/Button';
 import { getSvgSize } from '../Icon/utils';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
+import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
@@ -81,7 +81,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
 
   // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
   if ('tooltip' in props) {
-    const { name, iconType, className, tooltip, tooltipPlacement, ...restProps } = props;
+    const { name, iconType, className, tooltip, tooltipPlacement, type, ...restProps } = props;
     return (
       <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
         <button
@@ -89,21 +89,21 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
           ref={buttonRef}
           aria-label={ariaLabel}
           className={cx(styles.button, className)}
-          type="button"
+          type={type || 'button'}
         >
           <IconRenderer icon={name} size={limitedIconSize} className={styles.icon} iconType={iconType} />
         </button>
       </Tooltip>
     );
   } else {
-    const { name, iconType, className, ...restProps } = props;
+    const { name, iconType, className, type, ...restProps } = props;
     return (
       <button
         {...restProps}
         ref={buttonRef}
         aria-label={ariaLabel}
         className={cx(styles.button, className)}
-        type="button"
+        type={type || 'button'}
       >
         <IconRenderer icon={name} size={limitedIconSize} className={styles.icon} iconType={iconType} />
       </button>

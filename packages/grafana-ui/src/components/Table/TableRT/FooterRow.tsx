@@ -1,12 +1,12 @@
-import { ColumnInstance, HeaderGroup } from 'react-table';
+import { type ColumnInstance, type HeaderGroup } from 'react-table';
 
 import { fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { EmptyCell, FooterCell } from '../Cells/FooterCell';
-import { FooterItem } from '../types';
+import { type FooterItem } from '../types';
 
-import { TableStyles } from './styles';
+import { type TableStyles } from './styles';
 
 export interface FooterRowProps {
   totalColumnsWidth: number;

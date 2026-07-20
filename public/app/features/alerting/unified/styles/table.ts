@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export const getAlertTableStyles = (theme: GrafanaTheme2) => ({
   table: css({
     width: '100%',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     border: `solid 1px ${theme.colors.border.weak}`,
     backgroundColor: theme.colors.background.secondary,
     overflow: 'hidden',

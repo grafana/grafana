@@ -18,6 +18,7 @@ const (
 	WeightExplore
 	WeightDrilldown
 	WeightAssistant
+	WeightSigil
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightAIAndML
@@ -145,6 +146,16 @@ func (root *NavTreeRoot) RemoveEmptyAdminSections() {
 	}
 	if sec := root.FindById(NavIDCfg); sec != nil && len(sec.Children) == 0 {
 		root.RemoveSectionByID(NavIDCfg)
+	}
+}
+
+// RemoveEmptyConnectionsSection removes the Connections section if it has no children.
+// The section is always added to the nav tree so that plugin pages can be attached via
+// addAppLinks; this method prunes it when no children were ultimately registered.
+// Must be called AFTER all hooks have had a chance to add their nav items.
+func (root *NavTreeRoot) RemoveEmptyConnectionsSection() {
+	if sec := root.FindById("connections"); sec != nil && len(sec.Children) == 0 {
+		root.RemoveSectionByID("connections")
 	}
 }
 

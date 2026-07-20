@@ -1,6 +1,5 @@
-import { PluginLoadingStrategy } from '@grafana/data';
-
-import { clearPluginSettingsCache } from '../pluginSettings';
+import { type PluginLoadingStrategy } from '@grafana/data';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 
 import { CACHE_INITIALISED_AT, DECOUPLED_PLUGIN_REGEX, PLUGIN_PATH_REGEX } from './constants';
 
@@ -30,7 +29,7 @@ export function clearPluginInfoInCache(pluginId: string): void {
   if (cache[path]) {
     delete cache[path];
   }
-  clearPluginSettingsCache(pluginId);
+  invalidatePluginSettingsCache(pluginId);
 }
 
 export function resolvePluginUrlWithCache(url: string, defaultBust = CACHE_INITIALISED_AT): string {

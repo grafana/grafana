@@ -3,6 +3,7 @@ package ofrep
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -74,6 +76,18 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 			noAuthInfo:    true,
 			expectedValid: true,
 		},
+		{
+			name:          "wildcard auth namespace - valid for any specific namespace",
+			authNamespace: "*",
+			requestBody:   `{"context":{"namespace":"stacks-1"}}`,
+			expectedValid: true,
+		},
+		{
+			name:          "empty body - always valid",
+			authNamespace: "stacks-1",
+			requestBody:   ``,
+			expectedValid: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -92,10 +106,13 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 				req = req.WithContext(context.Background())
 			}
 
-			valid := b.validateNamespaceIfPresent(req)
+			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
+			require.NoError(t, err)
+
+			_, valid := b.validateNamespaceIfPresent(req, evalCtx)
 			assert.Equal(t, tt.expectedValid, valid)
 
-			// Body must still be readable after validation
+			// Body must still be readable after readEvalContext
 			body, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			assert.Equal(t, tt.requestBody, string(body))
@@ -116,25 +133,62 @@ func TestRootOneFlagHandler_MissingFlagKey(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestRootOneFlagHandler_UnauthedNonPublicFlag(t *testing.T) {
-	b := &APIBuilder{
-		providerType: setting.OFREPProviderType,
-		logger:       log.NewNopLogger(),
+func TestOneFlagHandler_Unauth(t *testing.T) {
+	routes := []struct {
+		name string
+		call func(b *APIBuilder, w http.ResponseWriter, r *http.Request)
+	}{
+		{"root", func(b *APIBuilder, w http.ResponseWriter, r *http.Request) { b.rootOneFlagHandler(w, r) }},
+		{"namespaced", func(b *APIBuilder, w http.ResponseWriter, r *http.Request) { b.oneFlagHandler(w, r) }},
+	}
+	tests := []struct {
+		name       string
+		metadata   map[string]any
+		wantStatus int
+	}{
+		{"public flag returns 200", map[string]any{"public": true}, http.StatusOK},
+		{"private flag returns 404, indistinguishable from a genuinely missing flag", nil, http.StatusNotFound},
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags/secretflag", bytes.NewBufferString(`{}`))
-	req = mux.SetURLVars(req, map[string]string{"flagKey": "secretflag"})
-
-	// Unauthenticated requester
-	requester := &identity.StaticRequester{
-		Type: types.TypeUnauthenticated,
+	for _, rt := range routes {
+		for _, tt := range tests {
+			t.Run(rt.name+": "+tt.name, func(t *testing.T) {
+				b := newSingleEvalBuilder(t, tt.metadata)
+				w := httptest.NewRecorder()
+				r := newUnauthReq("/ofrep/v1/evaluate/flags/brandnewflag", map[string]string{"flagKey": "brandnewflag", "namespace": ""})
+				rt.call(b, w, r)
+				assert.Equal(t, tt.wantStatus, w.Code)
+			})
+		}
 	}
-	ctx := types.WithAuthInfo(req.Context(), requester)
-	req = req.WithContext(ctx)
+}
 
-	w := httptest.NewRecorder()
-	b.rootOneFlagHandler(w, req)
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+func TestAllFlagsHandler_Unauth(t *testing.T) {
+	routes := []struct {
+		name string
+		call func(b *APIBuilder, w http.ResponseWriter, r *http.Request)
+	}{
+		{"root", func(b *APIBuilder, w http.ResponseWriter, r *http.Request) { b.rootAllFlagsHandler(w, r) }},
+		{"namespaced", func(b *APIBuilder, w http.ResponseWriter, r *http.Request) { b.allFlagsHandler(w, r) }},
+	}
+	upstreamFlags := []goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
+		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{Key: "publicFlag", Metadata: map[string]any{"public": true}}},
+		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{Key: "privateFlag", Metadata: map[string]any{"public": false}}},
+	}
+
+	for _, rt := range routes {
+		t.Run(rt.name, func(t *testing.T) {
+			b := newBulkEvalBuilder(t, upstreamFlags, http.StatusOK)
+			w := httptest.NewRecorder()
+			r := newUnauthReq("/ofrep/v1/evaluate/flags", map[string]string{"namespace": ""})
+			rt.call(b, w, r)
+
+			require.Equal(t, http.StatusOK, w.Code)
+			var result goffmodel.OFREPBulkEvaluateSuccessResponse
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+			assert.Equal(t, []string{"publicFlag"}, flagKeys(result.Flags))
+		})
+	}
 }
 
 func TestRootAllFlagsHandler_NamespaceMismatch(t *testing.T) {

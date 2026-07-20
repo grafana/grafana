@@ -2,8 +2,8 @@ package fakes
 
 import (
 	"context"
-
-	"golang.org/x/exp/maps"
+	"maps"
+	"slices"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -24,7 +24,7 @@ type FakeSilenceStore struct {
 
 func (s *FakeSilenceStore) ListSilences(ctx context.Context, orgID int64, filter []string) ([]*models.Silence, error) {
 	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"ListSilences", []interface{}{ctx, orgID, filter}})
-	return maps.Values(s.Silences), nil
+	return slices.Collect(maps.Values(s.Silences)), nil
 }
 
 func (s *FakeSilenceStore) GetSilence(ctx context.Context, orgID int64, id string) (*models.Silence, error) {

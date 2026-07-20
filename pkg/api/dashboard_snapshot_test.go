@@ -46,7 +46,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 
 	allowedUser := userWithPermissions(1, []accesscontrol.Permission{
 		{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
-		{Action: dashboards.ActionSnapshotsDelete},
+		{Action: dashboardsnapshots.ActionSnapshotsDelete},
 	})
 
 	t.Run("User should not be able to delete snapshot without permissions", func(t *testing.T) {
@@ -157,7 +157,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				assert.Equal(t, http.MethodGet, externalRequest.Method)
 				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
-				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
+				assert.Equal(t, "/api/snapshots-delete/54321", externalRequest.URL.EscapedPath())
 			})
 	})
 
@@ -371,6 +371,63 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 		}, sqlmock)
 }
 
+// TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots verifies the
+// externalSnapshotsSupportLegacyAPI opt-in lever on public-mode external hosts.
+// Default off: anonymous /api/snapshots pushes hit the k8s rewrite and get 401.
+// On: the handler short-circuits to CreateDashboardSnapshotPublic so legacy
+// senders can keep pushing while they migrate to the authenticated k8s push.
+func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) {
+	tests := []struct {
+		name           string
+		supportLegacy  bool
+		expectedStatus int
+	}{
+		{
+			name:           "rejects anonymous push by default",
+			supportLegacy:  false,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:           "accepts anonymous push when externalSnapshotsSupportLegacyAPI is on",
+			supportLegacy:  true,
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashSnapSvc := dashboardsnapshots.NewMockService(t)
+			if tt.supportLegacy {
+				dashSnapSvc.On("CreateDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.CreateDashboardSnapshotCommand")).
+					Return(&dashboardsnapshots.DashboardSnapshot{Key: "pub-key", DeleteKey: "pub-delete-key"}, nil)
+			}
+
+			flags := []any{featuremgmt.FlagKubernetesSnapshots}
+			if tt.supportLegacy {
+				flags = append(flags, featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
+			}
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
+				cfg.SnapshotEnabled = true
+				cfg.SnapshotPublicMode = true
+				hs.Cfg = cfg
+				hs.Features = featuremgmt.WithFeatures(flags...)
+				hs.dashboardsnapshotsService = dashSnapSvc
+			})
+
+			body := strings.NewReader(`{"name":"public push","dashboard":{"uid":"x","title":"t"}}`)
+			req := server.NewRequest(http.MethodPost, "/api/snapshots/", body)
+			req.Header.Set("Content-Type", "application/json")
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			defer func() { _ = res.Body.Close() }()
+
+			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+		})
+	}
+}
+
 func buildHttpServer(d dashboardsnapshots.Service, snapshotEnabled bool) *HTTPServer {
 	hs := &HTTPServer{
 		dashboardsnapshotsService: d,
@@ -404,7 +461,8 @@ func setUpSnapshotTest(t *testing.T, userId int64, deleteUrl string) dashboardsn
 	}
 	if deleteUrl != "" {
 		res.External = true
-		res.ExternalDeleteURL = deleteUrl
+		// Stored URL must include a deleteKey path segment; the function rebuilds the path.
+		res.ExternalDeleteURL = deleteUrl + "/api/snapshots-delete/" + res.DeleteKey
 	}
 	dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil).Maybe()
 	dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()

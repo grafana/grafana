@@ -1,9 +1,9 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { CompletionDataProvider } from './CompletionDataProvider';
+import { type CompletionDataProvider } from './CompletionDataProvider';
 import { NeverCaseError } from './NeverCaseError';
-import { CompletionType, getCompletions } from './completions';
-import { getSituation, Situation } from './situation';
+import { type CompletionType, getCompletions } from './completions';
+import { getSituation, type Situation } from './situation';
 
 // from: monacoTypes.languages.CompletionItemInsertTextRule.InsertAsSnippet
 const INSERT_AS_SNIPPET_ENUM_VALUE = 4;

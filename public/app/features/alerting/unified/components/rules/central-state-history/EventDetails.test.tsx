@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { TimeRange, dateTime } from '@grafana/data';
+import { type TimeRange, dateTime } from '@grafana/data';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import { EventDetails } from './EventDetails';
@@ -21,13 +21,16 @@ jest.mock('../state-history/LokiStateHistory', () => ({
 }));
 
 describe('EventDetails', () => {
-  it('renders error message row when current state is Error', () => {
+  it.each([
+    { state: GrafanaAlertState.Error, error: 'query failed' },
+    { state: 'Alerting (Error)' as const, error: 'datasource timeout' },
+  ])('renders error message row when error is present (state: $state)', ({ state, error }) => {
     const record = {
       timestamp: Date.now(),
       line: {
         previous: GrafanaAlertState.Normal,
-        current: GrafanaAlertState.Error,
-        error: 'test error message',
+        current: state,
+        error,
         labels: { instance: 'i-123' },
         ruleUID: 'grafana/uid-1',
       },
@@ -44,6 +47,6 @@ describe('EventDetails', () => {
     const errorRow = screen.getByTestId('state-history-error');
     expect(errorRow).toBeInTheDocument();
     expect(errorRow).toHaveTextContent('Error message:');
-    expect(errorRow).toHaveTextContent('test error message');
+    expect(errorRow).toHaveTextContent(error);
   });
 });

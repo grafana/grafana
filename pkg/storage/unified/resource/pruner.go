@@ -7,6 +7,7 @@ import "context"
 type Pruner interface {
 	Add(key PruningKey) error
 	Start(ctx context.Context)
+	Stop()
 }
 
 // PruningKey is a comparable key for pruning history.
@@ -18,7 +19,7 @@ type PruningKey struct {
 }
 
 func (k PruningKey) Validate() bool {
-	return k.Namespace != "" && k.Group != "" && k.Resource != "" && k.Name != ""
+	return k.Group != "" && k.Resource != "" && k.Name != ""
 }
 
 type NoopPruner struct{}
@@ -28,3 +29,5 @@ func (p *NoopPruner) Add(key PruningKey) error {
 }
 
 func (p *NoopPruner) Start(ctx context.Context) {}
+
+func (p *NoopPruner) Stop() {}

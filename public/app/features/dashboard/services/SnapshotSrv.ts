@@ -1,10 +1,7 @@
-import { lastValueFrom } from 'rxjs';
-
 import { config, getBackendSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
-
-import { getAPINamespace } from '../../../api/utils';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
+import { dispatch } from 'app/types/store';
 
 // Used in the snapshot list
 export interface Snapshot {
@@ -15,6 +12,15 @@ export interface Snapshot {
   url?: string;
 }
 
+export interface SnapshotListPage {
+  items: Snapshot[];
+  continueToken?: string;
+}
+
+export interface SnapshotListOptions {
+  continue?: string;
+}
+
 export interface SnapshotSharingOptions {
   externalEnabled: boolean;
   externalSnapshotName: string;
@@ -22,7 +28,7 @@ export interface SnapshotSharingOptions {
   snapshotEnabled: boolean;
 }
 
-export interface SnapshotCreateCommand {
+interface SnapshotCreateCommand {
   dashboard: object;
   name: string;
   expires?: number;
@@ -37,7 +43,7 @@ export interface SnapshotCreateResponse {
 
 export interface DashboardSnapshotSrv {
   create: (cmd: SnapshotCreateCommand) => Promise<SnapshotCreateResponse>;
-  getSnapshots: () => Promise<Snapshot[]>;
+  getSnapshots: (opts?: SnapshotListOptions) => Promise<SnapshotListPage>;
   getSharingOptions: () => Promise<SnapshotSharingOptions>;
   deleteSnapshot: (key: string) => Promise<void>;
   getSnapshot: (key: string) => Promise<DashboardDTO>;
@@ -45,7 +51,10 @@ export interface DashboardSnapshotSrv {
 
 const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   create: (cmd: SnapshotCreateCommand) => getBackendSrv().post<SnapshotCreateResponse>('/api/snapshots', cmd),
-  getSnapshots: () => getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots'),
+  getSnapshots: async () => {
+    const items = await getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots');
+    return { items, continueToken: undefined };
+  },
   getSharingOptions: () => getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options'),
   deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
   getSnapshot: async (key: string) => {
@@ -59,103 +68,98 @@ const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   },
 };
 
-interface K8sMetadata {
-  name: string;
-  namespace: string;
-  resourceVersion: string;
-  creationTimestamp: string;
-}
-
-interface K8sSnapshotInfo {
-  title: string;
-  external: boolean;
-  externalUrl?: string;
-  expires?: number;
-}
-
-interface K8sSnapshotResource {
-  metadata: K8sMetadata;
-  spec: K8sSnapshotInfo;
-}
-
-interface DashboardSnapshotList {
-  items: K8sSnapshotResource[];
-}
-
-// Response from the /dashboard subresource - returns a Dashboard with raw dashboard data in spec
-interface K8sDashboardSubresource {
-  apiVersion: string;
-  kind: 'Dashboard';
-  metadata: K8sMetadata;
-  spec: DashboardDataDTO;
+function mapK8sSnapshotItem(item: {
+  metadata: { name?: string };
+  spec: { title?: string; external?: boolean; externalUrl?: string };
+}): Snapshot {
+  return {
+    key: item.metadata.name ?? '',
+    name: item.spec.title ?? '',
+    external: item.spec.external ?? false,
+    externalUrl: item.spec.externalUrl,
+  };
 }
 
 class K8sAPI implements DashboardSnapshotSrv {
-  readonly apiVersion = 'dashboard.grafana.app/v0alpha1';
-  readonly url: string;
-
-  constructor() {
-    this.url = `/apis/${this.apiVersion}/namespaces/${getAPINamespace()}/snapshots`;
+  async create(cmd: SnapshotCreateCommand): Promise<SnapshotCreateResponse> {
+    // CreateSnapshotApiResponse is `any` in the generated types; the legacy backend
+    // returns SnapshotCreateResponse and the k8s endpoint preserves the same shape.
+    return await dispatch(dashboardAPIv0alpha1.endpoints.createSnapshot.initiate({ body: cmd })).unwrap();
   }
 
-  async create(cmd: SnapshotCreateCommand) {
-    return getBackendSrv().post<SnapshotCreateResponse>(this.url + '/create', cmd);
-  }
-
-  async getSnapshots(): Promise<Snapshot[]> {
-    const result = await getBackendSrv().get<DashboardSnapshotList>(this.url);
-    return result.items.map((r) => {
+  async getSnapshots(opts?: SnapshotListOptions): Promise<SnapshotListPage> {
+    // Imperative query dispatches auto-subscribe to RTK's cache. Releasing the
+    // subscription in `finally` ensures a subsequent deleteSnapshot mutation (which
+    // invalidates the Snapshot tag) doesn't trigger a stale background refetch.
+    const promise = dispatch(
+      dashboardAPIv0alpha1.endpoints.listSnapshot.initiate({ continue: opts?.continue }, { forceRefetch: true })
+    );
+    try {
+      const result = await promise.unwrap();
       return {
-        key: r.metadata.name,
-        name: r.spec.title,
-        external: r.spec.external,
-        externalUrl: r.spec.externalUrl,
+        items: result.items.map(mapK8sSnapshotItem),
+        continueToken: result.metadata.continue,
       };
-    });
+    } finally {
+      promise.unsubscribe();
+    }
   }
 
-  deleteSnapshot(uid: string) {
-    return getBackendSrv().delete<void>(this.url + '/' + uid);
+  async deleteSnapshot(uid: string) {
+    await dispatch(dashboardAPIv0alpha1.endpoints.deleteSnapshot.initiate({ name: uid })).unwrap();
   }
 
-  async getSharingOptions() {
-    return getBackendSrv().get<SnapshotSharingOptions>(this.url + '/settings');
+  async getSharingOptions(): Promise<SnapshotSharingOptions> {
+    // GetSnapshotSettingsApiResponse is `any` in the generated types; the backend
+    // returns the same SnapshotSharingOptions shape as the legacy endpoint.
+    const promise = dispatch(
+      dashboardAPIv0alpha1.endpoints.getSnapshotSettings.initiate(undefined, { forceRefetch: true })
+    );
+    try {
+      return await promise.unwrap();
+    } finally {
+      promise.unsubscribe();
+    }
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {
-    const headers: Record<string, string> = {};
-    if (!contextSrv.isSignedIn) {
-      alert('TODO... need a barer token for anonymous use case');
-      const token = `??? TODO, get anon token for snapshots (${contextSrv.user?.name}) ???`;
-      headers['Authorization'] = `Bearer ${token}`;
+    // For anonymous callers (`org-0`) the dashboard v0alpha1 baseAPI routes these
+    // read-by-key endpoints to the `default` namespace, so the public snapshot view works
+    // through RTK like every other method.
+    const snapshotPromise = dispatch(
+      dashboardAPIv0alpha1.endpoints.getSnapshot.initiate({ name: uid }, { forceRefetch: true })
+    );
+    const dashboardPromise = dispatch(
+      dashboardAPIv0alpha1.endpoints.getSnapshotDashboard.initiate({ name: uid }, { forceRefetch: true })
+    );
+    try {
+      const [snapshotResponse, dashboardResponse] = await Promise.all([
+        snapshotPromise.unwrap(),
+        dashboardPromise.unwrap(),
+      ]);
+
+      // The /dashboard subresource returns a Dashboard whose `spec` is the raw dashboard
+      // payload — typed as `Unstructured` in the generated client, but always a
+      // DashboardDataDTO at runtime.
+      // structuredClone unfreezes the payload: RTK Query auto-freezes responses, but
+      // downstream dashboard processing (e.g. fixThresholds in getPanelOptionsWithDefaults)
+      // mutates fields like thresholds.steps[0].value in place and would throw on a
+      // frozen object.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const dashboard = structuredClone(dashboardResponse.spec) as DashboardDataDTO;
+
+      return {
+        dashboard,
+        meta: {
+          isSnapshot: true,
+          version: 0,
+          k8s: snapshotResponse.metadata,
+        },
+      };
+    } finally {
+      snapshotPromise.unsubscribe();
+      dashboardPromise.unsubscribe();
     }
-
-    // Fetch both snapshot metadata and dashboard content in parallel
-    const [snapshotResponse, dashboardResponse] = await Promise.all([
-      lastValueFrom(
-        getBackendSrv().fetch<K8sSnapshotResource>({
-          url: this.url + '/' + uid,
-          method: 'GET',
-          headers: headers,
-        })
-      ),
-      lastValueFrom(
-        getBackendSrv().fetch<K8sDashboardSubresource>({
-          url: this.url + '/' + uid + '/dashboard',
-          method: 'GET',
-          headers: headers,
-        })
-      ),
-    ]);
-
-    return {
-      dashboard: dashboardResponse.data.spec,
-      meta: {
-        isSnapshot: true,
-        version: 0,
-        k8s: snapshotResponse.data.metadata,
-      },
-    };
   }
 }
 

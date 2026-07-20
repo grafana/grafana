@@ -4,7 +4,7 @@ import { render, screen } from 'test/test-utils';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin, SCORE_LEVELS } from '../types';
+import { type CatalogPlugin, SCORE_LEVELS } from '../types';
 
 import { PluginDetailsPanel } from './PluginDetailsPanel';
 
@@ -36,7 +36,6 @@ const mockPlugin: CatalogPlugin = {
   isInstalled: true,
   isDisabled: false,
   isDeprecated: false,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   isPublished: true,
   name: 'Test Plugin',
@@ -95,6 +94,10 @@ const mockPlugin: CatalogPlugin = {
   isFullyInstalled: true,
   accessControl: {},
   url: 'https://github.com/grafana/test-plugin',
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 const mockInfo = [

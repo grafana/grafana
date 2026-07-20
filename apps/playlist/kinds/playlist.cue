@@ -14,36 +14,11 @@ package playlist
 	value: string
 }
 
-playlistv0alpha1: {
-	kind:   "Playlist"
-	plural: "playlists"
-	scope:  "Namespaced"
-	validation: {
-		operations: [
-			"CREATE",
-			"UPDATE",
-		]
-	}
-	mutation: {
-		operations: [
-			"CREATE",
-			"UPDATE",
-		]
-	}
-	schema: {
-		#Item: #PlaylistItem
-		spec: {
-			title:    string
-			interval: string
-			items: [...#Item]
-		}
-	}
-}
-
 playlistv1: {
-	kind:   "Playlist"
-	plural: "playlists"
-	scope:  "Namespaced"
+	kind:       "Playlist"
+	plural:     "playlists"
+	scope:      "Namespaced"
+	conversion: true
 	validation: {
 		operations: [
 			"CREATE",

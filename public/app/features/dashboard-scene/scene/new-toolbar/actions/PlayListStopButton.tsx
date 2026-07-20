@@ -3,7 +3,7 @@ import { Trans } from '@grafana/i18n';
 import { ToolbarButton } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const PlayListStopButton = ({}: ToolbarActionProps) => (
   <ToolbarButton

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Icon, Input, Tooltip, Label, Button, useStyles2, TextLink } from '@grafana/ui';
 
-export interface ResourcePickerProps<T> {
+interface ResourcePickerProps<T> {
   resources: T[];
   onChange: (resources: T[]) => void;
 }
@@ -88,13 +88,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
           </div>
         </div>
       ))}
-      <Button
-        aria-label={t('components.advanced-resource-picker.aria-label-add', 'Add')}
-        icon="plus"
-        variant="secondary"
-        onClick={addResource}
-        type="button"
-      >
+      <Button icon="plus" variant="secondary" onClick={addResource} type="button">
         <Trans i18nKey="components.advanced-resource-picker.button-add-resource-uri">Add resource URI</Trans>
       </Button>
     </>

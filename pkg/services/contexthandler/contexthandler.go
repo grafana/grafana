@@ -167,6 +167,8 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 	ns := "default"
 	if id != nil {
 		ns = id.Namespace
+	} else if h.cfg.StackID != "" {
+		ns = "stacks-" + h.cfg.StackID
 	}
 	evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{
 		"namespace": ns,

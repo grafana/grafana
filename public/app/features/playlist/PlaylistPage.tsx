@@ -4,17 +4,29 @@ import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { contextSrv } from 'app/core/services/context_srv';
+import { useUrlParams } from 'app/core/navigation/hooks';
+import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
+import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 
-import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
+import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { searchPlaylists } from './utils';
+import { canWritePlaylists, searchPlaylists } from './utils';
 
 export const PlaylistPage = () => {
   const { data, isLoading } = useListPlaylistQuery({});
   const [deletePlaylist] = useDeletePlaylistMutation();
+  // Set after a repository-managed playlist is committed to a new branch; surfaces the PR banner.
+  const { newPrURL, repoURL } = usePullRequestParam();
+  const [urlParams] = useUrlParams();
+  const branchInfo = {
+    targetBranch: urlParams.get('ref') || undefined,
+    configuredBranch: urlParams.get('repo_branch') || undefined,
+    repoBaseUrl: repoURL,
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const allPlaylists = useMemo(() => data?.items ?? [], [data?.items]);
   const playlists = useMemo(() => searchPlaylists(allPlaylists, searchQuery), [searchQuery, allPlaylists]);
@@ -40,7 +52,7 @@ export const PlaylistPage = () => {
   return (
     <Page
       actions={
-        contextSrv.isEditor && showSearch ? (
+        canWritePlaylists() && showSearch ? (
           <LinkButton href="/playlists/new">
             <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
           </LinkButton>
@@ -49,6 +61,8 @@ export const PlaylistPage = () => {
       navId="dashboards/playlists"
     >
       <Page.Contents>
+        {newPrURL && <PreviewBannerViewPR prURL={newPrURL} isNewPr repoUrl={repoURL} branchInfo={branchInfo} />}
+
         {showSearch && <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
 
         {isLoading ? (
@@ -68,7 +82,7 @@ export const PlaylistPage = () => {
               <EmptyState
                 variant="call-to-action"
                 button={
-                  <LinkButton disabled={!contextSrv.isEditor} href="playlists/new" icon="plus" size="lg">
+                  <LinkButton disabled={!canWritePlaylists()} href="playlists/new" icon="plus" size="lg">
                     <Trans i18nKey="playlist-page.empty.button">Create playlist</Trans>
                   </LinkButton>
                 }
@@ -82,18 +96,27 @@ export const PlaylistPage = () => {
                 </Trans>
               </EmptyState>
             )}
-            {playlistToDelete && (
-              <ConfirmModal
-                title={playlistToDelete.spec?.title ?? ''}
-                confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
-                body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
-                  name: playlistToDelete.spec?.title,
-                })}
-                onConfirm={onDeletePlaylist}
-                isOpen={Boolean(playlistToDelete)}
-                onDismiss={onDismissDelete}
-              />
-            )}
+            {playlistToDelete &&
+              (isManagedByRepository(playlistToDelete) ? (
+                // Repository-managed playlists are removed by committing the deletion to git.
+                <SaveProvisionedResourceDrawer
+                  resource={playlistToDelete}
+                  title={playlistToDelete.spec?.title ?? ''}
+                  action="delete"
+                  onDismiss={onDismissDelete}
+                />
+              ) : (
+                <ConfirmModal
+                  title={playlistToDelete.spec?.title ?? ''}
+                  confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
+                  body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
+                    name: playlistToDelete.spec?.title,
+                  })}
+                  onConfirm={onDeletePlaylist}
+                  isOpen={Boolean(playlistToDelete)}
+                  onDismiss={onDismissDelete}
+                />
+              ))}
             {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
           </>
         )}

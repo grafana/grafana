@@ -5,9 +5,9 @@ import testApp3pluginJson from '../../plugins/grafana-extensionexample3-app/plug
 import { testIds } from '../../testIds';
 import { selectors } from '@grafana/e2e-selectors';
 
-test.use({ openFeature: { flags: { useMTPlugins: true } } });
+test.use({ openFeature: { flags: { 'plugins.useMTPlugins': true } } });
 
-test.describe('grafana-extensionstest-app', { tag: ['@plugins', '@useMTPlugins'] }, () => {
+test.describe('grafana-extensionstest-app', { tag: ['@plugins', '@plugins.useMTPlugins'] }, () => {
   test('should extend the actions menu with a link to a-app plugin', async ({ page }) => {
     await page.goto(`/a/${pluginJson.id}/added-links`);
     const section = await page.getByTestId(testIds.addedLinksPage.section1);

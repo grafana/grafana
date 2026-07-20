@@ -128,7 +128,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
-			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
+			userInfo:         &social.BasicUserInfo{Email: "some@example.com"},
 			isEmailAllowed:   false,
 			expectedErr:      errOAuthEmailNotAllowed,
 		},
@@ -146,7 +146,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
-			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
+			userInfo:         &social.BasicUserInfo{Email: "some@example.com"},
 			isEmailAllowed:   false,
 			expectedErr:      errOAuthUserInfo,
 		},
@@ -167,16 +167,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
-				Email:  "some@email.com",
+				Email:  "some@example.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@email.com",
+				Email:           "some@example.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				Groups:          []string{"grp1", "grp2"},
+				ExternalGroups:  []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -207,16 +207,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
-				Email:  "some@email.com",
+				Email:  "some@example.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@email.com",
+				Email:           "some@example.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				Groups:          []string{"grp1", "grp2"},
+				ExternalGroups:  []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -225,7 +225,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 					AllowSignUp:     true,
 					FetchSyncedUser: true,
 					SyncOrgRoles:    true,
-					LookUpParams:    login.UserLookupParams{Email: strPtr("some@email.com")},
+					LookUpParams:    login.UserLookupParams{Email: new("some@example.com")},
 				},
 			},
 		},
@@ -245,11 +245,11 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:    "123",
 				Name:  "name",
-				Email: "some@email.com",
+				Email: "some@example.com",
 				Role:  "Admin",
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@email.com",
+				Email:           "some@example.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
@@ -300,16 +300,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
-				Email:  "some@email.com",
+				Email:  "some@example.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@email.com",
+				Email:           "some@example.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				Groups:          []string{"grp1", "grp2"},
+				ExternalGroups:  []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -367,7 +367,8 @@ func TestOAuth_Authenticate(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
 				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
-				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
+				assert.Equal(t, tt.expectedIdentity.ExternalGroups, identity.ExternalGroups)
+				assert.Empty(t, identity.Groups, "IdP groups must not leak into Identity.Groups")
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)

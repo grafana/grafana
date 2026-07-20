@@ -3,9 +3,10 @@ import memoizeOne from 'memoize-one';
 import { Fragment } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { t } from '@grafana/i18n';
-import { Alert, Column, EmptyState, InteractiveTable, TextLink } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Alert, type Column, EmptyState, InteractiveTable, TextLink } from '@grafana/ui';
 import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { useGetFolderParentsQuery } from 'app/api/clients/folder/v1beta1';
 import { GENERAL_FOLDER_TITLE, GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -24,6 +25,7 @@ const getColumns = memoizeOne((): Array<Column<DashboardHit>> => {
           inline={false}
           href={`/dashboards/f/${original.name}`}
           title={t('teams.team-pages.team-folders.open-folder', 'Open folder')}
+          onClick={() => reportInteraction('grafana_teamfolder_reference_link_clicked', { origin: 'name column' })}
         >
           {original.title}
         </TextLink>
@@ -115,7 +117,14 @@ function FolderPathCell({ folderUid }: { folderUid: string }) {
       {pathParts.map((part) => (
         <Fragment key={part.name}>
           /
-          <TextLink color="primary" inline={false} href={`/dashboards/f/${part.name}`}>
+          <TextLink
+            color="primary"
+            inline={false}
+            href={`/dashboards/f/${part.name}`}
+            onClick={() =>
+              reportInteraction('grafana_teamfolder_reference_link_clicked', { origin: 'full path column' })
+            }
+          >
             {part.title}
           </TextLink>
         </Fragment>

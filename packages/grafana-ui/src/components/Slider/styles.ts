@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { css as cssCore } from '@emotion/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import '@rc-component/slider/assets/index.css';
 
 export const getStyles = (theme: GrafanaTheme2, isHorizontal: boolean, hasMarks = false) => {
   const { spacing } = theme;
   const railColor = theme.colors.border.strong;
-  const trackColor = theme.colors.primary.main;
-  const handleColor = theme.colors.primary.main;
-  const blueOpacity = theme.colors.primary.transparent;
+  const trackColor = theme.colors.accent.main;
+  const handleColor = theme.colors.accent.main;
+  const blueOpacity = theme.colors.accent.transparent;
   const hoverStyle = `box-shadow: 0px 0px 0px 6px ${blueOpacity}`;
 
   return {

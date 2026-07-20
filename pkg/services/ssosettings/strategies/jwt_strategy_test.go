@@ -34,9 +34,9 @@ func TestGetJWTConfig(t *testing.T) {
 
 	strategy := NewJWTStrategy(cfg)
 
-	require.True(t, strategy.IsMatch("jwt"))
-	require.False(t, strategy.IsMatch("ldap"))
-	require.False(t, strategy.IsMatch("generic_oauth"))
+	require.True(t, strategy.IsMatch(context.Background(), "jwt"))
+	require.False(t, strategy.IsMatch(context.Background(), "ldap"))
+	require.False(t, strategy.IsMatch(context.Background(), "generic_oauth"))
 
 	result, err := strategy.GetProviderConfig(context.Background(), "jwt")
 	require.NoError(t, err)

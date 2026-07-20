@@ -209,9 +209,10 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 
-	Kind       string `json:"-"`
-	Attribute  string `json:"-"`
-	Identifier string `json:"-"`
+	Kind           string `json:"-"`
+	Attribute      string `json:"-"`
+	Identifier     string `json:"-"`
+	DatasourceType string `json:"-" xorm:"datasource_type"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
@@ -449,6 +450,16 @@ const (
 	// Alerting Notification actions (legacy)
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
+	// ActionAlertingNotificationsConfigHistoryRead gates read access to the raw Alertmanager config blob
+	// (GET /config/api/v1/alerts) and config history (GET /config/history).
+	// Restricted to admin-only in v13; endpoints will be removed in v14.
+	ActionAlertingNotificationsConfigHistoryRead = "alert.notifications.config-history:read"
+	// ActionAlertingNotificationsConfigHistoryWrite gates write access to config history
+	// (POST /config/history/{id}/_activate).
+	// Restricted to admin-only in v13; endpoint will be removed in v14.
+	ActionAlertingNotificationsConfigHistoryWrite = "alert.notifications.config-history:write"
+	// ActionAlertingNotificationSystemStatus gates access to alertmanager status API
+	ActionAlertingNotificationSystemStatus = "alert.notifications.system-status:read"
 
 	// Alerting notifications template actions
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
@@ -483,15 +494,24 @@ const (
 	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
 	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
 
+	AlertingNotificationsApiGroup = "notifications.alerting.grafana.app"
+	AlertingRoutesResource        = "routingtrees"
+	AlertingRoutesKind            = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource
 	// Alerting managed routes actions (new, scoped per-resource)
-	ActionAlertingManagedRoutesRead   = "alert.notifications.routes.managed:read"
-	ActionAlertingManagedRoutesWrite  = "alert.notifications.routes.managed:write"
-	ActionAlertingManagedRoutesCreate = "alert.notifications.routes.managed:create"
-	ActionAlertingManagedRoutesDelete = "alert.notifications.routes.managed:delete"
+	ActionAlertingManagedRoutesRead      = AlertingRoutesKind + ":get"
+	ActionAlertingManagedRoutesWrite     = AlertingRoutesKind + ":update"
+	ActionAlertingManagedRoutesCreate    = AlertingRoutesKind + ":create"
+	ActionAlertingManagedRoutesDelete    = AlertingRoutesKind + ":delete"
+	ActionAlertingRoutesPermissionsRead  = AlertingRoutesKind + ":set_permissions"
+	ActionAlertingRoutesPermissionsWrite = AlertingRoutesKind + ":get_permissions"
 
-	// Alerting routes permissions actions
-	ActionAlertingRoutesPermissionsRead  = "routes.permissions:read"
-	ActionAlertingRoutesPermissionsWrite = "routes.permissions:write"
+	// Alerting alertmanager import actions (scoped per import identifier, feature-flagged)
+	AlertingAlertmanagerImportsResource     = "alertmanagerimports"
+	AlertingAlertmanagerImportsKind         = AlertingNotificationsApiGroup + "/" + AlertingAlertmanagerImportsResource
+	ActionAlertingAlertmanagerImportsCreate = AlertingAlertmanagerImportsKind + ":create"
+	ActionAlertingAlertmanagerImportsRead   = AlertingAlertmanagerImportsKind + ":get"
+	ActionAlertingAlertmanagerImportsWrite  = AlertingAlertmanagerImportsKind + ":update"
+	ActionAlertingAlertmanagerImportsDelete = AlertingAlertmanagerImportsKind + ":delete"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
@@ -517,6 +537,19 @@ const (
 	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
 	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
 
+	// Config k8s resource actions, scoped per-resource. Reads are exposed to
+	// viewers; updates are gated to admins.
+	AlertingConfigResource     = "configs"
+	AlertingConfigKind         = AlertingNotificationsApiGroup + "/" + AlertingConfigResource
+	ActionAlertingConfigRead   = AlertingConfigKind + ":get"
+	ActionAlertingConfigUpdate = AlertingConfigKind + ":update"
+	// ActionAlertingConfigStatusUpdate gates writes to the /status
+	// subresource. Granted only to the in-process service identity (see
+	// pkg/apimachinery/identity/context.go). NOT registered in any fixed
+	// role — humans should never write status directly; the sync worker
+	// owns it.
+	ActionAlertingConfigStatusUpdate = AlertingConfigKind + "/status:update"
+
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"
 	ActionFeatureManagementWrite = "featuremgmt.write"
@@ -529,6 +562,9 @@ const (
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"
+
+	// Live (Grafana Live) actions
+	ActionLivePush = "live:push"
 )
 
 var (

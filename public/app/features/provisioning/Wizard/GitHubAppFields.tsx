@@ -1,48 +1,65 @@
+import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Combobox, Field, RadioButtonGroup, Stack } from '@grafana/ui';
-import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Combobox, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
+import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
+import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
-import { ConnectionFormData } from '../types';
+import { type ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { useStepStatus } from './StepStatusContext';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
-import { ConnectionCreationResult, WizardFormData } from './types';
+import { type ConnectionCreationResult, type GitHubBasedConnectionType, type WizardFormData } from './types';
 
 interface GitHubAppFieldsProps {
+  connectionType: GitHubBasedConnectionType;
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
-export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
+export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubAppFieldsProps) {
+  const styles = useStyles2(getStyles);
   const {
     control,
     watch,
     setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
-
   const { setStepStatusInfo } = useStepStatus();
 
   // GH app form
   const credentialForm = useForm<ConnectionFormData>({
-    defaultValues: {
-      type: 'github',
-      title: '',
-      description: '',
-      appID: '',
-      installationID: '',
-      privateKey: '',
-    },
+    defaultValues:
+      connectionType === 'githubEnterprise'
+        ? {
+            type: 'githubEnterprise',
+            title: '',
+            description: '',
+            appID: '',
+            installationID: '',
+            privateKey: '',
+            webhookDisabled: false,
+            serverUrl: '',
+          }
+        : {
+            type: 'github',
+            title: '',
+            description: '',
+            appID: '',
+            installationID: '',
+            privateKey: '',
+            webhookDisabled: false,
+          },
   });
 
   const [createConnection, connectionRequest] = useCreateOrUpdateConnection();
@@ -51,7 +68,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     isLoading,
     connections: githubConnections,
     error: connectionListError,
-  } = useConnectionOptions(true);
+  } = useConnectionOptions(true, connectionType);
 
   const hasNoConnections = !isLoading && !connectionListError && githubConnections.length === 0;
 
@@ -74,13 +91,24 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       return;
     }
 
-    const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
-    const spec: ConnectionSpec = {
-      type: 'github',
-      title,
-      ...(description && { description }),
-      github: { appID, installationID },
+    const form = credentialForm.getValues();
+    const baseSpec = {
+      title: form.title,
+      ...(form.description && { description: form.description }),
+      ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
     };
+    const spec: ConnectionSpec =
+      form.type === 'githubEnterprise'
+        ? {
+            ...baseSpec,
+            type: 'githubEnterprise',
+            githubEnterprise: { appID: form.appID, installationID: form.installationID, serverUrl: form.serverUrl },
+          }
+        : {
+            ...baseSpec,
+            type: 'github',
+            github: { appID: form.appID, installationID: form.installationID },
+          };
 
     const defaultErrorMessage = t(
       'provisioning.wizard.github-app-creation-default-error',
@@ -102,7 +130,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     };
 
     try {
-      const result = await createConnection(spec, privateKey);
+      const result = await createConnection(spec, form.privateKey);
       if (result.data?.metadata?.name) {
         credentialForm.reset();
         onGitHubAppSubmit({ success: true, connectionName: result.data.metadata.name });
@@ -131,6 +159,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
           // RadioButtonGroup doesn't support refs, so we need to remove it from fields
           render={({ field: { ref, onChange, ...field } }) => (
             <RadioButtonGroup
+              className={styles.appModeRadios}
               options={[
                 {
                   value: 'existing',
@@ -214,11 +243,24 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
         <FormProvider {...credentialForm}>
           <GitHubConnectionFields
             required
+            type={connectionType}
             onNewConnectionCreation={handleCreateConnection}
             isCreating={connectionRequest.isLoading}
+          />
+          <WebhookDisabledField
+            registration={credentialForm.register('webhookDisabled')}
+            invalid={!!credentialForm.formState.errors.webhookDisabled}
+            error={credentialForm.formState.errors.webhookDisabled?.message}
           />
         </FormProvider>
       )}
     </Stack>
   );
 }
+
+const getStyles = (_theme: GrafanaTheme2) => ({
+  appModeRadios: css({
+    maxWidth: '100%',
+    overflowX: 'auto',
+  }),
+});

@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
+	"github.com/grafana/dskit/services"
 	tracingmodule "github.com/grafana/grafana/pkg/modules/tracing"
 )
 
@@ -260,7 +260,7 @@ func TestListener_ServiceLifecycleIntegration(t *testing.T) {
 	}
 
 	// Check the first 3 spans (service state spans)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		span := spans[i]
 		require.Equal(t, expectedNames[i], span.Name)
 		require.True(t, span.EndTime.After(span.StartTime), "Span %s should be ended", span.Name)
@@ -524,8 +524,6 @@ func TestListener_LongRunningService(t *testing.T) {
 	serviceName := "long-running-service"
 	listener := tracingmodule.NewListener(ctx, serviceName)
 
-	startTime := time.Now()
-
 	listener.Starting()
 	time.Sleep(20 * time.Millisecond) // Simulate startup time
 
@@ -537,7 +535,6 @@ func TestListener_LongRunningService(t *testing.T) {
 
 	listener.Terminated(services.Stopping)
 
-	endTime := time.Now()
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
@@ -555,12 +552,13 @@ func TestListener_LongRunningService(t *testing.T) {
 	require.True(t, stoppingSpan.EndTime.After(stoppingSpan.StartTime))
 	require.True(t, parentSpan.EndTime.After(parentSpan.StartTime))
 
-	// Parent span should encompass the entire lifecycle
-	require.True(t, parentSpan.StartTime.Before(startTime.Add(10*time.Millisecond)) ||
-		parentSpan.StartTime.Equal(startTime.Add(10*time.Millisecond)),
-		"Parent span should start around the beginning")
-	require.True(t, parentSpan.EndTime.After(endTime.Add(-10*time.Millisecond)),
-		"Parent span should end around the end")
+	// Parent span should encompass the entire lifecycle (compare spans, not wall clock)
+	require.True(t, parentSpan.StartTime.Before(startingSpan.StartTime) ||
+		parentSpan.StartTime.Equal(startingSpan.StartTime),
+		"Parent span should start no later than the Starting child span")
+	require.True(t, parentSpan.EndTime.After(stoppingSpan.EndTime) ||
+		parentSpan.EndTime.Equal(stoppingSpan.EndTime),
+		"Parent span should end no earlier than the Stopping child span")
 }
 
 func TestListener_EarlyTermination(t *testing.T) {

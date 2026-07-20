@@ -1,10 +1,10 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
 
 import {
-  DataFrameJSON,
+  type DataFrameJSON,
   LoadingState,
-  PanelData,
+  type PanelData,
   dataFrameFromJSON,
   getDefaultTimeRange,
   withLoadingIndicator,
@@ -12,8 +12,8 @@ import {
 import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
 
 import {
-  PreviewRuleRequest,
-  PreviewRuleResponse,
+  type PreviewRuleRequest,
+  type PreviewRuleResponse,
   isCloudPreviewRequest,
   isGrafanaPreviewRequest,
 } from '../types/preview';

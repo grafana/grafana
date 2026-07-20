@@ -1,6 +1,6 @@
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
-import { GrafanaConfig, locationUtil } from '@grafana/data';
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -9,8 +9,13 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { useSelector } from 'app/types/store';
 
 import { StarToolbarButton } from './StarToolbarButton';
+import { itemStarred } from './analytics/main';
 
-const [_, { dashbdD, folderA_folderB_dashbdB }] = getFolderFixtures();
+jest.mock('./analytics/main', () => ({
+  itemStarred: jest.fn(),
+}));
+
+const [_, { dashbdD, folderA, folderA_folderB_dashbdB }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -41,11 +46,15 @@ const TestStarredMenuItems = () => {
 
 const existingStarredItem = dashbdD.item;
 const itemToStar = folderA_folderB_dashbdB.item;
+const folderToStar = folderA.item;
 
 const findStarButton = (title: string, isStarred: boolean) =>
   screen.findByRole('button', { name: new RegExp(`^${isStarred ? 'unmark' : 'mark'} "${title}" as favorite`, 'i') });
 
-const setup = (dashboardForStarButton: typeof existingStarredItem | typeof itemToStar) => {
+const setup = (
+  itemForStarButton: typeof existingStarredItem | typeof itemToStar,
+  { group = 'dashboard.grafana.app', kind = 'Dashboard' } = {}
+) => {
   config.bootData.navTree = [
     {
       id: 'starred',
@@ -62,12 +71,7 @@ const setup = (dashboardForStarButton: typeof existingStarredItem | typeof itemT
   return render(
     <>
       <TestStarredMenuItems />
-      <StarToolbarButton
-        title={dashboardForStarButton.title}
-        group="dashboard.grafana.app"
-        kind="Dashboard"
-        id={dashboardForStarButton.uid}
-      />
+      <StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />
     </>
   );
 };
@@ -86,6 +90,10 @@ const fixtures: Array<
 describe('StarToolbarButton', () => {
   describe.each(fixtures)('%s', (_title, featureToggleSetup) => {
     testWithFeatureToggles(featureToggleSetup);
+
+    beforeEach(() => {
+      jest.mocked(itemStarred).mockClear();
+    });
 
     it('adds a nav menu item, including correct url', async () => {
       const { user } = setup(itemToStar);
@@ -148,6 +156,38 @@ describe('StarToolbarButton', () => {
 
       // After loading, should show "Unmark as favorite" (filled star state)
       expect(await findStarButton(existingStarredItem.title, true)).toBeInTheDocument();
+    });
+
+    it('reports a typed analytics event when starring a folder', async () => {
+      const { user } = setup(folderToStar, { group: 'folder.grafana.app', kind: 'Folder' });
+
+      await user.click(await findStarButton(folderToStar.title, false));
+
+      await waitFor(() => {
+        expect(itemStarred).toHaveBeenCalledWith({
+          group: 'folder.grafana.app',
+          kind: 'Folder',
+          status: 'starred',
+          origin: 'StarToolbarButton',
+        });
+      });
+      expect(itemStarred).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a typed analytics event when unstarring a dashboard', async () => {
+      const { user } = setup(existingStarredItem);
+
+      await user.click(await findStarButton(existingStarredItem.title, true));
+
+      await waitFor(() => {
+        expect(itemStarred).toHaveBeenCalledWith({
+          group: 'dashboard.grafana.app',
+          kind: 'Dashboard',
+          status: 'unstarred',
+          origin: 'StarToolbarButton',
+        });
+      });
+      expect(itemStarred).toHaveBeenCalledTimes(1);
     });
   });
 });

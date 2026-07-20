@@ -22,6 +22,10 @@ post-generate-cleanup: ## Clean up the generated code
 	@rm ../../packages/grafana-schema/src/schema/dashboard/v1beta1/types.spec.gen.ts
 	@cp ./tshack/v1alpha1_spec_gen.ts ../../packages/grafana-schema/src/schema/dashboard/v1beta1/types.spec.gen.ts
 
+	# Variable spec currently requires a TS shim to expose Spec/defaultSpec.
+	@rm -f ../../packages/grafana-schema/src/schema/variable/v2beta1/types.spec.gen.ts
+	@cp ./tshack/variable_v2beta1_spec_gen.ts ../../packages/grafana-schema/src/schema/variable/v2beta1/types.spec.gen.ts
+
 	# Remove auto-generated DeepCopy and DeepCopyInto methods for Spec for v0alpha1.
 	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go > ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp
 	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp2
@@ -33,6 +37,12 @@ post-generate-cleanup: ## Clean up the generated code
 	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp2
 	@rm ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp
 	@mv ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
+
+	# Remove auto-generated DeepCopy and DeepCopyInto methods for Spec for v1 (alias to common.Unstructured).
+	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v1/dashboard_object_gen.go > ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp
+	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp2
+	@rm ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp
+	@mv ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v1/dashboard_object_gen.go
 
 	# Copy dashboard/v2alpha1 spec so we can use it for schema validation
 	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
@@ -47,6 +57,25 @@ post-generate-cleanup: ## Clean up the generated code
 	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 	@echo "" >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 	@cat ./kinds/v2beta1/dashboard_spec.cue >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
+
+	# Copy dashboard/v2 spec so we can use it for schema validation
+	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "// Source: apps/dashboard/kinds/v2/dashboard_spec.cue" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@cat ./kinds/v2/dashboard_spec.cue >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+
+	@# Remove generated files for v1beta1 since it's a thin wrapper around v1
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_codec_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_schema_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_spec_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_status_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/zz_generated.openapi.go
+	@echo "Removed generated v1beta1 files (v1beta1 is a thin wrapper around v1)"
+
+	# Copy default home dashboard into the apiserver
+	@cp ../../public/dashboards/home.json ../../pkg/registry/apis/dashboard/home/home.json
 
 .PHONY: generate-golden-files
 generate-golden-files: ## Generate golden output files (migration first, then conversion)

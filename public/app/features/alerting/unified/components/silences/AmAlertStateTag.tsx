@@ -1,6 +1,6 @@
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
-import { State, StateTag } from '../StateTag';
+import { type State, StateTag } from '../StateTag';
 
 const alertStateToState: Record<AlertState, State> = {
   [AlertState.Active]: 'bad',

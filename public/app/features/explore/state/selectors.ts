@@ -1,12 +1,12 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { flatten, uniqBy } from 'lodash';
 
-import { DataSourceRef } from '@grafana/schema';
-import { ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { type DataSourceRef } from '@grafana/schema';
+import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
 export const selectPanes = (state: Pick<StoreState, 'explore'>) => state.explore.panes;
-export const selectExploreRoot = (state: Pick<StoreState, 'explore'>) => state.explore;
+const selectExploreRoot = (state: Pick<StoreState, 'explore'>) => state.explore;
 
 export const selectRichHistorySettings = (state: Pick<StoreState, 'explore'>) => state.explore.richHistorySettings;
 

@@ -380,6 +380,7 @@ type FakeLicensingService struct {
 	LicensePath    string
 	LicenseAppURL  string
 	CDNPrefix      string
+	ValidLicense   bool
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
@@ -404,6 +405,10 @@ func (s *FakeLicensingService) Environment() []string {
 
 func (s *FakeLicensingService) ContentDeliveryPrefix() string {
 	return s.CDNPrefix
+}
+
+func (s *FakeLicensingService) HasValidLicense() bool {
+	return s.ValidLicense
 }
 
 type FakeRoleRegistry struct {
@@ -543,6 +548,17 @@ func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID 
 }
 
 func (f *FakeAuthService) RemoveExternalService(ctx context.Context, pluginID string) error {
+	return nil
+}
+
+type FakeRBACCleaner struct {
+	CleanupFunc func(ctx context.Context, pluginIDs []string) error
+}
+
+func (f *FakeRBACCleaner) CleanupPluginRBAC(ctx context.Context, pluginIDs ...string) error {
+	if f.CleanupFunc != nil {
+		return f.CleanupFunc(ctx, pluginIDs)
+	}
 	return nil
 }
 

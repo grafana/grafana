@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { EditorRow, EditorFieldGroup, EditorField } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
-import { BuildAndUpdateOptions } from './utils';
+import { type BuildAndUpdateOptions } from './utils';
 
 interface LimitSectionProps {
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;

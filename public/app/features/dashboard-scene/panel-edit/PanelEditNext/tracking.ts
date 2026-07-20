@@ -1,6 +1,8 @@
 import { debounce } from 'lodash';
 
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { PanelEditNextFeedbackEvent } from 'app/types/events';
 
 import { QueryEditorType } from './constants';
 
@@ -26,7 +28,7 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline';
+type AddCardSource = 'section_header' | 'inline' | 'empty_state';
 
 export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSource: AddCardSource) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
@@ -128,10 +130,24 @@ export function trackSidebarViewChange(view: QueryEditorType) {
   });
 }
 
+export function trackStackedViewToggle(direction: 'enter' | 'exit') {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_stacked_view',
+    direction,
+  });
+}
+
 export function trackQueryOptionsToggle(open: boolean) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'toggle_query_options',
     open,
+  });
+}
+
+export function trackMultiSelectToggle(direction: 'enter' | 'exit') {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_multi_select',
+    direction,
   });
 }
 
@@ -140,4 +156,16 @@ export function trackRenameInitiated() {
     action: 'rename_initiated',
     item_type: QueryEditorType.Query,
   });
+}
+
+export function startFeedbackSurvey(): void {
+  const isPanelEditNextFeedbackEventEnabled = getFeatureFlagClient().getBooleanValue(
+    FlagKeys.GrafanaPanelEditNextFeedbackEvent,
+    false
+  );
+  if (isPanelEditNextFeedbackEventEnabled) {
+    // Fire an event for grafana-setupguide-app to detect, which will show the survey in Cloud.
+    getAppEvents().publish(new PanelEditNextFeedbackEvent());
+    return;
+  }
 }

@@ -12,7 +12,7 @@ export const ThemeSpacingOptionsSchema = z.object({
 export type ThemeSpacingOptions = z.infer<typeof ThemeSpacingOptionsSchema>;
 
 /** @internal */
-export type ThemeSpacingArgument = number | string;
+type ThemeSpacingArgument = number | string;
 
 /**
  * @beta

@@ -3,16 +3,15 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import {
-  GrafanaTheme2,
-  PanelData,
-  PanelModel,
-  PanelPluginMeta,
-  PanelPluginVisualizationSuggestion,
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelModel,
+  type PanelPluginMeta,
+  type PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
@@ -22,10 +21,11 @@ import { panelsWithoutData } from '../../suggestions/consts';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
-import { VisualizationCardGrid, VisualizationCardGridGroup } from './VisualizationCardGrid';
+import { VisualizationCardGrid, type VisualizationCardGridGroup } from './VisualizationCardGrid';
+import { VizTypePicker } from './VizTypePicker';
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
-import { VizTypeChangeDetails } from './types';
+import { type VizTypeChangeDetails } from './types';
 
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
@@ -75,7 +75,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
-  const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
 
   const panelState = useMemo((): PanelState => {
@@ -141,7 +140,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   );
 
   useEffect(() => {
-    if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0 || !isUnconfiguredPanel) {
+    if (!suggestions || suggestions.length === 0 || !isUnconfiguredPanel) {
       return;
     }
 
@@ -167,7 +166,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       setFirstCardHash(newFirstCardHash);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [suggestions, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel]);
+  }, [suggestions, firstCardHash, isUnconfiguredPanel]);
 
   if (loading || !data) {
     return (
@@ -187,8 +186,14 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     );
   }
 
-  if (isNewVizSuggestionsEnabled && !hasData(data)) {
+  if (!hasData(data)) {
     return <NoDataPanelList searchQuery={searchQuery} panel={panel} onChange={onChange} />;
+  }
+
+  // When the search matches no suggestions, fall back to the full panel list
+  // so users can still find and pick any visualization type.
+  if (suggestions && suggestions.length === 0 && searchQuery) {
+    return <VizTypePicker pluginId={panel?.type ?? ''} searchQuery={searchQuery} onChange={onChange} />;
   }
 
   return (
@@ -208,11 +213,12 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
         </Alert>
       )}
       <VisualizationCardGrid
-        groups={isNewVizSuggestionsEnabled ? suggestionsByVizType : undefined}
-        items={!isNewVizSuggestionsEnabled ? suggestions : undefined}
+        groups={suggestionsByVizType}
+        items={undefined}
         data={data!}
         onItemClick={(item) => handleSuggestionClick(item, suggestionIndexMap.get(item.hash) ?? -1)}
         getItemKey={(item) => item.hash}
+        selectedKey={firstCardHash ?? undefined}
       />
     </>
   );
@@ -231,6 +237,12 @@ function NoDataPanelList({ searchQuery, panel, onChange }: NoDataPanelListProps)
     const panels = meta.filter((p) => panelsWithoutData.has(p.id));
     return filterPluginList(panels, searchQuery ?? '', panel?.type);
   }, [searchQuery, panel?.type, meta]);
+
+  // When searching and no no-data panels match, fall back to the full panel list
+  // so users can still find and pick any visualization type.
+  if (searchQuery && noDataPanels.length === 0) {
+    return <VizTypePicker pluginId={panel?.type ?? ''} searchQuery={searchQuery} onChange={onChange} />;
+  }
 
   return (
     <>

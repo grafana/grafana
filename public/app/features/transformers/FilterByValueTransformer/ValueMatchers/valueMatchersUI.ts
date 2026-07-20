@@ -4,7 +4,7 @@ import { getBasicValueMatchersUI } from './BasicMatcherEditor';
 import { getNoopValueMatchersUI } from './NoopMatcherEditor';
 import { getRangeValueMatchersUI } from './RangeMatcherEditor';
 import { getRegexValueMatchersUI } from './RegexMatcherEditor';
-import { ValueMatcherUIRegistryItem } from './types';
+import { type ValueMatcherUIRegistryItem } from './types';
 
 export const valueMatchersUI = new Registry<ValueMatcherUIRegistryItem<any>>(() => {
   return [

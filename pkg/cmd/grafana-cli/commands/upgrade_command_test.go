@@ -120,17 +120,18 @@ func (a simpleArgs) Slice() []string { return []string(a) }
 // Base struct with default implementations for unused CommandLine methods
 type baseCommandLine struct{}
 
-func (b baseCommandLine) ShowHelp() error               { return nil }
-func (b baseCommandLine) ShowVersion()                  {}
-func (b baseCommandLine) Application() *cli.App         { return nil }
-func (b baseCommandLine) Int(_ string) int              { return 0 }
-func (b baseCommandLine) String(_ string) string        { return "" }
-func (b baseCommandLine) StringSlice(_ string) []string { return nil }
-func (b baseCommandLine) FlagNames() []string           { return nil }
-func (b baseCommandLine) Generic(_ string) any          { return nil }
-func (b baseCommandLine) Bool(_ string) bool            { return false }
-func (b baseCommandLine) PluginURL() string             { return "" }
-func (b baseCommandLine) GcomToken() string             { return "" }
+func (b baseCommandLine) ShowHelp() error                 { return nil }
+func (b baseCommandLine) ShowVersion()                    {}
+func (b baseCommandLine) Application() *cli.App           { return nil }
+func (b baseCommandLine) Int(_ string) int                { return 0 }
+func (b baseCommandLine) String(_ string) string          { return "" }
+func (b baseCommandLine) StringSlice(_ string) []string   { return nil }
+func (b baseCommandLine) FlagNames() []string             { return nil }
+func (b baseCommandLine) Generic(_ string) any            { return nil }
+func (b baseCommandLine) Bool(_ string) bool              { return false }
+func (b baseCommandLine) PluginURL() string               { return "" }
+func (b baseCommandLine) GcomToken() string               { return "" }
+func (b baseCommandLine) GrafanaComProxyAPIToken() string { return "" }
 
 // Test implementation - only implements what we actually need
 type testCommandLine struct {

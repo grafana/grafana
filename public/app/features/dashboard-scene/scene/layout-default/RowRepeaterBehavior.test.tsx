@@ -1,4 +1,4 @@
-import { VariableRefresh } from '@grafana/data';
+import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
@@ -9,7 +9,7 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
-  VariableValueOption,
+  type VariableValueOption,
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
@@ -17,7 +17,7 @@ import { getCloneKey, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 
-import { RepeatDirection } from './DashboardGridItem';
+import { type RepeatDirection } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { RowActions } from './row-actions/RowActions';

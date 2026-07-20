@@ -9,7 +9,7 @@ declare global {
 
 import { renderHook } from '@testing-library/react';
 
-import { DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { type DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
 import { useStructureRev } from './useStructureRev';
 

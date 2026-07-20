@@ -339,6 +339,7 @@ func AddResourcePermissionKnownTypes(scheme *runtime.Scheme, version schema.Grou
 	scheme.AddKnownTypes(version,
 		&ResourcePermission{},
 		&ResourcePermissionList{},
+		&PermissionsSearchResult{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},
@@ -371,10 +372,15 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&ExternalGroupMappingList{},
 		&GetTeamGroupsResponse{},
 		&GetTeamMembersResponse{},
+		&CreateTeamMemberResponse{},
+		&DeleteTeamMemberResponse{},
 		&GetUserTeamsResponse{},
+		&ListServiceAccountTokensResponse{},
+		&GetServiceAccountTokenResponse{},
+		&CreateServiceAccountTokenResponse{},
+		&DeleteServiceAccountTokenResponse{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
-		// &ServiceAccountTokenList{},
 		// &DisplayList{},
 		// &SSOSetting{},
 		// &SSOSettingList{},

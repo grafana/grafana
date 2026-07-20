@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 export const commentOnlyQuery = {
   query: `-- comment ending with whitespace     `,

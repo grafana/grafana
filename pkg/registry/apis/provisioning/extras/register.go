@@ -34,16 +34,20 @@ func ProvideProvisioningOSSRepositoryExtras(
 	reg prometheus.Registerer,
 ) []repository.Extra {
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(reg))
+	// http:// URLs with a token are only allowed in development or when explicitly opted in,
+	// since the token would otherwise travel in cleartext.
+	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
 		),
-		git.Extra(decrypter),
+		git.Extra(decrypter, allowInsecure),
 		github.Extra(
 			decrypter,
 			ghFactory,
 			webhooksBuilder,
+			allowInsecure,
 		),
 	}
 }

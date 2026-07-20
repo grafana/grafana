@@ -97,7 +97,7 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                   "refId": "B",
                   "type": "reduce",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "B",
               },
               {
@@ -115,7 +115,9 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -132,12 +134,18 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                   "refId": "C",
                   "type": "threshold",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "C",
               },
             ],
             "exec_err_state": "Error",
             "is_paused": false,
+            "metadata": {
+              "editor_settings": {
+                "simplified_notifications_section": true,
+                "simplified_query_and_expressions_section": true,
+              },
+            },
             "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "notification_settings": {
@@ -263,7 +271,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "refId": "B",
                   "type": "reduce",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "B",
               },
               {
@@ -281,7 +289,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -298,7 +308,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "refId": "C",
                   "type": "threshold",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "C",
               },
             ],
@@ -432,7 +442,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "refId": "B",
                   "type": "reduce",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "B",
               },
               {
@@ -450,7 +460,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -467,7 +479,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "refId": "C",
                   "type": "threshold",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "C",
               },
             ],
@@ -604,7 +616,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "refId": "B",
                   "type": "reduce",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "B",
               },
               {
@@ -622,7 +634,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -639,7 +653,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "refId": "C",
                   "type": "threshold",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "C",
               },
             ],
@@ -773,7 +787,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "refId": "B",
                   "type": "reduce",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "B",
               },
               {
@@ -791,7 +805,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -808,7 +824,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "refId": "C",
                   "type": "threshold",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "C",
               },
             ],

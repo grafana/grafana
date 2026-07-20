@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	pngExt                        = ".png"
-	defaultGCSSignedURLExpiration = 7 * 24 * time.Hour // 7 days
+	pngExt                          = ".png"
+	defaultGCSSignedURLExpiration   = 7 * 24 * time.Hour // 7 days
+	defaultS3PresignedURLExpiration = 7 * 24 * time.Hour // 7 days
 )
 
 //go:generate mockgen -destination=mock.go -package=imguploader github.com/grafana/grafana/pkg/components/imguploader ImageUploader
@@ -48,6 +49,23 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 		bucketUrl := s3sec.Key("bucket_url").MustString("")
 		accessKey := s3sec.Key("access_key").MustString("")
 		secretKey := s3sec.Key("secret_key").MustString("")
+		enablePresignedURLs := s3sec.Key("enable_presigned_urls").MustBool(false)
+
+		presignedURLExp := s3sec.Key("presigned_url_expiration").MustString("")
+		var presignedURLExpiration time.Duration
+		if presignedURLExp != "" {
+			presignedURLExpiration, err = time.ParseDuration(presignedURLExp)
+			if err != nil {
+				return nil, err
+			}
+			if presignedURLExpiration < 0 {
+				return nil, fmt.Errorf("presigned_url_expiration must be >= 0, got %s", presignedURLExp)
+			}
+		} else {
+			presignedURLExpiration = defaultS3PresignedURLExpiration
+		}
+
+		acl := "public-read"
 
 		if path != "" && path[len(path)-1:] != "/" {
 			path += "/"
@@ -62,7 +80,18 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 			region = info.region
 		}
 
-		return NewS3Uploader(endpoint, region, bucket, path, "public-read", accessKey, secretKey, pathStyleAccess), nil
+		return NewS3Uploader(S3UploaderOptions{
+			Endpoint:               endpoint,
+			Region:                 region,
+			Bucket:                 bucket,
+			Path:                   path,
+			ACL:                    acl,
+			AccessKey:              accessKey,
+			SecretKey:              secretKey,
+			PathStyleAccess:        pathStyleAccess,
+			EnablePresignedURLs:    enablePresignedURLs,
+			PresignedURLExpiration: presignedURLExpiration,
+		}), nil
 	case "webdav":
 		webdavSec, err := cfg.Raw.GetSection("external_image_storage.webdav")
 		if err != nil {

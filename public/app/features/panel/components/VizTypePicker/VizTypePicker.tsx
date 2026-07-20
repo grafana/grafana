@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { EmptySearchResult, useStyles2 } from '@grafana/ui';
@@ -9,7 +9,7 @@ import { EmptySearchResult, useStyles2 } from '@grafana/ui';
 import { filterPluginList } from '../../state/util';
 
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
-import { VizTypeChangeDetails } from './types';
+import { type VizTypeChangeDetails } from './types';
 
 export interface Props {
   pluginId: string;

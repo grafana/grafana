@@ -1,11 +1,11 @@
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 import { validateUid } from './validation';
 
@@ -43,12 +43,13 @@ const v2Dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
 describe('validateUid', () => {
   beforeAll(() => {
     setDashboardAPI({
-      legacy: {
+      unified: {
         getDashboardDTO: jest.fn().mockResolvedValue(legacyDashboard),
         deleteDashboard: jest.fn(),
         saveDashboard: jest.fn(),
         listDeletedDashboards: jest.fn(),
         restoreDashboard: jest.fn(),
+        getDashboard: jest.fn(),
         listDashboardHistory: jest.fn(),
         getDashboardHistoryVersions: jest.fn(),
         restoreDashboardVersion: jest.fn(),
@@ -59,6 +60,7 @@ describe('validateUid', () => {
         saveDashboard: jest.fn(),
         listDeletedDashboards: jest.fn(),
         restoreDashboard: jest.fn(),
+        getDashboard: jest.fn(),
         listDashboardHistory: jest.fn(),
         getDashboardHistoryVersions: jest.fn(),
         restoreDashboardVersion: jest.fn(),

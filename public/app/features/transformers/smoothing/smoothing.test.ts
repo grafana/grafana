@@ -1,12 +1,12 @@
 import {
-  DataFrame,
-  DataTransformContext,
+  type DataFrame,
+  type DataTransformContext,
   FieldType,
   toDataFrame,
   TransformationApplicabilityLevels,
 } from '@grafana/data';
 
-import { calculateMaxSourcePoints, getSmoothingTransformer, SmoothingTransformerOptions } from './smoothing';
+import { calculateMaxSourcePoints, getSmoothingTransformer, type SmoothingTransformerOptions } from './smoothing';
 
 describe('Smoothing transformer', () => {
   const smoothingTransformer = getSmoothingTransformer();

@@ -1,13 +1,17 @@
 import { within } from '@testing-library/react';
+import { HttpResponse, delay, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
+import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerDataSourceJsonData, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import {
   __clearRuleViewTabsForTests,
@@ -18,6 +22,7 @@ import {
   getGrafanaRule,
   getVanillaPromRule,
   grantUserPermissions,
+  mockAlertmanagerAlert,
   mockCombinedCloudRuleNamespace,
   mockDataSource,
   mockPluginLinkExtension,
@@ -26,6 +31,7 @@ import {
   mockRulerGrafanaRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
+import { setAlertmanagerAlertsHandler } from '../../mocks/server/configure';
 import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
@@ -35,7 +41,8 @@ import * as ruleId from '../../utils/rule-id';
 import { stringifyIdentifier } from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
-import RuleViewer, { ActiveTab } from './RuleViewer';
+import RuleViewer from './RuleViewer';
+import { ActiveTab } from './activeTab';
 import { addRulePageEnrichmentSection } from './tabs/extensions/RuleViewerExtension';
 
 jest.mock('@grafana/assistant', () => ({
@@ -44,7 +51,6 @@ jest.mock('@grafana/assistant', () => ({
 
 // metadata and interactive elements
 const ELEMENTS = {
-  loading: byText(/Loading rule/i),
   metadata: {
     summary: (text: string) => byText(text),
     runbook: (url: string) => byRole('link', { name: url }),
@@ -169,6 +175,7 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleUpdate,
         AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.FoldersRead,
         AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstanceCreate,
         AccessControlAction.AlertingInstanceRead,
@@ -295,7 +302,12 @@ describe('RuleViewer', () => {
 
         await user.click(screen.getByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
-        await user.click(screen.getByRole('button', { name: /Compare versions/i }));
+        // The button becomes enabled only after both checkboxes have been processed and the
+        // component re-renders with canCompare=true. Wait explicitly rather than relying on
+        // userEvent's implicit act() flush, which can lose the race on a loaded CI runner.
+        const compareButton = screen.getByRole('button', { name: /Compare versions/i });
+        await waitFor(() => expect(compareButton).toBeEnabled());
+        await user.click(compareButton);
         await screen.findByText(/comparing versions/i);
         // "Pending period" appears in both the always-visible sidebar and the version diff
         expect((await screen.findAllByText(/pending period/i)).length).toBeGreaterThanOrEqual(1);
@@ -310,7 +322,9 @@ describe('RuleViewer', () => {
 
         await user.click(screen.getByLabelText('6'));
         await user.click(screen.getByLabelText('5'));
-        await user.click(screen.getByRole('button', { name: /Compare versions/i }));
+        const compareButton = screen.getByRole('button', { name: /Compare versions/i });
+        await waitFor(() => expect(compareButton).toBeEnabled());
+        await user.click(compareButton);
         await screen.findByText(/comparing versions/i);
 
         const versionSummary = screen.getByRole('heading', { level: 4 });
@@ -374,6 +388,93 @@ describe('RuleViewer', () => {
     });
   });
 
+  describe('inhibition status in title', () => {
+    const mockRule = getGrafanaRule(
+      {
+        name: 'Test alert',
+        promRule: mockPromAlertingRule({ state: PromAlertingRuleState.Firing }),
+      },
+      { uid: grafanaRulerRule.grafana_alert.uid }
+    );
+    const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+
+    beforeEach(() => {
+      grantPermissionsHelper([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingInstanceRead,
+      ]);
+    });
+
+    it('should show "Inhibited" state in the title when the rule has inhibited instances', async () => {
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: grafanaRulerRule.grafana_alert.uid, alertname: 'Test alert' },
+          status: { state: AlertState.Suppressed, silencedBy: [], inhibitedBy: ['source-fingerprint'] },
+        }),
+      ]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      expect(await screen.findByText('Inhibited')).toBeInTheDocument();
+    });
+
+    it('should not show "Inhibited" state in the title when no instances are inhibited', async () => {
+      setAlertmanagerAlertsHandler([]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      // wait for the page to settle
+      await screen.findByText('Test alert');
+      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+    });
+
+    it('should not show "Inhibited" when inhibited alerts belong to a different rule', async () => {
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: 'different-rule-uid', alertname: 'Other alert' },
+          status: { state: AlertState.Suppressed, silencedBy: [], inhibitedBy: ['source-fingerprint'] },
+        }),
+      ]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      await screen.findByText('Test alert');
+      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+    });
+
+    it('should not show a stale "Inhibited" badge while re-fetching after the rule is no longer inhibited', async () => {
+      // Seed the cache: the rule currently has an inhibited instance, so the badge shows.
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: grafanaRulerRule.grafana_alert.uid, alertname: 'Test alert' },
+          status: { state: AlertState.Suppressed, silencedBy: [], inhibitedBy: ['source-fingerprint'] },
+        }),
+      ]);
+
+      // Share a single store so the cached "inhibited" result survives the refetch we trigger below.
+      const store = configureStore();
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query, store);
+      expect(await screen.findByText('Inhibited')).toBeInTheDocument();
+
+      // The rule is no longer inhibited, but the refetch hangs so we can observe the in-flight state.
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', async () => {
+          await delay('infinite');
+          return HttpResponse.json([]);
+        })
+      );
+
+      // Something invalidates the shared alerts cache (e.g. a mutation or poll), starting a background refetch.
+      store.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerAlerts']));
+
+      // While the refetch is in flight we must not keep rendering the stale "inhibited" state.
+      await waitFor(() => {
+        expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+      });
+    });
+  });
+
   describe('Data source managed alert rule', () => {
     const { mimir } = dataSources;
 
@@ -394,8 +495,8 @@ describe('RuleViewer', () => {
       ]);
     });
 
-    it('should render a data source managed alert rule', () => {
-      renderRuleViewer(mockRule, mockRuleIdentifier);
+    it('should render a data source managed alert rule', async () => {
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
 
       // assert on basic info to be vissible
       expect(screen.getByText('cloud test alert')).toBeInTheDocument();
@@ -417,7 +518,7 @@ describe('RuleViewer', () => {
 
       const user = userEvent.setup();
 
-      renderRuleViewer(sloRule, sloRuleIdentifier);
+      await renderRuleViewer(sloRule, sloRuleIdentifier);
 
       expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
@@ -436,7 +537,7 @@ describe('RuleViewer', () => {
       );
       const assertsRuleIdentifier = ruleId.fromCombinedRule(mimir.name, assertsRule);
 
-      renderRuleViewer(assertsRule, assertsRuleIdentifier);
+      await renderRuleViewer(assertsRule, assertsRuleIdentifier);
 
       expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
@@ -473,7 +574,7 @@ describe('RuleViewer', () => {
     const mockRuleIdentifier = ruleId.fromCombinedRule(prometheus.name, mockRule);
 
     it('should render metadata for vanilla Prometheus alert rule', async () => {
-      renderRuleViewer(mockRule, mockRuleIdentifier);
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
 
       expect(screen.getByText('prom test alert')).toBeInTheDocument();
 
@@ -587,16 +688,21 @@ describe('RuleViewer', () => {
   });
 });
 
-const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, tab: ActiveTab = ActiveTab.Query) => {
+const renderRuleViewer = async (
+  rule: CombinedRule,
+  identifier: RuleIdentifier,
+  tab: ActiveTab = ActiveTab.Query,
+  store?: ReturnType<typeof configureStore>
+) => {
   const path = `/alerting/${identifier.ruleSourceName}/${stringifyIdentifier(identifier)}/view?tab=${tab}`;
   const view = render(
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
     </AlertRuleProvider>,
-    { historyOptions: { initialEntries: [path] } }
+    { historyOptions: { initialEntries: [path] }, store }
   );
 
-  await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
+  await screen.findByRole('heading', { name: rule.name });
 
   return view;
 };

@@ -37,6 +37,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "logsdrilldown",
+	AppDisplayName:   "logsdrilldown",
 	Group:            "logsdrilldown.grafana.app",
 	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{

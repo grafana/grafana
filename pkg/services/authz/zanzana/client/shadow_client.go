@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -59,10 +60,10 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 
 		if acErr == nil {
 			if res.Allowed != acRes.Allowed {
-				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+				c.metrics.evaluationStatusTotal.WithLabelValues("error", "check", formatCheck(req), req.Namespace).Inc()
 				c.logger.Warn("Zanzana check result does not match", "expected", acRes.Allowed, "actual", res.Allowed, "user", id.GetUID(), "request", req)
 			} else {
-				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+				c.metrics.evaluationStatusTotal.WithLabelValues("success", "check", formatCheck(req), req.Namespace).Inc()
 			}
 		}
 	}()
@@ -121,10 +122,10 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 			if zanzanaItemChecker != nil {
 				zanzanaRes := zanzanaItemChecker(name, folder)
 				if zanzanaRes != rbacRes {
-					c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+					c.metrics.evaluationStatusTotal.WithLabelValues("error", "compile", "other", req.Namespace).Inc()
 					c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes, "name", name, "folder", folder)
 				} else {
-					c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+					c.metrics.evaluationStatusTotal.WithLabelValues("success", "compile", "other", req.Namespace).Inc()
 				}
 			}
 		}()
@@ -175,19 +176,46 @@ func (c *ShadowClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req 
 // compareBatchCheckResults compares the results from RBAC and Zanzana batch checks
 // and logs any discrepancies.
 func (c *ShadowClient) compareBatchCheckResults(acRes, zanzanaRes authlib.BatchCheckResponse, id authlib.AuthInfo, req authlib.BatchCheckRequest) {
-	for key, acResult := range acRes.Results {
-		zanzanaResult, ok := zanzanaRes.Results[key]
+	checkItems := make(map[string]authlib.BatchCheckItem, len(req.Checks))
+	for _, checkItem := range req.Checks {
+		checkItems[checkItem.CorrelationID] = checkItem
+	}
+
+	for correlationID, acResult := range acRes.Results {
+		zanzanaResult, ok := zanzanaRes.Results[correlationID]
+		checkItem := checkItems[correlationID]
+
 		if !ok {
-			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-			c.logger.Warn("Zanzana batch check missing result", "key", key, "user", id.GetUID())
+			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
+			c.logger.Warn("Zanzana batch check missing result", "item", checkItem, "user", id.GetUID(), "req_namespace", req.Namespace)
 			continue
 		}
 
 		if acResult.Allowed != zanzanaResult.Allowed {
-			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-			c.logger.Warn("Zanzana batch check result does not match", "key", key, "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "user", id.GetUID())
+			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
+			c.logger.Warn("Zanzana batch check result does not match", "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "item", checkItem, "user", id.GetUID(), "req_namespace", req.Namespace)
 		} else {
-			c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+			c.metrics.evaluationStatusTotal.WithLabelValues("success", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
 		}
 	}
+}
+
+func formatCheck(req authlib.CheckRequest) string {
+	return formatResource(req.Group, req.Resource, req.Subresource)
+}
+
+func formatBatchCheck(req authlib.BatchCheckItem) string {
+	return formatResource(req.Group, req.Resource, req.Subresource)
+}
+
+func formatResource(group, resource, subresource string) string {
+	res := ""
+	if group == "" && resource == "" {
+		return "other"
+	}
+	res = fmt.Sprintf("%s/%s", group, resource)
+	if subresource != "" {
+		res = fmt.Sprintf("%s/%s", res, subresource)
+	}
+	return res
 }

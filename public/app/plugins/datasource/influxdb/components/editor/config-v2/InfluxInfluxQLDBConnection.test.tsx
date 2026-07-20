@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom';
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 
 import { InfluxInfluxQLDBConnection } from './InfluxInfluxQLDBConnection';
-import { createTestProps } from './helpers';
+import { createMockValidation, createTestProps } from './helpers';
 
 describe('InfluxInfluxQLDBConnection', () => {
   const onOptionsChangeMock = jest.fn();
@@ -40,5 +40,43 @@ describe('InfluxInfluxQLDBConnection', () => {
     fireEvent.change(screen.getByLabelText(/User/i), { target: { value: 'newuser' } });
 
     expect(onOptionsChangeMock).toHaveBeenCalled();
+  });
+
+  describe('validation', () => {
+    const emptyProps = createTestProps({
+      options: {
+        user: '',
+        jsonData: { dbName: '' },
+        secureJsonData: { password: '' },
+        secureJsonFields: { password: false },
+      },
+      mocks: { onOptionsChange: jest.fn() },
+    });
+
+    it('shows inline errors for all required fields when validator is called with empty values', async () => {
+      const validation = createMockValidation();
+      render(<InfluxInfluxQLDBConnection {...emptyProps} validation={validation} />);
+
+      await act(async () => {
+        validation.runValidator();
+      });
+
+      expect(screen.getByText('Database is required')).toBeInTheDocument();
+      expect(screen.getByText('User is required')).toBeInTheDocument();
+      expect(screen.getByText('Password is required')).toBeInTheDocument();
+    });
+
+    it('shows no errors when all fields are filled', async () => {
+      const validation = createMockValidation();
+      render(<InfluxInfluxQLDBConnection {...defaultProps} validation={validation} />);
+
+      await act(async () => {
+        validation.runValidator();
+      });
+
+      expect(screen.queryByText('Database is required')).not.toBeInTheDocument();
+      expect(screen.queryByText('User is required')).not.toBeInTheDocument();
+      expect(screen.queryByText('Password is required')).not.toBeInTheDocument();
+    });
   });
 });

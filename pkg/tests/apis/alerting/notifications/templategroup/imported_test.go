@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -35,7 +35,7 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 		},
 	})
 
-	client, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -45,12 +45,10 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	require.NoError(t, err)
 
 	identifier := "test-create-get-config"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": identifier,
-		"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 	}
 	var amConfig apimodels.AlertmanagerUserConfig
 	require.NoError(t, yaml.Unmarshal(configYaml, &amConfig))
@@ -63,22 +61,22 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, templates.Items, 3)
 
-	require.Equal(t, v0alpha1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
+	require.Equal(t, v1beta1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
 	require.Equal(t, "imported", templates.Items[1].Spec.Title)
 	require.Equal(t, "template", templates.Items[2].Spec.Title)
 
 	t.Run("should be correct kind", func(t *testing.T) {
 		assert.Equal(t,
-			v0alpha1.TemplateGroupSpec{
+			v1beta1.TemplateGroupSpec{
 				Title:   "imported",
 				Content: amConfig.TemplateFiles["imported"],
-				Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+				Kind:    v1beta1.TemplateGroupTemplateKindMimir,
 			}, templates.Items[1].Spec)
 		assert.Equal(t,
-			v0alpha1.TemplateGroupSpec{
+			v1beta1.TemplateGroupSpec{
 				Title:   "template",
 				Content: amConfig.TemplateFiles["template"],
-				Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+				Kind:    v1beta1.TemplateGroupTemplateKindMimir,
 			}, templates.Items[2].Spec)
 	})
 
@@ -101,13 +99,13 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	})
 
 	t.Run("should not conflict with Grafana kind", func(t *testing.T) {
-		tpl := v0alpha1.TemplateGroup{
+		tpl := v1beta1.TemplateGroup{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: templates.Items[1].Spec,
 		}
-		tpl.Spec.Kind = v0alpha1.TemplateGroupTemplateKindGrafana
+		tpl.Spec.Kind = v1beta1.TemplateGroupTemplateKindGrafana
 
 		created, err := client.Create(context.Background(), &tpl, resource.CreateOptions{})
 		require.NoError(t, err)
@@ -120,11 +118,78 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Len(t, templates.Items, 4)
-		assert.Equal(t, v0alpha1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
+		assert.Equal(t, v1beta1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
 		assert.Equal(t, "imported", templates.Items[1].Spec.Title)
-		assert.Equal(t, v0alpha1.TemplateGroupTemplateKindGrafana, templates.Items[1].Spec.Kind)
+		assert.Equal(t, v1beta1.TemplateGroupTemplateKindGrafana, templates.Items[1].Spec.Kind)
 		assert.Equal(t, "imported", templates.Items[2].Spec.Title)
-		assert.Equal(t, v0alpha1.TemplateGroupTemplateKindMimir, templates.Items[2].Spec.Kind)
+		assert.Equal(t, v1beta1.TemplateGroupTemplateKindMimir, templates.Items[2].Spec.Kind)
 		assert.Equal(t, "template", templates.Items[3].Spec.Title)
 	})
+}
+
+func TestIntegrationPromotedTemplates(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingImportAlertmanagerAPI,
+		},
+	})
+
+	client, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	identifier := "test-promote-templates"
+
+	amConfig := apimodels.AlertmanagerUserConfig{
+		AlertmanagerConfig: `
+route:
+  receiver: sinkhole
+receivers:
+  - name: sinkhole
+`,
+		TemplateFiles: map[string]string{
+			"imported": `{{ define "imported" }}
+{{ end }}`,
+			"template": `{{ define "template" }}
+  {{ template "imported" . }}
+{{ end }}`,
+		},
+	}
+
+	response := alertingApi.ConvertPrometheusPostAlertmanagerConfig(t, amConfig, map[string]string{
+		"Content-Type":                         "application/yaml",
+		"X-Grafana-Alerting-Config-Identifier": identifier,
+		"X-Grafana-Alerting-Promote":           "true",
+	})
+	require.Equal(t, "success", response.Status)
+
+	// After promote the config must not be stored as an extra config.
+	_, status, _ := alertingApi.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+		"X-Grafana-Alerting-Config-Identifier": identifier,
+	})
+	require.Equal(t, 404, status)
+
+	// Promoted templates must appear via the k8s API.
+	templates, err := client.List(context.Background(), apis.DefaultNamespace, resource.ListOptions{})
+	require.NoError(t, err)
+
+	// Find the two promoted templates (default Grafana template is always present).
+	var promoted []v1beta1.TemplateGroup
+	for _, tpl := range templates.Items {
+		if tpl.Spec.Title == "imported" || tpl.Spec.Title == "template" {
+			promoted = append(promoted, tpl)
+		}
+	}
+	require.Len(t, promoted, 2, "both promoted templates must be visible via k8s API")
+
+	for _, tpl := range promoted {
+		assert.Equal(t, v1beta1.TemplateGroupTemplateKindMimir, tpl.Spec.Kind,
+			"promoted Mimir template must have Mimir kind, got %q for %q", tpl.Spec.Kind, tpl.Spec.Title)
+		assert.EqualValues(t, models.ProvenanceNone, tpl.GetProvenanceStatus(),
+			"promoted template must have no provenance (not locked)")
+	}
 }

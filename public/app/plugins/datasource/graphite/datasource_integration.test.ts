@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { BackendSrv, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { type BackendSrv, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 
 import { GraphiteDatasource } from './datasource';
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, type JSX } from 'react';
 import { usePrevious } from 'react-use';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 
 import { useTimeRangeContext } from '../TimeRangeContext';
 import { TimeSyncButton } from '../TimeSyncButton';

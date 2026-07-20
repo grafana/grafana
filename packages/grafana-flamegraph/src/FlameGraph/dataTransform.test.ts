@@ -3,7 +3,7 @@ import { createDataFrame, FieldType } from '@grafana/data';
 import {
   CollapsedMapBuilder,
   FlameGraphDataContainer,
-  LevelItem,
+  type LevelItem,
   nestedSetToLevels,
   CollapsedMap,
 } from './dataTransform';

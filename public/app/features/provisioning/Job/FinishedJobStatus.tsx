@@ -4,11 +4,14 @@ import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../Wizard/types';
-import { JobType } from '../types';
+import { type StepStatusInfo } from '../Wizard/types';
+import { type JobType } from '../types';
 
 import { JobContent } from './JobContent';
 import { getJobMessages } from './getJobMessage';
+
+const MAX_FINISHED_JOB_RETRIES = 5;
+const RETRY_DELAY_MS = 1000;
 
 export interface FinishedJobProps {
   jobUid: string;
@@ -19,24 +22,30 @@ export interface FinishedJobProps {
 }
 
 export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange, onRetry }: FinishedJobProps) {
-  const hasRetried = useRef(false);
+  const retryCount = useRef(0);
+  const pendingRetry = useRef<ReturnType<typeof setTimeout>>();
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
     uid: jobUid,
   });
-  const retryFailed = hasRetried.current && finishedQuery.isError;
+  const retryFailed =
+    retryCount.current >= MAX_FINISHED_JOB_RETRIES &&
+    !pendingRetry.current &&
+    !finishedQuery.isFetching &&
+    finishedQuery.isError;
 
   const job = finishedQuery.data;
 
   useEffect(() => {
-    const shouldRetry = !job && !hasRetried.current && !finishedQuery.isFetching;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    const shouldRetry =
+      !job && !finishedQuery.isFetching && !pendingRetry.current && retryCount.current < MAX_FINISHED_JOB_RETRIES;
 
     if (shouldRetry) {
-      hasRetried.current = true;
-      timeoutId = setTimeout(() => {
+      retryCount.current += 1;
+      pendingRetry.current = setTimeout(() => {
+        pendingRetry.current = undefined;
         finishedQuery.refetch();
-      }, 1000);
+      }, RETRY_DELAY_MS);
     }
 
     if (retryFailed) {
@@ -93,13 +102,17 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
         });
       }
     }
+  }, [finishedQuery, job, onStatusChange, onRetry, retryFailed]);
 
+  // Clear a scheduled retry only on unmount; clearing in the main effect's cleanup
+  // would cancel a pending retry on every re-render of the watched (now-empty) list.
+  useEffect(() => {
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (pendingRetry.current) {
+        clearTimeout(pendingRetry.current);
       }
     };
-  }, [finishedQuery, job, onStatusChange, onRetry, retryFailed]);
+  }, []);
 
   // If retry failed, return null - parent handles the error via onStatusChange
   if (retryFailed) {

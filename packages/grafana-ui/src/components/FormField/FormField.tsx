@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { InputHTMLAttributes, useId } from 'react';
+import { type InputHTMLAttributes, useId } from 'react';
 import * as React from 'react';
 
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
-import { PopoverContent } from '../Tooltip/types';
+import { type PopoverContent } from '../Tooltip/types';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;

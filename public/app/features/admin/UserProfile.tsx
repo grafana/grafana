@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { UserDTO } from 'app/types/user';
+import { type UserDTO } from 'app/types/user';
 
 interface Props {
   user: UserDTO;
@@ -185,7 +185,7 @@ interface UserProfileRowProps {
   onChange?: (value: string) => void;
 }
 
-export const UserProfileRow = memo(
+const UserProfileRow = memo(
   ({
     label,
     value: valueProp = '',
@@ -302,7 +302,7 @@ interface LockedRowProps {
   lockMessage?: string;
 }
 
-export const LockedRow = ({ label, value, lockMessage }: LockedRowProps) => {
+const LockedRow = ({ label, value, lockMessage }: LockedRowProps) => {
   const lockMessageClass = css({
     fontStyle: 'italic',
     marginRight: '0.6rem',

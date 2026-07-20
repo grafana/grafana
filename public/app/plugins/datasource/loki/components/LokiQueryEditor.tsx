@@ -1,7 +1,8 @@
 import { isEqual } from 'lodash';
-import { memo, SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
+import { memo, type SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
+import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
@@ -12,7 +13,7 @@ import {
   QueryHeaderSwitch,
   QueryEditorMode,
 } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
@@ -22,16 +23,16 @@ import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEdi
 import { QueryPatternsModal } from '../querybuilder/components/QueryPatternsModal';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
-import { LokiQuery, QueryStats } from '../types';
+import { type LokiQuery, type QueryStats } from '../types';
 
 import { shouldUpdateStats } from './stats';
-import { LokiQueryEditorProps } from './types';
+import { type LokiQueryEditorProps } from './types';
 
 export const testIds = {
   editor: 'loki-editor',
 };
 
-export const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
+const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
 
 export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   const id = useId();
@@ -52,6 +53,10 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
+  const showAssistant =
+    config.featureToggles.queryWithAssistant &&
+    (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
+
   const onExplainChange = (event: SyntheticEvent<HTMLInputElement>) => {
     window.localStorage.setItem(lokiQueryEditorExplainKey, event.currentTarget.checked ? 'true' : 'false');
     setExplain(event.currentTarget.checked);
@@ -59,13 +64,6 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
 
   const onEditorModeChange = useCallback(
     (newEditorMode: QueryEditorMode) => {
-      reportInteraction('grafana_loki_editor_mode_clicked', {
-        newEditor: newEditorMode,
-        previousEditor: query.editorMode ?? '',
-        newQuery: !query.expr,
-        app: app ?? '',
-      });
-
       if (newEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can lose some data.
@@ -76,7 +74,7 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
       }
       changeEditorMode(query, newEditorMode, onChange);
     },
-    [onChange, query, app]
+    [onChange, query]
   );
 
   useEffect(() => {
@@ -91,10 +89,6 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   };
 
   const onClickLabelBrowserButton = () => {
-    reportInteraction('grafana_loki_label_browser_opened', {
-      app: app,
-    });
-
     setLabelBrowserVisible((visible) => !visible);
   };
 
@@ -151,21 +145,21 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
       />
       <EditorHeader>
         <Stack gap={1}>
+          {showAssistant && (
+            <QueryWithAssistantButton
+              currentQuery={query}
+              queries={queries ?? [query]}
+              dataSourceInstanceSettings={datasource.instanceSettings}
+              datasourceApi={null}
+              app={app}
+            />
+          )}
           <Button
             data-testid={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"
             size="sm"
             onClick={() => {
               setQueryPatternsModalOpen((prevValue) => !prevValue);
-
-              const visualQuery = buildVisualQueryFromString(query.expr || '');
-              reportInteraction('grafana_loki_query_patterns_opened', {
-                version: 'v2',
-                app: app ?? '',
-                editorMode: query.editorMode,
-                preSelectedOperationsCount: visualQuery.query.operations.length,
-                preSelectedLabelsCount: visualQuery.query.labels.length,
-              });
             }}
           >
             Kick start your query

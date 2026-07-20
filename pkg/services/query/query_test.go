@@ -146,7 +146,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 			require.Equal(t, tc.signedInUser.Name, tc.pluginContext.req.PluginContext.User.Name)
 			require.Equal(t, tc.signedInUser.Email, tc.pluginContext.req.PluginContext.User.Email)
 			require.Equal(t, string(tc.signedInUser.OrgRole), tc.pluginContext.req.PluginContext.User.Role)
-			require.Equal(t, tc.signedInUser.OrgID, tc.pluginContext.req.PluginContext.OrgID)
+			require.Equal(t, tc.signedInUser.OrgID, tc.pluginContext.req.PluginContext.OrgID) // nolint:staticcheck
 		})
 	})
 
@@ -926,7 +926,7 @@ type fakeDataSourceRequestValidator struct {
 	err error
 }
 
-func (rv *fakeDataSourceRequestValidator) Validate(dsURL string, dsJsonData *simplejson.Json, req *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(dsURL string, dsJsonData map[string]any, req *http.Request) error {
 	return rv.err
 }
 

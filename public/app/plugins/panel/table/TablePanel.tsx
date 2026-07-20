@@ -2,28 +2,25 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
 import {
-  ActionModel,
   DashboardCursorSync,
-  DataFrame,
-  FieldMatcherID,
+  type DataFrame,
   getFrameDisplayName,
-  InterpolateFunction,
-  PanelProps,
-  SelectableValue,
-  Field,
+  type PanelProps,
+  type SelectableValue,
+  type Field,
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
-import { TableSortByFieldState } from '@grafana/ui/internal';
+import { useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { type TableOptions } from '@grafana/schema';
+import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
-import { getActions } from 'app/features/actions/utils';
+import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
-import { Options } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {
+interface Props extends PanelProps<TableOptions> {
   initialRowIndex?: number;
   sortByBehavior?: 'initial' | 'managed';
 }
@@ -47,6 +44,7 @@ export function TablePanel(props: Props) {
     cacheFieldDisplayNames(data.series);
   }, [data.series]);
 
+  const nestedRefactorEnabled = useFlagTableRefactorNested();
   const theme = useTheme2();
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
@@ -87,12 +85,15 @@ export function TablePanel(props: Props) {
       width={width}
       data={main}
       noHeader={!options.showHeader}
+      noValue={fieldConfig.defaults.noValue}
       showTypeIcons={options.showTypeIcons}
       resizable={true}
       sortByBehavior={sortByBehavior}
       sortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
+      onColumnResize={(displayName, resizedWidth, fieldScope) =>
+        onColumnResize(displayName, resizedWidth, fieldScope, props)
+      }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.enablePagination}
@@ -106,6 +107,7 @@ export function TablePanel(props: Props) {
       transparent={transparent}
       disableSanitizeHtml={disableSanitizeHtml}
       disableKeyboardEvents={options.disableKeyboardEvents}
+      nestedRefactorEnabled={nestedRefactorEnabled}
     />
   );
 
@@ -124,57 +126,10 @@ export function TablePanel(props: Props) {
     <div className={tableStyles.wrapper}>
       {tableElement}
       <div className={tableStyles.selectWrapper}>
-        <Select
-          tabIndex={options.disableKeyboardEvents ? -1 : 0}
-          options={names}
-          value={names[currentIndex]}
-          onChange={(val) => onChangeTableSelection(val, props)}
-        />
+        <Combobox options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
       </div>
     </div>
   );
-}
-
-function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
-  return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
-}
-
-function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
-  const { fieldConfig } = props;
-  const { overrides } = fieldConfig;
-
-  const matcherId = FieldMatcherID.byName;
-  const propId = 'custom.width';
-
-  // look for existing override
-  const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
-
-  if (override) {
-    // look for existing property
-    const property = override.properties.find((prop) => prop.id === propId);
-    if (property) {
-      property.value = width;
-    } else {
-      override.properties.push({ id: propId, value: width });
-    }
-  } else {
-    overrides.push({
-      matcher: { id: matcherId, options: fieldDisplayName },
-      properties: [{ id: propId, value: width }],
-    });
-  }
-
-  props.onFieldConfigChange({
-    ...fieldConfig,
-    overrides,
-  });
-}
-
-function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
-  props.onOptionsChange({
-    ...props.options,
-    sortBy,
-  });
 }
 
 function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
@@ -183,50 +138,6 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
     frameIndex: val.value || 0,
   });
 }
-
-// placeholder function; assuming the values are already interpolated
-const replaceVars: InterpolateFunction = (value: string) => value;
-
-const getCellActions = (
-  dataFrame: DataFrame,
-  field: Field,
-  rowIndex: number,
-  replaceVariables: InterpolateFunction | undefined
-): Array<ActionModel<Field>> => {
-  const numActions = field.config.actions?.length ?? 0;
-
-  if (numActions > 0) {
-    const actions = getActions(
-      dataFrame,
-      field,
-      field.state!.scopedVars!,
-      replaceVariables ?? replaceVars,
-      field.config.actions ?? [],
-      { valueRowIndex: rowIndex },
-      'table'
-    );
-
-    if (actions.length === 1) {
-      return actions;
-    } else {
-      const actionsOut: Array<ActionModel<Field>> = [];
-      const actionLookup = new Set<string>();
-
-      actions.forEach((action) => {
-        const key = action.title;
-
-        if (!actionLookup.has(key)) {
-          actionsOut.push(action);
-          actionLookup.add(key);
-        }
-      });
-
-      return actionsOut;
-    }
-  }
-
-  return [];
-};
 
 const tableStyles = {
   wrapper: css({

@@ -13,6 +13,10 @@ type TeamGroupsHandler interface {
 	rest.Connecter
 }
 
+// TeamGroupsHandlerProvider builds the handler once the Team rest.Getter
+// is ready (after dual-writer setup). OSS: noop; Enterprise overrides.
+type TeamGroupsHandlerProvider func(teamGetter rest.Getter) TeamGroupsHandler
+
 type SearchHandler interface {
 	GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes
 }

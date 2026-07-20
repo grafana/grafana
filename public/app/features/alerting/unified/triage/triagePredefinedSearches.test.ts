@@ -13,7 +13,7 @@ describe('triagePredefinedSearches', () => {
         expect(search.id).toMatch(new RegExp(`^${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}`));
         expect(typeof search.name).toBe('string');
         expect(search.name.length).toBeGreaterThan(0);
-        expect(search.isDefault).toBe(false);
+        expect(typeof search.isDefault).toBe('boolean');
         expect(typeof search.query).toBe('string');
         expect(search.query.length).toBeGreaterThan(0);
       }
@@ -30,36 +30,51 @@ describe('triagePredefinedSearches', () => {
     it('first search has filter firing and groupBy folder', () => {
       const first = getTriagePredefinedSearches()[0];
       const params = new URLSearchParams(first.query);
-      expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
+      // groupBy is encoded in var-filters as grafana_folder|groupBy
+      expect(params.getAll('var-filters')).toContain('grafana_folder|groupBy');
+      expect(params.has('var-groupBy')).toBe(false);
       const filters = extractFilterObjects(first.query);
-      expect(filters).toHaveLength(1);
-      expect(filters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
+      const regularFilters = filters.filter((f) => f.operator !== 'groupBy');
+      expect(regularFilters).toHaveLength(1);
+      expect(regularFilters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
     });
 
     it('second search has filter firing only (no groupBy)', () => {
       const second = getTriagePredefinedSearches()[1];
       const params = new URLSearchParams(second.query);
-      expect(params.getAll('var-groupBy')).toEqual([]);
+      expect(params.has('var-groupBy')).toBe(false);
       const filters = extractFilterObjects(second.query);
-      expect(filters).toHaveLength(1);
-      expect(filters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
+      const groupByFilters = filters.filter((f) => f.operator === 'groupBy');
+      const regularFilters = filters.filter((f) => f.operator !== 'groupBy');
+      expect(groupByFilters).toHaveLength(0);
+      expect(regularFilters).toHaveLength(1);
+      expect(regularFilters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
     });
 
-    it('third search has groupBy folder only', () => {
+    it('third search has groupBy folder only (no regular filters)', () => {
       const third = getTriagePredefinedSearches()[2];
       const params = new URLSearchParams(third.query);
-      expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
-      expect(params.has('var-filters')).toBe(false);
+      // groupBy is now in var-filters as grafana_folder|groupBy
+      expect(params.getAll('var-filters')).toContain('grafana_folder|groupBy');
+      expect(params.has('var-groupBy')).toBe(false);
+      const filters = extractFilterObjects(third.query);
+      const regularFilters = filters.filter((f) => f.operator !== 'groupBy');
+      expect(regularFilters).toHaveLength(0);
     });
 
-    it('default predefined search is folder-only (grouped by folder)', () => {
-      expect(TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID).toBe('triage-predefined-folder-only');
+    it('default predefined search is folder-firing (firing, grouped by folder)', () => {
+      expect(TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID).toBe('triage-predefined-folder-firing');
       const searches = getTriagePredefinedSearches();
       const defaultSearch = searches.find((s) => s.id === TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID);
       expect(defaultSearch).toBeDefined();
+      expect(defaultSearch!.isDefault).toBe(true);
       const params = new URLSearchParams(defaultSearch!.query);
-      expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
-      expect(params.has('var-filters')).toBe(false);
+      expect(params.getAll('var-filters')).toContain('grafana_folder|groupBy');
+      expect(params.has('var-groupBy')).toBe(false);
+      const filters = extractFilterObjects(defaultSearch!.query);
+      const regularFilters = filters.filter((f) => f.operator !== 'groupBy');
+      expect(regularFilters).toHaveLength(1);
+      expect(regularFilters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
     });
   });
 

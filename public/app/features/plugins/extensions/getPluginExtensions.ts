@@ -1,15 +1,11 @@
-import { combineLatest, from, map, Observable, switchMap } from 'rxjs';
+import { combineLatest, from, map, type Observable, switchMap } from 'rxjs';
 
 import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
 import { log } from './logs/log';
-import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
-import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { RegistryType } from './registry/Registry';
 import { getPluginExtensionRegistries } from './registry/setup';
-import type { PluginExtensionRegistries } from './registry/types';
-import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
+import { type GetExtensions, type GetExtensionsOptions } from './types';
 import {
   addedLinkToExtensionLink,
   getReadOnlyProxy,
@@ -65,23 +61,6 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
     map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component))
   );
 };
-
-export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
-  let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
-  let addedLinksRegistry: RegistryType<Array<AddedLinkRegistryItem<object>>>;
-
-  // Create registry subscriptions to keep an copy of the registry state for use in the non-async
-  // plugin extensions getter.
-  registries.addedComponentsRegistry.asObservable().subscribe((componentsRegistry) => {
-    addedComponentsRegistry = componentsRegistry;
-  });
-
-  registries.addedLinksRegistry.asObservable().subscribe((linksRegistry) => {
-    addedLinksRegistry = linksRegistry;
-  });
-
-  return (options) => getPluginExtensions({ ...options, addedComponentsRegistry, addedLinksRegistry });
-}
 
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({

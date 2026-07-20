@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -78,7 +77,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 	}
 
 	if ar.UpdatedBy != nil {
-		result.UpdatedBy = util.Pointer(models.UserUID(*ar.UpdatedBy))
+		result.UpdatedBy = new(models.UserUID(*ar.UpdatedBy))
 	}
 
 	var err error
@@ -130,7 +129,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 			return models.AlertRule{}, fmt.Errorf("failed to parse notification settings: %w", err)
 		}
 		if ns != nil {
-			result.NotificationSettings = util.Pointer(models.NotificationSettingsFromContact(*ns))
+			result.NotificationSettings = new(models.NotificationSettingsFromContact(*ns))
 		}
 	}
 
@@ -195,7 +194,7 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 	}
 
 	if ar.UpdatedBy != nil {
-		result.UpdatedBy = util.Pointer(string(*ar.UpdatedBy))
+		result.UpdatedBy = new(string(*ar.UpdatedBy))
 	}
 
 	// Serialize complex types to JSON strings

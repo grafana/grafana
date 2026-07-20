@@ -1,8 +1,8 @@
 {
-  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
   "items": [
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "LINE",
@@ -75,7 +75,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "dingding",
@@ -175,7 +175,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "discord",
@@ -264,6 +264,22 @@
                 "label": "Use Discord's Webhook Username",
                 "placeholder": "",
                 "propertyName": "use_discord_username",
+                "required": false,
+                "secure": false,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
+                "description": "Show the message inside the embed instead of above it. Note: mentions (@ or \u003c@ID\u003e) in the message will not trigger Discord notifications when this is enabled, as Discord only pings for mentions in the main message content.",
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Show Message in Embed",
+                "placeholder": "",
+                "propertyName": "use_embed_description",
                 "required": false,
                 "secure": false,
                 "showWhen": {
@@ -889,7 +905,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "email",
@@ -1256,7 +1272,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "googlechat",
@@ -1360,7 +1376,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "jira",
@@ -2394,7 +2410,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "kafka",
@@ -2558,7 +2574,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "mqtt",
@@ -2838,7 +2854,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "oncall",
@@ -3018,7 +3034,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "opsgenie",
@@ -4090,7 +4106,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "pagerduty",
@@ -5160,7 +5176,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "prometheus-alertmanager",
@@ -5232,7 +5248,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "pushover",
@@ -6489,7 +6505,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "sensugo",
@@ -6625,7 +6641,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "slack",
@@ -8003,7 +8019,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "sns",
@@ -9008,7 +9024,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "teams",
@@ -10334,7 +10350,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "telegram",
@@ -11187,7 +11203,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "threema",
@@ -11291,7 +11307,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "victorops",
@@ -12081,7 +12097,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "webex",
@@ -12780,7 +12796,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "webhook",
@@ -14066,7 +14082,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "wechat",
@@ -14801,7 +14817,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "wecom",

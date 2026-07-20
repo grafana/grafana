@@ -7,16 +7,19 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	types "k8s.io/apimachinery/pkg/types"
 
 	claims "github.com/grafana/authlib/types"
-
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -24,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/scimutil"
@@ -31,17 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-func ptrString(s string) *string {
-	return &s
-}
-
-func ptrBool(b bool) *bool {
-	return &b
-}
 
 var (
 	provider            = oftesting.NewTestProvider()
@@ -51,7 +45,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	if err := openfeature.SetProvider(provider); err != nil {
+	if err := openfeature.SetProviderAndWait(provider); err != nil {
 		panic(err)
 	}
 
@@ -247,7 +241,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -260,7 +254,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email: "test",
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -281,7 +275,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -296,11 +290,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -322,7 +316,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: ptrString("test"),
+							Login: new("test"),
 						},
 					},
 				},
@@ -336,11 +330,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: ptrString("test"),
+						Login: new("test"),
 					},
 					SyncUser: true,
 				},
@@ -380,7 +374,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           "test",
 				Name:            "test",
 				Email:           "test",
-				IsGrafanaAdmin:  ptrBool(false),
+				IsGrafanaAdmin:  new(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
@@ -426,7 +420,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				id: &authn.Identity{
 					Login:           "test_create",
 					Name:            "test_create",
-					IsGrafanaAdmin:  ptrBool(true),
+					IsGrafanaAdmin:  new(true),
 					Email:           "test_create",
 					AuthenticatedBy: "oauth",
 					AuthID:          "2032",
@@ -435,7 +429,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						AllowSignUp: true,
 						EnableUser:  true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test_create"),
+							Email: new("test_create"),
 							Login: nil,
 						},
 					},
@@ -451,13 +445,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email:           "test_create",
 				AuthenticatedBy: "oauth",
 				AuthID:          "2032",
-				IsGrafanaAdmin:  ptrBool(true),
+				IsGrafanaAdmin:  new(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:    true,
 					AllowSignUp: true,
 					EnableUser:  true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test_create"),
+						Email: new("test_create"),
 						Login: nil,
 					},
 				},
@@ -476,13 +470,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Name:           "test_mod",
 					Email:          "test_mod",
 					IsDisabled:     false,
-					IsGrafanaAdmin: ptrBool(true),
+					IsGrafanaAdmin: new(true),
 					ClientParams: authn.ClientParams{
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: ptrString("test"),
+							Login: new("test"),
 						},
 					},
 				},
@@ -496,13 +490,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Name:           "test_mod",
 				Email:          "test_mod",
 				IsDisabled:     false,
-				IsGrafanaAdmin: ptrBool(true),
+				IsGrafanaAdmin: new(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: ptrString("test"),
+						Login: new("test"),
 					},
 				},
 			},
@@ -521,13 +515,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Email:          "test_mod@test.com",
 					EmailVerified:  true,
 					IsDisabled:     false,
-					IsGrafanaAdmin: ptrBool(true),
+					IsGrafanaAdmin: new(true),
 					ClientParams: authn.ClientParams{
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: ptrString("test"),
+							Login: new("test"),
 						},
 					},
 				},
@@ -542,13 +536,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email:          "test_mod@test.com",
 				IsDisabled:     false,
 				EmailVerified:  false,
-				IsGrafanaAdmin: ptrBool(true),
+				IsGrafanaAdmin: new(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: ptrString("test"),
+						Login: new("test"),
 					},
 				},
 			},
@@ -633,7 +627,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email:           "user1@test.com",
 				Name:            "User One",
 				ExternalUID:     "matching-uid",
-				IsGrafanaAdmin:  ptrBool(false),
+				IsGrafanaAdmin:  new(false),
 				ClientParams:    authn.ClientParams{SyncUser: true},
 			},
 		},
@@ -647,7 +641,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						// Call the original mockUpdateFn for assertions
 						err := mockUpdateFn(t, &user.UpdateUserCommand{
 							UserID:         scimUserNotAdminInitial.ID,
-							IsGrafanaAdmin: ptrBool(true),
+							IsGrafanaAdmin: new(true),
 						}, true, scimUserNotAdminInitial.Email)(ctx, cmd)
 						if err != nil {
 							return err
@@ -673,7 +667,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Login:           "saml.login. متفاوت",             // SAML sends different login
 					Email:           "saml.email. متفاوت@example.com", // SAML sends different email
 					Name:            "SAML Name متفاوت",               // SAML sends different name
-					IsGrafanaAdmin:  ptrBool(true),                    // Key change: SAML says user IS admin
+					IsGrafanaAdmin:  new(true),                        // Key change: SAML says user IS admin
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						// LookUpParams not strictly needed if AuthID + AuthenticatedBy + ExternalUID is enough
@@ -688,7 +682,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           "saml.login. متفاوت",             // Reflects actual behavior: SAML input value persists
 				Email:           "saml.email. متفاوت@example.com", // Reflects actual behavior: SAML input value persists
 				Name:            "SAML Name متفاوت",               // Reflects actual behavior: SAML input value persists
-				IsGrafanaAdmin:  ptrBool(true),                    // This SHOULD be updated
+				IsGrafanaAdmin:  new(true),                        // This SHOULD be updated
 				EmailVerified:   false,                            // Reflects actual behavior: becomes false
 				AuthID:          "id_from_saml_assertion",
 				AuthenticatedBy: "saml",
@@ -708,7 +702,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						// Call the original mockUpdateFn for assertions
 						err := mockUpdateFn(t, &user.UpdateUserCommand{
 							UserID:         scimUserIsAdminInitial.ID,
-							IsGrafanaAdmin: ptrBool(false),
+							IsGrafanaAdmin: new(false),
 						}, true, scimUserIsAdminInitial.Email)(ctx, cmd)
 						if err != nil {
 							return err
@@ -731,7 +725,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					AuthID:          "id_from_saml_assertion",
 					AuthenticatedBy: "saml",
 					ExternalUID:     "external_id_demote",
-					IsGrafanaAdmin:  ptrBool(false), // Key change: SAML says user is NOT admin
+					IsGrafanaAdmin:  new(false), // Key change: SAML says user is NOT admin
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 					},
@@ -745,7 +739,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           scimUserIsAdminInitial.Login,
 				Email:           scimUserIsAdminInitial.Email,
 				Name:            scimUserIsAdminInitial.Name,
-				IsGrafanaAdmin:  ptrBool(false), // Updated
+				IsGrafanaAdmin:  new(false), // Updated
 				EmailVerified:   scimUserIsAdminInitial.EmailVerified,
 				AuthID:          "id_from_saml_assertion",
 				AuthenticatedBy: "saml",
@@ -766,7 +760,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						// In this case, IsGrafanaAdmin from SAML (false) matches DB (false), so it *will* be in the command.
 						err := mockUpdateFn(t, &user.UpdateUserCommand{
 							UserID:         scimUserNotAdminInitial.ID,
-							IsGrafanaAdmin: ptrBool(false), // SAML says false, DB is false
+							IsGrafanaAdmin: new(false), // SAML says false, DB is false
 						}, true, scimUserNotAdminInitial.Email)(ctx, cmd)
 						if err != nil {
 							return err
@@ -792,7 +786,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Login:           "saml.login.new",             // SAML sends different login
 					Email:           "saml.email.new@example.com", // SAML sends different email
 					Name:            "SAML Name New",              // SAML sends different name
-					IsGrafanaAdmin:  ptrBool(false),               // SAML says not admin (same as DB)
+					IsGrafanaAdmin:  new(false),                   // SAML says not admin (same as DB)
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 					},
@@ -806,7 +800,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           "saml.login.new",             // Reflects actual behavior: SAML input value persists
 				Email:           "saml.email.new@example.com", // Reflects actual behavior: SAML input value persists
 				Name:            "SAML Name New",              // Reflects actual behavior: SAML input value persists
-				IsGrafanaAdmin:  ptrBool(false),               // Unchanged, matches DB
+				IsGrafanaAdmin:  new(false),                   // Unchanged, matches DB
 				EmailVerified:   false,                        // Reflects actual behavior: becomes false
 				AuthID:          "id_from_saml_assertion",
 				AuthenticatedBy: "saml",
@@ -827,7 +821,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						// Email changes, IsGrafanaAdmin changes.
 						expectedCmd := &user.UpdateUserCommand{
 							UserID:         nonScimUserInitial.ID,
-							IsGrafanaAdmin: ptrBool(true),
+							IsGrafanaAdmin: new(true),
 							Email:          "nonscim.new.email@example.com",
 							Login:          "", // Login not changing, so should be empty in cmd
 							Name:           "", // Name not changing, so should be empty in cmd
@@ -876,11 +870,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Login:          nonScimUserInitial.Login,        // Use initial login for lookup
 					Email:          "nonscim.new.email@example.com", // SAML sends new email
 					Name:           nonScimUserInitial.Name,         // Name is same
-					IsGrafanaAdmin: ptrBool(true),                   // SAML promotes to admin
+					IsGrafanaAdmin: new(true),                       // SAML promotes to admin
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Login: ptrString(nonScimUserInitial.Login), // Lookup by existing login
+							Login: new(nonScimUserInitial.Login), // Lookup by existing login
 						},
 					},
 				},
@@ -893,13 +887,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           nonScimUserInitial.Login,        // Login updated if it was in UpdateUserCommand
 				Email:           "nonscim.new.email@example.com", // Email updated
 				Name:            nonScimUserInitial.Name,         // Name updated if it was in UpdateUserCommand
-				IsGrafanaAdmin:  ptrBool(true),                   // IsAdmin updated
+				IsGrafanaAdmin:  new(true),                       // IsAdmin updated
 				EmailVerified:   false,                           // Email changed, so should be unverified
 				AuthenticatedBy: "saml",
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Login: ptrString(nonScimUserInitial.Login),
+						Login: new(nonScimUserInitial.Login),
 					},
 				},
 			},
@@ -920,7 +914,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -935,11 +929,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -960,7 +954,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -974,11 +968,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -1231,11 +1225,12 @@ func initUserSyncService() *UserSync {
 	}
 	quotaSvc := &quotatest.FakeQuotaService{}
 	return &UserSync{
-		userService:     userSvc,
-		authInfoService: authInfoSvc,
-		quotaService:    quotaSvc,
-		tracer:          tracing.InitializeTracerForTest(),
-		log:             log,
+		userService:       userSvc,
+		authInfoService:   authInfoSvc,
+		quotaService:      quotaSvc,
+		tracer:            tracing.InitializeTracerForTest(),
+		log:               log,
+		openFeatureClient: openfeature.NewDefaultClient(),
 	}
 }
 
@@ -1647,6 +1642,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			provider.UsingFlags(t, defaultFeatureFlags)
 			userSyncService := tt.userSyncServiceSetup()
 			err := userSyncService.ValidateUserProvisioningHook(context.Background(), tt.identity, nil)
 			require.ErrorIs(t, err, tt.expectedErr)
@@ -1841,13 +1837,21 @@ func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructu
 	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
 }
 
+func (m *MockK8sHandler) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, orgID int64, opts metav1.PatchOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, pt, data, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
 func (m *MockK8sHandler) Delete(ctx context.Context, name string, orgID int64, options metav1.DeleteOptions) error {
 	args := m.Called(ctx, name, orgID, options)
 	return args.Error(0)
 }
 
-func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
-	args := m.Called(ctx, orgID)
+func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64, listOptions metav1.ListOptions) error {
+	args := m.Called(ctx, orgID, listOptions)
 	return args.Error(0)
 }
 
@@ -1999,6 +2003,7 @@ func TestUserSync_GetUsageStats(t *testing.T) {
 }
 
 func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
+	provider.UsingFlags(t, defaultFeatureFlags)
 	userSync := initUserSyncService()
 	userSync.rejectNonProvisionedUsers = true
 	userSync.isUserProvisioningEnabled = true
@@ -2259,4 +2264,558 @@ func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
 	}, nil)
 
 	require.NoError(t, err)
+}
+
+func TestUserSync_createUser_PassesOrgRoleAsDefaultOrgRole(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             *authn.Identity
+		wantOrgRole    string
+		wantSkipOrgSet bool
+	}{
+		{
+			name: "identity role for active org propagates to DefaultOrgRole",
+			id: &authn.Identity{
+				Login:    "identityeditor",
+				Email:    "identityeditor@example.com",
+				Name:     "Identity Editor",
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+			},
+			wantOrgRole:    "Editor",
+			wantSkipOrgSet: true,
+		},
+		{
+			name: "no OrgRoles leaves DefaultOrgRole empty so k8s falls back to AutoAssignOrgRole",
+			id: &authn.Identity{
+				Login: "newbie",
+				Email: "newbie@example.com",
+				Name:  "Newbie",
+				OrgID: 1,
+			},
+			wantOrgRole:    "",
+			wantSkipOrgSet: false,
+		},
+		{
+			name: "OrgRoles present but no match for active org propagates RoleNone",
+			id: &authn.Identity{
+				Login:    "mismatched",
+				Email:    "mismatched@example.com",
+				Name:     "Mismatched",
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{2: org.RoleEditor},
+			},
+			wantOrgRole:    "None",
+			wantSkipOrgSet: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, defaultFeatureFlags)
+
+			var captured *user.CreateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					captured = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name}, nil
+				},
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				setting.NewCfg(),
+				nil,
+			)
+
+			_, err := s.createUser(context.Background(), tt.id)
+			require.NoError(t, err)
+			require.NotNil(t, captured)
+			assert.Equal(t, tt.wantOrgRole, captured.DefaultOrgRole, "DefaultOrgRole should match identity role mapping for the active org")
+			assert.Equal(t, tt.wantSkipOrgSet, captured.SkipOrgSetup, "SkipOrgSetup should still reflect whether OrgRoles are present")
+		})
+	}
+}
+
+func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
+	tests := []struct {
+		name                    string
+		authenticatedBy         string
+		kubernetesUsersRedirect bool
+		wantDefaultOrgRole      string
+	}{
+		{
+			name:                    "auth proxy with flag enabled aligns OrgID so the asserted role is written",
+			authenticatedBy:         login.AuthProxyAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "Editor",
+		},
+		{
+			name:                    "ldap with flag enabled aligns OrgID so the asserted role is written",
+			authenticatedBy:         login.LDAPAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "Editor",
+		},
+		{
+			name:                    "ldap with flag disabled leaves OrgID unaligned so the role resolves to None",
+			authenticatedBy:         login.LDAPAuthModule,
+			kubernetesUsersRedirect: false,
+			wantDefaultOrgRole:      "None",
+		},
+		{
+			name:                    "auth proxy with flag disabled leaves OrgID unaligned so the role resolves to None",
+			authenticatedBy:         login.AuthProxyAuthModule,
+			kubernetesUsersRedirect: false,
+			wantDefaultOrgRole:      "None",
+		},
+		{
+			name:                    "non auth-proxy module is not aligned even with flag enabled",
+			authenticatedBy:         login.SAMLAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "None",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			var captured *user.CreateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				ExpectedError: user.ErrUserNotFound,
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					captured = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name, OrgID: 1}, nil
+				},
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					ExpectedError:    user.ErrUserNotFound,
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				setting.NewCfg(),
+				nil,
+			)
+
+			// Mirrors the auth proxy identity: the asserted role is keyed by DefaultOrgID but OrgID is unset.
+			email := "proxyuser@example.com"
+			loginName := "proxyuser"
+			id := &authn.Identity{
+				Login:           loginName,
+				Email:           email,
+				Name:            "Proxy User",
+				AuthID:          "proxyuser",
+				AuthenticatedBy: tt.authenticatedBy,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
+				ClientParams: authn.ClientParams{
+					SyncUser:    true,
+					AllowSignUp: true,
+					LookUpParams: login.UserLookupParams{
+						Email: &email,
+						Login: &loginName,
+					},
+				},
+			}
+
+			err := s.SyncUserHook(context.Background(), id, nil)
+			require.NoError(t, err)
+			require.NotNil(t, captured)
+			assert.Equal(t, tt.wantDefaultOrgRole, captured.DefaultOrgRole,
+				"DefaultOrgRole written to the k8s user must reflect whether OrgID was aligned")
+		})
+	}
+}
+
+func strPtr(s string) *string { return &s }
+
+func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
+	tests := []struct {
+		name                    string
+		singleOrganization      bool
+		kubernetesUsersRedirect bool
+		syncOrgRoles            bool
+		currentRole             string
+		assertedRole            org.RoleType
+		wantUpdateRole          *string
+	}{
+		{
+			name:                    "role change is synced in single-org k8s mode",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          strPtr("Editor"),
+		},
+		{
+			name:                    "explicit None role is synced (demotion)",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Editor",
+			assertedRole:            org.RoleNone,
+			wantUpdateRole:          strPtr("None"),
+		},
+		{
+			name:                    "unchanged role is not synced",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Editor",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when SyncOrgRoles is disabled",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            false,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when not in single-org mode",
+			singleOrganization:      false,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when k8s users redirect is disabled",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: false,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			var captured *user.UpdateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
+					captured = cmd
+					return nil
+				},
+			}
+
+			cfg := setting.NewCfg()
+			cfg.RBAC.SingleOrganization = tt.singleOrganization
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				cfg,
+				nil,
+			)
+
+			usr := &user.User{ID: 1, Login: "proxyuser", OrgID: 1, OrgRole: tt.currentRole}
+			id := &authn.Identity{
+				ID:              "1",
+				Login:           "proxyuser",
+				AuthenticatedBy: login.AuthProxyAuthModule,
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: tt.assertedRole},
+				ClientParams:    authn.ClientParams{SyncUser: true, SyncOrgRoles: tt.syncOrgRoles},
+			}
+
+			// userAuth is non-nil so no auth-connection creation is attempted.
+			err := s.updateUserAttributes(context.Background(), usr, id, &login.UserAuth{})
+			require.NoError(t, err)
+
+			if tt.wantUpdateRole == nil {
+				if captured != nil {
+					assert.Nil(t, captured.OrgRole, "OrgRole must not be set on the update command")
+				}
+				return
+			}
+
+			require.NotNil(t, captured, "an update should have been issued")
+			require.NotNil(t, captured.OrgRole)
+			assert.Equal(t, *tt.wantUpdateRole, *captured.OrgRole)
+		})
+	}
+}
+
+// Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
+func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
+	usr := &user.SignedInUser{
+		UserID:   42,
+		UserUID:  "uid-42",
+		Login:    "alice",
+		TeamUIDs: []string{"team-uid-1", "team-uid-2"},
+	}
+
+	id := &authn.Identity{
+		ExternalGroups: []string{"ldap-admins", "ldap-devs"},
+	}
+
+	syncSignedInUserToIdentity(usr, id)
+
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, id.Groups,
+		"Groups must be populated from usr.TeamUIDs")
+	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, id.ExternalGroups,
+		"ExternalGroups (set by the auth client) must not be clobbered by the user-sync hook")
+}
+
+func TestMergeExternalAuthInfo(t *testing.T) {
+	authProxy := &authn.Identity{AuthenticatedBy: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}
+
+	t.Run("returns no change when identity has no auth module", func(t *testing.T) {
+		existing := []user.ExternalAuthInfo{{Module: login.LDAPAuthModule, AuthID: "x"}}
+		got, changed := mergeExternalAuthInfo(existing, &authn.Identity{})
+		assert.False(t, changed)
+		assert.Equal(t, existing, got)
+	})
+
+	t.Run("does not record internal auth modules", func(t *testing.T) {
+		for _, module := range []string{
+			login.PasswordAuthModule,
+			login.APIKeyAuthModule,
+			login.ExtendedJWTModule,
+			login.RenderModule,
+		} {
+			got, changed := mergeExternalAuthInfo(nil, &authn.Identity{AuthenticatedBy: module, AuthID: "1"})
+			assert.False(t, changed, "module %q must not be recorded", module)
+			assert.Nil(t, got, "module %q must not be recorded", module)
+		}
+	})
+
+	t.Run("appends a new connection", func(t *testing.T) {
+		got, changed := mergeExternalAuthInfo(nil, authProxy)
+		assert.True(t, changed)
+		assert.Equal(t, []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}, got)
+	})
+
+	t.Run("preserves connections from other modules", func(t *testing.T) {
+		existing := []user.ExternalAuthInfo{{Module: login.LDAPAuthModule, AuthID: "ldap-id"}}
+		got, changed := mergeExternalAuthInfo(existing, authProxy)
+		assert.True(t, changed)
+		assert.Equal(t, []user.ExternalAuthInfo{
+			{Module: login.LDAPAuthModule, AuthID: "ldap-id"},
+			{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"},
+		}, got)
+		assert.Len(t, existing, 1, "input slice must not be mutated")
+	})
+
+	t.Run("updates an existing connection for the same module", func(t *testing.T) {
+		existing := []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "old", ExternalUID: "old-uid"}}
+		got, changed := mergeExternalAuthInfo(existing, authProxy)
+		assert.True(t, changed)
+		assert.Equal(t, []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}, got)
+	})
+
+	t.Run("returns no change when the connection already matches", func(t *testing.T) {
+		existing := []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}
+		got, changed := mergeExternalAuthInfo(existing, authProxy)
+		assert.False(t, changed)
+		assert.Equal(t, existing, got)
+	})
+}
+
+func TestUserSync_SyncUserHook_PopulatesExternalAuthInfo(t *testing.T) {
+	email := "proxyuser@example.com"
+	loginName := "proxyuser"
+	wantEntry := user.ExternalAuthInfo{Module: login.AuthProxyAuthModule, AuthID: "proxyuser", ExternalUID: "ext-1"}
+
+	newIdentity := func() *authn.Identity {
+		return &authn.Identity{
+			Login:           loginName,
+			Email:           email,
+			Name:            "Proxy User",
+			AuthID:          "proxyuser",
+			ExternalUID:     "ext-1",
+			AuthenticatedBy: login.AuthProxyAuthModule,
+			ClientParams: authn.ClientParams{
+				SyncUser:     true,
+				AllowSignUp:  true,
+				LookUpParams: login.UserLookupParams{Email: &email, Login: &loginName},
+			},
+		}
+	}
+
+	tests := []struct {
+		name                    string
+		kubernetesUsersRedirect bool
+		dualWriterMode          grafanarest.DualWriterMode
+		existing                *user.User
+		wantCreateInfo          []user.ExternalAuthInfo
+		wantUpdateInfo          []user.ExternalAuthInfo
+		wantUpdateCalled        bool
+	}{
+		{
+			name:                    "create seeds ExternalAuthInfo when flag enabled and unified storage",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode5,
+			wantCreateInfo:          []user.ExternalAuthInfo{wantEntry},
+		},
+		{
+			name:                    "create omits ExternalAuthInfo when flag disabled",
+			kubernetesUsersRedirect: false,
+			dualWriterMode:          grafanarest.Mode5,
+			wantCreateInfo:          nil,
+		},
+		{
+			name:                    "create omits ExternalAuthInfo in legacy-read storage mode",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode1,
+			wantCreateInfo:          nil,
+		},
+		{
+			name:                    "update adds ExternalAuthInfo when flag enabled and unified storage",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode5,
+			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User"},
+			wantUpdateInfo:          []user.ExternalAuthInfo{wantEntry},
+			wantUpdateCalled:        true,
+		},
+		{
+			name:                    "update is skipped in legacy-read storage mode",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode1,
+			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User"},
+			wantUpdateCalled:        false,
+		},
+		{
+			name:                    "update is skipped when the connection is already present",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode5,
+			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User", ExternalAuthInfo: []user.ExternalAuthInfo{wantEntry}},
+			wantUpdateCalled:        false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			cfg := setting.NewCfg()
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0alpha1.UserResourceInfo.GroupResource().String(): {DualWriterMode: tt.dualWriterMode},
+			}
+
+			var createCmd *user.CreateUserCommand
+			var updateCmd *user.UpdateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				ExpectedUser: tt.existing,
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					createCmd = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name, OrgID: 1}, nil
+				},
+				UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
+					updateCmd = cmd
+					return nil
+				},
+			}
+			if tt.existing == nil {
+				fakeUserSvc.ExpectedError = user.ErrUserNotFound
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					ExpectedError:    user.ErrUserNotFound,
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				cfg,
+				nil,
+			)
+
+			err := s.SyncUserHook(context.Background(), newIdentity(), nil)
+			require.NoError(t, err)
+
+			if tt.existing == nil {
+				require.NotNil(t, createCmd)
+				assert.Equal(t, tt.wantCreateInfo, createCmd.ExternalAuthInfo)
+				assert.Nil(t, updateCmd)
+				return
+			}
+
+			if tt.wantUpdateCalled {
+				require.NotNil(t, updateCmd)
+				assert.Equal(t, tt.wantUpdateInfo, updateCmd.ExternalAuthInfo)
+			} else {
+				assert.Nil(t, updateCmd, "update should not be called when nothing changed")
+			}
+		})
+	}
+}
+
+func TestUserSync_SyncUserHook_SkipsAnonymousIdentity(t *testing.T) {
+	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, true),
+	})
+
+	createCalled, updateCalled := false, false
+	fakeUserSvc := &usertest.FakeUserService{
+		CreateFn: func(_ context.Context, _ *user.CreateUserCommand) (*user.User, error) {
+			createCalled = true
+			return &user.User{}, nil
+		},
+		UpdateFn: func(_ context.Context, _ *user.UpdateUserCommand) error {
+			updateCalled = true
+			return nil
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		iamv0alpha1.UserResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
+	}
+
+	s := ProvideUserSync(
+		fakeUserSvc,
+		&authinfoimpl.OSSUserProtectionImpl{},
+		&authinfotest.FakeService{},
+		&quotatest.FakeQuotaService{},
+		tracing.InitializeTracerForTest(),
+		featuremgmt.WithFeatures(),
+		cfg,
+		nil,
+	)
+
+	// Mirrors the anonymous client identity: SyncUser is not set.
+	anon := &authn.Identity{Type: claims.TypeAnonymous, ClientParams: authn.ClientParams{SyncPermissions: true}}
+	err := s.SyncUserHook(context.Background(), anon, nil)
+
+	require.NoError(t, err)
+	assert.False(t, createCalled, "anonymous identity must not create a user")
+	assert.False(t, updateCalled, "anonymous identity must not update a user")
 }

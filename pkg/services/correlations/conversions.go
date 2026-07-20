@@ -2,16 +2,21 @@ package correlations
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
+	correlationsApp "github.com/grafana/grafana/apps/correlations/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*correlationsV0.Correlation, error) {
+func ToResource(orig Correlation) (*correlationsV0.Correlation, error) {
 	cfg, err := ToSpecConfig(orig.Config)
 	if err != nil {
 		return nil, err
@@ -19,7 +24,7 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*corre
 	obj := &correlationsV0.Correlation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      orig.UID,
-			Namespace: namespacer(orig.OrgID),
+			Namespace: authlib.OrgNamespaceFormatter(orig.OrgID),
 		},
 		Spec: correlationsV0.CorrelationSpec{
 			Label: orig.Label,
@@ -46,6 +51,19 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*corre
 			Kind: utils.ManagerKindClassicFP, // nolint:staticcheck
 		})
 	}
+
+	// we use labels for filtering, but if this function is used to create a correlation, those labels will be lost, so this rebuilds them
+	// this mirrors the mutator logic in apps/correlations/pkg/app/app.go
+	obj.Labels = map[string]string{
+		correlationsApp.SourceRefLabelKey: fmt.Sprintf("%s.%s",
+			obj.Spec.Source.Group,
+			obj.Spec.Source.Name),
+		correlationsApp.SourceRefProvLabelKey: fmt.Sprintf("%s.%s.%s",
+			obj.Spec.Source.Group,
+			obj.Spec.Source.Name,
+			strconv.FormatBool(orig.Provisioned)),
+	}
+
 	return obj, nil
 }
 
@@ -64,7 +82,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 		Label:       obj.Spec.Label,
 		Description: ptr.Deref(obj.Spec.Description, ""),
 		SourceUID:   obj.Spec.Source.Name,
-		SourceType:  ptr.To(obj.Spec.Source.Group),
+		SourceType:  new(obj.Spec.Source.Group),
 		Type:        CorrelationType(obj.Spec.Type),
 		Config:      *cfg,
 	}
@@ -73,7 +91,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 	}
 	if obj.Spec.Target != nil {
 		result.TargetUID = &obj.Spec.Target.Name
-		result.TargetType = ptr.To(obj.Spec.Target.Group)
+		result.TargetType = new(obj.Spec.Target.Group)
 	}
 	return result, nil
 }
@@ -148,4 +166,29 @@ func ToCreateCorrelationCommand(obj *correlationsV0.Correlation) (*CreateCorrela
 		Type:        tmp.Type,
 		Provisioned: tmp.Provisioned,
 	}, nil
+}
+
+func convertUnstructuredToCorrelation(item unstructured.Unstructured) (*Correlation, error) {
+	obj := &correlationsV0.Correlation{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, obj)
+	if err != nil {
+		return nil, err
+	}
+	correlation, err := ToCorrelation(obj)
+	if err != nil {
+		return nil, err
+	}
+	return correlation, nil
+}
+
+func convertCorrelationToUnstructured(item Correlation) (*unstructured.Unstructured, error) {
+	corrK8s, err := ToResource(item)
+	if err != nil {
+		return &unstructured.Unstructured{}, err
+	}
+	unstructCorr, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&corrK8s)
+	if err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{Object: unstructCorr}, nil
 }

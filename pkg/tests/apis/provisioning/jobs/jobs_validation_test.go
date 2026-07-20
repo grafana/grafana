@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -10,25 +9,22 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
+	helper := sharedHelper(t)
 
 	const repoReadOnly = "job-validation-readonly"
 	testRepo := common.TestRepo{
-		Name:               repoReadOnly,
-		Template:           "../testdata/local-readonly.json.tmpl",
-		Target:             "folder",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1,
+		Name:       repoReadOnly,
+		SyncTarget: "folder",
+		Workflows:  []string{},
+		Copies:     map[string]string{},
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repoReadOnly, 0)
+	helper.RequireRepoFolderCount(t, repoReadOnly, 1)
 
 	t.Run("write jobs should be rejected for read-only repositories", func(t *testing.T) {
 		writeJobs := []struct {
@@ -91,7 +87,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 					SubResource("jobs").
 					Body(body).
 					SetHeader("Content-Type", "application/json").
-					Do(ctx).StatusCode(&statusCode)
+					Do(t.Context()).StatusCode(&statusCode)
 
 				require.Error(t, result.Error(), "write job should be rejected for read-only repository")
 				require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -115,7 +111,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "pull job should be allowed for read-only repository")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")

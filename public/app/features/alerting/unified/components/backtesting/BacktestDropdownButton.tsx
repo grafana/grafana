@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 
-import { TimeRange, rangeUtil } from '@grafana/data';
+import { type TimeRange, rangeUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Dropdown, Menu, MenuItem } from '@grafana/ui';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 
 import { BacktestPanel } from './BacktestPanel';
 

@@ -1,12 +1,12 @@
-import { from, Observable, of } from 'rxjs';
+import { from, type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@grafana/data';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { CustomVariableSupport, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
+import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { InfluxVariableEditor } from './components/editor/variable/VariableQueryEditor';
-import InfluxDatasource from './datasource';
-import { InfluxVariableQuery } from './types';
+import type InfluxDatasource from './datasource';
+import { type InfluxVariableQuery } from './types';
 
 export class InfluxVariableSupport extends CustomVariableSupport<InfluxDatasource> {
   editor = InfluxVariableEditor;

@@ -1,12 +1,12 @@
-import { FC, HTMLAttributes } from 'react';
-import * as React from 'react';
+import { type FC, type HTMLAttributes } from 'react';
+import type * as React from 'react';
 
-import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import { PluginPageBackground } from '@grafana/runtime';
+import { type NavModel, type NavModelItem, type PageLayoutType } from '@grafana/data';
+import { type PluginPageBackground } from '@grafana/runtime';
 
-import { ScrollRefElement } from '../NativeScrollbar';
+import { type ScrollRefElement } from '../NativeScrollbar';
 
-import { PageContents } from './PageContents';
+import { type PageContents } from './PageContents';
 
 export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;

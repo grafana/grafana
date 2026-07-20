@@ -2,7 +2,7 @@ import { render, screen } from 'test/test-utils';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { ClassicCondition } from '../types';
+import { type ClassicCondition } from '../types';
 
 import { Condition } from './Condition';
 

@@ -1,5 +1,5 @@
 import { FieldType } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse } from '@grafana/runtime';
+import { type BackendDataSourceResponse, type FetchResponse } from '@grafana/runtime';
 
 export const mockInfluxFetchResponse = (
   overrides?: Partial<FetchResponse<BackendDataSourceResponse>>
@@ -31,7 +31,7 @@ export const mockInfluxFetchResponse = (
   };
 };
 
-export const mockInfluxTSDBQueryResponse = [
+const mockInfluxTSDBQueryResponse = [
   {
     schema: {
       name: 'logs.host',
@@ -118,34 +118,7 @@ export const mockInfluxTSDBQueryResponse = [
   },
 ];
 
-export const metricFindQueryResponse = {
-  config: {
-    url: 'mock-response-url',
-  },
-  headers: new Headers(),
-  ok: false,
-  redirected: false,
-  status: 0,
-  statusText: '',
-  type: 'basic',
-  url: '',
-  data: {
-    status: 'success',
-    results: [
-      {
-        series: [
-          {
-            name: 'measurement',
-            columns: ['name'],
-            values: [['cpu']],
-          },
-        ],
-      },
-    ],
-  },
-};
-
-export const mockInfluxRetentionPolicyResponse = [
+const mockInfluxRetentionPolicyResponse = [
   {
     schema: {
       refId: 'metadataQuery',

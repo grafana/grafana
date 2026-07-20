@@ -15,7 +15,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type RuleLimits struct {
@@ -314,7 +313,7 @@ func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode)
 func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int64, error) {
 	if ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
-			return util.Pointer[int64](-1), nil // will be patched later with the real value of the current version of the rule
+			return new(int64(-1)), nil // will be patched later with the real value of the current version of the rule
 		}
 		return nil, nil // if it's a new rule, use nil as the default
 	}

@@ -53,8 +53,8 @@ export const validateTitle = (newTitle: string, folderUid: string) => {
 
 export const validateUid = (value: string) => {
   return getDashboardAPI()
-    .getDashboardDTO(value)
-    .then((existingDashboard) => {
+    .then(async (api) => {
+      const existingDashboard = await api.getDashboardDTO(value);
       const isV2 = isDashboardV2Resource(existingDashboard);
       const dashboard = isV2 ? existingDashboard.spec : existingDashboard.dashboard;
       const folderTitle = isV2

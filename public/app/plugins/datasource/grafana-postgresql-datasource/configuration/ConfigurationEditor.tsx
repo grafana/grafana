@@ -1,7 +1,7 @@
-import { SyntheticEvent, useState } from 'react';
+import { type SyntheticEvent, useState } from 'react';
 
 import {
-  DataSourcePluginOptionsEditorProps,
+  type DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginJsonDataOption,
@@ -19,7 +19,7 @@ import {
 import {
   Collapse,
   Combobox,
-  ComboboxOption,
+  type ComboboxOption,
   Field,
   Icon,
   Input,
@@ -31,7 +31,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 
-import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
+import { type PostgresOptions, PostgresTLSMethods, PostgresTLSModes, type SecureJsonData } from '../types';
 
 import { useAutoDetectFeatures } from './useAutoDetectFeatures';
 

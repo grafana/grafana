@@ -1508,7 +1508,7 @@ describe('convertToWorkbenchRows', () => {
       ]);
     });
 
-    it('should use global rule counts when same rule appears in multiple groups', () => {
+    it('should use per-group rule counts when same rule appears in multiple groups', () => {
       const result = convertToWorkbenchRows(
         [
           {
@@ -1552,7 +1552,7 @@ describe('convertToWorkbenchRows', () => {
         ['team']
       );
 
-      // Both groups get the global summed counts for uid1: firing=5+8=13, pending=2+3=5
+      // Each group gets its own scoped count: backend firing=5,pending=2; frontend firing=8,pending=3
       expect(result).toEqual([
         {
           type: 'group',
@@ -1561,10 +1561,10 @@ describe('convertToWorkbenchRows', () => {
             {
               type: 'alertRule',
               metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
-              instanceCounts: { firing: 13, pending: 5 },
+              instanceCounts: { firing: 5, pending: 2 },
             },
           ],
-          instanceCounts: { firing: 13, pending: 5 },
+          instanceCounts: { firing: 5, pending: 2 },
         },
         {
           type: 'group',
@@ -1573,10 +1573,10 @@ describe('convertToWorkbenchRows', () => {
             {
               type: 'alertRule',
               metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
-              instanceCounts: { firing: 13, pending: 5 },
+              instanceCounts: { firing: 8, pending: 3 },
             },
           ],
-          instanceCounts: { firing: 13, pending: 5 },
+          instanceCounts: { firing: 8, pending: 3 },
         },
       ]);
     });

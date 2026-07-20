@@ -4,7 +4,7 @@ import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { JobType } from '../types';
+import { type JobType } from '../types';
 import { getRepoHrefForProvider } from '../utils/git';
 
 type RepositoryLinkProps = {

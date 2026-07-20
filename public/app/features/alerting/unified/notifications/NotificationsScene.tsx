@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
   CustomVariable,
   EmbeddedScene,
   PanelBuilders,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
@@ -28,7 +28,6 @@ import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import {
   Button,
   GraphGradientMode,
-  LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
@@ -143,12 +142,15 @@ export const NotificationsScene = ({
     // Users will need to manually type label keys (allowCustomValue handles this).
     const labelsFilterVariable = new AdHocFiltersVariable({
       name: LABELS_FILTER,
-      label: t('alerting.notifications-scene.labels-filter-variable.label.labels', 'Labels'),
+      label: t('alerting.notifications-scene.labels-filter-variable.label.group-labels', 'Group Labels'),
       allowCustomValue: true,
-      layout: 'combobox',
       applyMode: 'manual',
       supportsMultiValueOperators: true,
       expressionBuilder: prometheusExpressionBuilder,
+      inputPlaceholder: t(
+        'alerting.notifications-scene.labels-filter-variable.placeholder',
+        'Filter by group label values'
+      ),
       filters: [],
       defaultKeys: availableKeys,
       // Note: AdHocFiltersVariable doesn't support providing default values without a datasource
@@ -249,7 +251,7 @@ function getQueryRunnerForNotificationsDataSource(ruleUID?: string) {
  * This function creates a SceneFlexItem with a timeseries panel that shows the notification events.
  * The query uses a runtime datasource that fetches the events from the notifications api.
  */
-export function getNotificationsGraphSceneFlexItem(ruleUID?: string) {
+function getNotificationsGraphSceneFlexItem(ruleUID?: string) {
   return new SceneFlexItem({
     minHeight: 300,
     ySizing: 'content',
@@ -272,14 +274,14 @@ export function getNotificationsGraphSceneFlexItem(ruleUID?: string) {
       .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
       .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
       .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+      .setOption('legend', { showLegend: false })
       .setOption('tooltip', { mode: TooltipDisplayMode.Single })
       .setNoValue('No events found')
       .build(),
   });
 }
 
-export class ClearFilterButtonScenesObject extends SceneObjectBase {
+class ClearFilterButtonScenesObject extends SceneObjectBase {
   public static Component = ClearFilterButtonObjectRenderer;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -287,7 +289,7 @@ export class ClearFilterButtonScenesObject extends SceneObjectBase {
   });
 }
 
-export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<ClearFilterButtonScenesObject>) {
+function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<ClearFilterButtonScenesObject>) {
   model.useState();
 
   const labelsFilterVariable = sceneGraph.lookupVariable(LABELS_FILTER, model);
@@ -352,5 +354,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-export default NotificationsScene;

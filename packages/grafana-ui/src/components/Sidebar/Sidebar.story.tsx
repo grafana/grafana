@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { useState } from 'react';
 
 import { Button } from '../Button/Button';
 import { Box } from '../Layout/Box/Box';
 
-import { Sidebar, SidebarPosition, useSidebar } from './Sidebar';
+import { Sidebar, type SidebarPosition, useSidebar } from './Sidebar';
 import mdx from './Sidebar.mdx';
 
 interface StoryProps {
@@ -52,17 +52,30 @@ export const Example: StoryFn<StoryProps> = (args) => {
   const togglePane = (pane: string) => {
     if (openPane === pane) {
       setOpenPane('');
+      setPreviousPane(null);
     } else {
       setOpenPane(pane);
+      setPreviousPane(openPane);
     }
   };
+
+  const [previousPane, setPreviousPane] = useState<string | null>(null);
 
   const contextValue = useSidebar({
     hasOpenPane: !!openPane,
     position: args.position,
     bottomMargin: 0,
     edgeMargin: 0,
-    onClosePane: () => setOpenPane(''),
+    onClosePane: () => {
+      setOpenPane('');
+      setPreviousPane(null);
+    },
+    onGoBack: previousPane
+      ? () => {
+          setOpenPane(previousPane);
+          setPreviousPane(null);
+        }
+      : undefined,
   });
 
   return (

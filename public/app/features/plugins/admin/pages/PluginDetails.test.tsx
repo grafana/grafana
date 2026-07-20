@@ -1,4 +1,4 @@
-import { getDefaultNormalizer, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
+import { getDefaultNormalizer, type RenderResult, type SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
@@ -7,11 +7,12 @@ import {
   PluginSignatureStatus,
   PluginType,
   dateTimeFormatTimeAgo,
-  WithAccessControlMetadata,
+  type WithAccessControlMetadata,
 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { updateAppPluginSettings } from '@grafana/runtime/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import * as api from '../api';
@@ -19,11 +20,11 @@ import { usePluginConfig } from '../hooks/usePluginConfig';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../mocks/mockHelpers';
 import { fetchRemotePlugins } from '../state/actions';
 import {
-  CatalogPlugin,
-  CatalogPluginDetails,
+  type CatalogPlugin,
+  type CatalogPluginDetails,
   PluginTabIds,
   PluginTabLabels,
-  ReducerState,
+  type ReducerState,
   RequestStatus,
 } from '../types';
 
@@ -35,6 +36,13 @@ jest.mock('@grafana/runtime', () => {
 
   return runtime;
 });
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  updateAppPluginSettings: jest.fn(),
+}));
+
+const updateAppPluginSettingsMock = jest.mocked(updateAppPluginSettings);
 
 jest.mock('../hooks/usePluginConfig.tsx', () => ({ usePluginConfig: jest.fn(() => ({ value: { meta: {} } })) }));
 
@@ -168,7 +176,7 @@ describe('Plugin details page', () => {
 
       const { findByText, queryByText } = renderPluginDetails({ id, details });
       expect(await findByText('4.2.2')).toBeInTheDocument();
-      expect(queryByText(/>=8.0.0/i)).toBeInTheDocument();
+      expect(queryByText(/8.0.0 or later/i)).toBeInTheDocument();
     });
 
     it('should display description in the header', async () => {
@@ -261,7 +269,12 @@ describe('Plugin details page', () => {
     });
 
     it('should not display an update button for a plugin that is managed', async () => {
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true, isManaged: true });
+      const { queryByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        hasUpdate: true,
+        managed: { enabled: true },
+      });
 
       // Does not display an "update" button
       expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
@@ -359,7 +372,7 @@ describe('Plugin details page', () => {
       });
 
       // Wait for the dependencies part to be loaded
-      expect(await queryByText('Grafana >=8.0.0')).toBeInTheDocument();
+      expect(await queryByText('Grafana 8.0.0 or later')).toBeInTheDocument();
     });
 
     it('should show a confirm modal when trying to uninstall a plugin', async () => {
@@ -513,9 +526,6 @@ describe('Plugin details page', () => {
       const name = 'Akumuli';
 
       // @ts-ignore
-      api.updatePluginSettings = jest.fn();
-
-      // @ts-ignore
       usePluginConfig.mockReturnValue({ value: { meta: { enabled: false, pinned: false, jsonData: {} } } });
 
       const { queryByText, getByRole, user } = renderPluginDetails({
@@ -532,16 +542,13 @@ describe('Plugin details page', () => {
       await user.click(getByRole('button', { name: /enable/i }));
 
       // Check if the API request was initiated
-      expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
-      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, { enabled: true, pinned: true, jsonData: {} });
+      expect(updateAppPluginSettingsMock).toHaveBeenCalledTimes(1);
+      expect(updateAppPluginSettingsMock).toHaveBeenCalledWith(id, { enabled: true, pinned: true, jsonData: {} });
     });
 
     it('should be possible to disable an app plugin', async () => {
       const id = 'akumuli-datasource';
       const name = 'Akumuli';
-
-      // @ts-ignore
-      api.updatePluginSettings = jest.fn();
 
       // @ts-ignore
       usePluginConfig.mockReturnValue({ value: { meta: { enabled: true, pinned: true, jsonData: {} } } });
@@ -560,8 +567,8 @@ describe('Plugin details page', () => {
       await user.click(getByRole('button', { name: /disable/i }));
 
       // Check if the API request was initiated
-      expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
-      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, { enabled: false, pinned: false, jsonData: {} });
+      expect(updateAppPluginSettingsMock).toHaveBeenCalledTimes(1);
+      expect(updateAppPluginSettingsMock).toHaveBeenCalledWith(id, { enabled: false, pinned: false, jsonData: {} });
     });
 
     it('should not display versions tab for plugins not published to gcom', async () => {

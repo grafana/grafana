@@ -3,14 +3,25 @@ import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-import { Alert, Box, Button, CodeEditor, Icon, Modal, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { config, locationService } from '@grafana/runtime';
+import {
+  Alert,
+  Box,
+  Button,
+  CodeEditor,
+  Icon,
+  LoadingPlaceholder,
+  Modal,
+  Spinner,
+  Stack,
+  Text,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
   trackImportToGMADryrunError,
@@ -23,29 +34,46 @@ import {
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
-import { Folder } from '../../types/rule-form';
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
+import { ALERTING_SETTINGS_URL } from '../../settings/navigation';
+import { type Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
+import { hasConfiguredUid, useAutoSyncConfiguration } from '../settings/useAutoSyncConfiguration';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
+import { PolicyTreeNameHelp } from './PolicyTreeNameHelp';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
-import { MERGE_MATCHERS_LABEL_NAME, getPauseRulesLabel } from './Wizard/constants';
-import { StepKey } from './Wizard/types';
+import { getPauseRulesLabel } from './Wizard/steps';
+import { type ImportMethod, StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { DryRunValidationResult } from './types';
-import { useExtraConfigState } from './useExtraConfigState';
-import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
+import { StepImportMethod, isAutoSyncSegmentEnabled } from './steps/StepImportMethod';
+import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
+import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
+import { useCanImportToGMA } from './useCanImportToGMA';
+import {
+  buildRoutingParams,
+  filterRulerRulesConfig,
+  useDryRunNotifications,
+  useImportNotifications,
+  useImportRules,
+} from './useImport';
 import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
+  // Step 0: how the resources are brought into Grafana
+  importMethod: ImportMethod;
+  /** Selected Mimir/Cortex data source UID when importMethod is 'autosync' */
+  autosyncDatasourceUID?: string;
+
   // Step 1: Alertmanager resources
   step1Completed: boolean;
   step1Skipped: boolean;
@@ -80,17 +108,59 @@ export interface ImportFormValues {
 const ImportToGMA = () => {
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       pageNav={{
         text: t('alerting.import-to-gma-tool.pageTitle', 'Import to Grafana Alerting'),
       }}
     >
-      <StepperStateProvider>
-        <ImportWizardContent />
-      </StepperStateProvider>
+      <ImportWizardGate />
     </AlertingPageWrapper>
   );
 };
+
+function Wizard() {
+  return (
+    <StepperStateProvider>
+      <ImportWizardContent />
+    </StepperStateProvider>
+  );
+}
+
+// Blocks the whole import flow while auto-sync is active
+export function ImportWizardGate() {
+  if (!isAutoSyncSegmentEnabled()) {
+    return <Wizard />;
+  }
+  return <ImportWizardAutoSyncGuard />;
+}
+
+function ImportWizardAutoSyncGuard() {
+  const { state, isLoading } = useAutoSyncConfiguration();
+
+  if (isLoading) {
+    return <LoadingPlaceholder text={t('alerting.import-to-gma.loading', 'Loading…')} />;
+  }
+  if (hasConfiguredUid(state)) {
+    return <AutoSyncActiveBlock />;
+  }
+  return <Wizard />;
+}
+
+function AutoSyncActiveBlock() {
+  return (
+    <Alert severity="warning" title={t('alerting.import-to-gma.autosync-active-block.title', 'Auto-sync is enabled')}>
+      <Stack direction="column" gap={1} alignItems="flex-start">
+        <Trans i18nKey="alerting.import-to-gma.autosync-active-block.description">
+          Grafana is continuously syncing alert configuration from a data source, so the configuration is a read-only
+          mirror and cannot be imported into. To import, disable auto-sync in Alerting settings first.
+        </Trans>
+        <TextLink href={ALERTING_SETTINGS_URL} icon="cog">
+          {t('alerting.import-to-gma.autosync-active-block.go-to-settings', 'Go to Alerting settings')}
+        </TextLink>
+      </Stack>
+    </Alert>
+  );
+}
 
 /**
  * Inner content component that uses the stepper state
@@ -112,7 +182,7 @@ function ImportWizardContent() {
       return dryRunData;
     }
     if (dryRunError) {
-      return { valid: false, error: dryRunError, renamedReceivers: [], renamedTimeIntervals: [] };
+      return { valid: false, error: dryRunError, renamedReceivers: [], renamedTimeIntervals: [], stats: undefined };
     }
     return undefined;
   }, [dryRunData, dryRunError]);
@@ -138,6 +208,9 @@ function ImportWizardContent() {
 
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
+      // Step 0 — default to auto-sync when it's available, otherwise the one-time import
+      importMethod: isAutoSyncSegmentEnabled() ? 'autosync' : 'stage',
+      autosyncDatasourceUID: undefined,
       // Step 1
       step1Completed: false,
       step1Skipped: false,
@@ -167,13 +240,7 @@ function ImportWizardContent() {
   const [step1Completed, step1Skipped] = watch(['step1Completed', 'step1Skipped']);
 
   // Permission checks aligned with backend authorization.go
-  const canImportNotifications = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
-  const canImportRules =
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
-
-  // Check for existing extra config that will be replaced
-  const { existingIdentifier } = useExtraConfigState();
+  const { canImportNotifications, canImportRules } = useCanImportToGMA();
 
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(() => {
@@ -197,6 +264,7 @@ function ImportWizardContent() {
       datasourceName: formValues.notificationsDatasourceName ?? undefined,
       yamlFile: formValues.notificationsYamlFile,
       configIdentifier: formValues.policyTreeName,
+      promote: formValues.importMethod === 'promote',
     });
   }, [getValues, runDryRun]);
 
@@ -221,14 +289,18 @@ function ImportWizardContent() {
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
   // These handlers only need to update form values and control whether to proceed
   const handleStep1Next = useCallback((): boolean => {
-    // Block navigation if dry-run validation failed
     if (dryRunState === 'error') {
       return false;
     }
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
+    const currentPolicyTreeName = getValues('policyTreeName');
+    const currentRoutingTree = getValues('selectedRoutingTree');
+    if (currentPolicyTreeName && !currentRoutingTree) {
+      setValue('selectedRoutingTree', currentPolicyTreeName);
+    }
     return true;
-  }, [dryRunState, setValue]);
+  }, [dryRunState, setValue, getValues]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
@@ -277,6 +349,7 @@ function ImportWizardContent() {
           datasourceName: values.notificationsDatasourceName ?? undefined,
           yamlFile: values.notificationsYamlFile,
           configIdentifier: values.policyTreeName,
+          promote: values.importMethod === 'promote',
         });
       }
 
@@ -290,20 +363,25 @@ function ImportWizardContent() {
           rulesPayload = filteredConfig;
         }
 
-        // Add routing tree label to all imported rules
-        const extraLabels = values.selectedRoutingTree
-          ? `${MERGE_MATCHERS_LABEL_NAME}=${values.selectedRoutingTree}`
-          : undefined;
-
-        await importRules({
+        const baseParams = {
           dataSourceUID: values.rulesDatasourceUID,
           targetFolderUID: values.targetFolder?.uid,
           pauseAlertingRules: values.pauseAlertingRules,
           pauseRecordingRules: values.pauseRecordingRules,
           payload: rulesPayload,
           targetDatasourceUID: values.targetDatasourceUID,
-          extraLabels,
-        });
+        };
+
+        const { notificationSettings, extraLabels } = buildRoutingParams(
+          values.selectedRoutingTree,
+          Boolean(config.featureToggles.alertingPolicyRoutingSettings)
+        );
+
+        if (notificationSettings !== undefined) {
+          await importRules({ ...baseParams, notificationSettings });
+        } else {
+          await importRules({ ...baseParams, extraLabels });
+        }
       }
 
       setImportStatus('success');
@@ -312,6 +390,7 @@ function ImportWizardContent() {
       const isRootFolder = isEmpty(targetFolder?.uid);
 
       trackImportToGMASuccess({
+        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
         isRootFolder,
@@ -336,6 +415,7 @@ function ImportWizardContent() {
     } catch (err) {
       setImportStatus('error');
       trackImportToGMAError({
+        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
       });
@@ -376,6 +456,12 @@ function ImportWizardContent() {
 
       <FormProvider {...formAPI}>
         <WizardLayout>
+          {/* Step 0: Import method */}
+          {activeStep === StepKey.Method && <StepImportMethod onNext={() => true} onCancel={handleWizardCancel} />}
+
+          {/* Auto-sync: Review & enable */}
+          {activeStep === StepKey.ReviewEnable && <StepReviewEnableAutoSync onCancel={handleWizardCancel} />}
+
           {/* Step 1: Notification Resources */}
           {activeStep === StepKey.Notifications && (
             <Step1Wrapper
@@ -386,7 +472,6 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
-              existingIdentifier={existingIdentifier}
             />
           )}
 
@@ -437,8 +522,6 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
-  /** Identifier of an existing imported config that will be replaced, if any */
-  existingIdentifier?: string;
 }
 
 function Step1Wrapper({
@@ -449,7 +532,6 @@ function Step1Wrapper({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
-  existingIdentifier,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
   // Can proceed if form is valid and dry-run passed (existing config will be force-replaced)
@@ -476,7 +558,6 @@ function Step1Wrapper({
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
-        existingIdentifier={existingIdentifier}
       />
     </WizardStep>
   );
@@ -577,6 +658,53 @@ const getValidationIndicatorStyles = (theme: GrafanaTheme2) => ({
   warningIcon: css({ color: theme.colors.warning.main }),
   errorIcon: css({ color: theme.colors.error.main }),
 });
+
+/**
+ * Summary of how many resources a promote will merge into the live config, shown on the
+ * review screen. Lists only the resource types that are actually present in the import.
+ */
+export function PromoteMergeSummary({ stats }: { stats: PromoteStatsSummary }) {
+  const items = [
+    stats.receivers > 0 &&
+      t('alerting.import-to-gma.review.merge-receivers', '', {
+        count: stats.receivers,
+        defaultValue_one: '{{count}} contact point',
+        defaultValue_other: '{{count}} contact points',
+      }),
+    stats.templates > 0 &&
+      t('alerting.import-to-gma.review.merge-templates', '', {
+        count: stats.templates,
+        defaultValue_one: '{{count}} template',
+        defaultValue_other: '{{count}} templates',
+      }),
+    stats.timeIntervals > 0 &&
+      t('alerting.import-to-gma.review.merge-time-intervals', '', {
+        count: stats.timeIntervals,
+        defaultValue_one: '{{count}} mute timing',
+        defaultValue_other: '{{count}} mute timings',
+      }),
+    stats.inhibitionRules > 0 &&
+      t('alerting.import-to-gma.review.merge-inhibition-rules', '', {
+        count: stats.inhibitionRules,
+        defaultValue_one: '{{count}} inhibition rule',
+        defaultValue_other: '{{count}} inhibition rules',
+      }),
+    stats.route && t('alerting.import-to-gma.review.merge-route', 'a notification route'),
+  ].filter((item): item is string => Boolean(item));
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <Alert
+      severity="warning"
+      title={t('alerting.import-to-gma.review.merge-summary', 'Will merge into your live config: {{summary}}', {
+        summary: items.join(', '),
+      })}
+    />
+  );
+}
 
 // Review Step Component
 interface ReviewStepProps {
@@ -680,7 +808,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
         </Text>
         <Text color="secondary">
           <Trans i18nKey="alerting.import-to-gma.review.subtitle">
-            Review each section and once you are happy, start the migration.
+            Review each section and once you are happy, start the import.
           </Trans>
         </Text>
       </Box>
@@ -722,13 +850,25 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                   </div>
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.policy-tree', 'Policy tree')}</Text>
-                    <Text weight="medium">
-                      {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
-                    </Text>
+                    <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
+                      <Text weight="medium">{formData.policyTreeName}</Text>
+                      <PolicyTreeNameHelp />
+                    </Stack>
                   </div>
+                  {formData.importMethod === 'promote' && (
+                    <div className={styles.row}>
+                      <Text color="secondary">{t('alerting.import-to-gma.review.method', 'Method')}</Text>
+                      <Text weight="medium">{t('alerting.import-to-gma.review.method-promote', 'Promote')}</Text>
+                    </div>
+                  )}
                   {dryRunResult && (
                     <Box marginTop={1}>
                       <ValidationStatusIndicator result={dryRunResult} />
+                    </Box>
+                  )}
+                  {formData.importMethod === 'promote' && dryRunResult?.stats && (
+                    <Box marginTop={1}>
+                      <PromoteMergeSummary stats={dryRunResult.stats} />
                     </Box>
                   )}
                 </Stack>
@@ -751,8 +891,10 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
               {willImportRules && (
                 <button type="button" className={styles.badgeWithIcon} onClick={handlePreviewRules}>
                   {rulesCount > 0
-                    ? t('alerting.import-to-gma.review.will-import-rules-count', 'Will import {{count}} rules', {
+                    ? t('alerting.import-to-gma.review.will-import-rules-count', '', {
                         count: rulesCount,
+                        defaultValue_one: 'Will import {{count}} rules',
+                        defaultValue_other: 'Will import {{count}} rules',
                       })
                     : t('alerting.import-to-gma.review.will-import-rules', 'Will import rules')}
                   <Icon name="eye" size="sm" />

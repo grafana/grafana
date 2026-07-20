@@ -4,7 +4,7 @@ import type { IDisposable, IRange, Position, editor, languages } from 'monaco-ed
 import type { Monaco } from '@grafana/ui';
 
 import { getAlertManagerSuggestions, getGomplateSuggestions } from './alertManagerSuggestions';
-import { SuggestionDefinition } from './suggestionDefinition';
+import { type SuggestionDefinition } from './suggestionDefinition';
 import {
   getAlertSuggestions,
   getAlertsSuggestions,
@@ -61,7 +61,7 @@ function isInsideGoExpression(model: editor.ITextModel, position: Position) {
   );
 }
 
-export class CompletionProvider {
+class CompletionProvider {
   constructor(
     private readonly monaco: Monaco,
     private readonly range: IRange

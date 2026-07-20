@@ -3,17 +3,17 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { first } from 'rxjs/operators';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { FrameState } from 'app/features/canvas/runtime/frame';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { ContextMenu, MenuItem, type MenuItemProps } from '@grafana/ui';
+import { type ElementState } from 'app/features/canvas/runtime/element';
+import { type FrameState } from 'app/features/canvas/runtime/frame';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementManagement';
 
-import { CanvasPanel } from '../CanvasPanel';
-import { AnchorPoint, LayerActionID } from '../types';
+import { type CanvasPanel } from '../CanvasPanel';
+import { type AnchorPoint, LayerActionID } from '../types';
 import { getElementTypes, onAddItem } from '../utils';
 
 type Props = {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -26,8 +28,10 @@ import (
 
 var ErrFailedToParsePemFile = errors.New("failed to parse pem-encoded file")
 var ErrKeySetIsNotConfigured = errors.New("key set for jwt verification is not configured")
-var ErrKeySetConfigurationAmbiguous = errors.New("key set configuration is ambiguous: you should set either key_file, jwk_set_file or jwk_set_url")
+var ErrKeySetConfigurationAmbiguous = errors.New("key set configuration is ambiguous: you should set only one of key_file, key_value, jwk_set_file, jwk_set_value or jwk_set_url")
 var ErrJWTSetURLMustHaveHTTPSScheme = errors.New("jwt_set_url must have https scheme")
+var ErrFailedToDecodeKeyValue = errors.New("failed to base64-decode inline key value")
+var ErrPrivateKeyNotSupported = errors.New("private keys are not supported for JWT verification; configure the corresponding public key")
 
 type keySet interface {
 	Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error)
@@ -52,7 +56,13 @@ func checkKeySetConfiguration(settings setting.AuthJWTSettings) error {
 	if settings.KeyFile != "" {
 		count++
 	}
+	if settings.KeyValue != "" {
+		count++
+	}
 	if settings.JWKSetFile != "" {
+		count++
+	}
+	if settings.JWKSetValue != "" {
 		count++
 	}
 	if settings.JWKSetURL != "" {
@@ -70,144 +80,186 @@ func checkKeySetConfiguration(settings setting.AuthJWTSettings) error {
 	return nil
 }
 
-// initKeySet creates a provider for JWKSet, either file, or https
-// nolint:gocyclo
+// initKeySet creates a provider for JWKSet from exactly one configured source: a
+// PEM key or JWKS provided as a file or inline value, or a JWKS https endpoint.
+// Configuration is read from the live settings snapshot so changes pushed via
+// the SSO settings API are honoured on reload.
 func (s *AuthService) initKeySet() error {
 	if err := checkKeySetConfiguration(s.settings); err != nil {
 		return err
 	}
 
-	if keyFilePath := s.settings.KeyFile; keyFilePath != "" {
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
-		file, err := os.Open(keyFilePath)
+	switch {
+	case s.settings.KeyFile != "":
+		data, err := s.readKeyFile(s.settings.KeyFile)
 		if err != nil {
 			return err
 		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				s.log.Warn("Failed to close file", "path", keyFilePath, "err", err)
-			}
-		}()
-
-		data, err := io.ReadAll(file)
+		s.keySet, err = parsePEMPublicKey(data, s.settings.KeyID)
+		return err
+	case s.settings.KeyValue != "":
+		data, err := decodeKeyValue(s.settings.KeyValue)
 		if err != nil {
 			return err
 		}
-		block, _ := pem.Decode(data)
-		if block == nil {
-			return ErrFailedToParsePemFile
-		}
-
-		var key any
-		switch block.Type {
-		case "PUBLIC KEY":
-			if key, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
-				return err
-			}
-		case "PRIVATE KEY":
-			if key, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
-				return err
-			}
-		case "RSA PUBLIC KEY":
-			if key, err = x509.ParsePKCS1PublicKey(block.Bytes); err != nil {
-				return err
-			}
-		case "RSA PRIVATE KEY":
-			if key, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
-				return err
-			}
-		case "EC PRIVATE KEY":
-			if key, err = x509.ParseECPrivateKey(block.Bytes); err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("unknown pem block type %q", block.Type)
-		}
-
-		s.keySet = &keySetJWKS{
-			jose.JSONWebKeySet{
-				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.settings.KeyID}},
-			},
-		}
-	} else if keyFilePath := s.settings.JWKSetFile; keyFilePath != "" {
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
-		file, err := os.Open(keyFilePath)
+		s.keySet, err = parsePEMPublicKey(data, s.settings.KeyID)
+		return err
+	case s.settings.JWKSetFile != "":
+		data, err := s.readKeyFile(s.settings.JWKSetFile)
 		if err != nil {
 			return err
 		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				s.log.Warn("Failed to close file", "path", keyFilePath, "err", err)
-			}
-		}()
-
-		var jwks jose.JSONWebKeySet
-		if err := json.NewDecoder(file).Decode(&jwks); err != nil {
+		s.keySet, err = parseJWKS(data)
+		return err
+	case s.settings.JWKSetValue != "":
+		data, err := decodeKeyValue(s.settings.JWKSetValue)
+		if err != nil {
 			return err
 		}
-
-		s.keySet = &keySetJWKS{jwks}
-	} else if urlStr := s.settings.JWKSetURL; urlStr != "" {
-		if err := validateJWKSetURL(urlStr, s.Cfg.Env); err != nil {
+		s.keySet, err = parseJWKS(data)
+		return err
+	case s.settings.JWKSetURL != "":
+		keySet, err := s.newHTTPKeySet(s.settings.JWKSetURL)
+		if err != nil {
 			return err
 		}
-
-		var caCertPool *x509.CertPool
-		if s.settings.TlsClientCa != "" {
-			s.log.Debug("reading ca from TlsClientCa path")
-			// nolint:gosec
-			// We can ignore the gosec G304 warning on this one because `tlsClientCa` comes from grafana configuration file
-			caCert, err := os.ReadFile(s.settings.TlsClientCa)
-			if err != nil {
-				s.log.Error("Failed to read TlsClientCa", "path", s.settings.TlsClientCa, "error", err)
-				return fmt.Errorf("failed to read TlsClientCa: %w", err)
-			}
-
-			caCertPool = x509.NewCertPool()
-			if !caCertPool.AppendCertsFromPEM(caCert) {
-				s.log.Error("failed to decode provided PEM certs", "path", s.settings.TlsClientCa)
-				return fmt.Errorf("failed to decode provided PEM certs file from TlsClientCa")
-			}
-		}
-
-		if s.settings.JWKSetBearerTokenFile != "" {
-			if _, err := getBearerToken(s.settings.JWKSetBearerTokenFile); err != nil {
-				return err
-			}
-		}
-
-		s.keySet = &keySetHTTP{
-			url:             urlStr,
-			log:             s.log,
-			bearerTokenPath: s.settings.JWKSetBearerTokenFile,
-			client: &http.Client{
-				Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{
-						Renegotiation:      tls.RenegotiateFreelyAsClient,
-						InsecureSkipVerify: s.settings.TlsSkipVerify,
-						RootCAs:            caCertPool,
-					},
-					Proxy: http.ProxyFromEnvironment,
-					DialContext: (&net.Dialer{
-						Timeout:   time.Second * 30,
-						KeepAlive: 15 * time.Second,
-					}).DialContext,
-					TLSHandshakeTimeout:   10 * time.Second,
-					ExpectContinueTimeout: 1 * time.Second,
-					MaxIdleConns:          100,
-					IdleConnTimeout:       30 * time.Second,
-				},
-				Timeout: time.Second * 30,
-			},
-			cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
-			cacheExpiration: s.settings.CacheTTL,
-			cache:           s.RemoteCache,
-		}
+		s.keySet = keySet
+		return nil
 	}
 
 	return nil
+}
+
+// newHTTPKeySet builds a key set that fetches a JWKS from an https endpoint.
+func (s *AuthService) newHTTPKeySet(urlStr string) (*keySetHTTP, error) {
+	urlParsed, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, err
+	}
+	if urlParsed.Scheme != "https" && s.Cfg.Env != setting.Dev {
+		return nil, ErrJWTSetURLMustHaveHTTPSScheme
+	}
+
+	var caCertPool *x509.CertPool
+	if s.settings.TlsClientCa != "" {
+		s.log.Debug("reading ca from TlsClientCa path")
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `tlsClientCa` comes from grafana configuration file
+		caCert, err := os.ReadFile(s.settings.TlsClientCa)
+		if err != nil {
+			s.log.Error("Failed to read TlsClientCa", "path", s.settings.TlsClientCa, "error", err)
+			return nil, fmt.Errorf("failed to read TlsClientCa: %w", err)
+		}
+
+		caCertPool = x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			s.log.Error("failed to decode provided PEM certs", "path", s.settings.TlsClientCa)
+			return nil, fmt.Errorf("failed to decode provided PEM certs file from TlsClientCa")
+		}
+	}
+
+	// Read Bearer token from file during init
+	if s.settings.JWKSetBearerTokenFile != "" {
+		if _, err := getBearerToken(s.settings.JWKSetBearerTokenFile); err != nil {
+			return nil, err
+		}
+	}
+
+	return &keySetHTTP{
+		url:             urlStr,
+		log:             s.log,
+		bearerTokenPath: s.settings.JWKSetBearerTokenFile,
+		client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					Renegotiation:      tls.RenegotiateFreelyAsClient,
+					InsecureSkipVerify: s.settings.TlsSkipVerify,
+					RootCAs:            caCertPool,
+				},
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout:   time.Second * 30,
+					KeepAlive: 15 * time.Second,
+				}).DialContext,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       30 * time.Second,
+			},
+			Timeout: time.Second * 30,
+		},
+		cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
+		cacheExpiration: s.settings.CacheTTL,
+		cache:           s.RemoteCache,
+	}, nil
+}
+
+// readKeyFile reads the full contents of a key file referenced from the grafana configuration.
+func (s *AuthService) readKeyFile(path string) ([]byte, error) {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `path` comes from grafana configuration file
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			s.log.Warn("Failed to close file", "path", path, "err", err)
+		}
+	}()
+
+	return io.ReadAll(file)
+}
+
+// decodeKeyValue base64-decodes an inline key value provided directly in the configuration.
+func decodeKeyValue(value string) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(strings.TrimSpace(value))
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrFailedToDecodeKeyValue, err)
+	}
+	return data, nil
+}
+
+// parsePEMPublicKey parses a single PEM-encoded key and wraps it in a JWKS using the given key ID.
+func parsePEMPublicKey(data []byte, keyID string) (*keySetJWKS, error) {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, ErrFailedToParsePemFile
+	}
+
+	var key any
+	var err error
+	switch block.Type {
+	case "PUBLIC KEY":
+		if key, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
+			return nil, err
+		}
+	case "RSA PUBLIC KEY":
+		if key, err = x509.ParsePKCS1PublicKey(block.Bytes); err != nil {
+			return nil, err
+		}
+	case "PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY":
+		// JWT tokens are verified with the public key; a private key here is a
+		// configuration mistake and is unusable anyway (go-jose rejects it at verify time).
+		return nil, ErrPrivateKeyNotSupported
+	default:
+		return nil, fmt.Errorf("unknown pem block type %q", block.Type)
+	}
+
+	return &keySetJWKS{
+		jose.JSONWebKeySet{
+			Keys: []jose.JSONWebKey{{Key: key, KeyID: keyID}},
+		},
+	}, nil
+}
+
+// parseJWKS parses a JWKS JSON document into a key set.
+func parseJWKS(data []byte) (*keySetJWKS, error) {
+	var jwks jose.JSONWebKeySet
+	if err := json.Unmarshal(data, &jwks); err != nil {
+		return nil, err
+	}
+	return &keySetJWKS{jwks}, nil
 }
 
 func (ks *keySetJWKS) Key(ctx context.Context, keyID string) ([]jose.JSONWebKey, error) {

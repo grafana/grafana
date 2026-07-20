@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
+import { Controller, type FieldErrors, type UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
+import { Button, Field, type FormFieldErrors, type FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {
-  DashboardInput,
-  DashboardInputs,
-  DataSourceInput,
-  ImportDashboardDTO,
+  type DashboardInput,
+  type DashboardInputs,
+  type DataSourceInput,
+  type ImportDashboardDTO,
   LibraryPanelInputState,
 } from '../../types';
+import { getUidFieldDescription, getUidFieldLabel } from '../utils/uidFieldText';
 import { validateTitle, validateUid } from '../utils/validation';
 
 import { LibraryPanelsList } from './LibraryPanelsList';
@@ -25,6 +26,7 @@ interface Props extends Pick<UseFormReturn<ImportDashboardDTO>, 'register' | 'co
   onCancel: () => void;
   onUidReset: () => void;
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
+  onFolderChange?: (uid: string) => void;
 }
 
 export function ImportForm({
@@ -38,6 +40,7 @@ export function ImportForm({
   onCancel,
   onSubmit,
   watch,
+  onFolderChange,
 }: Props) {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
@@ -80,18 +83,24 @@ export function ImportForm({
         <Field label={t('manage-dashboards.import-dashboard-form.label-folder', 'Folder')} noMargin>
           <Controller
             render={({ field: { ref, value, onChange, ...field } }) => (
-              <FolderPicker {...field} onChange={(uid, title) => onChange({ uid, title })} value={value.uid} />
+              <FolderPicker
+                {...field}
+                onChange={(uid, title) => {
+                  onChange({ uid, title });
+                  if (uid) {
+                    onFolderChange?.(uid);
+                  }
+                }}
+                value={value.uid}
+              />
             )}
             name="folder"
             control={control}
           />
         </Field>
         <Field
-          label={t('manage-dashboards.import-dashboard-form.label-unique-identifier-uid', 'Unique identifier (UID)')}
-          description={t(
-            'manage-dashboards.import-dashboard-form.description-unique-identifier-uid',
-            'The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.'
-          )}
+          label={getUidFieldLabel()}
+          description={getUidFieldDescription()}
           invalid={!!errors.uid}
           error={errors.uid?.message}
           noMargin
@@ -100,7 +109,10 @@ export function ImportForm({
             {!uidReset ? (
               <Input
                 disabled
-                {...register('uid', { validate: async (v: string) => await validateUid(v) })}
+                {...register('uid', {
+                  setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
+                  validate: async (v: string) => await validateUid(v),
+                })}
                 addonAfter={
                   !uidReset && (
                     <Button onClick={onUidReset}>
@@ -110,7 +122,13 @@ export function ImportForm({
                 }
               />
             ) : (
-              <Input {...register('uid', { required: true, validate: async (v: string) => await validateUid(v) })} />
+              <Input
+                {...register('uid', {
+                  required: true,
+                  setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
+                  validate: async (v: string) => await validateUid(v),
+                })}
+              />
             )}
           </>
         </Field>
