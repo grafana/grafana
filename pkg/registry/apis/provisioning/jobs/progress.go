@@ -14,6 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// NotifyThrottleInterval is the minimum time between two persisted "immediate"
+// progress notifications; SetMessage/SetTotal calls closer together are
+// coalesced. Callers that need every update to persist must space them at least
+// this far apart.
+const NotifyThrottleInterval = 500 * time.Millisecond
+
 // maybeNotifyProgress will only notify if a certain amount of time has passed
 // or if the job completed
 func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
@@ -62,7 +68,7 @@ type jobProgressRecorder struct {
 func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:             time.Now(),
-		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, progressFn),
+		notifyImmediatelyFn: maybeNotifyProgress(NotifyThrottleInterval, progressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, progressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
 		resultReasons:       make(map[string]struct{}),

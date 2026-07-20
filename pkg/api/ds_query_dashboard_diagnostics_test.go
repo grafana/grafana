@@ -234,28 +234,42 @@ func TestDiagnosticsJobStore_lifecycle(t *testing.T) {
 func TestDiagnosticsJobStore_prune(t *testing.T) {
 	creator := &user.SignedInUser{OrgID: 1, UserUID: "creator"}
 
-	// Retention TTL: a job older than the retention window is pruned on the next create, so the
-	// in-memory store can't accumulate finished/abandoned jobs (and their archive bytes) forever.
-	t.Run("evicts jobs past the retention TTL", func(t *testing.T) {
+	// Retention TTL: a terminal job older than the retention window is pruned on the next create, so
+	// the store can't accumulate finished/abandoned jobs (and their archive bytes) forever.
+	t.Run("evicts terminal jobs past the retention TTL", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		stale := s.create(1, creator)
+		s.complete(stale.UID, []byte("done"))
 		s.jobs[stale.UID].CreatedAt = time.Now().Add(-diagnosticsJobRetention - time.Minute)
 
 		fresh := s.create(1, creator) // triggers pruneLocked
 		_, ok := s.snapshot(stale.UID, creator)
-		require.False(t, ok, "stale job should have been pruned")
+		require.False(t, ok, "stale terminal job should have been pruned")
 		_, ok = s.snapshot(fresh.UID, creator)
 		require.True(t, ok, "fresh job should remain")
 	})
 
-	// Max-entries cap: a burst within the retention window still can't grow the store past the cap;
-	// the oldest jobs are evicted first.
-	t.Run("evicts oldest beyond the max-entries cap", func(t *testing.T) {
+	// A still-pending (in-flight) job is never evicted, even past the TTL: its goroutine is still
+	// writing to it, so dropping it would orphan the run.
+	t.Run("never evicts a pending in-flight job", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+		pending := s.create(1, creator)
+		s.jobs[pending.UID].CreatedAt = time.Now().Add(-diagnosticsJobRetention - time.Hour)
+
+		s.create(1, creator) // triggers pruneLocked
+		_, ok := s.snapshot(pending.UID, creator)
+		require.True(t, ok, "a pending job must survive pruning regardless of age")
+	})
+
+	// Max-entries cap: a burst of finished jobs within the retention window still can't grow the
+	// store past the cap; the oldest terminal jobs are evicted first.
+	t.Run("evicts oldest terminal jobs beyond the max-entries cap", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		base := time.Now()
 		var oldest string
 		for i := 0; i < diagnosticsJobMaxEntries; i++ {
 			j := s.create(1, creator)
+			s.complete(j.UID, nil) // only terminal jobs count against the cap
 			// Age them deterministically so eviction order is well-defined.
 			s.jobs[j.UID].CreatedAt = base.Add(time.Duration(i) * time.Second)
 			if i == 0 {
@@ -264,11 +278,13 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		}
 		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
 
-		// One more create pushes over the cap and must evict exactly the oldest.
+		// One more terminal job pushes over the cap and must evict exactly the oldest.
 		newest := s.create(1, creator)
+		s.complete(newest.UID, nil)
+		s.pruneLocked(time.Now()) // complete() doesn't prune; force a sweep as the next create would
 		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
 		_, ok := s.snapshot(oldest, creator)
-		require.False(t, ok, "oldest job should have been evicted")
+		require.False(t, ok, "oldest terminal job should have been evicted")
 		_, ok = s.snapshot(newest.UID, creator)
 		require.True(t, ok, "newest job should remain")
 	})

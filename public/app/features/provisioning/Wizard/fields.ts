@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 import { type RepositoryFormData } from '../types';
 import { validateNoUserInfoInUrl } from '../utils/validators';
@@ -223,6 +224,22 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           required: t('provisioning.bitbucket.token-user-required', 'Username is required'),
         },
       },
+      email: {
+        label: t('provisioning.bitbucket.email-label', 'Atlassian account email'),
+        description: t(
+          'provisioning.bitbucket.email-description',
+          'The Atlassian account email used to authenticate the Bitbucket API. Required to enable webhooks.'
+        ),
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder: 'you@example.com',
+        required: false,
+        validation: {
+          pattern: {
+            value: w3cStandardEmailValidator,
+            message: t('provisioning.bitbucket.email-invalid', 'Enter a valid email address'),
+          },
+        },
+      },
       url: {
         ...shared.url,
         description: t('provisioning.bitbucket.url-description', 'The Bitbucket repository URL'),
@@ -343,6 +360,7 @@ export const getGitProviderFields = (
   | {
       tokenConfig: FieldConfig;
       tokenUserConfig?: FieldConfig;
+      emailConfig?: FieldConfig;
       signingMethodConfig?: FieldConfig;
       signingKeyConfig?: FieldConfig;
       smimeCertificateConfig?: FieldConfig;
@@ -363,6 +381,7 @@ export const getGitProviderFields = (
   // For git providers, these fields are guaranteed to exist
   const tokenConfig = configs.token;
   const tokenUserConfig = configs.tokenUser; // Optional field, only for some providers
+  const emailConfig = configs.email; // Optional field, only for Bitbucket
   const signingMethodConfig = configs.signingMethod; // Optional, only for git-based providers
   const signingKeyConfig = configs.commitSigningKey; // Optional, only for git-based providers
   const smimeCertificateConfig = configs.smimeCertificate; // Paired with commitSigningKey when format is smime
@@ -381,6 +400,7 @@ export const getGitProviderFields = (
   return {
     tokenConfig,
     tokenUserConfig,
+    emailConfig,
     signingMethodConfig,
     signingKeyConfig,
     smimeCertificateConfig,

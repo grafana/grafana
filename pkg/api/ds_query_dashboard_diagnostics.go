@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -134,25 +135,32 @@ func (s *diagnosticsJobStore) create(total int, creator identity.Requester) *dia
 	return j
 }
 
-// pruneLocked drops jobs past the retention TTL, then evicts the oldest jobs beyond the max-entries
-// cap. Caller must hold s.mu. This is what keeps the in-memory store bounded.
+// pruneLocked drops terminal jobs past the retention TTL, then evicts the oldest terminal jobs
+// beyond the max-entries cap. Caller must hold s.mu. This is what keeps the in-memory store bounded.
+//
+// A still-pending job is never evicted: its background goroutine is still writing to it, so dropping
+// it would orphan the run -- complete/fail would no-op and status/download would 404 after expensive
+// generation. Only complete/error jobs are eligible, so the store is bounded by (finished jobs) plus
+// however many runs are genuinely in flight.
 func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
+	terminal := make([]string, 0, len(s.jobs))
 	for uid, j := range s.jobs {
+		if j.State == jobPending {
+			continue
+		}
 		if now.Sub(j.CreatedAt) > diagnosticsJobRetention {
 			delete(s.jobs, uid)
+			continue
 		}
+		terminal = append(terminal, uid)
 	}
-	if len(s.jobs) <= diagnosticsJobMaxEntries {
+	if len(terminal) <= diagnosticsJobMaxEntries {
 		return
 	}
-	uids := make([]string, 0, len(s.jobs))
-	for uid := range s.jobs {
-		uids = append(uids, uid)
-	}
-	sort.Slice(uids, func(a, b int) bool {
-		return s.jobs[uids[a]].CreatedAt.Before(s.jobs[uids[b]].CreatedAt)
+	sort.Slice(terminal, func(a, b int) bool {
+		return s.jobs[terminal[a]].CreatedAt.Before(s.jobs[terminal[b]].CreatedAt)
 	})
-	for _, uid := range uids[:len(uids)-diagnosticsJobMaxEntries] {
+	for _, uid := range terminal[:len(terminal)-diagnosticsJobMaxEntries] {
 		delete(s.jobs, uid)
 	}
 }
@@ -348,12 +356,15 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		pctx, harBuffer := harcapture.WithCapture(ctx) // capture each panel independently
 		resp, err := queryData(pctx, user, skipDSCache, p.MetricRequest)
 		panel.HARBuffer = harBuffer
+		panel.Resp = resp // carries external (gRPC) plugins' __har__ capture frames, merged in BuildDashboard
 		// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error
-		// (see diagnostics.ResponseError doc) -- capture that too, or a failed panel would be
-		// recorded in the manifest as having run successfully with no query-error.txt.
+		// (see diagnostics.ResponseError doc) -- capture that too, or a failed panel would be recorded
+		// in the manifest as having run successfully with no query-error.txt. An externalized plugin
+		// carries its swallowed top-level error in the __har__ frame instead (PluginCaptureError); fold
+		// both in the same way the single-panel path does.
 		panel.QueryErr = err
 		if panel.QueryErr == nil {
-			panel.QueryErr = diagnostics.ResponseError(resp)
+			panel.QueryErr = errors.Join(diagnostics.ResponseError(resp), diagnostics.PluginCaptureError(resp))
 		}
 
 		panels = append(panels, panel)

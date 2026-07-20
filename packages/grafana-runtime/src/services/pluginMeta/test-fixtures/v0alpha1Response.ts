@@ -727,6 +727,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           loadingStrategy: 'script',
         },
         baseURL: 'app/plugins/panel/annolist',
+        aliasIds: ['ryantxu-annolist-panel'],
         signature: {
           status: 'internal',
         },

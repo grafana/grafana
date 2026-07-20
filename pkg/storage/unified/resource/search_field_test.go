@@ -232,8 +232,8 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		},
 	}, nil)
 
-	// The standard name field has sort capability so Bleve can use it as a stable pagination tie-breaker.
-	const expected = "3484142f1ce8094a4659bb0275fe91e4d68f0ce6fa1ed24a17dd81615a8a76d1"
+	// Standard tags declare facet capability so Bleve facets use their keyword-analyzed mapping.
+	const expected = "0f114ef8fa64163466eb9d3477163cfe964b5a626c37279d5e60a2586c18a064"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
 }
