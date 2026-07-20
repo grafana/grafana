@@ -39,21 +39,20 @@ const meta: Meta<typeof SecretInput> = {
 
 export default meta;
 
-const Template: StoryFn<typeof SecretInput> = ({ revealable, ...args }) => {
+const Template: StoryFn<typeof SecretInput> = (args) => {
   const [secret, setSecret] = useState('');
-
-  const sharedProps = {
-    width: args.width,
-    value: secret,
-    isConfigured: args.isConfigured,
-    placeholder: args.placeholder,
-    onChange: (event: ChangeEvent<HTMLInputElement>) => setSecret(event.target.value.trim()),
-    onReset: () => setSecret(''),
-  };
 
   return (
     <Field label="Your secret password">
-      {revealable ? <SecretInput revealable={true} {...sharedProps} /> : <SecretInput {...sharedProps} />}
+      <SecretInput
+        width={args.width}
+        value={secret}
+        isConfigured={args.isConfigured}
+        revealable={args.revealable}
+        placeholder={args.placeholder}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => setSecret(event.target.value.trim())}
+        onReset={() => setSecret('')}
+      />
     </Field>
   );
 };
