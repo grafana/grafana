@@ -112,6 +112,48 @@ func TestQueryDashboardDiagnostics_survivesRequestContextCancellation(t *testing
 		"the original request's ReqContext must not be mutated -- QueryDashboardDiagnostics forces the flag on a clone")
 }
 
+// TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached guards the in-flight cap at the
+// handler boundary: once diagnosticsMaxInFlightJobs generations are already pending, a further POST
+// must be rejected with 429 rather than starting yet another detached goroutine.
+func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+
+	// Swap the process-wide store for an isolated one pre-filled to the in-flight cap, and restore it
+	// after so this test neither sees nor leaks pending jobs into others that share the global store.
+	prev := dashboardDiagnosticsJobs
+	t.Cleanup(func() { dashboardDiagnosticsJobs = prev })
+	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+	creator := &user.SignedInUser{OrgID: 1, UserUID: "u1"}
+	for i := 0; i < diagnosticsMaxInFlightJobs; i++ {
+		_, ok := dashboardDiagnosticsJobs.create(1, creator)
+		require.True(t, ok, "setup: pre-filling the store to the cap must succeed")
+	}
+
+	// create() rejects before the handler touches queryDataService, so no fake is needed.
+	hs := &HTTPServer{}
+
+	body := `{"panels":[{"id":1,"title":"Panel 1","from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}]}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/dashboard-diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  req,
+			Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder()),
+		},
+		SignedInUser: creator,
+		Logger:       log.New("test"),
+	}
+	c.Req = req
+
+	resp := hs.QueryDashboardDiagnostics(c)
+	require.Equal(t, http.StatusTooManyRequests, resp.Status(),
+		"a create beyond the in-flight cap must be rejected with 429, not started")
+	// The rejected request must not have created a job.
+	require.Len(t, dashboardDiagnosticsJobs.jobs, diagnosticsMaxInFlightJobs,
+		"a rejected request must not add a job to the store")
+}
+
 // TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError guards against a regression where
 // QueryData's response was discarded, so a per-refId failure (backend.DataResponse.Error, the usual
 // way a datasource query fails -- see diagnostics.ResponseError) never reached panel.QueryErr: the
