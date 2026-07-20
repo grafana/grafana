@@ -68,12 +68,12 @@ func rebaseNextLink(baseURL, nextLink string) string {
 }
 
 func fetchArmPage(ctx context.Context, cli *http.Client, rawURL string) (*armListResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil) // #nosec G704 -- datasource client targets operator-configured URL
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := cli.Do(req)
+	res, err := cli.Do(req) // #nosec G704 -- datasource client targets operator-configured URL
 	if err != nil {
 		return nil, fmt.Errorf("unexpected error: %w", err)
 	}
