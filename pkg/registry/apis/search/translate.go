@@ -76,7 +76,7 @@ func TranslateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResour
 	req := newRequest(gvr, namespace)
 	applyLeaves(req, leaves)
 	applyLabelSelector(req, q.LabelSelector)
-	applySort(req, q.Sort, hasTextLeaf(leaves), resource.SEARCH_FIELD_NAME)
+	applySort(req, q.Sort, hasTextLeaf(leaves), &resourcepb.ResourceSearchRequest_Sort{Field: resource.SEARCH_FIELD_NAME})
 	req.Fields = defaultReturnFields(q.Fields)
 	applyFacets(req, q.Facets, resolveFacetLimit(q.FacetLimit))
 	req.Limit = resolveLimit(q.Limit)
@@ -118,11 +118,9 @@ func TranslateTrashQuery(q *searchv0.TrashQuery, gvr schema.GroupVersionResource
 	req := newRequest(gvr, namespace)
 	req.IsDeleted = true
 	applyLeaves(req, leaves)
-	applySort(req, q.Sort, hasTextLeaf(leaves), trashFieldDeletionTime)
-	if len(q.Sort) == 0 {
-		// Default trash order is deletion_time desc, not name asc.
-		req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: trashFieldDeletionTime, Desc: true}}
-	}
+	// Trash's default order is deletion_time desc (search uses name asc); when a
+	// text query is present both fall back to relevance instead.
+	applySort(req, q.Sort, hasTextLeaf(leaves), &resourcepb.ResourceSearchRequest_Sort{Field: trashFieldDeletionTime, Desc: true})
 	req.Fields = trashReturnFields(q.Fields)
 	req.Limit = resolveLimit(q.Limit)
 	req.SearchAfter = searchAfter
@@ -486,11 +484,11 @@ func applyLabelSelector(req *resourcepb.ResourceSearchRequest, sel *metav1.Label
 
 // applySort maps the requested sort into the backend request. When no sort is
 // given: with a text query, results order by relevance (empty SortBy); without
-// one, by defaultField ascending.
-func applySort(req *resourcepb.ResourceSearchRequest, sorts []searchv0.SortField, hasText bool, defaultField string) {
+// one, by defaultSort.
+func applySort(req *resourcepb.ResourceSearchRequest, sorts []searchv0.SortField, hasText bool, defaultSort *resourcepb.ResourceSearchRequest_Sort) {
 	if len(sorts) == 0 {
 		if !hasText {
-			req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: defaultField}}
+			req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{defaultSort}
 		}
 		return
 	}

@@ -400,6 +400,8 @@ func TestTranslateTrashQuery_TextAndFilter(t *testing.T) {
 	assert.Equal(t, "cpu", req.Query)
 	require.Len(t, req.Options.Fields, 1)
 	assert.Equal(t, "deleted_by", req.Options.Fields[0].Key)
+	// A text query keeps relevance order; deletion_time desc is not forced.
+	assert.Empty(t, req.SortBy)
 }
 
 func TestTranslateTrashQuery_ValidationErrors(t *testing.T) {
