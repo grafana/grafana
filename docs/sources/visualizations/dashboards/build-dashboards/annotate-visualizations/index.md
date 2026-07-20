@@ -5,7 +5,6 @@ aliases:
   - ../../../panels/visualizations/annotations/ # /docs/grafana/next/panels/visualizations/annotations/
   - ../../../reference/annotations/ # /docs/grafana/latest/reference/annotations/
 keywords:
-keywords:
   - annotations
   - annotation query
   - built-in query
