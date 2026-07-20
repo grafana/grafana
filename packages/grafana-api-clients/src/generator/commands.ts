@@ -1,7 +1,7 @@
 import { spawnSync } from 'child_process';
 import path from 'path';
 
-import { type Variant, PACKAGE_ROOT, ALLOWED_GENERATE_COMMANDS } from './variants.ts';
+import { type Variant, PACKAGE_ROOT, ALLOWED_GENERATE_COMMANDS, ALLOWED_FORMAT_COMMANDS } from './variants.ts';
 
 /** Return the list of files that need formatting after generation. */
 export function getFilesToFormat(variant: Variant, groupName: string, version: string): string[] {
@@ -17,6 +17,9 @@ export function getFilesToFormat(variant: Variant, groupName: string, version: s
 }
 
 function runOrWarn(label: string, command: string, cwd: string) {
+  if (!ALLOWED_FORMAT_COMMANDS.some((allowed) => command.startsWith(allowed))) {
+    throw new Error(`Refusing to run disallowed format command: "${command}"`);
+  }
   console.log(`🧹 Running ${label} on generated/modified files...`);
   const [cmd, ...args] = command.split(' ').filter(Boolean);
   const result = spawnSync(cmd, args, { cwd, stdio: 'pipe', shell: false });

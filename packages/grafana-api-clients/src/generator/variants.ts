@@ -47,3 +47,8 @@ export function variantFor(isEnterprise: boolean): Variant {
  *  Derived from the known Variant definitions — any command not in this list
  *  will be rejected by runGenerateApis() before reaching execSync. */
 export const ALLOWED_GENERATE_COMMANDS: readonly string[] = [OSS.generateCommand, ENTERPRISE.generateCommand];
+
+/** Exhaustive list of permitted base command prefixes for file formatting.
+ *  runOrWarn() validates every command string against this list before
+ *  passing it to spawnSync, preventing command-injection via crafted paths. */
+export const ALLOWED_FORMAT_COMMANDS: readonly string[] = ['yarn eslint --fix', 'yarn prettier --write'];
