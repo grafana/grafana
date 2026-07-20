@@ -716,11 +716,18 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	return resp, nil
 }
 
-// statusFromContextError maps context cancellation/deadline errors to their
-// gRPC codes (Canceled/DeadlineExceeded) as the gRPC spec requires; returns
-// nil for anything else so callers fall through to their own mapping.
+// statusFromContextError maps cancellation/deadline errors to their gRPC
+// codes (Canceled/DeadlineExceeded) as the gRPC spec requires; returns nil
+// for anything else so callers fall through to their own mapping.
 // Without this, client disconnects surface as Internal and trip error SLOs.
+//
+// Checks two shapes: status errors from gRPC-backed dependencies (which do
+// not unwrap to the context sentinels), then wrapped context errors from
+// HTTP/SQL dependencies.
 func statusFromContextError(err error) error {
+	if s, ok := status.FromError(err); ok && (s.Code() == codes.Canceled || s.Code() == codes.DeadlineExceeded) {
+		return s.Err()
+	}
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return status.FromContextError(err).Err()
 	}

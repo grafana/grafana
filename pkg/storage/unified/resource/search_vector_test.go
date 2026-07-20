@@ -460,6 +460,34 @@ func TestVectorSearch_AuthzContextCanceledReturnsCanceled(t *testing.T) {
 	assert.Equal(t, codes.Canceled, status.Code(err))
 }
 
+func TestVectorSearch_AuthzGrpcStatusCanceledReturnsCanceled(t *testing.T) {
+	// gRPC-backed authz clients surface cancellation as a status error, not
+	// a wrapped context.Canceled sentinel.
+	access := &erroringAccessClient{err: fmt.Errorf("authz: %w", status.Error(codes.Canceled, "context canceled"))}
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{{UID: "u1", Score: 0.1}},
+	}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
+}
+
+func TestVectorSearch_AuthzGrpcStatusDeadlineExceededReturnsDeadlineExceeded(t *testing.T) {
+	access := &erroringAccessClient{err: status.Error(codes.DeadlineExceeded, "deadline exceeded")}
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{{UID: "u1", Score: 0.1}},
+	}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.DeadlineExceeded, status.Code(err))
+}
+
 func TestVectorSearch_AuthzCompileErrorReturnsInternal(t *testing.T) {
 	access := &erroringAccessClient{err: errors.New("authz service is down")}
 	backend := &fakeVectorBackend{
