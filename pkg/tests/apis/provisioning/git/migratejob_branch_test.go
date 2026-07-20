@@ -105,7 +105,9 @@ func TestIntegrationProvisioning_SelectiveMigrateToBranch(t *testing.T) {
 
 	const repo = "selective-migrate-to-branch-repo"
 	const branch = "feature-selective"
-	helper.CreateGitRepo(t, repo, nil, "write", "branch")
+	// Selective migration is only supported on folder/folderless targets (an
+	// instance target must migrate everything).
+	helper.CreateFolderTargetGitRepo(t, repo, nil, "write", "branch")
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
