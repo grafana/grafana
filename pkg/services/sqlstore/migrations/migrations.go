@@ -41,6 +41,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	addQuotaMigration(mg)
 	addAppSettingsMigration(mg)
 	addSessionMigration(mg)
+	addPlaylistMigrations(mg)
 	addPreferencesMigrations(mg)
 	addAlertMigrations(mg)
 	addAnnotationMig(mg)
@@ -80,6 +81,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddManagedPermissionsMigration(mg, accesscontrol.ManagedPermissionsMigrationID)
 	accesscontrol.AddManagedFolderAlertActionsMigration(mg)
 	accesscontrol.AddActionNameMigrator(mg)
+	addPlaylistUIDMigration(mg)
 
 	ualert.UpdateRuleGroupIndexMigration(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatMigration(mg)
