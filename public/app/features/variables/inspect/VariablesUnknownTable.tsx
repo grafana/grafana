@@ -29,10 +29,7 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
   const { loading } = useAsync(async () => {
     if (open && changed > 0) {
       // make sure we only fetch when opened and variables or dashboard have changed
-      const start = Date.now();
       const unknownsNetwork = await getUnknownsNetwork(variables, dashboard);
-      const stop = Date.now();
-      const elapsed = stop - start;
       setChanged(0);
       setUsages(unknownsNetwork);
       return unknownsNetwork;
