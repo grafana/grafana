@@ -268,7 +268,11 @@ describe('dashboardV2SpecSchema', () => {
     if (!result.success) {
       return;
     }
-    expect(result.data.elements['panel-1'].spec.vizConfig.version).toBe('');
+    const panel = result.data.elements['panel-1'];
+    if (panel.kind !== 'Panel') {
+      throw new Error('expected element panel-1 to be a Panel');
+    }
+    expect(panel.spec.vizConfig.version).toBe('');
   });
 
   it('tolerates an invalid variable refresh/sort by falling back to the canonical default', () => {
