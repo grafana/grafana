@@ -12548,7 +12548,7 @@
       "inspect-json": "Panel JSON",
       "more": "More...",
       "new-alert-rule": "New alert rule",
-      "panel-copy-success": "Panel {{panelName}} copied to clipboard",
+      "panel-copy-success": "Panel \"{{panelName}}\" copied to clipboard",
       "paste-styles": "Paste styles",
       "query": "Query",
       "remove": "Remove",
