@@ -168,7 +168,7 @@ Saved queries are supported in:
 Learn more about saved queries:
 
 - [Saved queries dialog box](#saved-queries-dialog-box)
-- [Roles, permission, and RBAC](#roles-permissions-and-rbac)
+- [Roles, permissions, and RBAC](#roles-permissions-and-rbac)
 - [Variables in saved queries](#variables-in-saved-queries)
 - [Manage saved queries as code](#manage-saved-queries-as-code)
 - [Known limitations](#known-limitations)
