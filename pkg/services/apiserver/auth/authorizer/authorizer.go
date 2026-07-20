@@ -2,6 +2,7 @@ package authorizer
 
 import (
 	"context"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
@@ -25,6 +26,10 @@ func NewAllowAuthorizer() authorizer.Authorizer {
 var _ authorizer.Authorizer = (*GrafanaAuthorizer)(nil)
 
 type GrafanaAuthorizer struct {
+	// mu guards apis so per-CRD-group authorizers can be registered and
+	// unregistered dynamically at runtime (e.g. by CRDRegistrationController)
+	// while requests are being authorized concurrently.
+	mu   sync.RWMutex
 	apis map[string]authorizer.Authorizer
 	auth authorizer.Authorizer
 }
@@ -49,21 +54,33 @@ func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 
 	// Individual services may have explicit implementations
 	apis := make(map[string]authorizer.Authorizer)
+	ga := &GrafanaAuthorizer{
+		apis: apis,
+	}
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
-	authorizers = append(authorizers, &authorizerForAPI{apis})
+	authorizers = append(authorizers, &authorizerForAPI{apis: apis, mu: &ga.mu})
 
 	// org role authorizer is last -- and will return allow for verbs that match expectations
 	// it is only helpful here for remote APIs in some cloud use-cases.
 	//nolint:staticcheck // remove once build handler chains are untangled between local and remote APIs handling
 	authorizers = append(authorizers, NewRoleAuthorizer())
-	return &GrafanaAuthorizer{
-		apis: apis,
-		auth: union.New(authorizers...),
-	}
+	ga.auth = union.New(authorizers...)
+	return ga
 }
 
 func (a *GrafanaAuthorizer) Register(gv schema.GroupVersion, fn authorizer.Authorizer) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.apis[gv.String()] = fn
+}
+
+// Unregister removes the authorizer for a specific GroupVersion. It is used for
+// dynamic removal of authorizers when CRD-backed API groups are deleted or no
+// longer served.
+func (a *GrafanaAuthorizer) Unregister(gv schema.GroupVersion) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	delete(a.apis, gv.String())
 }
 
 // Authorize implements authorizer.Authorizer.
@@ -72,11 +89,14 @@ func (a *GrafanaAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 }
 
 type authorizerForAPI struct {
+	mu   *sync.RWMutex
 	apis map[string]authorizer.Authorizer
 }
 
 func (a *authorizerForAPI) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+	a.mu.RLock()
 	auth, ok := a.apis[attr.GetAPIGroup()+"/"+attr.GetAPIVersion()]
+	a.mu.RUnlock()
 	if ok {
 		return auth.Authorize(ctx, attr)
 	}
