@@ -154,7 +154,7 @@
   },
   "packages/grafana-data/src/types/dataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "packages/grafana-data/src/types/dataLink.ts": {
@@ -1909,11 +1909,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/RichHistory/RichHistoryStarredTab.tsx": {
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/ViewingLayer.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2259,14 +2254,6 @@
   },
   "public/app/features/serviceaccounts/state/reducers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/support-bundles/SupportBundlesCreate.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    },
-    "@grafana/require-no-margin": {
       "count": 1
     }
   },

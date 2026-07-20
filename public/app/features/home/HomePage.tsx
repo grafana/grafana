@@ -11,8 +11,10 @@ import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { FiringAlertsCard, canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
+import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
+import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
+import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
@@ -50,7 +52,9 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isLoadingTabs;
+  const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
+  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs;
+
   // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
   // what actually renders below.
   const extraContent = renderLimitedComponents({
@@ -105,9 +109,9 @@ export default function HomePage() {
                   <Recommendations />
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                    <DashboardTabs extensionComponents={tabComponents} />
-                    {/* TODO: Alerts and incidents will combine into one card */}
-                    <FiringAlertsCard />
+                    {/* Skip the HomepageTabs extension point for the redesign UI */}
+                    <DashboardTabs extensionComponents={[]} />
+                    <AlertIncidentTabs />
                   </Grid>
                 </>
               ) : (

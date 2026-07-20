@@ -427,8 +427,8 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20260713132205-673c077411fe h1:C9mRCPhIt/FsUEJAv3RSt0JCzWppK/BLghMA6Y3Dglo=
 github.com/grafana/alerting v0.0.0-20260713132205-673c077411fe/go.mod h1:xlvTghiB2qaV65HDCv7v5PTQ+NK47SKayDpTSndJK5E=
-github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2 h1:s62oq8TAt0aWVX1ul6RvKgYb4IanlHKIwJwFsTKPoyY=
-github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2/go.mod h1:jlv0zQBdgsu/kmcq7tfO3KDjNiBB2ToiM5amsP0PjG0=
+github.com/grafana/authlib v0.0.0-20260715184607-1dffa9543b9f h1:KpZkZO+upTaY3a8HVnoq6fFNOkcO+8bEiy4nsq4EQ2c=
+github.com/grafana/authlib v0.0.0-20260715184607-1dffa9543b9f/go.mod h1:DKf93Uhnfwl8dkOoFdsiUVMaO08mcpvyRXhGUkT5v38=
 github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 h1:8lFEFsViKBZFBuehfD0Ghs1NnHgQSioZ8O8kKv5pKqY=
 github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=
@@ -437,8 +437,8 @@ github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 h1:/m/qmt7Ay+HK+GVbI
 github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3/go.mod h1:6zFIzal2FCd0JC1pE0ZTb2ftC0Jr/zsQR4zRNRdDfZA=
 github.com/grafana/grafana-app-sdk v0.56.4 h1:N+6TQkn4qEBGk1hStOCwwa2glIGLrSVA5BIgJruLToQ=
 github.com/grafana/grafana-app-sdk v0.56.4/go.mod h1:G1Ky4rrII1FHY6pcANrAhg4O4jl4c7dTP80CXIeOdow=
-github.com/grafana/grafana-app-sdk/logging v0.56.2 h1:PMNxGOjXytX8aIYZY11llLRAHICjbpbIEEzIX1DrXZY=
-github.com/grafana/grafana-app-sdk/logging v0.56.2/go.mod h1:19HroGkdv9aVjfToKYYDOo+kVqoWHcPgewlJs7ole5A=
+github.com/grafana/grafana-app-sdk/logging v0.56.3 h1:dQsenznHqv3y5AlFhc4P2mvw1ZqDDRVze4Kch2jZPCA=
+github.com/grafana/grafana-app-sdk/logging v0.56.3/go.mod h1:19HroGkdv9aVjfToKYYDOo+kVqoWHcPgewlJs7ole5A=
 github.com/grafana/grafana-aws-sdk v1.4.4 h1:D9h1+fm0h77atG9vsSbaHv8WeAHt27R45wq+9/DYXlk=
 github.com/grafana/grafana-aws-sdk v1.4.4/go.mod h1:LnKdGUzifE9spPA/LuxwhxAP/zJlx27OHZr95hWHOzU=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 h1:moFDZEb2kTIrUo5u3Bekg1weABQQjy1EK1biP4I6L+0=
@@ -1013,8 +1013,8 @@ golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJ
 golang.org/x/sync v0.0.0-20201207232520-09787c993a3a/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20210220032951-036812b2e83c/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20220513210516-0976fa681c29/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
-golang.org/x/sync v0.21.0 h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=
-golang.org/x/sync v0.21.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
+golang.org/x/sync v0.22.0 h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=
+golang.org/x/sync v0.22.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
 golang.org/x/sys v0.0.0-20180823144017-11551d06cbcc/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20180830151530-49385e6e1522/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20180905080454-ebe1bf3edb33/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
@@ -1312,8 +1312,8 @@ google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3/go.mod h1:RAyBrSAP
 google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd/go.mod h1:RAyBrSAP7Fh3Nc84ghnVLDPuV51xc9agzmm4Ph6i0Q4=
 google.golang.org/genproto/googleapis/api v0.0.0-20260615183401-62b3387ff324 h1:g0RAkxK/smSu/iRwC/KIX1mwUoVJtk2OjbgaeS4DmUM=
 google.golang.org/genproto/googleapis/api v0.0.0-20260615183401-62b3387ff324/go.mod h1:Z4WJ5pJOYWFWcHEQUelD5QaZDknIQkpIL/+fyJOT9+A=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20260615183401-62b3387ff324 h1:9HZDLIdYBJXAnaFOr9WHrKVycfpY+75s9HGadC0305A=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20260615183401-62b3387ff324/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260622175928-b703f567277d h1:mpAgMyM9vQHxycBlDq50y1VHpfSfVwzXvrQKtYbXuUY=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260622175928-b703f567277d/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=
 google.golang.org/grpc v1.21.1/go.mod h1:oYelfM1adQP15Ek0mdvEgi9Df8B9CZIaU1084ijfRaM=
@@ -1344,8 +1344,8 @@ google.golang.org/grpc v1.44.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ5
 google.golang.org/grpc v1.45.0/go.mod h1:lN7owxKUQEqMfSyQikvvk5tf/6zMPsrK+ONuO11+0rQ=
 google.golang.org/grpc v1.46.0/go.mod h1:vN9eftEi1UMyUsIF80+uQXhHjbXYbm0uXoFCACuMGWk=
 google.golang.org/grpc v1.46.2/go.mod h1:vN9eftEi1UMyUsIF80+uQXhHjbXYbm0uXoFCACuMGWk=
-google.golang.org/grpc v1.81.1 h1:VnnIIZ88UzOOKLukQi+ImGz8O1Wdp8nAGGnvOfEIWQQ=
-google.golang.org/grpc v1.81.1/go.mod h1:xGH9GfzOyMTGIOXBJmXt+BX/V0kcdQbdcuwQ/zNw42I=
+google.golang.org/grpc v1.82.0 h1:vguDnZUPjE26w09A63VoxZPnvPjB5Riyc0mkXPFmAIU=
+google.golang.org/grpc v1.82.0/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
 google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0/go.mod h1:6Kw0yEErY5E/yWrBtf03jp27GLLJujG4z/JK95pnjjw=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
