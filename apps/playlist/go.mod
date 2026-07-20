@@ -44,7 +44,7 @@ require (
 	github.com/grafana/authlib v0.0.0-20260715184607-1dffa9543b9f // indirect
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.56.3 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.56.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
