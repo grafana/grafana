@@ -446,10 +446,10 @@ describe('RuleListActions', () => {
       enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
     });
 
-    // Drive auto-sync state via the Config resource (what useIsAutoSyncActive reads). The
-    // status UID reflects an actually-active sync.
+    // Drive auto-sync state via the Config resource: useIsAutoSyncActive reads
+    // spec.externalAlertmanagerSync.datasourceUid, so specUid is the active-sync signal.
     function mockAutoSync(uid?: string) {
-      setupAutoSyncConfig(server, uid ? { statusUid: uid } : {});
+      setupAutoSyncConfig(server, uid ? { specUid: uid } : {});
     }
 
     async function findDisabledItem(menu: HTMLElement, role: 'importAlertRules' | 'importToGma') {
