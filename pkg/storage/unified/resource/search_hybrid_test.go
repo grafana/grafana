@@ -503,6 +503,33 @@ func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
 	assert.Equal(t, codes.Internal, status.Code(err))
 }
 
+func TestHybridSearch_CallerCancellationReturnsCanceled(t *testing.T) {
+	// A canceled caller context maps to Canceled regardless of which leg
+	// failed or how it wrapped the error.
+	backend := &fakeVectorBackend{err: fmt.Errorf("pgvector: %w", context.Canceled)}
+	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+	idx.err = fmt.Errorf("bleve: %w", context.Canceled)
+
+	_, err := s.HybridSearch(canceledAuthedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
+}
+
+func TestHybridSearch_DownstreamCanceledWithLiveContextReturnsInternal(t *testing.T) {
+	// A downstream cancellation while the caller is still live is a
+	// server-side fault, not a client disconnect.
+	backend := &fakeVectorBackend{err: fmt.Errorf("pgvector: %w", context.Canceled)}
+	s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
 func TestHybridSearch_VectorLegFailureFailsRequest(t *testing.T) {
 	backend := &fakeVectorBackend{err: fmt.Errorf("pgvector exploded")}
 	s, _, _ := newHybridTestServer(lexTableResponse(), backend)

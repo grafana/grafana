@@ -110,6 +110,13 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	})
 
 	if err := g.Wait(); err != nil {
+		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded,
+		// not Internal — keyed off the parent ctx (gctx is canceled by any
+		// leg failure); a downstream cancellation while the caller is still
+		// live remains a server-side fault.
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		if status.Code(err) != codes.Unknown {
 			return nil, err
 		}
