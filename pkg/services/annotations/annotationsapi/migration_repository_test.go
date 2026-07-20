@@ -23,6 +23,7 @@ type fakeLegacy struct {
 	findCalls    []*annotations.ItemQuery
 	updateItems  []*annotations.Item
 	deleteParams []*annotations.DeleteParams
+	deleteErr    error
 }
 
 func (f *fakeLegacy) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
@@ -37,7 +38,7 @@ func (f *fakeLegacy) Update(_ context.Context, item *annotations.Item) error {
 }
 func (f *fakeLegacy) Delete(_ context.Context, params *annotations.DeleteParams) error {
 	f.deleteParams = append(f.deleteParams, params)
-	return nil
+	return f.deleteErr
 }
 func (f *fakeLegacy) FindTags(context.Context, *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	return annotations.FindTagsResult{}, nil
@@ -200,6 +201,18 @@ func TestMigrationRepository_Find(t *testing.T) {
 		assert.Equal(t, []*annotations.ItemDTO{item(5, 10)}, got)
 		assert.Equal(t, 1, proxy.getCalls)
 		assert.Len(t, legacy.findCalls, 1)
+	})
+
+	t.Run("by-id returns empty on ErrGone and does not fall back to legacy", func(t *testing.T) {
+		legacy := &fakeLegacy{findResult: []*annotations.ItemDTO{item(5, 10)}}
+		proxy := &fakeProxy{getErr: ErrGone}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		got, err := repo.Find(context.Background(), &annotations.ItemQuery{AnnotationID: 5})
+		require.NoError(t, err)
+		assert.Empty(t, got)
+		assert.Equal(t, 1, proxy.getCalls)
+		assert.Empty(t, legacy.findCalls)
 	})
 
 	t.Run("by-id propagates other proxy errors", func(t *testing.T) {
@@ -414,19 +427,38 @@ func TestMigrationRepository_Update(t *testing.T) {
 		require.Len(t, legacy.updateItems, 1)
 		assert.Same(t, item, legacy.updateItems[0])
 	})
+
+	t.Run("ErrGone does not fall back to legacy", func(t *testing.T) {
+		legacy := &fakeLegacy{}
+		proxy := &fakeProxy{updateErr: ErrGone}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		require.ErrorIs(t, repo.Update(context.Background(), &annotations.Item{OrgID: 1, ID: 5}), ErrGone)
+		assert.Empty(t, legacy.updateItems)
+	})
 }
 
 // --- Delete ----------------------------------------------------------------
 
 func TestMigrationRepository_Delete(t *testing.T) {
-	t.Run("single delete hits new store and skips legacy", func(t *testing.T) {
+	t.Run("single delete removes from new store then dual-deletes the legacy copy", func(t *testing.T) {
 		legacy := &fakeLegacy{}
 		proxy := &fakeProxy{}
 		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
 
 		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))
 		assert.Equal(t, 1, proxy.deleteCalls)
-		assert.Empty(t, legacy.deleteParams)
+		require.Len(t, legacy.deleteParams, 1)
+	})
+
+	t.Run("single delete succeeds even when the best-effort legacy delete fails", func(t *testing.T) {
+		legacy := &fakeLegacy{deleteErr: assert.AnError}
+		proxy := &fakeProxy{}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))
+		assert.Equal(t, 1, proxy.deleteCalls)
+		require.Len(t, legacy.deleteParams, 1)
 	})
 
 	t.Run("single delete propagates non-NotFound proxy errors", func(t *testing.T) {
@@ -441,6 +473,16 @@ func TestMigrationRepository_Delete(t *testing.T) {
 	t.Run("single delete falls back to legacy on ErrNotFound", func(t *testing.T) {
 		legacy := &fakeLegacy{}
 		proxy := &fakeProxy{deleteErr: ErrNotFound}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))
+		assert.Equal(t, 1, proxy.deleteCalls)
+		require.Len(t, legacy.deleteParams, 1)
+	})
+
+	t.Run("single delete treats ErrGone as idempotent success and retries the legacy cleanup", func(t *testing.T) {
+		legacy := &fakeLegacy{}
+		proxy := &fakeProxy{deleteErr: ErrGone}
 		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
 
 		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))

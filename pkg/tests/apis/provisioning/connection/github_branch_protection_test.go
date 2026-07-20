@@ -1,7 +1,6 @@
 package connection
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +23,6 @@ import (
 // when configuring a GitHub repository with the write workflow.
 func TestIntegrationGitHubBranchProtection(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Start test git server that responds to nanogit's smart HTTP protocol
 	gitServer := startTestGitServer(t)
@@ -91,7 +89,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-bp-required-pr", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).
+			Do(t.Context()).
 			Raw()
 
 		var testResults provisioning.TestResults
@@ -133,7 +131,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-bp-locked", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).
+			Do(t.Context()).
 			Raw()
 
 		var testResults provisioning.TestResults
@@ -176,7 +174,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-bp-multiple", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).
+			Do(t.Context()).
 			Raw()
 
 		var testResults provisioning.TestResults
@@ -218,7 +216,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-bp-unprotected", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error())
 
@@ -255,7 +253,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-bp-branch-wf", []string{"branch"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error())
 
@@ -297,7 +295,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-bp-forbidden", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error())
 
@@ -350,7 +348,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-ruleset-pr", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).
+			Do(t.Context()).
 			Raw()
 
 		var testResults provisioning.TestResults
@@ -402,7 +400,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-ruleset-non-blocking", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).
+			Do(t.Context()).
 			Raw()
 
 		var testResults provisioning.TestResults
@@ -451,7 +449,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-combined-protection", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).
+			Do(t.Context()).
 			Raw()
 
 		var testResults provisioning.TestResults
@@ -497,7 +495,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-disabled-ruleset", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error())
 
@@ -541,7 +539,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-non-matching-ruleset", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error())
 
@@ -585,7 +583,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 			SubResource("test").
 			Body(makeRepoConfig("test-ruleset-forbidden", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error())
 
@@ -660,7 +658,6 @@ func startTestGitServer(t *testing.T) *httptest.Server {
 // are created successfully, but their health status reflects the branch protection issue.
 func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Start test git server
 	gitServer := startTestGitServer(t)
@@ -723,7 +720,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 			Resource("repositories").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// Repository creation should succeed
 		require.NoError(t, result.Error(), "repository creation should succeed even with protected branch")
@@ -736,7 +733,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 
 		// Wait for health check to run and mark repository as unhealthy
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repoStatus, err := helper.Repositories.Resource.Get(ctx, "test-health-pr-reviews", metav1.GetOptions{})
+			repoStatus, err := helper.Repositories.Resource.Get(t.Context(), "test-health-pr-reviews", metav1.GetOptions{})
 			if !assert.NoError(collect, err, "failed to get repository status") {
 				return
 			}
@@ -824,7 +821,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 			Resource("repositories").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// Repository creation should succeed
 		require.NoError(t, result.Error(), "repository creation should succeed even with locked branch")
@@ -837,7 +834,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 
 		// Wait for health check to run and mark repository as unhealthy
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repoStatus, err := helper.Repositories.Resource.Get(ctx, "test-health-locked", metav1.GetOptions{})
+			repoStatus, err := helper.Repositories.Resource.Get(t.Context(), "test-health-locked", metav1.GetOptions{})
 			if !assert.NoError(collect, err, "failed to get repository status") {
 				return
 			}
@@ -924,7 +921,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 			Resource("repositories").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// Repository creation should succeed
 		require.NoError(t, result.Error(), "repository creation should succeed with unprotected branch")
@@ -937,7 +934,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 
 		// Wait for health check to run, then verify no branch protection errors
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repoStatus, err := helper.Repositories.Resource.Get(ctx, "test-health-unprotected", metav1.GetOptions{})
+			repoStatus, err := helper.Repositories.Resource.Get(t.Context(), "test-health-unprotected", metav1.GetOptions{})
 			if !assert.NoError(collect, err, "failed to get repository status") {
 				return
 			}

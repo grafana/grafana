@@ -13,12 +13,18 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
+  AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
+  AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
+  /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
+  AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -27,6 +33,8 @@ export const FlagKeys = {
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
+  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
+  DashboardsFilterablePanels: "dashboards.filterablePanels",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
@@ -51,12 +59,16 @@ export const FlagKeys = {
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
+  GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Builds the navigation tree client-side instead of reading it from /bootdata */
+  GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
@@ -67,6 +79,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
+  /** Enables the dedicated Saved queries page and its navigation entry */
+  GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
@@ -75,7 +89,7 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
-  /** Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled. */
+  /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
   GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
@@ -136,6 +150,17 @@ export const FlagKeys = {
 } as const;
 
 /**
+ * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleQuality`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleQuality", false, options).value;
+};
+
+/**
  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
  *
  * **Details:**
@@ -166,6 +191,28 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar
+ *
+ * **Details:**
+ * - flag key: `assistant.fullscreenWorkspace`
+ * - default value: `false`
+ */
+export const useFlagAssistantFullscreenWorkspace = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.fullscreenWorkspace", false, options).value;
+};
+
+/**
+ * Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.
+ *
+ * **Details:**
+ * - flag key: `awsAssumeRolePerDatasourceExternalId`
+ * - default value: `false`
+ */
+export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("awsAssumeRolePerDatasourceExternalId", false, options).value;
 };
 
 /**
@@ -210,6 +257,17 @@ export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardTemplatesAssistantButton", false, options).value;
+};
+
+/**
+ * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
+ *
+ * **Details:**
+ * - flag key: `dashboards.filterablePanels`
+ * - default value: `false`
+ */
+export const useFlagDashboardsFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.filterablePanels", false, options).value;
 };
 
 /**
@@ -345,6 +403,17 @@ export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluatio
 };
 
 /**
+ * Enables the sidebar in Explore metrics (Metrics Drilldown)
+ *
+ * **Details:**
+ * - flag key: `grafana.exploreMetricsSidebar`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.exploreMetricsSidebar", false, options).value;
+};
+
+/**
  * Enables PLG-focused growth redesign of the unified homepage
  *
  * **Details:**
@@ -378,6 +447,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Builds the navigation tree client-side instead of reading it from /bootdata
+ *
+ * **Details:**
+ * - flag key: `grafana.multiTenantNavTree`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.multiTenantNavTree", false, options).value;
+};
+
+/**
  * Enables a new UI for query errors and notices
  *
  * **Details:**
@@ -393,10 +473,10 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `grafana.newPreferencesPage`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPreferencesPage", false, options).value;
+  return useFlag("grafana.newPreferencesPage", true, options).value;
 };
 
 /**
@@ -430,6 +510,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.queryVarEditorRedesign", true, options).value;
+};
+
+/**
+ * Enables the dedicated Saved queries page and its navigation entry
+ *
+ * **Details:**
+ * - flag key: `grafana.savedQueriesPage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSavedQueriesPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.savedQueriesPage", false, options).value;
 };
 
 /**
@@ -477,7 +568,7 @@ export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptio
 };
 
 /**
- * Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.
+ * Use the find default scope endpoint to seed the initial scope selection when none is set.
  *
  * **Details:**
  * - flag key: `grafana.useDefaultScopesEndpoint`
