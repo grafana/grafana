@@ -895,6 +895,10 @@ lineage: schemas: [{
 			tag: string
 			// Human-readable description of what this failure mode looks like.
 			description?: string
+			// UID of the Grafana alert rule whose firing state drives this
+			// failure mode's badge. When set, the badge lights up while the
+			// rule is firing. Empty means the mode is declared-only.
+			alertRuleUid?: string
 		}
 
 		// A related SLO reference.

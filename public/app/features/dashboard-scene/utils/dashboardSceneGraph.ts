@@ -127,22 +127,23 @@ export interface AnomalousPanel {
 }
 
 /**
- * Collects panels that are actively matching a declared failure mode (Phase
- * F-lite). A panel is anomalous when its `PanelIntentChips` has an `activeMatch`
- * (set while it breaches its alert threshold and declares failure modes). Used
- * by the dashboard summary bar to render a "needs attention" health strip.
+ * Collects panels that are actively matching a declared failure mode (Phase F).
+ * A panel is anomalous when its `PanelIntentChips` has an `activeMatch`; the
+ * emitted `tags` are only the failure modes whose referenced alert rule is
+ * currently firing (`activeMatch.matchedTags`), not every declared mode. Used
+ * by the dashboard summary bar to redden the matching failure-mode chips.
  */
 function getAnomalousPanels(scene: DashboardScene): AnomalousPanel[] {
   const anomalous: AnomalousPanel[] = [];
   for (const panel of getVizPanels(scene)) {
     const chips = getPanelIntentChips(panel);
-    if (!chips?.state.activeMatch) {
+    const matchedTags = chips?.state.activeMatch?.matchedTags ?? [];
+    if (matchedTags.length === 0) {
       continue;
     }
-    const failureModes = Array.isArray(chips.state.intent.failureModes) ? chips.state.intent.failureModes : [];
     anomalous.push({
       title: panel.state.title || getPanelIdForVizPanel(panel).toString(),
-      tags: failureModes.map((fm) => fm.tag).filter(Boolean),
+      tags: matchedTags.filter(Boolean),
     });
   }
   return anomalous;

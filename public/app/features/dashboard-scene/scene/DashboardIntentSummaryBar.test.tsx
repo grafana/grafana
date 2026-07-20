@@ -27,7 +27,7 @@ jest.mock('@grafana/runtime', () => ({
 
 interface PanelSpec {
   intent: PanelIntent;
-  activeMatch?: { since: number };
+  activeMatch?: { matchedTags: string[]; since: number };
 }
 
 interface BuildOpts {
@@ -171,7 +171,7 @@ describe('DashboardIntentSummaryBar', () => {
       const dashboard = buildDashboard({
         intent: { purpose: 'Checkout health.' },
         panelIntents: [
-          { intent: { failureModes: [{ tag: 'cpu-saturation' }] }, activeMatch: { since: 1 } },
+          { intent: { failureModes: [{ tag: 'cpu-saturation' }] }, activeMatch: { matchedTags: ['cpu-saturation'], since: 1 } },
           { intent: { failureModes: [{ tag: 'oom' }] } },
         ],
       });
@@ -189,7 +189,7 @@ describe('DashboardIntentSummaryBar', () => {
       const dashboard = buildDashboard({
         intent: { purpose: 'Checkout health.' },
         panelIntents: [
-          { intent: { failureModes: [{ tag: 'cpu-saturation' }] }, activeMatch: { since: 1 } },
+          { intent: { failureModes: [{ tag: 'cpu-saturation' }] }, activeMatch: { matchedTags: ['cpu-saturation'], since: 1 } },
           { intent: { failureModes: [{ tag: 'oom' }] } },
         ],
       });

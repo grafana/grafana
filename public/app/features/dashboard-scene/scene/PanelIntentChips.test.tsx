@@ -4,7 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { type DataFrame, FieldType } from '@grafana/data';
 import { type Panel } from '@grafana/schema';
 
-import { PanelIntentChips, PanelIntentChipsRenderer, computeActiveMatch, computeChipStates } from './PanelIntentChips';
+import {
+  type ActiveMatch,
+  PanelIntentChips,
+  PanelIntentChipsRenderer,
+  type RuleFiringState,
+  computeChipStates,
+  computeFiringModes,
+} from './PanelIntentChips';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: undefined }),
@@ -13,7 +20,7 @@ jest.mock('@grafana/assistant', () => ({
 
 type PanelIntent = NonNullable<Panel['intent']>;
 
-function renderChips(intent: PanelIntent, activeMatch?: { since: number }) {
+function renderChips(intent: PanelIntent, activeMatch?: ActiveMatch) {
   const chips = new PanelIntentChips({ intent, activeMatch });
   // Render the renderer directly so we don't need to stand up a full
   // VizPanel + plugin import setup in the test. The parent-check
@@ -81,24 +88,50 @@ describe('PanelIntentChips', () => {
     expect(screen.queryByText(/Out of memory/)).not.toBeInTheDocument();
   });
 
-  describe('active failure-mode match (Phase F-lite)', () => {
-    it('renders the active-match chip with a bolt icon when activeMatch is set', () => {
-      renderChips({ failureModes: [{ tag: 'spike' }] }, { since: Date.UTC(2026, 0, 1, 15, 13) });
+  describe('active failure-mode match (Phase F)', () => {
+    it('renders the active-match chip with a bolt icon when activeMatch names the mode', () => {
+      renderChips({ failureModes: [{ tag: 'spike' }] }, { matchedTags: ['spike'], since: Date.UTC(2026, 0, 1, 15, 13) });
       expect(screen.getByTestId('panel-intent-active-match')).toBeInTheDocument();
     });
 
-    it('lists matched tags and breach time in the popover, no Investigate when assistant unavailable', async () => {
+    it('renders one red chip per firing mode so each can be investigated separately', () => {
+      // Two failure modes linked to firing rules → two independent red chips,
+      // not one chip with a "+1" hiding the second (regression for the reported
+      // UX gap where a second firing mode was collapsed behind "+1").
+      renderChips(
+        { failureModes: [{ tag: 'traffic-drop' }, { tag: 'stale-series' }] },
+        { matchedTags: ['traffic-drop', 'stale-series'], since: Date.UTC(2026, 0, 1, 15, 13) }
+      );
+      const chips = screen.getAllByTestId('panel-intent-active-match');
+      expect(chips).toHaveLength(2);
+      expect(screen.getByText('#traffic-drop')).toBeInTheDocument();
+      expect(screen.getByText('#stale-series')).toBeInTheDocument();
+    });
+
+    it('scopes each firing chip popover to its own mode, no Investigate when assistant unavailable', async () => {
       renderChips(
         { failureModes: [{ tag: 'spike' }, { tag: 'oom' }] },
-        { since: Date.UTC(2026, 0, 1, 15, 13) }
+        { matchedTags: ['spike', 'oom'], since: Date.UTC(2026, 0, 1, 15, 13) }
       );
 
-      await userEvent.hover(screen.getByTestId('panel-intent-active-match'));
+      await userEvent.hover(screen.getByText('#spike'));
 
-      expect(await screen.findByText('Matches #spike, #oom')).toBeInTheDocument();
-      expect(screen.getByText(/Alert threshold breached since/)).toBeInTheDocument();
+      // Popover names only the hovered mode (not the aggregate list).
+      expect(await screen.findByText('Matches #spike')).toBeInTheDocument();
+      expect(screen.getByText(/Alert rule firing since/)).toBeInTheDocument();
       // Assistant is mocked unavailable, so no Investigate shortcut.
       expect(screen.queryByRole('button', { name: /Investigate/i })).not.toBeInTheDocument();
+    });
+
+    it('reddens only the firing mode and keeps the others quiet (independent badges)', () => {
+      renderChips(
+        { failureModes: [{ tag: 'bot-traffic' }, { tag: 'ddos' }] },
+        { matchedTags: ['bot-traffic'], since: Date.UTC(2026, 0, 1, 15, 13) }
+      );
+      // Firing mode is the red active-match chip...
+      expect(screen.getByTestId('panel-intent-active-match')).toHaveTextContent('#bot-traffic');
+      // ...and the non-firing mode renders as a separate quiet chip.
+      expect(screen.getByText('#ddos')).toBeInTheDocument();
     });
 
     it('falls back to the quiet chip when there is no active match', () => {
@@ -108,31 +141,49 @@ describe('PanelIntentChips', () => {
     });
   });
 
-  describe('computeActiveMatch', () => {
-    it('matches when alerting and at least one failure mode is declared', () => {
-      const result = computeActiveMatch({ alert: 'alerting' }, [{ tag: 'spike' }], undefined, 1000);
-      expect(result).toEqual({ since: 1000 });
+  describe('computeFiringModes', () => {
+    const firing = (activeAt?: number): RuleFiringState => ({ firing: true, activeAt });
+    const notFiring: RuleFiringState = { firing: false };
+
+    it('fires only the mode whose referenced rule is firing', () => {
+      const modes = [
+        { tag: 'bot-traffic', alertRuleUid: 'r1' },
+        { tag: 'ddos', alertRuleUid: 'r2' },
+      ];
+      const states = new Map([
+        ['r1', firing(1000)],
+        ['r2', notFiring],
+      ]);
+      expect(computeFiringModes(modes, states, undefined, 5000)).toEqual({ matchedTags: ['bot-traffic'], since: 1000 });
     });
 
-    it('does not match when alerting but no failure modes are declared', () => {
-      expect(computeActiveMatch({ alert: 'alerting' }, [], undefined, 1000)).toBeUndefined();
+    it('returns undefined when no referenced rule is firing', () => {
+      const modes = [{ tag: 'ddos', alertRuleUid: 'r2' }];
+      expect(computeFiringModes(modes, new Map([['r2', notFiring]]), undefined, 5000)).toBeUndefined();
     });
 
-    it('does not match when not alerting, even with failure modes', () => {
-      expect(computeActiveMatch({ alert: 'normal' }, [{ tag: 'spike' }], undefined, 1000)).toBeUndefined();
-      expect(computeActiveMatch({ range: 'warning' }, [{ tag: 'spike' }], undefined, 1000)).toBeUndefined();
-      expect(computeActiveMatch(undefined, [{ tag: 'spike' }], undefined, 1000)).toBeUndefined();
+    it('never fires a mode without an alertRuleUid (declared-only)', () => {
+      const modes = [{ tag: 'spike' }];
+      expect(computeFiringModes(modes, new Map(), undefined, 5000)).toBeUndefined();
     });
 
-    it('preserves the original since timestamp across recomputes while still breaching', () => {
-      const prev = { since: 500 };
-      const result = computeActiveMatch({ alert: 'alerting' }, [{ tag: 'spike' }], prev, 2000);
-      expect(result).toEqual({ since: 500 });
+    it('uses the earliest firing rule activeAt as the since timestamp', () => {
+      const modes = [
+        { tag: 'a', alertRuleUid: 'r1' },
+        { tag: 'b', alertRuleUid: 'r2' },
+      ];
+      const states = new Map([
+        ['r1', firing(3000)],
+        ['r2', firing(1500)],
+      ]);
+      expect(computeFiringModes(modes, states, undefined, 9000)?.since).toBe(1500);
     });
 
-    it('clears the match once the panel returns below the threshold', () => {
-      const prev = { since: 500 };
-      expect(computeActiveMatch({ alert: 'normal' }, [{ tag: 'spike' }], prev, 2000)).toBeUndefined();
+    it('falls back to prev.since then now when activeAt is unavailable', () => {
+      const modes = [{ tag: 'a', alertRuleUid: 'r1' }];
+      const states = new Map([['r1', firing(undefined)]]);
+      expect(computeFiringModes(modes, states, { matchedTags: ['a'], since: 500 }, 9000)?.since).toBe(500);
+      expect(computeFiringModes(modes, states, undefined, 9000)?.since).toBe(9000);
     });
   });
 

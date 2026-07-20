@@ -1057,8 +1057,9 @@ func (DashboardIntentExpectedBehavior) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardIntentFailureMode struct {
-	Tag         string  `json:"tag"`
-	Description *string `json:"description,omitempty"`
+	Tag          string  `json:"tag"`
+	Description  *string `json:"description,omitempty"`
+	AlertRuleUid *string `json:"alertRuleUid,omitempty"`
 }
 
 // NewDashboardIntentFailureMode creates a new DashboardIntentFailureMode object.

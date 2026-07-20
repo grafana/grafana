@@ -669,6 +669,7 @@ export const defaultIntentExpectedBehavior = (): IntentExpectedBehavior => ({
 export interface IntentFailureMode {
 	tag: string;
 	description?: string;
+	alertRuleUid?: string;
 }
 
 export const defaultIntentFailureMode = (): IntentFailureMode => ({

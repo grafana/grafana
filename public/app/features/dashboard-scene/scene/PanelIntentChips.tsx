@@ -6,10 +6,16 @@ import { t } from '@grafana/i18n';
 import { sceneGraph, type SceneComponentProps, type SceneObjectState, SceneObjectBase, VizPanel } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { prometheusApi } from 'app/features/alerting/unified/api/prometheusApi';
+import { dispatch } from 'app/store/store';
+import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { isLessThanThreshold, parseAlertThreshold, parseNormalRange } from './parseIntentThresholds';
+
+/** How often the referenced alert rules' firing state is refreshed. */
+const RULE_STATE_POLL_MS = 30_000;
 
 /** Severity state for an individual chip derived from live panel data. */
 type ChipState = 'alerting' | 'warning' | 'normal';
@@ -23,14 +29,24 @@ interface ChipStates {
 }
 
 /**
- * An active match between live panel data and the panel's declared failure
- * modes (Phase F-lite). Present only while the panel is breaching its alert
- * threshold — at which point the breach is attributed to the declared failure
- * modes so the author sees "this is the pattern we warned about, happening now".
+ * An active match between the panel's declared failure modes and the live
+ * firing state of the Grafana alert rules they reference (Phase F). Present
+ * only while at least one referenced rule is firing; `matchedTags` names the
+ * specific failure modes whose rule is firing (not every declared mode), so
+ * badges light up independently.
  */
 export interface ActiveMatch {
-  /** Epoch ms when the breach was first detected this session. */
+  /** Tags of the failure modes whose referenced alert rule is currently firing. */
+  matchedTags: string[];
+  /** Epoch ms the earliest matched rule started firing (from the rule's activeAt). */
   since: number;
+}
+
+/** Firing state of a single alert rule, keyed by rule UID. */
+export interface RuleFiringState {
+  firing: boolean;
+  /** Epoch ms the rule started firing, from the earliest active alert. */
+  activeAt?: number;
 }
 
 interface PanelIntentChipsState extends SceneObjectState {
@@ -41,8 +57,8 @@ interface PanelIntentChipsState extends SceneObjectState {
    */
   chipStates?: ChipStates;
   /**
-   * Set while the panel is actively breaching its alert threshold and has
-   * declared failure modes to attribute the breach to. undefined otherwise.
+   * Set while at least one failure mode's referenced alert rule is firing.
+   * undefined otherwise.
    */
   activeMatch?: ActiveMatch;
 }
@@ -74,32 +90,110 @@ export class PanelIntentChips extends SceneObjectBase<PanelIntentChipsState> {
       throw new Error('PanelIntentChips must be used as a VizPanel title item');
     }
 
-    const recompute = () => {
+    // Threshold/range chip coloring is driven by live panel data (Phase E.5).
+    const recomputeChipStates = () => {
       const dataState = sceneGraph.getData(this).state;
       const chipStates = computeChipStates(this.state.intent, dataState.data?.series ?? []);
-      const failureModes = Array.isArray(this.state.intent.failureModes) ? this.state.intent.failureModes : [];
-      const activeMatch = computeActiveMatch(chipStates, failureModes, this.state.activeMatch, Date.now());
-      this.setState({ chipStates, activeMatch });
+      this.setState({ chipStates });
     };
 
-    // Evaluate immediately with whatever data is already loaded.
-    recompute();
+    // Failure-mode firing is driven by the state of the Grafana alert rules the
+    // modes reference (Phase F). Fetched imperatively (RTK hooks are React-only)
+    // so the result lands in scene state where the summary bar / aggregation can
+    // read it. Skips the network entirely when no mode references a rule.
+    const refreshFiring = async () => {
+      const failureModes = Array.isArray(this.state.intent.failureModes) ? this.state.intent.failureModes : [];
+      const ruleStateByUid = await fetchRuleStates(this, failureModes);
+      const activeMatch = computeFiringModes(failureModes, ruleStateByUid, this.state.activeMatch, Date.now());
+      this.setState({ activeMatch });
+    };
 
-    // Re-evaluate whenever panel data refreshes.
-    const dataSub = sceneGraph.getData(this).subscribeToState(recompute);
+    // Evaluate immediately with whatever is already loaded.
+    recomputeChipStates();
+    void refreshFiring();
 
-    // Re-evaluate when intent is edited at runtime (e.g. via PanelIntentEditor).
+    const dataSub = sceneGraph.getData(this).subscribeToState(recomputeChipStates);
+
+    // Re-evaluate when intent is edited at runtime (e.g. via PanelIntentEditor) —
+    // the set of referenced rules may have changed.
     const intentSub = this.subscribeToState((next, prev) => {
       if (next.intent !== prev.intent) {
-        recompute();
+        recomputeChipStates();
+        void refreshFiring();
       }
     });
+
+    // Poll the alert rule state so a rule that starts/stops firing is reflected
+    // without a manual dashboard refresh.
+    const pollTimer = setInterval(() => void refreshFiring(), RULE_STATE_POLL_MS);
 
     return () => {
       dataSub.unsubscribe();
       intentSub.unsubscribe();
+      clearInterval(pollTimer);
     };
   };
+}
+
+/**
+ * Fetch the current firing state of every Grafana alert rule referenced by the
+ * panel's failure modes, keyed by rule UID. Returns an empty map (no network
+ * call) when no failure mode references a rule, on any error, or when the
+ * dashboard isn't saved yet. Uses the imperative RTK dispatch pattern (see
+ * AlertStatesDataLayer) because scene objects can't call React query hooks.
+ */
+async function fetchRuleStates(
+  model: PanelIntentChips,
+  failureModes: Array<{ alertRuleUid?: string }>
+): Promise<Map<string, RuleFiringState>> {
+  const result = new Map<string, RuleFiringState>();
+  const referencesRule = failureModes.some((fm) => !!fm.alertRuleUid);
+  if (!referencesRule) {
+    return result;
+  }
+  const panel = model.parent instanceof VizPanel ? model.parent : undefined;
+  if (!panel) {
+    return result;
+  }
+  const dashboardUid = getDashboardSceneFor(panel).state.uid;
+  if (!dashboardUid) {
+    return result;
+  }
+  const panelId = getPanelIdForVizPanel(panel);
+
+  try {
+    const res = await dispatch(
+      prometheusApi.endpoints.getGrafanaGroups.initiate({ dashboardUid, panelId }, { forceRefetch: true })
+    );
+    const groups = res.data?.data?.groups ?? [];
+    for (const group of groups) {
+      for (const rule of group.rules) {
+        if (rule.type !== PromRuleType.Alerting || !rule.uid) {
+          continue;
+        }
+        result.set(rule.uid, {
+          firing: rule.state === PromAlertingRuleState.Firing,
+          activeAt: earliestActiveAt(rule.alerts),
+        });
+      }
+    }
+  } catch {
+    // Best-effort: on any error we return whatever we have (likely empty), which
+    // renders the modes as declared-only rather than crashing the header.
+  }
+  return result;
+}
+
+/** Earliest active-alert timestamp (epoch ms) among a rule's active alerts. */
+function earliestActiveAt(alerts: Array<{ activeAt: string }> | undefined): number | undefined {
+  let earliest: number | undefined;
+  for (const alert of alerts ?? []) {
+    const t = Date.parse(alert.activeAt);
+    if (!Number.isNaN(t)) {
+      earliest = earliest === undefined ? t : Math.min(earliest, t);
+    }
+  }
+  return earliest;
 }
 
 // ---------------------------------------------------------------------------
@@ -149,27 +243,39 @@ export function computeChipStates(
 }
 
 /**
- * Decide whether the panel is actively matching a declared failure mode
- * (Phase F-lite). For now the trigger is deterministic: the panel is breaching
- * its alert threshold (`chipStates.alert === 'alerting'`) AND it declares at
- * least one failure mode to attribute the breach to. The match-start time is
- * preserved across recomputes so the popover can show "since HH:MM"; it resets
- * once the panel returns below the threshold.
+ * Compute which declared failure modes are currently firing, based on the live
+ * firing state of the Grafana alert rules they reference (Phase F). A failure
+ * mode fires iff it references a rule (`alertRuleUid`) that is currently firing,
+ * so badges light up independently — `#bot-traffic` can be red while `#ddos`
+ * stays quiet. A mode without a rule reference never fires here (declared-only).
  *
- * Step 2 (deferred) will let each failure mode carry its own condition so the
- * match can name the specific mode rather than attributing to all declared ones.
+ * `since` is the earliest firing rule's `activeAt`; when unavailable it falls
+ * back to the previous match's `since` (stable across recomputes) or `now`.
  */
-export function computeActiveMatch(
-  chipStates: ChipStates | undefined,
-  failureModes: Array<{ tag: string }>,
+export function computeFiringModes(
+  failureModes: Array<{ tag: string; alertRuleUid?: string }>,
+  ruleStateByUid: Map<string, RuleFiringState>,
   prev: ActiveMatch | undefined,
   now: number
 ): ActiveMatch | undefined {
-  const breaching = chipStates?.alert === 'alerting';
-  if (breaching && failureModes.length > 0) {
-    return prev ?? { since: now };
+  const matchedTags: string[] = [];
+  let earliest: number | undefined;
+  for (const fm of failureModes) {
+    if (!fm.alertRuleUid) {
+      continue;
+    }
+    const state = ruleStateByUid.get(fm.alertRuleUid);
+    if (state?.firing) {
+      matchedTags.push(fm.tag);
+      if (state.activeAt !== undefined) {
+        earliest = earliest === undefined ? state.activeAt : Math.min(earliest, state.activeAt);
+      }
+    }
   }
-  return undefined;
+  if (matchedTags.length === 0) {
+    return undefined;
+  }
+  return { matchedTags, since: earliest ?? prev?.since ?? now };
 }
 
 /**
@@ -190,7 +296,7 @@ function getWorstLastValue(series: DataFrame[], isLess: boolean): number | undef
       if (!len) {
         continue;
       }
-      const last = (field.values as number[])[len - 1];
+      const last: unknown = field.values[len - 1];
       if (typeof last !== 'number' || !Number.isFinite(last)) {
         continue;
       }
@@ -225,16 +331,20 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
   const thresholdProvenance = intent.provenance?.['expected_behavior.alert_threshold'];
   const failureModesProvenance = intent.provenance?.failure_modes;
 
-  // Show at most the top failure mode in the header to keep the row
-  // compact. The remaining ones are revealed via the tooltip when the
-  // user hovers the chip, and visible in full in the edit-mode section.
-  const primaryFailureMode = failureModes[0];
-  const extraFailureModes = failureModes.length - 1;
+  // Split failure modes into firing (referenced alert rule currently firing)
+  // and quiet, so each set renders as its own chip and badges light up
+  // independently (Phase F). Each chip shows a primary tag + "+N" to stay
+  // compact; the tooltip lists the full set.
+  const matchedTags = new Set(activeMatch?.matchedTags ?? []);
+  const firingModes = failureModes.filter((fm) => matchedTags.has(fm.tag));
+  const quietModes = failureModes.filter((fm) => !matchedTags.has(fm.tag));
+  const primaryQuietMode = quietModes[0];
+  const extraQuietModes = quietModes.length - 1;
 
   // Bail out cleanly if the intent block exists but has nothing the
   // chips would surface (purpose-only intent is rendered in the dashboard
   // summary bar, not at the panel-header level).
-  if (!expected?.normalRange && !expected?.alertThreshold && !primaryFailureMode) {
+  if (!expected?.normalRange && !expected?.alertThreshold && failureModes.length === 0) {
     return null;
   }
 
@@ -260,34 +370,35 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
           </span>
         </Tooltip>
       )}
-      {primaryFailureMode &&
-        (activeMatch ? (
-          // Phase F-lite: the panel is breaching its alert threshold, which
-          // matches the declared failure mode(s) — surface it as an active,
-          // red chip with an interactive popover (distinct `bolt` icon so it
-          // doesn't read as the runtime panel-error chip's exclamation-triangle).
+      {activeMatch &&
+        // Phase F: each firing failure mode gets its OWN red chip so every
+        // active mode is visible and can be investigated separately (rather than
+        // collapsing them behind a "+N"). Distinct `bolt` icon so it doesn't
+        // read as the runtime panel-error chip's exclamation-triangle.
+        firingModes.map((fm) => (
           <ActiveMatchChip
+            key={fm.tag}
             model={model}
-            failureModes={failureModes}
+            failureModes={[fm]}
             since={activeMatch.since}
             styles={styles}
           />
-        ) : (
-          <Tooltip content={failureModeTooltip(failureModes, failureModesProvenance)} placement="top">
-            {/*
-             * Phase E.4: a declared failure mode is a pattern the author
-             * wants the team to watch for — not an active incident. Render
-             * it as a quiet tag (no warning icon, `#` prefix to read as a
-             * label) so it does not visually collide with the runtime
-             * panel-error chip. The red active-match treatment lives in
-             * ActiveMatchChip above.
-             */}
-            <span className={failureModeChipClass(styles, failureModesProvenance)}>
-              #{primaryFailureMode.tag}
-              {extraFailureModes > 0 ? ` +${extraFailureModes}` : ''}
-            </span>
-          </Tooltip>
         ))}
+      {primaryQuietMode && (
+        <Tooltip content={failureModeTooltip(quietModes, failureModesProvenance)} placement="top">
+          {/*
+           * Phase E.4: a declared failure mode with no firing rule is a pattern
+           * the author wants the team to watch for — not an active incident.
+           * Render it as a quiet tag (no warning icon, `#` prefix to read as a
+           * label) so it does not visually collide with the runtime panel-error
+           * chip. The red active-match treatment lives in ActiveMatchChip above.
+           */}
+          <span className={failureModeChipClass(styles, failureModesProvenance)}>
+            #{primaryQuietMode.tag}
+            {extraQuietModes > 0 ? ` +${extraQuietModes}` : ''}
+          </span>
+        </Tooltip>
+      )}
     </div>
   );
 }
@@ -338,7 +449,7 @@ function ActiveMatchChip({ model, failureModes, since, styles }: ActiveMatchChip
     <Stack direction="column" gap={0.5}>
       <span className={styles.matchTitle}>{t('panel-intent-chips.match-title', 'Matches {{tags}}', { tags })}</span>
       <span className={styles.matchDetail}>
-        {t('panel-intent-chips.match-detail', 'Alert threshold breached since {{since}}', { since: sinceLabel })}
+        {t('panel-intent-chips.match-detail', 'Alert rule firing since {{since}}', { since: sinceLabel })}
       </span>
       {assistant.isAvailable && assistant.openAssistant && (
         <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={handleInvestigate}>

@@ -1128,14 +1128,15 @@ Preferences: {
 
 // Expected operating behavior for a dashboard or panel.
 IntentExpectedBehavior: {
-	normalRange?:     string
-	alertThreshold?:  string
-	notes?:           string
+	normalRange?:    string
+	alertThreshold?: string
+	notes?:          string
 }
 
 IntentFailureMode: {
-	tag:          string
-	description?: string
+	tag:           string
+	description?:  string
+	alertRuleUid?: string
 }
 
 IntentRelatedSLO: {
@@ -1150,25 +1151,25 @@ IntentRunbook: {
 }
 
 DashboardIntent: {
-	schemaVersion?:      int | *1
-	purpose?:            string
-	owner?:              string
-	expectedBehavior?:   IntentExpectedBehavior
-	failureModes?:       [...IntentFailureMode]
-	relatedSlos?:        [...IntentRelatedSLO]
-	runbooks?:           [...IntentRunbook]
-	provenance?:         {[string]: string}
-	lastVerifiedAt?:     string
+	schemaVersion?:    int | *1
+	purpose?:          string
+	owner?:            string
+	expectedBehavior?: IntentExpectedBehavior
+	failureModes?: [...IntentFailureMode]
+	relatedSlos?: [...IntentRelatedSLO]
+	runbooks?: [...IntentRunbook]
+	provenance?: {[string]: string}
+	lastVerifiedAt?: string
 }
 
 PanelIntent: {
-	schemaVersion?:      int | *1
-	purpose?:            string
-	owner?:              string
-	expectedBehavior?:   IntentExpectedBehavior
-	failureModes?:       [...IntentFailureMode]
-	relatedSlos?:        [...IntentRelatedSLO]
-	runbooks?:           [...IntentRunbook]
-	provenance?:         {[string]: string}
-	lastVerifiedAt?:     string
+	schemaVersion?:    int | *1
+	purpose?:          string
+	owner?:            string
+	expectedBehavior?: IntentExpectedBehavior
+	failureModes?: [...IntentFailureMode]
+	relatedSlos?: [...IntentRelatedSLO]
+	runbooks?: [...IntentRunbook]
+	provenance?: {[string]: string}
+	lastVerifiedAt?: string
 }

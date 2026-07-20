@@ -88,7 +88,11 @@ describe('dashboardSceneGraph', () => {
 
   describe('getAnomalousPanels', () => {
     function sceneWithPanels(
-      panels: Array<{ title: string; intent?: NonNullable<Panel['intent']>; activeMatch?: { since: number } }>
+      panels: Array<{
+        title: string;
+        intent?: NonNullable<Panel['intent']>;
+        activeMatch?: { matchedTags: string[]; since: number };
+      }>
     ) {
       const vizPanels = panels.map(
         (p, i) =>
@@ -107,16 +111,21 @@ describe('dashboardSceneGraph', () => {
       });
     }
 
-    it('returns only panels with an active match, including their failure-mode tags', () => {
+    it('returns only panels with an active match, and only the firing failure-mode tags', () => {
       const scene = sceneWithPanels([
-        { title: 'CPU', intent: { failureModes: [{ tag: 'cpu-saturation' }, { tag: 'noisy-neighbor' }] }, activeMatch: { since: 1 } },
+        {
+          title: 'CPU',
+          // Declares two modes but only one rule is firing, so only that tag is emitted.
+          intent: { failureModes: [{ tag: 'cpu-saturation' }, { tag: 'noisy-neighbor' }] },
+          activeMatch: { matchedTags: ['cpu-saturation'], since: 1 },
+        },
         { title: 'Memory', intent: { failureModes: [{ tag: 'oom' }] } },
         { title: 'No intent' },
       ]);
 
       const result = dashboardSceneGraph.getAnomalousPanels(scene);
 
-      expect(result).toEqual([{ title: 'CPU', tags: ['cpu-saturation', 'noisy-neighbor'] }]);
+      expect(result).toEqual([{ title: 'CPU', tags: ['cpu-saturation'] }]);
     });
 
     it('returns an empty array when no panel is matching', () => {

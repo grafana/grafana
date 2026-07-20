@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useReducer } from 'react';
 
 import { type OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
-import { BusEventWithPayload, type GrafanaTheme2 } from '@grafana/data';
+import { BusEventWithPayload, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
-import { Button, Field, IconButton, Input, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, IconButton, Input, Select, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
 
 import { dashboardEditActions } from '../edit-pane/shared';
 import { PanelIntentChips } from '../scene/PanelIntentChips';
@@ -32,7 +33,7 @@ interface PanelIntentFillPayload {
     alertThreshold?: string;
     notes?: string;
   };
-  failureModes?: Array<{ tag: string; notes?: string }>;
+  failureModes?: Array<{ tag: string; notes?: string; alertRuleUid?: string }>;
   relatedSlos?: string[];
   runbooks?: string[];
   provenance?: Record<string, string>;
@@ -167,6 +168,7 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
               failureModes: payload.failureModes.map((fm) => ({
                 tag: fm.tag,
                 description: fm.notes,
+                alertRuleUid: fm.alertRuleUid,
               })),
             }
           : {}),
@@ -348,6 +350,24 @@ interface FailureModesEditorProps {
 
 function FailureModesEditor({ failureModes, onChange, panel }: FailureModesEditorProps) {
   const styles = useStyles2(getStyles);
+
+  // Offer the panel's Grafana alert rules as options for linking a failure mode
+  // to a firing signal. allowCustomValue lets the author paste a rule UID that
+  // isn't in the (dashboard/panel-scoped) list.
+  const dashboardUID = getDashboardSceneFor(panel).state.uid ?? null;
+  const panelId = getPanelIdForVizPanel(panel);
+  const { rules } = usePanelCombinedRules({ dashboardUID, panelId });
+  const ruleOptions: Array<SelectableValue<string>> = rules
+    .filter((rule) => !!rule.uid)
+    .map((rule) => ({ label: rule.name, value: rule.uid }));
+
+  const ruleValue = (uid: string | undefined): SelectableValue<string> | null => {
+    if (!uid) {
+      return null;
+    }
+    return ruleOptions.find((opt) => opt.value === uid) ?? { label: uid, value: uid };
+  };
+
   return (
     <fieldset className={styles.group}>
       <legend className={styles.legend}>
@@ -378,6 +398,25 @@ function FailureModesEditor({ failureModes, onChange, panel }: FailureModesEdito
               onChange={(e) => {
                 const next = [...failureModes];
                 next[idx] = { ...fm, description: e.currentTarget.value || undefined };
+                onChange(next);
+              }}
+            />
+            <Select
+              aria-label={t('panel-intent-editor.failure-modes.alert-rule', 'Link alert rule')}
+              placeholder={t('panel-intent-editor.failure-modes.alert-rule-placeholder', 'Alert rule (optional)')}
+              options={ruleOptions}
+              value={ruleValue(fm.alertRuleUid)}
+              allowCustomValue
+              isClearable
+              width={28}
+              onChange={(selected: SelectableValue<string> | null) => {
+                const next = [...failureModes];
+                next[idx] = { ...fm, alertRuleUid: selected?.value || undefined };
+                onChange(next);
+              }}
+              onCreateOption={(customUid) => {
+                const next = [...failureModes];
+                next[idx] = { ...fm, alertRuleUid: customUid.trim() || undefined };
                 onChange(next);
               }}
             />

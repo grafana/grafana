@@ -20,6 +20,13 @@ jest.mock('../edit-pane/shared', () => ({
   },
 }));
 
+// FailureModesEditor lists the panel's alert rules for the per-mode "Link alert
+// rule" picker via this RTK-backed hook. Stub it so the editor renders without a
+// Redux store / network.
+jest.mock('app/features/alerting/unified/hooks/usePanelCombinedRules', () => ({
+  usePanelCombinedRules: () => ({ rules: [], loading: false }),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
@@ -137,6 +144,19 @@ describe('PanelIntentEditor', () => {
     // Removing the only failure mode should drop the array entirely so the
     // saved JSON doesn't carry an empty `failureModes: []`.
     expect(intentOf(vizPanel)?.failureModes).toBeUndefined();
+  });
+
+  it('exposes an alert-rule picker for each failure mode (Phase F)', async () => {
+    const { vizPanel } = buildPanel({
+      intent: { failureModes: [{ tag: 'bot-traffic', alertRuleUid: 'rule-1' }] },
+    });
+    render(<PanelIntentEditor panel={vizPanel} />);
+
+    // The per-mode "Link alert rule" picker is rendered and pre-filled with the
+    // stored UID (no matching option in the stubbed rule list, so it shows the raw uid).
+    const picker = screen.getByLabelText(/Link alert rule/i);
+    expect(picker).toBeInTheDocument();
+    expect(screen.getByText('rule-1')).toBeInTheDocument();
   });
 
   it('does not render the "Write" button when the assistant is unavailable', () => {
