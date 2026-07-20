@@ -5,15 +5,11 @@ import { type DataFrame, type DataQueryResponse, type Field, FieldType } from '@
 import { transformBackendResult } from './backendResultTransformer';
 
 // needed because the derived-fields functionality calls it
-jest.mock('@grafana/runtime', () => ({
+jest.mock('@grafana/runtime/unstable', () => ({
   // @ts-ignore
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: () => {
-        return { name: 'Loki1' };
-      },
-    };
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: () => {
+    return Promise.resolve({ name: 'Loki1' });
   },
 }));
 
@@ -65,7 +61,7 @@ const inputFrame: DataFrame = {
 };
 
 describe('backendResultTransformer', () => {
-  it('processes a logs dataframe correctly', () => {
+  it('processes a logs dataframe correctly', async () => {
     const response: DataQueryResponse = { data: [cloneDeep(inputFrame)] };
 
     const expectedFrame = cloneDeep(inputFrame);
@@ -81,7 +77,7 @@ describe('backendResultTransformer', () => {
 
     const expected: DataQueryResponse = { data: [expectedFrame] };
 
-    const result = transformBackendResult(
+    const result = await transformBackendResult(
       response,
       [
         {
@@ -94,38 +90,42 @@ describe('backendResultTransformer', () => {
     expect(result).toEqual(expected);
   });
 
-  it('applies maxLines correctly', () => {
+  it('applies maxLines correctly', async () => {
     const response: DataQueryResponse = { data: [cloneDeep(inputFrame)] };
 
-    const frame1: DataFrame = transformBackendResult(
-      response,
-      [
-        {
-          refId: 'A',
-          expr: LOKI_EXPR,
-        },
-      ],
-      []
+    const frame1: DataFrame = (
+      await transformBackendResult(
+        response,
+        [
+          {
+            refId: 'A',
+            expr: LOKI_EXPR,
+          },
+        ],
+        []
+      )
     ).data[0];
 
     expect(frame1.meta?.limit).toBeUndefined();
 
-    const frame2 = transformBackendResult(
-      response,
-      [
-        {
-          refId: 'A',
-          expr: LOKI_EXPR,
-          maxLines: 42,
-        },
-      ],
-      []
+    const frame2 = (
+      await transformBackendResult(
+        response,
+        [
+          {
+            refId: 'A',
+            expr: LOKI_EXPR,
+            maxLines: 42,
+          },
+        ],
+        []
+      )
     ).data[0];
 
     expect(frame2.meta?.limit).toBe(42);
   });
 
-  it('processed derived fields correctly', () => {
+  it('processed derived fields correctly', async () => {
     const input: DataFrame = {
       length: 1,
       fields: [
@@ -144,7 +144,7 @@ describe('backendResultTransformer', () => {
       ],
     };
     const response: DataQueryResponse = { data: [input] };
-    const result = transformBackendResult(
+    const result = await transformBackendResult(
       response,
       [{ refId: 'A', expr: '' }],
       [
@@ -161,7 +161,7 @@ describe('backendResultTransformer', () => {
     ).toBe(1);
   });
 
-  it('handle loki parsing errors', () => {
+  it('handle loki parsing errors', async () => {
     const clonedFrame = cloneDeep(inputFrame);
     clonedFrame.fields[2] = {
       name: 'labels',
@@ -174,7 +174,7 @@ describe('backendResultTransformer', () => {
     };
     const response: DataQueryResponse = { data: [clonedFrame] };
 
-    const result = transformBackendResult(
+    const result = await transformBackendResult(
       response,
       [
         {
@@ -187,7 +187,7 @@ describe('backendResultTransformer', () => {
     expect(result.data[0]?.meta?.custom?.error).toBe('Error when parsing some of the logs');
   });
 
-  it('improve loki escaping error message when query contains escape', () => {
+  it('improve loki escaping error message when query contains escape', async () => {
     const response: DataQueryResponse = {
       data: [],
       error: {
@@ -196,7 +196,7 @@ describe('backendResultTransformer', () => {
       },
     };
 
-    const result = transformBackendResult(
+    const result = await transformBackendResult(
       response,
       [
         {
@@ -211,7 +211,7 @@ describe('backendResultTransformer', () => {
     );
   });
 
-  it('do not change loki escaping error message when query does not contain escape', () => {
+  it('do not change loki escaping error message when query does not contain escape', async () => {
     const response: DataQueryResponse = {
       data: [],
       error: {
@@ -220,7 +220,7 @@ describe('backendResultTransformer', () => {
       },
     };
 
-    const result = transformBackendResult(
+    const result = await transformBackendResult(
       response,
       [
         {
@@ -233,12 +233,12 @@ describe('backendResultTransformer', () => {
     expect(result.error?.message).toBe('parse error at line 1, col 2: invalid char escape');
   });
 
-  it('resolves search words from queries with template variables', () => {
+  it('resolves search words from queries with template variables', async () => {
     const dataFrame = cloneDeep(inputFrame);
     dataFrame.meta = {
       executedQueryString: 'Expr: {service_name="tns-app"} |~ "(?i)template" |= "variable"',
     };
-    const result = transformBackendResult(
+    const result = await transformBackendResult(
       { data: [dataFrame] },
       [
         {

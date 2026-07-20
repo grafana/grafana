@@ -1,5 +1,5 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
-import { lastValueFrom, merge, type Observable, of, throwError } from 'rxjs';
+import { from, lastValueFrom, merge, type Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
@@ -390,8 +390,10 @@ export class LokiDatasource
     return super
       .query(fixedRequest)
       .pipe(
-        map((response) =>
-          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+        switchMap((response) =>
+          from(
+            transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+          )
         )
       );
   }

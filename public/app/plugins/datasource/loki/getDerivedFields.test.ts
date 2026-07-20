@@ -2,27 +2,23 @@ import { createDataFrame } from '@grafana/data';
 
 import { getDerivedFields } from './getDerivedFields';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: (datasourceUid?: string) => {
-        switch (datasourceUid) {
-          case 'tempo-datasource-uid':
-            return { name: 'Tempo', type: 'tempo' };
-          case 'xray-datasource-uid':
-            return { name: 'X-ray', type: 'grafana-x-ray-datasource' };
-        }
-        return { name: 'Loki1' };
-      },
-    };
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref?: { uid?: string }) => {
+    switch (ref?.uid) {
+      case 'tempo-datasource-uid':
+        return Promise.resolve({ name: 'Tempo', type: 'tempo' });
+      case 'xray-datasource-uid':
+        return Promise.resolve({ name: 'X-ray', type: 'grafana-x-ray-datasource' });
+    }
+    return Promise.resolve({ name: 'Loki1' });
   },
 }));
 
 describe('getDerivedFields', () => {
-  it('adds links to fields', () => {
+  it('adds links to fields', async () => {
     const df = createDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
-    const newFields = getDerivedFields(df, [
+    const newFields = await getDerivedFields(df, [
       {
         matcherRegex: 'trace1=(\\w+)',
         matcherType: 'regex',
@@ -109,14 +105,14 @@ describe('getDerivedFields', () => {
       url: '',
     });
   });
-  it('adds links to fields with labels', () => {
+  it('adds links to fields with labels', async () => {
     const df = createDataFrame({
       fields: [
         { name: 'labels', values: [{ trace3: 'bar', trace4: 'blank' }, { trace3: 'tar' }, {}, null] },
         { name: 'line', values: ['nothing', 'trace1=1234', 'trace2=aa', ''] },
       ],
     });
-    const newFields = getDerivedFields(df, [
+    const newFields = await getDerivedFields(df, [
       {
         matcherRegex: 'trace1=(\\w+)',
         matcherType: 'regex',
@@ -156,9 +152,9 @@ describe('getDerivedFields', () => {
     expect(trace4!.values).toEqual([null, null, null, null]);
   });
 
-  it('adds links to fields with no `matcherType`', () => {
+  it('adds links to fields with no `matcherType`', async () => {
     const df = createDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
-    const newFields = getDerivedFields(df, [
+    const newFields = await getDerivedFields(df, [
       {
         matcherRegex: 'trace1=(\\w+)',
         name: 'trace1',
@@ -174,9 +170,9 @@ describe('getDerivedFields', () => {
     });
   });
 
-  it('adds links to fields with `matcherType=regex`', () => {
+  it('adds links to fields with `matcherType=regex`', async () => {
     const df = createDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
-    const newFields = getDerivedFields(df, [
+    const newFields = await getDerivedFields(df, [
       {
         matcherRegex: 'trace1=(\\w+)',
         matcherType: 'regex',
@@ -193,14 +189,14 @@ describe('getDerivedFields', () => {
     });
   });
 
-  it('matches label keys using regex when matcherType is label', () => {
+  it('matches label keys using regex when matcherType is label', async () => {
     const df = createDataFrame({
       fields: [
         { name: 'labels', values: [{ traceId: 'abc' }, { traceID: 'xyz' }] },
         { name: 'line', values: ['log1', 'log2'] },
       ],
     });
-    const newFields = getDerivedFields(df, [
+    const newFields = await getDerivedFields(df, [
       {
         matcherRegex: 'traceI(d|D)',
         name: 'traceIdFromLabel',

@@ -1,17 +1,20 @@
 import { groupBy } from 'lodash';
 
 import { FieldType, type DataFrame, type DataLink, type Field } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { type DerivedFieldConfig } from './types';
 
-export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: DerivedFieldConfig[]): Field[] {
+export async function getDerivedFields(
+  dataFrame: DataFrame,
+  derivedFieldConfigs: DerivedFieldConfig[]
+): Promise<Field[]> {
   if (!derivedFieldConfigs.length) {
     return [];
   }
   const derivedFieldsGrouped = groupBy(derivedFieldConfigs, 'name');
 
-  const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
+  const newFields = await Promise.all(Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig));
 
   // line-field is the first string-field
   // NOTE: we should create some common log-frame-extra-string-field code somewhere
@@ -68,13 +71,15 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
 /**
  * Transform derivedField config into dataframe field with config that contains link.
  */
-function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field {
-  const dataSourceSrv = getDataSourceSrv();
+async function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Promise<Field> {
+  const dataLinks: DataLink[] = [];
 
-  const dataLinks = derivedFieldConfigs.reduce<DataLink[]>((acc, derivedFieldConfig) => {
+  for (const derivedFieldConfig of derivedFieldConfigs) {
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
-      const dsSettings = dataSourceSrv.getInstanceSettings(derivedFieldConfig.datasourceUid);
+      // getDataSourceInstance rejects when the data source cannot be resolved; keep the link
+      // usable and fall back to a placeholder name, matching the previous non-throwing lookup.
+      const dsInstance = await getDataSourceInstance({ uid: derivedFieldConfig.datasourceUid }).catch(() => undefined);
       const queryType = (type: string | undefined): string | undefined => {
         switch (type) {
           case 'tempo':
@@ -86,20 +91,20 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         }
       };
 
-      acc.push({
+      dataLinks.push({
         // Will be filled out later
         title: derivedFieldConfig.urlDisplayLabel || '',
         url: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         internal: {
-          query: { query: derivedFieldConfig.url, queryType: queryType(dsSettings?.type) },
+          query: { query: derivedFieldConfig.url, queryType: queryType(dsInstance?.type) },
           datasourceUid: derivedFieldConfig.datasourceUid,
-          datasourceName: dsSettings?.name ?? 'Data source not found',
+          datasourceName: dsInstance?.name ?? 'Data source not found',
         },
         targetBlank: derivedFieldConfig.targetBlank,
       });
     } else if (derivedFieldConfig.url) {
-      acc.push({
+      dataLinks.push({
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
         title: derivedFieldConfig.urlDisplayLabel || '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
@@ -107,8 +112,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         targetBlank: derivedFieldConfig.targetBlank,
       });
     }
-    return acc;
-  }, []);
+  }
 
   return {
     name: derivedFieldConfigs[0].name,

@@ -29,11 +29,11 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   };
 }
 
-function processStreamFrame(
+async function processStreamFrame(
   frame: DataFrame,
   query: LokiQuery | undefined,
   derivedFieldConfigs: DerivedFieldConfig[]
-): DataFrame {
+): Promise<DataFrame> {
   const custom: Record<string, string> = {
     ...frame.meta?.custom, // keep the original meta.custom
     // used by logsModel
@@ -52,7 +52,7 @@ function processStreamFrame(
   };
 
   const newFrame = setFrameMeta(frame, meta);
-  const derivedFields = getDerivedFields(newFrame, derivedFieldConfigs);
+  const derivedFields = await getDerivedFields(newFrame, derivedFieldConfigs);
   return {
     ...newFrame,
     fields: [...newFrame.fields, ...derivedFields],
@@ -63,11 +63,13 @@ function processStreamsFrames(
   frames: DataFrame[],
   queryMap: Map<string, LokiQuery>,
   derivedFieldConfigs: DerivedFieldConfig[]
-): DataFrame[] {
-  return frames.map((frame) => {
-    const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
-    return processStreamFrame(frame, query, derivedFieldConfigs);
-  });
+): Promise<DataFrame[]> {
+  return Promise.all(
+    frames.map((frame) => {
+      const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
+      return processStreamFrame(frame, query, derivedFieldConfigs);
+    })
+  );
 }
 
 function processMetricInstantFrames(frames: DataFrame[]): DataFrame[] {
@@ -136,11 +138,11 @@ function improveError(error: DataQueryError | undefined, queryMap: Map<string, L
   return error;
 }
 
-export function transformBackendResult(
+export async function transformBackendResult(
   response: DataQueryResponse,
   queries: LokiQuery[],
   derivedFieldConfigs: DerivedFieldConfig[]
-): DataQueryResponse {
+): Promise<DataQueryResponse> {
   const { data, error, ...rest } = response;
 
   // in the typescript type, data is an array of basically anything.
@@ -173,7 +175,7 @@ export function transformBackendResult(
     data: [
       ...processMetricRangeFrames(metricRangeFrames),
       ...processMetricInstantFrames(metricInstantFrames),
-      ...processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs),
+      ...(await processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs)),
     ],
   };
 }
