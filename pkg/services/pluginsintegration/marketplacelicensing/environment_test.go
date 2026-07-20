@@ -12,10 +12,10 @@ import (
 func TestOSSLicense(t *testing.T) {
 	const appURL = "https://grafana.example.com/raw"
 
-	environment := Provide(&setting.Cfg{AppURL: appURL})
+	marketplaceLicensing := Provide(&setting.Cfg{AppURL: appURL})
 
-	require.Equal(t, appURL, environment.AppURL())
-	token, err := environment.LicenseToken(context.Background(), "acme-widget")
+	require.Equal(t, appURL, marketplaceLicensing.AppURL())
+	token, err := marketplaceLicensing.LicenseToken(context.Background(), "acme-widget")
 	require.NoError(t, err)
 	require.Empty(t, token)
 }

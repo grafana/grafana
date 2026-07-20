@@ -104,7 +104,8 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 		p.logger.Warn("Failed to prepare marketplace license environment", "pluginId", pluginID)
 		return nil
 	}
-	licensePath, hasPath := "", false
+	var licensePath string
+	var hasPath bool
 	if p.cfg.MarketplaceLicenseDirectory != "" {
 		licensePath, hasPath = marketplacelicensing.LicensePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
 	}
