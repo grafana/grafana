@@ -105,7 +105,11 @@ export function StartInvestigationButton({
   const knownId = startedInvestigation?.id ?? lookedUpInvestigation?.id;
   const [shouldPoll, setShouldPoll] = useState(false);
 
-  const { data: polledInvestigation } = assistantApi.useGetAssistantInvestigationQuery(knownId ?? '', {
+  const {
+    data: polledInvestigation,
+    isError: isPollError,
+    refetch: refetchPoll,
+  } = assistantApi.useGetAssistantInvestigationQuery(knownId ?? '', {
     skip: !featureEnabled || !installed || !knownId,
     pollingInterval: shouldPoll ? ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS : 0,
   });
@@ -124,13 +128,14 @@ export function StartInvestigationButton({
   const investigationFailed = isAssistantInvestigationFailed(investigation?.state);
 
   useEffect(() => {
-    if (!knownId) {
+    if (!knownId || isPollError) {
+      // Stop on poll failure so we don't keep spinning "Generating…" with no recovery.
       setShouldPoll(false);
       return;
     }
     // Keep polling until a terminal state — unknown/paused must not freeze the UI.
     setShouldPoll(!isAssistantInvestigationTerminal(investigation?.state ?? 'pending'));
-  }, [knownId, investigation?.state]);
+  }, [knownId, investigation?.state, isPollError]);
 
   if (!featureEnabled || !installed) {
     return null;
@@ -247,6 +252,23 @@ export function StartInvestigationButton({
       >
         <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={handleStart}>
           <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
+        </Button>
+      </Tooltip>
+    );
+  }
+
+  // Poll failures must not leave the generating spinner stuck on a stale non-terminal
+  // snapshot from lookup/start. Offer an explicit retry that resumes polling on success.
+  if (isPollError && knownId && !isAssistantInvestigationTerminal(investigation?.state)) {
+    return (
+      <Tooltip
+        content={t(
+          'alerting.triage.instance-details-drawer.investigation-poll-failed',
+          'Could not refresh investigation status. Try again.'
+        )}
+      >
+        <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={() => refetchPoll()}>
+          <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-poll-retry">Retry status</Trans>
         </Button>
       </Tooltip>
     );

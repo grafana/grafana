@@ -3629,6 +3629,8 @@
         "investigation-checking": "Checking for investigation…",
         "investigation-lookup-failed": "Could not check for an existing investigation. Try again.",
         "investigation-lookup-retry": "Retry check",
+        "investigation-poll-failed": "Could not refresh investigation status. Try again.",
+        "investigation-poll-retry": "Retry status",
         "investigation-report-failed": "The investigation report failed or was cancelled. You can try again.",
         "investigation-running": "Generating investigation report…",
         "investigation-start-failed": "Could not start the investigation. Try again.",
