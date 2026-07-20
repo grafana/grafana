@@ -18,6 +18,7 @@ import {
   type SceneTimeRangeLike,
   type SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
+  timeShiftAlignmentProcessor,
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
@@ -27,7 +28,7 @@ import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { DEFAULT_COMPARE_OPTIONS, PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
-import { getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
+import { getCompareTimeRange } from './utils';
 
 export interface PanelTimeRangeState extends SceneTimeRangeState {
   enabled?: boolean;
