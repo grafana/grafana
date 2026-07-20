@@ -34,7 +34,10 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, ssoS
 	}
 
 	if err := s.Reload(context.Background(), *settings); err != nil {
-		s.log.Error("failed to apply JWT settings", "error", err)
+		s.log.Error("failed to apply JWT settings from SSO store, falling back to config file", "error", err)
+		if initErr := s.init(); initErr != nil {
+			s.log.Error("failed to apply JWT config file settings", "error", initErr)
+		}
 	}
 	return s, nil
 }

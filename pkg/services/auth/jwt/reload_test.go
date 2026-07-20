@@ -9,7 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -139,6 +141,27 @@ func TestReload_EmptyExpectClaims(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.True(t, s.Settings().Enabled)
+}
+
+func TestProvideService_ReloadFailureFallsBackToConfigFile(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.JWTAuth = setting.AuthJWTSettings{Enabled: false, HeaderName: "X-Config-File-JWT"}
+
+	ssoSettings := &ssosettingstests.FakeService{
+		ExpectedReloadablesRegistry: map[string]ssosettings.Reloadable{},
+		ExpectedSSOSetting: &models.SSOSettings{
+			Settings: map[string]any{
+				"enabled":       true,
+				"header_name":   "X-SSO-JWT",
+				"expect_claims": "{not-json",
+			},
+		},
+	}
+
+	s, err := ProvideService(cfg, nil, ssoSettings)
+	require.NoError(t, err)
+	require.Equal(t, "X-Config-File-JWT", s.Settings().HeaderName)
+	require.False(t, s.Settings().Enabled)
 }
 
 // TestReload_RaceWithVerify exercises Verify against concurrent Reload calls

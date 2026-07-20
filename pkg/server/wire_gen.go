@@ -639,11 +639,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	oauthtokenService := oauthtoken.ProvideService(socialService, authinfoimplService, cfg, registerer, serverLockService, tracingService, userAuthTokenService, featureToggles)
 	ossCachingService := caching.ProvideCachingService()
 	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
-	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
-	if err != nil {
-		return nil, err
-	}
-	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokenService, tracingService, cachingServiceClient, featureToggles, registerer, authService)
+	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokenService, tracingService, cachingServiceClient, featureToggles, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -739,6 +735,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	gateway := pushhttp.ProvideService(cfg, grafanaLive)
 	authnimplService := authnimpl.ProvideService(cfg, tracingService, userAuthTokenService, usageStats, registerer, authinfoimplService)
 	authnAuthenticator := authnimpl.ProvideAuthnServiceAuthenticateOnly(authnimplService)
+	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
+	if err != nil {
+		return nil, err
+	}
 	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles, authService)
 	logger := loggermw.Provide(cfg, featureToggles)
 	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
@@ -1378,11 +1378,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	oauthtokentestService := oauthtokentest.ProvideService()
 	ossCachingService := caching.ProvideCachingService()
 	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
-	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
-	if err != nil {
-		return nil, err
-	}
-	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokentestService, tracingService, cachingServiceClient, featureToggles, registerer, authService)
+	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokentestService, tracingService, cachingServiceClient, featureToggles, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1490,6 +1486,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	gateway := pushhttp.ProvideService(cfg, grafanaLive)
 	authnimplService := authnimpl.ProvideService(cfg, tracingService, userAuthTokenService, usageStats, registerer, authinfoimplService)
 	authnAuthenticator := authnimpl.ProvideAuthnServiceAuthenticateOnly(authnimplService)
+	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
+	if err != nil {
+		return nil, err
+	}
 	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles, authService)
 	logger := loggermw.Provide(cfg, featureToggles)
 	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()

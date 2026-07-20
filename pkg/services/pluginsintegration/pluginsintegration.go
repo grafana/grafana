@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -168,23 +167,22 @@ func ProvideClientWithMiddlewares(
 	cachingServiceClient *caching.CachingServiceClient,
 	features featuremgmt.FeatureToggles,
 	promRegisterer prometheus.Registerer,
-	jwtService jwt.JWTService,
 ) (*backend.MiddlewareHandler, error) {
-	return NewMiddlewareHandler(cfg, pluginRegistry, oAuthTokenService, tracer, cachingServiceClient, features, promRegisterer, pluginRegistry, jwtService)
+	return NewMiddlewareHandler(cfg, pluginRegistry, oAuthTokenService, tracer, cachingServiceClient, features, promRegisterer, pluginRegistry)
 }
 
 func NewMiddlewareHandler(
 	cfg *setting.Cfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingServiceClient *caching.CachingServiceClient, features featuremgmt.FeatureToggles,
-	promRegisterer prometheus.Registerer, registry registry.Service, jwtService jwt.JWTService,
+	promRegisterer prometheus.Registerer, registry registry.Service,
 ) (*backend.MiddlewareHandler, error) {
 	c := client.ProvideService(pluginRegistry)
-	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingServiceClient, features, promRegisterer, registry, jwtService)
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingServiceClient, features, promRegisterer, registry)
 	return backend.HandlerFromMiddlewares(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingServiceClient *caching.CachingServiceClient, features featuremgmt.FeatureToggles, promRegisterer prometheus.Registerer, registry registry.Service, jwtService jwt.JWTService) []backend.HandlerMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingServiceClient *caching.CachingServiceClient, features featuremgmt.FeatureToggles, promRegisterer prometheus.Registerer, registry registry.Service) []backend.HandlerMiddleware {
 	middlewares := []backend.HandlerMiddleware{
 		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry),
@@ -199,7 +197,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	middlewares = append(middlewares,
 		clientmiddleware.NewTracingHeaderMiddleware(),
-		clientmiddleware.NewClearAuthHeadersMiddleware(jwtService, &cfg.AuthProxy),
+		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewCachingMiddleware(cachingServiceClient),

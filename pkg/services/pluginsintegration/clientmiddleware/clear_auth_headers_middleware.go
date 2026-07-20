@@ -5,28 +5,22 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewClearAuthHeadersMiddleware creates a new backend.HandlerMiddleware
 // that will clear any outgoing HTTP headers that was part of the incoming
 // HTTP request and used when authenticating to Grafana.
-func NewClearAuthHeadersMiddleware(jwtService jwt.JWTService, cfgAuthProxy *setting.AuthProxySettings) backend.HandlerMiddleware {
+func NewClearAuthHeadersMiddleware() backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ClearAuthHeadersMiddleware{
-			BaseHandler:  backend.NewBaseHandler(next),
-			jwtService:   jwtService,
-			cfgAuthProxy: cfgAuthProxy,
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type ClearAuthHeadersMiddleware struct {
 	backend.BaseHandler
-	jwtService   jwt.JWTService
-	cfgAuthProxy *setting.AuthProxySettings
 }
 
 func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
@@ -36,9 +30,14 @@ func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend
 		return
 	}
 
-	jwtAuth := m.jwtService.Settings()
-	items := contexthandler.GetAuthHTTPHeaders(&jwtAuth, m.cfgAuthProxy)
-	for _, k := range items {
+	// Strip the auth-header snapshot frozen at request start (see
+	// contexthandler.WithAuthHTTPHeaders) so clearing always matches the headers
+	// that authenticated this request, regardless of any concurrent reload.
+	list := contexthandler.AuthHTTPHeaderListFromContext(reqCtx.Req.Context())
+	if list == nil {
+		return
+	}
+	for _, k := range list.Items {
 		h.DeleteHTTPHeader(k)
 	}
 }
