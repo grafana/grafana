@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { useFlagDashboardsFilterablePanels } from '@grafana/runtime/internal';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -62,15 +61,12 @@ export const StateTimelinePanel = ({
   const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
-  const filteringEnabled = useFlagDashboardsFilterablePanels();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const getFilterByGroupedLabelsModel = useCallback(
     (frame: DataFrame, seriesIdx: number | null | undefined) =>
-      filteringEnabled
-        ? getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters)
-        : undefined,
-    [filteringEnabled, getFiltersBasedOnGrouping, onAddAdHocFilters]
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
   );
 
   const { frames, warn } = useMemo(

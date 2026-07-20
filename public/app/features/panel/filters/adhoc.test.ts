@@ -1,4 +1,6 @@
 import { createDataFrame, FieldType } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type AdHocFilterItem } from '@grafana/ui';
 
 import { getFilterByGroupedLabels, getGroupedFilters } from './adhoc';
@@ -83,6 +85,14 @@ describe('getGroupedFilters', () => {
 });
 
 describe('getFilterByGroupedLabels', () => {
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.DashboardsFilterablePanels]: true });
+  });
+
+  afterEach(() => {
+    setTestFlags();
+  });
+
   const filterableFrame = createDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: [1, 2, 3] },
@@ -146,5 +156,21 @@ describe('getFilterByGroupedLabels', () => {
       { key: 'test', operator: '!=', value: 'value' },
       { key: 'label', operator: '!=', value: 'value2' },
     ]);
+  });
+
+  it('returns undefined when the filterable panels flag is disabled', () => {
+    setTestFlags({ [FlagKeys.DashboardsFilterablePanels]: false });
+
+    expect(getFilterByGroupedLabels(filterableFrame, 1, filtersGroupingFn, jest.fn())).toBeUndefined();
+  });
+
+  it('skips the flag check when checkFilterablePanelsFlag is false', () => {
+    setTestFlags({ [FlagKeys.DashboardsFilterablePanels]: false });
+
+    const model = getFilterByGroupedLabels(filterableFrame, 1, filtersGroupingFn, jest.fn(), {
+      checkFilterablePanelsFlag: false,
+    });
+
+    expect(model).toBeDefined();
   });
 });

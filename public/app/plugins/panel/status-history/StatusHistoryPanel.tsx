@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { useFlagDashboardsFilterablePanels } from '@grafana/runtime/internal';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -64,14 +63,11 @@ export const StatusHistoryPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
-  const filteringEnabled = useFlagDashboardsFilterablePanels();
 
   const getFilterByGroupedLabelsModel = useCallback(
     (frame: DataFrame, seriesIdx: number | null | undefined) =>
-      filteringEnabled
-        ? getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters)
-        : undefined,
-    [filteringEnabled, getFiltersBasedOnGrouping, onAddAdHocFilters]
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
   );
 
   const { frames, warn } = useMemo(

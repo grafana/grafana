@@ -119,7 +119,9 @@ export const TimeSeriesPanel = ({
 
   const getFilterByGroupedLabelsModel = useCallback(
     (frame: DataFrame, seriesIdx: number | null | undefined) =>
-      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters),
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters, {
+        checkFilterablePanelsFlag: false,
+      }),
     [getFiltersBasedOnGrouping, onAddAdHocFilters]
   );
 

@@ -1,4 +1,5 @@
 import { type DataFrame } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type AdHocFilterItem, type FilterByGroupedLabelsModel } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 
@@ -27,12 +28,28 @@ export function getGroupedFilters(
   return groupingFilters;
 }
 
+interface FilterByGroupedLabelsOptions {
+  /**
+   * The timeseries panel's tooltip filtering shipped with `dashboardUnifiedDrilldownControls` (GA) and
+   * must keep working when the experimental `dashboards.filterablePanels` flag is off, so it opts out.
+   */
+  checkFilterablePanelsFlag?: boolean;
+}
+
 export function getFilterByGroupedLabels(
   frame: DataFrame,
   seriesIdx: number | null | undefined,
   getFiltersBasedOnGrouping: ((items: AdHocFilterItem[]) => AdHocFilterItem[]) | undefined,
-  onAddAdHocFilters: ((items: AdHocFilterItem[]) => void) | undefined
+  onAddAdHocFilters: ((items: AdHocFilterItem[]) => void) | undefined,
+  { checkFilterablePanelsFlag = true }: FilterByGroupedLabelsOptions = {}
 ): FilterByGroupedLabelsModel | undefined {
+  if (
+    checkFilterablePanelsFlag &&
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsFilterablePanels, false)
+  ) {
+    return undefined;
+  }
+
   if (seriesIdx == null || getFiltersBasedOnGrouping == null || onAddAdHocFilters == null) {
     return undefined;
   }

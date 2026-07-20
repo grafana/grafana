@@ -11,7 +11,6 @@ import {
   getHistogramFields,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useFlagDashboardsFilterablePanels } from '@grafana/runtime/internal';
 import { TooltipDisplayMode, TooltipPlugin2, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
 import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
@@ -25,14 +24,11 @@ type Props = PanelProps<Options>;
 export const HistogramPanel = ({ data, options, width, height }: Props) => {
   const theme = useTheme2();
   const { getFiltersBasedOnGrouping, onAddAdHocFilters } = usePanelContext();
-  const filteringEnabled = useFlagDashboardsFilterablePanels();
 
   const getFilterByGroupedLabelsModel = useCallback(
     (frame: DataFrame, seriesIdx: number | null | undefined) =>
-      filteringEnabled
-        ? getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters)
-        : undefined,
-    [filteringEnabled, getFiltersBasedOnGrouping, onAddAdHocFilters]
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
   );
 
   const histogram = useMemo(() => {
