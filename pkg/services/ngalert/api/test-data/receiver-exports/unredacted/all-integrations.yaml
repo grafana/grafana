@@ -44,9 +44,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -97,9 +95,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -159,9 +155,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -215,9 +209,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -279,9 +271,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -333,9 +323,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -401,9 +389,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -460,9 +446,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -523,9 +507,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -586,9 +568,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -647,9 +627,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -733,9 +711,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -789,9 +765,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -844,9 +818,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -895,9 +867,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -948,9 +918,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -1003,9 +971,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
@@ -1036,9 +1002,7 @@ contactPoints:
                     -----END CERTIFICATE-----
                 clientKey: |-
                     -----BEGIN EC PRIVATE KEY-----
-                    MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                    AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                    EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                    THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                     -----END EC PRIVATE KEY-----
                 insecureSkipVerify: false
             url: grafana://noop
@@ -1088,9 +1052,7 @@ contactPoints:
                             -----END CERTIFICATE-----
                         clientKey: |-
                             -----BEGIN EC PRIVATE KEY-----
-                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
-                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
-                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            THIS-IS-A-FAKE-KEY-FOR-TESTING-PURPOSES-ONLY-NOT-A-REAL-PRIVATE-KEY=
                             -----END EC PRIVATE KEY-----
                         insecureSkipVerify: false
                     token_url: https://localhost/auth/token
