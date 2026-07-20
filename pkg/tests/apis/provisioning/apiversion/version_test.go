@@ -1,7 +1,6 @@
 package apiversion
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -209,7 +208,7 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 // when using the typed dynamic client (schema.GroupVersionResource with v1beta1).
 func TestIntegrationDynamicClientVersionConsistency(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
+
 	repoClient := common.GetRepositoryClientV1Beta1(helper.K8sTestHelper)
 
 	t.Run("create and get", func(t *testing.T) {
@@ -217,17 +216,17 @@ func TestIntegrationDynamicClientVersionConsistency(t *testing.T) {
 			Object: repositoryBody("dyn-v1beta1-repo", v1beta1APIVersion, helper.ProvisioningPath),
 		}
 
-		created, err := repoClient.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		created, err := repoClient.Resource.Create(t.Context(), repo, metav1.CreateOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, v1beta1APIVersion, created.GetAPIVersion())
 
-		fetched, err := repoClient.Resource.Get(ctx, "dyn-v1beta1-repo", metav1.GetOptions{})
+		fetched, err := repoClient.Resource.Get(t.Context(), "dyn-v1beta1-repo", metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, v1beta1APIVersion, fetched.GetAPIVersion())
 	})
 
 	t.Run("list", func(t *testing.T) {
-		list, err := repoClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := repoClient.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, v1beta1APIVersion, list.GetAPIVersion())
 
@@ -243,10 +242,9 @@ func TestIntegrationDynamicClientVersionConsistency(t *testing.T) {
 // endpoints exist with the expected resources.
 func TestIntegrationAPIGroupDiscoveryVersions(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	t.Run("API group lists both versions", func(t *testing.T) {
-		result := helper.AdminREST.Get().AbsPath("/apis/provisioning.grafana.app").Do(ctx)
+		result := helper.AdminREST.Get().AbsPath("/apis/provisioning.grafana.app").Do(t.Context())
 		require.NoError(t, result.Error())
 
 		raw, err := result.Raw()
@@ -266,7 +264,7 @@ func TestIntegrationAPIGroupDiscoveryVersions(t *testing.T) {
 	t.Run("v1beta1 resource list contains expected resources", func(t *testing.T) {
 		result := helper.AdminREST.Get().
 			AbsPath("/apis/provisioning.grafana.app/v1beta1").
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error())
 
 		raw, err := result.Raw()

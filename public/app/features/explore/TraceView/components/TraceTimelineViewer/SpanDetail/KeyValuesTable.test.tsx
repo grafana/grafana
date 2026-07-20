@@ -84,7 +84,7 @@ describe('KeyValuesTable tests', () => {
   it('renders a <CopyIcon /> for each data element', () => {
     setup();
 
-    expect(screen.getAllByRole('button')).toHaveLength(4);
+    expect(screen.getAllByRole('button', { hidden: true })).toHaveLength(4);
   });
 
   it('renders a link in json and properly escapes it', () => {
