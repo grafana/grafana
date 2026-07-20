@@ -59,8 +59,10 @@ func jwtFields() []jwtField {
 		stringField("expect_claims", func(s *setting.AuthJWTSettings) *string { return &s.ExpectClaims }),
 		stringField("jwk_set_url", func(s *setting.AuthJWTSettings) *string { return &s.JWKSetURL }),
 		stringField("jwk_set_file", func(s *setting.AuthJWTSettings) *string { return &s.JWKSetFile }),
+		stringField("jwk_set_value", func(s *setting.AuthJWTSettings) *string { return &s.JWKSetValue }),
 		stringField("jwk_set_bearer_token_file", func(s *setting.AuthJWTSettings) *string { return &s.JWKSetBearerTokenFile }),
 		stringField("key_file", func(s *setting.AuthJWTSettings) *string { return &s.KeyFile }),
+		stringField("key_value", func(s *setting.AuthJWTSettings) *string { return &s.KeyValue }),
 		stringField("key_id", func(s *setting.AuthJWTSettings) *string { return &s.KeyID }),
 		{
 			key: "cache_ttl",

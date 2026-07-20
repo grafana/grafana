@@ -172,6 +172,7 @@ func (s *AuthService) newHTTPKeySet(urlStr string) (*keySetHTTP, error) {
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
+					MinVersion:         tls.VersionTLS12,
 					Renegotiation:      tls.RenegotiateFreelyAsClient,
 					InsecureSkipVerify: s.settings.TlsSkipVerify,
 					RootCAs:            caCertPool,
