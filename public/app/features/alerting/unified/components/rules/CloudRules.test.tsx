@@ -55,7 +55,7 @@ describe('CloudRules — Mimir AM auto-sync gate', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationUI', 'alerting.syncExternalAlertmanager'] });
 
     it('disables the data source import button with a tooltip when Mimir AM auto-sync is configured', async () => {
-      setupAutoSyncConfig(server, { statusUid: 'mimir-uid' });
+      setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       const { user } = renderWithCloudResults();
 
@@ -87,12 +87,16 @@ describe('CloudRules — Mimir AM auto-sync gate', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
 
     it('enables the data source import button regardless of Config state', async () => {
-      setupAutoSyncConfig(server, { statusUid: 'mimir-uid' });
+      // Flag off ⇒ useIsAutoSyncActive short-circuits via skipToken; the Config query must
+      // never fire even when a sync is configured. Asserting the request never fired is what
+      // makes this fail on a missing gate — the button starts enabled anyway.
+      const { requestSpy } = setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       renderWithCloudResults();
 
       const btn = await ui.migrateButton.find();
       expect(btn).not.toHaveAttribute('aria-disabled', 'true');
+      expect(requestSpy).not.toHaveBeenCalled();
     });
   });
 });
