@@ -91,10 +91,12 @@ export function StartInvestigationButton({
     }
   }, [mutationMatchesCurrent, reset]);
 
-  const { data: lookedUpInvestigation, isLoading: isLookingUp } = assistantApi.useLookupInvestigationFromAlertQuery(
-    requestBody,
-    { skip: !featureEnabled || !installed }
-  );
+  const {
+    data: lookedUpInvestigation,
+    isLoading: isLookingUp,
+    isError: isLookupError,
+    refetch: refetchLookup,
+  } = assistantApi.useLookupInvestigationFromAlertQuery(requestBody, { skip: !featureEnabled || !installed });
 
   const knownId = startedInvestigation?.id ?? lookedUpInvestigation?.id;
   const [shouldPoll, setShouldPoll] = useState(false);
@@ -106,6 +108,7 @@ export function StartInvestigationButton({
 
   // Prefer the polled row (fresh state) over the create/lookup snapshots.
   const investigation = polledInvestigation ?? startedInvestigation ?? lookedUpInvestigation ?? undefined;
+  const investigationFailed = isAssistantInvestigationFailed(investigation?.state);
 
   useEffect(() => {
     if (!knownId) {
@@ -138,6 +141,22 @@ export function StartInvestigationButton({
           </Trans>
         </Text>
       </Stack>
+    );
+  }
+
+  // Non-404 lookup failures must not look like "no investigation" (would offer Start incorrectly).
+  if (isLookupError && !investigation) {
+    return (
+      <Tooltip
+        content={t(
+          'alerting.triage.instance-details-drawer.investigation-lookup-failed',
+          'Could not check for an existing investigation. Try again.'
+        )}
+      >
+        <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={() => refetchLookup()}>
+          <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-lookup-retry">Retry check</Trans>
+        </Button>
+      </Tooltip>
     );
   }
 
@@ -193,12 +212,27 @@ export function StartInvestigationButton({
     );
   }
 
-  if (isStartError || isAssistantInvestigationFailed(investigation?.state)) {
+  if (isStartError) {
     return (
       <Tooltip
         content={t(
-          'alerting.triage.instance-details-drawer.investigation-failed',
+          'alerting.triage.instance-details-drawer.investigation-start-failed',
           'Could not start the investigation. Try again.'
+        )}
+      >
+        <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={handleStart}>
+          <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
+        </Button>
+      </Tooltip>
+    );
+  }
+
+  if (investigationFailed && investigation) {
+    return (
+      <Tooltip
+        content={t(
+          'alerting.triage.instance-details-drawer.investigation-report-failed',
+          'The investigation report failed or was cancelled. You can try again.'
         )}
       >
         <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={handleStart}>

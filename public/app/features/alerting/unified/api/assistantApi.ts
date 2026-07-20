@@ -147,7 +147,11 @@ export const assistantApi = alertingApi.injectEndpoints({
           return { error: result.error };
         }
 
-        return { data: unwrapAssistantDataResponse(result.data) };
+        try {
+          return { data: unwrapAssistantDataResponse(result.data) };
+        } catch (error) {
+          return { error };
+        }
       },
     }),
 
