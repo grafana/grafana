@@ -159,7 +159,9 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		return r
 	}
 
+	fromLex := make(map[string]struct{}, len(lex))
 	for i, h := range lex {
+		fromLex[h.uid] = struct{}{}
 		r := get(h.uid)
 		r.Score += 1.0 / float64(rrfK+i+1)
 		r.Title = h.title
@@ -175,10 +177,12 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 			seen[v.UID] = struct{}{}
 			rank++
 			r.Score += 1.0 / float64(rrfK+rank)
-			if r.Title == "" {
+			// The index is the source of truth for display fields; the
+			// embeddings row may be stale. Membership, not emptiness,
+			// decides — "" is the legacy root-folder value, so an empty
+			// lexical folder must not be overwritten.
+			if _, ok := fromLex[v.UID]; !ok {
 				r.Title = v.Title
-			}
-			if r.Folder == "" {
 				r.Folder = v.Folder
 			}
 		}

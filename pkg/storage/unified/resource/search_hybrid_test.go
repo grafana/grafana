@@ -102,6 +102,28 @@ func TestFuseRRF_LexicalOnlySynthesizesTitleChunk(t *testing.T) {
 	assert.Nil(t, out[0].Chunks[0].Metadata)
 }
 
+func TestFuseRRF_LexicalRootFolderNotOverwrittenByStaleSemanticFolder(t *testing.T) {
+	// "" is the legacy root-folder value, not "unset": a dual-leg hit in
+	// the root folder must keep it even when the embeddings row carries a
+	// stale non-empty folder.
+	lex := []lexicalHit{{uid: "a", title: "A", folder: ""}}
+	sem := []vector.VectorSearchResult{
+		{UID: "a", Title: "A-stale", Folder: "old-folder", Subresource: "panel/1", Content: "c", Score: 0.1},
+	}
+
+	out := fuseRRF(hybridKey(), lex, sem)
+	require.Len(t, out, 1)
+	assert.Equal(t, "", out[0].Folder)
+	assert.Equal(t, "A", out[0].Title)
+
+	// semantic-only hits still get their display fields from the
+	// embeddings row
+	out = fuseRRF(hybridKey(), nil, sem)
+	require.Len(t, out, 1)
+	assert.Equal(t, "old-folder", out[0].Folder)
+	assert.Equal(t, "A-stale", out[0].Title)
+}
+
 func TestFuseRRF_TieBreaksByName(t *testing.T) {
 	lex := []lexicalHit{{uid: "z", title: "Z"}}
 	sem := []vector.VectorSearchResult{{UID: "m", Title: "M", Score: 0.1}}
