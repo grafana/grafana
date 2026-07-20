@@ -49,29 +49,13 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 		require.NoError(t, result.Error(), "should create file on default branch")
 
 		// Verify file exists in repository
-		fileObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files", "dashboard1.json")
-		require.NoError(t, err, "file should exist in repository")
-		require.NotNil(t, fileObj)
+		helper.RequireRepoFileExists(t, repoName, "dashboard1.json")
 
 		// Trigger sync and verify dashboard is created
 		helper.SyncAndWait(t, repoName)
 
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-
-			found := false
-			for _, dash := range dashboards.Items {
-				if dash.GetName() == "test-dashboard-1" {
-					found = true
-					assert.Equal(collect, repoName, dash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
-					break
-				}
-			}
-			assert.True(collect, found, "dashboard should be synced to Grafana")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should appear after sync")
+		dash := helper.RequireDashboards(t, "test-dashboard-1")[0]
+		require.Equal(t, repoName, dash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
 
 	t.Run("create file on new branch", func(t *testing.T) {
@@ -330,11 +314,8 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "should move file on default branch")
 
 		// Verify file moved
-		_, err = helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files", "moved", "dashboard.json")
-		require.NoError(t, err, "file should exist at new location")
-
-		_, err = helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files", "dashboard.json")
-		require.Error(t, err, "file should not exist at old location")
+		helper.RequireRepoFileExists(t, repoName, "moved", "dashboard.json")
+		helper.RequireRepoFileNotFound(t, repoName, "dashboard.json")
 	})
 }
 

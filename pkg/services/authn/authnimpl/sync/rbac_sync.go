@@ -232,6 +232,10 @@ func (s *RBACSync) cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []
 	// Since Cloud Admin/Editor/Viewer roles are not yet implemented one-to-one in the Grafana, it becomes a confusing experience for users,
 	// therefore we are doing granular mapping of all available functionality in the Grafana temporary.
 	var fixedCloudRoles = map[org.RoleType][]string{
+		// A user with no basic role (None) maps to no cloud roles. It is still a
+		// valid role, so login must not be blocked; any previously assigned cloud
+		// roles are removed below.
+		org.RoleNone:   {},
 		org.RoleViewer: {accesscontrol.FixedCloudViewerRole},
 		org.RoleEditor: {accesscontrol.FixedCloudEditorRole},
 		org.RoleAdmin:  {accesscontrol.FixedCloudAdminRole},
@@ -302,6 +306,13 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 	}
 
 	rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(ident)
+	if errors.Is(err, errInvalidCloudRole) {
+		// We have no cloud-role mapping for this org role (e.g. a newly
+		// introduced basic role). Skip syncing rather than blocking login; the
+		// mapping can be added later without causing an outage.
+		s.log.FromContext(ctx).Warn("Skipping cloud role sync; no mapping for org role", "role", ident.GetOrgRole(), "error", err)
+		return nil
+	}
 	if err != nil {
 		return err
 	}
