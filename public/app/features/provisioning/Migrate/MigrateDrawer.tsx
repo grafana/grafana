@@ -12,7 +12,7 @@ import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useSyncJob } from '../Wizard/hooks/useSyncJob';
 import { type StepStatusInfo } from '../Wizard/types';
 import { generateNewBranchName } from '../components/utils/newBranchName';
-import { validateBranchName } from '../utils/git';
+import { getRemoteConfig, validateBranchName } from '../utils/git';
 
 // The write workflow the migration uses: commit directly to the configured
 // branch, or open a pull request against a new branch.
@@ -25,12 +25,9 @@ function getRepoWorkflowState(repo?: Repository) {
   const workflows = repo?.spec?.workflows ?? [];
   const supportsWrite = workflows.includes('write');
   const supportsBranch = workflows.includes('branch');
-  const remote =
-    repo?.spec?.github ??
-    repo?.spec?.githubEnterprise ??
-    repo?.spec?.gitlab ??
-    repo?.spec?.bitbucket ??
-    repo?.spec?.git;
+  // Reuse the shared, type-driven provider lookup so the configured branch can't
+  // drift from the rest of the app when several provider blocks are present.
+  const remote = getRemoteConfig(repo?.spec);
   return {
     supportsWrite,
     supportsBranch,
@@ -186,12 +183,14 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     setConfirmDisableFolderIDs(false);
   }, [syncTarget]);
 
+  const trimmedBranch = branchRef.trim();
+
   // In the pull-request workflow the branch must be a valid git ref and must
   // differ from the configured branch: a PR against the configured branch is
   // meaningless, and the backend would silently fall back to a direct write
   // (and never return a pull-request URL).
-  const branchIsConfigured = isBranchWorkflow && configuredBranch !== '' && branchRef.trim() === configuredBranch;
-  const branchNameValid = !isBranchWorkflow || (Boolean(validateBranchName(branchRef)) && !branchIsConfigured);
+  const branchIsConfigured = isBranchWorkflow && configuredBranch !== '' && trimmedBranch === configuredBranch;
+  const branchNameValid = !isBranchWorkflow || (Boolean(validateBranchName(trimmedBranch)) && !branchIsConfigured);
 
   const canMigrate = Boolean(selectedRepo) && hasResourcesToMigrate && branchNameValid;
 
@@ -202,7 +201,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     await startJob(true, {
       syncTarget,
       generateNewFolderIDs: folderIDsApplicable ? generateNewFolderIDs : false,
-      ...(isBranchWorkflow && branchRef ? { branch: branchRef } : {}),
+      ...(isBranchWorkflow && trimmedBranch ? { branch: trimmedBranch } : {}),
       ...(isSelective ? { resources } : {}),
       ...(isBranchWorkflow && skipResourceDeletion ? { skipResourceDeletion: true } : {}),
     });
@@ -213,7 +212,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     folderIDsApplicable,
     generateNewFolderIDs,
     isBranchWorkflow,
-    branchRef,
+    trimmedBranch,
     isSelective,
     resources,
     skipResourceDeletion,
