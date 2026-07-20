@@ -34,10 +34,8 @@ func (s *httpServiceProxy) writeErrorResponse(rw http.ResponseWriter, statusCode
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(statusCode)
 
-	// Set error response to initial error message
 	errorBody := map[string]string{"error": message}
 
-	// Attempt to locate JSON portion in error message
 	re := regexp.MustCompile(`\{.*?\}`)
 	jsonPart := re.FindString(message)
 	if jsonPart != "" {
@@ -46,12 +44,10 @@ func (s *httpServiceProxy) writeErrorResponse(rw http.ResponseWriter, statusCode
 			errorBody["error"] = fmt.Sprintf("Invalid JSON format in error message. Raw error: %s", message)
 			s.logger.Error("failed to unmarshal JSON error message", "error", unmarshalErr)
 		} else {
-			// Extract relevant fields for a formatted error message
 			errorType, _ := jsonData["error"].(string)
 			errorDescription, ok := jsonData["error_description"].(string)
 			if !ok {
 				s.logger.Error("unable to convert error_description to string", "rawError", jsonData["error_description"])
-				// Attempt to just format the error as a string
 				errorDescription = fmt.Sprintf("%v", jsonData["error_description"])
 			}
 			if errorType == "" {
@@ -105,7 +101,6 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}
 
-	// Return the ResponseWriter for testing purposes
 	return rw, nil
 }
 
@@ -124,6 +119,7 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceI
 }
 
 func writeErrorResponse(rw http.ResponseWriter, code int, msg string) {
+	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(code)
 	errorBody := map[string]string{
 		"error": msg,
@@ -163,8 +159,6 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 
 		_, err = s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
 		if err != nil {
-			// The ResourceRequest function should handle writing the error response
-			// We log the error here to ensure it's captured
 			s.logger.Error("error in resource request", "error", err)
 			return
 		}
@@ -176,27 +170,29 @@ type armListEndpoint struct {
 	buildPath func(query url.Values) (path string, linkParams url.Values, err error)
 }
 
-var armListEndpoints = map[string]armListEndpoint{
-	"/subscriptions": {
-		service: azureMonitor,
-		buildPath: func(url.Values) (string, url.Values, error) {
-			return "/subscriptions?api-version=2019-03-01", nil, nil
+func armListEndpoints() map[string]armListEndpoint {
+	return map[string]armListEndpoint{
+		"/subscriptions": {
+			service: azureMonitor,
+			buildPath: func(url.Values) (string, url.Values, error) {
+				return "/subscriptions?api-version=2019-03-01", nil, nil
+			},
 		},
-	},
-	"/workspaces": {
-		service: azureMonitor,
-		buildPath: func(query url.Values) (string, url.Values, error) {
-			subscriptionID := query.Get("subscriptionId")
-			if subscriptionID == "" {
-				return "", nil, errors.New("subscriptionId is required")
-			}
-			path := fmt.Sprintf(
-				"/subscriptions/%s/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview",
-				url.PathEscape(subscriptionID),
-			)
-			return path, url.Values{"subscriptionId": {subscriptionID}}, nil
+		"/workspaces": {
+			service: azureMonitor,
+			buildPath: func(query url.Values) (string, url.Values, error) {
+				subscriptionID := query.Get("subscriptionId")
+				if subscriptionID == "" {
+					return "", nil, errors.New("subscriptionId is required")
+				}
+				path := fmt.Sprintf(
+					"/subscriptions/%s/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview",
+					url.PathEscape(subscriptionID),
+				)
+				return path, url.Values{"subscriptionId": {subscriptionID}}, nil
+			},
 		},
-	},
+	}
 }
 
 func (s *Service) armListHandler(ep armListEndpoint) func(rw http.ResponseWriter, req *http.Request) {
@@ -257,8 +253,10 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/azuremonitor/", s.handleResourceReq(azureMonitor))
 	mux.HandleFunc("/loganalytics/", s.handleResourceReq(azureLogAnalytics))
 	mux.HandleFunc("/resourcegraph/", s.handleResourceReq(azureResourceGraph))
-	for route, ep := range armListEndpoints {
-		mux.HandleFunc(route, s.armListHandler(ep))
+	for route, ep := range armListEndpoints() {
+		handler := s.armListHandler(ep)
+		mux.HandleFunc(route, handler)
+		mux.HandleFunc(route+"/{$}", handler)
 	}
 	return mux
 }

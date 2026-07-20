@@ -91,7 +91,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
+		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -111,7 +111,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=true", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
+		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -133,7 +133,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=false", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
+		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -155,7 +155,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=false&nextToken=page2", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
+		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -174,7 +174,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
+		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -196,7 +196,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions?listAll=true", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
+		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
 
 		res := rw.Result()
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -218,7 +218,7 @@ func TestHandleSubscriptions(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/subscriptions", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/subscriptions"])(rw, req)
+		s.armListHandler(armListEndpoints()["/subscriptions"])(rw, req)
 
 		require.Equal(t, http.StatusBadGateway, rw.Result().StatusCode)
 	})
@@ -230,7 +230,7 @@ func TestHandleWorkspaces(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/workspaces", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/workspaces"])(rw, req)
+		s.armListHandler(armListEndpoints()["/workspaces"])(rw, req)
 		require.Equal(t, http.StatusBadRequest, rw.Result().StatusCode)
 	})
 
@@ -247,7 +247,7 @@ func TestHandleWorkspaces(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "http://foo/workspaces?subscriptionId=sub-42", nil)
 		require.NoError(t, err)
-		s.armListHandler(armListEndpoints["/workspaces"])(rw, req)
+		s.armListHandler(armListEndpoints()["/workspaces"])(rw, req)
 
 		require.Equal(t, http.StatusOK, rw.Result().StatusCode)
 		require.Equal(t, "/subscriptions/sub-42/providers/Microsoft.OperationalInsights/workspaces", requestedPath)
@@ -274,9 +274,8 @@ func TestSkipTokenFromNextLink(t *testing.T) {
 
 func TestAppendSkipToken(t *testing.T) {
 	out := appendSkipToken("https://management.azure.com/subscriptions?api-version=2019-03-01", "page2")
-	u := out
-	require.Contains(t, u, "api-version=2019-03-01")
-	require.Contains(t, u, "skiptoken=page2")
+	require.Contains(t, out, "api-version=2019-03-01")
+	require.Contains(t, out, "skiptoken=page2")
 	require.Equal(t, "page2", skipTokenFromNextLink(out))
 }
 
@@ -319,9 +318,10 @@ func TestFetchArmPagesTruncation(t *testing.T) {
 	value, nextToken, truncated, err := fetchArmPages(context.Background(), srv.Client(), srv.URL+"/subscriptions?api-version=2019-03-01", true, 3)
 	require.NoError(t, err)
 	require.True(t, truncated)
-	require.Empty(t, nextToken)
 	require.Len(t, value, 3)
 	require.Equal(t, 3, *count)
+	require.NotEmpty(t, nextToken)
+	require.Equal(t, "page4", nextToken)
 }
 
 func readAllClose(res *http.Response) ([]byte, error) {

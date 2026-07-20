@@ -128,3 +128,28 @@ func Test_handleResourceReq(t *testing.T) {
 		t.Errorf("Unexpected result URL. Got %s, expecting %s", proxy.requestedURL, expectedURL)
 	}
 }
+
+func Test_newResourceMux_armListRouting(t *testing.T) {
+	srv, _, _ := newArmPagingServer(t, 1, 1)
+	s := newPaginationTestService(srv.URL, srv.Client())
+	mux := s.newResourceMux()
+
+	tests := []struct {
+		name       string
+		path       string
+		wantStatus int
+	}{
+		{"exact match returns results", "/subscriptions", http.StatusOK},
+		{"bare trailing slash is tolerated", "/subscriptions/", http.StatusOK},
+		{"arbitrary suffix is not swallowed", "/subscriptions/foo", http.StatusNotFound},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rw := httptest.NewRecorder()
+			req, err := http.NewRequest(http.MethodGet, "http://foo"+tt.path, nil)
+			require.NoError(t, err)
+			mux.ServeHTTP(rw, req)
+			require.Equal(t, tt.wantStatus, rw.Result().StatusCode)
+		})
+	}
+}

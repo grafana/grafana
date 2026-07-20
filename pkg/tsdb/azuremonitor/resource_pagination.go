@@ -43,7 +43,7 @@ func fetchArmPages(ctx context.Context, cli *http.Client, initialURL string, lis
 
 		nextURL = rebaseNextLink(initialURL, page.NextLink)
 		if nextURL != "" && pages >= maxPages {
-			return value, "", true, nil
+			return value, skipTokenFromNextLink(page.NextLink), true, nil
 		}
 	}
 	return value, "", false, nil
@@ -74,7 +74,7 @@ func fetchArmPage(ctx context.Context, cli *http.Client, rawURL string) (*armLis
 
 	res, err := cli.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("unexpected error: %v", err)
+		return nil, fmt.Errorf("unexpected error: %w", err)
 	}
 	defer func() { _ = res.Body.Close() }()
 
