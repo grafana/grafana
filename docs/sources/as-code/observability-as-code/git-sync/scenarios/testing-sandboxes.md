@@ -117,6 +117,15 @@ If you enable only the `write` workflow, saving a dashboard always commits direc
 4. The experience feels similar to using Grafana without Git Sync, but every change is committed to Git.
 5. When work is ready, you promote it to the `main` branch. Refer to [Promote a sandbox to main](#promote-a-sandbox-to-main).
 
+## Individual or shared sandboxes
+
+A sandbox can be scoped to a single user or shared by everyone. Each sandbox is a branch synced through its own Repository connection, so the choice is shaped by the per-stack limit of 10 repository connections. Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits/) for details.
+
+- **Individual sandboxes**: Give each user their own branch, such as `sandbox/alice` and `sandbox/bob`, each synced through a separate Repository connection. This provides the most isolation, but every sandbox consumes one of your 10 connections, so per-user sandboxes don't scale to many users. Reserve them for a small number of active users or short-lived projects, and delete the branch and its connection when the work is done to free the connection.
+- **Shared sandbox**: Use a single branch, such as `sandbox`, synced through one Repository connection that all users share. This uses only one connection regardless of how many users work in it, so it scales to any number of users. Separate users' work with different paths (for example, `alice/`, `bob/`) if you want some organization within the shared branch. The trade-off is less isolation, since everyone commits to the same branch.
+
+Both approaches promote to `main` the same way. Refer to [Promote a sandbox to main](#promote-a-sandbox-to-main).
+
 ## Protect sandbox branches
 
 Even though sandbox branches allow direct pushes, protect them against destructive operations. We recommend blocking force pushes on sandbox branches in your Git provider.
@@ -175,5 +184,6 @@ Refer to the following documents to learn more:
 - [Git Sync key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts/)
 - [Configure Git Sync as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-code/)
 - [Manage provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/provisioned-dashboards/)
+- [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits/)
 </content>
 </invoke>
