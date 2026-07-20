@@ -176,6 +176,8 @@ Use these settings to define how the legend appears in your visualization. For m
 | Mode | Use these settings to define how the legend appears in your visualization. Choose from:<ul><li>**List** - Displays the legend as a list. This is a default display mode of the legend.</li><li>**Table** - Displays the legend as a table.</li></ul> |
 | Placement | Select where to display the legend. Choose **Bottom** or **Right**. |
 | Width | Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**. |
+| Overflow | Control how overflow for long series names is handled. Choose **Ellipsis** to truncate the series names with "..." at the end, or **Wrap** to word-wrap the series names to multiple lines. This option is only displayed if you set the legend mode to **Table**. |
+| Limit | Limit how many series items are shown by default. The rest become expandable using a **Show all** link. |
 | Legend values | Select values to display in the legend. You can select more than one:<ul><li>**Percent** - The percentage of the whole.</li><li>**Value** - The raw numerical value.</li></ul> |
 
 <!-- prettier-ignore-end -->
