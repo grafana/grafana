@@ -13,8 +13,7 @@ jest.mock('react-use', () => ({
 
 const palette = ['#0000ff', '#ff0000'];
 
-const getTickLabels = () =>
-  Array.from(document.querySelectorAll('span')).map((tickEl) => tickEl.textContent);
+const getTickLabels = () => Array.from(document.querySelectorAll('span')).map((tickEl) => tickEl.textContent);
 
 describe('ColorScale', () => {
   describe('tick generation', () => {
