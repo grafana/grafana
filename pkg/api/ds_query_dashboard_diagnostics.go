@@ -66,6 +66,7 @@ type diagnosticsJob struct {
 	UID         string
 	State       diagnosticsJobState
 	CreatedAt   time.Time
+	finishedAt  time.Time // when the job reached a terminal state; retention is measured from here
 	PanelsTotal int
 	PanelsDone  int
 	Err         string
@@ -142,13 +143,18 @@ func (s *diagnosticsJobStore) create(total int, creator identity.Requester) *dia
 // it would orphan the run -- complete/fail would no-op and status/download would 404 after expensive
 // generation. Only complete/error jobs are eligible, so the store is bounded by (finished jobs) plus
 // however many runs are genuinely in flight.
+//
+// Retention is measured from finishedAt (not CreatedAt): a run that takes longer than the retention
+// window would otherwise be prunable the instant it completes, 404-ing a download for a job that just
+// finished. finishedAt is set exactly when the job goes terminal, so a fresh result always gets the
+// full window.
 func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
 	terminal := make([]string, 0, len(s.jobs))
 	for uid, j := range s.jobs {
 		if j.State == jobPending {
 			continue
 		}
-		if now.Sub(j.CreatedAt) > diagnosticsJobRetention {
+		if now.Sub(j.finishedAt) > diagnosticsJobRetention {
 			delete(s.jobs, uid)
 			continue
 		}
@@ -178,6 +184,7 @@ func (s *diagnosticsJobStore) complete(uid string, archive []byte) {
 	if j := s.jobs[uid]; j != nil {
 		j.State = jobComplete
 		j.archive = archive
+		j.finishedAt = time.Now()
 	}
 	s.mu.Unlock()
 }
@@ -187,6 +194,7 @@ func (s *diagnosticsJobStore) fail(uid string, err error) {
 	if j := s.jobs[uid]; j != nil {
 		j.State = jobError
 		j.Err = err.Error()
+		j.finishedAt = time.Now()
 	}
 	s.mu.Unlock()
 }

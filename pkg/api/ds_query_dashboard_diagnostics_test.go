@@ -240,13 +240,27 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		stale := s.create(1, creator)
 		s.complete(stale.UID, []byte("done"))
-		s.jobs[stale.UID].CreatedAt = time.Now().Add(-diagnosticsJobRetention - time.Minute)
+		// Retention is measured from finishedAt, so age that (not CreatedAt).
+		s.jobs[stale.UID].finishedAt = time.Now().Add(-diagnosticsJobRetention - time.Minute)
 
 		fresh := s.create(1, creator) // triggers pruneLocked
 		_, ok := s.snapshot(stale.UID, creator)
 		require.False(t, ok, "stale terminal job should have been pruned")
 		_, ok = s.snapshot(fresh.UID, creator)
 		require.True(t, ok, "fresh job should remain")
+	})
+
+	// A job that took longer than the retention window to generate must still be downloadable right
+	// after it completes: retention runs from finishedAt, not CreatedAt.
+	t.Run("keeps a slow job that just finished even if created long ago", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+		slow := s.create(1, creator)
+		s.jobs[slow.UID].CreatedAt = time.Now().Add(-diagnosticsJobRetention - time.Hour) // long run
+		s.complete(slow.UID, []byte("done"))                                              // finishedAt = now
+
+		s.create(1, creator) // triggers pruneLocked
+		_, ok := s.snapshot(slow.UID, creator)
+		require.True(t, ok, "a just-finished job must not be pruned by its old start time")
 	})
 
 	// A still-pending (in-flight) job is never evicted, even past the TTL: its goroutine is still
