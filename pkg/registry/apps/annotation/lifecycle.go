@@ -9,7 +9,7 @@ import (
 
 // startCleanup starts a background goroutine that periodically runs cleanup on the store
 func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr LifecycleManager, retentionTTL time.Duration) {
-	if retentionTTL == 0 {
+	if retentionTTL <= 0 {
 		a.logger.Info("Annotation cleanup disabled (no retention TTL configured)")
 		return
 	}
