@@ -40,10 +40,10 @@ test.describe(
     // Regression for the restore incident: the pre-fix flow read the dashboard at
     // resourceVersion=deleteRV-1, which authorizes against RBAC grants that the cleanup
     // sweep hard-deletes shortly after deletion — non-admin deleters got 403 forever.
-    // The fixed flow must fetch through the trash listing (deleter-keyed auth) instead.
-    test.describe('Restore fetches through the trash listing', () => {
+    // The fixed flow must fetch through the recently-deleted listing (deleter-keyed auth) instead.
+    test.describe('Restore fetches through the recently-deleted listing', () => {
       let dashboardUID: string;
-      const dashName = `E2E Trash Fetch ${SUFFIX}`;
+      const dashName = `E2E Deleted Fetch ${SUFFIX}`;
 
       test.beforeAll(async ({ request }) => {
         const response = await request.post(V1_API, {
@@ -62,7 +62,7 @@ test.describe(
         }
       });
 
-      test('restore reads the dashboard from the trash listing, not at a resourceVersion', async ({
+      test('restore reads the dashboard from the recently-deleted listing, not at a resourceVersion', async ({
         page,
         selectors,
       }) => {
@@ -77,13 +77,13 @@ test.describe(
 
         await expect(page.getByTestId(selectors.components.Alert.alertV2('success'))).toBeVisible();
 
-        const trashListFetch = dashboardApiRequests.find(
+        const deletedListingFetch = dashboardApiRequests.find(
           (entry) =>
             entry.startsWith('GET') &&
             entry.includes('labelSelector=grafana.app/get-trash=true') &&
             entry.includes(`fieldSelector=metadata.name=${dashboardUID}`)
         );
-        expect(trashListFetch).toBeDefined();
+        expect(deletedListingFetch).toBeDefined();
 
         // The pre-fix read: GET /dashboards/<uid>?resourceVersion=<deleteRV-1>
         const resourceVersionFetch = dashboardApiRequests.find(
@@ -110,7 +110,7 @@ test.describe(
 
       test('create denied with 403 shows the folder-permission guidance', async ({ page, selectors }) => {
         // Only the restore create is a POST to the dashboards collection; listing and the
-        // trash fetch are GETs, so they fall through untouched.
+        // per-uid deleted-dashboard fetch are GETs, so they fall through untouched.
         await page.route(/\/apis\/dashboard\.grafana\.app\/[^/]+\/namespaces\/[^/]+\/dashboards(\?.*)?$/, (route) => {
           if (route.request().method() !== 'POST') {
             return route.fallback();
@@ -137,8 +137,11 @@ test.describe(
         );
       });
 
-      test('empty trash-listing result shows the ask-an-administrator guidance', async ({ page, selectors }) => {
-        // The per-uid trash fetch is the only dashboards GET carrying a fieldSelector; an empty
+      test('empty recently-deleted listing result shows the ask-an-administrator guidance', async ({
+        page,
+        selectors,
+      }) => {
+        // The per-uid deleted-dashboard fetch is the only dashboards GET carrying a fieldSelector; an empty
         // list is what a user without access to the deleted dashboard receives (not a 403).
         await page.route(/\/apis\/dashboard\.grafana\.app\/.*fieldSelector=metadata\.name/, (route) => {
           if (route.request().method() !== 'GET') {

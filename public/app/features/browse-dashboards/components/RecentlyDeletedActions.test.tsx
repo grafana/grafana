@@ -117,7 +117,7 @@ describe('RecentlyDeletedActions', () => {
     expect(getRestoreModalProps().originCandidate).toBe('');
   });
 
-  it('fetches the deleted dashboard from the trash listing when restoring', async () => {
+  it('fetches the deleted dashboard from the recently-deleted listing when restoring', async () => {
     mockUseActionSelectionState.mockReturnValue({
       dashboard: { 'dashboard-1': true },
       folder: {},
@@ -181,7 +181,7 @@ describe('RecentlyDeletedActions', () => {
       );
     });
 
-    it('reports a fetch failure when the trash-listing read is denied', async () => {
+    it('reports a fetch failure when the recently-deleted listing read is denied', async () => {
       mockGetDeletedDashboard.mockRejectedValueOnce({
         status: 403,
         data: { message: 'forbidden' },
@@ -197,8 +197,8 @@ describe('RecentlyDeletedActions', () => {
       );
     });
 
-    it('reports a fetch failure when the dashboard is not in the trash listing', async () => {
-      // Empty trash-list result: the permission-aware listing returns nothing
+    it('reports a fetch failure when the dashboard is not in the recently-deleted listing', async () => {
+      // Empty recently-deleted result: the permission-aware listing returns nothing
       // this user is allowed to see.
       mockGetDeletedDashboard.mockResolvedValueOnce(undefined);
 

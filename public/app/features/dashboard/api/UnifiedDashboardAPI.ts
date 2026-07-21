@@ -145,7 +145,7 @@ export class UnifiedDashboardAPI
 
   async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
     // Table format carries only metadata — no spec/status available for conversion
-    // filtering. Both v1 and v2 hit the same backend trash store, so delegate to v1.
+    // filtering. Both v1 and v2 hit the same backend deleted-items store, so delegate to v1.
     return this.v1Client.listDeletedDashboards(options);
   }
 
@@ -154,8 +154,8 @@ export class UnifiedDashboardAPI
     if (item && failedFromVersion(item, ['v2'])) {
       return await this.v2Client.getDeletedDashboard(name);
     }
-    // An empty v1 result means not visible / not in trash, not a version
-    // mismatch — both clients hit the same trash store, so don't try v2.
+    // An empty v1 result means not visible / no longer among the deleted dashboards, not a
+    // version mismatch — both clients query the same deleted-items store, so don't try v2.
     return item;
   }
 

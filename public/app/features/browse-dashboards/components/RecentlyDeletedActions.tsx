@@ -95,9 +95,9 @@ export function RecentlyDeletedActions() {
       const api = await getDashboardAPI();
       const dashboard = await api.getDeletedDashboard(uid);
       if (!dashboard) {
-        // Trash listing is deleter/permission-aware: empty result means this user
-        // cannot read the deleted dashboard (or it is no longer in the trash).
-        logWarning('Deleted dashboard not found in trash listing during restore', { uid });
+        // The recently-deleted listing is deleter/permission-aware: empty result means
+        // this user cannot read the deleted dashboard (or it is no longer recently deleted).
+        logWarning('Deleted dashboard not visible in the recently-deleted listing during restore', { uid });
         return { uid, error: 'not_found', step: 'fetch' as const };
       }
 
@@ -119,7 +119,7 @@ export function RecentlyDeletedActions() {
     results.forEach((result, index) => {
       const dashboardUid = selectedDashboards[index];
       if (result.status === 'rejected') {
-        // Rejections come from the trash-listing fetch — the read path of the
+        // Rejections come from the recently-deleted listing fetch — the read path of the
         // restore pipeline.
         failed.push({
           uid: dashboardUid,
@@ -137,7 +137,7 @@ export function RecentlyDeletedActions() {
       } else {
         // Every settled promise lands in exactly one bucket: an empty error
         // message or an untitled dashboard must not fall through, or the
-        // measurement below and the trash-cache cleanup drift out of sync.
+        // measurement below and the deletedDashboardsCache cleanup drift out of sync.
         successful.push(dashboardUid);
       }
     });

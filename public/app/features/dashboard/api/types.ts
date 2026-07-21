@@ -40,9 +40,9 @@ export interface DashboardAPI<G, T> {
   restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO>;
   /** List all deleted dashboards (table format — metadata only, no spec) */
   listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse>;
-  /** Get a single soft-deleted dashboard (full resource incl. spec) via the trash listing.
-   *  Uses the trash-aware auth check (deleter-keyed), unlike getDashboard at a resourceVersion.
-   *  Resolves undefined when the dashboard is not in the trash or not visible to this user. */
+  /** Get a single soft-deleted dashboard (full resource incl. spec) via the recently-deleted listing.
+   *  Uses the deletion-aware auth check (deleter-keyed), unlike getDashboard at a resourceVersion.
+   *  Resolves undefined when the dashboard is no longer recently deleted or not visible to this user. */
   getDeletedDashboard(name: string): Promise<Resource<T> | undefined>;
   /** Get a single dashboard resource by name */
   getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<T>>;

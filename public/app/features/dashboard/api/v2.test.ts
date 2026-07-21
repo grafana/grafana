@@ -521,9 +521,9 @@ describe('v2 dashboard API', () => {
   });
 
   describe('getDeletedDashboard', () => {
-    it('should query the trash listing by name and return the matching item', async () => {
-      const trashItem = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } };
-      mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [trashItem] });
+    it('should query the recently-deleted listing by name and return the matching item', async () => {
+      const deletedItem = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } };
+      mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [deletedItem] });
 
       const api = new K8sDashboardV2API();
       const result = await api.getDeletedDashboard('deleted-dash-1');
@@ -532,10 +532,10 @@ describe('v2 dashboard API', () => {
         labelSelector: 'grafana.app/get-trash=true',
         fieldSelector: 'metadata.name=deleted-dash-1',
       });
-      expect(result).toBe(trashItem);
+      expect(result).toBe(deletedItem);
     });
 
-    it('should return undefined when the trash listing is empty', async () => {
+    it('should return undefined when the recently-deleted listing is empty', async () => {
       mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [] });
 
       const api = new K8sDashboardV2API();
