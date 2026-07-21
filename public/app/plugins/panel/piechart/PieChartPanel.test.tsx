@@ -344,7 +344,7 @@ describe('PieChartPanel', () => {
       expect(labels[1]).toHaveTextContent('Firefox4040%');
     });
 
-    it('uses black or white label text (WCAG contrast pick) when gradientFills is active', () => {
+    it('picks black or white label text for readability when gradientFills is active', () => {
       // Color must be set on field.config directly; the panel reads pre-resolved config,
       // it does not apply fieldConfig defaults itself (applyFieldOverrides does that in prod).
       const gradientColor = { mode: FieldColorModeId.Gradient, fixedColor: '#00ff00', gradientColorTo: '#ff0000' };
