@@ -184,7 +184,7 @@ const HeatmapPanelViz = ({
     const isRight = placement === 'right';
 
     return (
-      <VizLayout.Legend placement={placement} width={isRight ? options.legend.width : undefined}>
+      <VizLayout.Legend placement={placement} width={isRight ? options.legend.width : undefined} maxHeight="20%">
         <div className={isRight ? styles.colorScaleWrapperVertical : styles.colorScaleWrapper}>
           <ColorScale
             colorPalette={info.heatmapColors.palette}
