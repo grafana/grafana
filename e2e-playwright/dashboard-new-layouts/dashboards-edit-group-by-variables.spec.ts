@@ -20,12 +20,12 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new group by variable', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can add a new group by variable', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       const variable: Variable = {
         type: 'groupby',

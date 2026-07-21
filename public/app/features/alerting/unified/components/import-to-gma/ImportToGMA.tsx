@@ -5,7 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -78,7 +78,7 @@ export interface ImportFormValues {
   step1Completed: boolean;
   step1Skipped: boolean;
   /**
-   * Name of the imported policy tree (value for __grafana_managed_route__ label).
+   * Name of the imported policy tree (the config identifier for the imported Alertmanager config).
    * For now, this is free-form as we don't have an API to retrieve the list of available policy trees.
    */
   policyTreeName: string;
@@ -372,16 +372,8 @@ function ImportWizardContent() {
           targetDatasourceUID: values.targetDatasourceUID,
         };
 
-        const { notificationSettings, extraLabels } = buildRoutingParams(
-          values.selectedRoutingTree,
-          Boolean(config.featureToggles.alertingPolicyRoutingSettings)
-        );
-
-        if (notificationSettings !== undefined) {
-          await importRules({ ...baseParams, notificationSettings });
-        } else {
-          await importRules({ ...baseParams, extraLabels });
-        }
+        const { notificationSettings } = buildRoutingParams(values.selectedRoutingTree);
+        await importRules({ ...baseParams, notificationSettings });
       }
 
       setImportStatus('success');

@@ -43,11 +43,11 @@ const mockUseRecentlyDeletedStateManager = useRecentlyDeletedStateManager as jes
 >;
 const mockUseActionSelectionState = useActionSelectionState as jest.MockedFunction<typeof useActionSelectionState>;
 const mockRestoreModal = RestoreModal as jest.MockedFunction<typeof RestoreModal>;
-// onRestore only calls getDashboard, so the mock stubs just that method.
+// onRestore only calls getDeletedDashboard, so the mock stubs just that method.
 const mockGetDashboardAPI = getDashboardAPI as unknown as jest.MockedFunction<
-  () => Promise<{ getDashboard: jest.Mock }>
+  () => Promise<{ getDeletedDashboard: jest.Mock }>
 >;
-const mockGetDashboard = jest.fn();
+const mockGetDeletedDashboard = jest.fn();
 
 describe('RecentlyDeletedActions', () => {
   beforeEach(() => {
@@ -62,22 +62,10 @@ describe('RecentlyDeletedActions', () => {
     });
 
     (deletedDashboardsCache.removeItems as jest.Mock) = jest.fn();
-    (deletedDashboardsCache.getAsTable as jest.Mock) = jest.fn().mockResolvedValue({
-      rows: [
-        {
-          cells: [],
-          object: {
-            metadata: { name: 'dashboard-1', resourceVersion: '1', creationTimestamp: '2024-01-01T00:00:00Z' },
-          },
-        },
-      ],
-      columnDefinitions: [],
-      metadata: { resourceVersion: '1' },
-    });
 
     mockRestoreDashboard.mockResolvedValue({ data: { name: 'dashboard-1' } });
-    mockGetDashboard.mockResolvedValue({ metadata: { name: 'dashboard-1', annotations: {} }, spec: {} });
-    mockGetDashboardAPI.mockResolvedValue({ getDashboard: mockGetDashboard });
+    mockGetDeletedDashboard.mockResolvedValue({ metadata: { name: 'dashboard-1', annotations: {} }, spec: {} });
+    mockGetDashboardAPI.mockResolvedValue({ getDeletedDashboard: mockGetDeletedDashboard });
   });
 
   it('renders restore button', () => {
@@ -129,35 +117,11 @@ describe('RecentlyDeletedActions', () => {
     expect(getRestoreModalProps().originCandidate).toBe('');
   });
 
-  it('fetches the dashboard at the resource version before the delete event when restoring', async () => {
-    // The trash listing returns the delete event's RV. The fix subtracts one
-    // so the GET resolves to the live dashboard, not the tombstone.
-    const deleteRV = '2067893224188780544';
-    const previousRV = '2067893224188780543';
-
-    (deletedDashboardsCache.getAsTable as jest.Mock).mockResolvedValueOnce({
-      rows: [
-        {
-          cells: [],
-          object: {
-            metadata: { name: 'dashboard-1', resourceVersion: deleteRV, creationTimestamp: '2024-01-01T00:00:00Z' },
-          },
-        },
-      ],
-      columnDefinitions: [],
-      metadata: { resourceVersion: deleteRV },
-    });
-
+  it('fetches the deleted dashboard from the recently-deleted listing when restoring', async () => {
     mockUseActionSelectionState.mockReturnValue({
       dashboard: { 'dashboard-1': true },
       folder: {},
     });
-
-    const getDashboard = jest.fn().mockResolvedValue({
-      metadata: { name: 'dashboard-1', annotations: {} },
-      spec: {},
-    });
-    mockGetDashboardAPI.mockResolvedValue({ getDashboard });
 
     const { user } = render(<RecentlyDeletedActions />);
     await user.click(screen.getByRole('button', { name: 'Restore' }));
@@ -168,7 +132,7 @@ describe('RecentlyDeletedActions', () => {
       await onConfirm!('folder-target');
     });
 
-    expect(getDashboard).toHaveBeenCalledWith('dashboard-1', { resourceVersion: previousRV });
+    expect(mockGetDeletedDashboard).toHaveBeenCalledWith('dashboard-1');
   });
 
   it('does not preselect a folder when selected dashboards have mixed origins', async () => {
@@ -217,17 +181,33 @@ describe('RecentlyDeletedActions', () => {
       );
     });
 
-    it('reports a fetch failure when the read at the pre-delete resource version fails', async () => {
-      // The June 2026 incident shape: the GET at the trash RV 404s before any
-      // restore call is made.
-      mockGetDashboard.mockRejectedValueOnce(fetchError404);
+    it('reports a fetch failure when the recently-deleted listing read is denied', async () => {
+      mockGetDeletedDashboard.mockRejectedValueOnce({
+        status: 403,
+        data: { message: 'forbidden' },
+        config: { url: '' },
+      });
 
       await driveRestore();
 
       expect(jest.mocked(logMeasurement)).toHaveBeenCalledWith(
         'browse_dashboards.restore_result',
         { total_count: 1, success_count: 0, failure_count: 1 },
-        { status: 'failure', error_status_codes: '404', failed_steps: 'fetch' }
+        { status: 'failure', error_status_codes: '403', failed_steps: 'fetch' }
+      );
+    });
+
+    it('reports a fetch failure when the dashboard is not in the recently-deleted listing', async () => {
+      // Empty recently-deleted result: the permission-aware listing returns nothing
+      // this user is allowed to see.
+      mockGetDeletedDashboard.mockResolvedValueOnce(undefined);
+
+      await driveRestore();
+
+      expect(jest.mocked(logMeasurement)).toHaveBeenCalledWith(
+        'browse_dashboards.restore_result',
+        { total_count: 1, success_count: 0, failure_count: 1 },
+        { status: 'failure', error_status_codes: 'unknown', failed_steps: 'fetch' }
       );
     });
 
@@ -252,15 +232,7 @@ describe('RecentlyDeletedActions', () => {
         dashboard: { 'dashboard-1': true, 'dashboard-2': true },
         folder: {},
       });
-      (deletedDashboardsCache.getAsTable as jest.Mock).mockResolvedValue({
-        rows: ['dashboard-1', 'dashboard-2'].map((name) => ({
-          cells: [],
-          object: { metadata: { name, resourceVersion: '1', creationTimestamp: '2024-01-01T00:00:00Z' } },
-        })),
-        columnDefinitions: [],
-        metadata: { resourceVersion: '1' },
-      });
-      mockGetDashboard.mockRejectedValueOnce(fetchError404);
+      mockGetDeletedDashboard.mockRejectedValueOnce(fetchError404);
 
       await driveRestore();
 

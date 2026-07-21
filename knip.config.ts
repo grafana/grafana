@@ -14,7 +14,6 @@ const externalisedDatasources = [
   'grafana-testdata-datasource',
   'graphite',
   'influxdb',
-  'jaeger',
   'loki',
   'mysql',
 ];
