@@ -280,6 +280,9 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 	if !ok {
 		return response.Error(http.StatusTooManyRequests, "too many dashboard diagnostics jobs are already in progress; try again once one finishes", nil)
 	}
+	if hs.diagnosticsMetrics != nil {
+		hs.diagnosticsMetrics.RecordStarted(c.Req.Context(), diagnostics.ScopeDashboard)
+	}
 
 	// Snapshot the identity + cache flag + Query V2 signal; the goroutine must not touch the request
 	// or its context (both are tied to the HTTP request's lifetime, which ends when we return 202).
@@ -308,15 +311,24 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 		defer func() {
 			if r := recover(); r != nil {
 				dashboardDiagnosticsJobs.fail(uid, fmt.Errorf("dashboard diagnostics panic: %v", r))
+				if hs.diagnosticsMetrics != nil {
+					hs.diagnosticsMetrics.RecordCompleted(detachedCtx, diagnostics.ScopeDashboard, diagnostics.ResultError)
+				}
 			}
 		}()
 
 		archive, err := hs.buildDashboardDiagnosticsArchive(detachedCtx, user, skipDSCache, useQueryDataNew, req, uid)
 		if err != nil {
 			dashboardDiagnosticsJobs.fail(uid, err)
+			if hs.diagnosticsMetrics != nil {
+				hs.diagnosticsMetrics.RecordCompleted(detachedCtx, diagnostics.ScopeDashboard, diagnostics.ResultError)
+			}
 			return
 		}
 		dashboardDiagnosticsJobs.complete(uid, archive)
+		if hs.diagnosticsMetrics != nil {
+			hs.diagnosticsMetrics.RecordCompleted(detachedCtx, diagnostics.ScopeDashboard, diagnostics.ResultSuccess)
+		}
 	}(job.UID, user, skipDSCache, useQueryDataNew, reqDTO)
 
 	return response.JSON(http.StatusAccepted, map[string]any{"uid": job.UID, "state": jobPending})

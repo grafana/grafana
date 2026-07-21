@@ -52,6 +52,14 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "at least one query is required", nil)
 	}
 
+	result := diagnostics.ResultError
+	if hs.diagnosticsMetrics != nil {
+		hs.diagnosticsMetrics.RecordStarted(ctx, diagnostics.ScopePanel)
+		defer func() {
+			hs.diagnosticsMetrics.RecordCompleted(ctx, diagnostics.ScopePanel, result)
+		}()
+	}
+
 	captureCtx, harBuffer := harcapture.WithCapture(ctx)
 
 	// Force a live query: a query-result cache hit returns without a datasource round trip, so HTTP
@@ -110,6 +118,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	header := http.Header{}
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
+	result = diagnostics.ResultSuccess
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
 }
 
