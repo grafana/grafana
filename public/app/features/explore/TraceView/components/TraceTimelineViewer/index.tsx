@@ -27,6 +27,7 @@ import type TNil from '../types/TNil';
 import type TTraceTimeline from '../types/TTraceTimeline';
 import { type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type Trace, type TraceSpanReference, type CriticalPathSection } from '../types/trace';
+import { countSummarySpans } from '../utils/summary-span';
 
 import { type TraceFlameGraphs } from './SpanDetail';
 import TimelineHeaderRow from './TimelineHeaderRow/TimelineHeaderRow';
@@ -141,41 +142,47 @@ const UnthemedTraceTimelineViewer = memo(function UnthemedTraceTimelineViewer(pr
   const styles = useStyles2(getStyles);
   const [height, setHeight] = useState(0);
 
+  const numSummarySpans = countSummarySpans(trace.spans);
+
   const handleCollapseAll = useCallback(() => {
     collapseAll(trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
       datasourceType,
       grafana_version: config.buildInfo.version,
+      numSummarySpans,
       type: 'collapseAll',
     });
-  }, [collapseAll, datasourceType, trace.spans]);
+  }, [collapseAll, datasourceType, numSummarySpans, trace.spans]);
 
   const handleCollapseOne = useCallback(() => {
     collapseOne(trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
       datasourceType,
       grafana_version: config.buildInfo.version,
+      numSummarySpans,
       type: 'collapseOne',
     });
-  }, [collapseOne, datasourceType, trace.spans]);
+  }, [collapseOne, datasourceType, numSummarySpans, trace.spans]);
 
   const handleExpandAll = useCallback(() => {
     expandAll();
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
       datasourceType,
       grafana_version: config.buildInfo.version,
+      numSummarySpans,
       type: 'expandAll',
     });
-  }, [expandAll, datasourceType]);
+  }, [expandAll, datasourceType, numSummarySpans]);
 
   const handleExpandOne = useCallback(() => {
     expandOne(trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
       datasourceType,
       grafana_version: config.buildInfo.version,
+      numSummarySpans,
       type: 'expandOne',
     });
-  }, [expandOne, datasourceType, trace.spans]);
+  }, [expandOne, datasourceType, numSummarySpans, trace.spans]);
 
   useEffect(() => {
     mergeShortcuts({
