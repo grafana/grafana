@@ -12,6 +12,7 @@ import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { getStatusColor } from '../utils/repositoryStatus';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
+import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { formatTimestamp } from '../utils/time';
 
 import { JobAlerts } from './JobAlerts';
@@ -48,7 +49,7 @@ function formatJobDuration(job: Job): string | null {
   return intervalToAbbreviatedDurationString(interval, true);
 }
 
-const getJobColumns = (showAuthor: boolean) => [
+const getJobColumns = (showAuthor: boolean, repo: Repository) => [
   {
     id: 'jobId',
     header: t('provisioning.recent-jobs.column-job-id', 'Job ID'),
@@ -77,12 +78,20 @@ const getJobColumns = (showAuthor: boolean) => [
           header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
           cell: ({ row: { original: job } }: JobCell) => {
             const annotations = job.metadata?.annotations;
-            const sender = annotations?.[AnnoWebhookSender];
-            if (sender) {
-              return t('provisioning.recent-jobs.triggered-by-webhook', '{{sender}} (via Webhook)', { sender });
+            return annotations?.[AnnoWebhookSender] || annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
+          },
+        },
+        {
+          id: 'origin',
+          header: t('provisioning.recent-jobs.column-origin', 'Origin'),
+          cell: ({ row: { original: job } }: JobCell) => {
+            if (job.metadata?.annotations?.[AnnoWebhookSender] && repo.spec) {
+              const provider = getRepositoryTypeConfig(repo.spec.type)?.label;
+              if (provider) {
+                return provider;
+              }
             }
-            const author = annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
-            return author || t('provisioning.recent-jobs.triggered-by-system', 'System');
+            return t('provisioning.recent-jobs.origin-grafana', 'Grafana');
           },
         },
       ]
@@ -201,7 +210,7 @@ export function RecentJobs({ repo }: Props) {
     repositoryName: repo.metadata?.name ?? 'x',
   });
   const showAuthor = useBooleanFlagValue('provisioning.userAttribution', false);
-  const jobColumns = useMemo(() => getJobColumns(showAuthor), [showAuthor]);
+  const jobColumns = useMemo(() => getJobColumns(showAuthor, repo), [showAuthor, repo]);
   const hasLoadedDataRef = useRef(false);
 
   if (activeQuery.data || historicQuery.data) {

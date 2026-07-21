@@ -39,7 +39,7 @@ describe('RecentJobs', () => {
       setTestFlags({ 'provisioning.userAttribution': true });
     });
 
-    it('shows the triggering user', async () => {
+    it('shows the triggering user with Grafana as the origin', async () => {
       setup([
         createJob({
           metadata: {
@@ -51,6 +51,7 @@ describe('RecentJobs', () => {
       ]);
 
       expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+      expect(screen.getByText('Grafana')).toBeInTheDocument();
     });
 
     it('falls back to the author email when the name is missing', async () => {
@@ -67,13 +68,15 @@ describe('RecentJobs', () => {
       expect(await screen.findByText('ada@example.com')).toBeInTheDocument();
     });
 
-    it('shows System when no user triggered the job', async () => {
+    it('leaves the triggered by cell empty when no user triggered the job', async () => {
       setup([createJob()]);
 
-      expect(await screen.findByText('System')).toBeInTheDocument();
+      expect(await screen.findByText('job-1')).toBeInTheDocument();
+      expect(screen.queryByText('System')).not.toBeInTheDocument();
+      expect(screen.getByText('Grafana')).toBeInTheDocument();
     });
 
-    it('shows the webhook sender', async () => {
+    it('shows the webhook sender with the provider as the origin', async () => {
       setup([
         createJob({
           metadata: {
@@ -84,7 +87,8 @@ describe('RecentJobs', () => {
         }),
       ]);
 
-      expect(await screen.findByText('amalavet (via Webhook)')).toBeInTheDocument();
+      expect(await screen.findByText('amalavet')).toBeInTheDocument();
+      expect(screen.getByText('GitHub')).toBeInTheDocument();
     });
 
     it('shows webhook attribution in the expanded job specification', async () => {

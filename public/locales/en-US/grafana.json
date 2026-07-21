@@ -13864,14 +13864,14 @@
       "column-duration": "Duration",
       "column-job-id": "Job ID",
       "column-message": "Message",
+      "column-origin": "Origin",
       "column-started": "Started",
       "column-status": "Status",
       "column-triggered-by": "Triggered by",
       "error-loading-active-jobs": "Error loading active jobs",
       "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs",
-      "triggered-by-system": "System",
-      "triggered-by-webhook": "{{sender}} (via Webhook)"
+      "origin-grafana": "Grafana"
     },
     "repository-actions": {
       "connection": "Connection",
