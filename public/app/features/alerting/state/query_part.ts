@@ -59,6 +59,11 @@ export class QueryPart {
       return;
     }
 
+    // Validate index is a safe non-negative integer to prevent prototype/property injection
+    if (!Number.isInteger(index) || index < 0) {
+      return;
+    }
+
     if (strValue === '' && this.def.params[index].optional) {
       this.params.splice(index, 1);
     } else {
