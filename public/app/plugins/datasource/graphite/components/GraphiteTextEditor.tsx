@@ -56,6 +56,7 @@ export function GraphiteTextEditor({ rawQuery }: Props) {
     <QueryInput
       value={rawQuery}
       onChange={updateQuery}
+      aria-label="Graphite query"
       placeholder="Enter a Graphite query (run with Shift+Enter)"
       onRunQuery={runQuery}
       onBlur={runQuery}
