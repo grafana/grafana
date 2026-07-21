@@ -8,6 +8,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1957,6 +1958,23 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		require.Len(t, calls, 1)
 		require.True(t, calls[0].created)
 		require.NoError(t, calls[0].err)
+	})
+
+	t.Run("folder title with path traversal is rejected before touching the repo", func(t *testing.T) {
+		repo := makeRepo(t)
+		// A folder titled with traversal segments must never reach the backend.
+		// No Read/Create expectations are set, so the mock fails if either is called.
+		inputTree, _ := makeInputTree("../../etc")
+
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
+
+		var calls []fnCall
+		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, safepath.ErrPathTraversalAttempt)
+		require.Len(t, calls, 1)
+		require.False(t, calls[0].created)
 	})
 
 	t.Run("with metadata - existing folder does not write metadata file by default", func(t *testing.T) {
