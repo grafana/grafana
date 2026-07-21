@@ -197,8 +197,9 @@ type ResultsMetadata struct {
 type ResultItem struct {
 	Resource ResourceRef `json:"resource"`
 
-	// Score is present only when a text query was evaluated.
-	Score float64 `json:"score,omitempty"`
+	// Score is present only when a text query was evaluated. A pointer so a real
+	// score of 0 is still distinguishable from "no text query" (absent).
+	Score *float64 `json:"score,omitempty"`
 
 	// Fields holds the JSON values for the requested (or default) fields.
 	// Array-typed fields are returned as JSON arrays. Absent fields are omitted.
