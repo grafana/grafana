@@ -121,7 +121,6 @@ describe('RecentJobs', () => {
             annotations: {
               'provisioning.grafana.app/author': 'Ada Lovelace',
               'provisioning.grafana.app/authorEmail': 'ada@example.com',
-              'grafana.app/createdBy': 'user:abc123',
             },
           },
         }),
@@ -131,9 +130,7 @@ describe('RecentJobs', () => {
 
       expect(await screen.findByText('author')).toBeInTheDocument();
       expect(screen.getByText('authorEmail')).toBeInTheDocument();
-      expect(screen.getByText('createdBy')).toBeInTheDocument();
       expect(screen.getByText(/ada@example\.com/)).toBeInTheDocument();
-      expect(screen.getByText(/user:abc123/)).toBeInTheDocument();
     });
   });
 

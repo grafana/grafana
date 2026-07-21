@@ -26,7 +26,6 @@ const AnnoAuthor = 'provisioning.grafana.app/author';
 const AnnoAuthorEmail = 'provisioning.grafana.app/authorEmail';
 const AnnoWebhookSender = 'provisioning.grafana.app/webhookSender';
 const AnnoWebhookSenderId = 'provisioning.grafana.app/webhookSenderId';
-const AnnoCreatedBy = 'grafana.app/createdBy';
 
 type JobCell = {
   row: {
@@ -151,7 +150,6 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       ['webhookSenderId', AnnoWebhookSenderId],
       ['author', AnnoAuthor],
       ['authorEmail', AnnoAuthorEmail],
-      ['createdBy', AnnoCreatedBy],
     ]) {
       const value = annotations?.[anno];
       if (value) {
