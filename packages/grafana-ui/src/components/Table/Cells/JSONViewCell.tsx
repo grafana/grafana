@@ -26,14 +26,19 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   if (typeof value === 'string') {
     try {
       value = JSON.parse(value);
+      // Handle double-escaped JSON strings (e.g., from Azure Monitor)
+      // Keep parsing until we get a non-string value
+      while (typeof value === 'string') {
+        value = JSON.parse(value);
+      }
     } catch {} // ignore errors
-  } else {
-    try {
-      // JSON may refer to itself, which errors on stringify
-      displayValue = JSON.stringify(value, null, ' ');
-    } catch {
-      displayValue = undefined; // if it won't stringify, mark undefined
-    }
+  }
+
+  try {
+    // JSON may refer to itself, which errors on stringify
+    displayValue = JSON.stringify(value, null, ' ');
+  } catch {
+    displayValue = undefined; // if it won't stringify, mark undefined
   }
 
   const links = getCellLinks(field, row) || [];

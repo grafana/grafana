@@ -1210,6 +1210,11 @@ export function buildInspectValue(
     if (typeof value === 'string') {
       try {
         toStringify = JSON.parse(value);
+        // Handle double-escaped JSON strings (e.g., from Azure Monitor)
+        // Keep parsing until we get a non-string value
+        while (typeof toStringify === 'string') {
+          toStringify = JSON.parse(toStringify);
+        }
       } catch {
         // do nothing, toStringify will stay as the raw string
       }
