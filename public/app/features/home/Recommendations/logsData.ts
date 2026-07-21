@@ -203,8 +203,10 @@ export async function fetchLogsVolume(): Promise<LogsVolume> {
     // volume_range needs Loki >= 3.0; degrade to stats + CTA only.
     return { series: null, spike: null };
   }
-  // Series with an empty label value are aggregation leftovers, not real sources.
-  const series = (response?.data?.result ?? []).filter((s) => s.metric?.[sourceLabel]);
+  // The total-volume sparkline sums every series: some Lokis aggregate the whole volume under an
+  // empty label value, and dropping those would blank the graph. Spike detection (inside
+  // detectSpike) still requires a nameable source, so leftovers can never fire the alert.
+  const series = response?.data?.result ?? [];
   return { series: buildVolumeSparkline(series), spike: detectSpike(series, sourceLabel) };
 }
 

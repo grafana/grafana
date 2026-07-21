@@ -196,7 +196,7 @@ describe('fetchLogsVolume', () => {
     labelValuesByUid = { 'team-loki': { service_name: ['a', 'b'] } };
   });
 
-  it('drops empty-label series and sums the rest per timestamp', async () => {
+  it('sums every series per timestamp, including empty-label aggregation leftovers', async () => {
     volumeByUid = {
       'team-loki': [
         {
@@ -220,7 +220,7 @@ describe('fetchLogsVolume', () => {
     const volume = await fetchLogsVolume();
 
     expect(volume.series?.x?.values).toEqual([1_000_000, 2_000_000]);
-    expect(volume.series?.y.values).toEqual([15, 25]);
+    expect(volume.series?.y.values).toEqual([1_015, 25]);
     expect(volume.series?.y.state?.range).toBeDefined();
     expect(volume.spike).toBeNull();
 
@@ -231,6 +231,48 @@ describe('fetchLogsVolume', () => {
       aggregateBy: 'labels',
       targetLabels: 'service_name',
     });
+  });
+
+  it('renders the sparkline when the whole volume aggregates under an empty label value', async () => {
+    volumeByUid = {
+      'team-loki': [
+        {
+          metric: { service_name: '' },
+          values: [
+            [1_000, '400'],
+            [2_000, '750'],
+            [3_000, '760'],
+          ],
+        },
+      ],
+    };
+
+    const volume = await fetchLogsVolume();
+
+    expect(volume.series?.x?.values).toEqual([1_000_000, 2_000_000, 3_000_000]);
+    expect(volume.series?.y.values).toEqual([400, 750, 760]);
+    expect(volume.spike).toBeNull();
+  });
+
+  it('never fires the spike alert for an unnameable (empty-label) series', async () => {
+    const mb = 10_000_000;
+    volumeByUid = {
+      'team-loki': [
+        {
+          metric: { service_name: '' },
+          values: [
+            [1_000, `${mb}`],
+            [2_000, `${mb}`],
+            [3_000, `${10 * mb}`],
+          ],
+        },
+      ],
+    };
+
+    const volume = await fetchLogsVolume();
+
+    expect(volume.series).not.toBeNull();
+    expect(volume.spike).toBeNull();
   });
 
   it('fires the max-ratio source when the last bucket clears both thresholds', async () => {
