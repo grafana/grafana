@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
+import { isAppGeneratedResource } from '../../utils/managedResource';
 import { type ListedResource, type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
 
 /**
@@ -101,17 +102,21 @@ function ancestorTitles(uid: string, folderByUid: Map<string, ListedResource>): 
  * Folder-scoped kinds nest under the folder that directly contains them (and
  * roll up at the root into a synthetic "General" row); non-folder kinds get one
  * synthetic folder row per kind. Already-managed resources are dropped — the
- * migrate backend only takes unmanaged ones. Folders with nothing to migrate are
- * left out entirely.
+ * migrate backend only takes unmanaged ones. App-generated resources (e.g. the
+ * SLO app's dashboards/folders) are dropped too: the backend export skips them,
+ * so offering them as selectable here would let a user pick resources that never
+ * actually migrate. Folders with nothing to migrate are left out entirely.
  */
 function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[] {
-  const folderByUid = new Map(folders.map((folder) => [folder.uid, folder]));
+  const folderByUid = new Map(
+    folders.filter((folder) => !isAppGeneratedResource(folder.uid)).map((folder) => [folder.uid, folder])
+  );
   const directByFolder = new Map<string, MigratableResource[]>();
   const rootResources: MigratableResource[] = [];
   const syntheticRows: FolderRow[] = [];
 
   for (const { kind, raw } of results) {
-    const unmanaged = raw.filter((r) => !r.managed);
+    const unmanaged = raw.filter((r) => !r.managed && !isAppGeneratedResource(r.uid));
 
     if (!kind.folderScoped) {
       if (unmanaged.length > 0) {
