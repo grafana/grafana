@@ -121,7 +121,11 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...props} />);
 
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalledWith(props.row, props.origQuery, expect.anything());
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalledWith(
+        props.row,
+        props.origQuery,
+        expect.anything()
+      );
       const [, , timeRangeArg] = (props.logContextProvider.getInitContextFilters as jest.Mock).mock.calls[2];
       expect(timeRangeArg.from.valueOf()).toBe(props.row.timeEpochMs);
       expect(timeRangeArg.to.valueOf()).toBe(props.row.timeEpochMs);
