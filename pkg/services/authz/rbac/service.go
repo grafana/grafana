@@ -881,7 +881,9 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		t = newK8sNativeMapping(req.Group, req.Resource, req.Subresource)
 	}
 
-	if req.Name == "" && req.Verb != utils.VerbCreate {
+	// A request with a folder but no name is a folder-scoped question, not a capabilities probe.
+	folderScoped := req.ParentFolder != "" && t.HasFolderSupport()
+	if req.Name == "" && req.Verb != utils.VerbCreate && !folderScoped {
 		// For resources that require a wildcard scope, we can perform the check immediately
 		if t.Scope("") == "*" {
 			return scopeMap["*"], nil
