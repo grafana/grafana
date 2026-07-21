@@ -176,16 +176,17 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 // NotFound errors for children, since they might be already deleted or a stale search-index entry,
 // but we keep the error for the user-requested folder.
 func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
-	// Authorize the requester to delete this folder's alert rules and library elements before touching
-	// it, mirroring the per-folder permissions legacy enforced.
-	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
-		return nil, false, err
-	}
-
 	if err := s.markTerminating(ctx, name, options); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
 		}
+		return nil, false, err
+	}
+
+	// Authorize the requester to delete this folder's alert rules and library elements, mirroring the
+	// per-folder permissions legacy enforced. Runs after the NotFound skip so a stale or already-deleted
+	// child folder is skipped idempotently instead of 403-ing on an un-walkable inheritance chain.
+	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
 		return nil, false, err
 	}
 
