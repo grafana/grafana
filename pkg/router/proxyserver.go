@@ -16,9 +16,9 @@ import (
 // subset of Router: the standalone proxy has nothing behind it, so it supplies
 // a 404 as the fallthrough.
 type Routes interface {
-	// Handler serves the reverse-proxy tree mounted at /apis. next is served for
-	// paths the router does not own.
-	Handler(next http.Handler) http.Handler
+	// HandleFunc serves the reverse-proxy tree mounted at /apis. next is served
+	// for paths the router does not own.
+	HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler)
 	// OpenAPIV3Handler serves the merged OpenAPI v3 document at /openapi/v3.
 	OpenAPIV3Handler() http.Handler
 }
@@ -85,12 +85,14 @@ func NewProxyServer(cfg ProxyServerConfig, routes Routes) (*ProxyServer, error) 
 }
 
 // handler mounts the two proxied trees onto a stable mux built once. Route
-// churn happens inside routes.Handler()'s own dispatcher, never here.
+// churn happens inside the router's own group dispatch, never here.
 func (s *ProxyServer) handler() http.Handler {
 	mux := http.NewServeMux()
 	// Standalone proxy: nothing sits behind the router, so an unowned group is a
 	// 404 rather than a fallthrough.
-	mux.Handle("/apis/", s.routes.Handler(http.NotFoundHandler()))
+	mux.Handle("/apis/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.routes.HandleFunc(w, r, http.NotFoundHandler())
+	}))
 	mux.Handle("/openapi/v3/", s.routes.OpenAPIV3Handler())
 	return mux
 }

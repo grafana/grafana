@@ -38,7 +38,7 @@ package unless noted.
 
 The router serves on **its own port**, deliberately **outside** the apiserver's kubernetes handler
 chain (no authn, authz, audit, or priority-and-fairness). `ProxyServer` owns the `http.Server`,
-mounts `Router.Handler()` at `/apis` and `Router.OpenAPIV3Handler()` at `/openapi/v3`, and does a
+mounts `Router.HandleFunc` at `/apis` and `Router.OpenAPIV3Handler()` at `/openapi/v3`, and does a
 bounded graceful shutdown (drain with a timeout, then `Close()` fallback for hijacked/streaming
 conns). `server.go` in the apiserver package constructs and runs it; it is **not** part of the App.
 
@@ -78,7 +78,7 @@ every route into an anonymous `map[prefix]handler` plus a longest-prefix linear 
 the group at dispatch time and buries the not-found decision, so "path in a group I don't own"
 (should fall through to `next`) and "unknown subpath inside a group I do own" (the backend's problem)
 collapse into one catch-all. This router has exactly one path grammar — `/apis/<group>/<version>/...`
-— so the group is segment #2, an O(1) map key. `Handler(next)` parses the group, looks it up in the
+— so the group is segment #2, an O(1) map key. `HandleFunc(w, req, next)` parses the group, looks it up in the
 snapshot, and gives **primacy to the group**: own the group → dispatch to its `Backend`; unknown
 group → `next`; the `/apis` root → router-synthesized `APIGroupList`. Keep the config's shape at
 dispatch; do not reintroduce a flattening mux. The one idea worth borrowing from `PathRecorderMux`

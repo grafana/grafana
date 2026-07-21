@@ -34,7 +34,9 @@ func TestHandlerRoutesByGroup(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTeapot) // sentinel for "fell through to next"
 	})
-	h := r.Handler(next)
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r.HandleFunc(w, req, next)
+	})
 
 	cases := []struct {
 		path     string
@@ -69,7 +71,9 @@ func TestHandlerRootDiscoveryNotProxied(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
 	})
-	h := r.Handler(next)
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r.HandleFunc(w, req, next)
+	})
 
 	for _, path := range []string{"/apis", "/apis/"} {
 		rec := httptest.NewRecorder()

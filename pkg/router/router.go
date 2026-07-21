@@ -96,45 +96,42 @@ func (cr *BasicRouter) transportFor(key tlsCacheKey) (*http.Transport, error) {
 	return t, nil
 }
 
-// Handler serves the reverse-proxy tree. server.go mounts it at /apis; from
-// there it routes by GROUP, not by flattened path prefix. The group is the
-// natural key of the loaded config, so dispatch stays in group terms: a request
-// for a group we own goes to that group's Backend; anything else falls through
-// to next. That own-vs-fallthrough decision lives here, at the group layer,
-// rather than being hidden in a general-purpose path mux.
-func (cr *BasicRouter) Handler(next http.Handler) http.Handler {
-	// NOTE: when implementing OpenAPIV3Handler(), we need to support
-	// serverAddressByClientCIDRs in /apis to allow local in-network clients to
-	// connect directly as desired.
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		path := req.URL.Path
+// HandleFunc serves the reverse-proxy tree by group, falling through to next for
+// anything the router does not own. server.go mounts it at /apis. It is itself
+// the serving function (http.HandlerFunc shape plus a next), so a caller wraps it
+// as http.HandlerFunc(func(w, r) { router.HandleFunc(w, r, next) }).
+//
+// NOTE: when implementing OpenAPIV3Handler(), we need to support
+// serverAddressByClientCIDRs in /apis to allow local in-network clients to
+// connect directly as desired.
+func (cr *BasicRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
+	path := req.URL.Path
 
-		// Not part of the /apis tree — not ours.
-		if path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/") {
-			next.ServeHTTP(w, req)
-			return
-		}
+	// Not part of the /apis tree — not ours.
+	if path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/") {
+		next.ServeHTTP(w, req)
+		return
+	}
 
-		// Root discovery (APIGroupList) is the only path that needs a union
-		// across every group; synthesize it router-side.
-		if path == apisPrefix || path == apisPrefix+"/" {
-			cr.serveAPIGroupList(w, req)
-			return
-		}
+	// Root discovery (APIGroupList) is the only path that needs a union
+	// across every group; synthesize it router-side.
+	if path == apisPrefix || path == apisPrefix+"/" {
+		cr.serveAPIGroupList(w, req)
+		return
+	}
 
-		group := groupFromPath(path)
-		backends := *cr.snapshot.Load()
-		b, ok := backends[group]
-		if !ok {
-			// A group we don't serve. Fall through rather than 404 so a caller
-			// mounted ahead of us keeps its own routes.
-			next.ServeHTTP(w, req)
-			return
-		}
-		// /apis/<group> group discovery and /apis/<group>/... both proxy to the
-		// single owning backend (one backend owns all versions of a group).
-		b.Handler().ServeHTTP(w, req)
-	})
+	group := groupFromPath(path)
+	backends := *cr.snapshot.Load()
+	b, ok := backends[group]
+	if !ok {
+		// A group we don't serve. Fall through rather than 404 so a caller
+		// mounted ahead of us keeps its own routes.
+		next.ServeHTTP(w, req)
+		return
+	}
+	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
+	// single owning backend (one backend owns all versions of a group).
+	b.Handler().ServeHTTP(w, req)
 }
 
 // groupFromPath returns the group segment of an /apis/<group>[/...] path.
@@ -251,7 +248,7 @@ func (r *BasicRouter) publish() {
 // buildBackend turns a RouteConfig into a servable Backend. Build errors are
 // captured on the Backend so it serves a 500 rather than the reconcile loop
 // failing the whole set.
-func (r *BasicRouter) buildBackend(cfg *RouteConfig) Backend {
+func (r *BasicRouter) buildBackend(cfg RouteConfig) Backend {
 	rs := cfg.Backend
 	if rs.Mode != v1alpha2.RouteBackendSpecModeForward {
 		// TODO: handle operator/plugin modes.

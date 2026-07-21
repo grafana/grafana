@@ -56,6 +56,6 @@ type Router interface {
 	// Alive returns nil unless the router is in a non-recoverable state, such as a deadlock, and requires a full restart.
 	Alive(context.Context) error
 
-	// Handler will be passed routes for /apis* and /openapi/v3*, everything else will fallthrough to next
-	Handler(next http.Handler) http.Handler
+	// HandleFunc serves routes for /apis*; everything else falls through to next.
+	HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler)
 }
