@@ -154,6 +154,58 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 		require.Equal(t, updated, info.Created)
 	})
 
+	t.Run("should store auth timestamps in UTC", func(t *testing.T) {
+		ctx := context.Background()
+		originalGetTime := GetTime
+		t.Cleanup(func() { GetTime = originalGetTime })
+
+		location := time.FixedZone("UTC-7", int(-7*time.Hour/time.Second))
+		created := time.Date(2025, 1, 1, 12, 0, 0, 0, location)
+		initialExpiry := created.Add(30 * time.Minute)
+		updated := created.Add(time.Hour)
+		updatedExpiry := updated.Add(45 * time.Minute)
+		GetTime = func() time.Time { return created }
+		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+			AuthModule: login.GenericOAuthModule,
+			AuthId:     "timezone-auth-id",
+			UserId:     30,
+			UserUID:    "30",
+			OAuthToken: &oauth2.Token{
+				AccessToken:  "initial-access-token",
+				RefreshToken: "initial-refresh-token",
+				Expiry:       initialExpiry,
+			},
+		}))
+
+		info, err := store.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+			UserId:     30,
+			AuthModule: login.GenericOAuthModule,
+		})
+		require.NoError(t, err)
+		require.Equal(t, created.UTC(), info.Created)
+		require.Equal(t, initialExpiry.UTC(), info.OAuthExpiry)
+
+		GetTime = func() time.Time { return updated }
+		require.NoError(t, store.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
+			AuthModule: login.GenericOAuthModule,
+			AuthId:     "timezone-auth-id",
+			UserId:     30,
+			OAuthToken: &oauth2.Token{
+				AccessToken:  "updated-access-token",
+				RefreshToken: "updated-refresh-token",
+				Expiry:       updatedExpiry,
+			},
+		}))
+
+		info, err = store.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+			UserId:     30,
+			AuthModule: login.GenericOAuthModule,
+		})
+		require.NoError(t, err)
+		require.Equal(t, updated.UTC(), info.Created)
+		require.Equal(t, updatedExpiry.UTC(), info.OAuthExpiry)
+	})
+
 	t.Run("should populate missing user UID during store construction", func(t *testing.T) {
 		ctx := context.Background()
 		now := time.Now()

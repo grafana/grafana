@@ -272,12 +272,12 @@ func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) 
 			UserUID:           authUser.UserUID,
 			AuthModule:        authUser.AuthModule,
 			AuthID:            authUser.AuthId,
-			Created:           legacysql.NewDBTime(authUser.Created),
+			Created:           legacysql.NewDBTime(authUser.Created.UTC()),
 			OAuthAccessToken:  authUser.OAuthAccessToken,
 			OAuthRefreshToken: authUser.OAuthRefreshToken,
 			OAuthIDToken:      authUser.OAuthIdToken,
 			OAuthTokenType:    authUser.OAuthTokenType,
-			OAuthExpiry:       legacysql.NewDBTime(authUser.OAuthExpiry),
+			OAuthExpiry:       legacysql.NewDBTime(authUser.OAuthExpiry.UTC()),
 			ExternalUID:       authUser.ExternalUID,
 		}
 		querySQL, err := sqltemplate.Execute(insertAuthInfoTemplate, dbQuery)
@@ -379,12 +379,12 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 			AuthModule:        authUser.AuthModule,
 			AuthID:            authUser.AuthId,
 			ExternalUID:       authUser.ExternalUID,
-			Created:           legacysql.NewDBTime(authUser.Created),
+			Created:           legacysql.NewDBTime(authUser.Created.UTC()),
 			OAuthAccessToken:  authUser.OAuthAccessToken,
 			OAuthRefreshToken: authUser.OAuthRefreshToken,
 			OAuthIDToken:      authUser.OAuthIdToken,
 			OAuthTokenType:    authUser.OAuthTokenType,
-			OAuthExpiry:       legacysql.NewDBTime(authUser.OAuthExpiry),
+			OAuthExpiry:       legacysql.NewDBTime(authUser.OAuthExpiry.UTC()),
 		}
 		updateSQL, err := sqltemplate.Execute(updateAuthInfoTemplate, updateQuery)
 		if err != nil {
