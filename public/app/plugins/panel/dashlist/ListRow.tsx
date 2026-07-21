@@ -15,9 +15,22 @@ interface ListRowProps {
   oneRow?: boolean;
   href?: string;
   onClick?: () => void;
+  // Row divider + padding chrome. Set false for a flush row that matches the
+  // pre-redesign homepage cards. Defaults to true.
+  showDivider?: boolean;
 }
 
-export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, onClick, prefix }: ListRowProps) {
+export function ListRow({
+  title,
+  subtitle,
+  trailing,
+  isCompact,
+  oneRow,
+  href,
+  onClick,
+  prefix,
+  showDivider = true,
+}: ListRowProps) {
   const styles = useStyles2(getStyles);
 
   const subtitleDisplay = subtitle && (
@@ -44,7 +57,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
   );
 
   return (
-    <div className={cx(styles.row, isCompact && styles.listCompact)}>
+    <div className={cx(styles.row, isCompact && styles.listCompact, !showDivider && styles.flush)}>
       <Stack direction="row" alignItems="center" gap={1.5} grow={1} minWidth={0}>
         {prefix && <div>{prefix}</div>}
 
@@ -75,6 +88,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   listCompact: css({
     margin: 0,
+  }),
+  flush: css({
+    borderBottom: 'none',
+    padding: 0,
   }),
   titleLink: css({
     flex: 1,

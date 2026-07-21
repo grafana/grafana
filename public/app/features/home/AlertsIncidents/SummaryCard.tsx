@@ -173,6 +173,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   row: css({
     display: 'flex',
     alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.5, 0),
     minWidth: 0,
   }),
   // TODO: this should be safe to remove once incident card also moved to use ListRow component

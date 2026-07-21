@@ -132,6 +132,7 @@ export function FiringAlertsCardView({
         return (
           <ListRow
             isCompact
+            showDivider={redesignEnabled}
             title={alert.labels.alertname}
             subtitle={alert.labels.team}
             // when redesignEnabled is false, we want to show the subtitle inline with the title
