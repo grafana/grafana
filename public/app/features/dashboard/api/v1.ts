@@ -311,6 +311,15 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
 
+  async getDeletedDashboard(name: string): Promise<Resource<DashboardDataDTO> | undefined> {
+    const list = await this.client.list({
+      labelSelector: 'grafana.app/get-trash=true',
+      fieldSelector: `metadata.name=${name}`,
+    });
+    // find instead of items[0] guards against backends that ignore the fieldSelector
+    return list.items.find((item) => item.metadata.name === name);
+  }
+
   async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<DashboardDataDTO>> {
     return this.client.get(name, params);
   }

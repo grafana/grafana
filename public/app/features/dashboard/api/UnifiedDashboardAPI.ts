@@ -149,6 +149,16 @@ export class UnifiedDashboardAPI
     return this.v1Client.listDeletedDashboards(options);
   }
 
+  async getDeletedDashboard(name: string): Promise<Resource<DashboardDataDTO | DashboardV2Spec> | undefined> {
+    const item = await this.v1Client.getDeletedDashboard(name);
+    if (item && failedFromVersion(item, ['v2'])) {
+      return await this.v2Client.getDeletedDashboard(name);
+    }
+    // An empty v1 result means not visible / not in trash, not a version
+    // mismatch — both clients hit the same trash store, so don't try v2.
+    return item;
+  }
+
   async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<Dashboard | DashboardV2Spec>> {
     try {
       return await this.v1Client.getDashboard(name, params);
