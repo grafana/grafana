@@ -640,6 +640,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0, 1, 1, 1.5),
       overflow: 'hidden',
       gap: theme.spacing(1),
+      '&:empty': {
+        display: 'none',
+      },
     }),
     pointer: css({
       cursor: 'pointer',

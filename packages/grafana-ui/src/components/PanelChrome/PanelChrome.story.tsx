@@ -277,6 +277,11 @@ export const Examples = () => {
               </Button>
             ),
           })}
+          {renderPanel('Content', {
+            title: 'With empty subheader element',
+            menu,
+            subHeaderContent: <></>,
+          })}
         </Stack>
       </div>
     </DashboardStoryCanvas>
