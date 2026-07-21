@@ -199,6 +199,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Monotonic id so overlapping refreshPredefinedVariables() calls only apply the latest result.
+   * Also bumped on discard/restore so an in-flight refresh that snapped a discarded denylist
+   * cannot overwrite the restored variable set.
    */
   private _predefinedVariablesRefreshId = 0;
 
@@ -646,6 +648,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Restore them from the edit-session baseline when discarding.
    */
   private restoreSerializerAnnotationsFromInitialState() {
+    // Drop any in-flight refresh that captured the discarded denylist.
+    this._predefinedVariablesRefreshId++;
+
     const k8s = this.serializer.getK8SMetadata();
     if (!k8s) {
       return;

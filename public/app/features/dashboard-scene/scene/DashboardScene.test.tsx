@@ -2811,6 +2811,62 @@ describe('DashboardScene', () => {
       await firstRefresh;
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toEqual(['folderVar']);
     });
+
+    it('should ignore in-flight refresh results after discard restores the denylist', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      let resolveFetch!: (value: VariableKind[]) => void;
+      const pendingFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(pendingFetch);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: {
+          folderUid: 'folder-1',
+          // Baseline: deny all predefined variables.
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
+            },
+          },
+        },
+      });
+      const deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      // User opts into All — refresh starts but stays in flight.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: { annotations: {} },
+        },
+      });
+      const staleRefresh = scene.refreshPredefinedVariables();
+
+      // Discard restores the deny-all baseline (and serializer annotations).
+      scene.exitEditMode({ skipConfirm: true });
+      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables]).toBe(
+        serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED])
+      );
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+
+      // Stale All fetch must not re-inject after discard.
+      resolveFetch([globalVar]);
+      await staleRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+
+      deactivate();
+    });
   });
 
   describe('setPredefinedVariables', () => {
