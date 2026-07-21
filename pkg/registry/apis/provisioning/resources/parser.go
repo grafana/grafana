@@ -201,11 +201,19 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 	}
 
-	// Remove the internal dashboard UID,version and id if they exist
+	// Remove the internal dashboard UID, version and id if they exist. The
+	// deprecated internal ID is likewise owned by the storage layer, not the
+	// repository file, so strip its label too. Otherwise a repo-authored ID
+	// would ride a create straight past the uniqueness guard, which relies on
+	// an eventually-consistent search index and so lets duplicate IDs through
+	// when several dashboards are created within a single sync operation. With
+	// the label cleared, storage mints a fresh unique ID on create and restores
+	// the previous value on update.
 	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "version")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "id") // now managed as a label
+		unstructured.RemoveNestedField(parsed.Obj.Object, "metadata", "labels", utils.LabelKeyDeprecatedInternalID)
 	}
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)

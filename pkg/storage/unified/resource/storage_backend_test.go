@@ -17,6 +17,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -77,6 +79,137 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
 	assert.NotNil(t, backend.snowflake)
+}
+
+func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
+	tests := []struct {
+		name           string
+		experimentalKV func(KV) *ExperimentalKVOptions
+	}{
+		{
+			name: "nil experimental options",
+		},
+		{
+			name: "tenant metadata disabled",
+			experimentalKV: func(kv KV) *ExperimentalKVOptions {
+				return &ExperimentalKVOptions{KV: kv}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mainKV := setupBadgerKV(t)
+			experimentalKV := setupBadgerKV(t)
+			backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
+				if tt.experimentalKV != nil {
+					opts.ExperimentalKV = tt.experimentalKV(experimentalKV)
+				}
+				opts.TenantDeleterConfig = &TenantDeleterConfig{
+					Interval: time.Hour,
+					Log:      log.NewNopLogger(),
+				}
+			})
+
+			require.Same(t, mainKV, backend.tenantDeleter.pendingDeleteStore.kv)
+		})
+	}
+}
+
+func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
+	mainKV := setupBadgerKV(t)
+	experimentalKV := setupBadgerKV(t)
+	backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
+		opts.ExperimentalKV = &ExperimentalKVOptions{
+			KV:             experimentalKV,
+			TenantMetadata: true,
+		}
+		opts.TenantWatcherConfig = &TenantWatcherConfig{
+			TenantAPIServerURL: "http://127.0.0.1:1",
+			Token:              "test-token",
+			TokenExchangeURL:   "http://127.0.0.1:1",
+			UsePolling:         true,
+			PollInterval:       time.Hour,
+			Log:                log.NewNopLogger(),
+		}
+		opts.TenantDeleterConfig = &TenantDeleterConfig{
+			Interval: time.Hour,
+			Log:      log.NewNopLogger(),
+			Gcom: &testGcomVerifier{
+				getInstance: func(context.Context, string, string) (gcom.Instance, error) {
+					return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
+				},
+			},
+		}
+	})
+
+	// The watcher and deleter must share the exact store so records cannot be
+	// written to one KV and scanned from another.
+	require.Same(t, experimentalKV, backend.tenantWatcher.pendingDeleteStore.kv)
+	require.Same(t, backend.tenantWatcher.pendingDeleteStore, backend.tenantDeleter.pendingDeleteStore)
+
+	// Reconciling a tenant writes its pending-delete record to the experimental
+	// KV while the resource label update goes through the main backend.
+	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", backend.snowflake.Generate().Int64(), nil)
+	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
+
+	record, err := backend.tenantWatcher.pendingDeleteStore.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.True(t, record.LabelingComplete)
+	_, err = newPendingDeleteStore(mainKV).Get(t.Context(), testStacksNS1)
+	require.ErrorIs(t, err, kv.ErrNotFound)
+
+	latest, err := backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
+		Namespace: testStacksNS1,
+		Group:     "apps",
+		Resource:  "dashboards",
+		Name:      "dash1",
+	})
+	require.NoError(t, err)
+	reader, err := backend.dataStore.Get(t.Context(), latest)
+	require.NoError(t, err)
+	value, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NoError(t, reader.Close())
+	resource := &unstructured.Unstructured{}
+	require.NoError(t, resource.UnmarshalJSON(value))
+	require.Equal(t, "true", resource.GetLabels()[labelPendingDelete])
+
+	_, err = backend.eventStore.Get(t.Context(), EventKey{
+		Namespace:       latest.Namespace,
+		Group:           latest.Group,
+		Resource:        latest.Resource,
+		Name:            latest.Name,
+		ResourceVersion: latest.ResourceVersion,
+		Action:          latest.Action,
+	})
+	require.NoError(t, err)
+
+	// The experimental KV is metadata-only: resource data and events remain in
+	// the main KV even when tenant metadata routing is enabled.
+	for _, err := range experimentalKV.Keys(t.Context(), dataSection, ListOptions{}) {
+		require.NoError(t, err)
+		require.Fail(t, "resource data must not be written to the experimental KV")
+	}
+	for _, err := range experimentalKV.Keys(t.Context(), eventsSection, ListOptions{}) {
+		require.NoError(t, err)
+		require.Fail(t, "resource events must not be written to the experimental KV")
+	}
+
+	// The deleter finds the watcher's record in the shared experimental store
+	// and uses it to purge the resource from the main KV.
+	backend.tenantDeleter.runDeletionPass(t.Context())
+
+	_, err = backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
+		Namespace: testStacksNS1,
+		Group:     "apps",
+		Resource:  "dashboards",
+		Name:      "dash1",
+	})
+	require.ErrorIs(t, err, ErrNotFound)
+	record, err = backend.tenantDeleter.pendingDeleteStore.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.NotEmpty(t, record.DeletedAt)
 }
 
 // TestKvStorageBackend_Accessors verifies that KV() returns the configured

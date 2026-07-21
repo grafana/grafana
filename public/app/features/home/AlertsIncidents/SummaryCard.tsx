@@ -5,6 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Alert, Badge, Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { HomeSection } from '../HomeSection';
@@ -46,14 +47,15 @@ export function SummaryCard<T>({
   renderItem,
   footer,
 }: SummaryCardProps<T>) {
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const styles = useStyles2(getStyles);
 
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
-  return (
-    <HomeSection display="flex" direction="column">
+  const content = (
+    <>
       <Stack direction="column" gap={2} grow={1}>
-        <Stack direction="column" gap={2} grow={1}>
+        {!redesignEnabled && (
           <Stack alignItems="center" justifyContent="space-between">
             <Stack alignItems="center">
               <Text element="h2" variant="h5">
@@ -63,45 +65,57 @@ export function SummaryCard<T>({
             </Stack>
             {!loading && headerExtra}
           </Stack>
+        )}
 
-          {loading && (
-            <Stack direction="column">
-              {Array.from({ length: 3 }, (_, i) => (
-                <Skeleton key={i} height={20} />
-              ))}
-            </Stack>
-          )}
+        {loading && (
+          <Stack direction="column">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} height={20} />
+            ))}
+          </Stack>
+        )}
 
-          {error && (
-            <Alert
-              severity="warning"
-              title={error.title}
-              action={
-                <Button onClick={error.onRetry} variant="secondary" size="sm">
-                  <Trans i18nKey="home.summary-card.retry">Retry</Trans>
-                </Button>
-              }
-            />
-          )}
+        {error && (
+          <Alert
+            severity="warning"
+            title={error.title}
+            action={
+              <Button onClick={error.onRetry} variant="secondary" size="sm">
+                <Trans i18nKey="home.summary-card.retry">Retry</Trans>
+              </Button>
+            }
+          />
+        )}
 
-          {!loading && !error && items.length === 0 && (
-            <Stack direction="column" alignItems="center">
-              {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
-            </Stack>
-          )}
+        {!loading && !error && items.length === 0 && (
+          <Stack direction="column" grow={1} alignItems="center" justifyContent="center">
+            {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
+          </Stack>
+        )}
 
-          {!loading && !error && items.length > 0 && (
-            <ul className={styles.list}>
-              {items.map((item) => (
-                <li key={getItemKey(item)} className={styles.row}>
-                  {renderItem(item)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Stack>
+        {!loading && !error && items.length > 0 && (
+          <ul className={redesignEnabled ? undefined : styles.list}>
+            {items.map((item) => (
+              <li key={getItemKey(item)} className={styles.row}>
+                {renderItem(item)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Stack>
 
-        {!loading && !error && footer && <Stack justifyContent="flex-end">{footer}</Stack>}
+      {!loading && !error && footer && <Stack justifyContent="flex-end">{footer}</Stack>}
+    </>
+  );
+
+  if (redesignEnabled) {
+    return content;
+  }
+
+  return (
+    <HomeSection display="flex" direction="column">
+      <Stack direction="column" gap={2} grow={1}>
+        {content}
       </Stack>
     </HomeSection>
   );
