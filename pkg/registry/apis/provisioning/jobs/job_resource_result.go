@@ -3,6 +3,8 @@ package jobs
 import (
 	"errors"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -69,6 +71,8 @@ func classifyWarning(err error) (string, bool) {
 	switch {
 	case errors.As(err, &quotaExceededErr):
 		return provisioning.ReasonQuotaExceeded, true
+	case apierrors.IsRequestEntityTooLargeError(err):
+		return provisioning.ReasonResourceTooLarge, true
 	case errors.As(err, &validationErr):
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &ownershipErr):
