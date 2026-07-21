@@ -35,8 +35,6 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   DashboardsFilterablePanels: "dashboards.filterablePanels",
-  /** Enables using dashboard variables in panel threshold values */
-  DashboardsThresholdsInterpolation: "dashboards.thresholdsInterpolation",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
@@ -91,6 +89,8 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
+  /** Enables using dashboard variables in panel threshold values */
+  GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
@@ -272,17 +272,6 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDashboardsFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboards.filterablePanels", false, options).value;
-};
-
-/**
- * Enables using dashboard variables in panel threshold values
- *
- * **Details:**
- * - flag key: `dashboards.thresholdsInterpolation`
- * - default value: `false`
- */
-export const useFlagDashboardsThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboards.thresholdsInterpolation", false, options).value;
 };
 
 /**
@@ -580,6 +569,17 @@ export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.starredFolders", false, options).value;
+};
+
+/**
+ * Enables using dashboard variables in panel threshold values
+ *
+ * **Details:**
+ * - flag key: `grafana.thresholdsInterpolation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.thresholdsInterpolation", false, options).value;
 };
 
 /**

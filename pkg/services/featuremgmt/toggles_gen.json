@@ -1785,20 +1785,6 @@
     },
     {
       "metadata": {
-        "name": "dashboards.thresholdsInterpolation",
-        "resourceVersion": "1784559065681",
-        "creationTimestamp": "2026-07-20T14:51:05Z"
-      },
-      "spec": {
-        "description": "Enables using dashboard variables in panel threshold values",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-08-30T20:22:05Z",
@@ -3027,6 +3013,20 @@
         "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.thresholdsInterpolation",
+        "resourceVersion": "1784639663172",
+        "creationTimestamp": "2026-07-21T13:14:23Z"
+      },
+      "spec": {
+        "description": "Enables using dashboard variables in panel threshold values",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
       }

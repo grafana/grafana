@@ -3138,7 +3138,7 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:        "dashboards.thresholdsInterpolation",
+			Name:        "grafana.thresholdsInterpolation",
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
