@@ -1921,7 +1921,7 @@ describe('DashboardScene', () => {
 
       dashboardWatcher.editing = false;
       const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
-      jest
+      const getDashboardSrvSpy = jest
         .spyOn(require('app/features/dashboard/services/DashboardSrv'), 'getDashboardSrv')
         .mockReturnValue({ getCurrent: () => dash });
 
@@ -1938,6 +1938,7 @@ describe('DashboardScene', () => {
 
       expect(reloadSpy).toHaveBeenCalled();
       reloadSpy.mockRestore();
+      getDashboardSrvSpy.mockRestore();
     });
 
     it('should return early if API does not return a valid version number', () => {
@@ -2841,7 +2842,8 @@ describe('DashboardScene', () => {
           },
         },
       });
-      const deactivate = scene.activate();
+      // Skip activate(): this path only needs edit/discard, and activation calls
+      // getDashboardSrv().setCurrent which earlier suite spies may leave incomplete.
       scene.onEnterEditMode();
 
       // User opts into All — refresh starts but stays in flight.
@@ -2864,8 +2866,6 @@ describe('DashboardScene', () => {
       resolveFetch([globalVar]);
       await staleRefresh;
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
-
-      deactivate();
     });
   });
 
