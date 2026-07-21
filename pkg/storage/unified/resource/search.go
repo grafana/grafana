@@ -602,8 +602,6 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 // (lower score = closer match — passes through pgvector's <=> output).
 //
 // Returns Unimplemented when no embedding provider or vector backend is configured
-//
-//nolint:gocyclo
 func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (resp *resourcepb.VectorSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.VectorSearch")
 	defer span.End()
@@ -622,25 +620,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		}
 	}
 	defer func() {
-		// Error early-returns wrap an ErrorResult in the response but don't
-		// return an error — map the HTTP-style code to its gRPC equivalent
-		// so the histogram doesn't conflate 404s/403s with validation errors.
-		code := codes.OK
-		switch {
-		case retErr != nil:
-			code = status.Code(retErr)
-		case resp != nil && resp.Error != nil:
-			switch resp.Error.Code {
-			case http.StatusNotFound:
-				code = codes.NotFound
-			case http.StatusForbidden:
-				code = codes.PermissionDenied
-			case http.StatusUnauthorized:
-				code = codes.Unauthenticated
-			default:
-				code = codes.InvalidArgument
-			}
-		}
+		code := vectorSearchResponseCode(resp, retErr)
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
 				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
@@ -751,6 +731,28 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
+}
+
+// vectorSearchResponseCode maps a VectorSearch outcome to the gRPC code label
+// on the search-duration metric. ErrorResult carries HTTP-style codes; codes
+// without an explicit mapping label as InvalidArgument (validation errors).
+func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr error) codes.Code {
+	switch {
+	case retErr != nil:
+		return status.Code(retErr)
+	case resp == nil || resp.Error == nil:
+		return codes.OK
+	}
+	switch resp.Error.Code {
+	case http.StatusNotFound:
+		return codes.NotFound
+	case http.StatusForbidden:
+		return codes.PermissionDenied
+	case http.StatusUnauthorized:
+		return codes.Unauthenticated
+	default:
+		return codes.InvalidArgument
+	}
 }
 
 // validateVectorSearchRequest returns a non-nil response with a

@@ -178,6 +178,8 @@ END $$;`))
 	// (1) map resource names to the value stored in embeddings.resource (the LIST partition key), since resource names
 	// may contain chars a table name can't (e.g. hyphens);
 	// (2) disambiguate same-named resources across groups, since the partition name doesn't encode the group.
+	// External collections get "_external" appended to their partition_key, so an internal
+	// resource can never conflict with an external one.
 	embeddingCollections := migrator.Table{
 		Name: "embedding_collections",
 		Columns: []*migrator.Column{

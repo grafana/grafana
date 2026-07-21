@@ -20,9 +20,6 @@ type Collection struct {
 	IsExternal   bool   // externally-pushed rows; reads skip per-result authz
 }
 
-// No caching: the catalog holds a handful of rows, so the per-request
-// SELECT is noise next to the vector search itself. Add a cache when row
-// count or QPS makes it measurable.
 func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource string) (Collection, bool, error) {
 	collections, err := b.listCollections(ctx)
 	if err != nil {
