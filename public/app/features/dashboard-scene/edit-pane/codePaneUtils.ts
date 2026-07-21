@@ -43,21 +43,41 @@ export function applyJsonToDashboard(
     const { spec, apiVersion, kind, metadata } = resource;
 
     if (kind && kind !== 'Dashboard') {
-      return { success: false, error: `Invalid kind: ${kind}. Expected 'Dashboard'.` };
+      return {
+        success: false,
+        error: t('dashboard.schema-editor.invalid-kind', "Invalid kind: {{kind}}. Expected 'Dashboard'.", { kind }),
+      };
     }
     if (apiVersion && apiVersion !== expectedAPIVersion) {
       return {
         success: false,
-        error: `Invalid apiVersion: ${apiVersion}. Expected '${expectedAPIVersion}'.`,
+        error: t(
+          'dashboard.schema-editor.invalid-api-version',
+          "Invalid apiVersion: {{apiVersion}}. Expected '{{expectedAPIVersion}}'.",
+          { apiVersion, expectedAPIVersion }
+        ),
       };
     }
-    if (metadata?.name && metadata.name !== dashboard.state.uid) {
-      return { success: false, error: `Unable to change identifier from JSON editor` };
+    // getDashboardResourceText() emits NEW_DASHBOARD_NAME_PLACEHOLDER when the dashboard has no uid yet,
+    // so the pane's own initial JSON must be accepted on apply.
+    const expectedName = dashboard.state.uid ?? NEW_DASHBOARD_NAME_PLACEHOLDER;
+    if (metadata?.name && metadata.name !== expectedName) {
+      return {
+        success: false,
+        error: t(
+          'dashboard.schema-editor.identifier-change-unsupported',
+          'Unable to change identifier from JSON editor'
+        ),
+      };
     }
     if (metadata && Object.keys(metadata).length > 1) {
       return {
         success: false,
-        error: `Editing dashboard metadata is not yet supported (${Object.keys(metadata).join(', ')})`,
+        error: t(
+          'dashboard.schema-editor.metadata-edit-unsupported',
+          'Editing dashboard metadata is not yet supported ({{keys}})',
+          { keys: Object.keys(metadata).join(', ') }
+        ),
       };
     }
 

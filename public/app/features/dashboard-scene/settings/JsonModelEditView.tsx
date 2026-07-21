@@ -14,6 +14,7 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
+import { getDashboardResourceText } from '../edit-pane/codePaneUtils';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import {
   NameAlreadyExistsError,
@@ -59,7 +60,18 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
   public getJsonText(): string {
     const jsonData = this.getSaveModel();
+    // v2 dashboards are edited as the full resource envelope (apiVersion, kind, metadata, spec)
+    // so the editor validates against the same resource schema used elsewhere.
+    if (isDashboardV2Spec(jsonData)) {
+      return getDashboardResourceText(this.getDashboard());
+    }
     return getPrettyJSON(jsonData);
+  }
+
+  // Inverse of getJsonText(): unwrap the v2 resource envelope back to the bare spec used by the save flow.
+  public getEditedSaveModel(): DashboardDataDTO | DashboardV2Spec {
+    const parsed = JSON.parse(this.state.jsonText);
+    return isDashboardV2Spec(this.getSaveModel()) ? parsed.spec : parsed;
   }
 
   public onCodeEditorBlur = (value: string) => {
@@ -67,7 +79,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
   };
 
   public onSaveSuccess = async (result: SaveDashboardResponseDTO) => {
-    const jsonModel: DashboardDataDTO | DashboardV2Spec = JSON.parse(this.state.jsonText);
+    const jsonModel = this.getEditedSaveModel();
     const dashboard = this.getDashboard();
 
     const isV2 = isDashboardV2Spec(jsonModel);
@@ -163,7 +175,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
     const result = await onSaveDashboard(dashboard, {
       folderUid: dashboard.state.meta.folderUid,
       overwrite,
-      rawDashboardJSON: JSON.parse(model.state.jsonText),
+      rawDashboardJSON: model.getEditedSaveModel(),
       k8s: dashboard.state.meta.k8s,
     });
 

@@ -86,7 +86,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
       severity="error"
       topSpacing={0}
       bottomSpacing={0}
-      style={{ flexGrow: 0 }}
+      className={styles.errorAlert}
     >
       {applyError}
     </Alert>
@@ -168,6 +168,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minHeight: 0,
     padding: theme.spacing(1),
     gap: theme.spacing(1),
+  }),
+  errorAlert: css({
+    flex: '0 0 auto',
   }),
   editorContainer: css({
     flex: 1,
