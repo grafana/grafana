@@ -481,17 +481,12 @@ describe('CommandPalette', () => {
       // Wait for the settled deep search render (500ms debounce)
       await screen.findByText('API latency', {}, { timeout: 3000 });
 
-      expect(reportInteraction).toHaveBeenCalledWith(
-        'command_palette_deep_search_results_shown',
-        {
-          isDeepSearchEnabled: true,
-          isDeepSearchLoaded: true,
-          deepSearchItemsCount: 2,
-          // Bucketed to match command_palette_search_query ('latency' = 7 chars)
-          queryLength: '4-10',
-        },
-        { silent: true }
-      );
+      expect(reportInteraction).toHaveBeenCalledWith('command_palette_deep_search_results_shown', {
+        isDeepSearchEnabled: true,
+        isDeepSearchLoaded: true,
+        deepSearchItemsCount: 2,
+        queryLength: 7,
+      });
 
       // One event per settled result set, not one per keystroke
       const shownCalls = (reportInteraction as jest.Mock).mock.calls.filter(
