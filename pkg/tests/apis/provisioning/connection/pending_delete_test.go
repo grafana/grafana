@@ -47,7 +47,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, t.Context(), connObj)
+	_, err := helper.CreateGithubConnection(t, connObj)
 	require.NoError(t, err)
 
 	// After the initial reconciliation the controller has observed the current spec,
@@ -167,7 +167,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) 
 	// Sufficient for tests that exercise the admission webhook synchronously.
 	createConn := func(t *testing.T, name string) {
 		t.Helper()
-		_, err := helper.CreateGithubConnection(t, t.Context(), makeConnObj(name))
+		_, err := helper.CreateGithubConnection(t, makeConnObj(name))
 		require.NoError(t, err)
 	}
 

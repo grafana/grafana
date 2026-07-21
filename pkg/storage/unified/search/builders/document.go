@@ -97,19 +97,6 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, alertRules, recordingRules}, nil
 }
 
-// tableColumnsByName builds a map[fieldName]*ResourceTableColumnDefinition
-// from the given SearchFieldDefinitions. Used by IAM builders that expose
-// the historical XxxTableColumnDefinitions shape for wire-API consumers
-// (legacy SQL search backends) that look fields up by name.
-func tableColumnsByName(sfds []resource.SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
-	cols := resource.SearchFieldDefinitionsToTableColumns(sfds)
-	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
-	for _, c := range cols {
-		out[c.Name] = c
-	}
-	return out
-}
-
 // iamBuilder assembles the DocumentBuilderInfo for an IAM kind. Every IAM kind
 // is wired the same way: its search fields come from the generated IAM manifest
 // and its documents are extracted by the standard builder, so only the resource

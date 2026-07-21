@@ -3,7 +3,6 @@ import { BehaviorSubject, type Observable, combineLatest, type Subscription } fr
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
 import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type ScopesApiClient } from './ScopesApiClient';
 import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
@@ -251,14 +250,11 @@ export class ScopesService implements ScopesContextValue {
       this.updateState({ enabled });
       if (enabled) {
         const { appliedScopes, scopes } = this.selectorService.state;
-        // When there is no selection yet and ScopesFirstMode is on, fetch the
-        // default scope and apply it. Fire-and-forget so setEnabled stays sync.
-        // fetchDefaultScope is itself gated on grafana.useDefaultScopesEndpoint
-        // and returns undefined when off, so the call is safe here.
-        if (
-          appliedScopes.length === 0 &&
-          getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaEnableScopesFirstMode, false)
-        ) {
+        // When there is no selection yet, fetch the default scope and apply
+        // it. Fire-and-forget so setEnabled stays sync. fetchDefaultScope is
+        // itself gated on grafana.useDefaultScopesEndpoint and returns
+        // undefined when off, so the call is safe here.
+        if (appliedScopes.length === 0) {
           this.apiClient
             .fetchDefaultScope()
             .then((name) => {
