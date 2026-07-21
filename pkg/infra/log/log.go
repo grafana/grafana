@@ -85,6 +85,8 @@ func (lm *logManager) initialize(loggers []logWithFilters, levelStr string) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
+	loggers = append(loggers, logWithFilters{val: newCaptureLogger(), maxLevel: level.AllowDebug()})
+
 	defaultLoggers := make([]gokitlog.Logger, len(loggers))
 	for index, logger := range loggers {
 		defaultLoggers[index] = level.NewFilter(logger.val, logger.maxLevel)

@@ -11,7 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -23,8 +26,9 @@ import (
 // definitions the client already holds (so we avoid a dashboard-service lookup).
 type diagnosticsRequest struct {
 	dtos.MetricRequest
-	Dashboard json.RawMessage `json:"dashboard"`
-	Panel     json.RawMessage `json:"panel"`
+	Dashboard   json.RawMessage `json:"dashboard"`
+	Panel       json.RawMessage `json:"panel"`
+	IncludeLogs bool            `json:"includeLogs"`
 }
 
 // diagnosticsFeatureClient is a shared OpenFeature client reused across requests. Flags are
@@ -71,7 +75,23 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if c.Req.Header.Get("X-Query-V2") == "true" {
 		queryData = hs.queryDataService.QueryDataNew
 	}
+	var logCapture *log.Capture
+	if reqDTO.IncludeLogs {
+		logCapture = log.StartCapture()
+		defer logCapture.Stop()
+	}
 	resp, queryErr := queryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)
+
+	var queryLog, serverWindowLog []byte
+	if logCapture != nil {
+		capturedLines := logCapture.Stop()
+		queryLog = diagnostics.ScopedQueryLog(
+			capturedLines,
+			tracing.TraceIDFromContext(ctx, false),
+			requestDatasourceUIDs(reqDTO.Queries),
+		)
+		serverWindowLog = diagnostics.ServerWindowLog(capturedLines)
+	}
 
 	// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error, the
 	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle. An
@@ -83,14 +103,13 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	// (returns nil when both are nil).
 	respErr := errors.Join(diagnostics.ResponseError(resp), diagnostics.PluginCaptureError(resp))
 
-	// If the query failed before any traffic was captured (e.g. pre-flight access-denied or
-	// datasource-not-found, which never reach the datasource), there's nothing to diagnose, so
-	// surface the failure with the same status QueryMetricsV2 would return instead of a 200 bundle:
-	// a top-level error keeps its typed status (403/404, else 500), while a per-refId (bad-query)
-	// failure is a client error (400). A failure that did hit the wire leaves captured traffic and
-	// falls through — that captured failure is exactly what the bundle is for, recorded alongside
-	// query-error.txt.
-	if !diagnostics.HasCapturedHAR(resp, harBuffer) {
+	// If the query failed before any traffic or server logs were captured (e.g. pre-flight
+	// access-denied or datasource-not-found), there's nothing to diagnose, so surface the failure
+	// with the same status QueryMetricsV2 would return instead of a 200 bundle: a top-level error
+	// keeps its typed status (403/404, else 500), while a per-refId (bad-query) failure is a client
+	// error (400). A failure that produced either HTTP traffic or opted-in logs falls through — those
+	// artifacts are exactly what the bundle is for, recorded alongside query-error.txt.
+	if !diagnostics.HasCapturedHAR(resp, harBuffer) && len(queryLog) == 0 && len(serverWindowLog) == 0 {
 		if r := hs.diagnosticsNoCaptureError(queryErr, respErr); r != nil {
 			return r
 		}
@@ -101,7 +120,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if bundleErr == nil {
 		bundleErr = respErr
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, bundleErr)
+	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, bundleErr, queryLog, serverWindowLog)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}
@@ -111,6 +130,26 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
+}
+
+func requestDatasourceUIDs(queries []*simplejson.Json) []string {
+	seen := make(map[string]struct{}, len(queries))
+	uids := make([]string, 0, len(queries))
+	for _, query := range queries {
+		if query == nil {
+			continue
+		}
+		uid := query.Get("datasource").Get("uid").MustString()
+		if uid == "" || uid == "__expr__" {
+			continue
+		}
+		if _, ok := seen[uid]; ok {
+			continue
+		}
+		seen[uid] = struct{}{}
+		uids = append(uids, uid)
+	}
+	return uids
 }
 
 // diagnosticsNoCaptureError returns the response to send when a query failed and nothing was

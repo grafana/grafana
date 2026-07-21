@@ -452,7 +452,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 		}
 		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], pq)
 
-		s.log.Debug("Processed metrics query",
+		s.log.FromContext(ctx).Debug("Processed metrics query",
 			"ref_id", pq.query.RefID,
 			"from", timeRange.GetFromAsMsEpoch(),
 			"to", timeRange.GetToAsMsEpoch(),

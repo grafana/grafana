@@ -1,13 +1,27 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // TestDiagnosticsNoCaptureError guards the status mapping used when a query fails and no HAR was
@@ -42,4 +56,88 @@ func TestDiagnosticsNoCaptureError(t *testing.T) {
 	t.Run("no failure proceeds to bundle assembly (nil)", func(t *testing.T) {
 		require.Nil(t, hs.diagnosticsNoCaptureError(nil, nil))
 	})
+}
+
+func TestDiagnosticsRequestIncludeLogsDefaultsOff(t *testing.T) {
+	var absent diagnosticsRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"queries":[]}`), &absent))
+	require.False(t, absent.IncludeLogs)
+
+	var enabled diagnosticsRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"queries":[],"includeLogs":true}`), &enabled))
+	require.True(t, enabled.IncludeLogs)
+}
+
+func TestRequestDatasourceUIDs(t *testing.T) {
+	query := func(uid string) *simplejson.Json {
+		q := simplejson.New()
+		q.SetPath([]string{"datasource", "uid"}, uid)
+		return q
+	}
+
+	require.Equal(t, []string{"prom", "loki"}, requestDatasourceUIDs([]*simplejson.Json{
+		query("prom"), query("prom"), query(""), query("__expr__"), nil, query("loki"),
+	}))
+}
+
+func TestQueryDiagnosticsIncludesOptedInFilteredAndWindowLogs(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	require.NoError(t, log.SetupConsoleLogger("info"))
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ mock.Arguments) {
+			logger := log.New("diagnostics-capture-test")
+			logger.Debug("target line", "dsUID", "prom")
+			logger.Debug("decoy line", "dsUID", "other")
+		}).
+		Return(backend.NewQueryDataResponse(), nil).
+		Twice()
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ mock.Arguments) {
+			log.New("diagnostics-capture-test").Debug("preflight failure", "dsUID", "prom")
+		}).
+		Return(nil, errors.New("query failed before HTTP capture")).
+		Once()
+	hs := &HTTPServer{queryDataService: fakeQuery}
+
+	request := func(includeLogs bool) response.Response {
+		body := fmt.Sprintf(`{"from":"now-1h","to":"now","includeLogs":%t,"queries":[{"refId":"A","datasource":{"uid":"prom"}}]}`, includeLogs)
+		req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(body))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		ctx := &contextmodel.ReqContext{
+			Context: &web.Context{
+				Req:  req,
+				Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder()),
+			},
+			SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+			Logger:       log.New("test"),
+		}
+		ctx.Req = req
+		return hs.QueryDiagnostics(ctx)
+	}
+
+	withoutLogs := request(false)
+	require.Equal(t, http.StatusOK, withoutLogs.Status())
+	withoutFiles := readTarGzFiles(t, withoutLogs.Body())
+	require.NotContains(t, withoutFiles, "query.log")
+	require.NotContains(t, withoutFiles, "server-window.log")
+
+	withLogs := request(true)
+	require.Equal(t, http.StatusOK, withLogs.Status())
+	files := readTarGzFiles(t, withLogs.Body())
+	require.Contains(t, files, "query.log")
+	require.Contains(t, string(files["query.log"]), "target line")
+	require.NotContains(t, string(files["query.log"]), "decoy line")
+	require.Contains(t, files, "server-window.log")
+	require.Contains(t, string(files["server-window.log"]), "target line")
+	require.Contains(t, string(files["server-window.log"]), "decoy line")
+
+	failedWithLogs := request(true)
+	require.Equal(t, http.StatusOK, failedWithLogs.Status())
+	failedFiles := readTarGzFiles(t, failedWithLogs.Body())
+	require.Contains(t, string(failedFiles["query-error.txt"]), "query failed before HTTP capture")
+	require.Contains(t, string(failedFiles["query.log"]), "preflight failure")
+	require.Contains(t, string(failedFiles["server-window.log"]), "preflight failure")
 }
