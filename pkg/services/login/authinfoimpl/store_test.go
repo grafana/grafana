@@ -65,7 +65,8 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 		require.Len(t, labels, 2)
 
 		// There is no guarantee that user with user_id=1 gets "oauth_azuread" or "ldap".
-		// Both entries have the same creation time, so the selected label can vary by database.
+		// Both are valid results for the query (SELECT user_id, auth_module FROM `user_auth` WHERE `user_id` IN (1,2) ORDER BY created),
+		// Some databases may randomize its output, so test cannot rely on the ordering (other than "Created" column, which is equal here).
 		require.True(t, labels[1] == login.AzureADAuthModule || labels[1] == login.LDAPAuthModule)
 		require.Equal(t, login.GoogleAuthModule, labels[2])
 	})
