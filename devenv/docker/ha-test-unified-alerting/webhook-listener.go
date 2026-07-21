@@ -20,6 +20,8 @@ var (
 	mu           sync.Mutex
 	waitSeconds  int
 	logFile      bool
+	certFile     string
+	keyFile      string
 	logFileName  = filepath.Join(os.TempDir(), "/logs/webhook-listener.log")
 	dumpDir      = filepath.Join(os.TempDir(), "/logs/dumps")
 )
@@ -73,6 +75,8 @@ func updateFingerprints(v Data) {
 func parseFlags() {
 	flag.BoolVar(&logFile, "log-file", true, "Whether to log to file")
 	flag.IntVar(&waitSeconds, "wait-seconds", 0, "The number of seconds to wait before sending an HTTP response")
+	flag.StringVar(&certFile, "cert-file", "", "Path to the TLS certificate file")
+	flag.StringVar(&keyFile, "key-file", "", "Path to the TLS key file")
 	flag.Parse()
 }
 
@@ -168,7 +172,7 @@ func main() {
 	})
 	log.Println("Listening")
 	log.Printf("Wait Duration %v\n", waitDuration)
-	http.ListenAndServe("0.0.0.0:8080", nil)
+	log.Fatal(http.ListenAndServeTLS("0.0.0.0:8080", certFile, keyFile, nil))
 }
 
 const landingPage = `
