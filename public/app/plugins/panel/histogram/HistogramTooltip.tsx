@@ -4,6 +4,7 @@ import { type DataFrame, formattedValueToString } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
   type VizTooltipItem,
+  type FilterByGroupedLabelsModel,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
@@ -27,6 +28,7 @@ export interface HistogramTooltipProps {
 
   isPinned: boolean;
   maxHeight?: number;
+  filterByGroupedLabels?: FilterByGroupedLabelsModel;
 }
 
 export const HistogramTooltip = ({
@@ -38,6 +40,7 @@ export const HistogramTooltip = ({
   sortOrder = SortOrder.None,
   isPinned,
   maxHeight,
+  filterByGroupedLabels,
 }: HistogramTooltipProps) => {
   const xMinField = series.fields[0];
   const xMaxField = series.fields[1];
@@ -66,7 +69,7 @@ export const HistogramTooltip = ({
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getFieldDisplayLinks(field, dataIdx);
 
-    footer = <VizTooltipFooter dataLinks={links} />;
+    footer = <VizTooltipFooter dataLinks={links} filterByGroupedLabels={filterByGroupedLabels} />;
   }
 
   return (
