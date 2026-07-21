@@ -2068,38 +2068,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger":
-  version: 0.0.0-use.local
-  resolution: "@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger"
-  dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "workspace:*"
-    "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "workspace:*"
-    "@grafana/ui": "workspace:*"
-    "@testing-library/dom": "npm:10.4.1"
-    "@testing-library/jest-dom": "npm:6.6.4"
-    "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
-    "@types/jest": "npm:29.5.14"
-    "@types/node": "npm:24.10.1"
-    "@types/react": "npm:18.3.18"
-    "@types/react-dom": "npm:18.3.5"
-    jest: "npm:29.7.0"
-    react: "npm:18.3.1"
-    react-dom: "npm:18.3.1"
-    rxjs: "npm:7.8.2"
-    stream-browserify: "npm:3.0.0"
-    typescript: "npm:6.0.2"
-    webpack: "npm:^5.105.0"
-  peerDependencies:
-    "@grafana/runtime": "*"
-  languageName: unknown
-  linkType: soft
-
 "@grafana-plugins/loki@workspace:public/app/plugins/datasource/loki":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/loki@workspace:public/app/plugins/datasource/loki"
@@ -2547,6 +2515,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/lezer-logql@npm:0.4.0":
+  version: 0.4.0
+  resolution: "@grafana/lezer-logql@npm:0.4.0"
+  peerDependencies:
+    "@lezer/lr": 1.4.10
+  checksum: 10/451f3b62e636dd2384b7942dbe5846de442cd6f641ef4896c4a5f4cec09ea037d38e470582ff16b88b07e696a06adf21bb1fd278297757fcff4b759077723492
+  languageName: node
+  linkType: hard
+
 "@grafana/llm@npm:1.0.9":
   version: 1.0.9
   resolution: "@grafana/llm@npm:1.0.9"
@@ -2880,13 +2857,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^8.13.0":
-  version: 8.13.0
-  resolution: "@grafana/scenes-react@npm:8.13.0"
+"@grafana/scenes-react@npm:8.13.2":
+  version: 8.13.2
+  resolution: "@grafana/scenes-react@npm:8.13.2"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.13.0"
+    "@grafana/scenes": "npm:8.13.2"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -2900,13 +2877,13 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/847b0886b2842ca530bf08432630b378da2a895be97e581e0417218c576d73e75ab8486115d6ec469b738165cbeb1934f2b79e4902f59a9219077eb31e27c2f7
+  checksum: 10/1d0943f045fcd63dadefdde408e20d0818d7f7fc2c3ab5a6687008d7ea8d08949962784de94d3c2c1adb6db8065c415a023150c601ef26f9d9ba0926c06493f1
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.13.0, @grafana/scenes@npm:^8.13.0":
-  version: 8.13.0
-  resolution: "@grafana/scenes@npm:8.13.0"
+"@grafana/scenes@npm:8.13.2":
+  version: 8.13.2
+  resolution: "@grafana/scenes@npm:8.13.2"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -2931,7 +2908,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/73d4b8be6e7366cecc46030955c8d11b854f6771af6f671feaeacf3c57ddbd2bf20af4d4af09e8e8bfb6ce9f0a50af42db3342f4b643dce58e553ef1f7f7b0e8
+  checksum: 10/efee8c201b0744fe39c390d4786d4868b096f801e0615968b8d7bf493c23f8a43fad0fee493bcd4338f8480f6eda661435333a1aace9ba1164fae9d34032cfb3
   languageName: node
   linkType: hard
 
@@ -15654,14 +15631,14 @@ __metadata:
   linkType: hard
 
 "dompurify@npm:^3.4.0":
-  version: 3.4.11
-  resolution: "dompurify@npm:3.4.11"
+  version: 3.4.12
+  resolution: "dompurify@npm:3.4.12"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/d0473e1a22ed9cc23d86ef426717bce866913d1a725512a9478985bd917b272e0faba5f1d6ad8b2e37f3f4219206c4385162d7c984cfedcd23396e1e6ae0bc5e
+  checksum: 10/f826b68920887eb75115a162facb42380d1c3fac441548217b30068c9fadeed14f63fa1f7a1d2ab6f63613e5a0f897aa245c9224d4abf7939cd8ae58c04646af
   languageName: node
   linkType: hard
 
@@ -18562,14 +18539,15 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/i18n": "workspace:*"
     "@grafana/levitate": "npm:0.17.2"
+    "@grafana/lezer-logql": "npm:0.4.0"
     "@grafana/llm": "npm:1.0.9"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.10.0"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^8.13.0"
-    "@grafana/scenes-react": "npm:^8.13.0"
+    "@grafana/scenes": "npm:8.13.2"
+    "@grafana/scenes-react": "npm:8.13.2"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -21875,25 +21853,25 @@ __metadata:
   linkType: hard
 
 "js-yaml@npm:^3.10.0, js-yaml@npm:^3.13.1":
-  version: 3.14.2
-  resolution: "js-yaml@npm:3.14.2"
+  version: 3.15.0
+  resolution: "js-yaml@npm:3.15.0"
   dependencies:
     argparse: "npm:^1.0.7"
     esprima: "npm:^4.0.0"
   bin:
     js-yaml: bin/js-yaml.js
-  checksum: 10/172e0b6007b0bf0fc8d2469c94424f7dd765c64a047d2b790831fecef2204a4054eabf4d911eb73ab8c9a3256ab8ba1ee8d655b789bf24bf059c772acc2075a1
+  checksum: 10/2fdf3a1453ed93a8e06d6ca8054c0bec145cf40ab51f305d1071736a03668b95e40f47cfd0239d7d50019b4780a18cdaca3c935def935594c9876964c49f1185
   languageName: node
   linkType: hard
 
 "js-yaml@npm:^4.1.0":
-  version: 4.2.0
-  resolution: "js-yaml@npm:4.2.0"
+  version: 4.3.0
+  resolution: "js-yaml@npm:4.3.0"
   dependencies:
     argparse: "npm:^2.0.1"
   bin:
     js-yaml: bin/js-yaml.js
-  checksum: 10/51de2067a2b44b07ba5206132e56005f8b568ff279bb4d2f645068958c56fa4827d40a6841c983234671fa0a134bf094d0b0717873c2a3d319185297af145a6d
+  checksum: 10/2bcec3a8118d7f744badeb04e14366578d234a736f353d41fe35d2305e4ce2409a8e041d277f07cd6bbc8aaa12128d650a68ce43247072519bede20962d2126f
   languageName: node
   linkType: hard
 
@@ -28354,7 +28332,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:^3.0.0, readable-stream@npm:^3.0.2, readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0, readable-stream@npm:^3.5.0, readable-stream@npm:^3.6.0":
+"readable-stream@npm:^3.0.0, readable-stream@npm:^3.0.2, readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0, readable-stream@npm:^3.6.0":
   version: 3.6.2
   resolution: "readable-stream@npm:3.6.2"
   dependencies:
@@ -30420,16 +30398,6 @@ __metadata:
   bin:
     storybook: ./dist/bin/dispatcher.js
   checksum: 10/46fb4bdcbaa212da1621445eae5eb04d11075cef137233545be903453358419301450f011123e7a172f23d8fef865a248a7487819444155c20dba863dfaee4d7
-  languageName: node
-  linkType: hard
-
-"stream-browserify@npm:3.0.0":
-  version: 3.0.0
-  resolution: "stream-browserify@npm:3.0.0"
-  dependencies:
-    inherits: "npm:~2.0.4"
-    readable-stream: "npm:^3.5.0"
-  checksum: 10/05a3cd0a0ce2d568dbdeb69914557c26a1b0a9d871839666b692eae42b96189756a3ed685affc90dab64ff588a8524c8aec6d85072c07905a1f0d941ea68f956
   languageName: node
   linkType: hard
 
@@ -32991,13 +32959,13 @@ __metadata:
   linkType: hard
 
 "websocket-driver@npm:>=0.5.1":
-  version: 0.7.4
-  resolution: "websocket-driver@npm:0.7.4"
+  version: 0.7.5
+  resolution: "websocket-driver@npm:0.7.5"
   dependencies:
     http-parser-js: "npm:>=0.5.1"
     safe-buffer: "npm:>=5.1.0"
     websocket-extensions: "npm:>=0.1.1"
-  checksum: 10/17197d265d5812b96c728e70fd6fe7d067471e121669768fe0c7100c939d997ddfc807d371a728556e24fc7238aa9d58e630ea4ff5fd4cfbb40f3d0a240ef32d
+  checksum: 10/0671fef8c79ba1b1b2fa6b7d95cb034d059410e7c4cfd7ef42063a254e12ca2917806c3a5026206b33abf25a5d44a651c547b8f74d9ec94c9fe4df6fa1bc63f7
   languageName: node
   linkType: hard
 

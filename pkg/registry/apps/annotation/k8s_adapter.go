@@ -102,7 +102,7 @@ type k8sRESTAdapter struct {
 
 	// retentionTTL bounds how far in the past an annotation's time may be,
 	// matching the cleanup window so we don't accept data that would be
-	// immediately purged.
+	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
 	tracer  trace.Tracer
@@ -520,15 +520,17 @@ func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
-	maxPast := now.Add(-s.retentionTTL).UnixMilli()
 
 	if anno.Spec.Time > maxFuture {
 		return apierrors.NewBadRequest(
 			fmt.Sprintf("%v: time cannot be more than 1 week in the future", ErrInvalidInput))
 	}
-	if anno.Spec.Time < maxPast {
-		return apierrors.NewBadRequest(
-			fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
+	if s.retentionTTL > 0 {
+		maxPast := now.Add(-s.retentionTTL).UnixMilli()
+		if anno.Spec.Time < maxPast {
+			return apierrors.NewBadRequest(
+				fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
+		}
 	}
 
 	// If timeEnd is set, validate it's after time and within future bounds

@@ -1,22 +1,10 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import {
-  cacheFieldDisplayNames,
-  DashboardCursorSync,
-  type DataFrame,
-  type Field,
-  type GrafanaTheme2,
-  LogSortOrderChangeEvent,
-  LogsSortOrder,
-  type PanelProps,
-  store,
-} from '@grafana/data';
-import { config, getAppEvents } from '@grafana/runtime';
-import { useFlagTableProtoRowParser, useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { type GrafanaTheme2, LogSortOrderChangeEvent, LogsSortOrder, type PanelProps, store } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
-import { getConfig } from 'app/core/config';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
@@ -24,7 +12,13 @@ import { LogTableControls } from 'app/features/logs/components/panel/LogTableCon
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
 import { type DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
-import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
+import {
+  useCacheFieldDisplayNames,
+  useCellActions,
+  useCommonTableProps,
+  useTableSharedCrosshair,
+} from 'app/features/table/hooks';
+import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
@@ -51,19 +45,12 @@ export function TableNGWrap({
   containerElement,
   onWrapTextClick,
 }: Props) {
-  useMemo(() => {
-    cacheFieldDisplayNames(data.series);
-  }, [data.series]);
+  useCacheFieldDisplayNames(data.series);
 
   const panelContext = usePanelContext();
-  const protoParserEnabled = useFlagTableProtoRowParser();
-  const nestedRefactorEnabled = useFlagTableRefactorNested();
-  const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
-  const getActions = useCallback(
-    (frame: DataFrame, field: Field, rowIndex: number) =>
-      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables) : [],
-    [replaceVariables, userCanExecuteActions]
-  );
+  const getActions = useCellActions(replaceVariables);
+  const commonTableProps = useCommonTableProps(options, fieldConfig);
+  const enableSharedCrosshair = useTableSharedCrosshair();
   const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const showControls = options.showControls ?? defaultOptions.showControls ?? true;
   const controlsExpandedFromStore = store.getBool(
@@ -115,39 +102,23 @@ export function TableNGWrap({
       )}
 
       <TableNG
+        {...commonTableProps}
         sortByBehavior="managed"
         initialRowIndex={initialRowIndex}
         data={data.series[getCurrentFrameIndex(data.series, options)]}
         timeRange={data.timeRange}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
-        noHeader={!options.showHeader}
-        noValue={fieldConfig.defaults.noValue}
-        showTypeIcons={options.showTypeIcons}
-        resizable={true}
-        sortBy={options.sortBy}
         onSortByChange={(sortBy) => onSortByChange(sortBy, { onOptionsChange, options })}
         onColumnResize={(displayName, resizedWidth, fieldScope) =>
           onColumnResize(displayName, resizedWidth, fieldScope, { fieldConfig, onFieldConfigChange })
         }
         onCellFilterAdded={panelContext.onAddAdHocFilter}
-        frozenColumns={options.frozenColumns?.left}
-        enablePagination={options.enablePagination}
-        cellHeight={options.cellHeight}
-        maxRowHeight={options.maxRowHeight}
-        enableSharedCrosshair={
-          Boolean(config.featureToggles.tableSharedCrosshair) &&
-          Boolean(panelContext.sync) &&
-          panelContext.sync!() !== DashboardCursorSync.Off
-        }
+        enableSharedCrosshair={enableSharedCrosshair}
         fieldConfig={fieldConfig}
         getActions={getActions}
         structureRev={data.structureRev}
         transparent={transparent}
-        disableSanitizeHtml={getConfig().disableSanitizeHtml}
-        disableKeyboardEvents={options.disableKeyboardEvents}
-        protoParserEnabled={protoParserEnabled}
-        nestedRefactorEnabled={nestedRefactorEnabled}
       />
     </div>
   );

@@ -120,6 +120,16 @@ describe('VizLayout', () => {
       expect(screen.getByTestId(selectors.components.VizLayout.legend)).toHaveStyle({ maxHeight: '20%' });
     });
 
+    it('does not force full height on the scroll container', () => {
+      render(
+        <VizLayout width={800} height={600} legend={legend}>
+          {() => null}
+        </VizLayout>
+      );
+      const scrollBox = screen.getByTestId(selectors.components.VizLayout.legend).firstElementChild;
+      expect(scrollBox).not.toHaveStyle({ height: '100%' });
+    });
+
     it('does not call children before the legend height is measured', () => {
       const children = jest.fn().mockReturnValue(null);
       render(
@@ -239,6 +249,16 @@ describe('VizLayout', () => {
         </VizLayout>
       );
       expect(screen.getByTestId(selectors.components.VizLayout.legend)).toHaveStyle({ width: '200px' });
+    });
+
+    it('gives the scroll container full height so legend content can use percentage heights', () => {
+      render(
+        <VizLayout width={800} height={600} legend={legend}>
+          {() => null}
+        </VizLayout>
+      );
+      const scrollBox = screen.getByTestId(selectors.components.VizLayout.legend).firstElementChild;
+      expect(scrollBox).toHaveStyle({ height: '100%' });
     });
 
     it('preserves full width when legend width equals container width', () => {

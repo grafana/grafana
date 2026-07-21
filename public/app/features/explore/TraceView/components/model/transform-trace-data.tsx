@@ -17,6 +17,7 @@ import { isEqual as _isEqual } from 'lodash';
 // @ts-ignore
 import { type TraceKeyValuePair } from '@grafana/data';
 
+import { AGGREGATION_PREFIX } from '../constants/aggregation';
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
 import {
   type TraceResponse,
@@ -35,8 +36,6 @@ import { getTraceName } from './trace-viewer';
 function asTagArray(tags: unknown): TraceKeyValuePair[] {
   return Array.isArray(tags) ? tags : [];
 }
-
-const AGGREGATION_PREFIX = 'aggregation.';
 
 /**
  * Detect a pruned (summary / preserved-outlier) span from its `aggregation.*` tags and
@@ -74,12 +73,14 @@ function extractSpanAggregation(tags: TraceKeyValuePair[]): SpanAggregation | un
   ] as const;
   for (const [key, field] of numericFields) {
     if (byKey.has(key)) {
-      // Accept real numbers and numeric strings only. Number() would coerce null/boolean/[]/''
-      // to a misleading 0 or 1, so restrict the input before coercing rather than relying on a
-      // NaN check alone (the tag value type is `any`).
+      // Accept real numbers and finite numeric strings only. Number() would coerce null/boolean/[]/''
+      // to a misleading 0 or 1, so restrict the input before coercing rather than relying on the
+      // finite check alone (the tag value type is `any`). Number.isFinite (not just !isNaN) also
+      // rejects Infinity from "Infinity" or an out-of-range exponent, which would otherwise make the
+      // minimap's total weight infinite and collapse its step/height math to 0/NaN.
       const raw = byKey.get(key);
       const value = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
-      if (!Number.isNaN(value)) {
+      if (Number.isFinite(value)) {
         aggregation[field] = value;
       }
     }
