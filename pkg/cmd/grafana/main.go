@@ -10,8 +10,8 @@ import (
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
 	_ "github.com/grafana/grafana/pkg/operators"
-	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 	"github.com/grafana/grafana/pkg/server"
+	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 )
 

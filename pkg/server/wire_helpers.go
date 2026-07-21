@@ -5,13 +5,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	collectionsmigration "github.com/grafana/grafana/pkg/registry/apis/collections"
+	legacystars "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	snapshotmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	dsmigration "github.com/grafana/grafana/pkg/registry/apis/datasource"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
-	legacystars "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	preferencesmigration "github.com/grafana/grafana/pkg/registry/apis/preferences"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -50,29 +50,4 @@ func ProvideMigrationRegistry(
 	r.Register(preferencesmigration.PreferencesMigration(preferencesMigrator))
 	r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
 	return r
-}
-
-// Legacy wire names used by generated injectors until wire output is regenerated.
-func otelTracer() trace.Tracer { return OtelTracer() }
-
-func provideMigrationRegistry(
-	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
-	playlistMigrator playlistmigrator.PlaylistMigrator,
-	shortURLMigrator shorturlmigrator.ShortURLMigrator,
-	snapshotMigrator snapshotmigrator.SnapshotMigrator,
-	dataSourceMigrator dsmigrator.DataSourceMigrator,
-	starsMigrator legacystars.StarsMigrator,
-	preferencesMigrator legacypreferences.PreferencesMigrator,
-	queryCacheConfigMigrator querycachingmigrator.QueryCacheConfigMigrator,
-) *unifiedmigrations.MigrationRegistry {
-	return ProvideMigrationRegistry(
-		dashMigrator,
-		playlistMigrator,
-		shortURLMigrator,
-		snapshotMigrator,
-		dataSourceMigrator,
-		starsMigrator,
-		preferencesMigrator,
-		queryCacheConfigMigrator,
-	)
 }

@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -66,7 +67,6 @@ import (
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 )
 
 var provisioningExtras = wire.NewSet(

@@ -15,8 +15,8 @@ import (
 )
 
 type (
-	initializeFn                 func(context.Context, *setting.Cfg, Options, api.ServerOptions) (*Server, error)
-	initializeForTestFn          func(context.Context, sqlutil.ITestDB, interface {
+	initializeFn        func(context.Context, *setting.Cfg, Options, api.ServerOptions) (*Server, error)
+	initializeForTestFn func(context.Context, sqlutil.ITestDB, interface {
 		mock.TestingT
 		Cleanup(func())
 	}, *setting.Cfg, Options, api.ServerOptions) (*TestEnv, error)
@@ -25,9 +25,9 @@ type (
 )
 
 var (
-	initializeServer                initializeFn
-	initializeForTestServer         initializeForTestFn
-	initializeForCLIServer          initializeForCLIFn
+	initializeServer               initializeFn
+	initializeForTestServer        initializeForTestFn
+	initializeForCLIServer         initializeForCLIFn
 	initializeAPIServerFactoryFunc initializeAPIServerFactoryFn
 )
 

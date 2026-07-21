@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/server/wireext"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/server/wireext"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

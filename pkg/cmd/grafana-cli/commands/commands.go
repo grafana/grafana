@@ -14,6 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
+
+	// Registers the OSS dependency-injection entrypoints (server.InitializeForCLI etc.)
+	// via bootstrap/wire's init(); without this side-effect import they are nil.
+	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
