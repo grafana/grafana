@@ -257,10 +257,13 @@ func (r *BasicRouter) buildBackend(cfg RouteConfig) Backend {
 
 	backend := rs.Forward
 
-	tr, err := r.transportFor(tlsCacheKey{
-		caData:   *backend.Tls.CaData,
+	transportKey := tlsCacheKey{
 		insecure: backend.Tls.SkipTLSVerify,
-	})
+	}
+	if backend.Tls.CaData != nil {
+		transportKey.caData = *backend.Tls.CaData
+	}
+	tr, err := r.transportFor(transportKey)
 	if err != nil {
 		return &forwardBackend{name: cfg.Group, buildErr: fmt.Errorf("build transport for group=%s, err=%w", cfg.Group, err)}
 	}

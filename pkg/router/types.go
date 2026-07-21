@@ -5,44 +5,31 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 )
 
-type RouteConfig struct {
+type Backend interface {
 	// The resource version string -- if this changes, you know that something has changed
-	RV string
+	RV() string
 
 	// The group this route serves (must not contain /)
-	Group string
+	Group() string
 
-	// How the prefix is handled.  This is always required
-	Backend v1alpha2.RouteBackendSpec
+	// How the prefix is handled. Handler support /apis/{group}* and /openapi/v3/{group}*
+	Load(context.Context) (http.Handler, error)
 
 	// Includes group, versions, resources, and custom route information
-	Manifest app.ManifestData
+	Manifest() *app.ManifestData
 }
 
 type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory
 	// and that comparing changes can depend on the RV to know if anything has changed for the prefix
-	Load(context.Context) ([]RouteConfig, error)
+	Load(context.Context) ([]Backend, error)
 
 	// Something changed with routing... reload the configs. The channel is a pure
 	// coalescing wake signal (no payload): consumers re-read full state via Load.
 	Notify(context.Context) (<-chan struct{}, error)
-}
-
-// Backend corresponds to one served Group
-type Backend interface {
-	// Handler
-	Handler() http.Handler
-
-	// OpenAPIV3Handler
-	OpenAPIV3Handler() http.Handler
-
-	// Ready is the proof that passed configuration is correct and we are able to serve.
-	Ready(context.Context) error
 }
 
 type Router interface {
