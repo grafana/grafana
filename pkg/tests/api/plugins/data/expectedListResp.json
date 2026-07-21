@@ -114,6 +114,9 @@
     "name": "Annotations list",
     "type": "panel",
     "id": "annolist",
+    "aliasIDs": [
+      "ryantxu-annolist-panel"
+    ],
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1312,6 +1315,9 @@
     "name": "PostgreSQL",
     "type": "datasource",
     "id": "grafana-postgresql-datasource",
+    "aliasIDs": [
+      "postgres"
+    ],
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1616,6 +1622,9 @@
     "name": "TestData",
     "type": "datasource",
     "id": "grafana-testdata-datasource",
+    "aliasIDs": [
+      "testdata"
+    ],
     "enabled": true,
     "pinned": false,
     "info": {

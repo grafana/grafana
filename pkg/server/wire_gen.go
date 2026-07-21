@@ -410,7 +410,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, lokiService, prometheusService, testdatasourceService, postgresService, mysqlService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -608,7 +609,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	stubProvisioningService, err := provisioning.ProvideStubProvisioningService(cfg)
 	if err != nil {
 		return nil, err
@@ -1162,7 +1162,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, lokiService, prometheusService, testdatasourceService, postgresService, mysqlService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -1357,7 +1358,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	stubProvisioningService, err := provisioning.ProvideStubProvisioningService(cfg)
 	if err != nil {
 		return nil, err
@@ -1851,7 +1851,8 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return Runner{}, err

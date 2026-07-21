@@ -430,6 +430,9 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['RuleSequence'],
       }),
+      createSearchRules: build.mutation<CreateSearchRulesApiResponse, CreateSearchRulesApiArg>({
+        query: (queryArg) => ({ url: `/search`, method: 'POST', body: queryArg.createSearchRulesRequestBody }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -989,6 +992,10 @@ export type UpdateRuleSequenceStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type CreateSearchRulesApiResponse = /** status 200 OK */ CreateSearchRulesResponse;
+export type CreateSearchRulesApiArg = {
+  createSearchRulesRequestBody: CreateSearchRulesRequestBody;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1404,6 +1411,85 @@ export type RuleSequenceList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type CreateSearchRulesFacetValue = {
+  count: number;
+  value: string;
+};
+export type CreateSearchRulesRuleSearchHitFields = {
+  /** Alert-rule fields. */
+  annotations?: {
+    [key: string]: string;
+  };
+  dashboardUID?: string;
+  datasourceUIDs?: string[];
+  folder?: string;
+  for?: string;
+  interval?: string;
+  keepFiringFor?: string;
+  labels?: {
+    [key: string]: string;
+  };
+  /** Recording-rule fields. */
+  metric?: string;
+  notificationType?: string;
+  panelID?: number;
+  paused?: boolean;
+  receiver?: string;
+  routingTree?: string;
+  targetDatasourceUID?: string;
+  title?: string;
+  type?: string;
+};
+export type CreateSearchRulesSearchResultResource = {
+  group: string;
+  kind: string;
+  name: string;
+  resource: string;
+};
+export type CreateSearchRulesSearchResultHit = {
+  fields: CreateSearchRulesRuleSearchHitFields;
+  resource: CreateSearchRulesSearchResultResource;
+  score?: number;
+};
+export type CreateSearchRulesSearchResultsMetadata = {
+  continue?: string;
+  totalHits?: number;
+};
+export type CreateSearchRulesResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion: string;
+  facets?: {
+    [key: string]: CreateSearchRulesFacetValue[];
+  };
+  items: CreateSearchRulesSearchResultHit[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  metadata: CreateSearchRulesSearchResultsMetadata;
+};
+export type CreateSearchRulesSearchSortField = string;
+export type CreateSearchRulesSearchFilterLeaf = {
+  field: string;
+  operator: 'In' | 'NotIn';
+  values: string[];
+};
+export type CreateSearchRulesSearchTextLeaf = {
+  fields?: string[];
+  value: string;
+};
+export type CreateSearchRulesSearchWhereNode = {
+  and?: CreateSearchRulesSearchWhereNode[];
+  filter?: CreateSearchRulesSearchFilterLeaf;
+  text?: CreateSearchRulesSearchTextLeaf;
+};
+export type CreateSearchRulesRequestBody = {
+  continue?: string;
+  facets?: string[];
+  fields?: string[];
+  labelSelector?: string;
+  limit?: number;
+  sort?: CreateSearchRulesSearchSortField[];
+  where?: CreateSearchRulesSearchWhereNode;
+};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
@@ -1445,4 +1531,5 @@ export const {
   useLazyGetRuleSequenceStatusQuery,
   useReplaceRuleSequenceStatusMutation,
   useUpdateRuleSequenceStatusMutation,
+  useCreateSearchRulesMutation,
 } = injectedRtkApi;

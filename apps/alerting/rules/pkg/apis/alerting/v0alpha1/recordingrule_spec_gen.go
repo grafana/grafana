@@ -23,12 +23,9 @@ type RecordingRulePromDuration string
 // +k8s:openapi-gen=true
 type RecordingRuleTemplateString string
 
-// TODO(@moustafab): validate the metric name regex
 // +k8s:openapi-gen=true
 type RecordingRuleMetricName string
 
-// TODO: validate that only one can specify source=true
-// & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 // +k8s:openapi-gen=true
 type RecordingRuleExpressionMap map[string]RecordingRuleExpression
 

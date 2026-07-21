@@ -205,8 +205,7 @@ type searchServer struct {
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
-	selectableFields     map[LowerGroupResource][]string
-	searchFieldsHashes   map[LowerGroupResource]string
+	searchFields         *SearchFieldsRegistry
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -275,6 +274,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		}
 	}
 
+	searchFields := opts.SearchFields
+	if searchFields == nil {
+		searchFields = NewSearchFieldsRegistry(nil, nil, nil)
+	}
+
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
@@ -293,8 +297,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
-		selectableFields:          opts.SelectableFieldsForKinds,
-		searchFieldsHashes:        opts.SearchFieldsHashesForKinds,
+		searchFields:              searchFields,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
@@ -668,6 +671,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
 	}
@@ -682,6 +688,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: authz batch check", "err", err)
 		return nil, status.Error(codes.Internal, "authz batch check")
 	}
@@ -772,6 +781,11 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 		Task:      embedder.TaskRetrievalQuery,
 	})
 	if err != nil {
+		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded
+		// per the gRPC spec — reporting Internal here trips error SLOs.
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: embed query", "err", err)
 		return nil, status.Error(codes.Internal, "embed query")
 	}
@@ -1343,8 +1357,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 		}
 
 		sfKey := NewLowerGroupResource(key.Group, key.Resource)
-		sfields := s.selectableFields[sfKey]
-		expectedSearchFieldsHash := s.searchFieldsHashes[sfKey]
+		sfields, expectedSearchFieldsHash, _ := s.searchFields.For(sfKey)
 
 		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, nil) {
 			completeCh := make(chan struct{})
@@ -1538,9 +1551,8 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 	}
 
 	// Search-field metadata that affects what gets indexed (paths, types,
-	// capabilities, EmitZeroIfAbsent, CopyFromStandard) has changed since the
-	// index was built. Rebuild so documents are re-extracted with the new
-	// declarations.
+	// capabilities, EmitZeroIfAbsent) has changed since the index was built.
+	// Rebuild so documents are re-extracted with the new declarations.
 	//
 	// An empty expected hash means "no opinion" for this kind: either no
 	// SearchFieldsProvider is registered today, or the running binary doesn't

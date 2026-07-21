@@ -1,4 +1,13 @@
+import { reportInteraction } from '@grafana/runtime';
+
 import { AppChromeService } from './AppChromeService';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const reportInteractionMock = jest.mocked(reportInteraction);
 
 describe('AppChromeService', () => {
   it('Ignore state updates when sectionNav and pageNav have new instance but same text, url or active child', () => {
@@ -37,5 +46,34 @@ describe('AppChromeService', () => {
       pageNav: { text: 'test', url: 'A', children: [{ text: 'child', active: true }] },
     });
     expect(stateChanges).toBe(4);
+  });
+
+  describe('fullscreen workspace', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('setFullscreenWorkspace updates state and reports enter/exit', () => {
+      const chromeService = new AppChromeService();
+
+      chromeService.setFullscreenWorkspace(true);
+      expect(chromeService.state.getValue().fullscreenWorkspace).toBe(true);
+      expect(reportInteractionMock).toHaveBeenCalledWith('grafana_fullscreen_workspace', { action: 'enter' });
+
+      chromeService.setFullscreenWorkspace(false);
+      expect(chromeService.state.getValue().fullscreenWorkspace).toBe(false);
+      expect(reportInteractionMock).toHaveBeenCalledWith('grafana_fullscreen_workspace', { action: 'exit' });
+    });
+
+    it('toggleFullscreenWorkspace flips the current state', () => {
+      const chromeService = new AppChromeService();
+      const initial = chromeService.state.getValue().fullscreenWorkspace ?? false;
+
+      chromeService.toggleFullscreenWorkspace();
+      expect(chromeService.state.getValue().fullscreenWorkspace).toBe(!initial);
+
+      chromeService.toggleFullscreenWorkspace();
+      expect(chromeService.state.getValue().fullscreenWorkspace).toBe(initial);
+    });
   });
 });
