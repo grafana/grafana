@@ -7,6 +7,8 @@ services:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
