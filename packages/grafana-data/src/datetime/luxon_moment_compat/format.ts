@@ -66,7 +66,7 @@ export function convertMomentToLuxonWithOrdinal(format: string): string {
   return withEscapedLiterals.replace(TOKEN_PATTERN, replaceMomentToken);
 }
 
-export function getOrdinal(day: number): string {
+function getOrdinal(day: number): string {
   const value = day % 100;
   return ORDINAL_SUFFIXES[(value - 20) % 10] ?? ORDINAL_SUFFIXES[value] ?? 'th';
 }

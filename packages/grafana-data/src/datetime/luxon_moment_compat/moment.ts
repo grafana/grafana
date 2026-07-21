@@ -65,7 +65,7 @@ type InputObject = Partial<{
 type InputArray = ReadonlyArray<string | number>;
 
 export type MomentInput = MomentLike | DateTime | Date | number | string | InputObject | InputArray | undefined | null;
-export interface MomentBuiltinFormat {
+interface MomentBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
 type MomentFormat = string | string[] | MomentBuiltinFormat;

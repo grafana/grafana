@@ -16,14 +16,14 @@ import { round as _round, dropWhile as _dropWhile } from 'lodash';
 
 import { dateTimeAsMoment, toDuration } from '@grafana/data';
 
-export const STANDARD_DATE_FORMAT = 'YYYY-MM-DD';
-export const STANDARD_TIME_FORMAT = 'HH:mm';
+const STANDARD_DATE_FORMAT = 'YYYY-MM-DD';
+const STANDARD_TIME_FORMAT = 'HH:mm';
 export const ONE_MILLISECOND = 1000;
 export const ONE_SECOND = 1000 * ONE_MILLISECOND;
 export const ONE_MINUTE = 60 * ONE_SECOND;
 export const ONE_HOUR = 60 * ONE_MINUTE;
 export const ONE_DAY = 24 * ONE_HOUR;
-export const DEFAULT_MS_PRECISION = Math.log10(ONE_MILLISECOND);
+const DEFAULT_MS_PRECISION = Math.log10(ONE_MILLISECOND);
 
 const UNIT_STEPS: Array<{ unit: string; microseconds: number; ofPrevious: number }> = [
   { unit: 'd', microseconds: ONE_DAY, ofPrevious: 24 },
