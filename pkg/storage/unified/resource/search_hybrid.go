@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -52,14 +53,16 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		attribute.Int("limit", limit),
 	)
 
+	// Reject unauthenticated requests before they consume a slot of the
+	// tenant's rate budget.
+	user, ok := types.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return nil, status.Error(codes.Unauthenticated, "no user in context")
+	}
 	// Hybrid embeds a query, so it draws from the same per-tenant budget
 	// as VectorSearch.
 	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
 		return nil, err
-	}
-	user, ok := types.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
 	embedText := req.Query
@@ -186,7 +189,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 			r.Score += 1.0 / float64(rrfK+rank)
 			// Only fill in the title and folder when the resource wasn't found by lexical search
 			if _, ok := fromLex[v.UID]; !ok {
-				r.Title = v.Title
+				r.Title = titleFromChunkMetadata(v.Metadata, v.Title)
 				r.Folder = v.Folder
 			}
 		}
@@ -215,6 +218,23 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		return out[i].Key.Name < out[j].Key.Name
 	})
 	return out
+}
+
+// titleFromChunkMetadata prefers the chunk metadata's resource-level
+// title: the embeddings row title is chunk-qualified ("Dashboard — Panel",
+// see embed/dashboard/extractor.go displayTitle) and only a fallback.
+// Kinds whose metadata lacks the key fall back naturally.
+func titleFromChunkMetadata(meta []byte, fallback string) string {
+	if len(meta) == 0 {
+		return fallback
+	}
+	var m struct {
+		DashboardTitle string `json:"dashboardTitle"`
+	}
+	if err := json.Unmarshal(meta, &m); err != nil || m.DashboardTitle == "" {
+		return fallback
+	}
+	return m.DashboardTitle
 }
 
 // lexicalHitsFromResponse flattens the lexical leg's table into

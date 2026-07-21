@@ -124,6 +124,23 @@ func TestFuseRRF_LexicalRootFolderNotOverwrittenByStaleSemanticFolder(t *testing
 	assert.Equal(t, "A-stale", out[0].Title)
 }
 
+func TestFuseRRF_SemanticOnlyTitlePrefersDashboardTitleMetadata(t *testing.T) {
+	// Embeddings row titles are chunk-qualified ("Dashboard — Panel");
+	// semantic-only hits should surface the resource-level title from
+	// metadata when present.
+	sem := []vector.VectorSearchResult{
+		{UID: "a", Title: "Clean — Panel 5", Metadata: []byte(`{"dashboardTitle":"Clean"}`), Score: 0.1},
+		{UID: "b", Title: "Fallback — Panel", Metadata: []byte(`{"other":"x"}`), Score: 0.2},
+		{UID: "c", Title: "NoMeta — Panel", Score: 0.3},
+	}
+
+	out := fuseRRF(hybridKey(), nil, sem)
+	require.Len(t, out, 3)
+	assert.Equal(t, "Clean", out[0].Title)
+	assert.Equal(t, "Fallback — Panel", out[1].Title)
+	assert.Equal(t, "NoMeta — Panel", out[2].Title)
+}
+
 func TestFuseRRF_TieBreaksByName(t *testing.T) {
 	lex := []lexicalHit{{uid: "z", title: "Z"}}
 	sem := []vector.VectorSearchResult{{UID: "m", Title: "M", Score: 0.1}}
@@ -501,6 +518,36 @@ func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
+// recordingRateLimiter satisfies vector.RateLimiter and records whether it
+// was consulted.
+type recordingRateLimiter struct {
+	called bool
+}
+
+func (r *recordingRateLimiter) Allow(context.Context, string, time.Duration, int) (bool, int64, error) {
+	r.called = true
+	return true, 1, nil
+}
+
+func (r *recordingRateLimiter) SweepOlderThan(context.Context, time.Time) (int64, error) {
+	return 0, nil
+}
+
+func TestHybridSearch_UnauthenticatedDoesNotConsumeRateBudget(t *testing.T) {
+	limiter := &recordingRateLimiter{}
+	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+	s.rateLimiter = limiter
+	s.rateLimitPerTenant = 100
+	s.rateLimitWindow = time.Minute
+
+	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	assert.False(t, limiter.called, "unauthenticated request must not consume rate budget")
 }
 
 func TestHybridSearch_CallerCancellationReturnsCanceled(t *testing.T) {
