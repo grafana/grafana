@@ -367,6 +367,75 @@ func TestService_GetForProvider(t *testing.T) {
 	}
 }
 
+func TestService_GetForProvider_StorageReadMode(t *testing.T) {
+	t.Parallel()
+
+	dbRow := func() *models.SSOSettings {
+		return &models.SSOSettings{
+			Provider: "github",
+			Settings: map[string]any{"client_id": "client_id_db", "db_only": "db_only"},
+			Source:   models.DB,
+		}
+	}
+
+	testCases := []struct {
+		name                string
+		servedByMT          bool
+		mtReadAuthoritative bool
+		want                *models.SSOSettings
+	}{
+		{
+			name:       "below the read-flip the database wins and the fallback fills gaps",
+			servedByMT: false,
+			want: &models.SSOSettings{
+				Provider: "github",
+				Source:   models.DB,
+				Settings: map[string]any{"client_id": "client_id_db", "db_only": "db_only", "mt_only": "mt_only"},
+			},
+		},
+		{
+			name:       "at the read-flip MT-Settings wins and the database fills gaps",
+			servedByMT: true,
+			want: &models.SSOSettings{
+				Provider: "github",
+				Source:   models.System,
+				Settings: map[string]any{"client_id": "client_id_mt", "mt_only": "mt_only", "db_only": "db_only"},
+			},
+		},
+		{
+			name:                "once authoritative MT-Settings is the sole source and the database is not read",
+			servedByMT:          true,
+			mtReadAuthoritative: true,
+			want: &models.SSOSettings{
+				Provider: "github",
+				Source:   models.System,
+				Settings: map[string]any{"client_id": "client_id_mt", "mt_only": "mt_only"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			env := setupTestEnv(t, false, false, true)
+			env.service.mtReadAuthoritative = tc.mtReadAuthoritative
+			env.fallbackStrategy.ExpectedIsMatch = true
+			env.fallbackStrategy.ExpectedServesMTSettings = tc.servedByMT
+			env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+				"github": {"client_id": "client_id_mt", "mt_only": "mt_only"},
+			}
+			env.store.ExpectedSSOSetting = dbRow()
+
+			actual, err := env.service.GetForProvider(context.Background(), "github")
+
+			require.NoError(t, err)
+			require.Equal(t, tc.want, actual)
+		})
+	}
+}
+
 func TestService_GetForProviderFromCache(t *testing.T) {
 	t.Parallel()
 
