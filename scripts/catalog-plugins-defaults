@@ -8,5 +8,6 @@ stackdriver
 mssql
 jaeger
 loki
+prometheus
 grafana-postgresql-datasource
 grafana-pyroscope-datasource
