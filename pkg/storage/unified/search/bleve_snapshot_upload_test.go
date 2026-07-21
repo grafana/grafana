@@ -89,6 +89,9 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	assert.Equal(t, int64(42), uploadedMeta.LatestResourceVersion)
 	assert.Equal(t, be.opts.BuildVersion, uploadedMeta.BuildVersion)
 	assert.NotZero(t, uploadedMeta.IndexFormat)
+	// The test index holds a single document; DocCount is recorded for
+	// debugging only, but verify it reflects the index contents.
+	assert.Equal(t, uint64(1), uploadedMeta.DocCount)
 	assert.Equal(t, be.opts.BuildVersion, store.getLastLockBuildVersion())
 	// BuildTime must be populated from the index's internal build
 	// info (set by newBleveIndex), not left zero. Compare with second-level

@@ -1,19 +1,10 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
-import { useLocalStorage } from 'react-use';
+import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
+import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
 
 const FEATURE_CONTROL_ACCESSIBLE_LOCAL_STORAGE_KEY = 'grafana.feature-control.accessible';
 const FEATURE_CONTROL_OPEN_LOCAL_STORAGE_KEY = 'grafana.feature-control.open';
-
-const useStoredBoolean = (key: string, initialValue: boolean): [boolean, (value: boolean) => void] => {
-  const [value, setValue] = useLocalStorage<boolean>(key, initialValue, {
-    raw: false,
-    serializer: (value: boolean) => value.toString(),
-    deserializer: (value: string) => value === 'true',
-  });
-  return [value ?? false, useCallback((nextValue: boolean) => setValue(nextValue), [setValue])];
-};
 
 export type FeatureControlContextType = {
   /** Whether the feature control button is in the toolbar */

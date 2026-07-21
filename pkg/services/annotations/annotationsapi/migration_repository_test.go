@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,6 +23,7 @@ type fakeLegacy struct {
 	findCalls    []*annotations.ItemQuery
 	updateItems  []*annotations.Item
 	deleteParams []*annotations.DeleteParams
+	deleteErr    error
 }
 
 func (f *fakeLegacy) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
@@ -35,7 +38,7 @@ func (f *fakeLegacy) Update(_ context.Context, item *annotations.Item) error {
 }
 func (f *fakeLegacy) Delete(_ context.Context, params *annotations.DeleteParams) error {
 	f.deleteParams = append(f.deleteParams, params)
-	return nil
+	return f.deleteErr
 }
 func (f *fakeLegacy) FindTags(context.Context, *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	return annotations.FindTagsResult{}, nil
@@ -80,6 +83,29 @@ func (f *fakeProxy) Update(context.Context, int64, int64, *annotations.Item) err
 func (f *fakeProxy) Delete(context.Context, int64, int64) error {
 	f.deleteCalls++
 	return f.deleteErr
+}
+
+type fakeReader struct {
+	items []*annotations.ItemDTO
+}
+
+var _ annotationsimpl.ReadStore = (*fakeReader)(nil)
+
+func (f *fakeReader) Type() string { return "fake" }
+func (f *fakeReader) Get(context.Context, annotations.ItemQuery, *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+	return f.items, nil
+}
+func (f *fakeReader) GetTags(context.Context, annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	return annotations.FindTagsResult{}, nil
+}
+
+type fakeAuthorizer struct{}
+
+var _ accesscontrol.Authorizer = (*fakeAuthorizer)(nil)
+
+func (fakeAuthorizer) Authorize(context.Context, annotations.ItemQuery) (*accesscontrol.AccessResources, error) {
+	// Empty dashboards stops RepositoryImpl.Find after one pass.
+	return &accesscontrol.AccessResources{Dashboards: map[string]int64{}}, nil
 }
 
 func newTestRepo(t *testing.T, phase string, legacy *fakeLegacy, proxy *fakeProxy, userSvc user.Service) *migrationRepository {
@@ -177,6 +203,18 @@ func TestMigrationRepository_Find(t *testing.T) {
 		assert.Len(t, legacy.findCalls, 1)
 	})
 
+	t.Run("by-id returns empty on ErrGone and does not fall back to legacy", func(t *testing.T) {
+		legacy := &fakeLegacy{findResult: []*annotations.ItemDTO{item(5, 10)}}
+		proxy := &fakeProxy{getErr: ErrGone}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		got, err := repo.Find(context.Background(), &annotations.ItemQuery{AnnotationID: 5})
+		require.NoError(t, err)
+		assert.Empty(t, got)
+		assert.Equal(t, 1, proxy.getCalls)
+		assert.Empty(t, legacy.findCalls)
+	})
+
 	t.Run("by-id propagates other proxy errors", func(t *testing.T) {
 		legacy := &fakeLegacy{}
 		proxy := &fakeProxy{getErr: assert.AnError}
@@ -197,6 +235,33 @@ func TestMigrationRepository_Find(t *testing.T) {
 		assert.Equal(t, []*annotations.ItemDTO{item(2, 20), item(1, 10)}, got)
 		assert.Len(t, proxy.listCalls, 1)
 		assert.Len(t, legacy.findCalls, 1)
+	})
+
+	t.Run("proxy-writes merges new and legacy, respecting the caller's limit", func(t *testing.T) {
+		legacyItems := []*annotations.ItemDTO{item(2, 20), item(3, 30)}
+		legacy := annotationsimpl.NewRepositoryImpl(
+			&fakeAuthorizer{},
+			nil,
+			&fakeReader{items: legacyItems},
+			nil,
+		)
+
+		proxy := &fakeProxy{listResult: []*annotations.ItemDTO{item(1, 10)}}
+		repo := &migrationRepository{
+			legacy:  legacy,
+			proxy:   proxy,
+			cfg:     &setting.Cfg{AnnotationAppPlatform: setting.AnnotationAppPlatformSettings{APIMigrationPhase: "proxy-writes"}},
+			userSvc: usertest.NewUserServiceFake(),
+			logger:  log.New("test"),
+		}
+
+		query := &annotations.ItemQuery{Limit: 3}
+		got, err := repo.Find(context.Background(), query)
+		require.NoError(t, err)
+
+		// New + legacy yields 3 candidates; the caller's limit of 3 must win the truncation.
+		require.Len(t, got, 3, "merge must respect the caller's limit, not a value mutated by legacy")
+		assert.Equal(t, int64(3), query.Limit, "the caller's query limit must be untouched")
 	})
 
 	t.Run("proxy-writes falls back to legacy when the new store errors", func(t *testing.T) {
@@ -362,19 +427,38 @@ func TestMigrationRepository_Update(t *testing.T) {
 		require.Len(t, legacy.updateItems, 1)
 		assert.Same(t, item, legacy.updateItems[0])
 	})
+
+	t.Run("ErrGone does not fall back to legacy", func(t *testing.T) {
+		legacy := &fakeLegacy{}
+		proxy := &fakeProxy{updateErr: ErrGone}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		require.ErrorIs(t, repo.Update(context.Background(), &annotations.Item{OrgID: 1, ID: 5}), ErrGone)
+		assert.Empty(t, legacy.updateItems)
+	})
 }
 
 // --- Delete ----------------------------------------------------------------
 
 func TestMigrationRepository_Delete(t *testing.T) {
-	t.Run("single delete hits new store and skips legacy", func(t *testing.T) {
+	t.Run("single delete removes from new store then dual-deletes the legacy copy", func(t *testing.T) {
 		legacy := &fakeLegacy{}
 		proxy := &fakeProxy{}
 		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
 
 		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))
 		assert.Equal(t, 1, proxy.deleteCalls)
-		assert.Empty(t, legacy.deleteParams)
+		require.Len(t, legacy.deleteParams, 1)
+	})
+
+	t.Run("single delete succeeds even when the best-effort legacy delete fails", func(t *testing.T) {
+		legacy := &fakeLegacy{deleteErr: assert.AnError}
+		proxy := &fakeProxy{}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))
+		assert.Equal(t, 1, proxy.deleteCalls)
+		require.Len(t, legacy.deleteParams, 1)
 	})
 
 	t.Run("single delete propagates non-NotFound proxy errors", func(t *testing.T) {
@@ -389,6 +473,16 @@ func TestMigrationRepository_Delete(t *testing.T) {
 	t.Run("single delete falls back to legacy on ErrNotFound", func(t *testing.T) {
 		legacy := &fakeLegacy{}
 		proxy := &fakeProxy{deleteErr: ErrNotFound}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))
+		assert.Equal(t, 1, proxy.deleteCalls)
+		require.Len(t, legacy.deleteParams, 1)
+	})
+
+	t.Run("single delete treats ErrGone as idempotent success and retries the legacy cleanup", func(t *testing.T) {
+		legacy := &fakeLegacy{}
+		proxy := &fakeProxy{deleteErr: ErrGone}
 		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
 
 		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))

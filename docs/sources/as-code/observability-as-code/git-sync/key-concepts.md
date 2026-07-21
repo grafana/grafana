@@ -23,9 +23,7 @@ aliases:
 
 {{< admonition type="note" >}}
 
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -126,9 +124,11 @@ your-org/grafana-manifests/
 └── grafana/
     ├── cpu-metrics.json
     └── team-platform/
-        ├── .folder.json
+        ├── _folder.json
         └── memory-usage.json
 ```
+
+The `_folder.json` file stores the `team-platform` folder's stable UID and display name, so the folder keeps its identity and permissions if you move or rename it in the repository. Refer to [The Git Sync folder metadata file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync/#the-git-sync-folder-metadata-file) for details.
 
 The instance also has content that isn't managed by Git Sync: a manually created **Ops** folder and an **Ad-hoc dashboard**.
 

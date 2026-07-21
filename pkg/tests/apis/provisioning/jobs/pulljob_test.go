@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path"
@@ -9,11 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -22,7 +19,6 @@ import (
 
 func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo1 = "pulljob-repo-1"
 	const repo2 = "pulljob-repo-2"
@@ -34,7 +30,6 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard1.json",
 		},
-		SkipResourceAssertions: true, // will check both at the same time below
 	})
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repo2,
@@ -43,32 +38,12 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/timeline-demo.json": "dashboard2.json",
 		},
-		SkipResourceAssertions: true, // will check both at the same time below
 	})
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 2 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
-			return
-		}
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list folders: error: %s", err.Error())
-			return
-		}
-		if len(folders.Items) != 2 {
-			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
-			return
-		}
-
-		assert.Len(collect, dashboards.Items, 2)
-		assert.Len(collect, folders.Items, 2)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
+	helper.RequireRepoDashboardCount(t, repo1, 1)
+	helper.RequireRepoFolderCount(t, repo1, 1)
+	helper.RequireRepoDashboardCount(t, repo2, 1)
+	helper.RequireRepoFolderCount(t, repo2, 1)
 
 	// Test: Pull job should fail when trying to manage resources owned by another repository
 	t.Run("pull job should fail when trying to manage resources owned by another repository", func(t *testing.T) {
@@ -113,7 +88,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.True(t, found, "should have ownership conflict warning")
 
 		// Step 4: Verify original resource is still owned by repo1 and unchanged
-		originalDashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		originalDashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "original dashboard should still exist")
 		require.Equal(t, repo1, originalDashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
 
@@ -131,11 +106,11 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json (repo1)
 		const timelineUID = "mIJjFy8Kz"  // UID from timeline-demo.json (repo2)
 
-		repo1Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		repo1Dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo1's dashboard should exist")
 		require.Equal(t, repo1, repo1Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "should be owned by repo1")
 
-		repo2Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		repo2Dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo2's dashboard should exist")
 		require.Equal(t, repo2, repo2Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "should be owned by repo2")
 
@@ -143,7 +118,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		helper.SyncAndWait(t, repo1, nil)
 
 		// Step 3: Verify that repo2's resource is still intact after repo1's pull
-		persistentRepo2Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		persistentRepo2Dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo2's dashboard should still exist after repo1 pull")
 		require.Equal(t, repo2, persistentRepo2Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo2")
 		require.Equal(t, repo2Dashboard.GetGeneration(), persistentRepo2Dashboard.GetGeneration(), "repo2's resource should not be modified by repo1 pull")
@@ -154,7 +129,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 
-		persistentRepo1Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		persistentRepo1Dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo1's dashboard should still exist after repo2 pull")
 		require.Equal(t, repo1, persistentRepo1Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
 		require.Equal(t, repo1Dashboard.GetGeneration(), persistentRepo1Dashboard.GetGeneration(), "repo1's resource should not be modified by repo2 pull")
@@ -169,35 +144,30 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 // hard-failing the whole job. The orphan must not be silently adopted.
 func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "unmanaged-root-repo"
 	repoPath := path.Join(helper.ProvisioningPath, "unmanaged-root-repo-data")
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repo,
-		LocalPath:       repoPath,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repo,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
 	})
 
-	rootFolder, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
+
+	rootFolder, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.NoError(t, err, "root folder should exist after initial sync")
 	require.Equal(t, repo, rootFolder.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"root folder should be managed by the repo")
 
 	// Mimic "Delete and keep resources" from the UI: ensure the
 	// release-orphan-resources finalizer is set, then delete the repo.
-	_, err = helper.Repositories.Resource.Patch(ctx, repo, types.JSONPatchType, []byte(`[
-		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
-	]`), metav1.PatchOptions{})
-	require.NoError(t, err, "should patch finalizers")
+	helper.ReleaseAndDeleteRepository(t, repo)
+	common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
-	require.NoError(t, helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}))
-	helper.WaitForRepositoryDeleted(t, ctx, repo)
-	common.WaitForResourcesReleased(t, ctx, helper.Folders.Resource, "folders")
-
-	orphan, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	orphan, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.NoError(t, err, "orphan root folder should still exist after release")
 	require.NotContains(t, orphan.GetAnnotations(), utils.AnnoKeyManagerIdentity,
 		"orphan folder must have manager annotations stripped")
@@ -208,11 +178,10 @@ func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 	// and inspect the pull job ourselves rather than racing the helper's
 	// initial sync.
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              repoPath,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -244,7 +213,7 @@ func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 	// Defensive: the orphan folder must not have been silently adopted by
 	// the recreated repository. The whole point of the existing guard is
 	// that takeover requires explicit migration.
-	orphan, err = helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	orphan, err = helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.NoError(t, err, "orphan root folder should still exist")
 	require.NotContains(t, orphan.GetAnnotations(), utils.AnnoKeyManagerIdentity,
 		"orphan folder must not be silently adopted by the recreated repo")

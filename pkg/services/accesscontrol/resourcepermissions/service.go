@@ -461,6 +461,17 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		}
 	}
 
+	// Write action set token for datasources. Granular actions are also written until
+	// FlagIamOnlyStoreDatasourceActionSets is enabled (after the backfill migration has run).
+	if s.options.Resource == datasources.ScopeRoot {
+		actions = append(actions, s.options.GetActionSetName(permission))
+
+		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(), featuremgmt.FlagIamOnlyStoreDatasourceActionSets, false, openfeature.EvaluationContext{})
+		if onlyActionSets {
+			return actions, nil
+		}
+	}
+
 	// New resources with no legacy granular data go straight to action-set-only.
 	if s.options.Resource == accesscontrol.AlertingRoutesResource {
 		return []string{s.options.GetActionSetName(permission)}, nil
@@ -709,7 +720,8 @@ func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
 		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||
-		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot)
+		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot) ||
+		strings.HasPrefix(action, datasources.ScopeRoot)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.
