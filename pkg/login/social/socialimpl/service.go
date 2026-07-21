@@ -103,19 +103,12 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 		return nil, fmt.Errorf("oauth provider %q is not enabled", name)
 	}
 
-	// Overall request timeout for token exchange (and other OAuth HTTP calls).
-	// Defaults to 15s; overridable via token_exchange_timeout (seconds) so
-	// high-latency environments (e.g. Entra ID over constrained networks)
-	// can avoid intermittent "Failed to get token from provider" errors.
-	// See https://github.com/grafana/grafana/issues/120907
 	timeout := 15 * time.Second
 	if info.TokenExchangeTimeout > 0 {
 		timeout = time.Duration(info.TokenExchangeTimeout) * time.Second
 	}
 
-	// Dial and TLS handshake timeouts must also respect the configured budget.
-	// A short hard-coded dial timeout (previously 10s) causes "dial tcp … i/o
-	// timeout" failures even when token_exchange_timeout is raised above 15s.
+	// handle call back
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
