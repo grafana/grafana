@@ -4,6 +4,8 @@ services:
   db:
     image: mysql:8.0.32
     platform: linux/x86_64
+    security_opt:
+      - no-new-privileges:true
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana
