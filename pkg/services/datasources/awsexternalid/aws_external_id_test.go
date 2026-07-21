@@ -95,8 +95,10 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 
 	t.Run("preserves a valid stored ID on stack toggle and Terraform omit", func(t *testing.T) {
 		for _, tc := range []struct {
-			name    string
-			updated map[string]any
+			name        string
+			updated     map[string]any
+			wantModeSet bool
+			wantModeOn  bool
 		}{
 			{
 				name: "stack mode",
@@ -105,10 +107,14 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 					usePerDatasourceExternalIDJSONKey: false,
 					grafanaExternalIDJSONKey:          "",
 				},
+				wantModeSet: true,
+				wantModeOn:  false,
 			},
 			{
-				name:    "omit bool and ID",
-				updated: map[string]any{"authType": grafanaAssumeRoleAuthType},
+				name:        "omit bool and ID",
+				updated:     map[string]any{"authType": grafanaAssumeRoleAuthType},
+				wantModeSet: true,
+				wantModeOn:  true,
 			},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
@@ -120,6 +126,9 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 				updated := simplejson.NewFromAny(tc.updated)
 				preserveGrafanaExternalID(uid, stack, existing, updated, true)
 				assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
+				modeSet, modeOn := usePerDatasourceExternalID(updated)
+				assert.Equal(t, tc.wantModeSet, modeSet)
+				assert.Equal(t, tc.wantModeOn, modeOn)
 			})
 		}
 	})

@@ -127,8 +127,10 @@ func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.J
 // When allowGenerate is true it may mint when switching into grafana_assume_role or
 // explicitly opting into per-DS mode, unless stack mode is requested.
 //
-// Omitting usePerDatasourceExternalId / grafanaExternalId on update preserves an existing ID
-// (Terraform-friendly). Legacy GAR datasources without an ID stay on the stack ID until they opt in.
+// Omitting usePerDatasourceExternalId / grafanaExternalId on update preserves existing
+// values (Terraform-friendly). The mode bool must be preserved too: aws-sdk only uses the
+// per-DS ID when usePerDatasourceExternalId is explicitly true. Legacy GAR datasources
+// without an ID stay on the stack ID until they opt in.
 func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *simplejson.Json, allowGenerate bool) {
 	if updated == nil {
 		return
@@ -156,6 +158,13 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	if isValidGrafanaExternalID(existingID, stackExternalID, uid) {
 		// Keep the value across stack/per-DS toggles; mode is the bool.
 		updated.Set(grafanaExternalIDJSONKey, existingID)
+		// When the update omits the mode flag, restore the stored value so Terraform/API
+		// updates that only send partial jsonData do not silently fall back to stack ID.
+		if !modeSet {
+			if existingModeSet, existingModeOn := usePerDatasourceExternalID(existing); existingModeSet {
+				updated.Set(usePerDatasourceExternalIDJSONKey, existingModeOn)
+			}
+		}
 		return
 	}
 	// Invalid/empty stored ID is not re-applied. clearInvalid already removed bad payload
