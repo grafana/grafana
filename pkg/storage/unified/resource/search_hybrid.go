@@ -282,14 +282,21 @@ var hybridFilterKeys = map[string]struct{}{
 }
 
 // languageToDSTypes approximates language filtering on the lexical leg,
-// which indexes datasource types but not per-query languages.
+// which indexes datasource types but not per-query languages. Mirrors
+// inferLanguage in embed/dashboard/extractor.go — keep in sync. That
+// function matches substrings, so exotic plugin ids can still be missed
+// here; the real fix is indexing languages in bleve (tracked follow-up).
 var languageToDSTypes = map[string][]string{
-	"promql":  {"prometheus"},
+	"promql":  {"prometheus", "grafana-azureprometheus-datasource", "grafana-amazonprometheus-datasource"},
 	"logql":   {"loki"},
 	"traceql": {"tempo"},
 	// "postgres" is the legacy alias; current dashboards carry the full
 	// plugin id.
-	"sql": {"mysql", "postgres", "grafana-postgresql-datasource", "mssql"},
+	"sql": {
+		"mysql", "postgres", "grafana-postgresql-datasource", "mssql",
+		"grafana-clickhouse-datasource", "grafana-bigquery-datasource",
+		"grafana-snowflake-datasource",
+	},
 }
 
 // validateHybridSearchRequest returns nil when valid, otherwise an

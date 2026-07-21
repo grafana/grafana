@@ -292,7 +292,8 @@ func TestHybridLexicalRequest(t *testing.T) {
 	assert.Equal(t, "reference.DataSource", out.Options.Fields[2].Key)
 	assert.Equal(t, []string{"ds1"}, out.Options.Fields[2].Values)
 	assert.Equal(t, SEARCH_FIELD_PREFIX+"ds_types", out.Options.Fields[3].Key)
-	assert.ElementsMatch(t, []string{"prometheus", "loki"}, out.Options.Fields[3].Values)
+	want := append(append([]string{}, languageToDSTypes["promql"]...), languageToDSTypes["logql"]...)
+	assert.ElementsMatch(t, want, out.Options.Fields[3].Values)
 }
 
 func TestHybridVectorFilters(t *testing.T) {
@@ -447,7 +448,8 @@ func TestHybridSearch_FiltersReachBothLegs(t *testing.T) {
 	assert.Equal(t, SEARCH_FIELD_FOLDER, idx.gotReq.Options.Fields[1].Key)
 	assert.Equal(t, "reference.DataSource", idx.gotReq.Options.Fields[2].Key)
 	assert.Equal(t, SEARCH_FIELD_PREFIX+"ds_types", idx.gotReq.Options.Fields[3].Key)
-	assert.Equal(t, []string{"prometheus"}, idx.gotReq.Options.Fields[3].Values)
+	assert.Equal(t, languageToDSTypes["promql"], idx.gotReq.Options.Fields[3].Values)
+	assert.Contains(t, idx.gotReq.Options.Fields[3].Values, "prometheus")
 	idx.mu.Unlock()
 
 	require.Len(t, backend.gotFilters, 4)
