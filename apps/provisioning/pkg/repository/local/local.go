@@ -4,9 +4,7 @@ import (
 	"context"
 	"path"
 
-	// Git still uses sha1 for the most part: https://git-scm.com/docs/hash-function-transition
-	//nolint:gosec
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -259,7 +257,7 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	}
 
 	// TODO: Define what hashing algorithm we want to use for the entire repository. Maybe a config option?
-	hasher := sha1.New()
+	hasher := sha256.New()
 	// TODO: context-aware io.Copy? Is that even possible with a reasonable impl?
 	size, err := io.Copy(hasher, file)
 	if err != nil {
