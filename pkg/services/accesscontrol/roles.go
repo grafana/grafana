@@ -284,21 +284,10 @@ var (
 		},
 	}
 
-	// Adding a new section X to the kube-style settings API requires:
-	//  1. Define a fixed:<X>.settings:writer role granting both ActionSettingsRead
-	//     and ActionSettingsWrite on settings:<X>:*.
-	//  2. Register it in FixedRoleRegistrations and grant it where appropriate
-	//     (typically org.RoleAdmin).
-	// The role must include the read permission: the wildcard SettingsReaderRole
-	// (settings:*) is only granted to grafana server admins, so a section writer
-	// without an explicit read grant can write the section but not GET/LIST it.
-	// No code change is needed in pkg/extensions/apiserver/registry/setting:
-	// section awareness lives in pkg/services/authz/rbac/mapper.go via
-	// settingTranslation, which extracts the section from "<section>--<key>".
 	smtpSettingsWriterRole = RoleDTO{
 		Name:        "fixed:smtp.settings:writer",
 		DisplayName: "SMTP settings writer",
-		Description: "Read and update SMTP settings.",
+		Description: "Read and update the Grafana instance's SMTP configuration.",
 		Group:       "Settings",
 		Permissions: []Permission{
 			{
