@@ -168,6 +168,12 @@
       "types": "./dist/types/clients/rtkq/dashboard/v2beta1/index.d.ts",
       "import": "./dist/esm/clients/rtkq/dashboard/v2beta1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/dashboard/v2beta1/index.cjs"
+    },
+    "./rtkq/plugins/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/plugins/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/plugins/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/plugins/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/plugins/v0alpha1/index.cjs"
     }
   },
   "publishConfig": {

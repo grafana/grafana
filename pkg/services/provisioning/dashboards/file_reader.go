@@ -449,7 +449,9 @@ func (fr *FileReader) getOrCreateFolderInternal(ctx context.Context, orgID int64
 	if err == nil && result != nil && result.ManagedBy == "" {
 		result, err = fr.dashboardProvisioningService.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
 		if err != nil {
-			return 0, "", fmt.Errorf("unable to update provisioned folder")
+			// Preserve the original error so callers can classify transient
+			// failures (e.g. the folder API being unavailable) as retryable.
+			return 0, "", fmt.Errorf("unable to update provisioned folder: %w", err)
 		}
 	}
 

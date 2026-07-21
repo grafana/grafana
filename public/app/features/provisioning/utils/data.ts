@@ -111,8 +111,14 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     data.pullRequest?.titleTemplate,
     data.pullRequest?.enforceTemplate
   );
-  if (pullRequest) {
-    spec.pullRequest = pullRequest;
+  // GitHub keeps generateDashboardPreviews on its own config until existing repositories are
+  // backfilled; every other provider stores it on pullRequest options (matches the backend).
+  const generatePreviewsOnPullRequest = data.type !== 'github' && Boolean(data.generateDashboardPreviews);
+  if (pullRequest || generatePreviewsOnPullRequest) {
+    spec.pullRequest = {
+      ...pullRequest,
+      ...(generatePreviewsOnPullRequest ? { generateDashboardPreviews: data.generateDashboardPreviews } : {}),
+    };
   }
 
   if (data.webhook?.disabled) {
@@ -137,7 +143,6 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     case 'githubEnterprise':
       spec.githubEnterprise = {
         ...baseConfig,
-        generateDashboardPreviews: data.generateDashboardPreviews,
       };
       break;
     case 'gitlab':
@@ -147,6 +152,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       spec.bitbucket = {
         ...baseConfig,
         tokenUser: data.tokenUser,
+        email: data.email?.trim() || undefined,
       };
       break;
     case 'git':
@@ -205,8 +211,9 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     branchOptions: spec.branch,
     url: remoteConfig?.url || '',
     tokenUser: tokenUser || '',
-    generateDashboardPreviews:
-      spec.github?.generateDashboardPreviews || spec.githubEnterprise?.generateDashboardPreviews || false,
+    generateDashboardPreviews: spec.github
+      ? (spec.github?.generateDashboardPreviews ?? false)
+      : (spec.pullRequest?.generateDashboardPreviews ?? false),
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),

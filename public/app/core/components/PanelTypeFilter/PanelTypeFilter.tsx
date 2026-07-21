@@ -11,13 +11,15 @@ export interface Props {
   maxMenuHeight?: number;
 }
 
+const collator = new Intl.Collator();
+
 export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
   const { value: plugins = [] } = useListedPanelPluginMetas();
   const options = useMemo(
     () =>
       plugins
         .map((p) => ({ label: p.name, imgUrl: p.info.logos.small, value: p }))
-        .sort((a, b) => a.label?.localeCompare(b.label)),
+        .sort((a, b) => collator.compare(a.label, b.label)),
     [plugins]
   );
   const [value, setValue] = useState<Array<SelectableValue<PanelPluginMeta>>>([]);

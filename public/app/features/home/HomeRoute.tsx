@@ -4,8 +4,9 @@ import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';
+import { PageLoader } from '@grafana/ui';
 import { SETUP_GUIDE_HOME_URL } from 'app/core/hooks/useHomeNav';
-import { GrafanaRouteLoading } from 'app/core/navigation/GrafanaRouteLoading';
+import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 
 import { type DashboardPageProxyProps } from '../dashboard/containers/DashboardPageProxy';
 
@@ -31,11 +32,12 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
       return;
     }
     const newUrl = locationUtil.processRedirectUri(redirectUri, locationService.getLocation());
-    locationService.replace(newUrl);
+    // Landing-page resolution, not a navigation: journey trackers keep previousUrl absent.
+    locationService.replace(markAsUrlRewrite(newUrl));
   }, [willRedirect, redirectUri]);
 
   if (isLoading || willRedirect) {
-    return <GrafanaRouteLoading />;
+    return <PageLoader />;
   }
 
   // Probe failed: we cannot tell whether a home dashboard is configured.
@@ -53,7 +55,7 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
 
 export default function HomeRoute(props: DashboardPageProxyProps) {
   return (
-    <Suspense fallback={<GrafanaRouteLoading />}>
+    <Suspense fallback={<PageLoader />}>
       <HomeRouteInner {...props} />
     </Suspense>
   );

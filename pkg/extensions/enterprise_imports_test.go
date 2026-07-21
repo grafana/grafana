@@ -6,6 +6,7 @@
 package extensions
 
 import (
+	_ "github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/alicebob/miniredis/v2"
 	_ "github.com/google/go-github/v82/github"
 	_ "github.com/grafana/authlib/authz/proto/v1"
@@ -41,6 +42,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	_ "github.com/grafana/grafana/pkg/services/team/teamtest"
 	_ "github.com/grafana/grafana/pkg/services/user/usertest"
+	_ "github.com/grafana/grafana/pkg/storage/unified/resource/kv/test"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
@@ -50,6 +52,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tests/testsuite"
 	_ "github.com/grafana/grafana/pkg/util/testutil"
 	_ "github.com/grafana/grafana/pkg/util/testutil/pgtest"
+	_ "github.com/grafana/grafana/pkg/util/xorm/core"
 	_ "github.com/grafana/grafana/pkg/web/webtest"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/migueleliasweb/go-github-mock/src/mock"

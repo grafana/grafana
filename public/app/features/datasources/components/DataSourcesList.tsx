@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
+import { useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -19,7 +18,6 @@ import {
 } from '../../connections/hooks/useDatasourceAdvisorChecks';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
-import { trackDataSourcesListViewed } from '../tracking';
 
 import { DataSourcesListCard } from './DataSourcesListCard';
 import { DataSourcesListHeader } from './DataSourcesListHeader';
@@ -85,7 +83,6 @@ export function DataSourcesListView({
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const isKeyboardNavigating = useIsKeyboardNavigating();
   const { datasourceFailureByUID } = useDatasourceFailureByUID();
@@ -105,13 +102,6 @@ export function DataSourcesListView({
     }
     return allDataSources.filter((dataSource) => favoriteDataSources?.isFavoriteDatasource(dataSource.uid));
   }, [allDataSources, showFavoritesOnly, favoriteDataSources]);
-
-  useEffect(() => {
-    trackDataSourcesListViewed({
-      grafana_version: config.buildInfo.version,
-      path: location.pathname,
-    });
-  }, [location]);
 
   const rowGap = Number.parseFloat(theme.spacing(1)) || 8;
   const rowVirtualizer = useVirtualizer({
