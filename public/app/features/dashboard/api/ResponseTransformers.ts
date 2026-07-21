@@ -670,6 +670,7 @@ export function buildPanelKind(p: Panel): PanelKind {
             ...(p.queryCachingTTL !== undefined && { queryCachingTTL: p.queryCachingTTL }),
             ...(p.timeFrom !== undefined && { timeFrom: p.timeFrom }),
             ...(p.timeShift !== undefined && { timeShift: p.timeShift }),
+            ...(p.timeCompare !== undefined && { timeCompare: p.timeCompare }),
           },
         },
       },
@@ -1233,6 +1234,9 @@ function transformV2PanelToV1Panel(
       ...(panel.data.spec.queryOptions.timeShift !== undefined && {
         timeShift: panel.data.spec.queryOptions.timeShift,
       }),
+      ...(panel.data.spec.queryOptions.timeCompare !== undefined && {
+        timeCompare: panel.data.spec.queryOptions.timeCompare,
+      }),
       ...(panel.transparent !== undefined && { transparent: panel.transparent }),
       ...(repeat?.value !== undefined && { repeat: repeat.value }),
       ...(repeat?.direction !== undefined && { repeatDirection: repeat.direction }),
@@ -1421,7 +1425,7 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
   }
 }
 
-export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
+function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
   const annotations = (spec.annotations ?? []).map(transformV2ToV1AnnotationQuery);
 
   const gnetId = metadata.annotations?.[AnnoKeyDashboardGnetId];
@@ -1461,7 +1465,7 @@ export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: Ob
   };
 }
 
-export function transformAnnotationMappingsV1ToV2(
+function transformAnnotationMappingsV1ToV2(
   mappings: AnnotationQuery['mappings']
 ): AnnotationQueryKind['spec']['mappings'] {
   if (!mappings) {

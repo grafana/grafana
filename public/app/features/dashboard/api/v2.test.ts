@@ -11,6 +11,7 @@ import {
   AnnoKeyMessage,
   AnnoKeySavedFromUI,
   DeprecatedInternalId,
+  EMPTY_TABLE_RESPONSE,
 } from 'app/features/apiserver/types';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
@@ -488,16 +489,23 @@ describe('v2 dashboard API', () => {
   });
 
   describe('listDeletedDashboards', () => {
-    it('should return list of deleted dashboards', async () => {
+    it('should return table of deleted dashboards', async () => {
       const mockDeletedDashboards = {
-        items: [
+        ...EMPTY_TABLE_RESPONSE,
+        metadata: { resourceVersion: '1' },
+        columnDefinitions: [
+          { name: 'Name', type: 'string' },
+          { name: 'Title', type: 'string' },
+          { name: 'Created At', type: 'date' },
+        ],
+        rows: [
           {
-            ...mockDashboardDto,
-            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' },
+            cells: ['deleted-dash-1'],
+            object: { metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } },
           },
           {
-            ...mockDashboardDto,
-            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' },
+            cells: ['deleted-dash-2'],
+            object: { metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' } },
           },
         ],
       };
@@ -508,7 +516,32 @@ describe('v2 dashboard API', () => {
       const result = await api.listDeletedDashboards({ limit: 10 });
 
       expect(result).toEqual(mockDeletedDashboards);
-      expect(result.items).toHaveLength(2);
+      expect(result.rows).toHaveLength(2);
+    });
+  });
+
+  describe('getDeletedDashboard', () => {
+    it('should query the recently-deleted listing by name and return the matching item', async () => {
+      const deletedItem = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } };
+      mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [deletedItem] });
+
+      const api = new K8sDashboardV2API();
+      const result = await api.getDeletedDashboard('deleted-dash-1');
+
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/dashboards'), {
+        labelSelector: 'grafana.app/get-trash=true',
+        fieldSelector: 'metadata.name=deleted-dash-1',
+      });
+      expect(result).toBe(deletedItem);
+    });
+
+    it('should return undefined when the recently-deleted listing is empty', async () => {
+      mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [] });
+
+      const api = new K8sDashboardV2API();
+      const result = await api.getDeletedDashboard('deleted-dash-1');
+
+      expect(result).toBeUndefined();
     });
   });
 

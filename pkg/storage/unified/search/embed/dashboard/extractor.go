@@ -1,4 +1,4 @@
-// Package dashboard implements an embed.Extractor for Grafana dashboards.
+// Package dashboard implements an embed.Builder for Grafana dashboards.
 // Walks the dashboard JSON via JSONPath, supporting both classic (v1) and
 // v2 (k8s-shape) dashboards. Produces one embed.Item per panel.
 package dashboard
@@ -11,26 +11,59 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/PaesslerAG/jsonpath"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 )
 
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard")
+
+// defaultMaxPanels caps embeddings per dashboard. Anything past ~200
+// panels is unlikely to be human-authored; the cap saves provider
+// tokens on those outliers without affecting normal dashboards.
+const defaultMaxPanels = 200
+
+// maxItemContentBytes caps a panel's embeddable text so we keep our token count per batch reasonable
+const maxItemContentBytes = 4 * 1024
+
+// maxDescriptionBytes cap the panel desc at 2Kib to leave room for queries
+const maxDescriptionBytes = 2 * 1024
+
 // Extractor produces one embed.Item per panel.
 type Extractor struct {
-	logger *slog.Logger
+	logger    *slog.Logger
+	maxPanels int
 }
 
+// New builds an Extractor with the default panel cap (200).
 func New() *Extractor {
-	return &Extractor{logger: slog.Default()}
+	return &Extractor{logger: slog.Default(), maxPanels: defaultMaxPanels}
 }
 
+// Group returns the API group; satisfies the embed.Builder interface.
+func (e *Extractor) Group() string { return "dashboard.grafana.app" }
+
+// Resource returns the resource type; satisfies the embed.Builder interface.
 func (e *Extractor) Resource() string { return "dashboards" }
+
+// MaxItemsPerResource returns the per-dashboard panel cap; satisfies the
+// embed.Builder interface.
+func (e *Extractor) MaxItemsPerResource() int { return e.maxPanels }
 
 // Extract folder title doesn't exist on unified storage resources - so need to provide that
 func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {
+	ctx, span := tracer.Start(ctx, "unified.embed.dashboard.Extract")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("namespace", key.GetNamespace()),
+		attribute.String("name", key.GetName()),
+	)
+
 	var dashboardJSON map[string]any
 	if err := json.Unmarshal(value, &dashboardJSON); err != nil {
 		return nil, fmt.Errorf("unmarshal dashboard: %w", err)
@@ -58,6 +91,7 @@ func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, va
 			items = append(items, it)
 		}
 	}
+	span.SetAttributes(attribute.Int("panel_count", len(items)))
 	return items, nil
 }
 
@@ -76,7 +110,7 @@ func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, 
 		parts = append(parts, p.Title)
 	}
 	if p.Description != "" {
-		parts = append(parts, p.Description)
+		parts = append(parts, truncateUTF8(p.Description, maxDescriptionBytes))
 	}
 	breadcrumb := strings.Join(parts, " → ")
 
@@ -132,10 +166,21 @@ func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, 
 		UID:         uid,
 		Title:       displayTitle(content.DashboardTitle, p.Title, uid),
 		Subresource: subresource(p.PanelID, idx),
-		Content:     strings.Join(sections, "\n"),
+		Content:     truncateUTF8(strings.Join(sections, "\n"), maxItemContentBytes),
 		Metadata:    mdJSON,
 		Folder:      content.FolderUID,
 	}, true
+}
+
+// truncateUTF8 caps s to at most n bytes without splitting a rune.
+func truncateUTF8(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
 
 // subresource is the unique sub-identifier for a panel within its dashboard.

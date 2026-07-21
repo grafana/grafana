@@ -207,6 +207,10 @@ export const MenuItem = React.memo(
         data-testid={testId}
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
+        // Announce to screen readers that this item opens a submenu, and whether it is
+        // currently expanded, so nested items (e.g. under "More...") are discoverable.
+        aria-haspopup={hasSubMenu ? 'menu' : undefined}
+        aria-expanded={hasSubMenu ? isSubMenuOpen : undefined}
         tabIndex={tabIndex}
         {...disabledProps}
       >
@@ -269,7 +273,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(4),
-      borderRadius: getInternalRadius(theme, menuPadding, { parentBorderWidth: 0 }),
+      borderRadius: getInternalRadius(theme, menuPadding, { parentBorderWidth: 0, parentBorderRadius: 'lg' }),
       margin: 0,
       border: 'none',
       width: '100%',

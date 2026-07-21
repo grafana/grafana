@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/util"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -262,7 +261,7 @@ func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	for _, s := range v["health"] {
 		s = strings.ToLower(s)
 		switch s {
-		case "ok", "error", "nodata", "unknown":
+		case "ok", "error", "nodata":
 			health[s] = struct{}{}
 		default:
 			return nil, fmt.Errorf("unknown health '%s'", s)
@@ -271,12 +270,15 @@ func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	return health, nil
 }
 
+type StatusPreparer func(ruleUIDs []string)
+
 type RuleGroupStatusesOptions struct {
 	Ctx               context.Context
 	OrgID             int64
 	Query             url.Values
 	AllowedNamespaces map[string]string
 	SortByFullpath    bool
+	StatusPreparer    StatusPreparer
 }
 
 type ListAlertRulesStore interface {
@@ -606,6 +608,15 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 		}
 	}
 	span.AddEvent("Provenances retrieved from store")
+
+	if ctx.opts.StatusPreparer != nil {
+		ruleUIDs := make([]string, 0, len(ruleList))
+		for _, rule := range ruleList {
+			ruleUIDs = append(ruleUIDs, rule.UID)
+		}
+
+		ctx.opts.StatusPreparer(ruleUIDs)
+	}
 
 	groupedRules := getGroupedRules(log, ruleList, ctx.ruleNamesSet, ctx.opts.AllowedNamespaces)
 
@@ -1207,13 +1218,13 @@ func filterRulesByState(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.
 		var state *eval.State
 		switch rule.State {
 		case "normal", "inactive":
-			state = util.Pointer(eval.Normal)
+			state = new(eval.Normal)
 		case "alerting", "firing":
-			state = util.Pointer(eval.Alerting)
+			state = new(eval.Alerting)
 		case "pending":
-			state = util.Pointer(eval.Pending)
+			state = new(eval.Pending)
 		case "recovering":
-			state = util.Pointer(eval.Recovering)
+			state = new(eval.Recovering)
 		}
 		if state != nil {
 			if _, ok := withStatesFast[*state]; ok {

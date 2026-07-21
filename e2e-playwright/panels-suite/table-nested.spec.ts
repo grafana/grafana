@@ -473,6 +473,34 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     expect(minParamHref, '"Min param" href contains min= with a numeric value').toMatch(/min=[\d.]+/);
   });
 
+  test('expand nested rows by default', async ({ gotoPanelEditPage, selectors, page }) => {
+    const panelEditPage = await gotoPanelEditPage({
+      dashboard: {
+        uid: NESTED_COMPLEX_DASHBOARD_UID,
+      },
+      id: '2',
+    });
+
+    await waitForTableLoad(page);
+
+    // With expandAllRows: true the expander buttons should report aria-expanded=true
+    // and nested rows should be visible without any user interaction.
+    const expanders = panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander);
+
+    await expect(expanders.first()).toBeVisible();
+
+    // Every expander should be in the expanded state — no user clicks required.
+    const expanderCount = await expanders.count();
+    expect(expanderCount, 'at least one row expander is present').toBeGreaterThan(0);
+
+    for (let i = 0; i < expanderCount; i++) {
+      await expect(expanders.nth(i)).toHaveAttribute('aria-expanded', 'true');
+    }
+
+    // The nested table is visible immediately — a second .rdg grid should exist.
+    await expect(page.locator('.rdg').nth(1)).toBeVisible();
+  });
+
   test('tooltip from field', async ({ gotoPanelEditPage, page, selectors }) => {
     const panelEditPage = await gotoPanelEditPage({
       dashboard: {
@@ -512,9 +540,11 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).toBeVisible();
 
+    // Click neutral header padding to the left of the title button to dismiss the tooltip. The offset
+    // clears the panel's rounded corner (border-radius), which is excluded from the element's hit region.
     await panelEditPage
       .getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Nested Kitchen Sink'))
-      .click({ position: { x: 0, y: 0 } });
+      .click({ position: { x: 4, y: 24 } });
 
     await expect(
       panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
@@ -538,10 +568,36 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     await panelEditPage
       .getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Nested Kitchen Sink'))
-      .click({ position: { x: 0, y: 0 } });
+      .click({ position: { x: 4, y: 24 } });
 
     await expect(
       panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).not.toBeVisible();
+  });
+
+  test('no rows but nested transform renders empty state without crashing', async ({
+    gotoPanelEditPage,
+    selectors,
+    page,
+  }) => {
+    // Regression: when a panel returns zero rows but still carries a Group to nested tables
+    // transform, the nested data is empty so there is no "first nested frame" to derive nested
+    // fields from. The table must render its empty state instead of throwing.
+    const panelEditPage = await gotoPanelEditPage({
+      dashboard: {
+        uid: NESTED_COMPLEX_DASHBOARD_UID,
+      },
+      id: '3',
+    });
+
+    await waitForTableLoad(page);
+
+    // The empty-state placeholder proves the (nested) table rendered without crashing.
+    await expect(page.getByText('No rows')).toBeVisible();
+
+    // No data rows means no row expanders.
+    await expect(
+      panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+    ).toHaveCount(0);
   });
 });

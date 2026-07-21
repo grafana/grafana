@@ -10,7 +10,7 @@ import { getAlertManagerDataSources } from '../../../utils/datasource';
 import { type ImportFormValues } from '../ImportToGMA';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
-import { getNotificationsSourceOptions } from '../Wizard/constants';
+import { getNotificationsSourceOptions } from '../Wizard/steps';
 import { type DryRunValidationResult } from '../types';
 
 import { hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';

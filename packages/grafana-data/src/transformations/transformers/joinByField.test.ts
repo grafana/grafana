@@ -5,7 +5,8 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { JoinMode, type JoinByFieldOptions, joinByFieldTransformer } from './joinByField';
+import { type JoinByFieldOptions, joinByFieldTransformer } from './joinByField';
+import { JoinMode } from './joinShared';
 
 describe('JOIN Transformer', () => {
   beforeAll(() => {

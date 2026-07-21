@@ -110,12 +110,19 @@ func NewTenantWatcherConfig(cfg *setting.Cfg) *TenantWatcherConfig {
 	}
 
 	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	allowInsecure := cfg.TenantWatcherAllowInsecureTLS
+	if allowInsecure && cfg.Env != setting.Dev {
+		logger.Error("tenant_watcher_allow_insecure_tls is set but app_mode is not 'development'; ignoring and enforcing TLS verification. Provide a CA via tenant_watcher_ca_file or set app_mode=development.",
+			"app_mode", cfg.Env)
+		allowInsecure = false
+	}
+
 	tenantWatcherCfg := &TenantWatcherConfig{
 		TenantAPIServerURL: strings.TrimSpace(cfg.TenantApiServerAddress),
 		Token:              strings.TrimSpace(grpcSection.Key("token").MustString("")),
 		TokenExchangeURL:   strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString("")),
 		CAFile:             strings.TrimSpace(cfg.TenantWatcherCAFile),
-		AllowInsecure:      cfg.TenantWatcherAllowInsecureTLS,
+		AllowInsecure:      allowInsecure,
 		UsePolling:         cfg.TenantWatcherUsePolling,
 		PollInterval:       cfg.TenantWatcherPollInterval,
 		Log:                logger,
@@ -193,7 +200,7 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 }
 
 // NewTenantWatcher creates and starts a TenantWatcher.
-func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppender, cfg TenantWatcherConfig) (*TenantWatcher, error) {
+func NewTenantWatcher(ctx context.Context, ds *dataStore, pds *PendingDeleteStore, writeEvent EventAppender, cfg TenantWatcherConfig) (*TenantWatcher, error) {
 	restCfg, err := NewTenantRESTConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("building tenant REST config: %w", err)
@@ -221,7 +228,7 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 
 	tw := &TenantWatcher{
 		log:                logger,
-		pendingDeleteStore: newPendingDeleteStore(ds.kv),
+		pendingDeleteStore: pds,
 		dataStore:          ds,
 		writeEvent:         writeEvent,
 		client:             client,

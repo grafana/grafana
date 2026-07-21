@@ -90,6 +90,21 @@ These errors occur when GCP credentials are invalid, missing, or don't have the 
 1. Ensure the target service account has the **Monitoring Viewer** role.
 1. Verify both service accounts are in projects that have the required APIs enabled.
 
+### Forward OAuth Identity returns 403
+
+**Symptoms:**
+
+- Save & Test fails with `403 Forbidden` when using Forward OAuth Identity.
+- Queries succeed for some users but not others.
+
+**Solutions:**
+
+1. Confirm you're signed in to Grafana with Google, not as the local `admin` user. The Forward OAuth Identity method only forwards a token if the current session has one.
+1. Verify the Grafana Google authentication includes the `https://www.googleapis.com/auth/monitoring.read` scope. Refer to [Configure the Google OAuth scope](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#configure-the-google-oauth-scope).
+1. After you add the scope, sign out of Grafana, revoke the existing grant at [https://myaccount.google.com/permissions](https://myaccount.google.com/permissions), and sign back in. Google reuses the previous consent and doesn't reissue tokens with new scopes until the grant is revoked.
+1. Verify the signed-in user has the **Monitoring Viewer** role (`roles/monitoring.viewer`) on the project set in **Default project**.
+1. Check the **Default project** field is populated. The user's OAuth token doesn't carry a project context, so the data source can't fall back to a project from the credentials.
+
 ## Connection errors
 
 These errors occur when Grafana cannot reach Google Cloud Monitoring endpoints.

@@ -4,8 +4,8 @@ SELECT p.id, p.org_id,
   p.theme,
   p.week_start,
   p.home_dashboard_uid,
-  u.uid as user_uid,
-  t.uid as team_uid,
+  p.user_id, u.uid as user_uid, 
+  p.team_id, t.uid as team_uid, 
   p.created, p.updated
  FROM `grafana`.`preferences` as p 
  LEFT JOIN `grafana`.`user` as u ON p.user_id = u.id

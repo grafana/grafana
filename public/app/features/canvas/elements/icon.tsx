@@ -35,7 +35,7 @@ const svgStrokePathClass = css({
   },
 });
 
-export function IconDisplay(props: CanvasElementProps<IconConfig, IconData>) {
+function IconDisplay(props: CanvasElementProps<IconConfig, IconData>) {
   const { data } = props;
   if (!data?.path) {
     return null;

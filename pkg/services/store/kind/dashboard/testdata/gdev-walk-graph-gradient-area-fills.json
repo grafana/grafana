@@ -6,15 +6,15 @@
     "panel-tests": ""
   },
   "fields": {
-    "schemaVersion": "18"
+    "schemaVersion": "0"
   },
   "nested": [
     {
-      "UID": "graph-gradient-area-fills.json#2",
+      "UID": "graph-gradient-area-fills.json#0",
       "kind": "panel",
       "name": "Req/s",
       "fields": {
-        "type": "graph"
+        "type": "timeseries"
       },
       "references": [
         {
@@ -23,16 +23,16 @@
         {
           "family": "plugin",
           "type": "panel",
-          "identifier": "graph"
+          "identifier": "timeseries"
         }
       ]
     },
     {
-      "UID": "graph-gradient-area-fills.json#11",
+      "UID": "graph-gradient-area-fills.json#0",
       "kind": "panel",
       "name": "Req/s",
       "fields": {
-        "type": "graph"
+        "type": "timeseries"
       },
       "references": [
         {
@@ -41,16 +41,34 @@
         {
           "family": "plugin",
           "type": "panel",
-          "identifier": "graph"
+          "identifier": "timeseries"
         }
       ]
     },
     {
-      "UID": "graph-gradient-area-fills.json#7",
+      "UID": "graph-gradient-area-fills.json#0",
+      "kind": "panel",
+      "name": "Req/s",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph-gradient-area-fills.json#0",
       "kind": "panel",
       "name": "Memory",
       "fields": {
-        "type": "graph"
+        "type": "timeseries"
       },
       "references": [
         {
@@ -59,25 +77,7 @@
         {
           "family": "plugin",
           "type": "panel",
-          "identifier": "graph"
-        }
-      ]
-    },
-    {
-      "UID": "graph-gradient-area-fills.json#10",
-      "kind": "panel",
-      "name": "Req/s",
-      "fields": {
-        "type": "graph"
-      },
-      "references": [
-        {
-          "family": "ds"
-        },
-        {
-          "family": "plugin",
-          "type": "panel",
-          "identifier": "graph"
+          "identifier": "timeseries"
         }
       ]
     }
@@ -89,7 +89,7 @@
     {
       "family": "plugin",
       "type": "panel",
-      "identifier": "graph"
+      "identifier": "timeseries"
     }
   ]
 }

@@ -1,31 +1,6 @@
-import { LogLevel } from '@grafana/data';
-
 let index = 0;
 
-export function getRandomLogLevel(): LogLevel {
-  const v = Math.random();
-  if (v > 0.9) {
-    return LogLevel.critical;
-  }
-  if (v > 0.8) {
-    return LogLevel.error;
-  }
-  if (v > 0.7) {
-    return LogLevel.warning;
-  }
-  if (v > 0.4) {
-    return LogLevel.info;
-  }
-  if (v > 0.3) {
-    return LogLevel.debug;
-  }
-  if (v > 0.1) {
-    return LogLevel.trace;
-  }
-  return LogLevel.unknown;
-}
-
-export function getNextWord() {
+function getNextWord() {
   index = (index + Math.floor(Math.random() * 5)) % words.length;
   return words[index];
 }

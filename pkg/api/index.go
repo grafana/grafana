@@ -31,21 +31,18 @@ import (
 )
 
 type URLPrefs struct {
-	Language       string
-	RegionalFormat string
-	Theme          string
+	Language string
+	Theme    string
 }
 
 // URL prefs take precedence over any saved user preferences
 func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
 	language := c.Query("lang")
 	theme := c.Query("theme")
-	regionalFormat := c.Query("regionalFormat")
 
 	return URLPrefs{
-		Language:       language,
-		RegionalFormat: regionalFormat,
-		Theme:          theme,
+		Language: language,
+		Theme:    theme,
 	}
 }
 
@@ -60,12 +57,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{
-		UserID: userID,
-		OrgID:  c.GetOrgID(),
-		Teams:  c.TeamIDs, // nolint:staticcheck
+	c, prefsSpan := hs.injectSpan(c, "api.setIndexViewData.preferences")
+	var prefs *pref.Preference
+	if ofClient.Boolean(c.Req.Context(), featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(c.Req.Context())) {
+		prefs, err = hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
+	} else {
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{
+			UserID: userID,
+			OrgID:  c.GetOrgID(),
+			Teams:  c.TeamIDs, // nolint:staticcheck
+		}
+		prefs, err = hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	}
-	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+	prefsSpan.End()
 	if err != nil {
 		return nil, err
 	}
@@ -94,31 +98,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		language = prefs.JSONData.Language
 	}
 
-	var regionalFormat string
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
-		regionalFormat = "en"
-
-		// We default the regional format (locale) to the Accept-Language header rather than the language preference
-		// mainly because we want to avoid defaulting to en-US for most users who have not set a preference, and we
-		// don't have more specific English language preferences yet.
-
-		// Regional format preference order (from most-preferred to least):
-		// 1. URL parameter
-		// 2. regionalFormat User preference
-		// 3. Accept-Language header
-		// 4. Language preference
-		if urlPrefs.RegionalFormat != "" {
-			regionalFormat = urlPrefs.RegionalFormat
-		} else if prefs.JSONData.RegionalFormat != "" {
-			regionalFormat = prefs.JSONData.RegionalFormat
-		} else if acceptLangHeaderFirstValue != "" {
-			regionalFormat = acceptLangHeaderFirstValue
-		} else if language != "" {
-			regionalFormat = language
-		}
-	}
-
 	appURL := hs.Cfg.AppURL
 	appSubURL := hs.Cfg.AppSubURL
 
@@ -128,10 +107,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		appSubURL = ""
 		settings.AppSubUrl = ""
 	}
-	ofClient := openfeature.NewDefaultClient()
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
+	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
@@ -170,10 +149,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			LightTheme:                 theme.Type == "light",
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
-			Locale:                     locale, // << will be removed in favor of RegionalFormat
-			RegionalFormat:             regionalFormat,
+			Locale:                     locale,
 			Language:                   language,
-			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c),
 			AuthenticatedBy:            c.GetAuthenticatedBy(),
@@ -203,6 +180,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
+		NewPreferencesPage:                  newPreferencesPage,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -260,6 +238,9 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	if userID == 0 {
 		return 1
 	}
+
+	c, span := hs.injectSpan(c, "api.getUserOrgCount")
+	defer span.End()
 
 	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
 	if err != nil {
@@ -324,12 +305,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	}
 
 	if pref.IsValidThemeID(themePrefId) {
-		theme := pref.GetThemeByID(themePrefId)
-		// TODO refactor
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
-			return theme
-		}
+		return pref.GetThemeByID(themePrefId)
 	}
 
 	return pref.GetThemeByID(hs.Cfg.DefaultTheme)

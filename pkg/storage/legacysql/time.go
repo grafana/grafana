@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+// dbTimeMillisLayout is the wire format for DBTime values with a non-zero
+// millisecond component, letting a DBTime column act as a fine-grained
+// optimistic-concurrency token (e.g. team.updated as a resourceVersion).
+// Whole-second values emit `time.DateTime` instead, so text-based
+// `WHERE updated = ?` comparisons against second-precision rows match.
+const dbTimeMillisLayout = "2006-01-02 15:04:05.000"
+
 type DBTime struct {
 	time.Time
 }
@@ -14,12 +21,19 @@ func NewDBTime(t time.Time) DBTime {
 	return DBTime{Time: t}
 }
 
+func (t DBTime) wireLayout() string {
+	if t.Nanosecond() < int(time.Millisecond) {
+		return time.DateTime
+	}
+	return dbTimeMillisLayout
+}
+
 func (t DBTime) Value() (driver.Value, error) {
 	if t.IsZero() {
 		return nil, nil
 	}
 
-	return t.Format(time.DateTime), nil
+	return t.Format(t.wireLayout()), nil
 }
 
 func (t DBTime) String() string {
@@ -27,7 +41,7 @@ func (t DBTime) String() string {
 		return ""
 	}
 
-	return t.Format(time.DateTime)
+	return t.Format(t.wireLayout())
 }
 
 func (t *DBTime) Scan(value interface{}) error {
@@ -41,9 +55,9 @@ func (t *DBTime) Scan(value interface{}) error {
 
 	switch v := value.(type) {
 	case []byte:
-		parsedTime, err = time.Parse(time.DateTime, string(v))
+		parsedTime, err = parseDBTimeString(string(v))
 	case string:
-		parsedTime, err = time.Parse(time.DateTime, v)
+		parsedTime, err = parseDBTimeString(v)
 	case time.Time:
 		parsedTime = v
 	default:
@@ -56,4 +70,13 @@ func (t *DBTime) Scan(value interface{}) error {
 
 	t.Time = parsedTime
 	return nil
+}
+
+// parseDBTimeString accepts either the millisecond layout or the legacy
+// second layout (`time.DateTime`).
+func parseDBTimeString(s string) (time.Time, error) {
+	if t, err := time.Parse(dbTimeMillisLayout, s); err == nil {
+		return t, nil
+	}
+	return time.Parse(time.DateTime, s)
 }

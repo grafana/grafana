@@ -7,7 +7,9 @@ package server
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -56,12 +58,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
-	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -71,6 +72,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -135,10 +137,8 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
-	publicdashboardsApi.ProvideMiddleware,
-	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboardsApi.Middleware)),
-	publicdashboardsService.ProvideServiceWrapper,
-	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
+	publicdashboards.ProvideMiddleware,
+	publicdashboards.ProvideServiceWrapper,
 	caching.ProvideCachingService,
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 	secretsMigrator.ProvideSecretsMigrator,
@@ -153,9 +153,13 @@ var wireExtsBasicSet = wire.NewSet(
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
+	resource.NewGCGate,
 	unified.ProvideUnifiedStorageClient,
 	sql.ProvideStorageBackend,
+	sql.ProvideKV,
+	sql.ProvideResourceDB,
 	vector.ProvideVectorBackend,
+	embedderprovider.ProvideEmbedder,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
@@ -210,6 +214,7 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	resource.ProvideVectorMetrics,
 	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
 	sql.ProvideStorageBackend,
@@ -221,4 +226,26 @@ var wireExtsModuleServerSet = wire.NewSet(
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
 	standalone.ProvideAPIServerFactory,
+)
+
+// wireExtsDashboardStatsSet provides the dashboard stats dependency for the
+// InitializeDashboardStats injector. Kept separate from wireExtsSet so the
+// injector can receive already-constructed dependencies as parameters
+// without duplicate bindings.
+var wireExtsDashboardStatsSet = wire.NewSet(
+	builders.ProvideDashboardStats,
+	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
+)
+
+// wireExtsSearchSupportSet provides the document builders together with the
+// dashboard stats they use, for the InitializeSearchSupport injector.
+var wireExtsSearchSupportSet = wire.NewSet(
+	wireExtsDashboardStatsSet,
+	migrations.ProvideOSSMigrations,
+	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
+	bus.ProvideBus,
+	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
+	sqlstore.ProvideService,
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	search2.ProvideDocumentBuilders,
 )

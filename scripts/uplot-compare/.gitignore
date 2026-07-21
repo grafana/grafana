@@ -1,5 +1,0 @@
-dist
-node_modules
-public/uplot-compare-payload.json
-public/uplot-compare-payload-*.json
-tsconfig.app.tsbuildinfo

@@ -1,4 +1,3 @@
-import { mockIntersectionObserver } from 'jsdom-testing-mocks';
 import { act, render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
@@ -41,7 +40,10 @@ beforeEach(() => {
   setPrometheusRules(prometheusDs, prometheusGroups);
 });
 
-const io = mockIntersectionObserver();
+// The global IntersectionObserver mock in public/test/jest-setup.ts auto-fires
+// isIntersecting on observe(), which would cause runaway pagination here. Install
+// a controllable mock that only fires when enterNode()/leaveNode() is called.
+const io = installControllableIntersectionObserver();
 
 describe('RuleList - FilterView', () => {
   it('should render multiple pages of results', async () => {
@@ -150,5 +152,69 @@ function getFilter(overrides: Partial<RulesFilter> = {}): RulesFilter {
     freeFormWords: [],
     labels: [],
     ...overrides,
+  };
+}
+
+function installControllableIntersectionObserver() {
+  type Registration = {
+    callback: IntersectionObserverCallback;
+    observer: IntersectionObserver;
+    elements: Set<Element>;
+  };
+  const registrations: Registration[] = [];
+
+  global.IntersectionObserver = jest.fn().mockImplementation((callback: IntersectionObserverCallback) => {
+    const registration: Registration = {
+      callback,
+      observer: null as unknown as IntersectionObserver,
+      elements: new Set(),
+    };
+    const observer: IntersectionObserver = {
+      root: null,
+      rootMargin: '',
+      scrollMargin: '',
+      thresholds: [],
+      observe: (element: Element) => {
+        registration.elements.add(element);
+      },
+      unobserve: (element: Element) => {
+        registration.elements.delete(element);
+      },
+      disconnect: () => {
+        registration.elements.clear();
+        const idx = registrations.indexOf(registration);
+        if (idx >= 0) {
+          registrations.splice(idx, 1);
+        }
+      },
+      takeRecords: () => [],
+    };
+    registration.observer = observer;
+    registrations.push(registration);
+    return observer;
+  }) as unknown as typeof IntersectionObserver;
+
+  const fire = (element: Element, isIntersecting: boolean) => {
+    for (const reg of registrations) {
+      if (!reg.elements.has(element)) {
+        continue;
+      }
+      const rect = element.getBoundingClientRect();
+      const entry: IntersectionObserverEntry = {
+        target: element,
+        isIntersecting,
+        intersectionRatio: isIntersecting ? 1 : 0,
+        boundingClientRect: rect,
+        intersectionRect: rect,
+        rootBounds: null,
+        time: performance.now(),
+      };
+      reg.callback([entry], reg.observer);
+    }
+  };
+
+  return {
+    enterNode: (element: Element) => fire(element, true),
+    leaveNode: (element: Element) => fire(element, false),
   };
 }

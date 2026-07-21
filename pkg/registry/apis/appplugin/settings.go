@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -61,7 +62,7 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 	result := map[string]string{}
 	for k, v := range secure {
 		if !v.Create.IsZero() {
-			result[k] = v.Create.DangerouslyExposeAndConsumeValue() // ?????? for dual write, I don't think we can do the dangerous one
+			result[k] = v.Create.DangerouslyExposeAndConsumeValue()
 		}
 		if v.Remove {
 			result[k] = "" // best effort with the legacy API
@@ -72,7 +73,7 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 
 type settingsStorage struct {
 	pluginID       string
-	pluginSettings pluginsettings.Service // Do we need an explicitly caching version?
+	pluginSettings pluginsettings.Service // TODO we may need a caching version
 	resourceInfo   *utils.ResourceInfo
 }
 
@@ -151,13 +152,9 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
-		shim := legacyShimFromContext(ctx)
-		if shim != nil {
-			shim.getDecryptedSecureJSONData = func(ctx context.Context) (map[string]string, error) {
-				v := s.pluginSettings.DecryptedValues(ps)
-				return v, nil // odd this does not have an error
-			}
-		}
+		pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
+			return s.pluginSettings.DecryptedValues(ps), nil
+		})
 
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
 		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
@@ -177,16 +174,17 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 	return obj, nil
 }
 
-func (s *settingsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+func (s *settingsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
 		}
 	}
-	return s.save(ctx, obj)
+	isDryRun := options != nil && dryrun.IsDryRun(options.DryRun)
+	return s.save(ctx, obj, isDryRun)
 }
 
-func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	old, err := s.Get(ctx, name, nil)
 	if err != nil {
 		return nil, false, err
@@ -203,7 +201,8 @@ func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.
 		}
 	}
 
-	obj, err := s.save(ctx, updated)
+	isDryRun := options != nil && dryrun.IsDryRun(options.DryRun)
+	obj, err := s.save(ctx, updated, isDryRun)
 	return obj, false, err
 }
 
@@ -215,7 +214,7 @@ func (s *settingsStorage) DeleteCollection(_ context.Context, _ rest.ValidateObj
 	return nil, fmt.Errorf("not supported")
 }
 
-func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (*apppluginV0.Settings, error) {
+func (s *settingsStorage) save(ctx context.Context, obj runtime.Object, isDryRun bool) (*apppluginV0.Settings, error) {
 	p, ok := obj.(*apppluginV0.Settings)
 	if !ok {
 		return nil, fmt.Errorf("expected Settings object")
@@ -224,6 +223,10 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (*appplu
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
+	}
+
+	if isDryRun {
+		return p, nil
 	}
 
 	if err := s.pluginSettings.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{

@@ -1,10 +1,11 @@
 import { hash } from 'immutable';
 import { LRUCache } from 'lru-cache';
-import { v4 as uuidv4 } from 'uuid';
 
-import { type LogContext } from '@grafana/faro-web-sdk';
+import { generateUUID } from '@grafana/data';
 
 import { getLogger } from '../services/logging/registry';
+
+import { TracedError } from './TracedError';
 
 // 500 is our best guestimate right now. If a session
 // goes past 500 entries, the LRU evicts the oldest one, at worst a refetch,
@@ -70,16 +71,9 @@ function invalidateCacheIfNotReplaced<T>(key: string, cached: Promise<T>): void 
 
 function logError({ error, key }: LogErrorArgs): void {
   try {
-    const err = error instanceof Error ? error : new Error(String(error));
-
-    const context: LogContext = { message: err.message, key };
-    if (err.stack) {
-      context.stack = err.stack;
-    }
-
     getLogger('grafana/runtime.utils.getCachedPromise').logError(
-      new Error(`getCachedPromise: Something failed while resolving a cached promise`, { cause: error }),
-      context
+      new TracedError('getCachedPromise: Something failed while resolving a cached promise', error),
+      { key }
     );
   } catch (error) {
     console.error(error);
@@ -221,9 +215,9 @@ export function serializeArg(value: unknown, baseKey: string): string {
   try {
     return `${type}:${JSON.stringify(value)}`;
   } catch (error) {
-    const key = `uncacheable:${uuidv4()}`;
+    const key = `uncacheable:${generateUUID()}`;
     getLogger('grafana/runtime.utils.getCachedPromise').logError(
-      new Error(`getCachedPromiseWithArgs: serializeArg failed`, { cause: error }),
+      new TracedError('getCachedPromiseWithArgs: serializeArg failed', error),
       { baseKey, key }
     );
     return key;
@@ -286,24 +280,27 @@ export function getCachedPromiseWithArgs<T, TArgs extends unknown[]>(
 /**
  * Removes a cached promise entry so the next call with the same key re-executes the function.
  *
- * The key is derived from the promise function's name and body via {@link getCacheKeyFromPromise},
- * unless an explicit `cacheKey` is provided — in which case it takes precedence and `promise` is
- * only used for type inference.
- *
+ * The key is derived from the promise function's name and body via {@link getCacheKeyFromPromise}.
  * Silently no-ops when no entry exists for the resolved key.
  *
  * @template T - The type of the resolved promise value
  * @param promise - The promise-returning function whose cache entry should be invalidated. Inline
- *   arrow functions are anonymous and require an explicit `cacheKey` — or assign the arrow to a
- *   `const` first so name inference applies.
- * @param options - Optional options object
- * @param options.cacheKey - Optional explicit cache key. When provided, takes precedence over the key
- *   derived from `promise`.
- * @throws {Error} when neither a named function nor a `cacheKey` is supplied
+ *   arrow functions are anonymous and will be rejected — use the `cacheKey` overload instead, or
+ *   assign the arrow to a `const` first so name inference applies.
+ * @throws {Error} when the function is anonymous
  */
-export function invalidateCachedPromise<T>(promise: PromiseFunction<T>, options?: CacheKeyOptions): void {
-  const { cacheKey } = options ?? {};
-  const key = cacheKey ?? getCacheKeyFromPromise(promise);
+export function invalidateCachedPromise<T>(promise: PromiseFunction<T>): void;
+/**
+ * Removes a cached promise entry so the next call with the same key re-executes the function.
+ *
+ * Silently no-ops when no entry exists for the given key.
+ *
+ * @param cacheKey - The explicit cache key for the entry to invalidate.
+ * @throws {Error} when `cacheKey` is empty
+ */
+export function invalidateCachedPromise(cacheKey: string): void;
+export function invalidateCachedPromise(promiseOrKey: PromiseFunction<unknown> | string): void {
+  const key = typeof promiseOrKey === 'string' ? promiseOrKey : getCacheKeyFromPromise(promiseOrKey);
 
   if (!key) {
     throw new Error(`invalidateCachedPromise function must be invoked with a named function or cacheKey`);

@@ -1,6 +1,6 @@
 import { reportInteraction, config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { isOnPrem } from 'app/features/provisioning/utils/isOnPrem';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 

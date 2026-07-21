@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+	"github.com/pressly/goose/v3/lock"
 )
 
 //go:embed migrations/*.sql
@@ -20,8 +22,6 @@ var embedMigrations embed.FS
 // PartitionInfo contains metadata about a partition
 type PartitionInfo struct {
 	Name       string
-	StartTime  int64
-	EndTime    int64
 	ParentName string
 }
 
@@ -41,9 +41,7 @@ FOR VALUES FROM (%d) TO (%d);
 	createScopesIndexSQL    = `CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (namespace, scopes);`
 
 	listPartitionsSQL = `
-SELECT
-    child.relname AS partition_name,
-    pg_get_expr(child.relpartbound, child.oid) AS partition_bounds
+SELECT child.relname AS partition_name
 FROM pg_inherits
 JOIN pg_class parent ON pg_inherits.inhparent = parent.oid
 JOIN pg_class child ON pg_inherits.inhrelid = child.oid
@@ -136,20 +134,13 @@ func listPartitions(ctx context.Context, pool *pgxpool.Pool) ([]PartitionInfo, e
 
 	var partitions []PartitionInfo
 	for rows.Next() {
-		var name, bounds string
-		if err := rows.Scan(&name, &bounds); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, fmt.Errorf("failed to scan partition row: %w", err)
-		}
-
-		var start, end int64
-		if _, err := fmt.Sscanf(bounds, "FOR VALUES FROM (%d) TO (%d)", &start, &end); err != nil {
-			return nil, fmt.Errorf("failed to parse partition bounds %q: %w", bounds, err)
 		}
 
 		partitions = append(partitions, PartitionInfo{
 			Name:       name,
-			StartTime:  start,
-			EndTime:    end,
 			ParentName: "annotations",
 		})
 	}
@@ -171,17 +162,34 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) e
 		}
 	}()
 
-	// Configure goose to use embedded migrations
-	goose.SetBaseFS(embedMigrations)
+	// The provider reads from the root of the fs, so re-root onto the migrations dir.
+	migrationsFS, err := fs.Sub(embedMigrations, "migrations")
+	if err != nil {
+		return fmt.Errorf("failed to sub migrations fs: %w", err)
+	}
 
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("failed to set goose dialect: %w", err)
+	// Use Postgres advisory locks to prevent multiple instances from running migrations concurrently
+	locker, err := lock.NewPostgresSessionLocker()
+	if err != nil {
+		return fmt.Errorf("failed to create session locker: %w", err)
+	}
+
+	provider, err := goose.NewProvider(
+		goose.DialectPostgres,
+		db,
+		migrationsFS,
+		goose.WithSessionLocker(locker),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create goose provider: %w", err)
 	}
 
 	// Run all pending migrations
-	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
+	results, err := provider.Up(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
+	logger.Info("Database migrations complete", "applied", len(results))
 
 	return nil
 }

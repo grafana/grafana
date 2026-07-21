@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestNewInstanceSettings(t *testing.T) {
@@ -279,9 +278,9 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		logsApi.AssertCalled(t, "DescribeLogGroups",
 			&cloudwatchlogs.DescribeLogGroupsInput{
 				AccountIdentifiers:    []string{"some-account-id"},
-				IncludeLinkedAccounts: utils.Pointer(true),
+				IncludeLinkedAccounts: new(true),
 				Limit:                 aws.Int32(50),
-				LogGroupNamePrefix:    utils.Pointer("some-pattern"),
+				LogGroupNamePrefix:    new("some-pattern"),
 			})
 	})
 }

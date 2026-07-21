@@ -269,7 +269,7 @@ func newFakeKMS(kms osskmsproviders.Service) fakeKMS {
 	}
 }
 
-func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
+func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	providers, err := f.kms.Provide()
 	if err != nil {
 		return providers, err

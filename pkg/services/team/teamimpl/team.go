@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -21,6 +23,8 @@ type Service struct {
 	legacyService     team.Service
 	k8sService        team.Service
 	openFeatureClient *openfeature.Client
+	logger            log.Logger
+	tracer            tracing.Tracer
 }
 
 var _ team.Service = (*Service)(nil)
@@ -41,11 +45,13 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configPro
 		legacyService:     legacyService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		logger:            log.New("team"),
+		tracer:            tracer,
 	}, nil
 }
 
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isK8sRedirectEnabled(ctx) {
 		return s.k8sService.CreateTeam(ctx, cmd)
 	}
 
@@ -53,7 +59,7 @@ func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isK8sRedirectEnabled(ctx) {
 		return s.k8sService.UpdateTeam(ctx, cmd)
 	}
 
@@ -61,7 +67,7 @@ func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) e
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isK8sRedirectEnabled(ctx) {
 		return s.k8sService.DeleteTeam(ctx, cmd)
 	}
 
@@ -69,7 +75,7 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+	if s.isK8sRedirectEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.SearchTeams(ctx, query)
 	}
 
@@ -77,7 +83,7 @@ func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery)
 }
 
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+	if s.isK8sRedirectEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.GetTeamByID(ctx, query)
 	}
 
@@ -85,29 +91,58 @@ func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery)
 }
 
 func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
-	if s.isUserTeamsK8sPathEnabled(ctx) {
-		return s.k8sService.GetTeamsByUser(ctx, query)
+	ctx, span := s.tracer.Start(ctx, "team.wrapper.GetTeamsByUser", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+		attribute.Int64("userID", query.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isK8sRedirectEnabled(ctx) {
+		result, err := s.k8sService.GetTeamsByUser(ctx, query)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetTeamsByUser failed, falling back to legacy", "userID", query.UserID, "err", err)
 	}
 
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetTeamsByUser(ctx, query)
 }
 
 func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
-	if s.isUserTeamsK8sPathEnabled(ctx) {
-		// GetTeamIDsByUser is called during authentication (e.g. middleware that
-		// resolves team-based permissions) before a requester has been attached to
-		// the context. The k8s service requires a requester to build the dynamic
-		// client, so we must use the legacy SQL path for these pre-auth calls.
+	ctx, span := s.tracer.Start(ctx, "team.wrapper.GetTeamIDsByUser", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+		attribute.Int64("userID", query.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	// GetTeamIDsByUser is called during authentication (e.g. middleware that
+	// resolves team-based permissions) before a requester has been attached to
+	// the context. The k8s service requires a requester to build the dynamic
+	// client, so skip the k8s attempt for these pre-auth calls to avoid noisy
+	// per-request fallback logs.
+	if s.isK8sRedirectEnabled(ctx) {
 		if _, err := identity.GetRequester(ctx); err == nil {
-			return s.k8sService.GetTeamIDsByUser(ctx, query)
+			ids, uids, err := s.k8sService.GetTeamIDsByUser(ctx, query)
+			if err == nil {
+				span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+				return ids, uids, nil
+			}
+			ctxLogger.Warn("k8s GetTeamIDsByUser failed, falling back to legacy", "userID", query.UserID, "err", err)
 		}
 	}
 
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetTeamIDsByUser(ctx, query)
 }
 
 func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isK8sRedirectEnabled(ctx) {
 		return s.k8sService.IsTeamMember(ctx, orgId, teamId, userId)
 	}
 
@@ -120,15 +155,29 @@ func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) erro
 }
 
 func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
-	if s.isUserTeamsK8sPathEnabled(ctx) {
-		return s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
+	ctx, span := s.tracer.Start(ctx, "team.wrapper.GetUserTeamMemberships", trace.WithAttributes(
+		attribute.Int64("orgID", orgID),
+		attribute.Int64("userID", userID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isK8sRedirectEnabled(ctx) {
+		result, err := s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetUserTeamMemberships failed, falling back to legacy", "userID", userID, "err", err)
 	}
 
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
 }
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isK8sRedirectEnabled(ctx) {
 		return s.k8sService.GetTeamMembers(ctx, query)
 	}
 
@@ -144,24 +193,17 @@ func (s *Service) RegisterDelete(query string) {
 	s.legacyService.RegisterDelete(query)
 }
 
-func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
+// isK8sRedirectEnabled gates team operations on the k8s apiserver path.
+// FIXME: drop the UsersApi requirement once teamk8s no longer needs the k8s users resource for enrichment.
+func (s *Service) isK8sRedirectEnabled(ctx context.Context) bool {
 	if s.openFeatureClient == nil {
 		return false
 	}
-
-	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
-}
-
-// isUserTeamsK8sPathEnabled gates the methods that read membership through
-// the /users/{uid}/teams subresource (GetTeamsByUser, GetTeamIDsByUser,
-// GetUserTeamMemberships). The subresource is gated on FlagKubernetesTeamBindings;
-// without it the apiserver returns 403 and these methods would fail. Both
-// flags must be on for the k8s path; otherwise we fall back to legacy.
-func (s *Service) isUserTeamsK8sPathEnabled(ctx context.Context) bool {
-	if !s.isKubernetesTeamServiceEnabled(ctx) {
+	txCtx := openfeature.TransactionContext(ctx)
+	if !s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, txCtx) {
 		return false
 	}
-	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamBindings, false, openfeature.TransactionContext(ctx))
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, txCtx)
 }
 
 // shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.

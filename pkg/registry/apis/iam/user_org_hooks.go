@@ -90,22 +90,22 @@ func (b *IdentityAccessManagementAPIBuilder) AfterUserCreate(obj runtime.Object,
 // It compares old and new roles and performs the zanzana write after K8s update succeeds
 func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context, obj, oldObj runtime.Object, options *metav1.UpdateOptions) (registry.FinishFunc, error) {
 	if b.zClient == nil {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	oldUser, ok := oldObj.(*iamv0.User)
 	if !ok {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	newUser, ok := obj.(*iamv0.User)
 	if !ok {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	// If role hasn't changed, no need to update
 	if oldUser.Spec.Role == newUser.Spec.Role {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	resourceType := "user"

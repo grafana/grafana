@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -11,7 +12,7 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { LogMessages, logInfo } from '../../Analytics';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
-import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
+import { flattenGrafanaManagedRules, mergeUngroupedGrafanaRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
@@ -42,7 +43,8 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const hasResult = !!prom.result || !!ruler.result;
 
   const wantsListView = queryParams.view === 'list';
-  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
+  const ungroupedMerged = useMemo(() => mergeUngroupedGrafanaRules(namespaces), [namespaces]);
+  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(ungroupedMerged) : ungroupedMerged;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
 

@@ -51,7 +51,7 @@ export function PluginDetailsHeaderDependencies({ plugin, grafanaDependency }: P
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     dependencyTitle: css({
       marginRight: theme.spacing(0.5),

@@ -48,7 +48,7 @@ var errInvalidLockKey = errors.New("invalid lock key")
 // objectStorageLock provides distributed locking via conditional object storage writes.
 //
 // Not safe for concurrent use from the caller side. A single goroutine should
-// call Acquire, then either Release or consume Lost(). The internal heartbeat
+// call Acquire once, then either Release or consume Lost(). The internal heartbeat
 // goroutine only touches immutable config and closes lostCh.
 type objectStorageLock struct {
 	// Immutable after construction.
@@ -64,7 +64,7 @@ type objectStorageLock struct {
 	hbCancel context.CancelFunc
 	hbDone   chan struct{}
 
-	// lostCh is created in Acquire and only closed by the heartbeat goroutine.
+	// lostCh is created during construction and only closed by the heartbeat goroutine.
 	lostCh chan struct{}
 }
 
@@ -160,7 +160,6 @@ func (l *objectStorageLock) Acquire(ctx context.Context) error {
 	}
 
 	l.held = true
-	l.lostCh = make(chan struct{})
 
 	hbCtx, cancel := context.WithCancel(context.Background())
 	l.hbCancel = cancel
@@ -170,6 +169,8 @@ func (l *objectStorageLock) Acquire(ctx context.Context) error {
 }
 
 // Release stops the heartbeat and deletes the lock object.
+// After Lost is signaled, Release is best-effort cleanup; a nil return does not mean
+// this caller retained ownership until release.
 // Non-retriable errors: errLockHeld, errLockNotFound
 func (l *objectStorageLock) Release() error {
 	if !l.held {

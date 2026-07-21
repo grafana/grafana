@@ -1,12 +1,14 @@
-import { defineFeatureEvents } from '@grafana/runtime/internal';
+import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
-import { isSuggestedDashboardAssistantEnabled, isTemplateDashboardAssistantEnabled } from '../utils/assistantHelpers';
+import { isTemplateDashboardAssistantEnabled } from '../utils/assistantHelpers';
 
 import {
+  type DropdownMenuClickedProperties,
   type CompatibilityCheckCompletedProperties,
   type CompatibilityCheckTriggeredProperties,
   type CreateFromScratchClickedProperties,
   type EntryPointClickedProperties,
+  type FiltersAppliedProperties,
   type ItemClickedProperties,
   type LoadedProperties,
   type MappingFormCompletedProperties,
@@ -48,6 +50,8 @@ export const NewDashboardLibraryInteractions = {
   compatibilityCheckCompleted: newDashboardLibraryInteraction<CompatibilityCheckCompletedProperties>(
     'compatibility_check_completed'
   ),
+  /** Fired when the user changes a filter (tags / creators / sort) in a library view. */
+  filtersApplied: newDashboardLibraryInteraction<FiltersAppliedProperties>('filters_applied'),
 };
 
 /**
@@ -65,21 +69,6 @@ export const NewTemplateDashboardInteractions = {
     const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
     NewDashboardLibraryInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
   },
-};
-
-/**
- * Dashboard Library events scoped to the Suggested Dashboards variant.
- */
-export const NewSuggestedDashboardInteractions = {
-  ...NewDashboardLibraryInteractions,
-
-  itemClicked: async (properties: ItemClickedProperties & { action: 'use_dashboard' | 'assistant' }) => {
-    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
-    NewDashboardLibraryInteractions.itemClicked({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
-  },
-
-  loaded: async (properties: LoadedProperties) => {
-    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
-    NewDashboardLibraryInteractions.loaded({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
-  },
+  /** Fired when the user clicks the dropdown menu on a custom template card. */
+  dropdownMenuClicked: newDashboardLibraryInteraction<DropdownMenuClickedProperties>('dropdown_menu_clicked'),
 };

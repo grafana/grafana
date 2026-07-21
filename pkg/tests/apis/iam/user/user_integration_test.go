@@ -3,19 +3,26 @@ package user
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIntegrationUsers(t *testing.T) {
@@ -45,9 +52,12 @@ func TestIntegrationUsers(t *testing.T) {
 			})
 
 			doUserCRUDTestsUsingTheNewAPIs(t, helper)
+			doUserListFilteringTest(t, helper)
 			doHiddenUsersTests(t, helper)
 			doUserFieldSelectorTests(t, helper)
 			doUserStatusUpdateTests(t, helper)
+			doDisplayTests(t, helper)
+			doSelfTests(t, helper)
 
 			if mode < 3 {
 				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
@@ -379,6 +389,54 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 	})
 }
 
+// doUserListFilteringTest verifies that a nameless collection list is allowed at
+// the API layer (allowListAuthorizer) even for a caller that cannot read every
+// user, and that the backend filters the result by the caller's permissions.
+// User read is org-global (all-or-nothing; there is no per-user resource
+// permission), so a user without users:read gets a 200 filtered result rather
+// than a 403. Admin listing is already covered by the CRUD, hidden-user and
+// field-selector tests.
+func doUserListFilteringTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("list is allowed at the API layer and filtered by permissions", func(t *testing.T) {
+		ctx := context.Background()
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		target := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
+		target.Object["metadata"].(map[string]any)["name"] = "listfiltertarget"
+		target.Object["spec"].(map[string]any)["login"] = "listfiltertarget"
+		target.Object["spec"].(map[string]any)["email"] = "listfiltertarget@example.com"
+		created, err := adminClient.Resource.Create(ctx, target, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		t.Cleanup(func() {
+			_ = adminClient.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+		})
+
+		// A user with no basic role has no users:read permission.
+		lister := helper.CreateUser("user-list-filter-user", apis.Org1, org.RoleNone, nil)
+		listerClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      lister,
+			Namespace: helper.Namespacer(lister.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// The nameless list must succeed (200) rather than 403, and must not
+		// surface a user the caller has no permission to read.
+		list, err := listerClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		names := make([]string, 0, len(list.Items))
+		for _, item := range list.Items {
+			names = append(names, item.GetName())
+		}
+		require.NotContains(t, names, created.GetName(), "user without users:read must not see other users")
+	})
+}
+
 func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("should hide users from the hidden users list on Get and List", func(t *testing.T) {
 		ctx := context.Background()
@@ -589,6 +647,116 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 		gotLastSeenAt := toInt64(t, statusAfter["lastSeenAt"])
 		require.Equal(t, wantLastSeenAt, gotLastSeenAt,
 			"lastSeenAt should match the value provided in the status update")
+	})
+}
+
+func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("display endpoint returns identity info for known users and magic keys", func(t *testing.T) {
+		adminID, err := identity.UserIdentifier(helper.Org1.Admin.Identity.GetID())
+		require.NoError(t, err)
+		adminUID := helper.Org1.Admin.Identity.GetUID()
+		adminIDKey := strconv.FormatInt(adminID, 10)
+
+		q := url.Values{}
+		q.Add("key", adminUID)
+		q.Add("key", adminIDKey)
+		q.Add("key", "0")
+		q.Add("key", "anonymous:")
+		q.Add("key", "api-key:my-key")
+		q.Add("key", "bogus:1")
+
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/display?%s", q.Encode())
+
+		res := &iam.DisplayList{}
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   path,
+		}, res)
+
+		require.Equal(t, 200, rsp.Response.StatusCode)
+		require.ElementsMatch(t, []string{adminUID, adminIDKey, "0", "anonymous:", "api-key:my-key", "bogus:1"}, res.Keys)
+		require.Equal(t, []string{"bogus:1"}, res.InvalidKeys)
+
+		var sawAdmin, sawSystemAdmin, sawAnonymous, sawAPIKey bool
+		for _, d := range res.Items {
+			switch {
+			case d.Identity.Type == authlib.TypeUser && d.InternalID == adminID:
+				sawAdmin = true
+			case d.Identity.Type == authlib.TypeUser && d.Identity.Name == "0":
+				require.Equal(t, "System admin", d.DisplayName)
+				sawSystemAdmin = true
+			case d.Identity.Type == authlib.TypeAnonymous:
+				require.Equal(t, "Anonymous", d.DisplayName)
+				sawAnonymous = true
+			case d.Identity.Type == authlib.TypeAPIKey:
+				require.Equal(t, "API Key", d.DisplayName)
+				require.Equal(t, "my-key", d.Identity.Name)
+				sawAPIKey = true
+			}
+		}
+		require.True(t, sawAdmin, "admin user should be returned for UID/ID lookup")
+		require.True(t, sawSystemAdmin)
+		require.True(t, sawAnonymous)
+		require.True(t, sawAPIKey)
+	})
+
+	t.Run("display endpoint resolves service accounts with the service-account type", func(t *testing.T) {
+		sa := helper.Org1.AdminServiceAccount
+		q := url.Values{}
+		q.Add("key", strconv.FormatInt(sa.Id, 10))
+
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/display?%s", q.Encode())
+
+		res := &iam.DisplayList{}
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   path,
+		}, res)
+
+		require.Equal(t, 200, rsp.Response.StatusCode)
+		require.Empty(t, res.InvalidKeys)
+		require.Len(t, res.Items, 1)
+		require.Equal(t, authlib.TypeServiceAccount, res.Items[0].Identity.Type)
+		require.Equal(t, sa.Id, res.Items[0].InternalID)
+	})
+}
+
+func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
+	// selfPath is the "who am I" endpoint. A literal `~` token must not be
+	// shadowed by the users/{name} resource route.
+	const selfPath = "/apis/iam.grafana.app/v0alpha1/namespaces/default/users/~"
+
+	assertSelf := func(t *testing.T, caller apis.User) {
+		t.Helper()
+
+		res := &iam.Display{}
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   caller,
+			Method: "GET",
+			Path:   selfPath,
+		}, res)
+		require.Equal(t, 200, rsp.Response.StatusCode)
+
+		wantID, err := identity.UserIdentifier(caller.Identity.GetID())
+		require.NoError(t, err)
+
+		require.Equal(t, authlib.TypeUser, res.Identity.Type)
+		require.Equal(t, caller.Identity.GetRawIdentifier(), res.Identity.Name)
+		require.Equal(t, caller.Identity.GetName(), res.DisplayName)
+		require.NotEmpty(t, res.DisplayName)
+		require.NotEmpty(t, res.AvatarURL)
+		require.Contains(t, res.AvatarURL, "/avatar/")
+		require.Equal(t, wantID, res.InternalID)
+	}
+
+	t.Run("self endpoint returns the calling user's display info", func(t *testing.T) {
+		assertSelf(t, helper.Org1.Admin)
+	})
+
+	t.Run("self endpoint works for a non-admin reading their own info", func(t *testing.T) {
+		assertSelf(t, helper.Org1.Viewer)
 	})
 }
 

@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 type mockConnectionWithToken struct {
@@ -253,7 +255,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(nil)
 
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
@@ -554,7 +556,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						found := false
@@ -660,7 +662,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						// Verify token regeneration patch operation exists
@@ -928,7 +930,7 @@ func TestConnectionController_process(t *testing.T) {
 				)
 
 				mockPatcher := NewMockConnectionStatusPatcher(t)
-				mockPatcher.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				mockPatcher.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				return mockLister, mockHealthChecker, mockPatcher, mockFactory
 			},
@@ -1015,7 +1017,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						found := false
@@ -1190,7 +1192,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(nil)
 
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
@@ -1219,13 +1221,86 @@ func TestConnectionController_process(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "token secret not found - rebuilds and regenerates",
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+				mockLister := &mockConnectionLister{
+					conn: &provisioning.Connection{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:       "test-conn",
+							Namespace:  "default",
+							Generation: 1,
+						},
+						Status: provisioning.ConnectionStatus{
+							ObservedGeneration: 1,
+							Health: provisioning.HealthStatus{
+								Healthy: true,
+								Checked: time.Now().UnixMilli(),
+							},
+						},
+						Spec: provisioning.ConnectionSpec{
+							Type: provisioning.GithubConnectionType,
+							GitHub: &provisioning.GitHubConnectionConfig{
+								AppID:          "123",
+								InstallationID: "456",
+							},
+						},
+						// Orphaned reference: name is set but the secret can't be decrypted.
+						Secure: provisioning.ConnectionSecure{
+							Token: common.InlineSecureValue{Name: "orphaned-token"},
+						},
+					},
+				}
+				mockHealthChecker := NewMockConnectionHealthChecker(t)
+				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
+				mockFactory := connection.NewMockFactory(t)
+				mockConnection := connection.NewMockConnection(t)
+				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockConnWithToken := &mockConnectionWithToken{
+					Connection:      mockConnection,
+					TokenConnection: mockTokenConnection,
+				}
+
+				// No spec change and health is fresh, so only the token path drives reconcile.
+				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(false)
+
+				// First build fails because the token secret is missing; after the reference
+				// is cleared the rebuild succeeds.
+				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).
+					Return(nil, fmt.Errorf("unable to decrypt token: %w", connection.ErrTokenNotFound)).Once()
+				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).
+					Return(mockConnWithToken, nil).Once()
+
+				// Token is now zero (cleared), so it is regenerated without validity checks.
+				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).
+					Return(common.RawSecureValue("new-token"), nil)
+
+				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  &provisioning.TestResults{Success: true},
+						HealthStatus: provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					}, nil)
+				mockStatusPatcher.EXPECT().Patch(
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				).Return(nil)
+
+				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
+			},
+			conn: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-conn",
+					Namespace: "default",
+				},
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			mockLister, mockHealthChecker, mockStatusPatcher, mockFactory := tt.setupMocks()
 			cc := &ConnectionController{
-				connLister:        mockLister,
+				conns:             informer.NewCachedConnectionGetter(mockLister),
 				healthChecker:     mockHealthChecker,
 				statusPatcher:     mockStatusPatcher,
 				connectionFactory: mockFactory,
@@ -1390,10 +1465,9 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 
 			// Create controller
 			cc := &ConnectionController{
-				connLister:        mockLister,
+				conns:             informer.NewCachedConnectionGetter(mockLister),
 				connectionFactory: mockFactory,
 				healthChecker:     mockHealthChecker,
-				connSynced:        func() bool { return true },
 				statusPatcher:     mockPatcher,
 				logger:            logging.DefaultLogger,
 			}

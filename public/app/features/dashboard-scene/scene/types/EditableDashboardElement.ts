@@ -77,6 +77,12 @@ export interface EditableDashboardElement {
   onChangeName?(name: string): { errorMessage?: string } | void;
 
   /**
+   * Called when an outline rename commits (blur / Enter) without validation error.
+   * Use for side effects that must not run on every keystroke (e.g. dropping shadowed predefined variables).
+   */
+  onCommitName?(): void;
+
+  /**
    * Container objects can have children
    */
   getOutlineChildren?(isEditing?: boolean): SceneObject[];
@@ -87,6 +93,8 @@ export interface EditableDashboardElementInfo {
   typeName: string;
   icon: IconName;
   isHidden?: boolean;
+  /** Optional tooltip shown when hovering the element name in the outline */
+  tooltip?: string;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {

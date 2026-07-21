@@ -8,6 +8,7 @@ import 'jquery';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -39,14 +40,20 @@ import {
   setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
+  setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
+  initDataSourceInstanceSettings,
   initOpenFeature,
+  setExpressionDataSourceInstance,
+  setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
+  setJourneyRegistry,
+  setJourneyTracker,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
@@ -83,15 +90,20 @@ import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsCheck
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { initEchoSrv } from './core/services/echo/init';
+import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl';
+import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
+import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
+import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import {
   getObservablePluginComponents,
@@ -104,6 +116,7 @@ import { usePluginFunctions } from './features/plugins/extensions/usePluginFunct
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { pluginImporter } from './features/plugins/importer/pluginImporter';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -130,10 +143,16 @@ const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
+export interface AppInitOptions {
+  // Preferences fetched during boot (see initPreferences). Passed through so we
+  // can seed the RTK Query cache and avoid a duplicate preferences/merged request.
+  mergedPreferences?: Preferences;
+}
+
 export class GrafanaApp {
   context!: GrafanaContextType;
 
-  async init() {
+  async init(options?: AppInitOptions) {
     try {
       await preInitTasks();
 
@@ -153,18 +172,11 @@ export class GrafanaApp {
         }
       }
 
-      const regionalFormat = config.featureToggles.localeFormatPreference
-        ? config.regionalFormat
-        : contextSrv.user.language;
-
-      const initI18nPromise = initializeI18n(
-        {
-          language: contextSrv.user.language,
-          ns: NAMESPACES,
-          module: loadTranslations,
-        },
-        regionalFormat
-      );
+      const initI18nPromise = initializeI18n({
+        language: contextSrv.user.language,
+        ns: NAMESPACES,
+        module: loadTranslations,
+      });
 
       // This is a placeholder so we can put a 'comment' in the message json files.
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
@@ -181,7 +193,30 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.regionalFormat);
+      if (config.featureToggles.cujTracking) {
+        setJourneyTracker(new JourneyTrackerImpl());
+
+        // Initialize the journey registry (metadata + split triggers)
+        const registry = new JourneyRegistryImpl();
+        registry.init(JOURNEY_REGISTRY);
+        setJourneyRegistry(registry);
+
+        // Eagerly import journey wirings - these only use onInteraction,
+        // no heavy feature-level imports
+        await Promise.all([
+          import('./core/journeys/searchToResource'),
+          import('./core/journeys/browseToResource'),
+          import('./core/journeys/dashboardEdit'),
+          import('./core/journeys/panelEdit'),
+          import('./core/journeys/datasourceConfigure'),
+          import('./core/journeys/exploreToDashboard'),
+        ]);
+
+        // Warn about registry entries that have no start trigger wired up
+        registry.warnUnregistered();
+      }
+
+      setLocale(contextSrv.user.language);
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
@@ -189,6 +224,7 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
+      setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
       initGrafanaLive();
@@ -202,7 +238,7 @@ export class GrafanaApp {
 
       // Important that extension reducers are initialized before store
       addExtensionReducers();
-      configureStore();
+      configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
       initExtensions();
 
       initAlerting();
@@ -251,7 +287,14 @@ export class GrafanaApp {
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
 
-      // Init DataSourceSrv
+      // Init async data source services (populates cache from boot data so
+      // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
+      // need to wait on a network round trip).
+      setExpressionDataSourceInstance(expressionDatasource);
+      initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
+      setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
+
+      // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
@@ -259,9 +302,9 @@ export class GrafanaApp {
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
+        getPluginExtensionRegistries();
       }
 
-      getPluginExtensionRegistries();
       await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);

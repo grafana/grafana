@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"testing"
@@ -12,8 +13,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -24,7 +29,7 @@ import (
 func TestIntegrationTeams(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -43,10 +48,16 @@ func TestIntegrationTeams(t *testing.T) {
 			})
 
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
+			doTeamTitleUniquenessTests(t, helper)
+			doTeamListFilteringTest(t, helper)
 			doTeamSpecMembersTests(t, helper)
+			doTeamSpecExternalGroupsOSSTests(t, helper)
 
-			if mode < 3 {
+			if mode < rest.Mode3 {
 				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
+			}
+			if mode < rest.Mode4 {
+				doTeamDeleteCascadesLegacyMembersTest(t, helper)
 			}
 		})
 	}
@@ -280,6 +291,230 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		// Cleanup
 		_, err = env.SQLStore.GetSqlxSession().Exec(ctx, "DELETE FROM team WHERE uid IN (?, ?)", "t000000001", "t000000002")
 		require.NoError(t, err)
+	})
+}
+
+// doTeamTitleUniquenessTests verifies the admission-level title uniqueness
+// check end to end. Legacy storage also enforces UNIQUE(org_id, name), but in
+// unified-only mode there is no DB constraint — the 409 must come from
+// validation, so this runs in every dual-write mode.
+func doTeamTitleUniquenessTests(t *testing.T, helper *apis.K8sTestHelper) {
+	newTeam := func(generateName, title string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": generateName},
+			"spec":       map[string]interface{}{"title": title},
+		}}
+	}
+
+	mustCreate := func(t *testing.T, ctx context.Context, teamClient *apis.K8sResourceClient, generateName, title string) *unstructured.Unstructured {
+		created, err := teamClient.Resource.Create(ctx, newTeam(generateName, title), metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		return created
+	}
+
+	requireConflict := func(t *testing.T, err error, title string) {
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, fmt.Sprintf("team name '%s' is already taken", title))
+	}
+
+	t.Run("should reject creating a team with a duplicate title", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-dup-title-a-", "Duplicate Title Team")
+
+		_, err := teamClient.Resource.Create(ctx, newTeam("team-dup-title-b-", "Duplicate Title Team"), metav1.CreateOptions{})
+		requireConflict(t, err, "Duplicate Title Team")
+	})
+
+	t.Run("should reject creating a team with a case-variant of an existing title", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-dup-case-a-", "Case Variant Team")
+
+		_, err := teamClient.Resource.Create(ctx, newTeam("team-dup-case-b-", "cASE vARIANT tEAM"), metav1.CreateOptions{})
+		requireConflict(t, err, "cASE vARIANT tEAM")
+	})
+
+	t.Run("should reject renaming a team to a taken title but allow a free one", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-rename-target-", "Rename Target Team")
+		source := mustCreate(t, ctx, teamClient, "team-rename-source-", "Rename Source Team")
+
+		toUpdate, err := teamClient.Resource.Get(ctx, source.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		toUpdate.Object["spec"].(map[string]interface{})["title"] = "Rename Target Team"
+		_, err = teamClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		requireConflict(t, err, "Rename Target Team")
+
+		toUpdate, err = teamClient.Resource.Get(ctx, source.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		toUpdate.Object["spec"].(map[string]interface{})["title"] = "Rename Free Team"
+		updated, err := teamClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "Rename Free Team", updated.Object["spec"].(map[string]interface{})["title"])
+	})
+}
+
+// doTeamListFilteringTest verifies that a nameless collection list is allowed at
+// the API layer (allowListAuthorizer) and that the backend filters the result to
+// only the teams the caller can read. This guards the list-filtering behavior end
+// to end across both the legacy and unified storage backends.
+func doTeamListFilteringTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("list returns only the teams the user can read", func(t *testing.T) {
+		ctx := context.Background()
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		// Create the teams through the k8s API so they land in the store backing
+		// the current dual-writer mode.
+		visible := createNamedTeam(t, ctx, helper, adminClient, "list-filter-visible", "Visible Team", "list-filter-visible@example.com")
+		hidden := createNamedTeam(t, ctx, helper, adminClient, "list-filter-hidden", "Hidden Team", "list-filter-hidden@example.com")
+		t.Cleanup(func() {
+			cleanupCtx := context.Background()
+			_ = adminClient.Resource.Delete(cleanupCtx, visible.GetName(), metav1.DeleteOptions{})
+			_ = adminClient.Resource.Delete(cleanupCtx, hidden.GetName(), metav1.DeleteOptions{})
+		})
+
+		visibleID := visible.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, visibleID, "team should expose its internal ID label")
+
+		// A user with no basic role and read access to only the "visible" team.
+		// The AuthZ server resolves an id scope (teams:id:N) to a uid scope
+		// (teams:uid:X) via the legacy identity store (see rbac.newTeamNameResolver).
+		// FIXME: In unified-only mode (Mode5) the team is never written to the legacy
+		// team table, so id resolution finds nothing; granting the uid scope too
+		// (already in resolved form) keeps the test valid across all modes.
+		lister := helper.CreateUser("team-list-filter-user", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{accesscontrol.ActionTeamsRead},
+				Resource:          "teams",
+				ResourceAttribute: "id",
+				ResourceID:        visibleID,
+			},
+			{
+				Actions:           []string{accesscontrol.ActionTeamsRead},
+				Resource:          "teams",
+				ResourceAttribute: "uid",
+				ResourceID:        visible.GetName(),
+			},
+		})
+
+		listerClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      lister,
+			Namespace: helper.Namespacer(lister.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		// The nameless list must succeed (200) rather than 403, even though the
+		// user cannot read every team in the group.
+		list, err := listerClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		names := make([]string, 0, len(list.Items))
+		for _, item := range list.Items {
+			names = append(names, item.GetName())
+		}
+		require.Contains(t, names, visible.GetName(), "user should see the team they can read")
+		require.NotContains(t, names, hidden.GetName(), "user must not see teams they cannot read")
+	})
+}
+
+func createNamedTeam(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, name, title, email string) *unstructured.Unstructured {
+	t.Helper()
+	obj := createTeamObject(helper, name, title, email)
+	created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	return created
+}
+
+// doTeamDeleteCascadesLegacyMembersTest verifies that deleting a team cleans up
+// its legacy team_member rows. Only meaningful when legacy storage is written
+// (dual-write mode < 4), so the caller gates on mode.
+func doTeamDeleteCascadesLegacyMembersTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("delete team cascades legacy team_member rows", func(t *testing.T) {
+		ctx := context.Background()
+		env := helper.GetEnv()
+
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		editorUID := helper.Org1.Editor.Identity.GetIdentifier()
+		viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
+
+		created, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": "team-del-cascade-"},
+			"spec": map[string]interface{}{
+				"title":       "Team del cascade",
+				"email":       "del-cascade@example.com",
+				"provisioned": false,
+				"externalUID": "",
+				"members": []map[string]interface{}{
+					{"kind": "User", "name": editorUID, "permission": "member", "external": false},
+					{"kind": "User", "name": viewerUID, "permission": "admin", "external": false},
+				},
+			},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		teamUID := created.GetName()
+
+		// Resolve the team's legacy int64 id before deletion. Orphaned
+		// team_member rows keep this team_id even though the team row is gone,
+		// so we must capture it now and count by id rather than joining back
+		// to the team table.
+		var teamID int64
+		rows, err := env.SQLStore.GetSqlxSession().Query(ctx, "SELECT id FROM team WHERE uid = ?", teamUID)
+		require.NoError(t, err)
+		require.True(t, rows.Next())
+		require.NoError(t, rows.Scan(&teamID))
+		require.NoError(t, rows.Close())
+
+		countMembers := func() int {
+			var n int
+			r, err := env.SQLStore.GetSqlxSession().Query(ctx, "SELECT COUNT(*) FROM team_member WHERE team_id = ?", teamID)
+			require.NoError(t, err)
+			require.True(t, r.Next())
+			require.NoError(t, r.Scan(&n))
+			require.NoError(t, r.Close())
+			return n
+		}
+
+		require.Equal(t, 2, countMembers(), "expected legacy team_member rows to exist before delete")
+
+		require.NoError(t, teamClient.Resource.Delete(ctx, teamUID, metav1.DeleteOptions{}))
+
+		require.Equal(t, 0, countMembers(), "team_member rows must be cleaned up after team delete")
 	})
 }
 
@@ -550,5 +785,242 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Len(t, members, 1)
 		m := members[0].(map[string]interface{})
 		require.Equal(t, editorUID, m["name"])
+	})
+
+	// /teams/{name}/addMember and /teams/{name}/removeMember target a single
+	// team_member row per call, avoiding the stale-snapshot full-replace
+	// hazard the PUT path has. This test covers the happy path (insert /
+	// hydrate / delete) and the idempotency contract: addMember returns
+	// 201 on a fresh insert and 200 on a re-add, removeMember returns 200
+	// whether or not the row existed.
+	t.Run("addMember/removeMember subresources are atomic and idempotent", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-subres-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		teamUID := created.GetName()
+		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+
+		addPath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, teamUID)
+		removePath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/removemember", namespace, teamUID)
+		addBody := func(uid, perm string, external bool) []byte {
+			b, err := json.Marshal(map[string]interface{}{"name": uid, "permission": perm, "external": external})
+			require.NoError(t, err)
+			return b
+		}
+		removeBody := func(uid string) []byte {
+			b, err := json.Marshal(map[string]interface{}{"name": uid})
+			require.NoError(t, err)
+			return b
+		}
+
+		// addMember inserts the row; Get on the parent Team hydrates it
+		// back through the same Spec.Members slice the PUT path uses.
+		// First call returns 201 Created (fresh insert).
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: addBody(editorUID, "member", true),
+		}, &map[string]interface{}{})
+		require.Equal(t, 201, rsp.Response.StatusCode, "first addMember should be 201 Created, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+
+		fetched, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "members")
+		require.Len(t, members, 1)
+		require.Equal(t, editorUID, members[0].(map[string]interface{})["name"])
+
+		// Re-adding the same user is an idempotent no-op: the handler
+		// short-circuits before the Update and returns 200 OK (vs the
+		// fresh-insert 201) so a converged-but-resynced run doesn't
+		// surface as an error.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: addBody(editorUID, "member", true),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "second addMember should be idempotent 200, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+
+		// removeMember deletes the row.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: removePath, Body: removeBody(editorUID),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "removeMember response: %s", string(rsp.Body))
+
+		fetched, err = teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, _ = unstructured.NestedSlice(fetched.Object, "spec", "members")
+		require.Empty(t, members)
+
+		// removeMember on an absent membership is a no-op success
+		// (removed=false), not 404, so concurrent removeMember calls
+		// from peer instances don't surface as errors that increment
+		// the failure counter.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: removePath, Body: removeBody(editorUID),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "second removeMember should be 200 idempotent, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+	})
+
+	// Concurrent /addMember of *different* users on the same team is the
+	// scenario that silently lost members through the full PUT path. With
+	// the subresource each call inserts exactly one team_member row and
+	// the full-list semantics never come into play, so both members must
+	// always end up on the team. The handler returns 409 Conflict on
+	// RV-collision (no in-handler retry), so callers must retry.
+	t.Run("concurrent addMember of different users preserves every membership", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-subres-race-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		teamUID := created.GetName()
+		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+		addPath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, teamUID)
+
+		members := []string{editorUID, viewerUID}
+		var wg sync.WaitGroup
+		barrier := make(chan struct{})
+		results := make([]struct {
+			finalCode   int
+			sawConflict bool
+			attempts    int
+		}, len(members))
+		for i, uid := range members {
+			wg.Add(1)
+			go func(i int, uid string) {
+				defer wg.Done()
+				<-barrier
+				body, err := json.Marshal(map[string]interface{}{"name": uid, "permission": "member", "external": true})
+				require.NoError(t, err)
+				// Retry on 409 with a small bounded budget.
+				const maxAttempts = 8
+				var code int
+				for attempt := 1; attempt <= maxAttempts; attempt++ {
+					rsp := apis.DoRequest(helper, apis.RequestParams{
+						User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: body,
+					}, &map[string]interface{}{})
+					code = rsp.Response.StatusCode
+					results[i].attempts = attempt
+					if code != 409 {
+						break
+					}
+					results[i].sawConflict = true
+					time.Sleep(time.Duration(attempt) * 25 * time.Millisecond)
+				}
+				results[i].finalCode = code
+			}(i, uid)
+		}
+		close(barrier)
+		wg.Wait()
+		for i, r := range results {
+			uid := ""
+			if i < len(members) {
+				uid = members[i]
+			}
+			require.Truef(t, r.finalCode == 200 || r.finalCode == 201,
+				"goroutine %d (uid=%s) addMember should converge to 200/201 after retries, got %d in %d attempts",
+				i, uid, r.finalCode, r.attempts)
+		}
+
+		fetched, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		final, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "members")
+		names := make([]string, 0, len(final))
+		for _, raw := range final {
+			names = append(names, raw.(map[string]interface{})["name"].(string))
+		}
+		require.ElementsMatch(t, members, names, "no member should be silently lost")
+	})
+
+	// Cross-instance writers race here: instance A and instance B both Get
+	// the team at the same RV, each appends a different user to its own
+	// stale Spec.Members snapshot, and both submit Update. Without an RV
+	// precondition, B's full-replace Update silently drops the user A just
+	// added because that user isn't on B's submitted list.
+	//
+	// In a single-process integration test the in-flight Updates serialise
+	// inside the apiserver, so we simulate the cross-instance behaviour by
+	// keeping a stale snapshot in memory while another writer commits, then
+	// replaying the stale snapshot.
+	t.Run("stale-RV update with different members must not silently drop members", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-stalerv-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		// Stale snapshot taken before interface{} member is added.
+		stale, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Peer instance commits first: editor is now on the team.
+		fresh, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedSlice(fresh.Object, []interface{}{
+			memberSpec(editorUID, "member", false),
+		}, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// This instance's Update — built from the stale snapshot — appends
+		// viewer. With the RV precondition the apiserver returns 409, the
+		// caller refreshes, and both editor and viewer end up on the team.
+		require.NoError(t, unstructured.SetNestedSlice(stale.Object, []interface{}{
+			memberSpec(viewerUID, "member", false),
+		}, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, stale, metav1.UpdateOptions{})
+		require.Error(t, err, "stale-RV update must be rejected, otherwise editor is silently removed")
+		require.True(t, errors.IsConflict(err), "stale-RV update must surface as 409 Conflict, got %v", err)
+
+		// Refresh and retry.
+		refreshed, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		current, _, _ := unstructured.NestedSlice(refreshed.Object, "spec", "members")
+		current = append(current, memberSpec(viewerUID, "member", false))
+		require.NoError(t, unstructured.SetNestedSlice(refreshed.Object, current, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, refreshed, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		final, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		finalMembers, _, _ := unstructured.NestedSlice(final.Object, "spec", "members")
+		names := make([]string, 0, len(finalMembers))
+		for _, raw := range finalMembers {
+			m := raw.(map[string]interface{})
+			names = append(names, m["name"].(string))
+		}
+		require.ElementsMatch(t, []string{editorUID, viewerUID}, names,
+			"both members must be present; the stale-RV writer must not have erased editor")
+	})
+}
+
+// doTeamSpecExternalGroupsOSSTests covers spec.externalGroups behavior that
+// is universal regardless of which ExternalGroupReconciler is bound. Hydration
+// is reconciler-dependent and exercised in the enterprise suite.
+func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper) {
+	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		GVR:       gvrTeams,
+	})
+
+	t.Run("spec.externalGroups: validation rejects duplicates after lowercasing", func(t *testing.T) {
+		ctx := context.Background()
+		body := map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": "team-egroups-dup-"},
+			"spec": map[string]interface{}{
+				"title":          "Team egroups dup",
+				"email":          "egroups-dup@example.com",
+				"provisioned":    false,
+				"externalUID":    "",
+				"externalGroups": []interface{}{"LDAP-Admins", "  ldap-admins  "},
+			},
+		}
+		_, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: body}, metav1.CreateOptions{})
+		require.Error(t, err)
+		var se *errors.StatusError
+		require.ErrorAs(t, err, &se)
+		require.Equal(t, int32(400), se.ErrStatus.Code)
+		require.Contains(t, se.ErrStatus.Message, "duplicate")
 	})
 }

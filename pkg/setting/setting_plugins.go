@@ -39,7 +39,14 @@ var (
 		"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
 		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
 		"elasticsearch":                {ID: "elasticsearch"},
+		"tempo":                        {ID: "tempo"},
 		"zipkin":                       {ID: "zipkin"},
+		"opentsdb":                     {ID: "opentsdb"},
+		"stackdriver":                  {ID: "stackdriver"},
+		"mssql":                        {ID: "mssql"},
+		"jaeger":                       {ID: "jaeger"},
+		"grafana-advisor-app":          {ID: "grafana-advisor-app"},
+		"grafana-pyroscope-datasource": {ID: "grafana-pyroscope-datasource"},
 	}
 )
 
@@ -150,11 +157,11 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		for _, plugin := range defaultPreinstallPlugins {
 			preinstallPluginsAsync[plugin.ID] = plugin
 		}
-		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
-			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
-		}
 		if cfg.IsFeatureToggleEnabled("interactiveLearning") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}
+		}
+		if cfg.IsEnterprise {
+			preinstallPluginsAsync["grafana-assistant-app"] = InstallPlugin{"grafana-assistant-app", "", ""}
 		}
 		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPluginsAsync)
 

@@ -178,7 +178,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			frameOne := frames[0]
 			require.Len(t, frames[0].Fields, 31)
 			require.Equal(t, int64(1), *(frameOne.Fields[0].At(0).(*int64)))
-			require.Equal(t, "abc", *frameOne.Fields[1].At(0).(*string))
+			require.Equal(t, "abc", frameOne.Fields[1].At(0).(string))
 			require.Equal(t, "def", *frameOne.Fields[2].At(0).(*string))
 			require.Equal(t, int32(1), frameOne.Fields[3].At(0).(int32))
 			require.Equal(t, int64(10), *(frameOne.Fields[4].At(0).(*int64)))
@@ -189,7 +189,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			require.Equal(t, float64(3.33), *(frameOne.Fields[9].At(0).(*float64)))
 			require.WithinDuration(t, time.Now().UTC(), *frameOne.Fields[10].At(0).(*time.Time), 10*time.Second)
 			require.WithinDuration(t, time.Now(), *frameOne.Fields[11].At(0).(*time.Time), 10*time.Second)
-			require.Equal(t, "11:11:11", *frameOne.Fields[12].At(0).(*string))
+			require.Equal(t, "11:11:11", frameOne.Fields[12].At(0).(string))
 			require.Equal(t, int64(2018), *frameOne.Fields[13].At(0).(*int64))
 			require.Equal(t, string([]byte{1}), *frameOne.Fields[14].At(0).(*string))
 			require.Equal(t, "tinytext", *frameOne.Fields[15].At(0).(*string))

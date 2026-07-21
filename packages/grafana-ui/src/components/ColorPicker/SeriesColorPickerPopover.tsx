@@ -34,5 +34,8 @@ export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) =
   return <ColorPickerPopover {...colorPickerProps} color={color || '#000000'} customPickers={customPickers} />;
 };
 
-// This component is to enable SeriesColorPickerPopover usage via series-color-picker-popover directive
+/**
+ * @alias
+ * @deprecated Use `SeriesColorPickerPopover` instead. This export will be removed in a future major release.
+ */
 export const SeriesColorPickerPopoverWithTheme = SeriesColorPickerPopover;

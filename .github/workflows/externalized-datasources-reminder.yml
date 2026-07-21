@@ -6,17 +6,13 @@ on:
     paths:
       - "packages/grafana-prometheus/**"
       - "public/app/plugins/datasource/cloudwatch/**"
-      - "public/app/plugins/datasource/cloud-monitoring/**"
       - "public/app/plugins/datasource/graphite/**"
       - "public/app/plugins/datasource/influxdb/**"
-      - "public/app/plugins/datasource/opentsdb/**"
-      - "public/app/plugins/datasource/tempo/**"
+      - "public/app/plugins/datasource/prometheus/**"
       - "pkg/tsdb/cloudwatch/**"
-      - "pkg/tsdb/cloud-monitoring/**"
       - "pkg/tsdb/graphite/**"
       - "pkg/tsdb/influxdb/**"
-      - "pkg/tsdb/opentsdb/**"
-      - "pkg/tsdb/tempo/**"
+      - "pkg/tsdb/prometheus/**"
 
 jobs:
   add-comment:

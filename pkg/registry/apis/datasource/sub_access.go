@@ -15,7 +15,6 @@ import (
 
 type subAccessREST struct {
 	builder *DataSourceAPIBuilder
-	getter  rest.Getter
 }
 
 var _ = rest.Connecter(&subAccessREST{})
@@ -25,7 +24,7 @@ func (r *subAccessREST) New() runtime.Object {
 }
 
 func (r *subAccessREST) Destroy() {
-	// no-op implemenation needed for rest.Storage interface.
+	// no-op implementation needed for rest.Storage interface.
 }
 
 func (r *subAccessREST) ConnectMethods() []string {
@@ -54,9 +53,9 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*datasourceV0alpha1.DatasourceAccessInfo, error) {
 	reqContext := contexthandler.FromContext(ctx)
-	resourceIDs := map[string]bool{datasources.ScopePrefix: true}
+	resourceIDs := map[string]bool{name: true}
 	access := accesscontrol.GetResourcesMetadata(reqContext.Req.Context(), reqContext.GetPermissions(), datasources.ScopePrefix, resourceIDs)
 	return &datasourceV0alpha1.DatasourceAccessInfo{
-		Permissions: access[datasources.ScopePrefix],
+		Permissions: access[name],
 	}, nil
 }

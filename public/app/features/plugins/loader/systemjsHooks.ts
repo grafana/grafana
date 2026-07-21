@@ -107,7 +107,7 @@ export function decorateSystemJSResolve(
   }
 }
 
-export function decorateSystemJsOnload(err: unknown, id: string) {
+function decorateSystemJsOnload(err: unknown, id: string) {
   // IF the url is relative resolve to current origin, absolute urls passed in will ignore base.
   const url = new URL(id, window.location.origin);
   if (url.pathname.endsWith('.css') && !err) {

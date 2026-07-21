@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -722,7 +721,7 @@ func buildElement(ctx context.Context, panelMap map[string]interface{}, dsIndexP
 					Uid:  schemaversion.GetStringValue(libraryPanel, "uid"),
 					Name: schemaversion.GetStringValue(libraryPanel, "name"),
 				},
-				Id:    int32(panelID),
+				Id:    float64(panelID),
 				Title: schemaversion.GetStringValue(panelMap, "title"),
 			},
 		}
@@ -748,7 +747,7 @@ func buildElement(ctx context.Context, panelMap map[string]interface{}, dsIndexP
 }
 
 func buildPanelKind(ctx context.Context, panelMap map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) (*dashv2alpha1.DashboardPanelKind, error) {
-	panelID := int32(getIntField(panelMap, "id", 0))
+	panelID := float64(getIntField(panelMap, "id", 0))
 
 	// Transform queries
 	queries := transformPanelQueries(ctx, panelMap, dsIndexProvider)
@@ -2064,7 +2063,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 
 func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.DashboardAnnotationPanelFilter {
 	filter := &dashv2alpha1.DashboardAnnotationPanelFilter{
-		Ids: []int32{},
+		Ids: []float64{},
 	}
 
 	if exclude := getBoolField(filterMap, "exclude", false); exclude {
@@ -2072,20 +2071,18 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 	}
 
 	if ids, ok := filterMap["ids"].([]interface{}); ok {
-		intIds := make([]int32, 0, len(ids))
+		floatIds := make([]float64, 0, len(ids))
 		for _, id := range ids {
 			switch v := id.(type) {
 			case float64:
-				if v >= 0 && v <= float64(math.MaxInt32) {
-					intIds = append(intIds, int32(v))
-				}
+				floatIds = append(floatIds, v)
 			case int:
-				if v >= 0 && int64(v) <= math.MaxInt32 {
-					intIds = append(intIds, int32(v))
-				}
+				floatIds = append(floatIds, float64(v))
+			case int64:
+				floatIds = append(floatIds, float64(v))
 			}
 		}
-		filter.Ids = intIds
+		filter.Ids = floatIds
 	}
 
 	return filter
@@ -2413,6 +2410,9 @@ func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQu
 	}
 	if timeShift := schemaversion.GetStringValue(panelMap, "timeShift"); timeShift != "" {
 		queryOptions.TimeShift = &timeShift
+	}
+	if timeCompare := schemaversion.GetStringValue(panelMap, "timeCompare"); timeCompare != "" {
+		queryOptions.TimeCompare = &timeCompare
 	}
 
 	return queryOptions

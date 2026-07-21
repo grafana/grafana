@@ -11,7 +11,8 @@ import {
   type PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
+import { usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DataSourceSettingsState } from 'app/types/datasources';
@@ -29,13 +30,13 @@ import {
   useTestDataSource,
   useUpdateDatasource,
 } from '../state/hooks';
-import { setIsDefault, setDataSourceName, dataSourceLoaded, testDataSourceFailed } from '../state/reducers';
+import { dataSourceLoaded, testDataSourceFailed } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { type DataSourceRights } from '../types';
 
-import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
+import { DataSourceDefaultButton } from './DataSourceDefaultButton';
 import { DataSourceLoadError } from './DataSourceLoadError';
 import { DataSourceMissingRightsMessage } from './DataSourceMissingRightsMessage';
 import { DataSourcePluginConfigPage } from './DataSourcePluginConfigPage';
@@ -63,8 +64,6 @@ export function EditDataSource({ uid, pageId }: Props) {
   const onDelete = useDeleteLoadedDataSource();
   const onTest = useTestDataSource(uid);
   const onUpdate = useUpdateDatasource();
-  const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
-  const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
 
   return (
@@ -76,8 +75,6 @@ export function EditDataSource({ uid, pageId }: Props) {
       dataSourceRights={dataSourceRights}
       exploreUrl={exploreUrl}
       onDelete={onDelete}
-      onDefaultChange={onDefaultChange}
-      onNameChange={onNameChange}
       onOptionsChange={onOptionsChange}
       onTest={onTest}
       onUpdate={onUpdate}
@@ -93,8 +90,6 @@ export type ViewProps = {
   dataSourceRights: DataSourceRights;
   exploreUrl: string;
   onDelete: () => void;
-  onDefaultChange: (isDefault: boolean) => AnyAction;
-  onNameChange: (name: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
   onTest: () => void;
   onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
@@ -108,8 +103,6 @@ export function EditDataSourceView({
   dataSourceRights,
   exploreUrl,
   onDelete,
-  onDefaultChange,
-  onNameChange,
   onOptionsChange,
   onTest,
   onUpdate,
@@ -119,6 +112,9 @@ export function EditDataSourceView({
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0 && dataSource.uid;
   const { components, isLoading } = useDataSourceConfigPluginExtensions();
+  const { settings: instanceSettings, isLoading: isLoadingInstanceSettings } = useDataSourceInstanceSettings(
+    dataSource.uid
+  );
 
   // Validation API passed to the config editor. validate() is called in onSubmit
   // — if it returns false the save and health check are both skipped.
@@ -175,8 +171,6 @@ export function EditDataSourceView({
     },
   };
 
-  const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
-
   const onSubmit = useCallback(
     async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -209,14 +203,15 @@ export function EditDataSourceView({
     [validation, onUpdate, dataSource, onTest, dispatch, retryAdvisorCheck]
   );
 
-  if (loading || isLoading) {
+  if (loading || isLoading || isLoadingInstanceSettings) {
     return <PageLoader />;
   }
 
-  if (loadError || !hasDataSource || !dsi) {
+  if (loadError || !hasDataSource || !instanceSettings) {
     return (
       <DataSourceLoadError
-        notFound={!hasDataSource || !dsi}
+        notFound={!hasDataSource || !instanceSettings}
+        errorMsg={loadError}
         dataSourceRights={dataSourceRights}
         onDelete={() => {
           trackDsConfigClicked('delete');
@@ -228,7 +223,7 @@ export function EditDataSourceView({
 
   if (pageId) {
     return (
-      <DataSourcePluginContextProvider instanceSettings={dsi}>
+      <DataSourcePluginContextProvider instanceSettings={instanceSettings}>
         <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />
       </DataSourcePluginContextProvider>
     );
@@ -242,16 +237,8 @@ export function EditDataSourceView({
 
       <CloudInfoBox dataSource={dataSource} />
 
-      <BasicSettings
-        dataSourceName={dataSource.name}
-        isDefault={dataSource.isDefault}
-        onDefaultChange={onDefaultChange}
-        onNameChange={onNameChange}
-        disabled={readOnly || !hasWriteRights}
-      />
-
       {plugin && (
-        <DataSourcePluginContextProvider instanceSettings={dsi}>
+        <DataSourcePluginContextProvider instanceSettings={instanceSettings}>
           <DataSourcePluginSettings
             plugin={plugin}
             dataSource={dataSourceWithIsPDCInjected}
@@ -307,7 +294,9 @@ export function EditDataSourceView({
         }}
         canDelete={!readOnly && hasDeleteRights}
         canSave={!readOnly && hasWriteRights}
-      />
+      >
+        <DataSourceDefaultButton uid={dataSource.uid} />
+      </ButtonRow>
     </form>
   );
 }

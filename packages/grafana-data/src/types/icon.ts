@@ -2,6 +2,7 @@ export const availableIconsIndex = {
   google: true,
   microsoft: true,
   github: true,
+  'github-enterprise': true,
   gitlab: true,
   okta: true,
   scim: true,
@@ -166,6 +167,8 @@ export const availableIconsIndex = {
   'gf-service-account': true,
   'gf-show-context': true,
   'gf-pin': true,
+  'gf-pin-filled': true,
+  'gf-pin-unfilled': true,
   'gf-prometheus': true,
   'gf-traces': true,
   globe: true,
@@ -304,6 +307,10 @@ export const availableIconsIndex = {
   'cmab-logo': true,
   'lightbulb-alt': true,
   vial: true,
+  'anthropic-logo': true,
+  'cursor-logo': true,
+  'github-copilot-logo': true,
+  robot: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

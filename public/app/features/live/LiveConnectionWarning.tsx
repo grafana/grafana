@@ -8,8 +8,6 @@ import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
-export interface Props {}
-
 export const LiveConnectionWarning = memo(function LiveConnectionWarning() {
   const [show, setShow] = useState<boolean | undefined>(undefined);
   const subscriptionRef = useRef<Unsubscribable | undefined>(undefined);

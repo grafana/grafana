@@ -1,5 +1,6 @@
 import { type PanelPluginMeta, PluginType } from '@grafana/data';
 
+import { logPluginMetaWarning } from '../logging';
 import type { PanelPluginMetas, PanelPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
@@ -9,7 +10,7 @@ import {
   loadingStrategyMapper,
   stateMapper,
   infoMapper,
-  signatureMapper,
+  signatureStatusMapper,
   prependPublicPathToCorePlugins,
 } from './shared';
 
@@ -39,14 +40,14 @@ function sortMapper(spec: v0alpha1Spec): number {
 
 function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const { id, name, hideFromList = false, skipDataQuery = false, suggestions } = spec.pluginJson;
-  const state = stateMapper(spec);
+  const state = stateMapper(spec, logPluginMetaWarning);
   const info = infoMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
   const sort = sortMapper(spec);
   const type = PluginType.panel;
   const module = spec.module.path;
   const baseUrl = spec.baseURL;
-  const signature = signatureMapper(spec);
+  const signature = signatureStatusMapper(spec, logPluginMetaWarning);
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;

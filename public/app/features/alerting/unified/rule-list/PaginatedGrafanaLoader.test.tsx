@@ -1,25 +1,48 @@
-import { render, screen } from 'test/test-utils';
-import { byRole, byText } from 'testing-library-selector';
+import { render, screen, within } from 'test/test-utils';
+import { byRole } from 'testing-library-selector';
 
+import { useAssistant } from '@grafana/assistant';
+import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
-import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import {
+  type GrafanaPromRecordingRuleDTO,
+  type GrafanaPromRuleGroupDTO,
+  PromRuleType,
+} from 'app/types/unified-alerting-dto';
 
 import { mockFolderApi, setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockFolder, mockGrafanaPromAlertingRule } from '../mocks';
 import { NO_GROUP_PREFIX } from '../utils/rules';
+import { formatPrometheusDuration } from '../utils/time';
 
 import { GrafanaRuleGroupListItem } from './PaginatedGrafanaLoader';
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(),
+  createAssistantContextItem: jest.fn((type, data) => ({ type, ...data })),
+}));
+const mockUseAssistant = jest.mocked(useAssistant);
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 const server = setupMswServer();
 
 const ui = {
   treeItem: byRole('treeitem'),
   groupLink: (name: string | RegExp) => byRole('link', { name }),
-  ungroupedText: byText(/\(Ungrouped\)/),
+  ruleLink: (name: string | RegExp) => byRole('link', { name }),
 };
 
 describe('GrafanaRuleGroupListItem', () => {
   beforeEach(() => {
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: false,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
     grantUserPermissions([AccessControlAction.AlertingRuleRead]);
     mockFolderApi(server).folder('folder-123', mockFolder({ uid: 'folder-123', title: 'TestFolder' }));
   });
@@ -28,7 +51,7 @@ describe('GrafanaRuleGroupListItem', () => {
     server.resetHandlers();
   });
 
-  it('should display rule name with (Ungrouped) suffix for ungrouped rules', async () => {
+  it('should render an ungrouped alerting rule directly without a group wrapper', async () => {
     const grafanaRule = mockGrafanaPromAlertingRule({ name: 'My Alert Rule' });
     const ungroupedGroup: GrafanaPromRuleGroupDTO = {
       name: `${NO_GROUP_PREFIX}test-rule-uid`,
@@ -40,8 +63,57 @@ describe('GrafanaRuleGroupListItem', () => {
 
     render(<GrafanaRuleGroupListItem group={ungroupedGroup} namespaceName="TestFolder" />);
 
-    expect(await ui.treeItem.find()).toBeInTheDocument();
-    expect(await ui.groupLink(/My Alert Rule \(Ungrouped\)/).find()).toBeInTheDocument();
+    const treeItem = await ui.treeItem.find();
+    expect(within(treeItem).getByRole('link', { name: 'My Alert Rule' })).toBeInTheDocument();
+    // No "(Ungrouped)" suffix — wrapper is gone, so rule name renders verbatim.
+    expect(screen.queryByText(/Ungrouped/)).not.toBeInTheDocument();
+    // No ListGroup wrapper => no aria-expanded toggle on the treeitem.
+    expect(treeItem).not.toHaveAttribute('aria-expanded');
+    // Group interval surfaced inline since the group header isn't rendered for ungrouped rules.
+    expect(within(treeItem).getByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))).toBeInTheDocument();
+  });
+
+  it('should render an ungrouped recording rule directly', async () => {
+    const recordingRule: GrafanaPromRecordingRuleDTO = {
+      type: PromRuleType.Recording,
+      name: 'My Recording Rule',
+      query: 'count(up)',
+      health: 'ok',
+      uid: 'rec-rule-uid',
+      folderUid: 'folder-123',
+      isPaused: false,
+    };
+    const ungroupedGroup: GrafanaPromRuleGroupDTO = {
+      name: `${NO_GROUP_PREFIX}rec-rule-uid`,
+      file: 'TestFolder',
+      folderUid: 'folder-123',
+      interval: 60,
+      rules: [recordingRule],
+    };
+
+    render(<GrafanaRuleGroupListItem group={ungroupedGroup} namespaceName="TestFolder" />);
+
+    const treeItem = await ui.treeItem.find();
+    expect(within(treeItem).getByRole('link', { name: 'My Recording Rule' })).toBeInTheDocument();
+    expect(treeItem).not.toHaveAttribute('aria-expanded');
+    expect(within(treeItem).getByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))).toBeInTheDocument();
+  });
+
+  it('should render the eval interval inline for a paused ungrouped rule', async () => {
+    const pausedRule = mockGrafanaPromAlertingRule({ name: 'Paused Alert Rule', isPaused: true });
+    const ungroupedGroup: GrafanaPromRuleGroupDTO = {
+      name: `${NO_GROUP_PREFIX}paused-rule-uid`,
+      file: 'TestFolder',
+      folderUid: 'folder-123',
+      interval: 60,
+      rules: [pausedRule],
+    };
+
+    render(<GrafanaRuleGroupListItem group={ungroupedGroup} namespaceName="TestFolder" />);
+
+    const treeItem = await ui.treeItem.find();
+    expect(within(treeItem).getByRole('link', { name: 'Paused Alert Rule' })).toBeInTheDocument();
+    expect(within(treeItem).getByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))).toBeInTheDocument();
   });
 
   it('should display normal group name for grouped rules', async () => {

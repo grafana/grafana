@@ -238,6 +238,21 @@ describe('PanelDataPaneNext', () => {
         expect(lastCall.$timeRange).toBeUndefined();
       });
 
+      it('should preserve compareWith when updating other query options', () => {
+        mockPanel.setState({ $timeRange: new PanelTimeRange({ compareWith: '1d' }) });
+
+        dataPane.onQueryOptionsChange({
+          dataSource: { type: 'test', uid: 'test' },
+          queries: [],
+          maxDataPoints: 100,
+          timeRange: { from: undefined, shift: undefined },
+        });
+
+        const lastCall = (mockPanel.setState as jest.Mock).mock.calls.at(-1)[0];
+        expect(lastCall.$timeRange).toBeInstanceOf(PanelTimeRange);
+        expect((lastCall.$timeRange.state as PanelTimeRangeState).compareWith).toBe('1d');
+      });
+
       it('should set hideTimeOverride on PanelTimeRange', () => {
         dataPane.onQueryOptionsChange({
           dataSource: { type: 'test', uid: 'test' },
@@ -937,6 +952,29 @@ describe('PanelDataPaneNext', () => {
       expect(testDataPane.state.dsError).toBeUndefined();
     });
 
+    it('loads a section-scoped variable datasource by forwarding the panel scene scope', async () => {
+      const variableRef = { uid: '${metrics_source}', type: 'prometheus' };
+      mockQueryRunnerState.datasource = variableRef;
+
+      const resolvesWithScope = (ref: { uid?: string } | undefined, scopedVars: unknown) =>
+        ref?.uid === variableRef.uid && Boolean((scopedVars as { __sceneObject?: unknown } | undefined)?.__sceneObject);
+
+      mockGet.mockImplementation((ref: { uid?: string } | undefined, scopedVars: unknown) =>
+        resolvesWithScope(ref, scopedVars)
+          ? Promise.resolve(promDatasource)
+          : Promise.reject(new Error('Datasource not found'))
+      );
+      mockGetInstanceSettings.mockImplementation((ref: { uid?: string } | undefined, scopedVars: unknown) =>
+        resolvesWithScope(ref, scopedVars) ? promSettings : undefined
+      );
+
+      await callLoadDatasource();
+
+      expect(testDataPane.state.datasource).toBe(promDatasource);
+      expect(testDataPane.state.dsSettings).toBe(promSettings);
+      expect(testDataPane.state.dsError).toBeUndefined();
+    });
+
     it('should store the datasource in localStorage after a successful load', async () => {
       const mockStore = jest.spyOn(
         require('app/features/datasources/components/picker/utils'),
@@ -1065,7 +1103,10 @@ describe('PanelDataPaneNext', () => {
 
       await callLoadDatasource();
 
-      expect(mockGet).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' });
+      expect(mockGet).toHaveBeenCalledWith(
+        { uid: 'prom-uid', type: 'prometheus' },
+        expect.objectContaining({ __sceneObject: expect.anything() })
+      );
       expect(testDataPane.state.datasource).toBe(promDatasource);
     });
   });

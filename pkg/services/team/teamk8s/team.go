@@ -75,6 +75,8 @@ type TeamK8sService struct {
 
 var _ team.Service = (*TeamK8sService)(nil)
 
+// NewTeamK8sService relies on the k8s users resource for member enrichment;
+// teamimpl gates the redirect on kubernetesUsersApi.
 func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
@@ -108,59 +110,43 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	return s.getDynamicClient(ctx, namespace, teamGVR)
 }
 
+// resolveUserUID maps a legacy user.id to user.uid via the k8s users resource.
 func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, userID int64) (string, error) {
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {
 		return "", err
 	}
-
 	selector := labels.SelectorFromSet(labels.Set{
 		utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(userID, 10),
 	})
-	result, err := client.List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
+	// Resolve the user with a service identity: the caller is already authorized
+	// for the team membership operation (e.g. teams.permissions:write) but may
+	// lack users:list (e.g. a team admin), which would otherwise fail the lookup.
+	// Mirrors the legacy SQL lookup, which needed no users:list.
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+	result, err := client.List(svcCtx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return "", err
 	}
-
 	if len(result.Items) == 0 {
 		return "", user.ErrUserNotFound
 	}
 	if len(result.Items) > 1 {
 		return "", fmt.Errorf("multiple users found with ID %d", userID)
 	}
-
 	return result.Items[0].GetName(), nil
 }
 
-func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace string, userUID string) (*iamv0alpha1.User, error) {
-	client, err := s.getDynamicClient(ctx, namespace, userGVR)
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := client.Get(ctx, userUID, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	var user iamv0alpha1.User
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &user); err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*iamv0alpha1.User, error) {
+// listUsersByUIDs returns users by UID via the k8s users resource.
+func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*user.User, error) {
 	if len(uids) == 0 {
 		return nil, nil
 	}
-
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {
 		return nil, err
 	}
-
-	results := make([]*iamv0alpha1.User, len(uids))
+	results := make([]*user.User, len(uids))
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(usersGetParallelism)
 	for i, uid := range uids {
@@ -172,25 +158,53 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 				}
 				return fmt.Errorf("failed to get user %s: %w", uid, err)
 			}
-			var user iamv0alpha1.User
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &user); err != nil {
+			var k8sUser iamv0alpha1.User
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &k8sUser); err != nil {
 				return fmt.Errorf("failed to decode user %s: %w", uid, err)
 			}
-			results[i] = &user
+			results[i] = &user.User{
+				ID:    deprecatedInternalID(&k8sUser),
+				UID:   k8sUser.Name,
+				Email: k8sUser.Spec.Email,
+				Name:  k8sUser.Spec.Title,
+				Login: k8sUser.Spec.Login,
+			}
 			return nil
 		})
 	}
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
-
-	users := make(map[string]*iamv0alpha1.User, len(uids))
+	users := make(map[string]*user.User, len(uids))
 	for _, u := range results {
 		if u != nil {
-			users[u.GetName()] = u
+			users[u.UID] = u
 		}
 	}
 	return users, nil
+}
+
+// getUserByUID returns a single user by UID via the k8s users resource.
+func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace, userUID string) (*user.User, error) {
+	client, err := s.getDynamicClient(ctx, namespace, userGVR)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := client.Get(ctx, userUID, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var k8sUser iamv0alpha1.User
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &k8sUser); err != nil {
+		return nil, err
+	}
+	return &user.User{
+		ID:    deprecatedInternalID(&k8sUser),
+		UID:   k8sUser.Name,
+		Email: k8sUser.Spec.Email,
+		Name:  k8sUser.Spec.Title,
+		Login: k8sUser.Spec.Login,
+	}, nil
 }
 
 func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID string) ([]iamv0alpha1.GetUserTeamsUserTeam, error) {
@@ -199,11 +213,14 @@ func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID s
 		return nil, err
 	}
 
-	resp, err := client.GetUserTeams(ctx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
+	// Scope to a service identity for this namespace: the subresource derives the target org from the caller's
+	// identity namespace, which doesn't match for non-basic-auth identities (SSO, service accounts) and would
+	// otherwise search the wrong org and return no teams.
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+
+	// Propagate every error (including 404) so teamimpl falls back to legacy when the subresource is gated off.
+	resp, err := client.GetUserTeams(svcCtx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return resp.Items, nil
@@ -364,6 +381,10 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
 	if err != nil {
+		// Surface UNIQUE(org_id, name) violations as ErrTeamNameTaken so /api/teams returns 409 instead of 500.
+		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
+			return team.Team{}, team.ErrTeamNameTaken
+		}
 		ctxLogger.Error("k8s team create failed", "namespace", namespace, "orgID", orgID, "name", cmd.Name, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -443,27 +464,42 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	}
 
 	updated := result.DeepCopy()
-	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
-		ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
+	// Partial update: Name and ExternalUID are written only when set, so a
+	// single-field command doesn't clear the others. Matches the legacy store,
+	// where xorm skips zero-value columns.
+	if cmd.Name != "" {
+		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+			ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
 	}
+	// email is the deliberate exception: it's written unconditionally (not guarded
+	// like the fields above) so an empty value clears it, matching the legacy
+	// MustCols("email") contract that PUT /api/teams relies on. Do not add an
+	// `if cmd.Email != ""` guard or clearing a team's email breaks.
 	if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
 		ctxLogger.Error("failed to set spec.email on team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
-		ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
+	if cmd.ExternalUID != "" {
+		if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
+			ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
 	}
 
 	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
 	if err != nil {
+		// Same UNIQUE conversion as CreateTeam — rename to a taken name → 400 "Team name taken".
+		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
+			return team.ErrTeamNameTaken
+		}
 		ctxLogger.Error("k8s team update failed", "namespace", namespace, "orgID", orgID, "teamID", cmd.ID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -620,7 +656,12 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 		if hit.MemberCount != nil {
 			memberCount = *hit.MemberCount
 		}
+		var id int64
+		if hit.InternalId != nil {
+			id = *hit.InternalId
+		}
 		teams = append(teams, &team.TeamDTO{
+			ID:            id,
 			UID:           hit.Name,
 			OrgID:         query.OrgID,
 			Name:          hit.Title,
@@ -720,6 +761,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		Email:         fetched.Spec.Email,
 		ExternalUID:   fetched.Spec.ExternalUID,
 		IsProvisioned: fetched.Spec.Provisioned,
+		MemberCount:   int64(len(fetched.Spec.Members)),
 	}, nil
 }
 
@@ -783,6 +825,7 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 			Email:         t.Spec.Email,
 			ExternalUID:   t.Spec.ExternalUID,
 			IsProvisioned: t.Spec.Provisioned,
+			MemberCount:   int64(len(t.Spec.Members)),
 			AvatarURL:     dtos.GetGravatarUrlWithDefault(s.cfg, t.Spec.Email, t.Spec.Title),
 		})
 	}
@@ -994,8 +1037,8 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		return nil, err
 	}
 
-	k8sUser, err := s.getUserByUID(ctx, namespace, userUID)
-	if err != nil {
+	usr, err := s.getUserByUID(ctx, namespace, userUID)
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		ctxLogger.Error("failed to fetch user by UID", "namespace", namespace, "userUID", userUID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -1017,11 +1060,11 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 			External:   r.External,
 			Permission: permissionFromMember(iamv0alpha1.TeamTeamPermission(r.Permission)),
 		}
-		if k8sUser != nil {
-			dto.Email = k8sUser.Spec.Email
-			dto.Name = k8sUser.Spec.Title
-			dto.Login = k8sUser.Spec.Login
-			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, k8sUser.Spec.Email, k8sUser.Spec.Login)
+		if usr != nil {
+			dto.Email = usr.Email
+			dto.Name = usr.Name
+			dto.Login = usr.Login
+			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, usr.Email, usr.Login)
 		}
 		members = append(members, dto)
 	}
@@ -1140,12 +1183,12 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 			Permission: permissionFromMember(member.Permission),
 		}
 
-		if k8sUser, ok := usersMap[member.Name]; ok {
-			dto.UserID = deprecatedInternalID(k8sUser)
-			dto.Email = k8sUser.Spec.Email
-			dto.Name = k8sUser.Spec.Title
-			dto.Login = k8sUser.Spec.Login
-			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, k8sUser.Spec.Email, k8sUser.Spec.Login)
+		if usr, ok := usersMap[member.Name]; ok {
+			dto.UserID = usr.ID
+			dto.Email = usr.Email
+			dto.Name = usr.Name
+			dto.Login = usr.Login
+			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, usr.Email, usr.Login)
 		}
 
 		members = append(members, dto)

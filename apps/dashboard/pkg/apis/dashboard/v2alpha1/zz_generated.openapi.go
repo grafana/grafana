@@ -692,8 +692,8 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationPanelFilter(ref commo
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int32",
+										Type:    []string{"number"},
+										Format:  "double",
 									},
 								},
 							},
@@ -2103,6 +2103,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardFieldColor(ref common.Reference
 							Format:      "",
 						},
 					},
+					"gradientColorTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"seriesBy": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Some visualizations need to know how to assign a series color from by value color schemes.",
@@ -2913,8 +2920,8 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardLibraryPanelKindSpec(ref common
 						SchemaProps: spec.SchemaProps{
 							Description: "Panel ID for the library panel in the dashboard",
 							Default:     0,
-							Type:        []string{"integer"},
-							Format:      "int32",
+							Type:        []string{"number"},
+							Format:      "double",
 						},
 					},
 					"title": {
@@ -3223,8 +3230,8 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardPanelSpec(ref common.ReferenceC
 					"id": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int32",
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 					"title": {
@@ -3375,6 +3382,12 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardQueryOptionsSpec(ref common.Ref
 						},
 					},
 					"timeShift": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"timeCompare": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",

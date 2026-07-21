@@ -1,0 +1,68 @@
+name: Integration Tests (pgvector)
+
+on:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - Makefile
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/go.work'
+      - '**/go.work.sum'
+      - pkg/storage/unified/search/vector/**
+      - pkg/storage/unified/search/embed/**
+      - devenv/docker/blocks/pgvector/**
+      - devenv/.env
+      - .github/actions/setup-go/**
+      - .github/workflows/pr-test-integration-pgvector.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+permissions: {}
+
+jobs:
+  pgvector:
+    name: pgvector
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+    env:
+      PGVECTOR_TEST_DB: host=127.0.0.1 port=5433 dbname=grafana_vectors user=grafana password=password sslmode=disable
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Start pgvector via docker compose
+        run: make devenv sources=pgvector
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Wait for pgvector to be ready
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 30); do
+            if docker exec "$(docker ps -qf name=pgvector)" pg_isready -U grafana -d grafana_vectors -q; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "pgvector did not become ready in time" >&2
+          docker ps -a
+          docker logs "$(docker ps -aqf name=pgvector)" || true
+          exit 1
+      - name: Run vector integration tests
+        run: |
+          set -euo pipefail
+          CGO_ENABLED=0 go test -p=1 -count=1 -timeout=8m -run '^TestIntegration' ./pkg/storage/unified/search/vector/...
+      - name: Cleanup pgvector
+        if: always()
+        run: make devenv-down sources=pgvector

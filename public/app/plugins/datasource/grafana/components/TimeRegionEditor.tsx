@@ -1,14 +1,8 @@
 import { css } from '@emotion/css';
+import moment, { type Moment } from 'moment/moment';
 import { type ChangeEvent, useState } from 'react';
 
-import {
-  dateTime,
-  type DateTime,
-  getTimeZoneInfo,
-  type GrafanaTheme2,
-  isDateTime,
-  type SelectableValue,
-} from '@grafana/data';
+import { dateTimeAsMoment, type GrafanaTheme2, isDateTime, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   Button,
@@ -22,7 +16,7 @@ import {
   TimeZonePicker,
   useStyles2,
 } from '@grafana/ui';
-import { getTimeZoneTitle, TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
+import { getTimeZoneDisplayInfo, getTimeZoneTitle, TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
 import { type TimeRegionConfig, type TimeRegionMode } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -42,7 +36,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
   const styles = useStyles2(getStyles);
 
   const timestamp = Date.now();
-  const timezoneInfo = getTimeZoneInfo(value.timezone ?? 'utc', timestamp);
+  const timezoneInfo = getTimeZoneDisplayInfo(value.timezone ?? 'utc', timestamp);
   const isDashboardTimezone = getDashboardSrv().getCurrent()?.getTimezone() === value.timezone;
 
   const [isEditing, setEditing] = useState(false);
@@ -51,12 +45,12 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     setEditing(!isEditing);
   };
 
-  const getTime = (time: string | undefined): DateTime | undefined => {
+  const getTime = (time: string | undefined): Moment | undefined => {
     if (!time) {
       return undefined;
     }
 
-    const date = dateTime();
+    const date = moment();
 
     if (time) {
       const match = time.split(':');
@@ -80,7 +74,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     const timezone = (
       <>
         <TimeZoneTitle title={timezoneInfo ? getTimeZoneTitle(timezoneInfo) : ''} />
-        <TimeZoneOffset timeZone={value.timezone} timestamp={timestamp} />
+        <TimeZoneOffset offset={timezoneInfo && `UTC${timezoneInfo.offset}`} />
       </>
     );
 
@@ -91,7 +85,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     return timezone;
   };
 
-  const onTimeChange = (v: DateTime | undefined, field: string) => {
+  const onTimeChange = (v: Moment | undefined, field: string) => {
     const time = v ? v.format('HH:mm') : undefined;
     if (field === 'from') {
       onChange({ ...value, from: time });
@@ -192,10 +186,9 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
               />
               <TimeOfDayPicker
                 value={isDateTime(from) ? from : undefined}
-                onChange={(v) => onTimeChange(v, 'from')}
+                onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
                 allowEmpty={true}
                 placeholder="HH:mm"
-                size="sm"
               />
             </Stack>
           </Field>
@@ -213,10 +206,9 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
               )}
               <TimeOfDayPicker
                 value={isDateTime(to) ? to : undefined}
-                onChange={(v) => onTimeChange(v, 'to')}
+                onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'to')}
                 allowEmpty={true}
                 placeholder="HH:mm"
-                size="sm"
               />
             </Stack>
           </Field>

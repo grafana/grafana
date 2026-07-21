@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -17,6 +18,10 @@ const (
 	successLabel   = "success"
 	resultLabel    = "result"
 	decrypterLabel = "decrypter"
+)
+
+var (
+	histogramBuckets = []float64{.005, .01, .03, .05, .07, .09, .1, .13, .15, .17, .20, .25, .5, 1, 2.5, 5, 10, 25, 50, 100}
 )
 
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
@@ -34,6 +39,7 @@ type StorageMetrics struct {
 	SecureValueSetExternalIDDuration           *prometheus.HistogramVec
 	SecureValueSetStatusDuration               *prometheus.HistogramVec
 	SecureValueDeleteDuration                  *prometheus.HistogramVec
+	SecureValueAddGCAttemptCount               *prometheus.HistogramVec
 	SecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
@@ -47,7 +53,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "keeper_metadata_create_duration_seconds",
 			Help:                            "Duration of keeper metadata create operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -57,7 +63,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "keeper_metadata_update_duration_seconds",
 			Help:                            "Duration of keeper metadata update operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -67,7 +73,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "keeper_metadata_delete_duration_seconds",
 			Help:                            "Duration of keeper metadata delete operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -77,7 +83,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "keeper_metadata_get_duration_seconds",
 			Help:                            "Duration of keeper metadata get operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -87,7 +93,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "keeper_metadata_list_duration_seconds",
 			Help:                            "Duration of keeper metadata list operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -97,7 +103,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "keeper_metadata_get_keeper_config_duration_seconds",
 			Help:                            "Duration of keeper metadata get keeper config operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -109,7 +115,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "secure_value_metadata_create_duration_seconds",
 			Help:                            "Duration of secure value metadata create operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -119,7 +125,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "secure_value_metadata_get_duration_seconds",
 			Help:                            "Duration of secure value metadata get operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -129,7 +135,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "secure_value_metadata_list_duration_seconds",
 			Help:                            "Duration of secure value metadata list operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -139,7 +145,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "secure_value_set_external_id_duration_seconds",
 			Help:                            "Duration of secure value set external id operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -149,7 +155,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "secure_value_set_status_duration_seconds",
 			Help:                            "Duration of secure value set status operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -159,7 +165,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "secure_value_delete_duration_seconds",
 			Help:                            "Duration of secure value delete operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -169,10 +175,17 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "secure_value_set_inactive_all_from_group_duration_seconds",
 			Help:                            "Duration of secure value set inactive all from group operations",
-			Buckets:                         prometheus.DefBuckets,
+			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		SecureValueAddGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "secure_value_add_to_gc_attempt_count_duration_seconds",
+			Help:      "Duration of secure value gc attempt count modification operations",
+			Buckets:   instrument.DefBuckets,
 		}, []string{successLabel}),
 
 		// Decrypt metrics
@@ -181,8 +194,8 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "decrypt_duration_seconds",
 			Help:                            "Duration of decrypt operations",
-			Buckets:                         prometheus.DefBuckets,
-			NativeHistogramBucketFactor:     1.1,
+			Buckets:                         histogramBuckets,
+			NativeHistogramBucketFactor:     1.1, // enable native histograms
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{resultLabel, decrypterLabel}),
@@ -215,6 +228,7 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueDeleteDuration,
 				m.SecureValueSetInactiveAllFromGroupDuration,
 				m.DecryptDuration,
+				m.SecureValueAddGCAttemptCount,
 			)
 		}
 

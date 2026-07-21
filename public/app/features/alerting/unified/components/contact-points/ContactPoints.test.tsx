@@ -539,6 +539,8 @@ describe('contact points', () => {
         metadata: {
           annotations: {
             [K8sAnnotations.InUseRules]: '1',
+            // User has delete permission, but the contact point is still blocked by an in-use rule reference.
+            [K8sAnnotations.AccessDelete]: 'true',
           },
         },
       };

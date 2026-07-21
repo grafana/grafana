@@ -655,6 +655,8 @@ export enum SortOrder {
   None = 'none',
 }
 
+export type LegendOverflow = ('ellipsis' | 'wrap');
+
 /**
  * TODO docs
  */
@@ -671,16 +673,20 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
  * TODO docs
  */
 export interface VizLegendOptions {
+  /**
+   * @deprecated Use LegendDisplayMode.Table
+   */
   asTable?: boolean;
   calcs: Array<string>;
-  displayMode: LegendDisplayMode;
+  displayMode?: LegendDisplayMode;
   isVisible?: boolean;
   limit?: number;
+  overflow?: LegendOverflow;
   placement: LegendPlacement;
   showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
-  width?: number;
+  width?: (number | string);
 }
 
 export const defaultVizLegendOptions: Partial<VizLegendOptions> = {

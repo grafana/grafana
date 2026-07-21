@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +18,6 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -107,7 +105,11 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 
 	// For non-Terraform managers, identity changes are also blocked.
 	// Remove the old manager first, then add a new one with a different identity.
-	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
+	//
+	// Classic shim kinds are exempt: their identity is absent or unstable (e.g. a
+	// file-provisioning reader name, or empty for API/converted-Prometheus origins),
+	// so it is not a user-defined stable ID and must not be treated as immutable.
+	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && !managerNew.Kind.IsClassic() && managerNew.Identity != managerOld.Identity {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
 			Code:    http.StatusForbidden,
@@ -192,13 +194,16 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		return nil // not managed
 
 	case utils.ManagerKindRepo:
-		if auth.GetUID() == "access-policy:provisioning" || slices.Contains(auth.GetAudience(), provisioning.GROUP) {
+		if identity.IsProvisioningServiceIdentity(auth) {
 			return nil // OK!
 		}
 		// This can fallback to writing the value with a provisioning client
 		return errResourceIsManagedInRepository
 
-	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
+	case utils.ManagerKindPlugin,
+		utils.ManagerKindClassicFP,                  // nolint:staticcheck
+		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 
@@ -215,6 +220,25 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		return nil // Let the api admission hooks handle it
 	}
 	return nil
+}
+
+// managedResourceCommitMessage returns the git commit message to use when
+// forwarding a managed-resource write to the provisioning files endpoint. It
+// prefers the caller-supplied grafana.app/message annotation and falls back to
+// an action-specific message so the downstream nanogit commit always has a
+// non-empty subject.
+func managedResourceCommitMessage(obj utils.GrafanaMetaAccessor, action resourcepb.WatchEvent_Type) string {
+	if msg := obj.GetMessage(); msg != "" {
+		return msg
+	}
+	switch action {
+	case resourcepb.WatchEvent_ADDED:
+		return fmt.Sprintf("Create %s", obj.GetName())
+	case resourcepb.WatchEvent_DELETED:
+		return fmt.Sprintf("Delete %s", obj.GetName())
+	default:
+		return fmt.Sprintf("Update %s", obj.GetName())
+	}
 }
 
 func (s *Storage) handleManagedResourceRouting(ctx context.Context,
@@ -269,6 +293,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 			Resource("repositories").
 			Name(repo.Identity).
 			Suffix("files", src.Path).
+			Param("message", managedResourceCommitMessage(obj, action)).
 			Do(ctx)
 		return result.Error()
 	}
@@ -283,13 +308,18 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
 	}
 
-	// Execute the change
+	// Execute the change. The provisioning files endpoint reads the commit
+	// message from the `message` query parameter only — it does not inspect
+	// the body's grafana.app/message annotation. Forward the annotation here
+	// (with a sensible fallback) so writes through this fallback path produce
+	// a non-empty git commit message.
 	result := req.Namespace(obj.GetNamespace()).
 		Resource("repositories").
 		Name(repo.Identity).
 		Suffix("files", src.Path).
 		Body(orig).
 		Param("skipDryRun", "true").
+		Param("message", managedResourceCommitMessage(obj, action)).
 		Do(ctx)
 	err = result.Error()
 	if err != nil {

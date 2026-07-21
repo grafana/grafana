@@ -15,6 +15,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -24,14 +25,7 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*LegacyStore)(nil)
-	_ rest.SingularNameProvider = (*LegacyStore)(nil)
-	_ rest.Getter               = (*LegacyStore)(nil)
-	_ rest.Lister               = (*LegacyStore)(nil)
-	_ rest.Storage              = (*LegacyStore)(nil)
-	_ rest.CreaterUpdater       = (*LegacyStore)(nil)
-	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
-	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
+	_ grafanarest.Storage = (*LegacyStore)(nil)
 )
 
 var resource = iamv0alpha1.ServiceAccountResourceInfo
@@ -44,11 +38,6 @@ type LegacyStore struct {
 	store  legacy.LegacyIdentityStore
 	ac     claims.AccessClient
 	tracer trace.Tracer
-}
-
-// DeleteCollection implements rest.CollectionDeleter.
-func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
 }
 
 // Delete implements rest.GracefulDeleter.

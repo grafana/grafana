@@ -90,9 +90,9 @@ The following are configuration options for the Google Cloud Monitoring data sou
 
 Configure how Grafana authenticates with Google Cloud.
 
-| Setting                 | Description                                                                                                                                                                        |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Authentication type** | Select the authentication method. Choose **Google JWT File** to use a service account key file, or **GCE Default Service Account** if Grafana is running on a GCE virtual machine. |
+| Setting                 | Description                                                                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Authentication type** | Select the authentication method. Choose **Google JWT File** to use a service account key file, **GCE Default Service Account** if Grafana is running on a GCE virtual machine, or **Forward OAuth Identity** to authenticate as the Google-signed-in Grafana user. |
 
 ### JWT Key Details
 
@@ -101,6 +101,26 @@ These settings appear when you select **Google JWT File** as the authentication 
 | Setting       | Description                                                                                                                                                                               |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **JWT token** | Upload or paste your Google JWT token. You can drag and drop a `.json` key file, click **Click to browse files** to upload, or use **Paste JWT Token** or **Fill In JWT Token manually**. |
+
+### Forward OAuth Identity
+
+These settings appear when you select **Forward OAuth Identity** as the authentication type.
+
+| Setting             | Description                                                                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Default project** | Enter the GCP project ID to query. This field is required because the user's OAuth token doesn't carry a project context. The signed-in user must have the **Monitoring Viewer** role on this project. |
+
+The Grafana Google authentication must request the following scopes so the forwarded token can read Cloud Monitoring data. Set the full list under `[auth.google]` in `grafana.ini` or `custom.ini`, or under **Scopes** in the SSO Settings UI:
+
+```ini
+[auth.google]
+scopes = openid email profile https://www.googleapis.com/auth/monitoring.read
+```
+
+- `openid`, `email`, `profile`: the default Grafana sign-in scopes. Required for the user to log in.
+- `https://www.googleapis.com/auth/monitoring.read`: required for the forwarded token to call the Cloud Monitoring API.
+
+After you change the scopes, each user must sign out, revoke the existing grant at [https://myaccount.google.com/permissions](https://myaccount.google.com/permissions), and sign in again. Google reuses the previous consent until the grant is revoked, so existing sessions continue to hold tokens issued under the old scope set.
 
 ### Service account impersonation
 

@@ -3,10 +3,17 @@ import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  ConstantVariable,
+  CustomVariable,
+  SceneVariableSet,
+  type SceneVariable,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
+import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import {
@@ -21,6 +28,7 @@ jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     addVariableButtonClicked: jest.fn(),
   },
 }));
@@ -32,7 +40,10 @@ jest.mock('react-use', () => ({
   useLocalStorage: () => [{}, () => {}],
 }));
 
-function renderVariablesList(variables: SceneVariable[] = []) {
+function renderVariablesList(
+  variables: SceneVariable[] = [],
+  options?: { includeAdHoc?: boolean; topPlacementLabel?: string }
+) {
   const user = userEvent.setup();
 
   const variableSet = new SceneVariableSet({ variables });
@@ -43,7 +54,13 @@ function renderVariablesList(variables: SceneVariable[] = []) {
   activateFullSceneTree(dashboardScene);
   jest.spyOn(dashboardScene.state.editPane, 'selectObject');
 
-  const renderResult = render(<DashboardVariablesList variableSet={variableSet} />);
+  const renderResult = render(
+    <DashboardVariablesList
+      sourceVariableSet={variableSet}
+      topPlacementLabel={options?.topPlacementLabel}
+      includeAdHoc={options?.includeAdHoc}
+    />
+  );
 
   return {
     ...renderResult,
@@ -65,6 +82,11 @@ function buildTestVariables() {
     controlsMenuVar1: new ConstantVariable({ name: 'controlsMenuVar1', hide: VariableHide.inControlsMenu }),
     hiddenVar1: new ConstantVariable({ name: 'ninjaVar1', hide: VariableHide.hideVariable }),
     snapshotVar1: new SnapshotVariable({ name: 'snapshotVar1' }),
+    predefinedVar1: new CustomVariable({
+      name: 'globalVar',
+      query: 'a,b',
+      origin: toControlSourceRef({ type: 'global' }),
+    }),
   };
 }
 
@@ -85,6 +107,13 @@ describe('<DashboardVariablesList />', () => {
 
     const hiddenNames = Array.from(elements.hiddenListItems()).map((item) => item.textContent);
     expect(hiddenNames).toEqual(['ninjaVar1']);
+  });
+
+  test('uses custom top placement label when provided', () => {
+    const { visibleVar1 } = buildTestVariables();
+    const { getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
+
+    expect(getByRole('heading', { name: /top of row/i })).toBeInTheDocument();
   });
 
   test('always renders all 3 section titles even when some are empty', () => {
@@ -166,6 +195,15 @@ describe('<DashboardVariablesList />', () => {
       const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
       expect(aboveNames).toEqual(['visibleVar1']);
       expect(queryByText('adhocFilter')).not.toBeInTheDocument();
+    });
+
+    test('includes adhoc variables when includeAdHoc is true', () => {
+      const { visibleVar1 } = buildTestVariables();
+      const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
+      const { elements } = renderVariablesList([visibleVar1, adhocFilter], { includeAdHoc: true });
+
+      const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
+      expect(aboveNames).toEqual(['visibleVar1', 'adhocFilter']);
     });
   });
 });
@@ -250,5 +288,24 @@ describe('partitionVariablesByEditability()', () => {
 
     expect(editable).toEqual([]);
     expect(nonEditable[0]).toBe(snapshotVar1);
+  });
+
+  test('treats predefined-origin variables as non-editable', () => {
+    const { predefinedVar1 } = buildTestVariables();
+
+    const { editable, nonEditable } = partitionVariablesByEditability([predefinedVar1]);
+
+    expect(editable).toEqual([]);
+    expect(nonEditable).toEqual([predefinedVar1]);
+  });
+});
+
+describe('predefined variables in the edit-pane list', () => {
+  test('does not render a predefined variables section', () => {
+    const { visibleVar1, predefinedVar1 } = buildTestVariables();
+    const { queryByText } = renderVariablesList([visibleVar1, predefinedVar1]);
+
+    expect(queryByText('Predefined variables')).not.toBeInTheDocument();
+    expect(queryByText('globalVar')).not.toBeInTheDocument();
   });
 });

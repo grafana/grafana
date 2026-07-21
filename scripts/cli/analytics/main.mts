@@ -5,7 +5,7 @@ import { Project } from 'ts-morph';
 import { findAllEvents } from './findAllEvents.mts';
 import { formatEventsAsMarkdown } from './generateMarkdown.mts';
 
-const DEFINE_FEATURE_EVENTS_PATH = '@grafana/runtime/internal';
+const DEFINE_FEATURE_EVENTS_PATH = '@grafana/runtime/unstable';
 const SOURCE_FILE_PATTERNS = ['**/*.ts'];
 const OUTPUT_FORMAT = 'markdown';
 

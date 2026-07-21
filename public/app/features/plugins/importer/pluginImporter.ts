@@ -33,6 +33,8 @@ const defaultPreImport: PreImportStrategy = (plugin) => {
     pluginId: plugin.id,
     moduleHash: plugin.moduleHash,
     translations: plugin.translations,
+    hasUpdate: plugin.hasUpdate,
+    pluginName: plugin.name,
   };
 
   return args;
@@ -96,7 +98,11 @@ const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async 
   const { exposedComponentsRegistry, addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry } =
     await getPluginExtensionRegistries();
   exposedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.exposedComponentConfigs || [] });
-  addedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.addedComponentConfigs || [] });
+  addedComponentsRegistry.register({
+    pluginId: meta.id,
+    pluginMeta: meta,
+    configs: plugin.addedComponentConfigs || [],
+  });
   addedLinksRegistry.register({ pluginId: meta.id, configs: plugin.addedLinkConfigs || [] });
   addedFunctionsRegistry.register({ pluginId: meta.id, configs: plugin.addedFunctionConfigs || [] });
 

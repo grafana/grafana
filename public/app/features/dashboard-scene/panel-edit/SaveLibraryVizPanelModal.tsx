@@ -56,6 +56,12 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
           <Trans
             i18nKey="dashboard-scene.save-library-viz-panel-modal.affected-dashboards"
             count={libraryPanel.state._loadedPanel?.meta?.connectedDashboards}
+            tOptions={{
+              defaultValue_one:
+                'This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:',
+              defaultValue_other:
+                'This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:',
+            }}
           >
             This update will affect <strong>{'{{count}}'} dashboards.</strong> The following dashboards using the panel
             will be affected:

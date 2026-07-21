@@ -9,10 +9,13 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
+import { ImportToGMABanner } from '../components/import-to-gma/ImportToGMABanner';
+import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useShowImportToGMARulesBanner';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
+import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
@@ -28,10 +31,12 @@ import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
+  const showImportToGMABanner = useShowImportToGMARulesBanner();
 
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
+      {showImportToGMABanner && <ImportToGMABanner />}
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
@@ -72,6 +77,8 @@ export function RuleListActions() {
 
   const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
 
+  const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
+
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
   const moreActionsMenu = useMemo(
@@ -95,6 +102,8 @@ export function RuleListActions() {
               label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
               icon="upload"
               url="/alerting/import-datasource-managed-rules"
+              disabled={importDisabled}
+              description={importDisabled ? importDisabledReason : undefined}
             />
           )}
           {canAccessMigrationWizardUI && (
@@ -102,6 +111,8 @@ export function RuleListActions() {
               label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to Grafana Alerting')}
               icon="exchange-alt"
               url="/alerting/import-to-gma"
+              disabled={importDisabled}
+              description={importDisabled ? importDisabledReason : undefined}
             />
           )}
         </Menu.Group>
@@ -130,6 +141,8 @@ export function RuleListActions() {
       canAccessMigrationWizardUI,
       canExportRules,
       toggleShowExportDrawer,
+      importDisabled,
+      importDisabledReason,
     ]
   );
 

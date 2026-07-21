@@ -7,16 +7,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func BenchmarkThreshold(b *testing.B) {
 	results := make(mathexp.Values, 0, 1000)
 	for i := 0; i < cap(results); i++ {
-		n := newNumber(data.Labels{"test": fmt.Sprintf("series-%d", i)}, util.Pointer(float64(i)))
+		n := newNumber(data.Labels{"test": fmt.Sprintf("series-%d", i)}, new(float64(i)))
 		results = append(results, n)
 	}
 	ctx := context.Background()
@@ -64,7 +62,7 @@ func BenchmarkThreshold(b *testing.B) {
 
 		results := make(mathexp.Values, 0, 1000)
 		for i := 0; i < cap(results); i++ {
-			n := newNumber(nil, util.Pointer(float64(i)))
+			n := newNumber(nil, new(float64(i)))
 			results = append(results, n)
 		}
 		vars := mathexp.Vars{

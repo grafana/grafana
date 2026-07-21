@@ -20,6 +20,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { VariableRefresh } from '@grafana/schema';
 import {
   type AdhocVariableKind,
   type ConstantVariableKind,
@@ -77,6 +78,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -113,26 +115,35 @@ export function transformSaveModelSchemaV2ToScene(
 ): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
-  const annotations = dashboard.annotations ?? [];
-  const found = annotations.some((item) => item.spec.builtIn);
-  if (!found) {
-    annotations.unshift(getGrafanaBuiltInAnnotation());
+  const isSnapshot = Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]);
+
+  // Snapshots embed their annotation results in the per-panel snapshot query data, so we must
+  // not create annotation data layers — those would fire live annotation queries (e.g. the
+  // authorized annotations endpoint, which returns 401 for snapshots). Mirrors the v1
+  // transform's `!oldModel.isSnapshot()` guard.
+  let annotationLayers: DashboardAnnotationsDataLayer[] = [];
+  if (!isSnapshot) {
+    const annotations = dashboard.annotations ?? [];
+    const found = annotations.some((item) => item.spec.builtIn);
+    if (!found) {
+      annotations.unshift(getGrafanaBuiltInAnnotation());
+    }
+
+    annotationLayers = annotations.map((annotation) => {
+      const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
+
+      const layerState = {
+        key: uniqueId('annotations-'),
+        query: annotationQuerySpec,
+        name: annotation.spec.name,
+        isEnabled: Boolean(annotation.spec.enable),
+        isHidden: Boolean(annotation.spec.hide),
+        placement: annotation.spec.placement,
+      };
+
+      return new DashboardAnnotationsDataLayer(layerState);
+    });
   }
-
-  const annotationLayers = annotations.map((annotation) => {
-    const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
-
-    const layerState = {
-      key: uniqueId('annotations-'),
-      query: annotationQuerySpec,
-      name: annotation.spec.name,
-      isEnabled: Boolean(annotation.spec.enable),
-      isHidden: Boolean(annotation.spec.hide),
-      placement: annotation.spec.placement,
-    };
-
-    return new DashboardAnnotationsDataLayer(layerState);
-  });
 
   // Create alert states data layer if unified alerting is enabled
   let alertStatesLayer: AlertStatesDataLayer | undefined;
@@ -162,7 +173,7 @@ export function transformSaveModelSchemaV2ToScene(
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     folderTitle: metadata.annotations?.[AnnoKeyFolderTitle],
-    isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
+    isSnapshot,
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
 
@@ -319,6 +330,9 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
     // Added temporarily to allow skipping non-compatible variables
     .filter(isDefined);
 
+  // Nearest scope wins: a dashboard-local variable shadows a default (e.g. predefined
+  // global/folder) variable of the same name.
+  const localNames = new Set(variableObjects.map((v) => v.state.name));
   const defaultVariableObjects = defaultVariables
     .map((v) => {
       try {
@@ -328,7 +342,8 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
         return null;
       }
     })
-    .filter(isDefined);
+    .filter(isDefined)
+    .filter((v) => !localNames.has(v.state.name));
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
@@ -375,8 +390,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled:
-        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
@@ -407,6 +422,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
+    const refresh = config.publicDashboardAccessToken
+      ? VariableRefresh.never
+      : transformVariableRefreshToEnumV1(variable.spec.refresh);
     return new QueryVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
@@ -414,7 +432,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       query: getDataQueryForVariable(variable),
       datasource: getRuntimeVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
-      refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
+      refresh,
       regex: variable.spec.regex,
       regexApplyTo: variable.spec.regexApplyTo,
       allValue: variable.spec.allValue || undefined,
@@ -520,8 +538,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled:
-        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.spec.defaultValue
@@ -548,7 +565,7 @@ function getDataQueryForVariable(variable: QueryVariableKind) {
     : variable.spec.query.spec;
 }
 
-export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
+function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
   // Handle missing current object or value
   const currentValue = variable.spec.current?.value;
   const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
@@ -577,7 +594,7 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
   return intervals[0];
 }
 
-export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
+function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
   const variableObjects = (dashboard.variables ?? [])
     .map((v) => {
       try {
@@ -611,6 +628,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)
               : false,
+            $behaviors: [new ReportInteractionBehavior({})],
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -630,7 +648,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
+function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.kind === 'IntervalVariable') {

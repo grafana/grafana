@@ -6,10 +6,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
+// maxGroupLength is set conservatively below the DB column size of 190 (chosen to
+// fit MySQL's InnoDB index limit; see pkg/storage/unified/sql/db/migrations/resource_mig.go).
+// 128 comfortably covers all known group name patterns (longest observed: ~62 chars)
+// while leaving headroom before the DB constraint.
 const maxNameLength = 253
 const maxNamespaceLength = 40
 const minNamespaceLength = 3
-const maxGroupLength = 60
+const maxGroupLength = 128
 const minGroupLength = 3
 const maxResourceLength = 40
 const minResourceLength = 3
@@ -83,7 +87,7 @@ func IsValidGroup(group string) []string {
 		return []string{"group is too short"}
 	}
 	if !qualifiedNameRegexp(group) {
-		return []string{"group " + validation.RegexError(qualifiedNameErrMsg, qualifiedNameFmt, "dashboards.grafana.app", "grafana-loki-datasource")}
+		return []string{"group " + validation.RegexError(qualifiedNameErrMsg, qualifiedNameFmt, "dashboard.grafana.app", "grafana-loki-datasource")}
 	}
 	return nil
 }

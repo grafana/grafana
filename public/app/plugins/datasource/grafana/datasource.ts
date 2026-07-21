@@ -9,6 +9,7 @@ import {
   type DataQueryRequest,
   type DataQueryResponse,
   type DataSourceInstanceSettings,
+  type Scope,
   type TestDataSourceResponse,
   isValidLiveChannelAddress,
   MutableDataFrame,
@@ -16,13 +17,8 @@ import {
   dataFrameFromJSON,
   LoadingState,
 } from '@grafana/data';
-import {
-  DataSourceWithBackend,
-  getDataSourceSrv,
-  getGrafanaLiveSrv,
-  getTemplateSrv,
-  type StreamingFrameOptions,
-} from '@grafana/runtime';
+import { DataSourceWithBackend, getGrafanaLiveSrv, getTemplateSrv, type StreamingFrameOptions } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataSourceRef } from '@grafana/schema';
 import { annotationServer } from 'app/features/annotations/api';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
@@ -84,12 +80,15 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     for (const target of request.targets) {
       if (target.queryType === GrafanaQueryType.Annotations) {
         return from(
-          this.getAnnotations({
-            range: request.range,
-            rangeRaw: request.range.raw,
-            annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
-            dashboard: getDashboardSrv().getCurrent(),
-          })
+          this.getAnnotations(
+            {
+              range: request.range,
+              rangeRaw: request.range.raw,
+              annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
+              dashboard: getDashboardSrv().getCurrent(),
+            },
+            request.scopes
+          )
         );
       }
       if (target.hide) {
@@ -197,7 +196,10 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     return Promise.resolve([]);
   }
 
-  async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
+  async getAnnotations(
+    options: AnnotationQueryRequest<GrafanaQuery>,
+    requestScopes?: Scope[]
+  ): Promise<DataQueryResponse> {
     const query = options.annotation.target as GrafanaQuery;
     if (query?.queryType === GrafanaQueryType.TimeRegions) {
       const frame = doTimeRegionQuery(options.annotation.name, query.timeRegion!, options.range);
@@ -212,6 +214,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       limit: target.limit,
       tags: target.tags,
       matchAny: target.matchAny,
+      scopes: requestScopes && requestScopes?.length > 0 ? requestScopes.map((s) => s.metadata.name) : undefined,
     };
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
@@ -260,7 +263,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
 /** Get the GrafanaDatasource instance */
 export async function getGrafanaDatasource() {
-  return (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  const ds = await getDataSourceInstance('-- Grafana --');
+  if (!(ds instanceof GrafanaDatasource)) {
+    throw new Error('Expected the "-- Grafana --" data source to be a GrafanaDatasource instance');
+  }
+  return ds;
 }
 
 export interface FileElement {

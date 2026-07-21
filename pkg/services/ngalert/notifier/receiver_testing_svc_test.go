@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
@@ -98,7 +97,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	expectedAlert, err := convertToAlertParam(alert)
 	require.NoError(t, err)
 
-	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
 		if integration.Name == validEmailIntegration.Name {
 			return nil
 		}
@@ -114,7 +113,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	}{
 		{
 			name:        "error if integration UID is not empty",
-			integration: utils.Pointer(models.IntegrationGen()()),
+			integration: new(models.IntegrationGen()()),
 			user:        userAuthorizedToCreate,
 			expectedErr: models.ErrReceiverTestingInvalidIntegrationBase,
 		},
@@ -272,13 +271,13 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		{
 			name:        "error if integration does not exist in receiver",
 			receiverUID: receiverUID,
-			integration: utils.Pointer(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
+			integration: new(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
 			expectedErr: models.ErrReceiverTestingIntegrationNotFound,
 		},
 		{
 			name:        "error if user changes protected field (url) without permission",
 			receiverUID: receiverUID,
-			integration: utils.Pointer(models.IntegrationGen(
+			integration: new(models.IntegrationGen(
 				models.IntegrationMuts.WithUID(integrationUID),
 				models.IntegrationMuts.WithValidConfig("webhook"),
 				models.IntegrationMuts.AddSetting("url", "http://different-url.com"),

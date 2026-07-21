@@ -39,6 +39,28 @@ var (
 					return fmt.Sprintf("%v", *cast.Spec.Paused), nil
 				},
 			},
+			{
+				FieldSelector: "spec.metric",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*RecordingRule)
+					if !ok {
+						return "", errors.New("provided object must be of type *RecordingRule")
+					}
+
+					return string(cast.Spec.Metric), nil
+				},
+			},
+			{
+				FieldSelector: "spec.targetDatasourceUID",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*RecordingRule)
+					if !ok {
+						return "", errors.New("provided object must be of type *RecordingRule")
+					}
+
+					return string(cast.Spec.TargetDatasourceUID), nil
+				},
+			},
 		}))
 	kindRecordingRule = resource.Kind{
 		Schema: schemaRecordingRule,

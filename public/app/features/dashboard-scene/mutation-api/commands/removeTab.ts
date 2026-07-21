@@ -14,7 +14,7 @@ import { movePanelsToLayout } from './movePanelsHelper';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const removeTabPayloadSchema = payloads.removeTab;
+const removeTabPayloadSchema = payloads.removeTab;
 
 export type RemoveTabPayload = z.infer<typeof removeTabPayloadSchema>;
 

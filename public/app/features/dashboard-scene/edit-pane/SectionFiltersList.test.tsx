@@ -9,8 +9,36 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
 import { SectionFiltersCategoryTitle, SectionFiltersList } from './SectionFiltersList';
 
+const mockDashboardVariablesList = jest.fn(
+  ({
+    renderVariables,
+    topPlacementLabel,
+    includeAdHoc,
+  }: {
+    renderVariables?: Array<{ state: { name: string } }>;
+    topPlacementLabel?: string;
+    includeAdHoc?: boolean;
+  }) => (
+    <div>
+      {topPlacementLabel && <span>{topPlacementLabel}</span>}
+      {includeAdHoc && <span>includeAdHoc</span>}
+      {renderVariables?.map((variable, idx) => (
+        <span key={`${variable.state.name}-${idx}`}>{variable.state.name}</span>
+      ))}
+    </div>
+  )
+);
+
 jest.mock('./add-new/AddFilters', () => ({
   openAddFilterForm: jest.fn(),
+}));
+
+jest.mock('./dashboard/DashboardVariablesList', () => ({
+  DashboardVariablesList: (props: {
+    renderVariables?: Array<{ state: { name: string } }>;
+    topPlacementLabel?: string;
+    includeAdHoc?: boolean;
+  }) => mockDashboardVariablesList(props),
 }));
 
 describe('SectionFiltersList', () => {
@@ -31,12 +59,21 @@ describe('SectionFiltersList', () => {
     expect(screen.getByText('Add filter')).toBeInTheDocument();
   });
 
-  it('counts only adhoc filter variables when collapsed', () => {
-    const row = buildRow({ includeFilter: true, includeCustom: true });
+  it('renders a plain top-level filters heading without a count', () => {
+    render(<SectionFiltersCategoryTitle />);
 
-    render(<SectionFiltersCategoryTitle sectionOwner={row} isExpanded={false} />);
+    expect(screen.getByText('Filters')).toBeInTheDocument();
+    expect(screen.queryByText('Filters (1)')).not.toBeInTheDocument();
+  });
 
-    expect(screen.getByText('Filters (1)')).toBeInTheDocument();
+  it('uses top of row label for section filters placement', () => {
+    const row = buildRow({ includeFilter: true });
+
+    render(<SectionFiltersList sectionOwner={row} />);
+
+    expect(mockDashboardVariablesList).toHaveBeenCalledWith(
+      expect.objectContaining({ topPlacementLabel: 'Top of row', includeAdHoc: true })
+    );
   });
 });
 

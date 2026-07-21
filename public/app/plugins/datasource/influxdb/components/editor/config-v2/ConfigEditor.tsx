@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Box, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
@@ -10,8 +11,16 @@ import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
 import { CONTAINER_MIN_WIDTH } from './constants';
 import { type Props } from './types';
 
-export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Props) => {
+export const ConfigEditor: React.FC<Props> = (props: Props) => {
+  const { onOptionsChange, options } = props;
   const styles = useStyles2(getStyles);
+
+  // Only activate validation when the feature toggle is enabled. When disabled,
+  // validation is undefined so no validators are registered and save proceeds
+  // as before.
+  const validationEnabled = config.featureToggles.influxDBConfigValidation;
+  const validation = validationEnabled ? props.validation : undefined;
+
   return (
     <Stack justifyContent="space-between">
       <div className={`${styles.hideOnSmallScreen} ${styles.leftSticky}`}>
@@ -24,8 +33,8 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
           <Text variant="bodySmall" color="secondary">
             Fields marked with * are required
           </Text>
-          <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
-          <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
+          <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} validation={validation} />
+          <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} validation={validation} />
         </Stack>
       </Box>
       <Box width="20%" flex="0 0 20%">

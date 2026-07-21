@@ -110,11 +110,3 @@ export function functionRenderer(part: any, innerExpr: string) {
 export function suffixRenderer(part: QueryPart, innerExpr: string) {
   return innerExpr + ' ' + part.params[0];
 }
-
-export function identityRenderer(part: QueryPart, innerExpr: string) {
-  return part.params[0];
-}
-
-export function quotedIdentityRenderer(part: QueryPart, innerExpr: string) {
-  return '"' + part.params[0] + '"';
-}

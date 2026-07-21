@@ -36,17 +36,6 @@ export interface FolderDTO extends WithAccessControlMetadata {
 /** Minimal data required to create a new folder */
 export type NewFolder = Pick<FolderDTO, 'title' | 'parentUid'>;
 
-export interface FolderState {
-  id: number;
-  uid: string;
-  title: string;
-  url: string;
-  canSave: boolean;
-  canDelete: boolean;
-  hasChanged: boolean;
-  version: number;
-}
-
 /**
  * API response from `/api/folders/${folderUID}/counts`
  * Supports both the current resource-style keys and older legacy aliases, which depends on whether the unified storage
@@ -56,24 +45,19 @@ export interface FolderState {
 export interface DescendantCountDTO {
   folders?: number;
   dashboards?: number;
-  library_elements?: number;
   alertrules?: number;
+  // There is this weird thing where legacy/sql-fallback values have different resource name for the panels. As the old
+  // API uses the same backend as new and just reshapes it, this will leak here.
+  library_elements?: number;
+  librarypanels?: number;
+
+  // Legacy keys that should not be actually returned anymore when unified storage is enabled but we keep it for now.
   folder?: number;
   dashboard?: number;
-  librarypanel?: number;
   alertrule?: number;
+  librarypanel?: number;
 }
 
-type DescendantResource = 'folders' | 'dashboards' | 'library_elements' | 'alertrules';
+type DescendantResource = 'folders' | 'dashboards' | 'librarypanels' | 'alertrules';
 /** Summary of descendant counts by resource type, with keys matching the App Platform API response */
 export interface DescendantCount extends Record<DescendantResource, number> {}
-
-export interface FolderInfo {
-  /**
-   * @deprecated use uid instead.
-   */
-  id?: number; // can't be totally removed as search and alerts api aren't supporting folderUids yet. It will break DashList and AlertList panel
-  uid?: string;
-  title?: string;
-  url?: string;
-}

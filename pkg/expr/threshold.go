@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type predicate interface {
@@ -183,9 +182,9 @@ func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp
 			result = !result
 		}
 		if result {
-			return util.Pointer(float64(1))
+			return new(float64(1))
 		}
-		return util.Pointer(float64(0))
+		return new(float64(0))
 	}
 
 	refVarResult := vars[tc.ReferenceVar]

@@ -1,8 +1,7 @@
-import { acceptCompletion, autocompletion } from '@codemirror/autocomplete';
+import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
-import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import { EditorView, keymap } from '@codemirror/view';
+import CodeMirror from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -10,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
   type CodeMirrorCompletionSource,
@@ -27,12 +27,16 @@ const getCompletionExtensions = (
   }
 
   if (mode === 'override') {
-    return [autocompletion({ override: [...sources] })];
+    return [autocompletion({ override: [...sources] }), autocompleteSpaceKeymap];
   }
 
   // Merge: enable autocompletion and contribute the sources via language data
   // so they're combined with whatever the active language registers.
-  return [autocompletion(), ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }]))];
+  return [
+    autocompletion(),
+    autocompleteSpaceKeymap,
+    ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }])),
+  ];
 };
 
 const getAccessibilityExtensions = (
@@ -61,9 +65,27 @@ const autocompleteTabKeymap = Prec.highest(
   ])
 );
 
+const autocompleteSpaceKeymap = Prec.highest(
+  keymap.of([
+    {
+      key: 'Space',
+      run: (view) => {
+        if (view.state.readOnly) {
+          return false;
+        }
+
+        view.dispatch(view.state.replaceSelection(' '));
+        startCompletion(view);
+        return true;
+      },
+    },
+  ])
+);
+
 export const CodeEditor = memo(function CodeEditor({
   value,
   language,
+  sqlDialect,
   height = '200px',
   onChange,
   'aria-label': ariaLabel,
@@ -71,9 +93,13 @@ export const CodeEditor = memo(function CodeEditor({
   completionSources,
   completionMode = 'merge',
   extensions: additionalExtensions,
+  theme: themeOverride,
+  basicSetup,
+  indentWithTab = true,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
-  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
+  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
 
   const extensions = useMemo(
     () => [
@@ -96,11 +122,13 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
-        theme={theme.isDark ? vscodeDark : vscodeLight}
+        theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}
         onChange={onChange}
+        basicSetup={basicSetup}
+        indentWithTab={indentWithTab}
       />
     </>
   );

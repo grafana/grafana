@@ -25,3 +25,7 @@ class LayoutMockWorker {
 jest.mock('../../app/plugins/panel/nodeGraph/createLayoutWorker', () => ({
   createWorker: () => new LayoutMockWorker(),
 }));
+
+// JSDOM does not support Workers and the factory uses import.meta.url which
+// cannot be used in CommonJS modules. Uses __mocks__/createRouteGroupsMatcherWorker.ts.
+jest.mock('../../app/features/alerting/unified/createRouteGroupsMatcherWorker');

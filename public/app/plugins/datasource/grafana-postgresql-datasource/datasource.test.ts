@@ -37,9 +37,9 @@ const fakeDataSourceSrv: DataSourceSrv = {
 } as unknown as DataSourceSrv;
 
 const uid = '0000';
-// mock uuidv4 to give back the same value every time
-jest.mock('uuid', () => ({
-  v4: () => uid,
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  generateUUID: () => uid,
 }));
 
 let origBackendSrv: BackendSrv;

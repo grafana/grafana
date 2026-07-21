@@ -136,10 +136,7 @@ scenario('No series', (ctx) => {
   ctx.setData([]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.suggestions).toEqual([
-      expect.objectContaining({ pluginId: 'table' }),
-      expect.objectContaining({ pluginId: 'text' }),
-    ]);
+    expect(ctx.suggestions).toEqual([expect.objectContaining({ pluginId: 'table' })]);
   });
 });
 

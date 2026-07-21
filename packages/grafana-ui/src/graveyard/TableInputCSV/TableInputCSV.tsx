@@ -28,7 +28,7 @@ interface State {
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-export class UnThemedTableInputCSV extends PureComponent<Props, State> {
+class UnThemedTableInputCSV extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 

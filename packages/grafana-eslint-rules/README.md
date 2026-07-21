@@ -294,3 +294,21 @@ interface LoadedProperties extends EventProperty {
   numberOfItems: number;
 }
 ```
+
+### `no-direct-create-monitoring-logger`
+
+Disallow direct named imports of `createMonitoringLogger` from `@grafana/runtime`. New loggers must be registered in `packages/grafana-runtime/src/services/logging/loggers.ts` and retrieved via `getLogger` from `@grafana/runtime/unstable`.
+
+This keeps every valid logger source declared in one place so its defaults (context, console output) are discoverable and the registry can initialize it at app boot.
+
+#### Examples
+
+```ts
+// Bad ❌
+import { createMonitoringLogger } from '@grafana/runtime';
+const logger = createMonitoringLogger('features.my-area');
+
+// Good ✅ — register the source in loggers.ts, then:
+import { getLogger } from '@grafana/runtime/unstable';
+const logger = getLogger('features.my-area');
+```

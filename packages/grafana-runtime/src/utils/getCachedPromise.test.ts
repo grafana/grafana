@@ -1,5 +1,6 @@
 import { getLogger, setLogger } from '../services/logging/registry';
 
+import { TracedError } from './TracedError';
 import {
   getCacheKeyFromPromise,
   getCachedPromise,
@@ -221,15 +222,11 @@ describe('cached promises', () => {
 
         const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
         expect(logErrorMock).toHaveBeenCalledTimes(1);
-        expect(logErrorMock).toHaveBeenCalledWith(
-          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
-          {
-            stack: expect.any(String),
-            message: 'Network Error',
-            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
-          }
-        );
-        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+        const [loggedError, context] = logErrorMock.mock.calls[0];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+        expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+        expect(context).toEqual({ key: expect.stringMatching(/^mockConstructor:-?\d+$/) });
       });
 
       test('should log non-Error thrown values', async () => {
@@ -239,11 +236,11 @@ describe('cached promises', () => {
 
         const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
         expect(logErrorMock).toHaveBeenCalledTimes(1);
-        expect(logErrorMock).toHaveBeenCalledWith(
-          expect.any(Error),
-          expect.objectContaining({ message: 'string error', key: expect.stringMatching(/^mockConstructor:-?\d+$/) })
-        );
-        expect(logErrorMock.mock.calls[0][0].cause).toBe('string error');
+        const [loggedError, context] = logErrorMock.mock.calls[0];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+        expect(loggedError.cause).toBe('string error');
+        expect(context).toEqual({ key: expect.stringMatching(/^mockConstructor:-?\d+$/) });
       });
     });
 
@@ -289,15 +286,11 @@ describe('cached promises', () => {
         expect(promise).toHaveBeenCalledTimes(1);
         const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
         expect(logErrorMock).toHaveBeenCalledTimes(1);
-        expect(logErrorMock).toHaveBeenCalledWith(
-          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
-          {
-            stack: expect.any(String),
-            message: 'Network Error',
-            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
-          }
-        );
-        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+        const [loggedError, context] = logErrorMock.mock.calls[0];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+        expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+        expect(context).toEqual({ key: expect.stringMatching(/^mockConstructor:-?\d+$/) });
       });
 
       test('should invalidate cache when something errors', async () => {
@@ -388,15 +381,11 @@ describe('cached promises', () => {
 
         const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
         expect(logErrorMock).toHaveBeenCalledTimes(1);
-        expect(logErrorMock).toHaveBeenCalledWith(
-          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
-          {
-            stack: expect.any(String),
-            message: 'Network Error',
-            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
-          }
-        );
-        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+        const [loggedError, context] = logErrorMock.mock.calls[0];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+        expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+        expect(context).toEqual({ key: expect.stringMatching(/^mockConstructor:-?\d+$/) });
       });
 
       test('should propagate error when onError callback throws', async () => {
@@ -820,11 +809,13 @@ describe('cached promises', () => {
       expect(keyA).toMatch(/^uncacheable:/);
       expect(keyB).toMatch(/^uncacheable:/);
       expect(keyA).not.toBe(keyB);
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(2);
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'getCachedPromiseWithArgs: serializeArg failed' }),
-        expect.objectContaining({ baseKey: 'test' })
-      );
+      const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+      expect(logErrorMock).toHaveBeenCalledTimes(2);
+      const [loggedError, context] = logErrorMock.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toBe('getCachedPromiseWithArgs: serializeArg failed');
+      expect(loggedError.cause).toBeInstanceOf(Error);
+      expect(context).toEqual({ baseKey: 'test', key: expect.stringMatching(/^uncacheable:/) });
     });
   });
 
@@ -841,7 +832,7 @@ describe('cached promises', () => {
 
     test('should invalidate cache for cacheKey', async () => {
       const actual1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
-      invalidateCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+      invalidateCachedPromise('the-key');
       const actual2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
 
       expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
@@ -873,22 +864,41 @@ describe('cached promises', () => {
       );
     });
 
-    test('should not throw when called with an anonymous function and a cacheKey', () => {
-      expect(() => invalidateCachedPromise(async () => 2, { cacheKey: 'a-cache-key' })).not.toThrow();
+    test('should not throw when called with a cacheKey', () => {
+      expect(() => invalidateCachedPromise('a-cache-key')).not.toThrow();
     });
 
-    test('should prefer cacheKey over the key derived from the function', async () => {
-      const actual1 = await getCachedPromise(simulateOkRequest);
-      const actual2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+    test('should throw when called with an empty cacheKey', () => {
+      expect(() => invalidateCachedPromise('')).toThrow(
+        'invalidateCachedPromise function must be invoked with a named function or cacheKey'
+      );
+    });
 
-      invalidateCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+    test('cacheKey overload only affects entries under that key', async () => {
+      const a1 = await getCachedPromise(simulateOkRequest);
+      const b1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
 
-      const actual3 = await getCachedPromise(simulateOkRequest);
-      const actual4 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+      invalidateCachedPromise('explicit-key');
 
-      expect(actual1).toBe(actual3);
-      expect(actual1).not.toBe(actual2);
-      expect(actual2).not.toBe(actual4);
+      const a2 = await getCachedPromise(simulateOkRequest);
+      const b2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+
+      expect(a2).toBe(a1);
+      expect(b2).not.toBe(b1);
+    });
+
+    test('should be a no-op when there is no cached entry for the cacheKey', () => {
+      expect(() => invalidateCachedPromise('non-existent-key')).not.toThrow();
+    });
+
+    test('should accept a cacheKey returned by getCacheKeyFromPromise', async () => {
+      const a1 = await getCachedPromise(simulateOkRequest);
+      const derivedKey = getCacheKeyFromPromise(simulateOkRequest)!;
+
+      invalidateCachedPromise(derivedKey);
+      const a2 = await getCachedPromise(simulateOkRequest);
+
+      expect(a2).not.toBe(a1);
     });
   });
 
