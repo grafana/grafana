@@ -130,6 +130,31 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 		assert.Contains(t, parents, "folder-a")
 	})
 
+	t.Run("falls back to GetFolders when useSearch is set but the requester has no ID token", func(t *testing.T) {
+		sc := setupTestScenario(t)
+		sc.reqContext.SignedInUser.IDToken = ""
+
+		trackingSvc := newTrackingFolderService()
+		trackingSvc.ExpectedFolders = []*folder.Folder{
+			{UID: "folder-a", Title: "Folder A", OrgID: 1},
+		}
+		// Populate a hit list too — if the search path were taken, folder-b would
+		// leak into the tree.
+		trackingSvc.ExpectedHitList = searchmodel.HitList{
+			{UID: "folder-b", Title: "Folder B"},
+		}
+
+		cache := newFolderTreeCache(trackingSvc, true)
+		tree, err := cache.get(context.Background(), sc.reqContext.SignedInUser)
+		require.NoError(t, err)
+		require.NotNil(t, tree)
+
+		assert.True(t, tree.Contains("folder-a"))
+		// folder-b would only appear if the search path had been taken.
+		assert.False(t, tree.Contains("folder-b"))
+		assert.Equal(t, 1, trackingSvc.GetCallCount())
+	})
+
 	t.Run("caches tree and returns same instance on repeated calls", func(t *testing.T) {
 		sc := setupTestScenario(t)
 

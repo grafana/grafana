@@ -278,6 +278,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		OrgID:      orgID,
 		OrgRole:    role,
 		LastSeenAt: time.Now(),
+		IDToken:    "test-id-token",
 		// Allow user to create folders and library elements
 		Permissions: map[int64]map[string][]string{
 			1: {
