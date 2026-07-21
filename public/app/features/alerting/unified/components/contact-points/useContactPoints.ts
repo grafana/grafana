@@ -276,7 +276,7 @@ type DeleteContactPointArgs = { name: string; resourceVersion?: string };
 export function useDeleteContactPoint({ alertmanager }: BaseAlertmanagerArgs) {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
   const [deleteReceiver] = useDeleteReceiverMutation();
 
   const deleteFromK8sAPI = useAsync(async ({ name }: DeleteContactPointArgs) => {
@@ -321,7 +321,7 @@ export const useCreateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
 
   const { createOnCallIntegrations } = useOnCallIntegration();
   const [createGrafanaContactPoint] = useCreateReceiverMutation();
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
 
   const updateK8sAPI = useAsync(async ({ contactPoint }: CreateContactPointArgs) => {
     const contactPointWithMaybeOnCall = await createOnCallIntegrations(contactPoint);
@@ -358,7 +358,7 @@ export const useUpdateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
 
   const { createOnCallIntegrations } = useOnCallIntegration();
   const [replaceGrafanaContactPoint] = useReplaceReceiverMutation();
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
 
   const updateContactPoint = useAsync(async (args: UpdateContactpointArgs) => {
     if ('resourceVersion' in args && useK8sApi) {
