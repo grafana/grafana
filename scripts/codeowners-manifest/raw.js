@@ -24,7 +24,7 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
     const child = spawn('yarn', ['github-codeowners', 'audit', '--output', 'jsonl'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       cwd: process.cwd(),
-      shell: true,
+      shell: false,
     });
 
     let stderrData = '';
