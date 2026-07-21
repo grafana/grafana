@@ -29,12 +29,17 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   const [canSaveToDatabaseInstead, setCanSaveToDatabaseInstead] = useState(false);
   const dbSwitchRef = useRef<{ active: boolean; gitFolderUid?: string }>({ active: false });
 
-  // Latched while the repository is unresolved so the escape link survives error states
+  // changeInfo.isNew stays stable across repo resolution; the hook's isNew flips false on error
+  const isNewDashboard = changeInfo.isNew || !!saveAsCopy;
+
+  // Keep the escape available for folderless repos and whenever a new dashboard hits the error gate
   useEffect(() => {
     if (repository) {
-      setCanSaveToDatabaseInstead(repository.target === 'folderless' && (isNew || !!saveAsCopy));
+      setCanSaveToDatabaseInstead(repository.target === 'folderless' && isNewDashboard);
+    } else if (repoDataStatus === RepoViewStatus.Error && isNewDashboard) {
+      setCanSaveToDatabaseInstead(true);
     }
-  }, [repository, isNew, saveAsCopy]);
+  }, [repository, repoDataStatus, isNewDashboard]);
 
   // A completed database save must not trigger the folder restore below
   useEffect(() => {

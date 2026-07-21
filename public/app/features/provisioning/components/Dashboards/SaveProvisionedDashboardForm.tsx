@@ -273,7 +273,7 @@ export function SaveProvisionedDashboardForm({
   const handleSaveAtRoot = useCallback(() => {
     const { filename } = splitPath(getValues('path'));
     setValue('path', filename);
-    selectFolder(undefined, undefined);
+    selectFolder();
   }, [getValues, setValue, selectFolder]);
 
   const handleCreateFolder = useCallback(async () => {

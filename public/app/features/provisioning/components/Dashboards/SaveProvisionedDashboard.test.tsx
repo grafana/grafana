@@ -64,7 +64,7 @@ function setup(
   const renderProps: SaveProvisionedDashboardProps = {
     dashboard: createDashboard(),
     drawer: { onClose: jest.fn() } as unknown as SaveDashboardDrawer,
-    changeInfo: {} as unknown as DashboardChangeInfo,
+    changeInfo: { isNew: true } as unknown as DashboardChangeInfo,
     ...props,
   };
 
@@ -101,14 +101,26 @@ describe('SaveProvisionedDashboard', () => {
   });
 
   it('does not show the switch link for an existing dashboard', () => {
-    setup({ isNew: false });
+    setup({ isNew: false }, { changeInfo: { isNew: false } as unknown as DashboardChangeInfo });
 
     expect(screen.queryByRole('button', { name: /grafana database/i })).not.toBeInTheDocument();
   });
 
   it('shows the switch link when saving a copy of an existing folderless dashboard', () => {
-    setup({ isNew: false }, { saveAsCopy: true });
+    setup({ isNew: false }, { saveAsCopy: true, changeInfo: { isNew: false } as unknown as DashboardChangeInfo });
 
+    expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
+  });
+
+  it('shows the database escape when a new dashboard dead-ends on a non-folderless repo', () => {
+    setup({
+      isNew: false,
+      defaultValues: null,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Error,
+    });
+
+    expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
   });
 

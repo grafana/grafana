@@ -37,6 +37,20 @@ const settingsWithRepo = {
   availableRepositoryTypes: ['github'],
 };
 
+const folderlessSettings = {
+  items: [
+    {
+      name: 'folderless-repo',
+      title: 'Folderless Repo',
+      type: 'github',
+      target: 'folderless',
+      workflows: ['branch', 'write'],
+    },
+  ],
+  allowImageRendering: true,
+  availableRepositoryTypes: ['github'],
+};
+
 const folderResponse = {
   kind: 'Folder',
   apiVersion: 'folder.grafana.app/v1beta1',
@@ -176,23 +190,7 @@ describe('useDefaultValues', () => {
   });
 
   it('resolves a folderless repo for a brand-new dashboard with no folder', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () =>
-        HttpResponse.json({
-          items: [
-            {
-              name: 'folderless-repo',
-              title: 'Folderless Repo',
-              type: 'github',
-              target: 'folderless',
-              workflows: ['branch', 'write'],
-            },
-          ],
-          allowImageRendering: true,
-          availableRepositoryTypes: ['github'],
-        })
-      )
-    );
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
 
     const { result } = renderHook(() => useDefaultValues({ meta: {}, defaultTitle: 'New Dashboard' }), {
       wrapper: getWrapper({}),
@@ -204,23 +202,7 @@ describe('useDefaultValues', () => {
   });
 
   it('does not resolve a folderless repo for an existing dashboard with no folder', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () =>
-        HttpResponse.json({
-          items: [
-            {
-              name: 'folderless-repo',
-              title: 'Folderless Repo',
-              type: 'github',
-              target: 'folderless',
-              workflows: ['branch', 'write'],
-            },
-          ],
-          allowImageRendering: true,
-          availableRepositoryTypes: ['github'],
-        })
-      )
-    );
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
 
     const meta = { slug: 'existing-dashboard', k8s: { name: 'existing-dashboard-uid', annotations: {} } };
 
@@ -304,23 +286,7 @@ describe('useProvisionedDashboardData', () => {
   });
 
   it('resolves the folderless repo for a brand-new dashboard saved at root', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () =>
-        HttpResponse.json({
-          items: [
-            {
-              name: 'folderless-repo',
-              title: 'Folderless Repo',
-              type: 'github',
-              target: 'folderless',
-              workflows: ['branch', 'write'],
-            },
-          ],
-          allowImageRendering: true,
-          availableRepositoryTypes: ['github'],
-        })
-      )
-    );
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
 
     const dashboard = createDashboard({ folderUid: undefined, k8s: undefined });
     const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
@@ -333,23 +299,7 @@ describe('useProvisionedDashboardData', () => {
   });
 
   it('does not resolve the folderless repo for an existing dashboard saved at root', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () =>
-        HttpResponse.json({
-          items: [
-            {
-              name: 'folderless-repo',
-              title: 'Folderless Repo',
-              type: 'github',
-              target: 'folderless',
-              workflows: ['branch', 'write'],
-            },
-          ],
-          allowImageRendering: true,
-          availableRepositoryTypes: ['github'],
-        })
-      )
-    );
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
 
     const dashboard = createDashboard({
       folderUid: undefined,
