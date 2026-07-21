@@ -46,6 +46,8 @@ services:
       - "9443:9443"
       - "9444:9444"
       - "9445:9445"
+    security_opt:
+      - no-new-privileges:true
     tmpfs:
       - /run
       - /tmp
