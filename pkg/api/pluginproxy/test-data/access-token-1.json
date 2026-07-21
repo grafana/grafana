@@ -5,5 +5,5 @@
   "expires_on": "1528740417",
   "not_before": "1528736517",
   "resource": "https://api.nr1.io",
-  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJGQUtFX1RFU1RfVVNFUiIsImlhdCI6MH0.FAKE_SIGNATURE_FOR_TESTING_ONLY"
+  "access_token": "FAKE_ACCESS_TOKEN_FOR_TESTING_ONLY"
 }
