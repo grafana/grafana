@@ -12,7 +12,7 @@ type RouteConfig struct {
 	// The resource version string -- if this changes, you know that something has changed
 	RV string
 
-	// The group this route serves
+	// The group this route serves (must not contain /)
 	Group string
 
 	// How the prefix is handled.  This is always required
