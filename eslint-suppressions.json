@@ -843,11 +843,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/core/components/PluginHelp/PluginHelp.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1

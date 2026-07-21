@@ -119,10 +119,11 @@ Refer to [Git Sync permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSIO
 To modify permissions, each provisioned folder must include the `_folder.json` metadata file, which gives the folder a stable UID. Without it, the folder's permissions are lost if you move or rename that folder in the Git repository. Refer to [The Git Sync folder metadata file](#the-git-sync-folder-metadata-file) for details about this file and why it exists.
 {{< /admonition >}}
 
-To add or modify folder permissions:
+Folder permissions attach to the folder's UID (stored in `_folder.json`), not to its repository path, so you can only set them after Git Sync has created the folder. To add or modify folder permissions:
 
 - From the UI, select **Folder actions > Manage permissions** on the top right corner.
 - Using the API, refer to [Dashboard Permissions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_permissions/).
+- As code with Terraform, using the folder UID from `_folder.json`. Refer to [Modify folder-level permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana/#modify-folder-level-permissions) for manual and Terraform examples.
 
 ### The Git Sync folder metadata file
 
