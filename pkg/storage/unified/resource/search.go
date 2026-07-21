@@ -659,8 +659,12 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	)
 
 	searchError := func(msg string, err error) error {
+		// Requests are often canceled by clients, so they should not count as internal errors.
 		if ctx.Err() != nil {
 			return status.FromContextError(ctx.Err()).Err()
+		}
+		if _, ok := status.FromError(err); ok {
+			return err
 		}
 		s.log.Error(msg, "err", err)
 		return status.Error(codes.Internal, msg)
