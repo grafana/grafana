@@ -25,37 +25,35 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
       {subtitle}
     </Text>
   );
+
+  const content = (
+    <Stack
+      direction={oneRow ? 'row' : 'column'}
+      gap={oneRow ? 1 : 0}
+      alignItems={oneRow ? 'center' : 'stretch'}
+      grow={1}
+      minWidth={0}
+    >
+      {/* Title */}
+      <Text truncate element="p">
+        {title}
+      </Text>
+      {/* Subtitle */}
+      {subtitleDisplay}
+    </Stack>
+  );
+
   return (
     <div className={cx(styles.row, isCompact && styles.listCompact)}>
-      <Stack direction="row" alignItems="center" gap={1} grow={1}>
-        <div>{prefix}</div>
+      <Stack direction="row" alignItems="center" gap={1} grow={1} minWidth={0}>
+        {prefix && <div>{prefix}</div>}
 
         {href ? (
-          <Link href={href} onClick={onClick} color="primary" className={styles.titleLink} aria-label={title}>
-            <Stack
-              direction={oneRow ? 'row' : 'column'}
-              gap={oneRow ? 1 : 0}
-              alignItems={oneRow ? 'center' : 'flex-start'}
-            >
-              {/* Title */}
-              <Text truncate element="p">
-                {title}
-              </Text>
-              {/* Subtitle */}
-              {subtitleDisplay}
-            </Stack>
+          <Link href={href} onClick={onClick} color="primary" className={styles.titleLink}>
+            {content}
           </Link>
         ) : (
-          <Stack
-            direction={oneRow ? 'row' : 'column'}
-            gap={oneRow ? 1 : 0}
-            alignItems={oneRow ? 'center' : 'flex-start'}
-            grow={1}
-          >
-            <Text truncate>{title}</Text>
-            {/* Subtitle */}
-            {subtitleDisplay}
-          </Stack>
+          content
         )}
       </Stack>
 
@@ -67,18 +65,20 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css({
     display: 'flex',
+    flex: 1,
+    minWidth: 0,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     margin: theme.spacing(1),
     padding: theme.spacing(1),
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
   }),
   listCompact: css({
     margin: 0,
   }),
   titleLink: css({
     flex: 1,
+    minWidth: 0,
     '&:hover > div > p:first-child': {
       color: theme.colors.text.link,
       textDecoration: 'underline',

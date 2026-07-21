@@ -25,10 +25,10 @@ describe('ListRow', () => {
   });
 
   describe('when an href is provided', () => {
-    it('links to the href and uses the title as the accessible name', () => {
+    it('links to the href and exposes the title and subtitle as its accessible name', () => {
       render(<ListRow title="My title" subtitle="My subtitle" href="/some/path" />);
 
-      expect(screen.getByRole('link', { name: 'My title' })).toHaveAttribute('href', '/some/path');
+      expect(screen.getByRole('link', { name: 'My title My subtitle' })).toHaveAttribute('href', '/some/path');
     });
 
     it('calls onClick when the link is clicked', async () => {

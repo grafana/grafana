@@ -140,8 +140,9 @@ export function FiringAlertsCardView({
             prefix={
               redesignEnabled ? (
                 <Tooltip content={severityLabel(level)}>
-                  <span aria-label={severityLabel(level)}>
+                  <span>
                     <SeverityBars level={level} />
+                    <span className="sr-only">{severityLabel(level)}</span>
                   </span>
                 </Tooltip>
               ) : (
