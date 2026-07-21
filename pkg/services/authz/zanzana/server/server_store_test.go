@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -45,7 +46,10 @@ func TestGetStore_Cache(t *testing.T) {
 func TestGetOrCreateStore_FullFlow(t *testing.T) {
 	srv := setupOpenFGAServer(t)
 	ctx := context.Background()
-	testNamespace := "test-full-flow-namespace"
+	testNamespace := "test-full-flow-namespace-" + uuid.NewString()
+	t.Cleanup(func() {
+		require.NoError(t, srv.DeleteStore(context.Background(), testNamespace))
+	})
 
 	// 1. Call GetStore for a non-existent namespace
 	_, err := srv.GetStore(ctx, testNamespace)

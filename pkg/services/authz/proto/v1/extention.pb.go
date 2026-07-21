@@ -2418,6 +2418,126 @@ func (x *GetFolderParentsResult) GetParentUids() []string {
 	return nil
 }
 
+type CheckPermissionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Namespace     string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Subject       string                 `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
+	Teams         []string               `protobuf:"bytes,3,rep,name=teams,proto3" json:"teams,omitempty"`
+	Action        string                 `protobuf:"bytes,4,opt,name=action,proto3" json:"action,omitempty"`
+	Scopes        []string               `protobuf:"bytes,5,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckPermissionRequest) Reset() {
+	*x = CheckPermissionRequest{}
+	mi := &file_extention_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckPermissionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckPermissionRequest) ProtoMessage() {}
+
+func (x *CheckPermissionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_extention_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckPermissionRequest.ProtoReflect.Descriptor instead.
+func (*CheckPermissionRequest) Descriptor() ([]byte, []int) {
+	return file_extention_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *CheckPermissionRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *CheckPermissionRequest) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *CheckPermissionRequest) GetTeams() []string {
+	if x != nil {
+		return x.Teams
+	}
+	return nil
+}
+
+func (x *CheckPermissionRequest) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *CheckPermissionRequest) GetScopes() []string {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
+type CheckPermissionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Allowed       bool                   `protobuf:"varint,1,opt,name=allowed,proto3" json:"allowed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckPermissionResponse) Reset() {
+	*x = CheckPermissionResponse{}
+	mi := &file_extention_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckPermissionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckPermissionResponse) ProtoMessage() {}
+
+func (x *CheckPermissionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_extention_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckPermissionResponse.ProtoReflect.Descriptor instead.
+func (*CheckPermissionResponse) Descriptor() ([]byte, []int) {
+	return file_extention_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *CheckPermissionResponse) GetAllowed() bool {
+	if x != nil {
+		return x.Allowed
+	}
+	return false
+}
+
 var File_extention_proto protoreflect.FileDescriptor
 
 const file_extention_proto_rawDesc = "" +
@@ -2579,12 +2699,21 @@ const file_extention_proto_rawDesc = "" +
 	"\x06folder\x18\x01 \x01(\tR\x06folder\"9\n" +
 	"\x16GetFolderParentsResult\x12\x1f\n" +
 	"\vparent_uids\x18\x01 \x03(\tR\n" +
-	"parentUids2\xcf\x02\n" +
+	"parentUids\"\x96\x01\n" +
+	"\x16CheckPermissionRequest\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x18\n" +
+	"\asubject\x18\x02 \x01(\tR\asubject\x12\x14\n" +
+	"\x05teams\x18\x03 \x03(\tR\x05teams\x12\x16\n" +
+	"\x06action\x18\x04 \x01(\tR\x06action\x12\x16\n" +
+	"\x06scopes\x18\x05 \x03(\tR\x06scopes\"3\n" +
+	"\x17CheckPermissionResponse\x12\x18\n" +
+	"\aallowed\x18\x01 \x01(\bR\aallowed2\xbb\x03\n" +
 	"\x15AuthzExtentionService\x12I\n" +
 	"\x04Read\x12\x1f.authz.extention.v1.ReadRequest\x1a .authz.extention.v1.ReadResponse\x12L\n" +
 	"\x05Write\x12 .authz.extention.v1.WriteRequest\x1a!.authz.extention.v1.WriteResponse\x12O\n" +
 	"\x06Mutate\x12!.authz.extention.v1.MutateRequest\x1a\".authz.extention.v1.MutateResponse\x12L\n" +
-	"\x05Query\x12 .authz.extention.v1.QueryRequest\x1a!.authz.extention.v1.QueryResponseB8Z6github.com/grafana/grafana/pkg/services/authz/proto/v1b\x06proto3"
+	"\x05Query\x12 .authz.extention.v1.QueryRequest\x1a!.authz.extention.v1.QueryResponse\x12j\n" +
+	"\x0fCheckPermission\x12*.authz.extention.v1.CheckPermissionRequest\x1a+.authz.extention.v1.CheckPermissionResponseB8Z6github.com/grafana/grafana/pkg/services/authz/proto/v1b\x06proto3"
 
 var (
 	file_extention_proto_rawDescOnce sync.Once
@@ -2598,7 +2727,7 @@ func file_extention_proto_rawDescGZIP() []byte {
 	return file_extention_proto_rawDescData
 }
 
-var file_extention_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_extention_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
 var file_extention_proto_goTypes = []any{
 	(*MutateRequest)(nil),                        // 0: authz.extention.v1.MutateRequest
 	(*MutateResponse)(nil),                       // 1: authz.extention.v1.MutateResponse
@@ -2638,9 +2767,11 @@ var file_extention_proto_goTypes = []any{
 	(*QueryOperation)(nil),                       // 35: authz.extention.v1.QueryOperation
 	(*GetFolderParentsQuery)(nil),                // 36: authz.extention.v1.GetFolderParentsQuery
 	(*GetFolderParentsResult)(nil),               // 37: authz.extention.v1.GetFolderParentsResult
-	(*timestamppb.Timestamp)(nil),                // 38: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),                      // 39: google.protobuf.Struct
-	(*wrapperspb.Int32Value)(nil),                // 40: google.protobuf.Int32Value
+	(*CheckPermissionRequest)(nil),               // 38: authz.extention.v1.CheckPermissionRequest
+	(*CheckPermissionResponse)(nil),              // 39: authz.extention.v1.CheckPermissionResponse
+	(*timestamppb.Timestamp)(nil),                // 40: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),                      // 41: google.protobuf.Struct
+	(*wrapperspb.Int32Value)(nil),                // 42: google.protobuf.Int32Value
 }
 var file_extention_proto_depIdxs = []int32{
 	2,  // 0: authz.extention.v1.MutateRequest.operations:type_name -> authz.extention.v1.MutateOperation
@@ -2668,10 +2799,10 @@ var file_extention_proto_depIdxs = []int32{
 	19, // 22: authz.extention.v1.DeleteRoleOperation.permissions:type_name -> authz.extention.v1.RolePermission
 	25, // 23: authz.extention.v1.TupleKey.condition:type_name -> authz.extention.v1.RelationshipCondition
 	22, // 24: authz.extention.v1.Tuple.key:type_name -> authz.extention.v1.TupleKey
-	38, // 25: authz.extention.v1.Tuple.timestamp:type_name -> google.protobuf.Timestamp
-	39, // 26: authz.extention.v1.RelationshipCondition.context:type_name -> google.protobuf.Struct
+	40, // 25: authz.extention.v1.Tuple.timestamp:type_name -> google.protobuf.Timestamp
+	41, // 26: authz.extention.v1.RelationshipCondition.context:type_name -> google.protobuf.Struct
 	27, // 27: authz.extention.v1.ReadRequest.tuple_key:type_name -> authz.extention.v1.ReadRequestTupleKey
-	40, // 28: authz.extention.v1.ReadRequest.page_size:type_name -> google.protobuf.Int32Value
+	42, // 28: authz.extention.v1.ReadRequest.page_size:type_name -> google.protobuf.Int32Value
 	23, // 29: authz.extention.v1.ReadResponse.tuples:type_name -> authz.extention.v1.Tuple
 	22, // 30: authz.extention.v1.WriteRequestWrites.tuple_keys:type_name -> authz.extention.v1.TupleKey
 	24, // 31: authz.extention.v1.WriteRequestDeletes.tuple_keys:type_name -> authz.extention.v1.TupleKeyWithoutCondition
@@ -2684,12 +2815,14 @@ var file_extention_proto_depIdxs = []int32{
 	31, // 38: authz.extention.v1.AuthzExtentionService.Write:input_type -> authz.extention.v1.WriteRequest
 	0,  // 39: authz.extention.v1.AuthzExtentionService.Mutate:input_type -> authz.extention.v1.MutateRequest
 	33, // 40: authz.extention.v1.AuthzExtentionService.Query:input_type -> authz.extention.v1.QueryRequest
-	28, // 41: authz.extention.v1.AuthzExtentionService.Read:output_type -> authz.extention.v1.ReadResponse
-	32, // 42: authz.extention.v1.AuthzExtentionService.Write:output_type -> authz.extention.v1.WriteResponse
-	1,  // 43: authz.extention.v1.AuthzExtentionService.Mutate:output_type -> authz.extention.v1.MutateResponse
-	34, // 44: authz.extention.v1.AuthzExtentionService.Query:output_type -> authz.extention.v1.QueryResponse
-	41, // [41:45] is the sub-list for method output_type
-	37, // [37:41] is the sub-list for method input_type
+	38, // 41: authz.extention.v1.AuthzExtentionService.CheckPermission:input_type -> authz.extention.v1.CheckPermissionRequest
+	28, // 42: authz.extention.v1.AuthzExtentionService.Read:output_type -> authz.extention.v1.ReadResponse
+	32, // 43: authz.extention.v1.AuthzExtentionService.Write:output_type -> authz.extention.v1.WriteResponse
+	1,  // 44: authz.extention.v1.AuthzExtentionService.Mutate:output_type -> authz.extention.v1.MutateResponse
+	34, // 45: authz.extention.v1.AuthzExtentionService.Query:output_type -> authz.extention.v1.QueryResponse
+	39, // 46: authz.extention.v1.AuthzExtentionService.CheckPermission:output_type -> authz.extention.v1.CheckPermissionResponse
+	42, // [42:47] is the sub-list for method output_type
+	37, // [37:42] is the sub-list for method input_type
 	37, // [37:37] is the sub-list for extension type_name
 	37, // [37:37] is the sub-list for extension extendee
 	0,  // [0:37] is the sub-list for field type_name
@@ -2730,7 +2863,7 @@ func file_extention_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_extention_proto_rawDesc), len(file_extention_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   38,
+			NumMessages:   40,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

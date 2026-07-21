@@ -2,6 +2,36 @@
 
 Zanzana is authorization server and wrapper around OpenFGA. OpenFGA implements Zanzibar authorization model, which is relation-based access control. But it's pretty flexible, so you can use it for implementing various authorization models.
 
+## Generic RBAC fallback checks
+
+Permissions without an exact native Zanzana translation are synchronized through the generic `rbac_action` and `rbac_permission` object types. Their object IDs are opaque, versioned encodings of the RBAC action and scope. The MT reconciler reads IAM `Role` and `RoleBinding` resources and is authoritative for these tuples; the deprecated legacy SQL reconciler remains native-only. Invalid permissions fail MT reconciliation instead of being skipped.
+
+Tuple synchronization is controlled by the existing `zanzana` feature toggle and `[zanzana.reconciler]` mode. Checking is enabled independently:
+
+```ini
+[feature_toggles]
+zanzana = true
+zanzanaRBACFallbackChecks = true
+
+[zanzana.client]
+# "rbac" keeps RBAC authoritative and shadows Zanzana.
+# "zanzana" makes generic fallback checks authoritative and shadows RBAC.
+primary_engine = rbac
+
+[zanzana.reconciler]
+mode = mt
+```
+
+When Zanzana is authoritative, errors fail closed. Native-translated permissions continue to use their existing authorization behavior. Disable `zanzanaRBACFallbackChecks` for immediate RBAC-only checking without stopping tuple synchronization.
+
+Rollout dashboards should show these metrics without subject or raw-scope labels:
+
+- `grafana_accesscontrol_fallback_comparisons_total{result=~"match|zanzana_allow_rbac_deny|zanzana_deny_rbac_allow|zanzana_error|rbac_error|shadow_timeout"}`
+- `grafana_accesscontrol_fallback_engine_duration_seconds{engine=~"rbac|zanzana"}`
+- `grafana_accesscontrol_fallback_checks_total{result=~"allow|deny|error"}`
+
+Use the comparison rate by `result` for sample volume and mismatches, the check error rate for availability, and histogram quantiles for per-engine latency. Promotion is a manual decision; there is no automatic mismatch threshold.
+
 ## Running Zanzana in embedded mode
 
 By default Zanzana runs in the same binary as Grafana, it's called embedded mode. Grafana communicates with Zanzana/OpenFGA via in-proc GRPC. OpenFGA supports several DB types, like MySQL, Postgres, sqlite. Default is sqlite, but since we run Postgres in cloud, this is recommended setup. In case of Postgres and MySQL OpenFGA creates tables in the same database as grafana (default db name is "grafana"). Minimal config for running Zanzana with Postgres is this:

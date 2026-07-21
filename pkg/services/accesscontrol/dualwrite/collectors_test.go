@@ -255,6 +255,10 @@ func (m *mockZanzanaClient) Query(ctx context.Context, req *authzextv1.QueryRequ
 	return args.Get(0).(*authzextv1.QueryResponse), args.Error(1)
 }
 
+func (m *mockZanzanaClient) CheckPermission(context.Context, *authzextv1.CheckPermissionRequest) (*authzextv1.CheckPermissionResponse, error) {
+	return &authzextv1.CheckPermissionResponse{}, nil
+}
+
 func TestIntegrationTeamMembershipCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
