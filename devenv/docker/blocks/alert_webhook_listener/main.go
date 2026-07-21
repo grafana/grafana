@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -17,7 +18,12 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	safeBody := strings.ReplaceAll(string(body), "\n", "")
 	line := fmt.Sprintf("webbhook: -> %s", safeBody)
 	fmt.Println(line)
-	if _, err := io.WriteString(w, line); err != nil {
+	tmpl, err := template.New("response").Parse("{{.}}")
+	if err != nil {
+		log.Printf("Failed to parse template: %v", err)
+		return
+	}
+	if err := tmpl.Execute(w, line); err != nil {
 		log.Printf("Failed to write: %v", err)
 	}
 }
