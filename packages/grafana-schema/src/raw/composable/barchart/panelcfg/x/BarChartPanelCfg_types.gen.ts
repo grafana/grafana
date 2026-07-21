@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.3.10";
+export const pluginVersion = "12.3.11";
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip, common.OptionsWithTextFormatting {
   /**
