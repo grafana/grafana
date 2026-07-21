@@ -56,7 +56,7 @@ type Migrator struct {
 	Dialect      Dialect
 	migrations   []Migration
 	migrationIds map[string]struct{}
-	obsolete     map[string]*ObsoleteMigrations // table name -> obsolete migrations
+	obsolete     []*ObsoleteMigrations
 	Logger       log.Logger
 	Cfg          *setting.Cfg
 	isLocked     atomic.Bool
@@ -173,13 +173,7 @@ func (mg *Migrator) AddMigration(id string, m Migration) {
 }
 
 func (mg *Migrator) AddObsoleteMigration(m *ObsoleteMigrations) {
-	if mg.obsolete == nil {
-		mg.obsolete = make(map[string]*ObsoleteMigrations)
-	}
-	if _, ok := mg.obsolete[m.Table]; ok {
-		panic(fmt.Sprintf("obsolete migration table conflict: %s", m.Table))
-	}
-	mg.obsolete[m.Table] = m
+	mg.obsolete = append(mg.obsolete, m)
 }
 
 func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
@@ -281,6 +275,25 @@ func (mg *Migrator) RunMigrations(ctx context.Context, isDatabaseLockingEnabled 
 	})
 }
 
+func (mg *Migrator) addObsoleteMigrations() error {
+	for _, o := range mg.obsolete {
+		exists, err := mg.DBEngine.IsTableExist(o.Table)
+		if err != nil {
+			return fmt.Errorf("failed to check obsolete table existence: %w", err)
+		}
+		if !exists {
+			continue
+		}
+		for _, m := range o.Migrations {
+			if _, ok := mg.migrationIds[m.Id()]; ok {
+				continue
+			}
+			mg.AddMigration(m.Id(), m)
+		}
+	}
+	return nil
+}
+
 func (mg *Migrator) run(ctx context.Context) (err error) {
 	ctx, span := tracer.Start(ctx, "Migrator.run")
 	defer span.End()
@@ -316,18 +329,8 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	successLabel := prometheus.Labels{"success": "true"}
 
-	// Add obsolete migrations if necessary
-	for _, o := range mg.obsolete {
-		exists, err := mg.DBEngine.IsTableExist(o.Table)
-		if err != nil {
-			return fmt.Errorf("failed to check table existence: %w", err)
-		}
-		if !exists {
-			continue
-		}
-		for _, m := range o.Migrations {
-			mg.AddMigration(m.Id(), m) // Handle obsolete migrations
-		}
+	if err := mg.addObsoleteMigrations(); err != nil {
+		return err
 	}
 
 	migrationsPerformed := 0
