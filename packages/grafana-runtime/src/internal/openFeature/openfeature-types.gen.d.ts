@@ -25,6 +25,7 @@ declare module "@openfeature/core" {
     | "dashboard.notebooks"
     | "stateTimeline.nameAboveBars"
     | "grafana.secretsReferenceValueUI"
+    | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
     | "dashboards.filterablePanels"
     | "grafana.filterablePanels"
