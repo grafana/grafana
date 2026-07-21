@@ -4,27 +4,31 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
+	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var _ auth.ExternalSessionStore = (*store)(nil)
 
 type store struct {
-	sqlStore       db.DB
+	sql            legacysql.LegacyDatabaseProvider
 	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer         tracing.Tracer
 }
 
-func provideExternalSessionStore(sqlStore db.DB,
+func provideExternalSessionStore(sql legacysql.LegacyDatabaseProvider,
 	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer tracing.Tracer,
 ) auth.ExternalSessionStore {
 	return &store{
-		sqlStore:       sqlStore,
+		sql:            sql,
 		secretsService: secretService,
 		tracer:         tracer,
 	}
@@ -36,8 +40,17 @@ func (s *store) Get(ctx context.Context, ID int64) (*auth.ExternalSession, error
 
 	externalSession := &auth.ExternalSession{ID: ID}
 
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		found, err := sess.Get(externalSession)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		query := externalSessionQuery{SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()), ExternalSessionTable: dbHelper.Table("user_external_session"), ID: ID}
+		querySQL, err := sqltemplate.Execute(getExternalSessionTemplate, query)
+		if err != nil {
+			return err
+		}
+		found, err := sess.SQL(querySQL, query.GetArgs()...).Get(externalSession)
 		if err != nil {
 			return err
 		}
@@ -88,8 +101,17 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 	}
 
 	queryResult := make([]*auth.ExternalSession, 0)
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Desc("id").Find(&queryResult, externalSession)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		sqlQuery := externalSessionQuery{SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()), ExternalSessionTable: dbHelper.Table("user_external_session"), ID: externalSession.ID, UserID: externalSession.UserID, SessionIDHash: externalSession.SessionIDHash, NameIDHash: externalSession.NameIDHash}
+		querySQL, err := sqltemplate.Execute(listExternalSessionsTemplate, sqlQuery)
+		if err != nil {
+			return err
+		}
+		return sess.SQL(querySQL, sqlQuery.GetArgs()...).Find(&queryResult)
 	})
 	if err != nil {
 		return nil, err
@@ -148,8 +170,32 @@ func (s *store) Create(ctx context.Context, extSession *auth.ExternalSession) er
 		return err
 	}
 
-	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Insert(clone)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		dbTZ := dbHelper.DB.GetEngine().DatabaseTZ
+		query := externalSessionQuery{
+			SQLTemplate:          sqltemplate.New(dbHelper.DialectForDriver()),
+			ExternalSessionTable: dbHelper.Table("user_external_session"),
+			Session:              clone,
+			ExpiresAt:            legacysql.NewDBTime(clone.ExpiresAt.In(dbTZ)),
+			CreatedAt:            legacysql.NewDBTime(time.Now().In(dbTZ)),
+		}
+		querySQL, err := sqltemplate.Execute(insertExternalSessionTemplate, query)
+		if err != nil {
+			return err
+		}
+		if query.DialectName() == "postgres" {
+			_, err = sess.SQL(querySQL, query.GetArgs()...).Get(&clone.ID)
+			return err
+		}
+		res, err := sess.Exec(append([]any{querySQL}, query.GetArgs()...)...)
+		if err != nil {
+			return err
+		}
+		clone.ID, err = res.LastInsertId()
 		return err
 	})
 	if err != nil {
@@ -187,8 +233,18 @@ func (s *store) Update(ctx context.Context, ID int64, cmd *auth.UpdateExternalSe
 
 	externalSession.ExpiresAt = cmd.Token.Expiry
 
-	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.ID(ID).Cols("access_token", "refresh_token", "id_token", "expires_at").Update(externalSession)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		dbTZ := dbHelper.DB.GetEngine().DatabaseTZ
+		query := externalSessionQuery{SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()), ExternalSessionTable: dbHelper.Table("user_external_session"), Session: externalSession, ID: ID, ExpiresAt: legacysql.NewDBTime(externalSession.ExpiresAt.In(dbTZ))}
+		querySQL, err := sqltemplate.Execute(updateExternalSessionTemplate, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(append([]any{querySQL}, query.GetArgs()...)...)
 		return err
 	})
 	if err != nil {
@@ -202,9 +258,17 @@ func (s *store) Delete(ctx context.Context, ID int64) error {
 	ctx, span := s.tracer.Start(ctx, "externalsession.Delete")
 	defer span.End()
 
-	externalSession := &auth.ExternalSession{ID: ID}
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(externalSession)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		query := externalSessionQuery{SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()), ExternalSessionTable: dbHelper.Table("user_external_session"), ID: ID}
+		querySQL, err := sqltemplate.Execute(deleteExternalSessionTemplate, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(append([]any{querySQL}, query.GetArgs()...)...)
 		return err
 	})
 	return err
@@ -214,9 +278,17 @@ func (s *store) DeleteExternalSessionsByUserID(ctx context.Context, userID int64
 	ctx, span := s.tracer.Start(ctx, "externalsession.DeleteExternalSessionsByUserID")
 	defer span.End()
 
-	externalSession := &auth.ExternalSession{UserID: userID}
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(externalSession)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		query := externalSessionQuery{SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()), ExternalSessionTable: dbHelper.Table("user_external_session"), UserID: userID}
+		querySQL, err := sqltemplate.Execute(deleteExternalSessionsByUserIDTemplate, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(append([]any{querySQL}, query.GetArgs()...)...)
 		return err
 	})
 	return err
@@ -225,10 +297,21 @@ func (s *store) DeleteExternalSessionsByUserID(ctx context.Context, userID int64
 func (s *store) BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userIDs []int64) error {
 	ctx, span := s.tracer.Start(ctx, "externalsession.BatchDeleteExternalSessionsByUserIDs")
 	defer span.End()
+	if len(userIDs) == 0 {
+		return nil
+	}
 
-	externalSession := &auth.ExternalSession{}
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.In("user_id", userIDs).Delete(externalSession)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		query := externalSessionQuery{SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()), ExternalSessionTable: dbHelper.Table("user_external_session"), UserIDs: userIDs}
+		querySQL, err := sqltemplate.Execute(deleteExternalSessionsByUserIDsTemplate, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(append([]any{querySQL}, query.GetArgs()...)...)
 		return err
 	})
 	return err

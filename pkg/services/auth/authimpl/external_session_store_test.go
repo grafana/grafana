@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
@@ -207,12 +208,19 @@ func TestIntegrationBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
 		err := store.BatchDeleteExternalSessionsByUserIDs(context.Background(), []int64{999, 1000})
 		require.NoError(t, err)
 	})
+
+	t.Run("returns no error for no user IDs", func(t *testing.T) {
+		store := setupTest(t)
+
+		err := store.BatchDeleteExternalSessionsByUserIDs(context.Background(), nil)
+		require.NoError(t, err)
+	})
 }
 
 func setupTest(t *testing.T) *store {
 	sqlStore := db.InitTestDB(t)
 	secretService := fakes.NewFakeSecretsService()
 	tracer := tracing.InitializeTracerForTest()
-	externalSessionStore := provideExternalSessionStore(sqlStore, secretService, tracer).(*store)
+	externalSessionStore := provideExternalSessionStore(legacysql.NewDatabaseProvider(sqlStore), secretService, tracer).(*store)
 	return externalSessionStore
 }

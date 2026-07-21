@@ -2,9 +2,11 @@ package authimpl
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 func (s *UserAuthTokenService) Run(ctx context.Context) error {
@@ -56,9 +58,17 @@ func (s *UserAuthTokenService) deleteExpiredTokens(ctx context.Context, maxInact
 	s.log.Debug("Starting cleanup of expired auth tokens", "createdBefore", createdBefore, "rotatedBefore", rotatedBefore)
 
 	var affected int64
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sql := `DELETE from user_auth_token WHERE created_at <= ? OR rotated_at <= ?`
-		res, err := dbSession.Exec(sql, createdBefore.Unix(), rotatedBefore.Unix())
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		query := tokenQuery{SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()), TokenTable: dbHelper.Table("user_auth_token"), CreatedBefore: createdBefore.Unix(), RotatedBefore: rotatedBefore.Unix()}
+		querySQL, err := sqltemplate.Execute(deleteExpiredTokensTemplate, query)
+		if err != nil {
+			return err
+		}
+		res, err := dbSession.Exec(append([]any{querySQL}, query.GetArgs()...)...)
 		if err != nil {
 			return err
 		}
@@ -81,10 +91,23 @@ func (s *UserAuthTokenService) deleteOrphanedExternalSessions(ctx context.Contex
 	s.log.Debug("Starting cleanup of external sessions")
 
 	var affected int64
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sql := `DELETE FROM user_external_session WHERE NOT EXISTS (SELECT 1 FROM user_auth_token WHERE user_external_session.id = user_auth_token.external_session_id)`
-
-		res, err := dbSession.Exec(sql)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		query := orphanedExternalSessionsQuery{
+			SQLTemplate:                  sqltemplate.New(dbHelper.DialectForDriver()),
+			ExternalSessionTable:         dbHelper.Table("user_external_session"),
+			TokenTable:                   dbHelper.Table("user_auth_token"),
+			ExternalSessionIDColumn:      "user_external_session.id",
+			TokenExternalSessionIDColumn: "token.external_session_id",
+		}
+		querySQL, err := sqltemplate.Execute(deleteOrphanedExternalSessionsTemplate, query)
+		if err != nil {
+			return err
+		}
+		res, err := dbSession.Exec(append([]any{querySQL}, query.GetArgs()...)...)
 		if err != nil {
 			return err
 		}
