@@ -333,21 +333,15 @@ describe('PieChart display labels', () => {
     });
     const labels = screen.getAllByTestId(selectors.components.Panels.Visualization.PieChart.svgLabel);
 
-    // Slices/labels render in the panel's sort order (descending here), so Chrome (60)
-    // comes before Firefox (40). Chrome=60, Firefox=40, total=100 → 60% / 40%. The tspan
-    // elements concatenate with no separator (Name, then Value, then Percent), so matching
-    // the joined string proves all three rendered — a missing Value tspan would collapse
-    // "Chrome" + "60" + "60%" down to "Chrome60%", which no longer contains "Chrome6060%".
+    // Labels follow descending sort. Each label is name+value+percent joined without a separator.
     expect(labels).toHaveLength(2);
     expect(labels[0]).toHaveTextContent('Chrome6060%');
     expect(labels[1]).toHaveTextContent('Firefox4040%');
   });
 
   it('uses black or white label text (WCAG contrast pick) when gradientFills is active', () => {
-    // field.config must carry the resolved color directly — PieChartPanel reads
-    // config already merged onto the frame's fields (done upstream by
-    // applyFieldOverrides in the real dashboard renderer); the panel's own
-    // `fieldConfig` prop is only used for override lookups, not to backfill it.
+    // Color must be set on field.config directly; the panel reads pre-resolved config,
+    // it does not apply fieldConfig defaults itself (applyFieldOverrides does that in prod).
     const gradientColor = { mode: FieldColorModeId.Gradient, fixedColor: '#00ff00', gradientColorTo: '#ff0000' };
     const seriesWithGradientColor = makeSeries([
       { name: 'Chrome', value: 60, config: { color: gradientColor } },
@@ -360,16 +354,15 @@ describe('PieChart display labels', () => {
     const labels = screen.getAllByTestId(selectors.components.Panels.Visualization.PieChart.svgLabel);
     const labelFillColors = labels.map((el) => el.getAttribute('fill')?.toLowerCase());
 
+    // Gradient mode picks black or white for contrast; any other color means it didn't run.
     expect(labelFillColors).toHaveLength(2);
-    // mostReadable() only ever returns one of these two — a plain theme color here
-    // would mean the contrast-picking branch (PieChart.tsx) didn't run.
     labelFillColors.forEach((color) => expect(['#ffffff', '#000000']).toContain(color));
   });
 });
 
 describe('PieChart label rendering', () => {
   it('suppresses the label for a slice too small to fit one (< 0.3 rad)', () => {
-    // tiny ~1% of total → arc angle well under the 0.3 rad label threshold.
+    // Tiny is ~1% of the total, well under the 0.3 rad label threshold.
     const seriesWithTinySlice = makeSeries([
       { name: 'Big', value: 990 },
       { name: 'Tiny', value: 10 },
@@ -378,12 +371,9 @@ describe('PieChart label rendering', () => {
       options: buildOptions({ displayLabels: [PieChartLabels.Name] }),
       data: { series: seriesWithTinySlice },
     });
-    // Both slices must still render — only the "Tiny" label should be suppressed, not the slice itself.
+    // Both slices render; only the Tiny label is dropped.
     expect(screen.getAllByTestId('data testid Pie Chart Slice')).toHaveLength(2);
-
     const labels = screen.getAllByTestId(selectors.components.Panels.Visualization.PieChart.svgLabel);
-
-    // Only "Big" is large enough to clear the label-space threshold — "Tiny" gets no label at all.
     expect(labels).toHaveLength(1);
     expect(labels[0]).toHaveTextContent('Big');
   });
@@ -395,9 +385,7 @@ describe('PieChart tooltip modes', () => {
       options: buildOptions({ tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.Ascending } }),
       data: { series: defaultSliceSeries },
     });
-    // The panel's sort (options.sort, Descending from buildOptions) orders the slices, so
-    // Chrome (60) is the first slice. tooltip.sort is irrelevant here — single mode shows
-    // only the hovered row.
+    // Descending sort makes Chrome the first slice. Single mode shows only the hovered row.
     await userEvent.hover(screen.getAllByTestId('data testid Pie Chart Slice')[0]);
 
     const rows = screen.getAllByTestId('SeriesTableRow');
@@ -431,7 +419,7 @@ describe('PieChart mouse interactions', () => {
     setup({ data: { series: defaultSliceSeries } });
     const slices = screen.getAllByTestId('data testid Pie Chart Slice');
 
-    // Default tooltip is multi mode, so hovering shows a row for both slices.
+    // Multi mode (the default) shows a row per slice.
     await userEvent.hover(slices[0]);
     expect(screen.getAllByTestId('SeriesTableRow')).toHaveLength(2);
 
@@ -487,8 +475,7 @@ describe('comparePieChartItemsByValue', () => {
 
 const defaultHideFrom = { legend: false, viz: false, tooltip: false };
 
-// Builds a single-frame series from (name, value) slices. Fields default to the
-// standard "don't hide anything" config; pass `config` to override (e.g. gradient color).
+// Builds one frame of numeric fields. Fields default to a visible config; pass config to override.
 const makeSeries = (slices: Array<{ name: string; value: number; config?: FieldConfig }>) => [
   toDataFrame({
     fields: slices.map(({ name, value, config }) => ({
