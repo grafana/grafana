@@ -9,6 +9,10 @@ jest.mock('./ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
 }));
 
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
+
 const scrollIntoViewMock = jest.fn();
 const scrollerMock = document.createElement('div');
 

@@ -1,14 +1,16 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
+import { useStyles2, PanelContainer } from '@grafana/ui';
 
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
+import { MetricsExplorer } from './MetricsExplorer';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
   return item.children?.filter((child) => child.type !== 'filter') || [];
@@ -40,11 +42,24 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
   expanded: 'grafana.explore.contentOutline.expanded',
 };
 
-export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
+export function ContentOutline({
+  scroller,
+  panelId,
+  showMetricsExplorer = false,
+}: {
+  scroller: HTMLElement | undefined;
+  panelId: string;
+  showMetricsExplorer?: boolean;
+}) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
   );
-  const styles = useStyles2(getStyles, contentOutlineExpanded);
+  const metricsSidebarEnabled = useBooleanFlagValue('grafana.exploreMetricsSidebar', false, {
+    suspendUntilReady: false,
+    suspendWhileReconciling: false,
+  });
+  const metricsExplorerVisible = metricsSidebarEnabled && showMetricsExplorer && contentOutlineExpanded;
+  const styles = useStyles2(getStyles, contentOutlineExpanded, metricsExplorerVisible);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
@@ -153,10 +168,15 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
   }, [outlineItems, verticalScroll]);
 
+  const outlineTitle = metricsExplorerVisible
+    ? t('explore.content-outline.title-datasource-explorer', 'Datasource explorer')
+    : t('explore.content-outline.title-outline', 'Outline');
+
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
-      <ScrollContainer>
-        <div className={styles.content}>
+      <div className={styles.header}>
+        {contentOutlineExpanded && <span className={styles.headerTitle}>{outlineTitle}</span>}
+        <div className={styles.toggleWrapper}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
             tooltip={
@@ -171,7 +191,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             })}
             aria-expanded={contentOutlineExpanded}
           />
+        </div>
+      </div>
 
+      {metricsExplorerVisible && <MetricsExplorer />}
+
+      <div className={styles.outlineSection}>
+        <div className={styles.content}>
           {outlineItems.map((item) => {
             return (
               <Fragment key={item.id}>
@@ -240,27 +266,74 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             );
           })}
         </div>
-      </ScrollContainer>
+      </div>
     </PanelContainer>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
+const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisible: boolean) => {
+  const expandedWidth = '300px';
+
   return {
     wrapper: css({
       label: 'wrapper',
       position: 'relative',
       display: 'flex',
-      justifyContent: 'center',
+      flexDirection: 'column',
       marginRight: theme.spacing(1),
       height: '100%',
+      overflow: 'hidden',
       backgroundColor: theme.colors.background.primary,
-      width: expanded ? '160px' : undefined,
-      minWidth: expanded ? '160px' : undefined,
+      width: expanded ? expandedWidth : undefined,
+      minWidth: expanded ? expandedWidth : undefined,
+    }),
+    header: css({
+      label: 'content-outline-header',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: expanded ? 'space-between' : 'center',
+      gap: theme.spacing(1),
+      flex: '0 0 auto',
+      padding: expanded ? theme.spacing(1, 1, 0.5, 1) : theme.spacing(1, 0.5),
+    }),
+    headerTitle: css({
+      label: 'content-outline-header-title',
+      flex: '1 1 auto',
+      minWidth: 0,
+      fontSize: theme.typography.h6.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    toggleWrapper: css({
+      label: 'content-outline-toggle-wrapper',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 auto',
+      width: theme.spacing(4),
+    }),
+    outlineSection: css({
+      label: 'outline-section',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: 0,
+      ...(metricsExplorerVisible
+        ? {
+            flex: '0 0 auto',
+            marginTop: 'auto',
+            borderTop: `1px solid ${theme.colors.border.weak}`,
+          }
+        : {
+            flex: '1 1 auto',
+            overflowY: 'auto',
+          }),
     }),
     content: css({
       label: 'content',
-      padding: theme.spacing(0, 0.5),
+      padding: theme.spacing(0.5, 1),
       top: 0,
     }),
     buttonStyles: css({
@@ -271,11 +344,11 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       },
     }),
     toggleContentOutlineButton: css({
+      justifyContent: 'center',
       '&:hover': {
         color: theme.colors.text.primary,
       },
       transform: expanded ? 'rotate(180deg)' : '',
-      marginRight: expanded ? theme.spacing(0.5) : undefined,
     }),
     indentRoot: css({
       paddingLeft: theme.spacing(3),
