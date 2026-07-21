@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
@@ -7,6 +7,7 @@ import { SaveDashboardAsForm } from 'app/features/dashboard-scene/saving/SaveDas
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardMeta } from 'app/types/dashboard';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
@@ -27,7 +28,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     useProvisionedDashboardData(dashboard, saveAsCopy);
   const [saveToDatabase, setSaveToDatabase] = useState(false);
   const [canSaveToDatabaseInstead, setCanSaveToDatabaseInstead] = useState(false);
-  const dbSwitchRef = useRef<{ active: boolean; gitFolderUid?: string }>({ active: false });
+  const dbSwitchRef = useRef<{ active: boolean; gitMeta?: DashboardMeta }>({ active: false });
 
   // changeInfo.isNew stays stable across repo resolution; the hook's isNew flips false on error
   const isNewDashboard = changeInfo.isNew || !!saveAsCopy;
@@ -41,7 +42,17 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     }
   }, [repository, repoDataStatus, isNewDashboard]);
 
-  // A completed database save must not trigger the folder restore below
+  // Restore the full git-flow meta so database-form folder picks (folderUid and manager
+  // annotations) don't leak back into the provisioned form and rebind it to the wrong repo
+  const restoreGitMeta = useCallback(() => {
+    const { active, gitMeta } = dbSwitchRef.current;
+    if (active && gitMeta) {
+      dashboard.setState({ meta: gitMeta });
+    }
+    dbSwitchRef.current.active = false;
+  }, [dashboard]);
+
+  // A completed database save must not trigger the restore below
   useEffect(() => {
     const sub = appEvents.subscribe(DashboardSavedEvent, () => {
       dbSwitchRef.current.active = false;
@@ -49,28 +60,26 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     return () => sub.unsubscribe();
   }, []);
 
-  // Cancel in the database form bypasses drawer.onClose; restore the git-flow folder
+  // Cancel in the database form bypasses drawer.onClose, so restore on unmount too
   useEffect(() => {
-    return () => {
-      const { active, gitFolderUid } = dbSwitchRef.current;
-      if (active) {
-        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: gitFolderUid } });
-      }
-    };
-  }, [dashboard]);
+    return () => restoreGitMeta();
+  }, [restoreGitMeta]);
 
   const handleSwitchToDatabase = () => {
-    // Only snapshot a folder the repository can resolve; otherwise fall back to root
-    dbSwitchRef.current = { active: true, gitFolderUid: repository ? dashboard.state.meta.folderUid : undefined };
-    // Any folder reachable here is provisioned, and a database save into it would be rejected
-    dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: undefined } });
+    const meta = dashboard.state.meta;
+    if (repository) {
+      // The selected folder is provisioned and can't take a database save, so open the form at root
+      dbSwitchRef.current = { active: true, gitMeta: { ...meta } };
+      dashboard.setState({ meta: { ...meta, folderUid: undefined } });
+    } else {
+      // Dead-ended on an unmanaged folder pick: keep it (a valid database folder) and return to root on switch-back
+      dbSwitchRef.current = { active: true, gitMeta: { ...meta, folderUid: undefined, k8s: undefined } };
+    }
     setSaveToDatabase(true);
   };
 
   const handleSwitchToGit = () => {
-    // Restore the git-flow folder so the repository resolves again after database folder picks
-    dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: dbSwitchRef.current.gitFolderUid } });
-    dbSwitchRef.current.active = false;
+    restoreGitMeta();
     setSaveToDatabase(false);
   };
 

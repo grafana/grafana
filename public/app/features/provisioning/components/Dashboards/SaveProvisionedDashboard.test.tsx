@@ -4,6 +4,7 @@ import { appEvents } from 'app/core/app_events';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardMeta } from 'app/types/dashboard';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
@@ -157,6 +158,38 @@ describe('SaveProvisionedDashboard', () => {
 
     expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid' } });
     expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+  });
+
+  it('drops database-form folder annotations when switching back to Git', async () => {
+    const dashboard = createDashboard({ folderUid: undefined });
+    const { user } = setup({}, { dashboard });
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // The database form picks a repo-managed folder, writing manager annotations onto the meta
+    dashboard.state.meta = {
+      folderUid: 'db-managed-folder',
+      k8s: { annotations: { 'grafana.app/managedBy': 'repo' } },
+    } as DashboardMeta;
+
+    await user.click(screen.getByRole('button', { name: /git repository/i }));
+
+    // The restore reinstates the git-flow meta wholesale, so no stale annotations leak back
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
+  });
+
+  it('keeps the picked folder when escaping to the database form after a dead-end', async () => {
+    const dashboard = createDashboard({ folderUid: 'db-folder-uid' });
+    const { user } = setup(
+      { isNew: false, defaultValues: null, repository: undefined, repoDataStatus: RepoViewStatus.Error },
+      { dashboard }
+    );
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    expect(screen.getByTestId('database-form')).toBeInTheDocument();
+    // The unmanaged folder is a valid database folder and must not be cleared
+    expect(dashboard.setState).not.toHaveBeenCalledWith({ meta: { folderUid: undefined } });
   });
 
   it('restores the git-flow folder when the database form is cancelled via closeModal', async () => {
