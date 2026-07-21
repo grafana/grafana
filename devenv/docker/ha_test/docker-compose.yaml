@@ -30,6 +30,11 @@ services:
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --max-connections=1001]
     ports:
       - "3306:3306"
+    read_only: true
+    tmpfs:
+      - /var/lib/mysql
+      - /tmp
+      - /var/run/mysqld
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 10s
