@@ -95,8 +95,13 @@ func (c *folderTreeCache) get(ctx context.Context, user identity.Requester) (*fo
 // listFolders returns the folders accessible to the user. When useSearch is set
 // it queries the search index (lightweight refs), otherwise it lists full folder
 // objects. Both paths return the data NewFolderTree needs (ID, UID, parent, title).
+//
+// If the requester has no ID token, fall back to GetFolders. SearchFolders scopes
+// hits server-side via the ID token; without one, unified search classifies the
+// call as a service call and returns every folder in the org, which would leak
+// library elements from folders the user can't read.
 func (c *folderTreeCache) listFolders(ctx context.Context, user identity.Requester) ([]*folder.Folder, error) {
-	if !c.useSearch {
+	if !c.useSearch || user.GetIDToken() == "" {
 		return c.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
 			OrgID:        user.GetOrgID(),
 			SignedInUser: user,
