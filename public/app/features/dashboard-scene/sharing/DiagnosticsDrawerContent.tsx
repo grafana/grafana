@@ -41,8 +41,9 @@ export function DiagnosticsDrawerContent({
       </Alert>
 
       <Checkbox
-        id="diagnostics-include-server-logs"
         label={t('dashboard.diagnostics.include-server-logs', 'Include server logs')}
+        // Checkbox renders its description inside the wrapping label, so provide the concise
+        // accessible name explicitly instead of including the full description in it.
         aria-label={t('dashboard.diagnostics.include-server-logs', 'Include server logs')}
         description={t(
           'dashboard.diagnostics.include-server-logs-description',

@@ -50,7 +50,7 @@ describe('downloadDiagnosticsForQueries', () => {
         method: 'POST',
         responseType: 'blob',
         // Only the visible query is forwarded.
-        data: { from: '100', to: '200', queries: [{ refId: 'A' }], includeLogs: true },
+        data: { from: '100', to: '200', queries: [{ refId: 'A' }], includeLogs: false },
       })
     );
     expect(saveAs).toHaveBeenCalledWith(blob, 'diagnostics-20260101-000000.tar.gz');
@@ -95,7 +95,7 @@ describe('dashboard diagnostics', () => {
         url: '/api/ds/dashboard-diagnostics',
         method: 'POST',
         responseType: 'json',
-        data: { dashboard: undefined, panels, includeLogs: true },
+        data: { dashboard: undefined, panels, includeLogs: false },
       })
     );
   });

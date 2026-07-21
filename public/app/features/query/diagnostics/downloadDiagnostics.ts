@@ -53,7 +53,7 @@ export async function downloadDiagnosticsForQueries(
       url: DIAGNOSTICS_ENDPOINT,
       method: 'POST',
       responseType: 'blob',
-      data: { from, to, queries: visibleQueries, includeLogs: options.includeLogs ?? true },
+      data: { from, to, queries: visibleQueries, includeLogs: options.includeLogs ?? false },
       // Surface failures in the drawer instead of a global toast.
       showErrorAlert: false,
       // Cancelling the drawer aborts the in-flight request.
@@ -103,7 +103,7 @@ export async function startDashboardDiagnostics(
       url: DASHBOARD_DIAGNOSTICS_ENDPOINT,
       method: 'POST',
       responseType: 'json',
-      data: { dashboard, panels, includeLogs: options.includeLogs ?? true },
+      data: { dashboard, panels, includeLogs: options.includeLogs ?? false },
       showErrorAlert: false,
       abortSignal: options.signal,
     })
