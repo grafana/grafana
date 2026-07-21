@@ -240,4 +240,100 @@ describe('dashboardV2SpecSchema', () => {
     }
     expect(result.data.annotations[0].kind).toBe('AnnotationQuery');
   });
+
+  it('accepts a panel that omits vizConfig.version (runtime-filled metadata)', () => {
+    const result = dashboardV2SpecSchema.safeParse(
+      minimalSpec({
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'P',
+              description: '',
+              links: [],
+              // vizConfig intentionally omits `version`.
+              vizConfig: {
+                kind: 'VizConfig',
+                group: 'timeseries',
+                spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+              },
+              data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+            },
+          },
+        },
+      })
+    );
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const panel = result.data.elements['panel-1'];
+    if (panel.kind !== 'Panel') {
+      throw new Error('expected element panel-1 to be a Panel');
+    }
+    expect(panel.spec.vizConfig.version).toBe('');
+  });
+
+  it('tolerates an invalid variable refresh/sort by falling back to the canonical default', () => {
+    const result = dashboardV2SpecSchema.safeParse(
+      minimalSpec({
+        variables: [
+          {
+            kind: 'QueryVariable',
+            spec: {
+              name: 'v',
+              refresh: 'bogus',
+              sort: 'bogus',
+              query: { kind: 'DataQuery', group: 'prometheus', spec: {} },
+            },
+          },
+        ],
+      })
+    );
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const variable = result.data.variables[0];
+    if (variable.kind !== 'QueryVariable') {
+      throw new Error('expected QueryVariable');
+    }
+    expect(variable.spec.refresh).toBe('never');
+    expect(variable.spec.sort).toBe('disabled');
+  });
+
+  it('tolerates an invalid conditionalRendering visibility by falling back to show', () => {
+    const result = dashboardV2SpecSchema.safeParse(
+      minimalSpec({
+        layout: {
+          kind: 'RowsLayout',
+          spec: {
+            rows: [
+              {
+                kind: 'RowsLayoutRow',
+                spec: {
+                  title: 'r',
+                  conditionalRendering: {
+                    kind: 'ConditionalRenderingGroup',
+                    spec: { visibility: 'bogus', condition: 'and', items: [] },
+                  },
+                  layout: gridLayout(),
+                },
+              },
+            ],
+          },
+        },
+      })
+    );
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const layout = result.data.layout;
+    if (layout.kind !== 'RowsLayout') {
+      throw new Error('expected RowsLayout');
+    }
+    expect(layout.spec.rows[0].spec.conditionalRendering?.spec.visibility).toBe('show');
+  });
 });

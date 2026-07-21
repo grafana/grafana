@@ -800,6 +800,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (!store.exists(LS_PANEL_COPY_KEY)) {
+      return;
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       const layout = getLayoutForObject(this);
       if (layout) {

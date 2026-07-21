@@ -27,12 +27,15 @@ export const FinishStep = memo(function FinishStep() {
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const [type, readOnly, wizardConnectionName, githubAuthType] = watch([
+  const [type, readOnly, wizardConnectionName, githubAuthType, email] = watch([
     'repository.type',
     'repository.readOnly',
     'githubApp.connectionName',
     'githubAuthType',
+    'repository.email',
   ]);
+
+  const emailWebhookDisabled = type === 'bitbucket' && !email?.trim();
 
   const isGitBased = isGitProvider(type);
 
@@ -176,6 +179,14 @@ export const FinishStep = memo(function FinishStep() {
           name="repository.webhook.baseUrl"
           disabledName="repository.webhook.disabled"
           connectionWebhookDisabled={connectionWebhookDisabled}
+          disabledReason={
+            emailWebhookDisabled
+              ? t(
+                  'provisioning.webhook-section.description-webhook-disabled-email-step',
+                  'Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.'
+                )
+              : undefined
+          }
           disabledError={errors?.repository?.webhook?.disabled?.message}
         />
       )}
