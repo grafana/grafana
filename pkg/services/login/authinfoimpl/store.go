@@ -19,12 +19,12 @@ var GetTime = time.Now
 
 type Store struct {
 	sql            legacysql.LegacyDatabaseProvider
-	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	logger         log.Logger
 }
 
 func ProvideStore(ctx context.Context, sql legacysql.LegacyDatabaseProvider,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) (login.Store, error) {
 	store := &Store{
 		sql:            sql,
@@ -49,7 +49,8 @@ type getAuthInfoQuery struct {
 
 func (q getAuthInfoQuery) Validate() error { return nil }
 
-// GetAuthInfo returns the latest auth info for a user.
+// GetAuthInfo returns the auth info for a user
+// It will return the latest auth info for a user
 func (s *Store) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
 	if query.UserId == 0 && query.AuthId == "" {
 		return nil, user.ErrUserNotFound
@@ -501,6 +502,8 @@ type authInfoUserUIDMigrationQuery struct {
 
 func (q authInfoUserUIDMigrationQuery) Validate() error { return nil }
 
+// authInfoUserUIDMigration ensures that all auth_info user_uids are set.
+// To protect against upgrade / downgrade we need to run this for a couple of releases.
 func (s *Store) authInfoUserUIDMigration(ctx context.Context) error {
 	dbHelper, err := s.sql(ctx)
 	if err != nil {
