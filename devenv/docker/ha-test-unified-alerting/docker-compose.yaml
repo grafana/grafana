@@ -43,6 +43,7 @@ services:
       - no-new-privileges:true
   nginx-proxy:
     image: jwilder/nginx-proxy
+    read_only: true
     ports:
       - "80:80"
     volumes:
