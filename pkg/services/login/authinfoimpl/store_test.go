@@ -319,6 +319,10 @@ func (d *sqlmockAuthInfoDB) GetDBType() core.DbType {
 	return core.SQLITE
 }
 
+func (d *sqlmockAuthInfoDB) GetEngine() *xorm.Engine {
+	return d.engine
+}
+
 func TestStoreUsesProviderTables(t *testing.T) {
 	registerAuthInfoSQLMockXormDriverOnce.Do(func() {
 		if core.QueryDriver("sqlmock") == nil {
@@ -334,6 +338,15 @@ func TestStoreUsesProviderTables(t *testing.T) {
 	engine, err := xorm.NewEngine("sqlmock", dsn)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = engine.Close() })
+	databaseTZ := time.FixedZone("UTC+2", int(2*time.Hour/time.Second))
+	engine.DatabaseTZ = databaseTZ
+	created := time.Date(2025, 1, 1, 12, 0, 0, 0, time.FixedZone("UTC-7", int(-7*time.Hour/time.Second)))
+	initialExpiry := created.Add(30 * time.Minute)
+	updated := created.Add(time.Hour)
+	updatedExpiry := updated.Add(45 * time.Minute)
+	originalGetTime := GetTime
+	t.Cleanup(func() { GetTime = originalGetTime })
+	GetTime = func() time.Time { return created }
 
 	legacyDB := &sqlmockAuthInfoDB{engine: engine}
 	type contextKey struct{}
@@ -447,7 +460,7 @@ VALUES (
   ?,
   ?
 )`)).
-		WithArgs(int64(42), "user-uid", login.LDAPAuthModule, "auth-id", sqlmock.AnyArg(), "", "", "", "", nil, "").
+		WithArgs(int64(42), "user-uid", login.LDAPAuthModule, "auth-id", created.In(databaseTZ).Format(time.DateTime), sqlmock.AnyArg(), sqlmock.AnyArg(), "", sqlmock.AnyArg(), initialExpiry.In(databaseTZ).Format(time.DateTime), "").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
@@ -455,8 +468,15 @@ VALUES (
 		UserUID:    "user-uid",
 		AuthModule: login.LDAPAuthModule,
 		AuthId:     "auth-id",
+		OAuthToken: &oauth2.Token{
+			AccessToken:  "initial-access-token",
+			RefreshToken: "initial-refresh-token",
+			TokenType:    "Bearer",
+			Expiry:       initialExpiry,
+		},
 	}))
 
+	GetTime = func() time.Time { return updated }
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "test_schema"."user_auth"
 SET auth_id = ?,
     external_uid = ?,
@@ -468,7 +488,7 @@ SET auth_id = ?,
     o_auth_token_type = ?
 WHERE user_id = ?
   AND auth_module = ?`)).
-		WithArgs("new-auth-id", "new-external-uid", sqlmock.AnyArg(), nil, "", "", "", "", int64(42), login.LDAPAuthModule).
+		WithArgs("new-auth-id", "new-external-uid", updated.In(databaseTZ).Format(time.DateTime), updatedExpiry.In(databaseTZ).Format(time.DateTime), sqlmock.AnyArg(), sqlmock.AnyArg(), "", sqlmock.AnyArg(), int64(42), login.LDAPAuthModule).
 		WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id
 FROM "test_schema"."user_auth"
@@ -490,6 +510,12 @@ WHERE user_id = ?
 		AuthModule:  login.LDAPAuthModule,
 		AuthId:      "new-auth-id",
 		ExternalUID: "new-external-uid",
+		OAuthToken: &oauth2.Token{
+			AccessToken:  "updated-access-token",
+			RefreshToken: "updated-refresh-token",
+			TokenType:    "Bearer",
+			Expiry:       updatedExpiry,
+		},
 	}))
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."user_auth"
