@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	gokitlog "github.com/go-kit/log"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -112,7 +113,7 @@ func TestCaptureParallelWritersAndOverlappingCaptures(t *testing.T) {
 		go func(worker int) {
 			defer wg.Done()
 			for i := 0; i < 100; i++ {
-				require.NoError(t, logger.Log("worker", worker, "line", i))
+				assert.NoError(t, logger.Log("worker", worker, "line", i))
 			}
 		}(worker)
 	}

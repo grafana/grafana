@@ -128,17 +128,39 @@ func matchesQueryLogLine(line, traceID string, dsUIDNeedles []string) bool {
 }
 
 func containsLogfmtField(line, field string) bool {
-	start := 0
-	for {
-		idx := strings.Index(line[start:], field)
-		if idx < 0 {
-			return false
+	atFieldStart := true
+	inQuotedValue := false
+	escaped := false
+	for idx := 0; idx < len(line); idx++ {
+		if inQuotedValue {
+			if escaped {
+				escaped = false
+				continue
+			}
+			switch line[idx] {
+			case '\\':
+				escaped = true
+			case '"':
+				inQuotedValue = false
+			}
+			continue
 		}
-		idx += start
-		end := idx + len(field)
-		if (idx == 0 || line[idx-1] == ' ') && (end == len(line) || line[end] == ' ') {
-			return true
+
+		if atFieldStart && strings.HasPrefix(line[idx:], field) {
+			end := idx + len(field)
+			if end == len(line) || line[end] == ' ' {
+				return true
+			}
 		}
-		start = end
+
+		switch line[idx] {
+		case ' ':
+			atFieldStart = true
+		case '"':
+			inQuotedValue = true
+		default:
+			atFieldStart = false
+		}
 	}
+	return false
 }
