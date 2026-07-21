@@ -97,6 +97,7 @@ services:
         condition: service_healthy
   webhook:
     image: webhook-receiver
+    read_only: true
     build:
       context: .
       dockerfile: Dockerfile
