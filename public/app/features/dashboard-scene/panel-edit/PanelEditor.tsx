@@ -4,7 +4,7 @@ import { debounce } from 'lodash';
 
 import { type NavIndex, type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
@@ -128,6 +128,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     return () => {
       this.commitChanges();
+      reportInteraction('panel_edit_closed', {}, { silent: true });
     };
   }
 
@@ -315,6 +316,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   public onDiscard = () => {
+    reportInteraction('panel_edit_discarded', {}, { silent: true });
     this.setState({ isDirty: false });
 
     const panel = this.state.panelRef.resolve();

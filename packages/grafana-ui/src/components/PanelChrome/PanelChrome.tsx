@@ -211,14 +211,13 @@ export function PanelChrome({
     theme,
     headerHeight,
     collapsed,
-    subHeaderHeight,
     height,
     width
   );
 
   const headerStyles: CSSProperties = {
-    height: headerHeight,
     cursor: dragClass ? 'move' : 'auto',
+    paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
   const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
@@ -500,9 +499,7 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
 const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
     // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
-    return (
-      theme.spacing.gridSize * theme.components.panel.headerHeight - (subHeaderHeight > 0 ? theme.spacing.gridSize : 0)
-    );
+    return theme.spacing.gridSize * theme.components.panel.headerHeight + subHeaderHeight;
   }
 
   return 0;
@@ -513,7 +510,6 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   headerHeight: number,
   collapsed: boolean,
-  subHeaderHeight: number,
   height?: number,
   width?: number
 ) => {
@@ -529,7 +525,12 @@ const getContentStyle = (
 
   let innerHeight = 0;
   if (height) {
-    innerHeight = height - headerHeight - panelPadding - panelBorder - subHeaderHeight;
+    innerHeight = height - headerHeight - panelPadding - panelBorder + chromePadding;
+
+    // When there is no header the content has topPadding
+    if (headerHeight === 0) {
+      innerHeight -= chromePadding;
+    }
   }
 
   if (collapsed) {
@@ -538,14 +539,14 @@ const getContentStyle = (
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
+    paddingTop: headerHeight > 0 ? 0 : chromePadding,
   };
 
   return { contentStyle, innerWidth, innerHeight };
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, contentBackground, contentBorderColor } = theme.components.panel;
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const { background, borderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -561,7 +562,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: visualRefreshEnabled ? 'unset' : 'hidden',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',
@@ -619,35 +620,30 @@ const getStyles = (theme: GrafanaTheme2) => {
     containNone: css({
       contain: 'none',
     }),
-    content: css(
-      {
-        label: 'panel-content',
-        flexGrow: 1,
-        contain: 'size layout',
-      },
-      visualRefreshEnabled && {
-        backgroundColor: contentBackground,
-        border: `1px solid ${contentBorderColor}`,
-        borderRadius: theme.shape.radius.lg,
-        overflow: 'hidden',
-        margin: '-1px', // to overlay the nested borders nicely
-      }
-    ),
+    content: css({
+      label: 'panel-content',
+      flexGrow: 1,
+      contain: 'size layout',
+    }),
     headerContainer: css({
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(0, 1, 0, 1),
+      padding: theme.spacing(1, 1, 0, 1),
       gap: theme.spacing(1),
+      maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
     }),
     subHeader: css({
       label: 'panel-sub-header',
       display: 'flex',
       alignItems: 'center',
       maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-      padding: theme.spacing(0, 1, 0, 1.5),
+      padding: theme.spacing(0, 1, 1, 1.5),
       overflow: 'hidden',
       gap: theme.spacing(1),
+      '&:empty': {
+        display: 'none',
+      },
     }),
     pointer: css({
       cursor: 'pointer',

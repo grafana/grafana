@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -981,7 +982,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			},
 		},
 		"facet fields": {
-			queryString: "facet=tags&facet=folder",
+			queryString: "facet=tags",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{Key: dashboardKey},
 				Query:   "",
@@ -991,8 +992,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Explain: false,
 				Fields:  defaultFields,
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-					"tags":   {Field: "tags", Limit: 50},
-					"folder": {Field: "folder", Limit: 50},
+					"tags": {Field: "tags", Limit: 50},
 				},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
@@ -1238,6 +1238,20 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		})
 	}
 
+	t.Run("rejects unsupported facet fields", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("facet=folder")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.Nil(t, result)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.ErrorContains(t, err, `faceting is not supported for field "folder"`)
+	})
+
 	t.Run("adds k6 exclusion for non-service accounts", func(t *testing.T) {
 		queryParams, err := url.ParseQuery("")
 		require.NoError(t, err)
@@ -1342,6 +1356,12 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 	return response, nil
 }
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
 	return nil, nil
 }
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {

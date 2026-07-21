@@ -3,21 +3,30 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
+import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
 
 import { DashboardTabsSkeleton } from './DashboardTabsSkeleton';
 import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
+import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
-import { type HomepageTabExtensionProps, type HomepageTab, validateHomepageTab } from './types';
+import {
+  type HomepageTabExtensionProps,
+  type HomepageTab,
+  validateHomepageTab,
+  DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN,
+  DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT,
+} from './types';
 
 const RECENT_TAB_ID = 'recent';
 const MOST_USED_TAB_ID = 'most-used';
@@ -83,6 +92,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
   }, []);
 
   const mostUsedAvailable = isMostUsedAvailable();
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
 
   const {
     value: mostUsedDashboards,
@@ -148,7 +158,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
   }, [initialLoading]);
 
   if (!initialLoadDone) {
-    return <DashboardTabsSkeleton />;
+    return <DashboardTabsSkeleton redesignEnabled={redesignEnabled} />;
   }
 
   const builtInTabs: HomepageTab[] = [
@@ -178,9 +188,10 @@ export function DashboardTabs({ extensionComponents }: Props) {
 
   const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => !tab.href)];
   const linkTabs = extensionTabs.filter((tab) => tab.href);
+  const listDensity = redesignEnabled ? 'compact' : 'default';
 
-  return (
-    <Stack direction="column" gap={2}>
+  const renderContent = () => (
+    <>
       <TabsBar>
         {contentTabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -206,8 +217,12 @@ export function DashboardTabs({ extensionComponents }: Props) {
       </TabsBar>
 
       {DEFAULT_TAB_IDS.includes(activeTab) && (
-        <TabContent className={styles.tabContent}>
-          <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
+        <TabContent className={redesignEnabled ? styles.redesignedTabContent : styles.tabContent}>
+          <ScrollContainer
+            showScrollIndicators
+            maxHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
+            minHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
+          >
             {activeTab === RECENT_TAB_ID && (
               <RecentDashboardsTab
                 dashboards={recentDashboards ?? []}
@@ -216,6 +231,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
                 retry={recentRetry}
                 foldersByUid={foldersByUid}
                 onStarChange={starredRetry}
+                density={listDensity}
               />
             )}
             {activeTab === MOST_USED_TAB_ID && (
@@ -225,6 +241,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
                 error={mostUsedError}
                 retry={mostUsedRetry}
                 foldersByUid={foldersByUid}
+                density={listDensity}
               />
             )}
             {activeTab === STARRED_TAB_ID && (
@@ -234,9 +251,14 @@ export function DashboardTabs({ extensionComponents }: Props) {
                 error={starredError}
                 retry={starredRetry}
                 foldersByUid={foldersByUid}
+                density={listDensity}
               />
             )}
           </ScrollContainer>
+          {/* Show reset recent dashboards button in the redesign UI and when tab is recent tab */}
+          {redesignEnabled && activeTab === RECENT_TAB_ID && !recentLoading && !recentError && (
+            <RecentDashboardsClearButton dashboards={recentDashboards ?? []} retry={recentRetry} redesignEnabled />
+          )}
         </TabContent>
       )}
 
@@ -246,6 +268,28 @@ export function DashboardTabs({ extensionComponents }: Props) {
         .map((Component, i) => (
           <DashboardExtensionTab key={i} Component={Component} registerTab={registerTab} activeTab={activeTab} />
         ))}
+    </>
+  );
+  return (
+    <Stack direction="column" gap={2} minWidth={0}>
+      {redesignEnabled ? (
+        <>
+          <Stack justifyContent="space-between">
+            <Text element="h2" variant="h5">
+              <Trans i18nKey="home.dashboards.title">Dashboards</Trans>
+            </Text>
+            <TextLink inline={false} color="secondary" href="/dashboards" icon="angle-right">
+              <Trans i18nKey="home.dashboards.view-all">View all</Trans>
+            </TextLink>
+          </Stack>
+
+          <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
+            {renderContent()}
+          </HomeSection>
+        </>
+      ) : (
+        <>{renderContent()}</>
+      )}
     </Stack>
   );
 }
@@ -255,6 +299,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0,
     background: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
+  }),
+  redesignedTabContent: css({
+    padding: 0,
   }),
   linkTabsSpacer: css({
     flex: 1,

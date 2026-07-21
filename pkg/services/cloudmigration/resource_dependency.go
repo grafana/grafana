@@ -13,20 +13,42 @@ var (
 // DependencyMap is a map of resource types to their direct dependencies.
 type DependencyMap map[MigrateDataType][]MigrateDataType
 
-// ResourceDependency is a map of resource types to their direct dependencies.
-// This is used to determine which resources can be filtered out from the snapshot without breaking the dependency chain.
-var ResourceDependency = DependencyMap{
-	PluginDataType:           nil,
-	FolderDataType:           nil,
-	DatasourceDataType:       {PluginDataType},
-	LibraryElementDataType:   {FolderDataType},
-	DashboardDataType:        {FolderDataType, DatasourceDataType, LibraryElementDataType},
+// baseResourceDependency holds the resources that are always migratable,
+// mapped to their direct dependencies.
+var baseResourceDependency = DependencyMap{
+	PluginDataType:         nil,
+	FolderDataType:         nil,
+	DatasourceDataType:     {PluginDataType},
+	LibraryElementDataType: {FolderDataType},
+	DashboardDataType:      {FolderDataType, DatasourceDataType, LibraryElementDataType},
+}
+
+// alertingResourceDependency holds the alerting resources, mapped to their
+// direct dependencies. These are only migratable when alerting is enabled.
+var alertingResourceDependency = DependencyMap{
 	MuteTimingType:           nil,
 	NotificationTemplateType: nil,
 	ContactPointType:         {NotificationTemplateType},
 	NotificationPolicyType:   {ContactPointType, MuteTimingType},
 	AlertRuleType:            {DatasourceDataType, FolderDataType, DashboardDataType, MuteTimingType, ContactPointType, NotificationPolicyType},
 	AlertRuleGroupType:       {AlertRuleType},
+}
+
+// ResourceDependency returns the resource dependency graph for the current
+// set of migratable resources. Alerting resources are only included when
+// alerting is enabled, so that they are neither offered in the UI nor accepted
+// by snapshot creation on instances where alerting is disabled.
+func ResourceDependency(alertingEnabled bool) DependencyMap {
+	depMap := make(DependencyMap, len(baseResourceDependency)+len(alertingResourceDependency))
+	for resourceType, dependencies := range baseResourceDependency {
+		depMap[resourceType] = dependencies
+	}
+	if alertingEnabled {
+		for resourceType, dependencies := range alertingResourceDependency {
+			depMap[resourceType] = dependencies
+		}
+	}
+	return depMap
 }
 
 // Parse a raw slice of resource types and returns a set of them if it has all correct dependencies.

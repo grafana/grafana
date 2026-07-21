@@ -8,6 +8,7 @@ import { LoadingState } from '@grafana/data';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { Button } from '../Button/Button';
+import { Combobox } from '../Combobox/Combobox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
@@ -229,6 +230,15 @@ export const Examples = () => {
             ),
           })}
           {renderPanel('Content', {
+            title: 'Actions with button',
+            subtitle: 'And a is a subtitle that has more detail',
+            actions: (
+              <Button size="sm" variant="secondary" key="A">
+                Breakdown
+              </Button>
+            ),
+          })}
+          {renderPanel('Content', {
             title: 'Panel with two actions',
             actions: [
               <Button size="sm" variant="secondary" key="A">
@@ -276,6 +286,22 @@ export const Examples = () => {
                 Breakdown
               </Button>
             ),
+          })}
+          {renderPanel('Not ideal as the space in header does not fit inputs', {
+            title: 'With select in header',
+            actions: (
+              <Combobox
+                value="Hello"
+                options={[{ label: 'hello', value: 'Hello' }]}
+                onChange={() => {}}
+                aria-label="Select option"
+              />
+            ),
+          })}
+          {renderPanel('Content', {
+            title: 'With empty subheader element',
+            menu,
+            subHeaderContent: <></>,
           })}
         </Stack>
       </div>
@@ -348,7 +374,9 @@ export const Basic: StoryFn<typeof PanelChrome> = (overrides?: Partial<PanelChro
     width: 400,
     height: 200,
     title: 'Very long title that should get ellipsis when there is no more space',
-    description,
+    description:
+      overrides?.description ??
+      'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
     menu,
     children: () => undefined,
   };
@@ -373,11 +401,9 @@ const LoadingIcon = [
 
 const leftItems = { LoadingIcon, Default };
 
-const description =
-  'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.';
-
 Basic.argTypes = {
   description: { control: { type: 'text' } },
+  title: { control: { type: 'text' } },
   subtitle: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),

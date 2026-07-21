@@ -6,9 +6,9 @@
     "background": {
       "canvas": "palette.white",
       "page": "palette.neutral50",
-      "primary": "palette.neutral150",
-      "secondary": "palette.white",
-      "elevated": "palette.neutral50"
+      "primary": "palette.white",
+      "secondary": "palette.neutral150",
+      "elevated": "palette.white"
     },
     "primary": {
       "main": "palette.neutral950"
@@ -24,7 +24,8 @@
     },
     "accent": {
       "main": "palette.orange600",
-      "text": "palette.orange700"
+      "text": "palette.orange700",
+      "contrastText": "palette.white"
     },
     "error": {
       "main": "palette.coral600",
@@ -49,9 +50,9 @@
       "link": "palette.orange700"
     },
     "border": {
-      "weak": "palette.neutral300",
-      "medium": "palette.neutral400",
-      "strong": "palette.neutral500"
+      "weak": "palette.neutral200",
+      "medium": "palette.neutral300",
+      "strong": "palette.neutral400"
     },
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
@@ -90,6 +91,9 @@
         { "background": "palette.lavender200", "text": "palette.lavender800" },
         { "background": "palette.rose200", "text": "palette.rose800" }
       ]
+    },
+    "input": {
+      "background": "palette.white"
     }
   },
   "shape": {

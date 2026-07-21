@@ -1,10 +1,11 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Alert, Badge, Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { HomeSection } from '../HomeSection';
@@ -46,14 +47,15 @@ export function SummaryCard<T>({
   renderItem,
   footer,
 }: SummaryCardProps<T>) {
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const styles = useStyles2(getStyles);
 
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
-  return (
-    <HomeSection display="flex" direction="column">
+  const content = (
+    <>
       <Stack direction="column" gap={2} grow={1}>
-        <Stack direction="column" gap={2} grow={1}>
+        {!redesignEnabled && (
           <Stack alignItems="center" justifyContent="space-between">
             <Stack alignItems="center">
               <Text element="h2" variant="h5">
@@ -63,45 +65,59 @@ export function SummaryCard<T>({
             </Stack>
             {!loading && headerExtra}
           </Stack>
+        )}
 
-          {loading && (
-            <Stack direction="column">
-              {Array.from({ length: 3 }, (_, i) => (
-                <Skeleton key={i} height={20} />
-              ))}
-            </Stack>
-          )}
+        {loading && (
+          <Stack direction="column">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} height={20} />
+            ))}
+          </Stack>
+        )}
 
-          {error && (
-            <Alert
-              severity="warning"
-              title={error.title}
-              action={
-                <Button onClick={error.onRetry} variant="secondary" size="sm">
-                  <Trans i18nKey="home.summary-card.retry">Retry</Trans>
-                </Button>
-              }
-            />
-          )}
+        {error && (
+          <Alert
+            severity="warning"
+            title={error.title}
+            action={
+              <Button onClick={error.onRetry} variant="secondary" size="sm">
+                <Trans i18nKey="home.summary-card.retry">Retry</Trans>
+              </Button>
+            }
+          />
+        )}
 
-          {!loading && !error && items.length === 0 && (
-            <Stack direction="column" alignItems="center">
-              {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
-            </Stack>
-          )}
+        {!loading && !error && items.length === 0 && (
+          <Stack direction="column" grow={1} alignItems="center" justifyContent="center">
+            {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
+          </Stack>
+        )}
 
-          {!loading && !error && items.length > 0 && (
-            <ul className={styles.list}>
-              {items.map((item) => (
-                <li key={getItemKey(item)} className={styles.row}>
-                  {renderItem(item)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Stack>
+        {!loading && !error && items.length > 0 && (
+          <ul className={redesignEnabled ? undefined : styles.list}>
+            {items.map((item) => (
+              <li key={getItemKey(item)} className={cx(styles.row, !redesignEnabled && styles.rowPadding)}>
+                {renderItem(item)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Stack>
 
-        {!loading && !error && footer && <Stack justifyContent="flex-end">{footer}</Stack>}
+      {!loading && !error && footer && <Stack justifyContent="flex-end">{footer}</Stack>}
+    </>
+  );
+
+  if (redesignEnabled) {
+    return content;
+  }
+
+  return (
+    // minWidth={0} lets the card shrink within the homepage grid so a long alert name
+    // can't stretch this column wider than its sibling.
+    <HomeSection display="flex" direction="column" minWidth={0}>
+      <Stack direction="column" gap={2} grow={1}>
+        {content}
       </Stack>
     </HomeSection>
   );
@@ -155,13 +171,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: theme.spacing(-2),
     paddingRight: theme.spacing(2),
   }),
+  // TODO: this should be safe to remove once incident card also moved to use ListRow component
   row: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(0.5, 0),
     minWidth: 0,
   }),
+  rowPadding: css({
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.5, 0),
+  }),
+  // TODO: this should be safe to remove once incident card also moved to use ListRow component
   title: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',

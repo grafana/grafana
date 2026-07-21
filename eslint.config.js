@@ -17,11 +17,7 @@ const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
-const pluginsToTranslate = [
-  'public/app/plugins/panel',
-  'public/app/plugins/datasource/azuremonitor',
-  'public/app/plugins/datasource/mssql',
-];
+const pluginsToTranslate = ['public/app/plugins/panel', 'public/app/plugins/datasource/azuremonitor'];
 
 const commonTestIgnores = [
   '**/*.{test,spec}.{ts,tsx}',
@@ -507,14 +503,11 @@ module.exports = [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
       'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
       'public/app/plugins/datasource/influxdb/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/jaeger/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/mssql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
     ],
     plugins: {

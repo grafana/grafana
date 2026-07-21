@@ -7,9 +7,9 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, type ComponentSize, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
+import { useFolderAbility } from '../../hooks/abilities/otherAbilities';
+import { FolderAction } from '../../hooks/abilities/types';
 import { type Folder } from '../../types/rule-form';
 
 type ButtonFill = 'solid' | 'outline' | 'text';
@@ -25,6 +25,7 @@ export interface CreateNewFolderProps {
  */
 export const CreateNewFolder = ({ onCreate, fill = 'outline', size = 'md' }: CreateNewFolderProps) => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const { granted: canCreate } = useFolderAbility(FolderAction.Create);
   const handleCreate = (folder: Folder) => {
     onCreate(folder);
     setIsCreatingFolder(false);
@@ -38,7 +39,7 @@ export const CreateNewFolder = ({ onCreate, fill = 'outline', size = 'md' }: Cre
         variant="secondary"
         fill={fill}
         size={size}
-        disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+        disabled={!canCreate}
       >
         <Trans i18nKey="alerting.create-new-folder.new-folder">New folder</Trans>
       </Button>

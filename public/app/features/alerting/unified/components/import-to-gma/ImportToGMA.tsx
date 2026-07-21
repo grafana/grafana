@@ -5,7 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -21,8 +21,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -60,6 +58,7 @@ import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { StepImportMethod, isAutoSyncSegmentEnabled } from './steps/StepImportMethod';
 import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
+import { useCanImportToGMA } from './useCanImportToGMA';
 import {
   buildRoutingParams,
   filterRulerRulesConfig,
@@ -79,7 +78,7 @@ export interface ImportFormValues {
   step1Completed: boolean;
   step1Skipped: boolean;
   /**
-   * Name of the imported policy tree (value for __grafana_managed_route__ label).
+   * Name of the imported policy tree (the config identifier for the imported Alertmanager config).
    * For now, this is free-form as we don't have an API to retrieve the list of available policy trees.
    */
   policyTreeName: string;
@@ -241,10 +240,7 @@ function ImportWizardContent() {
   const [step1Completed, step1Skipped] = watch(['step1Completed', 'step1Skipped']);
 
   // Permission checks aligned with backend authorization.go
-  const canImportNotifications = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
-  const canImportRules =
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
+  const { canImportNotifications, canImportRules } = useCanImportToGMA();
 
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(() => {
@@ -376,16 +372,8 @@ function ImportWizardContent() {
           targetDatasourceUID: values.targetDatasourceUID,
         };
 
-        const { notificationSettings, extraLabels } = buildRoutingParams(
-          values.selectedRoutingTree,
-          Boolean(config.featureToggles.alertingPolicyRoutingSettings)
-        );
-
-        if (notificationSettings !== undefined) {
-          await importRules({ ...baseParams, notificationSettings });
-        } else {
-          await importRules({ ...baseParams, extraLabels });
-        }
+        const { notificationSettings } = buildRoutingParams(values.selectedRoutingTree);
+        await importRules({ ...baseParams, notificationSettings });
       }
 
       setImportStatus('success');
@@ -394,6 +382,7 @@ function ImportWizardContent() {
       const isRootFolder = isEmpty(targetFolder?.uid);
 
       trackImportToGMASuccess({
+        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
         isRootFolder,
@@ -418,6 +407,7 @@ function ImportWizardContent() {
     } catch (err) {
       setImportStatus('error');
       trackImportToGMAError({
+        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
       });
