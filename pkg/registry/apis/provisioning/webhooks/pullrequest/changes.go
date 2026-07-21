@@ -10,12 +10,14 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -365,6 +367,19 @@ func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Rea
 
 	obj := info.Parsed.Obj
 	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
+
+	// Parse only fills Parsed.Existing during DryRun/Run (via a live Get), and
+	// deletions run neither. Fetch the live object directly so we can link back
+	// to it in Grafana: at comment time the resource still exists because the
+	// sync that removes it has not run yet. Best-effort — a missing object or a
+	// permission error just leaves the Resource column as plain text.
+	if info.Parsed.Client != nil {
+		if idCtx, _, idErr := identity.WithProvisioningIdentity(ctx, obj.GetNamespace()); idErr == nil {
+			if existing, getErr := info.Parsed.Client.Get(idCtx, obj.GetName(), metav1.GetOptions{}); getErr == nil {
+				info.Parsed.Existing = existing
+			}
+		}
+	}
 
 	// Link back to the resource in Grafana when it still exists there (dashboards
 	// and folders both have view routes); other kinds fall back to plain text.

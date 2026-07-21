@@ -13,7 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -1663,7 +1665,9 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 
 // A deleted file (e.g. a removed folder metadata file) no longer exists on the
 // PR branch, but the source link should still point at the previous ref so
-// reviewers can see what was removed.
+// reviewers can see what was removed. The folder still exists in Grafana until
+// the sync runs, so the Resource column should link to it — which requires
+// fetching the live object, since Parse (unlike DryRun) never sets Existing.
 func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 	finfo := &repository.FileInfo{
 		Path: "team/_folder.json",
@@ -1674,11 +1678,20 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 		Object: map[string]interface{}{
 			"apiVersion": folder.FolderResourceInfo.GroupVersion().String(),
 			"kind":       folderKind,
-			"metadata":   map[string]interface{}{"name": "the-uid"},
+			"metadata":   map[string]interface{}{"name": "the-uid", "namespace": "x"},
 			"spec":       map[string]interface{}{"title": "My Team"},
 		},
 	}
 	meta, _ := utils.MetaAccessor(obj)
+
+	// A fake client that returns the live folder object, standing in for the
+	// resource that still exists in Grafana at comment time.
+	folderGVR := schema.GroupVersionResource{Group: folder.GROUP, Version: folder.VERSION, Resource: "folders"}
+	scheme := runtime.NewScheme()
+	require.NoError(t, metav1.AddMetaToScheme(scheme))
+	fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+		folderGVR: "FolderList",
+	}, obj)
 
 	reader := repository.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
@@ -1691,13 +1704,15 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 	reader.On("Read", mock.Anything, "team/_folder.json", "base-ref").Return(finfo, nil)
 
 	parser := resources.NewMockParser(t)
+	// Existing is intentionally nil: the real parser only populates it during
+	// DryRun/Run, which deletions skip. The evaluator must fetch it via Client.
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
-		Info:     finfo,
-		Repo:     provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
-		GVK:      schema.GroupVersionKind{Kind: folderKind},
-		Obj:      obj,
-		Existing: obj,
-		Meta:     meta,
+		Info:   finfo,
+		Repo:   provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:    schema.GroupVersionKind{Kind: folderKind},
+		Obj:    obj,
+		Client: fakeDynamicClient.Resource(folderGVR).Namespace("x"),
+		Meta:   meta,
 	}, nil)
 
 	parserFactory := resources.NewMockParserFactory(t)
