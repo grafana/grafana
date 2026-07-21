@@ -10750,6 +10750,7 @@
     "placeholder-start-color-from-value": "Auto (min)",
     "placeholder-value-name": "Value",
     "placement-options": {
+      "label-bottom": "Bottom",
       "label-hidden": "Hidden",
       "label-left": "Left",
       "label-right": "Right"
