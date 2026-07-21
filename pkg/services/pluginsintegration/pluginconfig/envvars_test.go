@@ -235,6 +235,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 
 	t.Run("preparation failure falls back to disk license", func(t *testing.T) {
 		environment := newTestMarketplaceLicensing("https://grafana.example.com/")
+		environment.token = "partial-token"
 		environment.prepareErr = errors.New("prepare environment")
 		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
 

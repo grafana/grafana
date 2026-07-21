@@ -105,6 +105,7 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 	token, err := p.marketplaceLicensing.LicenseToken(ctx, pluginID)
 	if err != nil {
 		p.logger.Warn("Failed to get marketplace license token, falling-back to disk license", "pluginId", pluginID, "error", err)
+		token = ""
 	}
 	var licensePath string
 	var hasPath bool
