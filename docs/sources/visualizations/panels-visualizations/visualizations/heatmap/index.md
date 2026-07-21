@@ -210,6 +210,7 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 ### Legend options
 
 Legend options control how the color scale legend is displayed on the visualization.
+For more information about the legend, refer to [Configure a legend](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-legend/).
 
 | Option      | Description                                                                                                                                                                                                                                                                                                                                        |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
