@@ -519,7 +519,7 @@ func schema_pkg_apis_search_v0alpha1_TrashQuery(ref common.ReferenceCallback) co
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "TrashQuery is the request body for POST .../{resource}/trash. It shares the SearchQuery body grammar but LabelSelector and Facets are rejected, and field references are restricted to the fixed trash field set.",
+				Description: "TrashQuery is the request body for POST .../{resource}/trash. It is a deliberately smaller subset of SearchQuery: trash documents index only the standard fields, so there is no labelSelector and no faceting. Field references are restricted to the fixed trash field set.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -539,12 +539,6 @@ func schema_pkg_apis_search_v0alpha1_TrashQuery(ref common.ReferenceCallback) co
 					"where": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
-						},
-					},
-					"labelSelector": {
-						SchemaProps: spec.SchemaProps{
-							Description: "LabelSelector is rejected on /trash (trash documents do not preserve labels). Present in the type so the shared schema is uniform.",
-							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"),
 						},
 					},
 					"sort": {
@@ -574,21 +568,6 @@ func schema_pkg_apis_search_v0alpha1_TrashQuery(ref common.ReferenceCallback) co
 							},
 						},
 					},
-					"facets": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Facets is rejected on /trash. Present in the type so the shared schema is uniform.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
 					"limit": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -605,7 +584,7 @@ func schema_pkg_apis_search_v0alpha1_TrashQuery(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode", "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"},
+			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"},
 	}
 }
 

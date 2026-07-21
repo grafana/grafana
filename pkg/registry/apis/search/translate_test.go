@@ -416,23 +416,6 @@ func TestTranslateTrashQuery_ValidationErrors(t *testing.T) {
 			wantField: "kind",
 		},
 		{
-			name: "labelSelector rejected",
-			mutate: func(q *searchv0.TrashQuery) {
-				q.LabelSelector = &metav1.LabelSelector{MatchLabels: map[string]string{"a": "b"}}
-			},
-			wantField: "labelSelector",
-		},
-		{
-			name:      "facets rejected",
-			mutate:    func(q *searchv0.TrashQuery) { q.Facets = []string{"title"} },
-			wantField: "facets",
-		},
-		{
-			name:      "empty facets slice rejected",
-			mutate:    func(q *searchv0.TrashQuery) { q.Facets = []string{} },
-			wantField: "facets",
-		},
-		{
 			name: "filter on disallowed field",
 			mutate: func(q *searchv0.TrashQuery) {
 				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "title", Operator: "In", Values: []string{"a"}}}

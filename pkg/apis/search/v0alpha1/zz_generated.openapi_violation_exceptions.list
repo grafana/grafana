@@ -4,7 +4,6 @@ API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SearchQuery,Sort
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SearchResults,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,TextPredicate,Fields
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,TrashQuery,Facets
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,TrashQuery,Fields
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,TrashQuery,Sort
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,TrashResults,Items

@@ -92,12 +92,6 @@ func TranslateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResour
 // prerequisite that /trash depends on.
 func TranslateTrashQuery(q *searchv0.TrashQuery, gvr schema.GroupVersionResource, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
 	errs := validateEnvelope(q.TypeMeta, searchv0.KindTrashQuery)
-	if q.LabelSelector != nil {
-		errs = append(errs, field.Forbidden(field.NewPath("labelSelector"), "labelSelector is not supported on /trash"))
-	}
-	if q.Facets != nil {
-		errs = append(errs, field.Forbidden(field.NewPath("facets"), "facets are not supported on /trash"))
-	}
 
 	fs := trashFieldSet()
 	leaves, whereErrs := validateWhere(q.Where, fs, field.NewPath("where"))
@@ -288,12 +282,9 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 	case "filter":
 		fp := p.Child("filter")
 		f := n.Filter
-		switch f.Field {
-		case "":
+		if f.Field == "" {
 			errs = append(errs, field.Required(fp.Child("field"), "filter field is required"))
-		case "labels":
-			errs = append(errs, field.Invalid(fp.Child("field"), f.Field, "use labelSelector to filter on labels"))
-		default:
+		} else {
 			capErrs := checkCapability(fs, f.Field, resource.SearchCapabilityFilter, fp.Child("field"))
 			errs = append(errs, capErrs...)
 			// v1 filters are string-only (scalar or string array); numeric/boolean
@@ -311,6 +302,9 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 			errs = append(errs, field.Required(fp.Child("values"), "at least one value is required"))
 		}
 		for i, v := range f.Values {
+			// v1 rejects '*' because the backend still treats it as a wildcard in
+			// field filters, so a literal '*' in a value would be misinterpreted.
+			// Once exact-match filtering lands this restriction can be lifted.
 			if strings.Contains(v, "*") {
 				errs = append(errs, field.Invalid(fp.Child("values").Index(i), v, "wildcard values are not allowed"))
 			}

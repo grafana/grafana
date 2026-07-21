@@ -126,8 +126,9 @@ type SearchQuery struct {
 	Continue string `json:"continue,omitempty"`
 }
 
-// TrashQuery is the request body for POST .../{resource}/trash. It shares the
-// SearchQuery body grammar but LabelSelector and Facets are rejected, and field
+// TrashQuery is the request body for POST .../{resource}/trash. It is a
+// deliberately smaller subset of SearchQuery: trash documents index only the
+// standard fields, so there is no labelSelector and no faceting. Field
 // references are restricted to the fixed trash field set.
 //
 // +k8s:deepcopy-gen=true
@@ -137,15 +138,8 @@ type TrashQuery struct {
 
 	Where *WhereNode `json:"where,omitempty"`
 
-	// LabelSelector is rejected on /trash (trash documents do not preserve
-	// labels). Present in the type so the shared schema is uniform.
-	LabelSelector *metav1.LabelSelector `json:"labelSelector,omitempty"`
-
 	Sort   []SortField `json:"sort,omitempty"`
 	Fields []string    `json:"fields,omitempty"`
-	// Facets is rejected on /trash. Present in the type so the shared schema is
-	// uniform.
-	Facets []string `json:"facets,omitempty"`
 
 	Limit    int64  `json:"limit,omitempty"`
 	Continue string `json:"continue,omitempty"`

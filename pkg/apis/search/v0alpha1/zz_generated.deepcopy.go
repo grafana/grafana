@@ -313,11 +313,6 @@ func (in *TrashQuery) DeepCopyInto(out *TrashQuery) {
 		*out = new(WhereNode)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.LabelSelector != nil {
-		in, out := &in.LabelSelector, &out.LabelSelector
-		*out = new(v1.LabelSelector)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.Sort != nil {
 		in, out := &in.Sort, &out.Sort
 		*out = make([]SortField, len(*in))
@@ -325,11 +320,6 @@ func (in *TrashQuery) DeepCopyInto(out *TrashQuery) {
 	}
 	if in.Fields != nil {
 		in, out := &in.Fields, &out.Fields
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
-	if in.Facets != nil {
-		in, out := &in.Facets, &out.Facets
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
