@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
@@ -96,7 +96,7 @@ export function SummaryCard<T>({
         {!loading && !error && items.length > 0 && (
           <ul className={redesignEnabled ? undefined : styles.list}>
             {items.map((item) => (
-              <li key={getItemKey(item)} className={styles.row}>
+              <li key={getItemKey(item)} className={cx(styles.row, !redesignEnabled && styles.rowPadding)}>
                 {renderItem(item)}
               </li>
             ))}
@@ -113,7 +113,9 @@ export function SummaryCard<T>({
   }
 
   return (
-    <HomeSection display="flex" direction="column">
+    // minWidth={0} lets the card shrink within the homepage grid so a long alert name
+    // can't stretch this column wider than its sibling.
+    <HomeSection display="flex" direction="column" minWidth={0}>
       <Stack direction="column" gap={2} grow={1}>
         {content}
       </Stack>
@@ -169,13 +171,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: theme.spacing(-2),
     paddingRight: theme.spacing(2),
   }),
+  // TODO: this should be safe to remove once incident card also moved to use ListRow component
   row: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(0.5, 0),
     minWidth: 0,
   }),
+  rowPadding: css({
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.5, 0),
+  }),
+  // TODO: this should be safe to remove once incident card also moved to use ListRow component
   title: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',

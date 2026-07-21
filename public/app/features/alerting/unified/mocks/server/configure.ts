@@ -224,6 +224,35 @@ export const setMuteTimingsListError = () => {
 };
 
 /**
+ * Makes the mock server respond with an error when deleting a time interval,
+ * mirroring the API server conflict returned when the interval is still in use.
+ */
+export const setDeleteTimeIntervalError = (
+  message = 'Time interval is used',
+  messageId = 'alerting.notifications.time-intervals.used',
+  status = 409
+) => {
+  const handler = http.delete(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals/:name`, () => {
+    const errorResponse: ApiMachineryError = {
+      kind: 'Status',
+      apiVersion: 'v1',
+      metadata: {},
+      status: 'Failure',
+      message,
+      reason: 'Conflict',
+      details: {
+        uid: messageId,
+      },
+      code: status,
+    };
+    return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
+  });
+
+  server.use(handler);
+  return handler;
+};
+
+/**
  * Makes the mock server respond with no time intervals
  */
 export const setTimeIntervalsListEmpty = () => {
