@@ -26,6 +26,8 @@ declare module "@openfeature/core" {
     | "stateTimeline.nameAboveBars"
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsCodeMirror"
+    | "dashboards.filterablePanels"
+    | "grafana.filterablePanels"
     | "grafana.savedQueriesPage"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
@@ -36,6 +38,7 @@ declare module "@openfeature/core" {
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
+    | "grafana.newTextPanel"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
     | "globalDashboardVariables"
@@ -74,7 +77,8 @@ declare module "@openfeature/core" {
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
     | "grafana.onDemandDiagnostics"
-    | "grafana.multiTenantNavTree";
+    | "grafana.multiTenantNavTree"
+    | "grafana.exploreMetricsSidebar";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

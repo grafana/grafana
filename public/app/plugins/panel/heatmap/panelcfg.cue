@@ -93,6 +93,10 @@ composableKinds: PanelCfg: lineage: {
 			HeatmapLegend: {
 				// Controls if the legend is shown
 				show: bool
+				// Controls where the legend is shown
+				placement?: ui.LegendPlacement
+				// Controls legend width when shown on the right
+				width?: number | string
 			} @cuetsy(kind="interface")
 			// Controls exemplar options
 			ExemplarConfig: {
@@ -148,7 +152,8 @@ composableKinds: PanelCfg: lineage: {
 				// }
 				// Controls legend options
 				legend: HeatmapLegend | *{
-					show: true
+					show:      true
+					placement: "bottom"
 				}
 				// Controls tooltip options
 				tooltip: HeatmapTooltip | *{
