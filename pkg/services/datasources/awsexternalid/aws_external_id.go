@@ -1,4 +1,4 @@
-package service
+package awsexternalid
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -14,6 +15,21 @@ const (
 	grafanaExternalIDJSONKey          = "grafanaExternalId"
 	usePerDatasourceExternalIDJSONKey = "usePerDatasourceExternalId"
 )
+
+// BeforeSave mints or preserves per-datasource grafanaExternalId on create/update.
+// Pass existing=nil on create; pass the stored JsonData on update.
+func BeforeSave(ctx context.Context, uid string, cfg *setting.Cfg, existing, jsonData *simplejson.Json) {
+	allowGenerate := awsAssumeRolePerDatasourceExternalIDEnabled(ctx)
+	stackExternalID := ""
+	if cfg != nil {
+		stackExternalID = cfg.AWSExternalId
+	}
+	if existing == nil {
+		ensureGrafanaExternalID(uid, stackExternalID, jsonData, allowGenerate)
+		return
+	}
+	preserveGrafanaExternalID(uid, stackExternalID, existing, jsonData, allowGenerate)
+}
 
 // buildGrafanaExternalID returns "{stackExternalId}-{dsUID}".
 // The stack prefix keeps IDs unique across Cloud stacks (UIDs alone are only unique per org).

@@ -112,7 +112,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 	})
 
-	t.Run("AfterUIDAssigned", func(t *testing.T) {
+	t.Run("BeforeSave", func(t *testing.T) {
 		for _, tc := range []struct {
 			name string
 			uid  string
@@ -127,7 +127,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 				cmd := defaultAddDatasourceCommand
 				cmd.UID = tc.uid
 				cmd.JsonData = simplejson.New()
-				cmd.AfterUIDAssigned = func(uid string, jsonData *simplejson.Json) {
+				cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
 					gotUID = uid
 					jsonData.Set("grafanaExternalId", "stack-"+uid)
 				}
@@ -168,7 +168,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd2.Name = "other"
 			cmd2.UID = ""
 			cmd2.JsonData = simplejson.New()
-			cmd2.AfterUIDAssigned = func(uid string, jsonData *simplejson.Json) {
+			cmd2.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
 				gotUID = uid
 				jsonData.Set("grafanaExternalId", "stack-"+uid)
 			}
@@ -179,6 +179,30 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Equal(t, "free-uid", ds.UID)
 			require.Equal(t, "stack-free-uid", ds.JsonData.Get("grafanaExternalId").MustString())
 			require.GreaterOrEqual(t, calls, 2)
+		})
+
+		t.Run("runs on update before persist", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+			ds := initDatasource(db)
+
+			cmd := defaultUpdateDatasourceCommand
+			cmd.ID = ds.ID
+			cmd.UID = ds.UID
+			cmd.OrgID = ds.OrgID
+			cmd.Version = ds.Version
+			cmd.JsonData = simplejson.New()
+			called := false
+			cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+				called = true
+				require.Equal(t, ds.UID, uid)
+				jsonData.Set("grafanaExternalId", "stack-"+uid)
+			}
+
+			updated, err := ss.UpdateDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+			require.True(t, called)
+			require.Equal(t, "stack-"+ds.UID, updated.JsonData.Get("grafanaExternalId").MustString())
 		})
 	})
 

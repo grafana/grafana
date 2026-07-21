@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -391,10 +392,9 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	if cmd.JsonData == nil {
 		cmd.JsonData = simplejson.New()
 	}
-	allowPerDsExternalID := awsAssumeRolePerDatasourceExternalIDEnabled(ctx)
 	// Run after the store assigns the final UID so the minted ID matches what is inserted.
-	cmd.AfterUIDAssigned = func(uid string, jsonData *simplejson.Json) {
-		ensureGrafanaExternalID(uid, s.cfg.AWSExternalId, jsonData, allowPerDsExternalID)
+	cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+		awsexternalid.BeforeSave(ctx, uid, s.cfg, nil, jsonData)
 	}
 
 	var dataSource *datasources.DataSource
@@ -680,8 +680,10 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
-		allowPerDsExternalID := awsAssumeRolePerDatasourceExternalIDEnabled(ctx)
-		preserveGrafanaExternalID(cmd.UID, s.cfg.AWSExternalId, dataSource.JsonData, cmd.JsonData, allowPerDsExternalID)
+		existingJSON := dataSource.JsonData
+		cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+			awsexternalid.BeforeSave(ctx, uid, s.cfg, existingJSON, jsonData)
+		}
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource

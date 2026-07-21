@@ -300,8 +300,8 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 		}
 
-		if cmd.AfterUIDAssigned != nil {
-			cmd.AfterUIDAssigned(cmd.UID, cmd.JsonData)
+		if cmd.BeforeSave != nil {
+			cmd.BeforeSave(ctx, cmd.UID, cmd.JsonData)
 		}
 
 		ds = &datasources.DataSource{
@@ -374,6 +374,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
 				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 			}
+		}
+
+		if cmd.BeforeSave != nil {
+			cmd.BeforeSave(ctx, cmd.UID, cmd.JsonData)
 		}
 
 		ds = &datasources.DataSource{
