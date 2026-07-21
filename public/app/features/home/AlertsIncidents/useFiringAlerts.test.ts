@@ -104,4 +104,31 @@ describe('useFiringAlerts', () => {
 
     expect(result.current.hasTeams).toBe(true);
   });
+
+  it('matches slugified team labels case-insensitively in the alertmanager filter', async () => {
+    mockTeams([{ name: 'Grafana Frontend Navigation' }, { name: 'Eng' }]);
+    let filterParams: string[] = [];
+    server.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+        filterParams = new URL(request.url).searchParams.getAll('filter');
+        return HttpResponse.json([]);
+      })
+    );
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(filterParams).toEqual(['team=~"(?i)Grafana[^a-zA-Z0-9]+Frontend[^a-zA-Z0-9]+Navigation|Eng"']);
+
+    // The pattern must behave the way the (anchored, RE2) Alertmanager matcher will evaluate it:
+    // slug-style and name-style label values match, superstrings do not.
+    const value = filterParams[0].match(/^team=~"\(\?i\)(.*)"$/)![1];
+    const anchored = new RegExp(`^(?:${value})$`, 'i');
+    expect(anchored.test('grafana-frontend-navigation')).toBe(true);
+    expect(anchored.test('grafana_frontend_navigation')).toBe(true);
+    expect(anchored.test('Grafana Frontend Navigation')).toBe(true);
+    expect(anchored.test('eng')).toBe(true);
+    expect(anchored.test('grafana-frontend-navigation-oncall')).toBe(false);
+    expect(anchored.test('strength')).toBe(false);
+  });
 });

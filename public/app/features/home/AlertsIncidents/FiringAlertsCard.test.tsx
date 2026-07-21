@@ -176,7 +176,7 @@ describe('FiringAlertsCard', () => {
     expect(filters.some((f) => f.includes('team') && f.includes('platform|infra'))).toBe(true);
   });
 
-  it('escapes regex metacharacters in team names', async () => {
+  it('neutralizes regex metacharacters in team names via tokenization', async () => {
     const capturedRequests: Request[] = [];
     mockTeams([{ name: 'team.one' }]);
 
@@ -191,10 +191,11 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
-    // buildTeamMatchers escapes the '.' to '\.', then quoteWithEscape doubles the backslash on the wire
+    // The '.' becomes a separator token boundary, so metacharacters can never inject regex
+    // syntax into the matcher, and the pattern still matches any separator the labels use.
     const lastReq = capturedRequests[capturedRequests.length - 1];
     const filters = new URL(lastReq.url).searchParams.getAll('filter');
-    expect(filters.some((f) => f.includes('team\\\\.one'))).toBe(true);
+    expect(filters).toContain('team=~"(?i)team[^a-zA-Z0-9]+one"');
   });
 
   it('shows team-scoped empty state when team-filtered result is empty', async () => {

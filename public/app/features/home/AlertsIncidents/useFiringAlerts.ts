@@ -1,5 +1,4 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { escapeRegExp } from 'lodash';
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
@@ -22,11 +21,23 @@ function alertSeverityLevel(alert: AlertmanagerAlert) {
   return canonicalSeverity(alert.labels.severity ?? '');
 }
 
+// Alert `team` labels rarely carry Grafana team names verbatim — label vocabularies usually
+// slugify them ("Grafana Frontend Navigation" -> grafana-frontend-navigation), so each name is
+// matched case-insensitively with any separator run (spaces, dashes, underscores, ...) treated as
+// equivalent. Tokens are alphanumeric by construction, so the pattern needs no escaping; the
+// separator class avoids backslashes because Alertmanager's strict matcher parser rejects
+// non-standard escape sequences inside quoted values.
+function teamNamePattern(name: string): string | null {
+  const tokens = name.split(/[^a-zA-Z0-9]+/).filter((token) => token.length > 0);
+  return tokens.length > 0 ? tokens.join('[^a-zA-Z0-9]+') : null;
+}
+
 function buildTeamMatchers(teamNames: string[]) {
-  if (teamNames.length === 0) {
+  const patterns = teamNames.map(teamNamePattern).filter((pattern) => pattern !== null);
+  if (patterns.length === 0) {
     return [];
   }
-  return [{ name: 'team', value: teamNames.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
+  return [{ name: 'team', value: `(?i)${patterns.join('|')}`, isRegex: true, isEqual: true }];
 }
 
 // Exported so the homepage skeleton reserves the card slot using the same gate.
