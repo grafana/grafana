@@ -74,16 +74,21 @@ const getJobColumns = (showAuthor: boolean, repo: Repository) => [
   ...(showAuthor
     ? [
         {
-          id: 'triggeredBy',
-          header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
+          id: 'by',
+          header: t('provisioning.recent-jobs.column-by', 'By'),
           cell: ({ row: { original: job } }: JobCell) => {
             const annotations = job.metadata?.annotations;
-            return annotations?.[AnnoWebhookSender] || annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
+            return (
+              annotations?.[AnnoWebhookSender] ||
+              annotations?.[AnnoAuthor] ||
+              annotations?.[AnnoAuthorEmail] ||
+              t('provisioning.recent-jobs.by-grafana', 'Grafana')
+            );
           },
         },
         {
-          id: 'origin',
-          header: t('provisioning.recent-jobs.column-origin', 'Origin'),
+          id: 'from',
+          header: t('provisioning.recent-jobs.column-from', 'From'),
           cell: ({ row: { original: job } }: JobCell) => {
             if (job.metadata?.annotations?.[AnnoWebhookSender] && repo.spec) {
               const provider = getRepositoryTypeConfig(repo.spec.type)?.label;
@@ -91,7 +96,7 @@ const getJobColumns = (showAuthor: boolean, repo: Repository) => [
                 return provider;
               }
             }
-            return t('provisioning.recent-jobs.origin-grafana', 'Grafana');
+            return t('provisioning.recent-jobs.from-grafana', 'Grafana');
           },
         },
       ]
@@ -115,10 +120,9 @@ const getJobColumns = (showAuthor: boolean, repo: Repository) => [
 
 interface ExpandedRowProps {
   row: Job;
-  repo: Repository;
 }
 
-function ExpandedRow({ row, repo }: ExpandedRowProps) {
+function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
   const hasWarnings = Boolean(row.status?.warnings?.length);
@@ -142,18 +146,16 @@ function ExpandedRow({ row, repo }: ExpandedRowProps) {
       push: spec.push,
     };
     const annotations = row.metadata?.annotations;
-    const sender = annotations?.[AnnoWebhookSender];
-    const senderId = annotations?.[AnnoWebhookSenderId];
-    if (sender) {
-      const provider = repo.spec ? getRepositoryTypeConfig(repo.spec.type)?.label : undefined;
-      const id = senderId && provider ? ` ${provider} ID:${senderId}` : '';
-      v.push({ key: 'triggeredBy', value: `${sender} (via Webhook)${id}` });
-    } else {
-      const user = [annotations?.[AnnoAuthor], annotations?.[AnnoAuthorEmail], annotations?.[AnnoCreatedBy]]
-        .filter(Boolean)
-        .join(', ');
-      if (user) {
-        v.push({ key: 'triggeredBy', value: user });
+    for (const [key, anno] of [
+      ['webhookSender', AnnoWebhookSender],
+      ['webhookSenderId', AnnoWebhookSenderId],
+      ['author', AnnoAuthor],
+      ['authorEmail', AnnoAuthorEmail],
+      ['createdBy', AnnoCreatedBy],
+    ]) {
+      const value = annotations?.[anno];
+      if (value) {
+        v.push({ key, value });
       }
     }
     const def = actionOptions[action];
@@ -164,7 +166,7 @@ function ExpandedRow({ row, repo }: ExpandedRowProps) {
       v.push({ key, value });
     }
     return v;
-  }, [row.spec, row.metadata?.annotations, repo.spec]);
+  }, [row.spec, row.metadata?.annotations]);
 
   if (!hasSummary && !hasErrors && !hasWarnings && !hasSpec) {
     return null;
@@ -259,7 +261,7 @@ export function RecentJobs({ repo }: Props) {
         data={jobs}
         columns={jobColumns}
         getRowId={(item) => `${item.metadata?.uid}`}
-        renderExpandedRow={(row) => <ExpandedRow row={row} repo={repo} />}
+        renderExpandedRow={(row) => <ExpandedRow row={row} />}
         pageSize={10}
       />
     );
