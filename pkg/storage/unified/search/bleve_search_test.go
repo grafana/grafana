@@ -447,7 +447,7 @@ func TestWildcardQuery(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("*Dev Overview*"), []string{"name1"})
 	})
 
-	t.Run("default wildcard searches email and login fields", func(t *testing.T) {
+	t.Run("wildcard searches email and login only with explicit QueryFields", func(t *testing.T) {
 		// Use an index with keyword-analyzed email/login fields (matching
 		// production IAM config) so wildcards match full email addresses.
 		index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
@@ -469,12 +469,26 @@ func TestWildcardQuery(t *testing.T) {
 			},
 		}))
 
-		// Default wildcard (no QueryFields) should match email field
-		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), []string{"user1"})
-		// Default wildcard should match login field
-		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), []string{"user2"})
-		// Wildcard matching domain across both users (order is non-deterministic)
-		res, err := index.Search(context.Background(), nil, newTestQuery("*grafana.com*"), nil, nil)
+		emailField := resource.SEARCH_FIELD_PREFIX + "email"
+		loginField := resource.SEARCH_FIELD_PREFIX + "login"
+
+		// Default wildcard (no QueryFields) searches title only, so email/login queries don't match.
+		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), nil)
+		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), nil)
+
+		// With explicit QueryFields, wildcards match the named identity fields.
+		reqEmail := newTestQuery("*uniquemail@grafana.com*")
+		reqEmail.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: emailField}}
+		checkSearchQuery(t, index, reqEmail, []string{"user1"})
+
+		reqLogin := newTestQuery("*secondlogin*")
+		reqLogin.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: loginField}}
+		checkSearchQuery(t, index, reqLogin, []string{"user2"})
+
+		// Wildcard on email matching domain across both users (order is non-deterministic).
+		reqDomain := newTestQuery("*grafana.com*")
+		reqDomain.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: emailField}}
+		res, err := index.Search(context.Background(), nil, reqDomain, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
 	})
