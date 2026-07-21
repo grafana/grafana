@@ -20,8 +20,10 @@ jobs:
     permissions:
       contents: read
     outputs:
-      changed: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.backend == 'true' }}
-      frontend: ${{ steps.detect-changes.outputs.frontend }}
+      # Build when non-test frontend or backend changes: a test-only PR can't
+      # affect the built image, so it shouldn't trigger the Docker build.
+      changed: ${{ steps.detect-changes.outputs.frontend-no-tests == 'true' || steps.detect-changes.outputs.backend == 'true' }}
+      # Meticulous only exercises frontend changes, so it gates on this alone.
       frontend-no-tests: ${{ steps.detect-changes.outputs.frontend-no-tests }}
     steps:
       - uses: actions/checkout@v5
