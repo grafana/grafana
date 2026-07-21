@@ -1,3 +1,17 @@
+<!-- 12.3.9 START -->
+
+# 12.3.9 (2026-07-21)
+
+### Features and enhancements
+
+- **Alerting:** Return 403 instead of 500 on contact point provenance mismatch [#127813](https://github.com/grafana/grafana/pull/127813), [@rwwiv](https://github.com/rwwiv)
+- **Go:** Update version to 1.26.5 [#128018](https://github.com/grafana/grafana/pull/128018), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **alerting:** fix ORM table mapping bug causing SELECT alert_rule columns FROM user on PostgreSQL [#128754](https://github.com/grafana/grafana/pull/128754), [@dhananjay6561](https://github.com/dhananjay6561)
+
+<!-- 12.3.9 END -->
 <!-- 13.1.1 START -->
 
 # 13.1.1 (2026-07-21)
