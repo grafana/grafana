@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import type { ReactNode } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
-import { TextLink, useStyles2, Text, Stack } from '@grafana/ui';
+import { useStyles2, Text, Stack, Link } from '@grafana/ui';
 
 interface ListRowProps {
   title: string;
@@ -21,23 +21,40 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.row, isCompact && styles.dashlistLinkCompact)}>
-      <Stack direction="row" alignItems="center" gap={1}>
+      <Stack direction="row" alignItems="center" gap={1} grow={1}>
         <div>{prefix}</div>
 
-        <Stack direction={oneRow ? 'row' : 'column'} gap={oneRow ? 1 : 0} alignItems={oneRow ? 'center' : 'flex-start'}>
-          {/* Title */}
-          {href ? (
-            <TextLink href={href} onClick={onClick} inline={false} color="primary" className={styles.title}>
-              {title}
-            </TextLink>
-          ) : (
+        {href ? (
+          <Link href={href} onClick={onClick} color="primary" className={styles.titleLink}>
+            <Stack
+              direction={oneRow ? 'row' : 'column'}
+              gap={oneRow ? 1 : 0}
+              alignItems={oneRow ? 'center' : 'flex-start'}
+            >
+              {/* Title */}
+              <Text truncate element="p">
+                {title}
+              </Text>
+              {/* Subtitle */}
+              <Text truncate color="secondary" variant="bodySmall" element="p">
+                {subtitle ?? ''}
+              </Text>
+            </Stack>
+          </Link>
+        ) : (
+          <Stack
+            direction={oneRow ? 'row' : 'column'}
+            gap={oneRow ? 1 : 0}
+            alignItems={oneRow ? 'center' : 'flex-start'}
+            grow={1}
+          >
             <Text truncate>{title}</Text>
-          )}
-          {/* Subtitle */}
-          <Text truncate color="secondary" variant="bodySmall">
-            {subtitle ?? ''}
-          </Text>
-        </Stack>
+            {/* Subtitle */}
+            <Text truncate color="secondary" variant="bodySmall">
+              {subtitle ?? ''}
+            </Text>
+          </Stack>
+        )}
       </Stack>
 
       <div>{trailing}</div>
@@ -62,5 +79,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+  }),
+  titleLink: css({
+    flex: 1,
+    '&:hover > div > p:first-child': {
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
+    },
   }),
 });
