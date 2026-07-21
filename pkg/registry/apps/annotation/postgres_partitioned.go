@@ -424,8 +424,8 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 	}
 
 	// Points and ranges are fetched separately so each is able to leverage its own index (time vs time_end)
-	// with results unioned. Each set is capped at offset+limit+1 candidates so the outer query
-	// is able to sort and paginate the merged set.
+	// with results unioned. Either subquery could supply the entire page on its own, so each must return enough
+	// to cover the outer query's offset+limit, plus one extra row to detect whether a next page exists.
 	cols := `namespace, name, time, time_end, dashboard_uid, panel_id,
 	         text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at`
 	where := strings.Join(conditions, " AND ")
