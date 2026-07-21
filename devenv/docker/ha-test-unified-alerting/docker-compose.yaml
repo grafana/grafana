@@ -104,3 +104,5 @@ services:
       - "18081:8080"
     volumes:
       - "./logs/webhook:/tmp/logs:rw"
+    security_opt:
+      - no-new-privileges:true
