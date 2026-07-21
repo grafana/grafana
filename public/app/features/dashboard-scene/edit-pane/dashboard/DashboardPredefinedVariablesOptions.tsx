@@ -12,13 +12,23 @@ import {
   type ObjectMeta,
 } from 'app/features/apiserver/types';
 
-import { type DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import {
   parseIgnorePredefinedVariables,
   serializeIgnorePredefinedVariables,
 } from '../../utils/predefinedVariableDenyList';
 
 type PredefinedVariablesMode = 'none' | 'all' | 'global' | 'folder';
+
+/** Narrow host surface so this pane does not import DashboardScene (circular dep). */
+export type PredefinedVariablesDashboard = DashboardSceneLike & {
+  serializer: {
+    getK8SMetadata: () => { annotations?: Record<string, string | undefined> } | undefined;
+    setK8SAnnotations: (annotations: Record<string, string>) => void;
+  };
+  refreshPredefinedVariables: () => Promise<void>;
+  managedResourceCannotBeEdited: () => boolean;
+};
 
 function modeFromDenyList(denyList: string[] | undefined): PredefinedVariablesMode | undefined {
   // Missing / empty deny list → All (inject everything).
@@ -51,7 +61,7 @@ function denyListFromMode(mode: PredefinedVariablesMode): string[] | undefined {
   }
 }
 
-function readAnnotationMap(dashboard: DashboardScene): Record<string, string> {
+function readAnnotationMap(dashboard: PredefinedVariablesDashboard): Record<string, string> {
   const fromMeta = dashboard.state.meta.k8s?.annotations ?? {};
   const fromSerializer = dashboard.serializer.getK8SMetadata()?.annotations ?? {};
   const merged: Record<string, string> = {};
@@ -63,7 +73,7 @@ function readAnnotationMap(dashboard: DashboardScene): Record<string, string> {
   return merged;
 }
 
-function updateDashboardDenyList(dashboard: DashboardScene, mode: PredefinedVariablesMode) {
+function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard, mode: PredefinedVariablesMode) {
   const nextDenyList = denyListFromMode(mode);
   const meta = dashboard.state.meta;
   const annotations = readAnnotationMap(dashboard);
@@ -97,7 +107,7 @@ function updateDashboardDenyList(dashboard: DashboardScene, mode: PredefinedVari
 }
 
 interface Props {
-  dashboard: DashboardScene;
+  dashboard: PredefinedVariablesDashboard;
 }
 
 export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {

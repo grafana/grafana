@@ -127,7 +127,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
                   'dashboard.sidebar.predefined-variables.tooltip',
                   'Choose which global and folder variables this dashboard receives'
                 )}
-                active={openPane instanceof DashboardPredefinedVariablesPane}
+                active={openPane?.getId() === 'predefined-variables'}
               />
             )}
             {config.featureToggles.dashboardUndoRedo && (
