@@ -7,6 +7,7 @@ services:
   freeipa:
     image: freeipa/freeipa-server:fedora-29
     container_name: freeipa
+    read_only: true
     stdin_open: true
     tty: true
     sysctls:
