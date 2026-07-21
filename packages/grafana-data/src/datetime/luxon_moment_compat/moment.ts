@@ -577,7 +577,10 @@ function normalizeInput(input: MomentInput, options?: MomentOptions, parseOption
   }
 
   if (isInputObject(input)) {
-    const normalized = { ...input };
+    // explicit annotation because luxon's `isDateTime` guard (`o is DateTime<true> | DateTime<false>`)
+    // cannot subtract `DateTime<boolean>` from the union above, and a surviving `DateTime` is
+    // structurally assignable to `InputObject`, so spreading it here would otherwise widen to `{}`.
+    const normalized: InputObject = { ...input };
     if (normalized.month != null) {
       normalized.month += 1;
     }
