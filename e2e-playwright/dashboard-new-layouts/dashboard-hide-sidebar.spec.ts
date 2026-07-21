@@ -17,18 +17,28 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('hide button is available in view mode on desktop', async ({ gotoDashboardPage, selectors, page }) => {
+    test('hide button is available in view mode on desktop', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+      components,
+    }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await expect(sidebar.getContainer()).toBeVisible();
       await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
 
-    test('hide button is available in edit mode on desktop', async ({ gotoDashboardPage, selectors, page }) => {
+    test('hide button is available in edit mode on desktop', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+      components,
+    }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 
@@ -40,9 +50,10 @@ test.describe(
       gotoDashboardPage,
       selectors,
       page,
+      components,
     }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await sidebar.toolbar.getVisibilityToggle().click();
 
@@ -51,9 +62,14 @@ test.describe(
       await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
 
-    test('clicking show re-displays the sidebar after hiding it', async ({ gotoDashboardPage, selectors, page }) => {
+    test('clicking show re-displays the sidebar after hiding it', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+      components,
+    }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await sidebar.toolbar.getVisibilityToggle().click();
       await expect(sidebar.getContainer()).not.toBeVisible();
@@ -62,10 +78,15 @@ test.describe(
       await expect(sidebar.getContainer()).toBeVisible();
     });
 
-    test('hidden state is shared between view mode and edit mode', async ({ gotoDashboardPage, selectors, page }) => {
+    test('hidden state is shared between view mode and edit mode', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+      components,
+    }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       // Hide in view mode
       await sidebar.toolbar.getVisibilityToggle().click();
@@ -81,11 +102,12 @@ test.describe(
       gotoDashboardPage,
       selectors,
       page,
+      components,
     }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
 
       // Enter edit mode
       await controls.enterEditMode();
