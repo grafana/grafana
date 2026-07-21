@@ -296,7 +296,7 @@ func TestSecureValueQueries(t *testing.T) {
 					Name: "deleteSecureValue",
 					Data: &deleteSecureValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						ToDelete:    []contracts.DeleteInput{{Namespace: "a", Name: "b", Version: 1}, {Namespace: "d", Name: "e", Version: 2}},
+						ToDelete:    []contracts.SecureValueIdentifier{{Namespace: "a", Name: "b", Version: 1}, {Namespace: "d", Name: "e", Version: 2}},
 					},
 				},
 			},
@@ -335,18 +335,35 @@ func TestSecureValueQueries(t *testing.T) {
 			sqlSecureValueAddGCRetryCount: {
 				{
 					Name: "add to gc attempt count",
-					Data: &addGCAttemptCountSecureValues{
-						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						SecureValueIDs: []string{"1", "2"},
+					Data: &IncGCAttemptCountSecureValues{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						SecureValues: []contracts.SecureValueIdentifier{
+							{
+								Namespace: "ns1",
+								Name:      "n1",
+								Version:   1,
+							},
+							{
+								Namespace: "ns1",
+								Name:      "n2",
+								Version:   2,
+							},
+						},
 					},
 				},
 			},
-			sqlSecureValueListByIDs: {
+			sqlSecureValueListByIdentifiers: {
 				{
 					Name: "list secure values by ids",
 					Data: &listSecureValuesByIDs{
-						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						SecureValueIDs: []string{"1", "2"},
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						SecureValues: []contracts.SecureValueIdentifier{
+							{
+								Namespace: "ns1",
+								Name:      "n1",
+								Version:   2,
+							},
+						},
 					},
 				},
 			},

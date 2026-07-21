@@ -28,7 +28,7 @@ var (
 
 	sqlSecureValueRead                    = mustTemplate("secure_value_read.sql")
 	sqlSecureValueList                    = mustTemplate("secure_value_list.sql")
-	sqlSecureValueListByIDs               = mustTemplate("secure_value_list_by_ids.sql")
+	sqlSecureValueListByIdentifiers       = mustTemplate("secure_value_list_by_ids.sql")
 	sqlSecureValueCreate                  = mustTemplate("secure_value_create.sql")
 	sqlSecureValueUpdateExternalId        = mustTemplate("secure_value_updateExternalId.sql")
 	sqlSecureValueDelete                  = mustTemplate("secure_value_delete.sql")
@@ -212,7 +212,7 @@ func (r listSecureValue) Validate() error {
 
 type listSecureValuesByIDs struct {
 	sqltemplate.SQLTemplate
-	SecureValueIDs []string
+	SecureValues []contracts.SecureValueIdentifier
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -246,7 +246,7 @@ func (r updateExternalIdSecureValue) Validate() error {
 
 type deleteSecureValue struct {
 	sqltemplate.SQLTemplate
-	ToDelete []contracts.DeleteInput
+	ToDelete []contracts.SecureValueIdentifier
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -289,12 +289,12 @@ func (r listSecureValuesByLeaseToken) Validate() error {
 	return nil // TODO
 }
 
-type addGCAttemptCountSecureValues struct {
+type IncGCAttemptCountSecureValues struct {
 	sqltemplate.SQLTemplate
-	SecureValueIDs []string
+	SecureValues []contracts.SecureValueIdentifier
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r addGCAttemptCountSecureValues) Validate() error {
+func (r IncGCAttemptCountSecureValues) Validate() error {
 	return nil // TODO
 }

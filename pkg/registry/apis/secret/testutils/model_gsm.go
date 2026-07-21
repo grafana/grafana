@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -80,6 +82,10 @@ func (m *ModelGsm) ReadActiveVersion(namespace, name string) *ModelSecureValue {
 }
 
 func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
+	if len(sv.OwnerReferences) > 1 {
+		return nil, contracts.ErrTooManyOwnerReferences
+	}
+
 	keeper := m.getActiveKeeper(sv.Namespace)
 
 	if sv.Spec.Ref != nil && keeper.keeperType == secretv1beta1.SystemKeeperType {
@@ -165,10 +171,15 @@ func (m *ModelGsm) SetKeeperAsActive(namespace, keeperName string) error {
 	return nil
 }
 
-func (m *ModelGsm) Update(now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
+func (m *ModelGsm) Update(ctx context.Context, now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
 	sv := m.ReadActiveVersion(newSecureValue.Namespace, newSecureValue.Name)
 	if sv == nil {
 		return nil, false, contracts.ErrSecureValueNotFound
+	}
+
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok || authInfo.GetIdentityType() != claims.TypeAccessPolicy {
+		newSecureValue.OwnerReferences = sv.OwnerReferences
 	}
 
 	// If the keeper doesn't exist, return an error
@@ -271,9 +282,11 @@ func (m *ModelGsm) Read(namespace, name string) (*secretv1beta1.SecureValue, err
 }
 
 func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL time.Duration, maxBatchSize uint16) ([]*ModelSecureValue, error) {
-	// Match the SQL's ROW_NUMBER() OVER (ORDER BY created ASC)
 	slices.SortStableFunc(m.SecureValues, func(a, b *ModelSecureValue) int {
-		return a.created.Compare(b.created)
+		if c := a.created.Compare(b.created); c != 0 {
+			return c
+		}
+		return strings.Compare(string(a.UID), string(b.UID))
 	})
 
 	out := make([]*ModelSecureValue, 0)
