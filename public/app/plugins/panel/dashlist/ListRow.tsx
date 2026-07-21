@@ -20,14 +20,10 @@ interface ListRowProps {
 export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, onClick, prefix }: ListRowProps) {
   const styles = useStyles2(getStyles);
 
-  const subtitleDisplay = (
-    <>
-      {subtitle && (
-        <Text truncate color="secondary" variant="bodySmall" element="p">
-          {subtitle}
-        </Text>
-      )}
-    </>
+  const subtitleDisplay = subtitle && (
+    <Text truncate color="secondary" variant="bodySmall" element="p">
+      {subtitle}
+    </Text>
   );
   return (
     <div className={cx(styles.row, isCompact && styles.listCompact)}>
