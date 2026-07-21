@@ -6,8 +6,10 @@ import {
   type TableIdentifier,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
+import { quoteIdentifierIfNecessary } from '@grafana/sql';
 
 import { ALLOWED_FUNCTIONS } from '../../../utils/metaSqlExpr';
+import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
 interface CompletionProviderGetterArgs {
   getFields: (t: TableIdentifier) => Promise<ColumnDefinition[]>;
@@ -21,9 +23,10 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     tables: {
       resolve: async () => {
         const refIdsToTableDefs = args.refIds.map((refId) => {
+          const name = refId.label || refId.value || '';
           const tableDef: TableDefinition = {
-            name: refId.label || refId.value || '',
-            completion: refId.label || refId.value || '',
+            name,
+            completion: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
           };
           return tableDef;
         });

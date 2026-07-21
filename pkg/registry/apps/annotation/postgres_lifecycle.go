@@ -14,6 +14,8 @@ func (s *PostgreSQLStore) Cleanup(ctx context.Context, before time.Time) (int64,
 	// Calculate cutoff timestamp and corresponding partition name
 	cutoffMs := before.UnixMilli()
 	cutoffPartition := getPartitionName(cutoffMs)
+	// Don't drop partitions less than 24 hours old even if they're past TTL
+	minKeepPartition := getPartitionName(time.Now().UTC().Add(-24 * time.Hour).UnixMilli())
 
 	// Get all existing partitions
 	partitions, err := listPartitions(ctx, s.pool)
@@ -25,13 +27,7 @@ func (s *PostgreSQLStore) Cleanup(ctx context.Context, before time.Time) (int64,
 
 	// Iterate through partitions and drop those older than cutoff
 	for _, partition := range partitions {
-		// Skip if partition is newer than or equal to cutoff
-		if partition.Name >= cutoffPartition {
-			continue
-		}
-
-		// Don't drop partitions less than 24 hours old even if they're past TTL
-		if partition.EndTime > time.Now().UTC().Add(-24*time.Hour).UnixMilli() {
+		if partition.Name >= cutoffPartition || partition.Name >= minKeepPartition {
 			continue
 		}
 

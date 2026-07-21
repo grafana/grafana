@@ -91,18 +91,36 @@ func V26(_ context.Context, dashboard map[string]interface{}) error {
 	}
 
 	for _, panel := range panels {
-		panelMap, ok := panel.(map[string]interface{})
+		p, ok := panel.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		if panelMap["type"] == "text2" {
-			panelMap["type"] = "text"
+		migrateText2Panel(p)
 
-			if options, ok := panelMap["options"].(map[string]interface{}); ok {
-				delete(options, "angular")
+		// Handle nested panels in collapsed rows
+		if !IsArray(p["panels"]) {
+			continue
+		}
+		for _, nestedPanel := range p["panels"].([]interface{}) {
+			np, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
 			}
+			migrateText2Panel(np)
 		}
 	}
 
 	return nil
+}
+
+// migrateText2Panel converts a text2 panel to a text panel and removes the
+// angular field from its options.
+func migrateText2Panel(panelMap map[string]interface{}) {
+	if panelMap["type"] != "text2" {
+		return
+	}
+	panelMap["type"] = "text"
+	if options, ok := panelMap["options"].(map[string]interface{}); ok {
+		delete(options, "angular")
+	}
 }

@@ -283,7 +283,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
             </TextLink>
           </Stack>
 
-          <HomeSection paddingX={2} paddingY={1}>
+          <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
             {renderContent()}
           </HomeSection>
         </>

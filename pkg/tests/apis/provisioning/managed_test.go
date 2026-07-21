@@ -35,23 +35,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	helper.RequireRepoFolderCount(t, repoName, 1)
 
 	// Find the managed folder created by the repo sync.
-	var managedFolderName string
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-		for i := range folders.Items {
-			annotations := folders.Items[i].GetAnnotations()
-			if annotations[utils.AnnoKeyManagerIdentity] == repoName {
-				managedFolderName = folders.Items[i].GetName()
-				return
-			}
-		}
-		assert.Fail(collect, "managed folder not found")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should find a folder managed by the repo")
-
-	require.NotEmpty(t, managedFolderName, "managed folder name should be set")
+	managedFolderName := helper.RequireSingleRepoFolder(t, repoName).GetName()
 	t.Logf("Managed folder: %s (managed by repo %s)", managedFolderName, repoName)
 
 	t.Run("reject unmanaged dashboard in managed folder", func(t *testing.T) {
