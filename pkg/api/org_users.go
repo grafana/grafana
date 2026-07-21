@@ -119,12 +119,21 @@ func (hs *HTTPServer) addOrgUserHelper(c *contextmodel.ReqContext, cmd org.AddOr
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) response.Response {
-	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
+	query := &org.SearchOrgUsersQuery{
 		OrgID: c.GetOrgID(),
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
-	})
+	}
+
+	ctx := c.Req.Context()
+	var result *org.SearchOrgUsersQueryResult
+	var err error
+	if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		result, err = hs.searchOrgUsersUsingK8s(c, query)
+	} else {
+		result, err = hs.searchOrgUsersHelper(c, query)
+	}
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)

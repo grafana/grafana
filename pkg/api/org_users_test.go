@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -828,5 +829,42 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		require.Len(t, res.OrgUsers, 1)
 		assert.Equal(t, int64(42), res.OrgUsers[0].UserID)
 		assert.Equal(t, int64(1), res.TotalCount)
+	})
+}
+
+func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
+	hits := []*user.UserSearchHitDTO{
+		{ID: 42, UID: "uid-one", Login: "jdoe", Email: "jdoe@example.com", Role: "Admin"},
+		{ID: 99, UID: "uid-two", Login: "other", Role: "Viewer"},
+	}
+	newHS := func() *HTTPServer {
+		return &HTTPServer{
+			Cfg: setting.NewCfg(),
+			userService: &usertest.FakeUserService{
+				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 2, Users: hits, Page: 1, PerPage: 1000},
+			},
+		}
+	}
+	reqCtx := func() *contextmodel.ReqContext {
+		return &contextmodel.ReqContext{
+			Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)},
+			SignedInUser: &user.SignedInUser{OrgID: 1, UserID: 1},
+		}
+	}
+
+	t.Run("reads users from the user service when kubernetesUsersRedirect is enabled", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		resp := newHS().GetOrgUsersForCurrentOrg(reqCtx())
+		normalResp, ok := resp.(*response.NormalResponse)
+		require.True(t, ok)
+		require.Equal(t, http.StatusOK, normalResp.Status())
+
+		var got []org.OrgUserDTO
+		require.NoError(t, json.Unmarshal(normalResp.Body(), &got))
+		require.Len(t, got, 2)
+		assert.Equal(t, "jdoe", got[0].Login)
+		assert.Equal(t, int64(42), got[0].UserID)
+		assert.Equal(t, "other", got[1].Login)
 	})
 }
