@@ -2116,15 +2116,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "pluginContainers",
-			Description:     "Enables running plugins in containers",
-			Stage:           FeatureStagePrivatePreview,
-			Owner:           grafanaCatalogSquad,
-			Expression:      "false",
-			RequiresRestart: true,
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "cdnPluginsLoadFirst",
 			Description: "Prioritize loading plugins from the CDN before other sources",
 			Stage:       FeatureStageExperimental,
