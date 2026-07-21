@@ -1,3 +1,20 @@
+<!-- 13.0.4 START -->
+
+# 13.0.4 (2026-07-21)
+
+### Features and enhancements
+
+- **Alerting:** Return 403 instead of 500 on contact point provenance mismatch [#127815](https://github.com/grafana/grafana/pull/127815), [@rwwiv](https://github.com/rwwiv)
+- **Go:** Update version to 1.26.5 [#128016](https://github.com/grafana/grafana/pull/128016), [@macabu](https://github.com/macabu)
+- **Provisioning:** Improve form errors for github connections [#128209](https://github.com/grafana/grafana/pull/128209), [@floriecai](https://github.com/floriecai)
+
+### Bug fixes
+
+- **Dashboard:** Fixes issue with interval variable with Auto value [#127053](https://github.com/grafana/grafana/pull/127053), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** make GitHub webhook creation idempotent (fix repos stuck unhealthy with HTTP 422) [#128196](https://github.com/grafana/grafana/pull/128196), [@floriecai](https://github.com/floriecai)
+- **alerting:** fix ORM table mapping bug causing SELECT alert_rule columns FROM user on PostgreSQL [#128751](https://github.com/grafana/grafana/pull/128751), [@dhananjay6561](https://github.com/dhananjay6561)
+
+<!-- 13.0.4 END -->
 <!-- 12.4.6 START -->
 
 # 12.4.6 (2026-07-21)
