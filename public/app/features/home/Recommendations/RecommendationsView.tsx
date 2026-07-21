@@ -207,6 +207,11 @@ function RecommendationCards({ recommendations, collapsed }: RecommendationCards
   );
 }
 
+// Tallest solution content measured to date (Hosted Traces with stats, sparkline and alert row).
+// A shared minimum keeps the row height stable when switching solutions; content taller than
+// this still expands the row.
+const CARD_MIN_HEIGHT = 340;
+
 const getStyles = (theme: GrafanaTheme2) => ({
   pills: css({
     [theme.breakpoints.down('md')]: {
@@ -234,6 +239,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(3, 4),
     position: 'relative',
     minWidth: 0,
+    minHeight: CARD_MIN_HEIGHT,
   }),
   recommended: css({
     '&::before': {
