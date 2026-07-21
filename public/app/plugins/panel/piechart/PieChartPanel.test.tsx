@@ -428,6 +428,48 @@ describe('PieChart mouse interactions', () => {
   });
 });
 
+describe('PieChart panel states', () => {
+  it('renders the error view instead of a chart when there are no data frames', () => {
+    setup({ data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] } });
+
+    // No chart: neither the viz layout nor any slice is rendered.
+    expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId('data testid Pie Chart Slice')).toHaveLength(0);
+  });
+
+  it('does not render the legend when showLegend is false', () => {
+    setup({
+      options: buildOptions({
+        legend: { displayMode: LegendDisplayMode.List, showLegend: false, placement: 'right', calcs: [], values: [] },
+      }),
+      data: { series: defaultSliceSeries },
+    });
+
+    // Slices still render; with the legend off and no display labels, series names appear nowhere.
+    expect(screen.getAllByTestId('data testid Pie Chart Slice')).toHaveLength(2);
+    expect(screen.queryByText('Chrome')).not.toBeInTheDocument();
+  });
+
+  it('shows the raw value in the legend when legend values include Value', () => {
+    // Table mode renders the value column; List mode would only show names.
+    setup({
+      options: buildOptions({
+        legend: {
+          displayMode: LegendDisplayMode.Table,
+          showLegend: true,
+          placement: 'right',
+          calcs: [],
+          values: [PieChartLegendValues.Value],
+        },
+      }),
+      data: { series: defaultSliceSeries },
+    });
+
+    expect(screen.getByText('Chrome')).toBeInTheDocument();
+    expect(screen.getByText('60')).toBeInTheDocument();
+  });
+});
+
 describe('comparePieChartItemsByValue', () => {
   const makeFieldDisplay = (n: number) => ({ display: { numeric: n } }) as unknown as FieldDisplay;
 
