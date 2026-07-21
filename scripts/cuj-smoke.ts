@@ -6,10 +6,10 @@
  * whatever collector the local Grafana is wired to (see conf/custom.ini).
  *
  * Usage:
- *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 20
- *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 5 --headed
- *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 10 --scenario discarded
- *   node --experimental-strip-types scripts/cuj-smoke.ts --journeys search_to_resource
+ *   node scripts/cuj-smoke.ts --runs 20
+ *   node scripts/cuj-smoke.ts --runs 5 --headed
+ *   node scripts/cuj-smoke.ts --runs 10 --scenario discarded
+ *   node scripts/cuj-smoke.ts --journeys search_to_resource
  *
  * Requires: local Grafana running on $GRAFANA_URL (default localhost:3000)
  * with the cujTracking feature toggle enabled and Faro tracing wired in
