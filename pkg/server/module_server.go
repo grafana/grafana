@@ -38,6 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
+	rerankprovider "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"go.opentelemetry.io/otel"
@@ -160,6 +162,7 @@ type ModuleServer struct {
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
 	embedder         *embedder.Embedder
+	reranker         *rerank.Reranker
 	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
@@ -407,7 +410,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 	if dashboardStats != nil {
 		serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
 	}
-	svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.searchClient, s.grpcService, serviceOptions...)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.searchClient, s.grpcService, serviceOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -438,7 +441,7 @@ func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.grpcService, s.StorageServiceOptions...)
+	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, s.StorageServiceOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -476,6 +479,13 @@ func (s *ModuleServer) initUnifiedVectorBackend(storageServerEnabled bool) func(
 				return nil, err
 			}
 			s.embedder = e
+		}
+		if s.reranker == nil {
+			r, err := rerankprovider.ProvideReranker(s.cfg, s.vectorMetrics)
+			if err != nil {
+				return nil, err
+			}
+			s.reranker = r
 		}
 		return services.NewIdleService(nil, nil).WithName(modules.UnifiedVectorBackend), nil
 	}
