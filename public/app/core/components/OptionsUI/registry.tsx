@@ -31,7 +31,6 @@ import {
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
@@ -440,11 +439,7 @@ export const getAllStandardFieldConfigs = () => {
     name: t('options-ui.registry.standard-field-configs.name-thresholds', 'Thresholds'),
     editor: standardEditorsRegistry.get('thresholds').editor,
     override: standardEditorsRegistry.get('thresholds').editor,
-    // the flag must be evaluated per call, not at registry-build time: flag values load async during boot
-    process: (value, context, settings) =>
-      getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsThresholdsInterpolation, false)
-        ? thresholdsOverrideProcessor(value, context, settings)
-        : value,
+    process: thresholdsOverrideProcessor,
     settings: {},
     defaultValue: {
       mode: ThresholdsMode.Absolute,

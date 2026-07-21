@@ -20,7 +20,6 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -89,33 +88,6 @@ async function tick() {
 }
 
 describe('Variables in panel threshold steps (dashboard scene)', () => {
-  beforeEach(() => {
-    setTestFlags({ 'dashboards.thresholdsInterpolation': true });
-  });
-
-  it('leaves threshold steps untouched when the feature toggle is disabled', async () => {
-    setTestFlags({ 'dashboards.thresholdsInterpolation': false });
-
-    const warnVariable = new CustomVariable({ name: 'warn', query: '80,85', value: '80', text: '80' });
-    const steps = [
-      { value: -Infinity, color: 'green' },
-      { value: 90, color: 'red' },
-      { value: 40, valueExpr: '$warn', color: 'orange' },
-    ];
-    const panel = buildPanel({
-      thresholds: { mode: ThresholdsMode.Absolute, steps },
-    });
-    const scene = buildScene(panel, new SceneVariableSet({ variables: [warnVariable] }));
-
-    const deactivate = activateFullSceneTree(scene);
-    await tick();
-
-    const processed = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!);
-    expect(processed.series[0].fields[0].config.thresholds?.steps).toEqual(steps);
-
-    deactivate();
-  });
-
   it('resolves valueExpr through the real sceneGraph.interpolate path and updates on variable change', async () => {
     const warnVariable = new CustomVariable({ name: 'warn', query: '80,85', value: '80', text: '80' });
     const panel = buildPanel({
