@@ -3,6 +3,7 @@ import { debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type QueryEditorProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   Button,
   FileDropzone,
@@ -10,11 +11,11 @@ import {
   InlineFieldRow,
   Stack,
   Modal,
-  QueryInput,
   RadioButtonGroup,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { CodeMirrorEditor, getQueryFieldConfig } from '@grafana/ui/unstable';
 
 import { type JaegerDatasource } from '../datasource';
 import { type JaegerQuery, type JaegerQueryType } from '../types';
@@ -24,6 +25,9 @@ import { SearchForm } from './SearchForm';
 type Props = QueryEditorProps<JaegerDatasource, JaegerQuery>;
 
 function TraceIdEditor({ query, onChange, onRunQuery }: Pick<Props, 'query' | 'onChange' | 'onRunQuery'>) {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+
   const queryRef = useRef(query);
   queryRef.current = query;
   const onChangeRef = useRef(onChange);
@@ -98,15 +102,27 @@ function TraceIdEditor({ query, onChange, onRunQuery }: Pick<Props, 'query' | 'o
     }
   }, [updateQuery]);
 
+  const config = useMemo(
+    () =>
+      getQueryFieldConfig(theme, {
+        placeholder: 'Enter a Trace ID (run with Shift+Enter)',
+        onRunQuery: runQuery,
+        onBlur: handleBlur,
+      }),
+    [theme, runQuery, handleBlur]
+  );
+
   return (
-    <QueryInput
-      value={query.query ?? ''}
-      onChange={handleChange}
-      placeholder="Enter a Trace ID (run with Shift+Enter)"
-      onRunQuery={runQuery}
-      onBlur={handleBlur}
-      aria-label="Trace ID"
-    />
+    <div className={styles.traceIdEditor} data-testid={selectors.components.QueryField.container}>
+      <CodeMirrorEditor
+        value={query.query ?? ''}
+        onChange={handleChange}
+        height="auto"
+        indentWithTab={false}
+        aria-label="Trace ID"
+        {...config}
+      />
+    </div>
   );
 }
 
@@ -189,6 +205,9 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
 const getStyles = () => ({
   container: css({
+    width: '100%',
+  }),
+  traceIdEditor: css({
     width: '100%',
   }),
 });
