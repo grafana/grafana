@@ -393,7 +393,7 @@ export function SaveProvisionedDashboardForm({
 
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
-      : isNew || saveAsCopy
+      : isNew
         ? dashboard.getSaveResource({
             isNew,
             title,
@@ -408,11 +408,11 @@ export function SaveProvisionedDashboardForm({
           // shown in the drawer. This mirrors the non-provisioned save path.
           dashboard.getSaveResourceFromSpec(changeInfo.changedSaveModel);
 
-    savedSpecRef.current = rawDashboardJSON
-      ? rawDashboardJSON
-      : isNew || saveAsCopy
-        ? dashboard.getSaveAsModel({ isNew, title, description, copyTags, saveAsCopy })
-        : changeInfo.changedSaveModel;
+    // Single source of truth: baseline against exactly the spec we committed, so
+    // post-save change detection matches what was written (handleDismiss → saveCompleted).
+    // Deriving from body.spec avoids re-running getSaveAsModel() on the new/save-as path.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    savedSpecRef.current = body.spec as Dashboard | DashboardV2Spec;
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,

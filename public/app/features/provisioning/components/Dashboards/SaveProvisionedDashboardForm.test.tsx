@@ -462,9 +462,14 @@ describe('SaveProvisionedDashboardForm', () => {
       changeInfo: {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         changedSaveModel: trimmedSaveModel as unknown as Dashboard,
+        // Distinct baseline (old title) so the fixture reads coherently: an existing
+        // dashboard with a real, saved change.
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        initialSaveModel: trimmedSaveModel as unknown as Dashboard,
-        diffCount: 0,
+        initialSaveModel: {
+          title: 'Original Dashboard',
+          templating: { list: [{ name: 'v', current: { value: 'original' } }] },
+        } as unknown as Dashboard,
+        diffCount: 1,
         hasChanges: true,
         hasTimeChanges: false,
         hasVariableValueChanges: false,
