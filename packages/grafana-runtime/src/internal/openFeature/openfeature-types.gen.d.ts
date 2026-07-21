@@ -37,6 +37,7 @@ declare module "@openfeature/core" {
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
+    | "grafana.newTextPanel"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
     | "globalDashboardVariables"
@@ -76,6 +77,7 @@ declare module "@openfeature/core" {
     | "grafana.growthHomepage"
     | "grafana.onDemandDiagnostics"
     | "grafana.multiTenantNavTree"
+    | "grafana.exploreMetricsSidebar"
     | "dashboards.thresholdsInterpolation";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

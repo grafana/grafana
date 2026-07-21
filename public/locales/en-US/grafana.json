@@ -10718,7 +10718,6 @@
     "name-reverse": "Reverse",
     "name-scale": "Scale",
     "name-scheme": "Scheme",
-    "name-show-color-scale": "Show color scale",
     "name-show-histogram": "Show histogram (Y axis)",
     "name-show-legend": "Show legend",
     "name-start-color-from-value": "Start color scale from value",
@@ -10788,6 +10787,7 @@
       "change-theme": "Change theme",
       "collapse-all-rows": "Collapse all rows",
       "copy-panel": "Copy Panel",
+      "copy-share-link": "Copy panel share link",
       "copy-time-range": "Copy time range",
       "dashboard-settings": "Dashboard settings",
       "duplicate-panel": "Duplicate Panel",
@@ -10806,7 +10806,6 @@
       "open-assistant": "Open Assistant",
       "open-search": "Open search",
       "open-share-embed-drawer": "Share panel embed",
-      "open-share-link-drawer": "Share panel link",
       "open-shared-modal": "Share panel snapshot",
       "paste-panel": "Paste Panel",
       "paste-time-range": "Paste time range",
@@ -15541,6 +15540,9 @@
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
+    "frame-picker": {
+      "label": "Query"
+    },
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
