@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -215,6 +216,9 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 			}
 			return nil, false, err
 		}
+	} else {
+		logging.FromContext(ctx).Debug("Skipping in-process alert rule and library element cleanup",
+			"folder", name, "has_contents_deleter", s.contentsDeleter != nil, "dry_run", len(options.DryRun) > 0)
 	}
 
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
@@ -377,6 +381,7 @@ func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, us
 	if s.accessClient == nil {
 		return nil
 	}
+	logging.FromContext(ctx).Debug("Evaluating contained-resource delete permissions", "folder", folderUID)
 	folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
 	// Root folders carry an empty parent annotation; RBAC treats "" as no folder context, so a user
 	// who only inherits folders:write from General would be wrongly denied. Normalize to General.
