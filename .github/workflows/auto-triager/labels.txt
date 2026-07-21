@@ -101,7 +101,6 @@ datasource/Elasticsearch
 datasource/GitHub
 datasource/GoogleCloudMonitoring
 datasource/GoogleSheets
-datasource/grafana-pyroscope
 datasource/Graphite
 datasource/InfluxDB
 datasource/Jaeger

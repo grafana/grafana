@@ -58,7 +58,9 @@ import {
 export function sceneVariablesSetToVariables(
   set: SceneVariables,
   keepQueryOptions?: boolean,
-  excludedVariable?: SceneObject
+  excludedVariable?: SceneObject,
+  /** Include variables with `origin` (e.g. predefined global/folder). Default excludes them for persistence. */
+  includeRuntimeVariables?: boolean
 ) {
   const variables: VariableModel[] = [];
 
@@ -66,9 +68,9 @@ export function sceneVariablesSetToVariables(
     if (excludedVariable !== undefined && variable === excludedVariable) {
       continue;
     }
-    // Skipping default variables
+    // Skipping default / predefined variables unless the caller wants runtime listing
     // (Default variables don't get persisted to the JSON schema.)
-    if (variable.state.origin !== undefined) {
+    if (!includeRuntimeVariables && variable.state.origin !== undefined) {
       continue;
     }
 

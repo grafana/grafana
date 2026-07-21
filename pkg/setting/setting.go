@@ -196,7 +196,6 @@ type Cfg struct {
 	ProvisioningLokiTenantID                  string
 	ProvisioningMaxResourcesPerRepository     int64         // 0 = unlimited
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
-	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
@@ -208,6 +207,7 @@ type Cfg struct {
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
+	MarketplaceLicenseDirectory               string
 	// PluginsPaths: list of paths where Grafana will look for plugins.
 	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
 	PluginsPaths []string
@@ -850,6 +850,11 @@ type Cfg struct {
 	TenantDeleterDryRun           bool
 	TenantDeleterInterval         time.Duration
 
+	ManifestApiServerAddress        string
+	ManifestWatcherAllowInsecureTLS bool
+	ManifestWatcherCAFile           string
+	ManifestWatcherPollInterval     time.Duration
+
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
 
@@ -1125,7 +1130,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg.Raw)
+	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg)
 	if err != nil {
 		return err
 	}
@@ -1769,6 +1774,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
+	marketplace := iniFile.Section("marketplace")
+	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
 
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
@@ -2547,7 +2554,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
-	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)

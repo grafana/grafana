@@ -1546,6 +1546,10 @@ export type HealthStatus = {
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
   message?: string[];
 };
+export type TokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
 export type ConnectionStatus = {
   /** Conditions represent the latest available observations of the connection's state. */
   conditions?: Condition[];
@@ -1555,6 +1559,8 @@ export type ConnectionStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
+  /** Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable. */
+  token?: TokenStatus;
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1650,12 +1656,16 @@ export type FixFolderMetadataJobOptions = {
   ref?: string;
 };
 export type MigrateJobOptions = {
+  /** Target branch for the migration (git only). When set to a branch other than the repository's configured branch, the migration writes the exported resources to that branch (a pull request workflow) and removes the migrated resources from the instance instead of taking ownership of them — they return as managed resources once the branch is merged and a regular sync runs on the configured branch. When empty (or equal to the configured branch), the migration writes directly to the configured branch and takes ownership of the exported resources. */
+  branch?: string;
   /** GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written. */
   generateNewFolderIDs?: boolean;
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
   resources?: ResourceRef[];
+  /** SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place. */
+  skipResourceDeletion?: boolean;
 };
 export type MoveJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
@@ -1695,6 +1705,13 @@ export type ExportJobOptions = {
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
   resources?: ResourceRef[];
 };
+export type Duration = string;
+export type TestJobOptions = {
+  /** Duration is how long the job should sleep before completing, expressed as a Go duration string (for example "10s" or "2m"). It must be positive and is capped by the server to keep a single job's runtime predictable. */
+  duration?: Duration;
+  /** ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default. */
+  progressUpdates?: number;
+};
 export type JobSpec = {
   /** Possible enum values:
      - `"delete"` deletes files in the remote repository
@@ -1705,7 +1722,8 @@ export type JobSpec = {
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch.
-     - `"releaseResources"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set. */
+     - `"releaseResources"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.
+     - `"test"` is a synthetic job that does no real work: it simply sleeps for a configurable duration and then completes successfully. It exists only to generate controlled load on the job queue and controllers for performance testing, and is gated behind the provisioning.performance feature flag. */
   action:
     | 'delete'
     | 'deleteResources'
@@ -1715,7 +1733,8 @@ export type JobSpec = {
     | 'pr'
     | 'pull'
     | 'push'
-    | 'releaseResources';
+    | 'releaseResources'
+    | 'test';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
   /** Options when the action is `fix-folder-metadata` */
@@ -1734,6 +1753,8 @@ export type JobSpec = {
   push?: ExportJobOptions;
   /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
   repository?: string;
+  /** Required when the action is `test` */
+  test?: TestJobOptions;
 };
 export type JobResourceSummary = {
   create?: number;
@@ -1811,6 +1832,8 @@ export type SecureValues = {
 export type BitbucketRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
+  /** Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks. */
+  email?: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
@@ -1877,8 +1900,6 @@ export type GitHubRepositoryConfig = {
 export type GitHubEnterpriseRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Whether we should show dashboard previews for pull requests. */
-  generateDashboardPreviews?: boolean;
   /** Path is the subdirectory for the Grafana data inside the repository. */
   path?: string;
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
@@ -1902,6 +1923,8 @@ export type LocalRepositoryConfig = {
 export type PullRequestOptions = {
   /** When true, the PR title field in Save drawers is read-only. */
   enforceTemplate?: boolean;
+  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
+  generateDashboardPreviews?: boolean;
   /** Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used. */
   titleTemplate?: string;
 };
@@ -2002,16 +2025,13 @@ export type SyncStatus = {
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
-export type TokenStatus = {
-  expiration?: number;
-  lastUpdated?: number;
-};
 export type WebhookStatus = {
   id?: number;
   lastEvent?: number;
   lastRotated?: number;
   subscribedEvents?: string[];
   url?: string;
+  uuid?: string;
 };
 export type RepositoryStatus = {
   /** Conditions represent the latest available observations of the repository's state. */

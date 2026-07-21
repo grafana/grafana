@@ -11,7 +11,10 @@ interface ThemeableStoryProps {
   handleSassThemeChange: SassThemeChangeHandler;
 }
 const ThemeableStory = ({ children, handleSassThemeChange, themeId }: React.PropsWithChildren<ThemeableStoryProps>) => {
-  const theme = getThemeById(themeId);
+  let theme = getThemeById(themeId);
+  if (theme.name === 'Visual Refresh (Light)' || theme.name === 'Visual Refresh (Dark)') {
+    theme.flags.visualDesignRefresh = true;
+  }
 
   handleSassThemeChange(theme);
 

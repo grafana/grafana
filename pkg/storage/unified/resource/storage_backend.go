@@ -130,8 +130,9 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors    *prometheus.CounterVec
-	EventEmitFailures *prometheus.CounterVec
+	ConflictErrors      *prometheus.CounterVec
+	EventEmitFailures   *prometheus.CounterVec
+	NatsNotifierDropped *prometheus.CounterVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -146,6 +147,10 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name:      "event_emit_after_commit_failures_total",
 			Help:      "Total number of writes whose data was committed but whose event failed to be emitted",
 		}, []string{"resource", "action"}),
+		NatsNotifierDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_nats_notifier_dropped_events_total",
+			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
+		}, []string{"reason"}),
 	}
 }
 
@@ -181,8 +186,20 @@ type KVBackend interface {
 	LeaseManager() *lease.Manager
 }
 
+// ExperimentalKVOptions carries an alternative KV plus per-use-case flags
+// selecting which backend components use it.
+type ExperimentalKVOptions struct {
+	KV KV
+	// TenantMetadata stores tenant pending-delete metadata (written by
+	// the tenant watcher, read by the tenant deleter) in KV instead of KvStore.
+	TenantMetadata bool
+}
+
 type KVBackendOptions struct {
-	KvStore              KV
+	KvStore KV
+	// ExperimentalKV, when set, routes flagged use-cases to an alternative KV.
+	// Nil preserves existing behavior.
+	ExperimentalKV       *ExperimentalKVOptions
 	DisablePruner        bool
 	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
@@ -206,6 +223,10 @@ type KVBackendOptions struct {
 	// metrics only, never feeds the watch pipeline. Requires EventSubscriber set
 	// and enabled.
 	EnableNatsNotifierShadow bool
+	// EnableNatsNotifier feeds the watch pipeline directly from the bus instead of
+	// polling. Requires EventSubscriber set and enabled; falls back to the
+	// polling notifier otherwise.
+	EnableNatsNotifier bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -261,6 +282,11 @@ func getSnowflakeNode() (*snowflake.Node, error) {
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	kv := opts.KvStore
+	pdKV := opts.KvStore
+	if opts.ExperimentalKV != nil && opts.ExperimentalKV.TenantMetadata {
+		pdKV = opts.ExperimentalKV.KV
+	}
+	pds := newPendingDeleteStore(pdKV)
 
 	logger := opts.Log
 	if opts.Log == nil {
@@ -307,11 +333,17 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	backend := &kvStorageBackend{
-		kv:                      kv,
-		bulkLock:                NewBulkLock(),
-		dataStore:               newDataStore(kv, metrics),
-		eventStore:              eventStore,
-		notifier:                newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		kv:         kv,
+		bulkLock:   NewBulkLock(),
+		dataStore:  newDataStore(kv, metrics),
+		eventStore: eventStore,
+		notifier: newNotifier(eventStore, notifierOptions{
+			log:                logger,
+			useChannelNotifier: opts.UseChannelNotifier,
+			enableNatsNotifier: opts.EnableNatsNotifier,
+			eventSubscriber:    opts.EventSubscriber,
+			natsDropped:        metrics.NatsNotifierDropped,
+		}),
 		eventPublisher:          opts.EventPublisher,
 		watchOpts:               opts.WatchOptions.normalize(),
 		snowflake:               s,
@@ -345,7 +377,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant watcher.
 	if opts.TenantWatcherConfig != nil {
-		tw, err := NewTenantWatcher(ctx, backend.dataStore, func(ctx context.Context, event *WriteEvent) (int64, error) {
+		tw, err := NewTenantWatcher(ctx, backend.dataStore, pds, func(ctx context.Context, event *WriteEvent) (int64, error) {
 			return backend.WriteEvent(ctx, *event)
 		}, *opts.TenantWatcherConfig)
 		if err != nil {
@@ -356,7 +388,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant deleter.
 	if opts.TenantDeleterConfig != nil {
-		td := NewTenantDeleter(backend.dataStore, newPendingDeleteStore(backend.kv), *opts.TenantDeleterConfig)
+		td := NewTenantDeleter(backend.dataStore, pds, *opts.TenantDeleterConfig)
 		td.Start(ctx)
 		backend.tenantDeleter = td
 	}

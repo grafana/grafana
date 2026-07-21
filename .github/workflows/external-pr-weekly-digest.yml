@@ -1,5 +1,10 @@
 name: External PR Weekly Digest
 
+# Thin wiring. Mints a community-triage token via the broker, checks out the
+# private logic repo (scripts + docker + skills) at a pinned SHA into
+# ./community-triage/, and runs the digest from there. The consumer repo source
+# is mounted into the Oz container as /repo; config is resolved at the root.
+
 on:
   schedule:
     - cron: '0 9 * * 1'
@@ -19,20 +24,29 @@ on:
         description: 'Filter to specific team (leave empty for all)'
         required: false
         type: string
+        default: ''
 
 permissions: {}
 
 env:
+  # community-triage logic version this repo is pinned to. Bump deliberately;
+  # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
+  TRIAGE_REF: da6b3f7224d74c43d89374af39fc048911ea110b # trufflehog:ignore
   STALE_THRESHOLD_DAYS: ${{ inputs.stale_days || 30 }}
+
+concurrency:
+  group: pr-weekly-digest
+  cancel-in-progress: false
 
 jobs:
   report:
-    runs-on: ubuntu-arm64-small
-    environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
+    name: Generate PR weekly digest
+    runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pull-requests: read
-      id-token: write
+      contents: read      # checkout config + community-triage logic
+      pull-requests: read # query open external PRs
+      id-token: write     # vault OIDC + broker token exchange
+    environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
 
     steps:
       - name: Validate manual trigger
@@ -40,35 +54,60 @@ jobs:
         env:
           ACTOR: ${{ github.actor }}
           TEAM_FILTER: ${{ inputs.team_filter }}
+          STALE_DAYS: ${{ inputs.stale_days }}
         run: |
           echo "::notice::Manual trigger by $ACTOR"
+          # Validate dispatch inputs before they flow into env/scripts downstream.
+          # SECURITY-REVIEW.md #4. (Already env-passed, never inlined into run:.)
+          if [ -n "$STALE_DAYS" ] && ! [[ "$STALE_DAYS" =~ ^[0-9]+$ ]]; then
+            echo "::error::stale_days must be a positive integer: $STALE_DAYS"
+            exit 1
+          fi
+          if [ -n "$TEAM_FILTER" ] && ! [[ "$TEAM_FILTER" =~ ^[a-z0-9-]+(,[a-z0-9-]+)*$ ]]; then
+            echo "::error::team_filter must be comma-separated [a-z0-9-] names: $TEAM_FILTER"
+            exit 1
+          fi
           if [ -n "$TEAM_FILTER" ]; then
             echo "::notice::Team filter: $TEAM_FILTER"
           else
             echo "::notice::No team filter - will process all enabled teams"
           fi
 
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Checkout this repo (config + review source)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
+
+      - name: Mint token for community-triage
+        id: triage-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@580590a644e82e79bb2598bdaba0be245a14dda0  # create-github-app-token/v0.2.2
+        with:
+          github_app: grafana-community-triage
+
+      - name: Checkout community-triage logic (pinned by SHA)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: grafana/community-triage
+          ref: ${{ env.TRIAGE_REF }}
+          path: community-triage
+          token: ${{ steps.triage-token.outputs.token }}
+          persist-credentials: false
           sparse-checkout: |
-            .github/team-notifications-config.json
-            .github/CODEOWNERS
-            .github/workflows/scripts/utils.mts
-            .github/workflows/scripts/pr-digest.mts
+            .github/workflows/scripts
+            docker
+            .agents
 
       - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
           node-version: '22'
 
       - name: Get vault secrets
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@c2f1df59dba624b3fd509e5181aa8da5217120c0 # main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
         with:
           repo_secrets: |
-            OPENAI_API_KEY=community-openai:key
+            WARP_API_KEY=community-warp:key
             SLACK_BOT_TOKEN=community-slack-bot:token
             SLACK_CHANNELS=community-slack-channels:map
 
@@ -76,21 +115,108 @@ jobs:
         id: fetch-prs
         env:
           GH_TOKEN: ${{ github.token }}
+          ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-digest.mts fetch
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-digest.mts fetch
+
+      - name: Build analysis container
+        if: steps.fetch-prs.outputs.external_prs == 'true'
+        run: docker build -t oz-review ./community-triage/docker/oz-review/
+
+      - name: Stage clean repo mount
+        if: steps.fetch-prs.outputs.external_prs == 'true'
+        run: |
+          rsync -a --exclude='.git' --exclude='community-triage' "${GITHUB_WORKSPACE}/" /tmp/repo-clean/
+          # Overlay the analysis skills from community-triage so the Oz entrypoint
+          # (which copies /repo/.agents into its workspace) finds digest-pr-analysis.
+          cp -r ./community-triage/.agents /tmp/repo-clean/.agents
+          echo "Staged repo: $(find /tmp/repo-clean -type f | wc -l) files (no .git)"
+
+      - name: Restrict container egress to Warp API
+        id: egress
+        if: steps.fetch-prs.outputs.external_prs == 'true'
+        run: |
+          WARP_IPS=$(dig +short app.warp.dev A | head -3)
+          echo "Resolved app.warp.dev → $WARP_IPS"
+
+          # Pin one resolved IPv4 and expose it for --add-host on the container,
+          # so the container needs NO DNS. DNS egress is then dropped (no port-53
+          # ACCEPT below) to close the DNS-exfiltration channel — SECURITY-REVIEW.md #2.
+          WARP_IP=$(printf '%s\n' "$WARP_IPS" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' | head -1)
+          if [ -z "$WARP_IP" ]; then
+            echo "::error::could not resolve app.warp.dev to an IPv4 address"
+            exit 1
+          fi
+          printf 'warp_ip=%s\n' "$WARP_IP" >> "$GITHUB_OUTPUT"
+
+          sudo iptables -N OZ_EGRESS 2>/dev/null || sudo iptables -F OZ_EGRESS
+          sudo iptables -A OZ_EGRESS -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+          # shellcheck disable=SC2086
+          for ip in $WARP_IPS; do
+            sudo iptables -A OZ_EGRESS -d "$ip" -j ACCEPT
+            echo "Allowed: $ip"
+          done
+          sudo iptables -A OZ_EGRESS -j REJECT --reject-with icmp-net-unreachable
+
+          sudo iptables -I DOCKER-USER -j OZ_EGRESS
+
+      - name: Run PR digest analysis in Docker
+        id: digest-analysis
+        if: steps.fetch-prs.outputs.external_prs == 'true' && env.WARP_API_KEY != ''
+        continue-on-error: true
+        env:
+          WARP_IP: ${{ steps.egress.outputs.warp_ip }}
+          DATA_FILE: ${{ steps.fetch-prs.outputs.data_file }}
+        run: |
+          mkdir -p /tmp/oz-output /tmp/oz-context
+
+          cp "$DATA_FILE" /tmp/oz-context/prs.json
+          chmod -R a+rX /tmp/repo-clean /tmp/oz-context
+          chmod 777 /tmp/oz-output
+
+          docker run --rm \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=256 \
+            --memory=2g \
+            --add-host "app.warp.dev:${WARP_IP}" \
+            -v "/tmp/repo-clean:/repo:ro" \
+            -v "/tmp/oz-context:/context:ro" \
+            -v "/tmp/oz-output:/output" \
+            -e WARP_API_KEY="${WARP_API_KEY}" \
+            -e OZ_MODEL="claude-4-8-opus-high" \
+            -e OZ_SKILL="digest-pr-analysis" \
+            -e OZ_PROMPT="Analyze the open external pull requests in prs.json. Use the repository source at /repo to understand code relationships. Output analysis.json with insights." \
+            oz-review
+
+          if [ -f /tmp/oz-output/analysis.json ]; then
+            cp /tmp/oz-output/analysis.json .
+            echo "analysis_file=analysis.json" >> "$GITHUB_OUTPUT"
+            echo "Agent analysis captured"
+          else
+            echo "WARNING: No analysis.json from container"
+            echo "analysis_file=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Clean up egress rules
+        if: always()
+        run: |
+          sudo iptables -D DOCKER-USER -j OZ_EGRESS 2>/dev/null || true
+          sudo iptables -F OZ_EGRESS 2>/dev/null || true
+          sudo iptables -X OZ_EGRESS 2>/dev/null || true
 
       - name: Process teams and send reports
         if: steps.fetch-prs.outputs.external_prs == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
           STALE_DAYS: ${{ env.STALE_THRESHOLD_DAYS }}
           REPO: ${{ github.repository }}
           DATA_FILE: ${{ steps.fetch-prs.outputs.data_file }}
+          ANALYSIS_FILE: ${{ steps.digest-analysis.outputs.analysis_file || '' }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-digest.mts process
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-digest.mts process
 
       - name: No PRs summary
         if: steps.fetch-prs.outputs.external_prs != 'true'

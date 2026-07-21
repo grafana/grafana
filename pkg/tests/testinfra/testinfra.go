@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -889,12 +890,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))
 		require.NoError(t, err)
 	}
-	if opts.ProvisioningFolderAPIVersion != "" {
-		provisioningSect, err := getOrCreateSection("provisioning")
-		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
-		require.NoError(t, err)
-	}
 	// nil means "use the ini default" (100). Non-nil writes the value, including
 	// 0 which disables the size check.
 	if opts.ProvisioningMaxIncrementalChanges != nil {
@@ -1024,7 +1019,11 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	maxConns := opts.DBMaxConns
 	if maxConns <= 0 {
-		maxConns = 2
+		// Keep the pool small to surface connection leaks, but not so small that
+		// startup deadlocks: while migrating, the migrator can hold one connection
+		// on the database lock while each migration's transaction needs a second,
+		// and other startup components share the same pool.
+		maxConns = 5
 	}
 
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
@@ -1100,7 +1099,6 @@ type GrafanaOpts struct {
 	ProvisioningResources                                []string
 	ProvisioningMaxResourcesPerRepository                int64
 	ProvisioningMaxRepositories                          int64
-	ProvisioningFolderAPIVersion                         string
 	ProvisioningMaxIncrementalChanges                    *int
 	ProvisioningMaxFileSize                              *int64
 	// ProvisioningControllerResyncInterval overrides [provisioning]
@@ -1187,7 +1185,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

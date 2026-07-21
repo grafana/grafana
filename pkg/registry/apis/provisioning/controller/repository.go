@@ -102,7 +102,6 @@ func NewRepositoryController(
 	quotaGetter quotas.QuotaGetter,
 	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
-	folderAPIVersion string,
 	webhookSecretRotationInterval time.Duration,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
@@ -123,11 +122,10 @@ func NewRepositoryController(
 		quotaChecker:      quotaChecker,
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
-			lister:           resourceLister,
-			clientFactory:    clients,
-			metrics:          &finalizerMetrics,
-			maxWorkers:       parallelOperations,
-			folderAPIVersion: folderAPIVersion,
+			lister:        resourceLister,
+			clientFactory: clients,
+			metrics:       &finalizerMetrics,
+			maxWorkers:    parallelOperations,
 		},
 		jobs:                          jobs,
 		logger:                        logging.DefaultLogger.With("logger", loggerName),
@@ -662,7 +660,7 @@ func (rc *RepositoryController) process(key string) error {
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		logger.Info("quota changed", "quota", newQuota)
-	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
+	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
 		logger.Info("webhook missing, reconciling")
 	case shouldRotateWebhookSecret:
 		logger.Info("webhook secret rotation due")
@@ -714,7 +712,47 @@ func (rc *RepositoryController) process(key string) error {
 
 	repo, err := rc.repoFactory.Build(ctx, obj)
 	if err != nil {
-		return fmt.Errorf("unable to create repository from configuration: %w", err)
+		// The token references a stored secret that could not be decrypted (e.g. an
+		// orphaned reference whose secret was deleted). When the token is minted from a
+		// connection, regenerate it and rebuild rather than failing the reconcile forever.
+		// shouldGenerateToken being false guarantees we did not already mint one this pass.
+		if errors.Is(err, repository.ErrTokenNotFound) && !shouldGenerateToken &&
+			obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+			// If we wrote a token for this repository very recently, its secret may not be
+			// readable from the store yet. Wait for it rather than regenerating, which would
+			// delete it and can loop under secret-store read-after-write lag.
+			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
+				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
+				rc.queue.AddAfter(key, tokenWriteRetryDelay)
+				return nil
+			}
+
+			logger.Warn("repository token secret could not be decrypted, regenerating from connection",
+				"connection", obj.Spec.Connection.Name, "error", err)
+
+			c, cerr := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+			if cerr != nil {
+				return fmt.Errorf("retrieving connection to regenerate token: %w", cerr)
+			}
+
+			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
+			if gerr != nil {
+				return fmt.Errorf("regenerating repository token: %w", gerr)
+			}
+
+			if len(tokenOps) > 0 {
+				patchOperations = append(patchOperations, tokenOps...)
+			}
+			// Work on a copy so we don't mutate the shared informer-cache object, and
+			// overwrite the whole value so the stale reference name is cleared too.
+			obj = obj.DeepCopy()
+			obj.Secure.Token = common.InlineSecureValue{Create: token}
+
+			repo, err = rc.repoFactory.Build(ctx, obj)
+		}
+		if err != nil {
+			return fmt.Errorf("unable to create repository from configuration: %w", err)
+		}
 	}
 
 	// Handle hooks - may return early if hooks fail
@@ -833,7 +871,7 @@ func (rc *RepositoryController) process(key string) error {
 // Returns hook operations, whether processing should continue, and any error
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
-		(obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0)
+		repository.GetID(obj.Status.Webhook).IsEmpty()
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
@@ -871,7 +909,7 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	if len(obj.Spec.Workflows) == 0 {
 		return false
 	}
-	if obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0 {
+	if repository.GetID(obj.Status.Webhook).IsEmpty() {
 		return false
 	}
 	if obj.Status.Webhook.LastRotated == 0 {

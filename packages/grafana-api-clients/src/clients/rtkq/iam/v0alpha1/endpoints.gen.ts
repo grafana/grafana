@@ -432,6 +432,10 @@ const injectedRtkApi = api
         }),
         providesTags: ['User'],
       }),
+      getCurrentUserDisplay: build.query<GetCurrentUserDisplayApiResponse, GetCurrentUserDisplayApiArg>({
+        query: () => ({ url: `/users/~` }),
+        providesTags: ['Display'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -888,6 +892,8 @@ export type GetUserTeamsApiArg = {
   /** Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail. */
   continue?: string;
 };
+export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ Display;
+export type GetCurrentUserDisplayApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1296,4 +1302,6 @@ export const {
   useUpdateUserStatusMutation,
   useGetUserTeamsQuery,
   useLazyGetUserTeamsQuery,
+  useGetCurrentUserDisplayQuery,
+  useLazyGetCurrentUserDisplayQuery,
 } = injectedRtkApi;

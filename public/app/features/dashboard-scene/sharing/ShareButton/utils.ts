@@ -26,11 +26,15 @@ export const buildShareUrl = async (dashboard: DashboardScene, panel?: VizPanel)
     shortenURL: useShortUrl,
     shareResource: getTrackingSource(panel?.getRef()),
   });
-  return await createAndCopyShareDashboardLink(dashboard, {
-    useAbsoluteTimeRange,
-    theme,
-    useShortUrl,
-  });
+  return await createAndCopyShareDashboardLink(
+    dashboard,
+    {
+      useAbsoluteTimeRange,
+      theme,
+      useShortUrl,
+    },
+    panel
+  );
 };
 
 const SHARE_LINK_CONFIGURATION = 'grafana.dashboard.link.shareConfiguration';
