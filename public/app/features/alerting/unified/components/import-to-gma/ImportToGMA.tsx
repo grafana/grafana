@@ -21,8 +21,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -60,6 +58,7 @@ import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { StepImportMethod, isAutoSyncSegmentEnabled } from './steps/StepImportMethod';
 import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
+import { useCanImportToGMA } from './useCanImportToGMA';
 import {
   buildRoutingParams,
   filterRulerRulesConfig,
@@ -241,10 +240,7 @@ function ImportWizardContent() {
   const [step1Completed, step1Skipped] = watch(['step1Completed', 'step1Skipped']);
 
   // Permission checks aligned with backend authorization.go
-  const canImportNotifications = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
-  const canImportRules =
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
+  const { canImportNotifications, canImportRules } = useCanImportToGMA();
 
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(() => {

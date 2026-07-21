@@ -22,7 +22,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
-	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -50,7 +49,7 @@ func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service, exchanger au
 	}
 
 	nsMapper := request.GetNamespaceMapper(cfg)
-	restCfg := buildRESTConfig(url, exchanger, nsMapper, cfg.Env == setting.Dev)
+	restCfg := buildRESTConfig(url, exchanger, nsMapper, cfg.AnnotationAppPlatform.TLSClientConfig)
 
 	return &annotationAPIClient{
 		k8sClient: client.NewK8sHandler(
@@ -113,19 +112,35 @@ func (s *annotationAPIClient) Delete(ctx context.Context, orgID int64, name stri
 	return s.k8sClient.Delete(ctx, name, orgID, v1.DeleteOptions{})
 }
 
+// GetByLegacyID fetches an annotation by its legacy ID, including the tombstone if it has
+// been soft-deleted, so callers can tell a deleted record from a missing one.
+//
 // TODO: expensive — the legacyID index does not cover the time partition, so this scans
 // every partition. Carrying the annotation time to the call sites would let us prune them.
 func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error) {
-	list, err := s.k8sClient.List(ctx, orgID, v1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%d", annotationpkg.LabelKeyLegacyID, annotationID),
-	})
+	rc, err := s.getRESTClient()
 	if err != nil {
 		return nil, err
+	}
+
+	namespace := s.k8sClient.GetNamespace(orgID)
+	raw, err := rc.Get().
+		AbsPath("apis", annotationV0.APIGroup, annotationV0.APIVersion, "namespaces", namespace, "search").
+		Param("legacyID", strconv.FormatInt(annotationID, 10)).
+		Param("deleted", "include"). // include the tombstone so we can distinguish between deleted and missing
+		DoRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var list annotationV0.AnnotationList
+	if err := json.Unmarshal(raw, &list); err != nil {
+		return nil, fmt.Errorf("decode search response: %w", err)
 	}
 	if len(list.Items) == 0 {
 		return nil, ErrNotFound
 	}
-	return fromUnstructured(&list.Items[0])
+	return &list.Items[0], nil
 }
 
 func (s *annotationAPIClient) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
@@ -239,13 +254,11 @@ func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) 
 	return tc, nil
 }
 
-func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, allowInsecure bool) *rest.Config {
+func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, tlsConfig rest.TLSClientConfig) *rest.Config {
 	return &rest.Config{
-		Host:          url,
-		WrapTransport: newBearerTokenExchangeWrapper(exchanger, nsMapper),
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: allowInsecure,
-		},
+		Host:            url,
+		WrapTransport:   newBearerTokenExchangeWrapper(exchanger, nsMapper),
+		TLSClientConfig: tlsConfig,
 	}
 }
 

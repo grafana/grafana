@@ -145,7 +145,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </Text>
                     </div>
                     <div className={styles.valueColumn}>
-                      <Text variant="body">{status?.webhook?.id ?? 'N/A'}</Text>
+                      <Text variant="body">
+                        {status?.webhook?.id ?? status?.webhook?.uuid?.replace(/[{}]/g, '') ?? 'N/A'}
+                      </Text>
                     </div>
                     <div className={styles.labelColumn}>
                       <Text color="secondary">
@@ -245,6 +247,9 @@ function getWebhookURL(repo: Repository) {
   }
   if (spec?.type === 'gitlab' && status?.webhook?.url && repoUrl) {
     return textUtil.sanitizeUrl(`${repoUrl}/-/hooks/${status.webhook?.id}/edit`);
+  }
+  if (spec?.type === 'bitbucket' && status?.webhook?.uuid && spec.bitbucket?.url) {
+    return textUtil.sanitizeUrl(`${spec.bitbucket.url}/admin/webhooks/${encodeURIComponent(status.webhook.uuid)}/edit`);
   }
   return undefined;
 }
