@@ -112,18 +112,24 @@ There are two ways to configure trace to logs:
 
 ### Use a simple configuration
 
+1. Click **Add logs destination**.
+1. Enter a **Link label** that identifies the destination in the trace view.
 1. Select the target data source from the drop-down list.
 1. Set **Span start time shift** and **Span end time shift** to widen or shift the time range if log timestamps don't exactly match span timestamps.
 1. Configure **Tags** to use in the logs query. Tags must be present in span attributes or resources for the link to appear. You can remap tag names if the target data source doesn't allow dots in labels (for example, remap `http.status` to `http_status`).
 1. Optionally, toggle on **Filter by trace ID** or **Filter by span ID** to further filter logs.
+1. Repeat these steps to add another logs destination.
 
 ### Configure a custom query
 
+1. Click **Add logs destination**.
+1. Enter a **Link label** that identifies the destination in the trace view.
 1. Select the target data source from the drop-down list.
 1. Set **Span start time shift** and **Span end time shift**.
 1. Optionally, configure **Tags** to map. Use the `${__tags}` variable in your custom query to interpolate mapped tags. If you don't map tags, you can still reference any span tag directly, such as `method="${__span.tags.method}"`.
 1. Toggle on **Use custom query**.
 1. Write a custom query using the variables listed in this table. The link only appears when all variables resolve to non-empty values.
+1. Repeat these steps to add another logs destination.
 
 ### Variables for custom queries
 
@@ -145,6 +151,7 @@ To use a variable, wrap it in `${}`. For example: `${__span.name}`.
 
 | Setting                   | Description                                                                                                                                                                |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Link label**            | The name of the logs destination shown in the trace view.                                                                                                                  |
 | **Data source**           | The target logs data source. You can select Loki or Splunk logs data sources.                                                                                              |
 | **Span start time shift** | Shifts the start time for the logs query based on the span's start time. Use time units such as `5s`, `1m`, `3h`. Use negative values to extend to the past. Default: `0`. |
 | **Span end time shift**   | Shifts the end time for the logs query based on the span's end time. Default: `0`.                                                                                         |
@@ -225,19 +232,30 @@ datasources:
     basicAuthUser: <USERNAME>
     isDefault: false
     jsonData:
-      tracesToLogsV2:
-        datasourceUid: 'loki'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
-        tags:
-          - key: 'job'
-          - key: 'instance'
-          - key: 'pod'
-          - key: 'namespace'
-        filterByTraceID: false
-        filterBySpanID: false
-        customQuery: true
-        query: 'method="$${__span.tags.method}"'
+      tracesToLogsV3:
+        - name: 'Application logs'
+          datasourceUid: 'loki-app'
+          spanStartTimeShift: '1h'
+          spanEndTimeShift: '-1h'
+          tags:
+            - key: 'job'
+            - key: 'instance'
+            - key: 'pod'
+            - key: 'namespace'
+          filterByTraceID: false
+          filterBySpanID: false
+          customQuery: true
+          query: 'method="$${__span.tags.method}"'
+        - name: 'Audit logs'
+          datasourceUid: 'loki-audit'
+          spanStartTimeShift: '0'
+          spanEndTimeShift: '0'
+          tags:
+            - key: 'service.name'
+              value: 'service_name'
+          filterByTraceID: true
+          filterBySpanID: false
+          customQuery: false
       tracesToMetrics:
         datasourceUid: 'prom'
         spanStartTimeShift: '-2m'

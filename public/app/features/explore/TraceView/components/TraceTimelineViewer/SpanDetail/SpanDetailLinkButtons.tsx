@@ -13,7 +13,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTraceToLogsOptions, type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { getTracesToLogsOptions, type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
@@ -83,12 +83,20 @@ export const SpanDetailLinkButtons = (props: Props) => {
   const links = useMemo(() => {
     let linkToProfiles: SpanLinkDef | undefined;
 
-    const links = (createSpanLink?.(span) || [])
+    const spanLinks = createSpanLink?.(span) || [];
+    const logsLinkCount = spanLinks.filter((link) => link.type === SpanLinkType.Logs).length;
+    const links = spanLinks
       // Linked spans are shown in a separate section
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
         if (link.type === SpanLinkType.Logs) {
-          return createLinkModel(link, SpanLinkType.Logs, getLogsButtonCTA(settings), 'gf-logs', datasourceType);
+          return createLinkModel(
+            link,
+            SpanLinkType.Logs,
+            getLogsButtonCTA(settings, link, logsLinkCount),
+            'gf-logs',
+            datasourceType
+          );
         }
         if (link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle) {
           linkToProfiles = link;
@@ -171,15 +179,24 @@ const styles = {
   }),
 };
 
-function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
+function getLogsButtonCTA(
+  settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
+  link: SpanLinkDef,
+  logsLinkCount: number
+) {
   const defaultCTA = t('explore.span-detail-link-buttons.related-logs', 'Related logs');
   if (!settings) {
-    return defaultCTA;
+    return logsLinkCount > 1 ? link.title || defaultCTA : defaultCTA;
   }
 
-  // The trace-to-logs config lives on jsonData; getTraceToLogsOptions also
+  // The trace-to-logs config lives on jsonData; getTracesToLogsOptions also
   // migrates the legacy `tracesToLogs` shape to the v2 shape.
-  const options = getTraceToLogsOptions(settings.jsonData);
+  const destinations = getTracesToLogsOptions(settings.jsonData);
+  if (destinations.length > 1 || destinations[0]?.name) {
+    return link.title || defaultCTA;
+  }
+
+  const options = destinations[0];
   if (options?.filterBySpanID) {
     return t('explore.span-detail-link-buttons.logs-for-this-span', 'Logs for this span');
   }

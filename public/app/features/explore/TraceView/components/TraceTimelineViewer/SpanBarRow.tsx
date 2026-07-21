@@ -538,7 +538,10 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
   );
 
   const links = useMemo(
-    () => (createSpanLink?.(span) || []).filter((link) => link.type === SpanLinkType.Traces),
+    () =>
+      (createSpanLink?.(span) || []).filter(
+        (link) => link.type === SpanLinkType.Traces || link.type === SpanLinkType.Logs
+      ),
     [createSpanLink, span]
   );
 

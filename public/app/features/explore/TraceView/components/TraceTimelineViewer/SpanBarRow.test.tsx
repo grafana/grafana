@@ -129,6 +129,25 @@ describe('<SpanBarRow>', () => {
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
   });
 
+  it('renders destination labels in the span links menu', async () => {
+    render(
+      <SpanBarRow
+        {...(props as unknown as SpanBarRowProps)}
+        createSpanLink={() =>
+          [
+            { href: '/application-logs', title: 'Application logs', type: SpanLinkType.Logs },
+            { href: '/audit-logs', title: 'Audit logs', type: SpanLinkType.Logs },
+          ] as SpanLinkDef[]
+        }
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Span links' }));
+
+    expect(screen.getByText('Application logs')).toBeInTheDocument();
+    expect(screen.getByText('Audit logs')).toBeInTheDocument();
+  });
+
   it('render referenced to by single span', () => {
     render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const span = Object.assign(
