@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -68,18 +67,6 @@ func TestDiagnosticsRequestIncludeLogsDefaultsOff(t *testing.T) {
 	require.True(t, enabled.IncludeLogs)
 }
 
-func TestRequestDatasourceUIDs(t *testing.T) {
-	query := func(uid string) *simplejson.Json {
-		q := simplejson.New()
-		q.SetPath([]string{"datasource", "uid"}, uid)
-		return q
-	}
-
-	require.Equal(t, []string{"prom", "loki"}, requestDatasourceUIDs([]*simplejson.Json{
-		query("prom"), query("prom"), query(""), query("__expr__"), nil, query("loki"),
-	}))
-}
-
 func TestQueryDiagnosticsIncludesOptedInFilteredAndWindowLogs(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 	require.NoError(t, log.SetupConsoleLogger("info"))
@@ -102,6 +89,15 @@ func TestQueryDiagnosticsIncludesOptedInFilteredAndWindowLogs(t *testing.T) {
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, errors.New("silent query failure before HTTP capture")).
 		Once()
+	typedPreflightFailures := []error{
+		datasources.ErrDataSourceAccessDenied,
+		datasources.ErrDataSourceNotFound,
+	}
+	for _, queryErr := range typedPreflightFailures {
+		fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, queryErr).
+			Once()
+	}
 	hs := &HTTPServer{queryDataService: fakeQuery}
 
 	request := func(includeLogs bool) response.Response {
@@ -148,4 +144,13 @@ func TestQueryDiagnosticsIncludesOptedInFilteredAndWindowLogs(t *testing.T) {
 	require.Equal(t, http.StatusOK, silentFailureWithLogsEnabled.Status())
 	silentFailureFiles := readTarGzFiles(t, silentFailureWithLogsEnabled.Body())
 	require.Contains(t, string(silentFailureFiles["query-error.txt"]), "silent query failure before HTTP capture")
+
+	for _, queryErr := range typedPreflightFailures {
+		t.Run(queryErr.Error(), func(t *testing.T) {
+			failureWithLogsEnabled := request(true)
+			require.Equal(t, http.StatusOK, failureWithLogsEnabled.Status())
+			failureFiles := readTarGzFiles(t, failureWithLogsEnabled.Body())
+			require.Contains(t, string(failureFiles["query-error.txt"]), queryErr.Error())
+		})
+	}
 }

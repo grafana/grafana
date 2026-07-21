@@ -460,7 +460,7 @@ func panelDatasourceUIDs(req dtos.MetricRequest) []string {
 			continue
 		}
 		uid := q.Get("datasource").Get("uid").MustString()
-		if uid != "" && !seen[uid] {
+		if uid != "" && uid != "__expr__" && !seen[uid] {
 			seen[uid] = true
 			uids = append(uids, uid)
 		}

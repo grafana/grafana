@@ -484,8 +484,8 @@ func TestPanelDatasourceUIDs(t *testing.T) {
 		}
 		return j
 	}
-	req := dtos.MetricRequest{Queries: []*simplejson.Json{q("prom"), q("prom"), q("loki"), q(""), nil}}
-	// Deduplicated, in first-seen order; empty/nil entries dropped.
+	req := dtos.MetricRequest{Queries: []*simplejson.Json{q("prom"), q("prom"), q("loki"), q(""), q("__expr__"), nil}}
+	// Deduplicated, in first-seen order; empty, expression, and nil entries dropped.
 	require.Equal(t, []string{"prom", "loki"}, panelDatasourceUIDs(req))
 
 	require.Empty(t, panelDatasourceUIDs(dtos.MetricRequest{}))

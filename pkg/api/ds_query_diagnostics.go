@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -88,7 +87,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 		queryLog = diagnostics.ScopedQueryLog(
 			capturedLines,
 			tracing.TraceIDFromContext(ctx, false),
-			requestDatasourceUIDs(reqDTO.Queries),
+			panelDatasourceUIDs(reqDTO.MetricRequest),
 		)
 		serverWindowLog = diagnostics.ServerWindowLog(capturedLines)
 	}
@@ -129,26 +128,6 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
-}
-
-func requestDatasourceUIDs(queries []*simplejson.Json) []string {
-	seen := make(map[string]struct{}, len(queries))
-	uids := make([]string, 0, len(queries))
-	for _, query := range queries {
-		if query == nil {
-			continue
-		}
-		uid := query.Get("datasource").Get("uid").MustString()
-		if uid == "" || uid == "__expr__" {
-			continue
-		}
-		if _, ok := seen[uid]; ok {
-			continue
-		}
-		seen[uid] = struct{}{}
-		uids = append(uids, uid)
-	}
-	return uids
 }
 
 // diagnosticsNoCaptureError returns the response to send when a query failed and nothing was
