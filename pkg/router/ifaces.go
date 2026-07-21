@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
@@ -28,11 +27,12 @@ type RoutesLoader interface {
 	// and that comparing changes can depend on the RV to know if anything has changed for the prefix
 	Load(context.Context) ([]*RouteConfig, error)
 
-	// Something changed with routing... reload the configs
-	Notify(context.Context) (<-chan string, error)
+	// Something changed with routing... reload the configs. The channel is a pure
+	// coalescing wake signal (no payload): consumers re-read full state via Load.
+	Notify(context.Context) (<-chan struct{}, error)
 }
 
-type Router interface {
+type Interface interface {
 	// The loop that sets up the loader's notify and process ongoing events. Ready will return nil when it's done.
 	Run(context.Context) error
 
@@ -47,10 +47,4 @@ type Router interface {
 
 	// The exposed HTTP handler attached to /openapi/v3*
 	OpenAPIV3Handler() http.Handler
-}
-
-// This can live in OSS
-func NewStandardAPISRouter(ctx context.Context, loader RoutesLoader) (Router, error) {
-	// Implementation would go here
-	return nil, fmt.Errorf("TODO...")
 }
