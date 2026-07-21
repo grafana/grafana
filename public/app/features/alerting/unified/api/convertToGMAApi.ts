@@ -20,8 +20,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         payload: RulerRulesConfigDTO;
         /** Target data source UID to store recording rules in */
         targetDatasourceUID?: string;
-        /** Extra labels to add to all imported rules (format: key=value,key2=value2) */
-        extraLabels?: string;
         /** JSON-encoded notification settings applied to all imported alerting rules */
         notificationSettings?: string;
       }
@@ -33,7 +31,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         pauseAlerts,
         dataSourceUID,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       }) => ({
         url: `/api/convert/prometheus/config/v1/rules`,
@@ -46,7 +43,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           'X-Disable-Provenance': true,
           ...(targetFolderUID ? { 'X-Grafana-Alerting-Folder-UID': targetFolderUID } : {}),
           ...(targetDatasourceUID ? { 'X-Grafana-Alerting-Target-Datasource-UID': targetDatasourceUID } : {}),
-          ...(extraLabels ? { 'X-Grafana-Alerting-Extra-Labels': extraLabels } : {}),
           ...(notificationSettings ? { 'X-Grafana-Alerting-Notification-Settings': notificationSettings } : {}),
         },
       }),
@@ -84,8 +80,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         headers: {
           // The config identifier is the name of the extra configuration (policy tree name)
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
-          // TODO: Remove this header once the backend no longer requires it
-          'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
           ...(forceReplace ? { 'X-Grafana-Alerting-Config-Force-Replace': 'true' } : {}),
           ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
@@ -123,8 +117,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         },
         headers: {
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
-          // TODO: Remove this header once the backend no longer requires it
-          'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
           'X-Grafana-Alerting-Dry-Run': 'true',
           // Always force-replace during dry-run to avoid 409 conflicts —
           // we want to validate the config regardless of existing identifiers

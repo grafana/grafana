@@ -346,8 +346,14 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 	args = append(args, namespace)
 	argNum++
 
-	// Exclude soft-deleted annotations unless the caller explicitly opts in.
-	if !opts.IncludeDeleted {
+	// Filter on soft-delete state.
+	switch opts.Deleted {
+	case DeletedOnly:
+		conditions = append(conditions, "deleted_at IS NOT NULL")
+	case DeletedInclude:
+		// no filter, including both live and tombstoned rows
+	default:
+		// default to live rows only
 		conditions = append(conditions, "deleted_at IS NULL")
 	}
 
@@ -359,8 +365,8 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 	}
 
 	if opts.From > 0 {
-		// Range overlap: annotation's time_end is NULL (point) OR time_end >= from
-		conditions = append(conditions, fmt.Sprintf("(time_end IS NULL OR time_end >= $%d)", argNum))
+		// Check against time for point annotations and time_end for range annotations
+		conditions = append(conditions, fmt.Sprintf("((time_end IS NULL AND time >= $%d) OR (time_end IS NOT NULL AND time_end >= $%d))", argNum, argNum))
 		args = append(args, opts.From)
 		argNum++
 	}

@@ -158,7 +158,7 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
+    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
     id: number,
     source: 'panel' | 'edit_pane' | 'keyboard'
   ) {
@@ -190,9 +190,9 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
   trackPastePanelClick(
-    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' | 'keyboard' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
-    action: 'drop' | 'click' = 'click'
+    action: 'drop' | 'click' | 'keyboard' = 'click'
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },

@@ -77,6 +77,7 @@ type GitHubRepositoryConfig struct {
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
+	// TODO: deprecate this field in favor of PullRequestOptions.GenerateDashboardPreviews once all Github repositories have been backfilled.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
@@ -102,9 +103,6 @@ type GitHubEnterpriseRepositoryConfig struct {
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
-
-	// Whether we should show dashboard previews for pull requests.
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
 	// Path is the subdirectory for the Grafana data inside the repository.
 	Path string `json:"path,omitempty"`
@@ -140,6 +138,8 @@ type BitbucketRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
+	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+	Email string `json:"email,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -333,6 +333,15 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+func (r *Repository) ShouldGenerateDashboardPreviews() bool {
+	// GitHub keeps this on its own config until existing repositories are backfilled
+	// onto PullRequest options. Every other provider reads it from PullRequest.
+	if r.Spec.Type == GitHubRepositoryType {
+		return r.Spec.GitHub != nil && r.Spec.GitHub.GenerateDashboardPreviews
+	}
+	return r.Spec.PullRequest != nil && r.Spec.PullRequest.GenerateDashboardPreviews
+}
+
 // ConnectionName returns the name of the connection referenced by this repository,
 // or an empty string if the repository does not use a connection.
 func (r *Repository) ConnectionName() string {
@@ -427,6 +436,10 @@ type PullRequestOptions struct {
 
 	// When true, the PR title field in Save drawers is read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+
+	// Whether we should show dashboard previews for pull requests.
+	// By default, this is false (i.e. we will not create previews).
+	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
 func (PullRequestOptions) OpenAPIModelName() string {
@@ -644,7 +657,10 @@ func (SyncStatus) OpenAPIModelName() string {
 }
 
 type WebhookStatus struct {
-	ID               int64    `json:"id,omitempty"`
+	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
+	ID   int64  `json:"id,omitempty"`
+	UUID string `json:"uuid,omitempty"`
+
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`

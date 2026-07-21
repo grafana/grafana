@@ -415,3 +415,12 @@ jobs:
       run: |
         echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
         exit 1
+
+    - name: Check yarn constraints
+      id: yarn-constraints
+      run: yarn constraints
+    - name: Report yarn constraints failure
+      if: failure() && steps.yarn-constraints.outcome == 'failure'
+      run: |
+        echo "::error::Yarn constraints check failed. Run 'yarn constraints --fix' locally, commit the changes, and push again."
+        exit 1
