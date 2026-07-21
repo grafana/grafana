@@ -423,18 +423,29 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 		argNum++
 	}
 
-	// Construct query
-	query := `
-		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at
-		FROM annotations
-		WHERE ` + strings.Join(conditions, " AND ") + `
-		ORDER BY time DESC, name
-	`
+	// Points and ranges are fetched separately so each is able to leverage its own index (time vs time_end)
+	// with results unioned. Each set is capped at offset+limit+1 candidates so the outer query
+	// is able to sort and paginate the merged set.
+	cols := `namespace, name, time, time_end, dashboard_uid, panel_id,
+	         text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at`
+	where := strings.Join(conditions, " AND ")
 
-	// Add pagination
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argNum, argNum+1)
-	args = append(args, limit+1, offset) // Request one extra to detect more results for pagination
+	innerLimit := offset + limit + 1
+	query := fmt.Sprintf(`
+		SELECT * FROM (
+			(SELECT %[1]s FROM annotations
+			 WHERE %[2]s AND time_end IS NULL
+			 ORDER BY time DESC, name LIMIT $%[3]d)
+			UNION ALL
+			(SELECT %[1]s FROM annotations
+			 WHERE %[2]s AND time_end IS NOT NULL
+			 ORDER BY time_end DESC, time DESC, name LIMIT $%[3]d)
+		) merged
+		ORDER BY COALESCE(time_end, time) DESC, time DESC, name
+		LIMIT $%[4]d OFFSET $%[5]d
+	`, cols, where, argNum, argNum+1, argNum+2)
+
+	args = append(args, innerLimit, limit+1, offset)
 
 	return query, args
 }
