@@ -26,7 +26,7 @@ type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory
 	// and that comparing changes can depend on the RV to know if anything has changed for the prefix
-	Load(context.Context) ([]*RouteConfig, error)
+	Load(context.Context) ([]RouteConfig, error)
 
 	// Something changed with routing... reload the configs. The channel is a pure
 	// coalescing wake signal (no payload): consumers re-read full state via Load.
