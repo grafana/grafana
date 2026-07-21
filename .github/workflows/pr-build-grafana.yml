@@ -22,6 +22,7 @@ jobs:
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.backend == 'true' }}
       frontend: ${{ steps.detect-changes.outputs.frontend }}
+      frontend-no-tests: ${{ steps.detect-changes.outputs.frontend-no-tests }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -202,7 +203,7 @@ jobs:
           echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
 
   run-meticulous-tests:
-    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend == 'true'
+    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-no-tests == 'true'
     needs: [push-docker-image, detect-changes]
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
