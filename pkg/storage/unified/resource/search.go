@@ -658,32 +658,32 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
-	searchError := func(msg string, err error) error {
+	searchError := func(msg string, err error, grpcCode codes.Code) error {
 		// Requests are often canceled by clients, so they should not count as internal errors.
 		if ctx.Err() != nil {
 			return status.FromContextError(ctx.Err()).Err()
 		}
-		if _, ok := status.FromError(err); ok {
-			return err
+		if grpcCode != codes.Internal {
+			return status.New(grpcCode, err.Error()).Err()
 		}
 		s.log.Error(msg, "err", err)
 		return status.Error(codes.Internal, msg)
 	}
 
-	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
-		return nil, searchError("vector search rate limit", err)
+	if code, err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+		return nil, searchError("vector search rate limit", err, code)
 	}
 
 	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
 	if err != nil {
-		return nil, searchError("embed vector search query", err)
+		return nil, searchError("embed vector search query", err, codes.Internal)
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
-		return nil, searchError("vector search backend", err)
+		return nil, searchError("vector search backend", err, codes.Internal)
 	}
 
 	// Using authz post-filtering for now
@@ -696,7 +696,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 	if err != nil {
-		return nil, searchError("authz batch check", err)
+		return nil, searchError("authz batch check", err, codes.Internal)
 	}
 
 	resp = &resourcepb.VectorSearchResponse{
@@ -746,25 +746,24 @@ func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcep
 // checkVectorSearchRateLimit returns a gRPC status error when the
 // request must be rejected (over quota or limiter unreachable), nil
 // when it should proceed.
-func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace string) error {
+func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace string) (codes.Code, error) {
 	if s.rateLimiter == nil {
-		return nil
+		return codes.OK, nil
 	}
 	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, s.rateLimitWindow, s.rateLimitPerTenant)
 	if err != nil {
-		s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", namespace)
 		if s.vectorMetrics != nil {
 			s.vectorMetrics.RateLimiterErrorsTotal.Inc()
 		}
-		return status.Error(codes.Unavailable, "rate limiter unavailable")
+		return codes.Unavailable, fmt.Errorf("rate limiter unavailable, fail-closed: %w", err)
 	}
 	if !allowed {
 		if s.vectorMetrics != nil {
 			s.vectorMetrics.RateLimitedRequestsTotal.Inc()
 		}
-		return status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
+		return codes.ResourceExhausted, fmt.Errorf("tenant rate limit exceeded: %d requests in window", count)
 	}
-	return nil
+	return codes.OK, nil
 }
 
 // embedVectorSearchQuery returns the query embedding, fetching it from
