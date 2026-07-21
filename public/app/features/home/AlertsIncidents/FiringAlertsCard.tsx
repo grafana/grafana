@@ -1,12 +1,15 @@
 import { t, Trans } from '@grafana/i18n';
-import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { Badge, LinkButton, Stack, Tooltip } from '@grafana/ui';
+import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
 import { alertsCardClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
+import { SummaryCard, SummaryCardAge } from './SummaryCard';
 import { severityLevelColor } from './severity';
 import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
 
@@ -64,6 +67,7 @@ export function FiringAlertsCardView({
   data: FiringAlertsData;
   hideFooterActions?: boolean;
 }) {
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const {
     count,
     criticalCount,
@@ -126,21 +130,30 @@ export function FiringAlertsCardView({
       renderItem={({ alert, level, startedAt }) => {
         const detailHref = alertDetailHref(alert);
         return (
-          <>
-            <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
-            <SummaryCardTitle
-              href={detailHref}
-              onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
-            >
-              {alert.labels.alertname}
-            </SummaryCardTitle>
-            {alert.labels.team && (
-              <Text color="secondary" variant="bodySmall" truncate>
-                {alert.labels.team}
-              </Text>
-            )}
-            <SummaryCardAge date={startedAt} />
-          </>
+          <ListRow
+            isCompact
+            showDivider={redesignEnabled}
+            title={alert.labels.alertname}
+            subtitle={alert.labels.team}
+            // when redesignEnabled is false, we want to show the subtitle inline with the title
+            // when its true, we want to show the subtitle below the title
+            oneRow={!redesignEnabled}
+            prefix={
+              redesignEnabled ? (
+                <Tooltip content={severityLabel(level)}>
+                  <span>
+                    <SeverityBars level={level} />
+                    <span className="sr-only">{severityLabel(level)}</span>
+                  </span>
+                </Tooltip>
+              ) : (
+                <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+              )
+            }
+            trailing={<SummaryCardAge date={startedAt} />}
+            href={detailHref}
+            onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
+          />
         );
       }}
       emptyAction={
