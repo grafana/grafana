@@ -238,7 +238,10 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const label = (
     <Stack direction="row" justifyContent="space-between">
-      <Label>
+      <Label
+        htmlFor={id}
+        data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description')}
+      >
         <Trans i18nKey="dashboard.viz-panel.options.description">Description</Trans>
       </Label>
       <Stack>
