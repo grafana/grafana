@@ -1,5 +1,7 @@
+import { useContext } from 'react';
+
 import { Trans, t } from '@grafana/i18n';
-import { Badge, LinkButton, Stack } from '@grafana/ui';
+import { Badge, LinkButton, ModalsContext, Stack } from '@grafana/ui';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
 import { isGranted, isProvisioned, isSupported } from '../../hooks/abilities/abilityUtils';
@@ -9,7 +11,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
 
-import { useDeleteMuteTimingModal } from './useDeleteMuteTimingModal';
+import { DeleteMuteTimingModal } from './DeleteMuteTimingModal';
 import { type MuteTiming } from './useMuteTimings';
 
 interface MuteTimingActionsButtonsProps {
@@ -18,8 +20,11 @@ interface MuteTimingActionsButtonsProps {
 }
 
 export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }: MuteTimingActionsButtonsProps) => {
-  const [deleteModal, showDeleteModal, isDeleting] = useDeleteMuteTimingModal(muteTiming, alertManagerSourceName);
+  const { showModal, hideModal } = useContext(ModalsContext);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
+
+  const showDeleteModal = () =>
+    showModal(DeleteMuteTimingModal, { muteTiming, alertManagerSourceName, onDismiss: hideModal });
   const updateAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Update, context: muteTiming });
   const deleteAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: muteTiming });
   const exportAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Export });
@@ -30,13 +35,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   });
 
   const viewOrEditButton = (
-    <LinkButton
-      href={viewOrEditHref}
-      variant="secondary"
-      size="sm"
-      icon={muteTiming.provisioned ? 'eye' : 'pen'}
-      disabled={isDeleting}
-    >
+    <LinkButton href={viewOrEditHref} variant="secondary" size="sm" icon={muteTiming.provisioned ? 'eye' : 'pen'}>
       {muteTiming.provisioned ? (
         <Trans i18nKey="alerting.common.view">View</Trans>
       ) : (
@@ -59,7 +58,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
             variant="secondary"
             size="sm"
             data-testid="export"
-            disabled={!isGranted(exportAbility) || isDeleting}
+            disabled={!isGranted(exportAbility)}
             onClick={() => showExportDrawer(muteTiming.name)}
           >
             <Trans i18nKey="alerting.common.export">Export</Trans>
@@ -67,12 +66,11 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         )}
 
         {!muteTiming.provisioned && isGranted(deleteAbility) && (
-          <LinkButton icon="trash-alt" variant="secondary" size="sm" onClick={showDeleteModal} disabled={isDeleting}>
+          <LinkButton icon="trash-alt" variant="secondary" size="sm" onClick={showDeleteModal}>
             <Trans i18nKey="alerting.common.delete">Delete</Trans>
           </LinkButton>
         )}
       </Stack>
-      {deleteModal}
       {ExportDrawer}
     </>
   );

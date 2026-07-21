@@ -1,6 +1,7 @@
 import { render, screen, userEvent, within } from 'test/test-utils';
 
 import { base64UrlEncode } from '@grafana/alerting';
+import { ModalRoot } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   setDeleteTimeIntervalError,
@@ -23,6 +24,7 @@ const renderWithProvider = (alertManagerSource = GRAFANA_RULES_SOURCE_NAME) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
       <TimeIntervalsTable />
+      <ModalRoot />
     </AlertmanagerProvider>
   );
 };
