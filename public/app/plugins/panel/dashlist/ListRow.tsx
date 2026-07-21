@@ -57,7 +57,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
         )}
       </Stack>
 
-      <div>{trailing}</div>
+      {trailing && <div>{trailing}</div>}
     </div>
   );
 }
