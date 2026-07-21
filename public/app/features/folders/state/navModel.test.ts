@@ -4,12 +4,15 @@ import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
-import { buildNavModel, getAlertingTabID } from './navModel';
+import { buildNavModel, getAlertingTabID, getVariablesTabID } from './navModel';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     unifiedAlertingEnabled: true,
+    featureToggles: {
+      globalDashboardVariables: false,
+    },
   },
 }));
 
@@ -41,6 +44,7 @@ describe('buildNavModel', () => {
     jest.clearAllMocks();
     (contextSrv.hasPermission as jest.Mock).mockReturnValue(true);
     config.unifiedAlertingEnabled = true;
+    config.featureToggles.globalDashboardVariables = false;
   });
 
   describe('Alerts tab visibility', () => {
@@ -90,6 +94,39 @@ describe('buildNavModel', () => {
       expect(alertingTab).toBeDefined();
       expect(alertingTab?.icon).toBe('bell');
       expect(alertingTab?.url).toBe(`${mockFolder.url}/alerting`);
+    });
+  });
+
+  describe('Variables tab visibility', () => {
+    it('should hide Variables tab when globalDashboardVariables is off', () => {
+      const navModel = buildNavModel(mockFolder);
+      const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
+
+      expect(variablesTab).toBeUndefined();
+    });
+
+    it('should show Variables tab when globalDashboardVariables is on', () => {
+      config.featureToggles.globalDashboardVariables = true;
+
+      const navModel = buildNavModel(mockFolder);
+      const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
+
+      expect(variablesTab).toBeDefined();
+      expect(variablesTab?.icon).toBe('brackets-curly');
+      expect(variablesTab?.url).toBe(`${mockFolder.url}/variables`);
+    });
+
+    it('should hide Variables tab for Git-synced folders even when the toggle is on', () => {
+      config.featureToggles.globalDashboardVariables = true;
+      const gitSyncedFolder: FolderDTO = {
+        ...mockFolder,
+        managedBy: ManagerKind.Repo,
+      };
+
+      const navModel = buildNavModel(gitSyncedFolder);
+      const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
+
+      expect(variablesTab).toBeUndefined();
     });
   });
 });
