@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -123,7 +124,13 @@ func main() {
 	waitDuration := time.Duration(waitSeconds) * time.Second
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusOK)
-		writer.Write([]byte(landingPage))
+		tmpl, err := template.New("landing").Parse(landingPage)
+		if err != nil {
+			log.Println(err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		tmpl.Execute(writer, nil)
 	})
 
 	http.HandleFunc("/listen", func(w http.ResponseWriter, r *http.Request) {
