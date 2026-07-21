@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
@@ -146,12 +148,13 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
-	if l.Cfg.EnableKubernetesLibraryPanels {
+	ctx := c.Req.Context()
+	shouldUseKubeApi := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagLibraryelementsKubernetesLibraryPanels, false, openfeature.TransactionContext(ctx))
+	if shouldUseKubeApi {
 		l.k8sHandler.getK8sLibraryElement(c)
 		return nil // already handled in the k8s handler
 	}
 
-	ctx := c.Req.Context()
 	element, err := l.getLibraryElementByUid(ctx, c.SignedInUser,
 		model.GetLibraryElementCommand{
 			UID:        web.Params(c.Req)[":uid"],

@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1463,10 +1464,12 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 	}
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:             true,
-		DisableAnonymous:              true,
-		APIServerStorageType:          "unified",
-		EnableKubernetesLibraryPanels: true,
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
+		},
 	})
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1527,10 +1530,12 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 	}
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:             true,
-		DisableAnonymous:              true,
-		APIServerStorageType:          "unified",
-		EnableKubernetesLibraryPanels: true,
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
+		},
 	})
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{

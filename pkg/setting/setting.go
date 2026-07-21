@@ -864,9 +864,6 @@ type Cfg struct {
 
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	EnableKubernetesAggregatorCapTokenAuth bool
-
-	// EnableKubernetesLibraryPanels Enables kubernetes-style LibraryPanels API
-	EnableKubernetesLibraryPanels bool
 }
 
 type UnifiedStorageConfig struct {
@@ -1827,7 +1824,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
 
-	cfg.readStartupParams(iniFile)
 	return nil
 }
 
@@ -1903,13 +1899,6 @@ func (cfg *Cfg) readSessionConfig() {
 			"[Removed] Session setting was removed in v6.2, use remote_cache option instead",
 		)
 	}
-}
-
-func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
-	cfg.EnableKubernetesLibraryPanels = iniFile.Section("library_params").Key("enable_kubernetes_library_panels").MustBool(false)
-
-	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
-	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 }
 
 func (cfg *Cfg) initLogging(file *ini.File) error {
@@ -2550,6 +2539,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
+	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}

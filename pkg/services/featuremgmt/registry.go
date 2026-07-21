@@ -408,6 +408,14 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "libraryelements.kubernetesLibraryPanels",
+			Description: "Routes library panel requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:         "kubernetesFolderCascadeDelete",
 			Description:  "Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned",
 			Stage:        FeatureStageExperimental,
