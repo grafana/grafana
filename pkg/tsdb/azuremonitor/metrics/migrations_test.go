@@ -52,6 +52,11 @@ func TestDimensionFiltersMigration(t *testing.T) {
 			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq")}},
 			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq")}},
 		},
+		{
+			name:                     "drops filters without dimension",
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Operator: new("eq")}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{},
+		},
 	}
 
 	for _, tt := range tests {
