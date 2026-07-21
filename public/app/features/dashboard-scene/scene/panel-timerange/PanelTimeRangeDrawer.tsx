@@ -15,11 +15,11 @@ import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
 import { PanelTimeRange } from './PanelTimeRange';
 
-export const DEFAULT_COMPARE_OPTIONS = [
-  { label: 'Disabled', value: '' },
-  { label: 'Day before', value: '1d' },
-  { label: 'Week before', value: '1w' },
-  { label: 'Month before', value: '1M' },
+export const getCompareOptions = () => [
+  { label: t('common.disabled', 'Disabled'), value: '' },
+  { label: t('dashboard.panel.time-range-settings.compare-day-before', 'Day before'), value: '1d' },
+  { label: t('dashboard.panel.time-range-settings.compare-week-before', 'Week before'), value: '1w' },
+  { label: t('dashboard.panel.time-range-settings.compare-month-before', 'Month before'), value: '1M' },
 ];
 
 export type PanelTimeRangeZoomBehavior = 'panel_and_dashboard' | 'dashboard' | 'panel';
@@ -166,7 +166,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
               }
             >
               <Combobox
-                options={DEFAULT_COMPARE_OPTIONS}
+                options={getCompareOptions()}
                 createCustomValue={true}
                 value={compareWith ?? ''}
                 onChange={(x) => model.setState({ compareWith: x.value })}
