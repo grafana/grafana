@@ -107,16 +107,6 @@ datasources:
     secureJsonData:
       password: password
 
-  - name: gdev-postgres
-    type: postgres
-    url: postgres:5432
-    database: grafana
-    user: grafana
-    secureJsonData:
-      password: password
-    jsonData:
-      sslmode: "disable"
-
   - name: gdev-postgres-ds-tests
     type: postgres
     url: postgrestest:5432
