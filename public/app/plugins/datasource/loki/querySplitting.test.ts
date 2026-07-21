@@ -4,7 +4,6 @@ import {
   type DataQueryError,
   type DataQueryRequest,
   type DataQueryResponse,
-  type DateTime,
   dateTime,
   LoadingState,
 } from '@grafana/data';
@@ -18,21 +17,6 @@ import { runSplitQuery } from './querySplitting';
 import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { type LokiQuery } from './types';
-
-expect.extend({
-  toHaveValueOf(received: DateTime, expectedValue: number) {
-    const receivedValue = received.valueOf();
-    const pass = receivedValue === expectedValue;
-
-    return {
-      pass,
-      message: () =>
-        pass
-          ? `Expected ${this.utils.printReceived(receivedValue)} not to equal ${this.utils.printExpected(expectedValue)}`
-          : `Expected ${this.utils.printReceived(receivedValue)} to equal ${this.utils.printExpected(expectedValue)}`,
-    };
-  },
-});
 
 jest.mock('./tracking');
 
