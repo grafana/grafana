@@ -14,7 +14,9 @@ const (
 
 // ScopedQueryLog filters an in-memory capture window down to records attributable to this request.
 // Records are preserved verbatim: diagnostics redaction remains a project-wide follow-up. Matching
-// by datasource UID can include concurrent activity from the same UID, even from another org.
+// by datasource UID can include concurrent activity from the same UID, even from another org. The
+// bare uid key is required by datasource service logs, but can also admit an unrelated entity whose
+// UID happens to equal the diagnosed datasource UID.
 func ScopedQueryLog(lines []string, traceID string, dsUIDs []string) []byte {
 	needles := datasourceUIDNeedles(dsUIDs)
 	if traceID == "" && len(needles) == 0 {
