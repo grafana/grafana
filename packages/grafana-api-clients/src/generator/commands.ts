@@ -21,13 +21,17 @@ const ALLOWED_FORMAT_EXECUTABLES: readonly string[] = ['yarn'];
 
 function runOrWarn(label: string, cmd: string, args: string[], cwd: string) {
   // Validate the executable against a strict allowlist before anything else.
-  if (!ALLOWED_FORMAT_EXECUTABLES.includes(cmd)) {
+  // validatedCmd is the allowlist-verified executable; it is used in the
+  // spawnSync call below instead of the raw `cmd` parameter so that static
+  // analysis tools can confirm no unvalidated input reaches child_process.
+  const validatedCmd = ALLOWED_FORMAT_EXECUTABLES.find((allowed) => allowed === cmd);
+  if (validatedCmd === undefined) {
     throw new Error(`Refusing to run disallowed executable: "${cmd}"`);
   }
 
   // Validate the combined command (executable + sub-command flags) against the
   // known-safe prefix allowlist, catching any unexpected sub-command injection.
-  const command = [cmd, ...args].join(' ');
+  const command = [validatedCmd, ...args].join(' ');
   if (!ALLOWED_FORMAT_COMMANDS.some((allowed) => command.startsWith(allowed))) {
     throw new Error(`Refusing to run disallowed format command: "${command}"`);
   }
@@ -47,7 +51,7 @@ function runOrWarn(label: string, cmd: string, args: string[], cwd: string) {
   }
 
   console.log(`🧹 Running ${label} on generated/modified files...`);
-  const result = spawnSync(cmd, args, { cwd, stdio: 'pipe', shell: false });
+  const result = spawnSync(validatedCmd, args, { cwd, stdio: 'pipe', shell: false });
   if (result.error || result.status !== 0) {
     const detail = result.error?.message ?? result.stderr?.toString() ?? `exit code ${result.status}`;
     console.warn(`⚠️ Warning: ${label} encountered issues: ${detail}`);
