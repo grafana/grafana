@@ -1,3 +1,5 @@
+import { type JourneyHandle, locationService } from '@grafana/runtime';
+
 /**
  * Collects cleanup functions so journey wiring doesn't need
  * manual unsub1/unsub2/unsub3 bookkeeping.
@@ -56,4 +58,28 @@ function warnUnsupported(kind: string): void {
     `[CUJ] str() received unsupported value of type "${kind}"; coerced to ''. ` +
       `Pass primitives (string/number/boolean) to reportInteraction so journey attributes stay queryable in Tempo.`
   );
+}
+
+/**
+ * Subscribes to SPA route changes and ends the journey as `abandoned` when
+ * `isInScope(pathname)` returns false. The framework's beforeunload + visibility
+ * handlers only catch tab-level signals; in-app navigation needs explicit handling.
+ *
+ * Returns an unsubscribe function so callers can pass it through `collectUnsubs`.
+ *
+ * The first emit (the BehaviorSubject's current location at subscribe time) is
+ * ignored so the journey doesn't immediately end on its own start.
+ */
+export function abandonOnRouteChange(handle: JourneyHandle, isInScope: (pathname: string) => boolean): () => void {
+  let firstEmit = true;
+  const sub = locationService.getLocationObservable().subscribe((location) => {
+    if (firstEmit) {
+      firstEmit = false;
+      return;
+    }
+    if (!isInScope(location.pathname) && handle.isActive) {
+      handle.end('abandoned', { abandonedAt: location.pathname });
+    }
+  });
+  return () => sub.unsubscribe();
 }
