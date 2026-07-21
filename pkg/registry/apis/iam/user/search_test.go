@@ -487,7 +487,6 @@ func TestParseResults(t *testing.T) {
 		{Name: builders.USER_LAST_SEEN_AT},
 		{Name: builders.USER_ROLE},
 		{Name: builders.USER_DISABLED},
-		{Name: builders.USER_EXTERNAL_AUTH_MODULES},
 		{Name: resource.SEARCH_FIELD_CREATED},
 		{Name: legacyIDField},
 	}
@@ -543,7 +542,6 @@ func TestParseResults(t *testing.T) {
 							i64(lastSeen),
 							[]byte("Admin"),
 							{1},
-							[]byte(`["authproxy","ldap"]`),
 							i64(created),
 							[]byte("42"),
 						},
@@ -551,7 +549,7 @@ func TestParseResults(t *testing.T) {
 					// Second row exercises zero/empty cells -> fields keep zero values.
 					{
 						Key:   &resourcepb.ResourceKey{Name: "uid-2"},
-						Cells: [][]byte{[]byte("Jane"), nil, []byte("jane"), nil, []byte("Viewer"), {0}, nil, nil, nil},
+						Cells: [][]byte{[]byte("Jane"), nil, []byte("jane"), nil, []byte("Viewer"), {0}, nil, nil},
 					},
 				},
 			},
@@ -573,7 +571,6 @@ func TestParseResults(t *testing.T) {
 		assert.Equal(t, lastSeen, full.LastSeenAt)
 		assert.NotEmpty(t, full.LastSeenAtAge)
 		assert.True(t, full.Disabled)
-		assert.Equal(t, []string{"authproxy", "ldap"}, full.ExternalAuthModules)
 		assert.Equal(t, created, full.Created)
 		assert.Equal(t, int64(42), full.InternalId)
 
@@ -586,7 +583,6 @@ func TestParseResults(t *testing.T) {
 		assert.Zero(t, sparse.LastSeenAt)
 		assert.Empty(t, sparse.LastSeenAtAge)
 		assert.False(t, sparse.Disabled)
-		assert.Empty(t, sparse.ExternalAuthModules)
 		assert.Zero(t, sparse.Created)
 		assert.Zero(t, sparse.InternalId)
 	})
