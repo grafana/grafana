@@ -257,15 +257,18 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   );
 
   return (
-    <Field label={label}>
-      <TextArea
-        id={id}
-        value={subtitle ?? description}
-        onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
-        onFocus={() => setPrevDescription(subtitle ?? description ?? '')}
-        onBlur={onCommitDescriptionChange}
-      />
-    </Field>
+    <>
+      {/* eslint-disable-next-line @grafana/require-no-margin */}
+      <Field label={label}>
+        <TextArea
+          id={id}
+          value={subtitle ?? description}
+          onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
+          onFocus={() => setPrevDescription(subtitle ?? description ?? '')}
+          onBlur={onCommitDescriptionChange}
+        />
+      </Field>
+    </>
   );
 }
 
