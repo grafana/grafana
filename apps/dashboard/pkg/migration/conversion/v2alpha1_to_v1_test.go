@@ -225,9 +225,8 @@ func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:          1,
-					Title:       "Test Panel",
-					Description: "",
+					Id:    1,
+					Title: "Test Panel",
 					Data: dashv2alpha1.DashboardQueryGroupKind{
 						Kind: "QueryGroup",
 						Spec: dashv2alpha1.DashboardQueryGroupSpec{
@@ -303,9 +302,8 @@ func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:          1,
-					Title:       "Test Panel",
-					Description: "",
+					Id:    1,
+					Title: "Test Panel",
 					Data: dashv2alpha1.DashboardQueryGroupKind{
 						Kind: "QueryGroup",
 						Spec: dashv2alpha1.DashboardQueryGroupSpec{
@@ -430,9 +428,8 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:          id,
-					Title:       name,
-					Description: "",
+					Id:    id,
+					Title: name,
 					Data: dashv2alpha1.DashboardQueryGroupKind{
 						Kind: "QueryGroup",
 						Spec: dashv2alpha1.DashboardQueryGroupSpec{
