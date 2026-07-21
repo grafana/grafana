@@ -1016,6 +1016,32 @@ If already in edit mode, `wasAlreadyEditing` is `true` and `changes` is `[]`.
 
 ---
 
+## Validation
+
+### `VALIDATE_DASHBOARD`
+
+Validate the open dashboard and report problems that commonly slip through when a dashboard is built programmatically. Currently detects queries/fields that reference template variables not defined on the dashboard (built-in variables like `$__interval` are excluded). Read-only, no permissions required.
+
+**Request:**
+
+```json
+{ "type": "VALIDATE_DASHBOARD", "payload": {} }
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": { "undefinedVariables": ["env", "cluster"] },
+  "changes": []
+}
+```
+
+`undefinedVariables` is empty when the dashboard is clean.
+
+---
+
 ## Paths
 
 Every layout node has a path string returned by `GET_LAYOUT`:

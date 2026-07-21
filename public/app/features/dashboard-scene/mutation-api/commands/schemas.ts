@@ -1214,4 +1214,7 @@ export const payloads = {
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
     'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
   ),
+  validateDashboard: emptyPayloadSchema.describe(
+    'Validate the open dashboard and report issues (currently: queries/fields referencing template variables that are not defined on the dashboard)'
+  ),
 };
