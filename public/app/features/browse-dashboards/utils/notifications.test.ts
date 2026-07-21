@@ -1,7 +1,7 @@
 import { AppEvents } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getRestoreNotificationData } from './notifications';
+import { getRestoreNotificationData, RESTORE_FETCH_NOT_FOUND } from './notifications';
 
 describe('notifications', () => {
   describe('getRestoreNotificationData', () => {
@@ -161,8 +161,12 @@ describe('notifications', () => {
         });
       });
 
-      it('returns admin guidance when a deleted dashboard is not visible in the trash listing', () => {
-        const result = getRestoreNotificationData([], [{ uid: 'failed1', error: 'not_found', step: 'fetch' }], '');
+      it('returns admin guidance when a deleted dashboard is not visible in the recently-deleted listing', () => {
+        const result = getRestoreNotificationData(
+          [],
+          [{ uid: 'failed1', error: RESTORE_FETCH_NOT_FOUND, step: 'fetch' }],
+          ''
+        );
         expect(result).toEqual({
           kind: 'event',
           data: {
@@ -172,7 +176,7 @@ describe('notifications', () => {
         });
       });
 
-      it('returns admin guidance when the trash read fails with 403', () => {
+      it('returns admin guidance when the recently-deleted read fails with 403', () => {
         const result = getRestoreNotificationData(
           [],
           [{ uid: 'failed1', error: 'Forbidden', status: 403, step: 'fetch' }],

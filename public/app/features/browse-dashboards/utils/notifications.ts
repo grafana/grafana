@@ -5,6 +5,9 @@ import { isRootFolderUID } from 'app/features/search/constants';
 
 import { type RestoreNotificationData } from '../types';
 
+/** Fetch-step failure sentinel: the recently-deleted listing had no visible item for the uid. */
+export const RESTORE_FETCH_NOT_FOUND = 'not_found';
+
 interface RestoreFailure {
   uid: string;
   error: string;
@@ -54,11 +57,11 @@ export function getRestoreNotificationData(
     defaultValue_other: '{{count}} dashboard restored successfully',
   });
 
-  // Permission failures get actionable guidance instead of the raw API error.
+  // Failures the user can act on get guidance instead of the raw API error.
   // Create beats fetch: picking another folder is the action the user can take.
   const hasCreatePermissionFailure = failed.some((f) => f.step === 'create' && f.status === 403);
-  const hasFetchPermissionFailure = failed.some(
-    (f) => f.step === 'fetch' && (f.status === 403 || f.error === 'not_found')
+  const hasFetchFailure = failed.some(
+    (f) => f.step === 'fetch' && (f.status === 403 || f.error === RESTORE_FETCH_NOT_FOUND)
   );
 
   const firstError = failed[0]?.error;
@@ -67,10 +70,10 @@ export function getRestoreNotificationData(
         'browse-dashboards.restore.failed-create-permission',
         "You don't have permission to add dashboards to the selected folder. Choose a folder where you have edit permissions, or ask an administrator to restore the dashboards."
       )
-    : hasFetchPermissionFailure
+    : hasFetchFailure
       ? t(
-          'browse-dashboards.restore.failed-fetch-permission',
-          'The dashboards could not be restored due to missing permissions. Ask an administrator to restore them.'
+          'browse-dashboards.restore.failed-fetch',
+          "The dashboards could no longer be found or you don't have permission to restore them. Ask an administrator to restore them."
         )
       : firstError;
 

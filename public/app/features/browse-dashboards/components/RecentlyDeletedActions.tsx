@@ -18,7 +18,7 @@ import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { useActionSelectionState } from '../state/hooks';
 import { clearFolders, setAllSelection } from '../state/slice';
-import { getRestoreNotificationData } from '../utils/notifications';
+import { getRestoreNotificationData, RESTORE_FETCH_NOT_FOUND } from '../utils/notifications';
 
 import { RestoreModal } from './RestoreModal';
 
@@ -98,7 +98,7 @@ export function RecentlyDeletedActions() {
         // The recently-deleted listing is deleter/permission-aware: empty result means
         // this user cannot read the deleted dashboard (or it is no longer recently deleted).
         logWarning('Deleted dashboard not visible in the recently-deleted listing during restore', { uid });
-        return { uid, error: 'not_found', step: 'fetch' as const };
+        return { uid, error: RESTORE_FETCH_NOT_FOUND, step: 'fetch' as const };
       }
 
       const copy = structuredClone(dashboard);

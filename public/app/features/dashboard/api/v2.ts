@@ -36,7 +36,7 @@ import {
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
-import { buildRestorePayload, isV0V1StoredVersion } from './utils';
+import { buildRestorePayload, fetchDeletedDashboard, isV0V1StoredVersion } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -258,12 +258,7 @@ export class K8sDashboardV2API
   }
 
   async getDeletedDashboard(name: string): Promise<Resource<DashboardV2Spec> | undefined> {
-    const list = await this.client.list({
-      labelSelector: 'grafana.app/get-trash=true',
-      fieldSelector: `metadata.name=${name}`,
-    });
-    // find instead of items[0] guards against backends that ignore the fieldSelector
-    return list.items.find((item) => item.metadata.name === name);
+    return fetchDeletedDashboard(this.client, name);
   }
 
   async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<DashboardV2Spec>> {

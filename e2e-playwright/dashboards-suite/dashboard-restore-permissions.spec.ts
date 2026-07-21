@@ -164,7 +164,7 @@ test.describe(
         const errorToast = page.getByTestId(selectors.components.Alert.alertV2('error'));
         await expect(errorToast).toBeVisible();
         await expect(errorToast).toContainText(
-          'The dashboards could not be restored due to missing permissions. Ask an administrator to restore them.'
+          "The dashboards could no longer be found or you don't have permission to restore them. Ask an administrator to restore them."
         );
       });
     });
