@@ -73,6 +73,32 @@ export const SHOWCASE_INTENT = `Build a showcase dashboard that demonstrates wha
 - Showcase visual variety: an at-a-glance section of big-number stats and gauges up front, then time series, bar charts, tables, and a logs panel where the data supports them. Use thresholds and units so the panels look polished.
 - Showcase interactivity: template variables that scope the dashboard (datasource, namespace, instance — chained where the data supports it), reused in queries and legends.`;
 
+/** Shown as the user's chat message for showcase builds (the request the agent gets is SHOWCASE_INTENT). */
+export const SHOWCASE_DISPLAY_PROMPT = 'Show me what Grafana can do with the data in this instance.';
+
+/**
+ * The user-facing text shown as their message in the build conversation:
+ * their own wizard prompt plus the choices they made on the questions step.
+ * The assembled build request (buildGenerationPrompt) travels alongside it
+ * as hidden context, so this is all the chat displays.
+ */
+export function buildDisplayPrompt(args: {
+  /** The request as the user typed it in the wizard. */
+  request: string;
+  clarifications?: Array<{ question: string; answer: string }>;
+  /** Plan changes the user typed into the refine box on the review step, in order. */
+  planFeedback?: string[];
+}): string {
+  const parts = [args.request];
+  if (args.clarifications && args.clarifications.length > 0) {
+    parts.push(`My choices:\n${args.clarifications.map((c) => `- ${c.question} ${c.answer}`).join('\n')}`);
+  }
+  if (args.planFeedback && args.planFeedback.length > 0) {
+    parts.push(`Changes I asked for on the plan:\n${args.planFeedback.map((feedback) => `- ${feedback}`).join('\n')}`);
+  }
+  return parts.join('\n\n');
+}
+
 function formatDatasources(datasources: WizardDatasource[]): string {
   const maxListed = 50;
   const lines = datasources
@@ -290,6 +316,9 @@ ${titleRequirement}
 
   return parts.join('\n\n');
 }
+
+/** Shown as the user's chat message for automatic repair passes. */
+export const REPAIR_DISPLAY_PROMPT = 'Fix the problems found in the generated dashboard.';
 
 /**
  * Prompt for an automatic repair pass: after a build, deterministic validation

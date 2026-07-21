@@ -5,23 +5,28 @@
  * itself is owned by an app-level host component (DashboardGenerationHost)
  * that outlives the modal. The wizard publishes a request here; the host
  * picks it up and runs the assistant's headless dashboard builder, which
- * builds the dashboard in the live scene while the host's overlay blocks
- * interaction — in the new-dashboard editor for fresh builds, or in place
- * for "improve this dashboard" runs.
+ * builds the dashboard in the live scene — in the new-dashboard editor for
+ * fresh builds, or in place for "improve this dashboard" runs. The build's
+ * conversation opens in the assistant sidebar while a dashboard edit lock
+ * (dim overlay + progress pill) blocks manual edits until the build is done.
  *
  * The wizard can also announce a *likely* upcoming generation (prewarm) as
  * soon as it opens: the host then mounts the assistant's builder without a
  * prompt so it can pre-create the chat session the build will use, shaving
- * those round trips off the wait behind the overlay.
- *
- * After a successful build the store holds a 'done' phase so the host can
- * show follow-up actions (continue refining in the assistant, rate the
- * result) until the user dismisses them.
+ * those round trips off the wait.
  */
 
 export interface DashboardGenerationRequest {
   /** The full dashboard-building request handed to the assistant. */
   prompt: string;
+  /**
+   * Short user-facing text (the user's own wizard prompt and choices) shown
+   * as their message in the build conversation. The full `prompt` then
+   * reaches the agent as hidden context instead of being displayed. When
+   * unset — or with an older assistant plugin that predates the prop — the
+   * full `prompt` is shown as the message.
+   */
+  displayPrompt?: string;
   /** Origin identifier reported to the assistant. */
   origin: string;
   /** 'new' builds a fresh dashboard; 'current' improves the one that is open. */
@@ -30,20 +35,10 @@ export interface DashboardGenerationRequest {
   repairAttempt?: number;
 }
 
-export interface DashboardGenerationOutcome {
-  /** The agent's 1-2 sentence summary of what it built or changed. */
-  summary: string;
-  origin: string;
-  target: 'new' | 'current';
-  /** Opens the build's chat session in the assistant sidebar, when offered. */
-  openInAssistant?: () => void;
-}
-
 export type DashboardGenerationPhase =
   | { status: 'idle' }
   | { status: 'prewarm'; origin: string }
-  | { status: 'active'; request: DashboardGenerationRequest }
-  | { status: 'done'; outcome: DashboardGenerationOutcome };
+  | { status: 'active'; request: DashboardGenerationRequest };
 
 const IDLE: DashboardGenerationPhase = { status: 'idle' };
 
@@ -58,7 +53,6 @@ function notify() {
 
 /** Announce that a generation is likely coming so the host can warm up. */
 export function prewarmDashboardGeneration(origin: string) {
-  // A lingering 'done' bar from the previous build gives way to the new run.
   if (phase.status === 'active' || phase.status === 'prewarm') {
     return;
   }
@@ -77,12 +71,6 @@ export function cancelDashboardGenerationPrewarm() {
 
 export function startDashboardGeneration(request: DashboardGenerationRequest) {
   phase = { status: 'active', request };
-  notify();
-}
-
-/** Transition a finished build to its follow-up state (success bar). */
-export function completeDashboardGeneration(outcome: DashboardGenerationOutcome) {
-  phase = { status: 'done', outcome };
   notify();
 }
 

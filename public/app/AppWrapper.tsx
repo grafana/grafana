@@ -22,6 +22,7 @@ import { type RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
+import { DashboardEditLockHost } from './features/dashboard-edit-lock/DashboardEditLockHost';
 import { DashboardGenerationHost } from './features/dashboard-wizard/DashboardGenerationHost';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
@@ -155,6 +156,7 @@ export function AppWrapper({ context }: AppWrapperProps) {
                                   <RouterWrapper {...routerWrapperProps} />
                                   <LiveConnectionWarning />
                                   <DashboardGenerationHost />
+                                  <DashboardEditLockHost />
                                   <PortalContainer />
                                 </div>
                               </UNSAFE_PortalProvider>

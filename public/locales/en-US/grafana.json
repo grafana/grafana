@@ -6509,6 +6509,10 @@
       }
     }
   },
+  "dashboard-edit-lock": {
+    "cancel": "Cancel",
+    "default-label": "The Assistant is editing this dashboard"
+  },
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Upload dashboard JSON file",
@@ -7895,20 +7899,7 @@
     },
     "generation": {
       "assistant-unavailable": "The Grafana Assistant is not available.",
-      "cancel": "Cancel",
-      "continue-in-assistant": "Continue in Assistant",
-      "dismiss": "Dismiss",
       "failed-title": "Dashboard generation failed",
-      "rate-down": "Poor result",
-      "rate-thanks": "Thanks for the feedback!",
-      "rate-up": "Good result",
-      "starting": "Reading your data sources",
-      "starting-improve": "Reading your dashboard",
-      "subtitle": "This usually takes a few seconds. Hang tight.",
-      "success-title": "Dashboard generated",
-      "success-title-improve": "Dashboard improved",
-      "tip-body": "The Assistant checks which metrics and labels actually exist in your data sources, so every panel is built from real data.",
-      "tip-title": "About Grafana Assistant",
       "title": "Building your dashboard",
       "title-improve": "Improving your dashboard"
     },
