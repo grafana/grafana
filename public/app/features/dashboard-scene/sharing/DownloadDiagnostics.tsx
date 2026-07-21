@@ -19,11 +19,15 @@ import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
 
+import { type DashboardScene } from '../scene/DashboardScene';
+
 import { type SceneShareTabState, type ShareView } from './types';
 
 export interface DownloadDiagnosticsState extends SceneShareTabState {
   // The panel this diagnostics bundle is scoped to.
   panelRef?: SceneObjectRef<VizPanel>;
+  // The panel's dashboard, so its save model (and this panel's JSON within it) can be bundled.
+  dashboardRef?: SceneObjectRef<DashboardScene>;
 }
 
 export class DownloadDiagnostics extends SceneObjectBase<DownloadDiagnosticsState> implements ShareView {
@@ -57,6 +61,37 @@ function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunn
   return undefined;
 }
 
+// panel.state.key is "panel-<id>"; parse the numeric id without importing utils (import cycle, as above).
+function panelIdFrom(panel: VizPanel): number {
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+// Finds a panel's save model within a dashboard save model by id, recursing into collapsed rows
+// (which carry their children in a nested "panels" array). Kept dependency-free to avoid the
+// serialization/utils import cycle the rest of this file works around.
+function findPanelSaveModel(panels: unknown, id: number): unknown {
+  if (!Array.isArray(panels)) {
+    return undefined;
+  }
+  for (const p of panels) {
+    if (!isRecord(p)) {
+      continue;
+    }
+    if (p.id === id) {
+      return p;
+    }
+    const nested = findPanelSaveModel(p.panels, id);
+    if (nested) {
+      return nested;
+    }
+  }
+  return undefined;
+}
+
 // The download uses a blob-response fetch, whose FetchError carries the detail in status/statusText
 // (its data is a Blob and message is unset), so build a message from those rather than error.message
 // which would leave the alert body empty.
@@ -69,7 +104,7 @@ function diagnosticsErrorMessage(error: Error): string {
 }
 
 function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiagnostics>) {
-  const { onDismiss, panelRef } = model.useState();
+  const { onDismiss, panelRef, dashboardRef } = model.useState();
   const styles = useStyles2(getStyles);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -96,15 +131,26 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     }
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
 
+    // Bundle this panel's JSON and the dashboard JSON for context. The panel's save model is resolved
+    // from the dashboard save model by id rather than serialized separately (avoids the serialization
+    // import cycle this view already works around); undefined models are simply not sent.
+    const dashboardModel = dashboardRef?.resolve().getSaveModel();
+    const panelModel = findPanelSaveModel(
+      isRecord(dashboardModel) ? dashboardModel.panels : undefined,
+      panelIdFrom(panel)
+    );
+
     const controller = new AbortController();
     abortRef.current = controller;
     await downloadDiagnosticsForQueries(
       queries,
       String(timeRange.from.valueOf()),
       String(timeRange.to.valueOf()),
-      controller.signal
+      controller.signal,
+      panelModel,
+      dashboardModel
     );
-  }, [panelRef]);
+  }, [panelRef, dashboardRef]);
 
   const handleDismiss = () => {
     abortRef.current?.abort();

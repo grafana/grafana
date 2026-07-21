@@ -51,6 +51,19 @@ describe('DownloadDiagnostics', () => {
     expect(typeof to).toBe('string');
   });
 
+  it('forwards the dashboard save model and this panel’s JSON (resolved by id)', async () => {
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    const [, , , , panelModel, dashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    // The whole dashboard save model is sent (bundled as dashboard.json), and this panel's JSON is
+    // resolved from it by id (VizPanel key "panel-1" -> id 1) and sent as panel.json.
+    expect(dashboardModel).toEqual(expect.objectContaining({ uid: 'dash-1' }));
+    expect(panelModel).toEqual(expect.objectContaining({ id: 1, type: 'table' }));
+  });
+
   it('fills the runner-level datasource onto queries that lack one', async () => {
     const runner = new SceneQueryRunner({
       datasource: { uid: 'runner-ds', type: 'prometheus' },
@@ -115,19 +128,28 @@ function setupScenario(onDismiss?: () => void, runner?: SceneQueryRunner) {
 
   const gridItem = new DashboardGridItem({ key: 'grid-item-1', body: vizPanel });
 
-  const tab = new DownloadDiagnostics({
-    panelRef: vizPanel.getRef(),
-    onDismiss,
-  });
-
   const dashboard = new DashboardScene({
     title: 'Dash',
     uid: 'dash-1',
     meta: { canEdit: true },
     $timeRange: new SceneTimeRange({}),
     body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
-    overlay: tab,
   });
+
+  // Stub the save model so the test exercises this view's panel-lookup-by-id + payload wiring without
+  // depending on the serializer internals (which can emit v1 or v2). A v1 model with panels[] is used.
+  jest.spyOn(dashboard, 'getSaveModel').mockReturnValue({
+    uid: 'dash-1',
+    panels: [{ id: 1, type: 'table', title: 'Panel' }],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any);
+
+  const tab = new DownloadDiagnostics({
+    panelRef: vizPanel.getRef(),
+    dashboardRef: dashboard.getRef(),
+    onDismiss,
+  });
+  dashboard.setState({ overlay: tab });
 
   // Constructing the scene wires up parent pointers, which is all sceneGraph.getTimeRange and the
   // query-runner lookup need here. We deliberately skip activation so the SceneQueryRunner does not
