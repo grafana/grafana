@@ -25,7 +25,7 @@ describe('convertToWebSocketUrl', () => {
     win.location.host = 'example.com';
 
     const httpUrl = '/api/ds/proxy/1/api/v1/tail/loki?query=a';
-    const expectedWebSocketUrl = 'ws://example.com/grafana/api/ds/proxy/1/api/v1/tail/loki?query=a';
+    const expectedWebSocketUrl = 'wss://example.com/grafana/api/ds/proxy/1/api/v1/tail/loki?query=a';
 
     const result = convertToWebSocketUrl(httpUrl);
 
