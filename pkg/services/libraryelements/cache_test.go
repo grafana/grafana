@@ -132,7 +132,7 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 
 	t.Run("falls back to GetFolders when useSearch is set but the requester has no ID token", func(t *testing.T) {
 		sc := setupTestScenario(t)
-		sc.reqContext.SignedInUser.IDToken = ""
+		sc.reqContext.IDToken = ""
 
 		trackingSvc := newTrackingFolderService()
 		trackingSvc.ExpectedFolders = []*folder.Folder{
