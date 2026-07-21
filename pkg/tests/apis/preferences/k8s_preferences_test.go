@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -116,13 +116,33 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 			require.Equal(t, "", *replaced.Spec.Timezone, "PUT must clear timezone it omitted")
 		}
 	})
+
+	t.Run("merged preferences via resource-shaped GET", func(t *testing.T) {
+		admin := helper.Org1.Admin
+		adminName := "user-" + admin.Identity.GetIdentifier()
+		putResult := putUserPrefsK8s(t, helper, admin, adminName, fmt.Sprintf(`{"metadata": {"name": "%s"}, "spec": {"theme":"aubergine"}}`, adminName))
+		require.NoError(t, putResult.Error())
+
+		client := admin.RESTClient(t, &preferences.GroupVersion)
+		raw, err := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
+			"namespaces", "default",
+			"preferences", "merged").Do(context.Background()).Raw()
+		require.NoError(t, err, "GET preferences/merged: %s", string(raw))
+
+		out := &preferences.Preferences{}
+		require.NoError(t, json.Unmarshal(raw, out))
+		require.NotNil(t, out.Spec.Theme)
+		require.Equal(t, "aubergine", *out.Spec.Theme, "user preference must win in the merged view")
+		require.Contains(t, out.Annotations[preferences.APIGroup+"/source"], adminName,
+			"merged response must record the user preferences as a source")
+	})
 }
 
 func putUserPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, user apis.User, name string, body string) rest.Result {
 	t.Helper()
 	ctx := context.Background()
 	client := user.RESTClient(t, &preferences.GroupVersion)
-	resp := client.Put().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	resp := client.Put().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", name).Body([]byte(body)).Do(ctx)
 
@@ -134,7 +154,7 @@ func patchUserPrefsK8s(t *testing.T, _ *apis.K8sTestHelper, user apis.User, body
 	ctx := context.Background()
 	name := "user-" + user.Identity.GetIdentifier()
 	client := user.RESTClient(t, &preferences.GroupVersion)
-	return client.Patch(types.MergePatchType).AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	return client.Patch(types.MergePatchType).AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", name).Body([]byte(body)).Do(ctx)
 }
@@ -143,7 +163,7 @@ func getUserPrefsK8s(t *testing.T, _ *apis.K8sTestHelper, user apis.User, name s
 	t.Helper()
 	ctx := context.Background()
 	client := user.RESTClient(t, &preferences.GroupVersion)
-	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", name).Do(ctx)
 
@@ -159,7 +179,7 @@ func putOrgPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, body string) rest.
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	return client.Put().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	return client.Put().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "namespace").Body([]byte(body)).Do(ctx)
 }
@@ -168,7 +188,7 @@ func patchOrgPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, body string) res
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	return client.Patch(types.MergePatchType).AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	return client.Patch(types.MergePatchType).AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "namespace").Body([]byte(body)).Do(ctx)
 }
@@ -177,7 +197,7 @@ func getOrgPrefsK8s(t *testing.T, helper *apis.K8sTestHelper) *preferences.Prefe
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "namespace").Do(ctx)
 	raw, err := resp.Raw()
@@ -191,7 +211,7 @@ func putTeamPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, teamUID string, b
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	return client.Put().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	return client.Put().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "team-"+teamUID).Body([]byte(body)).Do(ctx)
 }
@@ -200,7 +220,7 @@ func getTeamPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, teamUID string) *
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "team-"+teamUID).Do(ctx)
 	raw, err := resp.Raw()

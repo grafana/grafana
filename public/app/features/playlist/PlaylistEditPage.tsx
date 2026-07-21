@@ -7,8 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { SaveProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
-import { SourceLink } from 'app/features/provisioning/components/SourceLink';
+import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
   getManagerIdentity,
@@ -61,9 +60,13 @@ export const PlaylistEditPage = () => {
   const renderTitle = (title: string) => (
     <Stack direction="row" gap={1} alignItems="center" wrap>
       <h1>{title}</h1>
-      {data && isManaged(data) && <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />}
-      {data && isManagedByRepository(data) && (
-        <SourceLink repositoryName={getManagerIdentity(data)} sourcePath={getSourcePath(data)} />
+      {data && isManaged(data) && (
+        <ManagedBadge
+          managerKind={getManagerKind(data)}
+          name={getManagerIdentity(data)}
+          repositoryName={getManagerIdentity(data)}
+          sourcePath={getSourcePath(data)}
+        />
       )}
     </Stack>
   );
@@ -91,8 +94,10 @@ export const PlaylistEditPage = () => {
         )}
       </Page.Contents>
       {provisionedPlaylist && (
-        <SaveProvisionedPlaylistDrawer
-          playlist={provisionedPlaylist}
+        <SaveProvisionedResourceDrawer
+          resource={provisionedPlaylist}
+          title={provisionedPlaylist.spec?.title ?? ''}
+          action="update"
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}

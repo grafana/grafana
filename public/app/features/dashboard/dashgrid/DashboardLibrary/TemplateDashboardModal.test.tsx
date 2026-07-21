@@ -2,10 +2,14 @@ import { http, HttpResponse } from 'msw';
 import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
@@ -32,17 +36,23 @@ const mockNewLoaded = jest.spyOn(NewTemplateDashboardInteractions, 'loaded').moc
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const mockGetList = jest
-  .fn()
-  .mockReturnValue([{ name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' }]);
+const defaultTestDataSource = {
+  name: 'Test Data Source',
+  uid: 'test-data-source-uid',
+  type: 'grafana-testdata-datasource',
+} as DataSourceInstanceListItem;
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
+}));
+
+const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
-    getDataSourceSrv: () => ({
-      getList: mockGetList,
-    }),
     locationService: {
       ...actual.locationService,
       push: jest.fn(),
@@ -62,12 +72,16 @@ jest.mock('@grafana/assistant', () => ({
 }));
 
 describe('TemplateDashboardModal', () => {
+  let originalPermissions: typeof contextSrv.user.permissions;
+
   beforeEach(() => {
     jest.clearAllMocks();
     config.featureToggles.dashboardTemplates = true;
-    mockGetList.mockReturnValue([
-      { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-    ]);
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
+    // Custom templates require the dashboardtemplates:read RBAC action; grant it by default so
+    // the custom-tab tests work, and revoke it explicitly in the read-gating test.
+    originalPermissions = contextSrv.user.permissions;
+    contextSrv.user.permissions = { [AccessControlAction.DashboardTemplatesRead]: true };
     // Default: no custom templates tab registered (matches the real default before the
     // enterprise extension registers itself). Individual describes override this.
     mockGetDashboardTemplatesTab.mockReturnValue(null);
@@ -81,6 +95,7 @@ describe('TemplateDashboardModal', () => {
               id: 1,
               name: 'Test Template Dashboard',
               description: 'A test template dashboard',
+              slug: 'test-template-dashboard',
               downloads: 100,
               datasource: 'grafana-testdata-datasource',
             },
@@ -88,6 +103,7 @@ describe('TemplateDashboardModal', () => {
               id: 2,
               name: 'Test Template Dashboard 2',
               description: 'A test template dashboard 2',
+              slug: 'test-template-dashboard-2',
               downloads: 100,
               datasource: 'grafana-testdata-datasource',
             },
@@ -95,6 +111,10 @@ describe('TemplateDashboardModal', () => {
         });
       })
     );
+  });
+
+  afterEach(() => {
+    contextSrv.user.permissions = originalPermissions;
   });
 
   describe('Render conditions', () => {
@@ -106,7 +126,7 @@ describe('TemplateDashboardModal', () => {
     });
 
     it('should not show TemplateDashboard modal when query param is present but test data source is not available', async () => {
-      mockGetList.mockReturnValueOnce([]);
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
       render(<TemplateDashboardModal />, {
         historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
       });
@@ -452,6 +472,26 @@ describe('TemplateDashboardModal', () => {
           historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
         });
 
+        await screen.findByRole('dialog', { name: 'Start a dashboard from a template' });
+
+        expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();
+        expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('when the user lacks the dashboardtemplates:read permission', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
+        contextSrv.user.permissions = {};
+      });
+
+      it('does not render the Custom tab even when the extension is registered', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        // Grafana-provisioned templates are still available, so the modal opens.
         await screen.findByRole('dialog', { name: 'Start a dashboard from a template' });
 
         expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();

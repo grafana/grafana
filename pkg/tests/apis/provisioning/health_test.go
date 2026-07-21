@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -25,16 +24,18 @@ import (
 
 func TestIntegrationHealth(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
+
 	repo := "test-repo-health"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repo,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repo,
+		SyncTarget: "folder",
 	})
 
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
+
 	// Verify the health status before calling the endpoint
-	repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.NoError(t, err)
 	originalRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 	require.True(t, originalRepo.Status.Health.Healthy, "repository should be marked healthy")
@@ -85,7 +86,7 @@ func TestIntegrationHealth(t *testing.T) {
 			SubResource("test").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "test endpoint should work for new repository configurations")
 
@@ -97,7 +98,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.Equal(t, 200, testResults.Code, "should return 200 for successful test")
 
 		// Verify the repository was not actually created (this was just a test)
-		_, err = helper.Repositories.Resource.Get(ctx, "test-new-config", metav1.GetOptions{})
+		_, err = helper.Repositories.Resource.Get(t.Context(), "test-new-config", metav1.GetOptions{})
 		require.True(t, err != nil, "repository should not be created during test")
 	})
 
@@ -133,7 +134,7 @@ func TestIntegrationHealth(t *testing.T) {
 			SubResource("test").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "test endpoint should work for new repository configurations")
 
@@ -145,7 +146,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.Equal(t, 200, testResults.Code, "should return 200 for successful test")
 
 		// Verify the repository was not actually created (this was just a test)
-		_, err = helper.Repositories.Resource.Get(ctx, "test-new-config", metav1.GetOptions{})
+		_, err = helper.Repositories.Resource.Get(t.Context(), "test-new-config", metav1.GetOptions{})
 		require.True(t, err != nil, "repository should not be created during test")
 	})
 
@@ -156,7 +157,7 @@ func TestIntegrationHealth(t *testing.T) {
 			Name(repo).
 			SubResource("test").
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "test endpoint should return NOT an error for existing repository")
 		obj, err := result.Get()
@@ -168,7 +169,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.Equal(t, 200, testResults.Code, "should return 200 for successful test")
 
 		// Verify repository health status after update
-		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		afterTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		require.True(t, afterTest.Status.Health.Healthy, "repository should be marked healthy")
@@ -195,7 +196,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// (In a real scenario, this would be detected during the next health check cycle)
 
 		// Get the repository status before the test
-		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		beforeTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("Before test - Healthy: %v, Checked: %d", beforeTest.Status.Health.Healthy, beforeTest.Status.Health.Checked)
@@ -207,7 +208,7 @@ func TestIntegrationHealth(t *testing.T) {
 			Name(repo).
 			SubResource("test").
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// The test endpoint may return an error for unhealthy repositories
 		obj, err := result.Get()
@@ -221,7 +222,7 @@ func TestIntegrationHealth(t *testing.T) {
 		}
 
 		// Verify repository health status after test - timestamp should change
-		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		repoObj, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		afterTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("After test - Healthy: %v, Checked: %d", afterTest.Status.Health.Healthy, afterTest.Status.Health.Checked)
@@ -242,7 +243,7 @@ func TestIntegrationHealth(t *testing.T) {
 			Name(repo).
 			SubResource("test").
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// Should succeed now that the directory is recreated
 		require.NoError(t, result.Error(), "test endpoint should work after recreating directory")
@@ -253,7 +254,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.Equal(t, 200, testResults.Code, "should return 200 after recreating directory")
 
 		// Verify repository health status is now healthy again
-		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		repoObj, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		finalRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, finalRepo.Status.Health.Checked)
@@ -292,7 +293,6 @@ func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResult
 
 func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
@@ -353,7 +353,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 		}
 
 		// Create with dryRun - that would test the connection
-		c, err := helper.Connections.Resource.Create(ctx, config, metav1.CreateOptions{
+		c, err := helper.Connections.Resource.Create(t.Context(), config, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
 		require.Error(t, err)
@@ -443,7 +443,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 		}
 
 		// Create with dryRun - that would test the connection
-		c, err := helper.Connections.Resource.Create(ctx, config, metav1.CreateOptions{
+		c, err := helper.Connections.Resource.Create(t.Context(), config, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
 		require.Error(t, err)
@@ -534,7 +534,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 		}
 
 		// Create with dryRun - that would test the connection
-		c, err := helper.Connections.Resource.Create(ctx, config, metav1.CreateOptions{
+		c, err := helper.Connections.Resource.Create(t.Context(), config, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
 		require.NoError(t, err)
@@ -544,7 +544,6 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 
 func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Use public GitHub repository (grafana-git-sync-demo) via git type - no token needed for read access
 	// This tests that:
@@ -589,7 +588,7 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 			SubResource("test").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		// Validation errors can be returned as HTTP errors or as TestResults
 		if result.Error() != nil {
@@ -654,7 +653,7 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 			SubResource("test").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error())
 
@@ -704,7 +703,7 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		}
 
 		// Create the repository
-		repo, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{})
+		repo, err := helper.Repositories.Resource.Create(t.Context(), repoConfig, metav1.CreateOptions{})
 		require.NoError(t, err, "repository creation should succeed")
 		require.NotNil(t, repo)
 
@@ -712,7 +711,7 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		helper.WaitForUnhealthyRepository(t, "test-git-unhealthy")
 
 		// Cleanup
-		err = helper.Repositories.Resource.Delete(ctx, "test-git-unhealthy", metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), "test-git-unhealthy", metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
@@ -750,7 +749,7 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		}
 
 		// Create the repository
-		repo, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{})
+		repo, err := helper.Repositories.Resource.Create(t.Context(), repoConfig, metav1.CreateOptions{})
 		require.NoError(t, err, "repository creation should succeed")
 		require.NotNil(t, repo)
 
@@ -758,7 +757,7 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		helper.WaitForHealthyRepository(t, "test-git-healthy-readonly")
 
 		// Cleanup
-		err = helper.Repositories.Resource.Delete(ctx, "test-git-healthy-readonly", metav1.DeleteOptions{})
+		err = helper.Repositories.Resource.Delete(t.Context(), "test-git-healthy-readonly", metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 }

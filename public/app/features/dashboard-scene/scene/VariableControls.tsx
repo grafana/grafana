@@ -18,6 +18,9 @@ import {
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
+import { SourceIcon } from '../settings/ProvisionedControlsSection';
+import { isVariableEditable } from '../settings/variables/utils';
+import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
@@ -70,6 +73,8 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
+  const canEditControl = Boolean(isSelectable) && isVariableEditable(variable);
+  const isReadOnlyControl = Boolean(isEditingNewLayouts) && !isVariableEditable(variable);
   const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
 
   const onClickEditVariable = useCallback(() => {
@@ -103,12 +108,13 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   // For switch variables in menu, we want to show the switch on the left and the label on the right
   if (inMenu && sceneUtils.isSwitchVariable(variable)) {
     return (
-      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+      <ControlActionsPopover isEditable={canEditControl} content={editActions}>
         <div
           className={cx(
             styles.switchMenuContainer,
             isSelected && 'dashboard-selected-element',
-            isSelectable && !isSelected && 'dashboard-selectable-element'
+            isSelectable && !isSelected && 'dashboard-selectable-element',
+            isReadOnlyControl && styles.readOnlyControl
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
           onPointerDown={markUserInitiated}
@@ -128,12 +134,13 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
 
   if (inMenu) {
     return (
-      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+      <ControlActionsPopover isEditable={canEditControl} content={editActions}>
         <div
           className={cx(
             styles.verticalContainer,
             isSelected && 'dashboard-selected-element',
-            isSelectable && !isSelected && 'dashboard-selectable-element'
+            isSelectable && !isSelected && 'dashboard-selectable-element',
+            isReadOnlyControl && styles.readOnlyControl
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
           onPointerDown={markUserInitiated}
@@ -150,12 +157,13 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   }
 
   return (
-    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+    <ControlActionsPopover isEditable={canEditControl} content={editActions}>
       <div
         className={cx(
           styles.container,
           isSelected && 'dashboard-selected-element',
-          isSelectable && !isSelected && 'dashboard-selectable-element'
+          isSelectable && !isSelected && 'dashboard-selectable-element',
+          isReadOnlyControl && styles.readOnlyControl
         )}
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
         onPointerDown={markUserInitiated}
@@ -185,12 +193,15 @@ function VariableLabel({
 
   const labelOrName = state.label || state.name;
   const controlsLayout = layout ?? 'horizontal';
-  const descriptionSuffix =
-    state.description != null && state.description !== '' ? (
-      <VariableDescriptionTooltip
-        description={state.description}
-        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
-      />
+  const placement = controlsLayout === 'vertical' ? 'top' : 'bottom';
+  const hasDescription = state.description != null && state.description !== '';
+  const predefinedOrigin = getPredefinedOrigin(state.origin);
+  const suffix =
+    hasDescription || predefinedOrigin ? (
+      <>
+        {predefinedOrigin && <SourceIcon origin={state.origin} />}
+        {hasDescription && <VariableDescriptionTooltip description={state.description!} placement={placement} />}
+      </>
     ) : undefined;
 
   return (
@@ -202,7 +213,7 @@ function VariableLabel({
       error={state.error}
       layout={controlsLayout}
       description={undefined}
-      suffix={descriptionSuffix}
+      suffix={suffix}
       className={className}
     />
   );
@@ -287,5 +298,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
+  }),
+  readOnlyControl: css({
+    opacity: 0.65,
+    cursor: 'default',
+    '&:hover': {
+      color: 'inherit',
+    },
   }),
 });

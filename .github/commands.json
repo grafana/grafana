@@ -125,22 +125,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/grafana-pyroscope",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Parca",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Elasticsearch",
     "action": "addToProject",
     "addToProject": {
@@ -653,14 +637,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/MSSQL",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Jaeger",
     "action": "addToProject",
     "addToProject": {
@@ -985,14 +961,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/911"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Parca",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {

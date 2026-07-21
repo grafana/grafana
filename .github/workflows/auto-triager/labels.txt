@@ -101,7 +101,6 @@ datasource/Elasticsearch
 datasource/GitHub
 datasource/GoogleCloudMonitoring
 datasource/GoogleSheets
-datasource/grafana-pyroscope
 datasource/Graphite
 datasource/InfluxDB
 datasource/Jaeger
@@ -110,7 +109,6 @@ datasource/Loki
 datasource/MSSQL
 datasource/MySQL
 datasource/OpenSearch
-datasource/Parca
 datasource/Phlare
 datasource/Postgres
 datasource/Prometheus

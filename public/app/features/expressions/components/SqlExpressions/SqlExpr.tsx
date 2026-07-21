@@ -9,12 +9,13 @@ import { t, Trans } from '@grafana/i18n';
 import { CompletionItemKind, type TableIdentifier } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { formatSQL } from '@grafana/sql';
+import { formatSQL, quoteIdentifierIfNecessary } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields, type FetchSQLFieldsOptions } from '../../utils/metaSqlExpr';
+import { SQL_EXPRESSIONS_DIALECT } from '../../utils/sqlIdentifier';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider as getLegacySqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
@@ -22,6 +23,7 @@ import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
 import { SqlEditor } from './SqlEditor/SqlEditor';
 import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
+import { useFunctionSignatures } from './hooks/useFunctionSignatures';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
 const SQLEditor = lazy(() =>
@@ -52,15 +54,23 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const interpolationRange = metadata?.range;
   const useCodeMirrorEditor = useBooleanFlagValue('sqlExpressionsCodeMirror', false);
 
+  // Signature metadata is large, so it is loaded lazily only for the CodeMirror path.
+  const functionSignatures = useFunctionSignatures(useCodeMirrorEditor);
+
   const completionProvider = useMemo<SqlCompletionProvider>(
     () => ({
       tables: () =>
-        refIds.map((refId) => ({
-          label: refId.label || refId.value || '',
-          insertText: refId.value || refId.label || '',
-          kind: 'table',
-          boost: 99,
-        })),
+        refIds.map((refId) => {
+          const name = refId.value || refId.label || '';
+
+          return {
+            label: refId.label || refId.value || '',
+            // Quote names that need it (e.g. spaces) so the inserted FROM clause parses and runs on the MySQL backend.
+            insertText: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
+            kind: 'table',
+            boost: 99,
+          };
+        }),
       columns: async ({ table }) => {
         if (!config.featureToggles.sqlExpressionsColumnAutoComplete) {
           return [];
@@ -107,10 +117,12 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     formatter: formatSQL,
   };
 
+  // Quote the seeded table name so refIds with spaces or special characters produce a runnable query.
+  const initialTable = quoteIdentifierIfNecessary(vars[0] || 'table name', SQL_EXPRESSIONS_DIALECT);
   const initialQuery = `SELECT
   *
 FROM
-  ${vars[0]}
+  ${initialTable}
 LIMIT
   10`;
 
@@ -267,6 +279,7 @@ LIMIT
                   value={query.expression ?? initialQuery}
                   onChange={onEditorChange}
                   completionProvider={completionProvider}
+                  functionSignatures={functionSignatures}
                   formatter={formatSQL}
                   height={editorHeight}
                   ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}

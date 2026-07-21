@@ -158,7 +158,7 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
+    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
     id: number,
     source: 'panel' | 'edit_pane' | 'keyboard'
   ) {
@@ -190,9 +190,9 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
   trackPastePanelClick(
-    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' | 'keyboard' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
-    action: 'drop' | 'click' = 'click'
+    action: 'drop' | 'click' | 'keyboard' = 'click'
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
@@ -348,6 +348,19 @@ export const DashboardInteractions = {
   // fired when the dashboard scene enters edit mode; source = how it was opened (Edit button vs assistant)
   editSessionStarted: (properties: { dashboard_uid?: string; source: 'assistant' | 'user' }) => {
     reportDashboardInteraction('edit_session_started', properties);
+  },
+
+  // click "Take me there" button from the dashboard settings for annotations or variables
+  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' }) => {
+    reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
+  },
+
+  viewPanelAction: (properties: { action?: string; value: string }) => {
+    reportDashboardInteraction('view_panel_action', properties);
+  },
+
+  setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
+    reportDashboardInteraction('set_visualization_option', properties);
   },
 };
 

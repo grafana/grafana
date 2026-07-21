@@ -7,6 +7,8 @@ keywords:
   - rbac
   - roles
   - security
+  - terraform
+  - folder permissions
 labels:
   products:
     - enterprise
@@ -36,25 +38,17 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#manage-dashboard-permissions
   manage-folder-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/organize-dashboards/manage-folders/#manage-folder-permissions
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#folder-permissions
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/organize-dashboards/manage-folders/#manage-folder-permissions
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#folder-permissions
 ---
 
 # Git Sync permissions and access control
 
-{{< admonition type="note" >}}
-
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
-
-{{< /admonition >}}
-
 For Git Sync you need to configure permissions at two layers to function correctly:
 
 - At the Grafana level for repository management and resource access, as described in this document.
-- At your Git provider level, to protect your repository. Refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/gitsync-repo-protection) for more information.
+- At your Git provider level, to protect your repository. Refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-git) for more information.
 
 ## Grafana role-based permissions
 
@@ -170,16 +164,57 @@ When Git Sync creates a provisioned folder, it assigns these default permissions
 
 ### Modify folder-level permissions
 
-{{< admonition type="note" >}}
-To safely modify permissions, each provisioned folder should include a `.folder.json` metadata file with the folder's UID. Without this file, folder permissions may be lost if the folder is moved to a different path in the Git repository.
+Folder permissions in Grafana are attached to a folder's **UID**, not to its path in the Git repository. Git Sync stores this UID in the folder's `_folder.json` metadata file (in the `metadata.name` field). For the metadata file schema and why it exists, refer to [The Git Sync folder metadata file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync/#the-git-sync-folder-metadata-file).
 
-For folders created from the Grafana UI, the metadata file is added automatically. If your folder is missing the metadata file, the UI shows a warning with instructions on how to add it.
+Because permissions reference the folder UID, keep the following in mind:
+
+- **Create the folders first.** A folder must exist in Grafana—and have a `_folder.json` file with a stable UID—before you can assign permissions to it. Let Git Sync create and sync the folders, then apply the permissions that reference the resulting UIDs. If you try to set a permission for a folder that hasn't been synced yet, there's no UID to attach it to.
+- **Permissions don't sync to Git.** You set them per Grafana instance. Every instance that syncs the same repository shares the same folder UIDs (from `_folder.json`), so you can apply the same permission definitions to each instance.
+
+{{< admonition type="note" >}}
+To safely modify permissions, each provisioned folder must include a `_folder.json` metadata file with the folder's UID. Without this file, the folder's UID is derived from its repository path, so folder permissions can be lost if the folder is moved to a different path in the Git repository.
+
+For folders created from the Grafana UI, the metadata file is added automatically. If your folder is missing the metadata file, the UI shows a warning with instructions on how to add it. Refer to [The Git Sync folder metadata file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync/#the-git-sync-folder-metadata-file) for details about this file and why it exists.
 {{< /admonition >}}
 
-You can customize folder permissions using:
+You can set folder permissions manually or as code. In both cases, apply them only after Git Sync has created the folders.
 
-- **Grafana UI**: Navigate to the folder, click the settings icon, and select **Permissions**
-- **RBAC (Enterprise/Cloud)**: Use [Role-Based Access Control](ref:rbac) for fine-grained permission management
+#### Set permissions manually
+
+- **Grafana UI**: Navigate to the folder and select **Folder actions > Manage permissions**. Add or edit permissions for roles, teams, or users.
+- **HTTP API**: Use the [Folder/Dashboard permissions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_permissions/). Reference the folder by the UID stored in its `_folder.json` file.
+- **RBAC (Enterprise/Cloud)**: Use [Role-Based Access Control](ref:rbac) for fine-grained permission management.
+
+#### Set permissions with Terraform
+
+You can manage folder permissions as code with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs). Because Git Sync—not Terraform—creates the folders, reference each folder by the UID from its `_folder.json` file (the `metadata.name` value). Apply the permissions only after Git Sync has synced the folders, so the folder UIDs already exist.
+
+Use [`grafana_folder_permission_item`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/folder_permission_item) to manage a single permission entry. This is additive, so it only manages the entries you declare and leaves other permissions untouched:
+
+```terraform
+# The UID comes from the folder's _folder.json metadata file ("metadata.name").
+locals {
+  team_platform_folder_uid = "team-platform-abc123"
+}
+
+resource "grafana_folder_permission_item" "team_platform_editor" {
+  folder_uid = local.team_platform_folder_uid
+  team       = grafana_team.platform.id # an existing team
+  permission = "Edit"
+}
+
+resource "grafana_folder_permission_item" "team_platform_viewer" {
+  folder_uid = local.team_platform_folder_uid
+  role       = "Viewer"
+  permission = "View"
+}
+```
+
+Alternatively, use [`grafana_folder_permission`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/folder_permission) to declare the full set of permissions for a folder in a single resource. This resource is authoritative: any permission that isn't listed is removed when you apply the configuration.
+
+{{< admonition type="note" >}}
+Don't manage these folders with the `grafana_folder` resource—they're owned by Git Sync. To avoid hardcoding UIDs, read them from the `_folder.json` files in your repository, or look them up with a [`grafana_folder` data source](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/folder).
+{{< /admonition >}}
 
 ## Configure fine-grained access control (RBAC)
 
@@ -284,7 +319,7 @@ The management and inspection views (`resources`, `history`, `status`) are gated
 
 After you've configured your Grafana permissions, set up the appropriate permissions at your Git provider to write changes. Repository protection settings control write access, branch protection rules, and code review requirements.
 
-For detailed information about configuring repository write access and branch protection, refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/gitsync-repo-protection).
+For detailed information about configuring repository write access and branch protection, refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-git).
 
 ## Troubleshoot permissions
 

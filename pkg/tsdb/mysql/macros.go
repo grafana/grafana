@@ -9,10 +9,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/mysql/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
-
-const rsIdentifier = `([_a-zA-Z0-9]+)`
-const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]session_user\([^\)]*\)|[\s,]current_user(\([^\)]*\))?|[\s,]system_user\([^\)]*\)|[\s,]user\([^\)]*\))([\s,;]|$)`)
 
@@ -123,11 +121,9 @@ func (m *mySQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backe
 	// in executable SQL are evaluated.
 	sql = stripSQLComments(sql)
 
-	// TODO: Handle error
-	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+	sql = m.ReplaceAllStringSubmatchFunc(sqlmacro.RegExp, sql, func(groups []string) string {
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")

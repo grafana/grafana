@@ -35,11 +35,28 @@ var (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/sqlstore/migrator")
 
+type Migrations interface {
+	AddMigration(id string, m Migration)
+}
+
+// ObsoleteMigrations is a container for migrations that are no longer active
+// These will ONLY run if the corresponding table exists.
+type ObsoleteMigrations struct {
+	Table      string
+	Migrations []Migration
+}
+
+func (o *ObsoleteMigrations) AddMigration(id string, mg Migration) {
+	mg.SetId(id)
+	o.Migrations = append(o.Migrations, mg)
+}
+
 type Migrator struct {
 	DBEngine     *xorm.Engine
 	Dialect      Dialect
 	migrations   []Migration
 	migrationIds map[string]struct{}
+	obsolete     []*ObsoleteMigrations
 	Logger       log.Logger
 	Cfg          *setting.Cfg
 	isLocked     atomic.Bool
@@ -155,6 +172,10 @@ func (mg *Migrator) AddMigration(id string, m Migration) {
 	mg.migrationIds[id] = struct{}{}
 }
 
+func (mg *Migrator) AddObsoleteMigration(m *ObsoleteMigrations) {
+	mg.obsolete = append(mg.obsolete, m)
+}
+
 func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
 	result := make([]string, 0, len(mg.migrations))
 	for _, migration := range mg.migrations {
@@ -200,6 +221,25 @@ func (mg *Migrator) RunMigrations(ctx context.Context, isDatabaseLockingEnabled 
 		return mg.run(ctx)
 	}
 
+	logger := mg.Logger.FromContext(ctx)
+
+	if !mg.Dialect.SupportsAdvisoryLocks() {
+		// Without advisory locks (SQLite) the outer transaction below would only
+		// pin a pooled connection for the whole run while every migration begins
+		// its own transaction on a second connection — a deadlock once the rest
+		// of the pool is occupied. Keep the in-process guard and skip the rest.
+		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, LockCfg{}); err != nil {
+			logger.Error("Failed to lock database", "error", err)
+			return err
+		}
+		defer func() {
+			if unlockErr := casRestoreOnErr(&mg.isLocked, true, false, ErrMigratorIsUnlocked, mg.Dialect.Unlock, LockCfg{}); unlockErr != nil {
+				logger.Error("Failed to unlock database", "error", unlockErr)
+			}
+		}()
+		return mg.run(ctx)
+	}
+
 	dbName, err := mg.Dialect.GetDBName(mg.DBEngine.DataSourceName())
 	if err != nil {
 		return err
@@ -208,8 +248,6 @@ func (mg *Migrator) RunMigrations(ctx context.Context, isDatabaseLockingEnabled 
 	if err != nil {
 		return err
 	}
-
-	logger := mg.Logger.FromContext(ctx)
 
 	return mg.InTransaction(func(sess *xorm.Session) error {
 		logger.Info("Locking database")
@@ -235,6 +273,25 @@ func (mg *Migrator) RunMigrations(ctx context.Context, isDatabaseLockingEnabled 
 		// migration will run inside a nested transaction
 		return mg.run(ctx)
 	})
+}
+
+func (mg *Migrator) addObsoleteMigrations() error {
+	for _, o := range mg.obsolete {
+		exists, err := mg.DBEngine.IsTableExist(o.Table)
+		if err != nil {
+			return fmt.Errorf("failed to check obsolete table existence: %w", err)
+		}
+		if !exists {
+			continue
+		}
+		for _, m := range o.Migrations {
+			if _, ok := mg.migrationIds[m.Id()]; ok {
+				continue
+			}
+			mg.AddMigration(m.Id(), m)
+		}
+	}
+	return nil
 }
 
 func (mg *Migrator) run(ctx context.Context) (err error) {
@@ -271,6 +328,10 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 	}
 
 	successLabel := prometheus.Labels{"success": "true"}
+
+	if err := mg.addObsoleteMigrations(); err != nil {
+		return err
+	}
 
 	migrationsPerformed := 0
 	migrationsSkipped := 0
@@ -425,11 +486,35 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 	return errors.Join(lastErr, b.Err())
 }
 
+// connAcquireTimeout bounds how long beginning a migration transaction may wait
+// for a pooled database connection. Waiting longer means the pool is exhausted
+// (e.g. every other connection is held while the migrator holds the database
+// lock); without a bound that wait is a silent deadlock. It is a variable so
+// tests can shorten it.
+var connAcquireTimeout = 30 * time.Second
+
 func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
 
-	if err := sess.Begin(); err != nil {
+	// database/sql ties the context passed to BeginTx to the whole transaction
+	// lifetime (cancellation rolls the transaction back), so a plain WithTimeout
+	// would abort long-running migrations. Instead a watchdog cancels the context
+	// only if Begin is still waiting for a connection when the timer fires; on
+	// success the context stays alive until the deferred cancel after
+	// Commit/Rollback.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	sess.Context(ctx)
+
+	watchdog := time.AfterFunc(connAcquireTimeout, cancel)
+	err := sess.Begin()
+	if !watchdog.Stop() {
+		// The watchdog fired: even if Begin won the race and succeeded, the
+		// canceled context has already doomed the transaction.
+		return fmt.Errorf("timed out after %s waiting for a database connection to begin a migration transaction (connection pool exhausted?)", connAcquireTimeout)
+	}
+	if err != nil {
 		return err
 	}
 
