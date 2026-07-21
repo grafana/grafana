@@ -163,7 +163,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Send Slack Message
         if: steps.compare-commits.outputs.needs_update == 'true'
-        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.4
+        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v3.0.2
         with:
           method: 'chat.postMessage'
           # send to alerting-reviews channel
