@@ -596,6 +596,44 @@ func TestExportResources_Dashboards_SkipsClassicManagedResourceWithoutIdentity(t
 	require.NoError(t, err)
 }
 
+func TestExportResources_Dashboards_SkipsAppGeneratedResources(t *testing.T) {
+	// SLO-app-generated dashboards (grafana_slo_app-… prefix) are derived,
+	// app-owned artifacts that must be excluded from export even though they
+	// carry no manager annotation. A regular dashboard is exported alongside it
+	// so the exclusion is proven specific to the SLO prefix, not a blanket skip.
+	regular := createDashboardObject("regular-dashboard")
+	sloGenerated := createDashboardObject("grafana_slo_app-ih91jevcngaq3n2njghbw")
+
+	mockItems := []unstructured.Unstructured{regular, sloGenerated}
+
+	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
+		progress.On("SetMessage", mock.Anything, "start resource export").Return()
+		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+		// The regular dashboard is exported normally.
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Name() == "regular-dashboard" && result.Action() == repository.FileActionCreated
+		})).Return()
+		// The SLO-generated dashboard is excluded: recorded as Ignored, never written.
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Name() == "grafana_slo_app-ih91jevcngaq3n2njghbw" && result.Action() == repository.FileActionIgnored
+		})).Return()
+		progress.On("TooManyErrors").Return(nil).Maybe()
+	}
+
+	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
+		// Only the regular dashboard may be written. If the SLO dashboard is ever
+		// written (i.e. the exclusion regresses), the object won't match this
+		// matcher and the mock fails on an unexpected call.
+		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			return obj.GetName() == "regular-dashboard"
+		}), mock.Anything).Return("regular-dashboard.json", nil)
+	}
+
+	err := runExportTest(t, mockItems, setupProgress, setupResources)
+	require.NoError(t, err)
+}
+
 func TestExportResources_GenerateNewUIDs(t *testing.T) {
 	mockItems := []unstructured.Unstructured{
 		createDashboardObject("original-name-1"),
