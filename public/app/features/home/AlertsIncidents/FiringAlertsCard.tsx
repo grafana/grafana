@@ -133,7 +133,9 @@ export function FiringAlertsCardView({
           <ListRow
             isCompact
             title={alert.labels.alertname}
-            subtitle={alert.labels.team ?? '-'}
+            subtitle={alert.labels.team}
+            // when redesignEnabled is false, we want to show the subtitle inline with the title
+            // when its true, we want to show the subtitle below the title
             oneRow={!redesignEnabled}
             prefix={
               redesignEnabled ? (

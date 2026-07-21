@@ -175,7 +175,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     minWidth: 0,
   }),
-  // this moved to ListRow
+  // TODO: this should be safe to remove once incident card also moved to use ListRow component
   title: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',

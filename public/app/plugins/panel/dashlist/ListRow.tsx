@@ -19,8 +19,18 @@ interface ListRowProps {
 
 export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, onClick, prefix }: ListRowProps) {
   const styles = useStyles2(getStyles);
+
+  const subtitleDisplay = (
+    <>
+      {subtitle && (
+        <Text truncate color="secondary" variant="bodySmall" element="p">
+          {subtitle}
+        </Text>
+      )}
+    </>
+  );
   return (
-    <div className={cx(styles.row, isCompact && styles.dashlistLinkCompact)}>
+    <div className={cx(styles.row, isCompact && styles.listCompact)}>
       <Stack direction="row" alignItems="center" gap={1} grow={1}>
         <div>{prefix}</div>
 
@@ -36,9 +46,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
                 {title}
               </Text>
               {/* Subtitle */}
-              <Text truncate color="secondary" variant="bodySmall" element="p">
-                {subtitle ?? ''}
-              </Text>
+              {subtitleDisplay}
             </Stack>
           </Link>
         ) : (
@@ -50,9 +58,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
           >
             <Text truncate>{title}</Text>
             {/* Subtitle */}
-            <Text truncate color="secondary" variant="bodySmall">
-              {subtitle ?? ''}
-            </Text>
+            {subtitleDisplay}
           </Stack>
         )}
       </Stack>
@@ -72,13 +78,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     width: '100%',
   }),
-  dashlistLinkCompact: css({
+  listCompact: css({
     margin: 0,
-  }),
-  title: css({
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
   }),
   titleLink: css({
     flex: 1,
