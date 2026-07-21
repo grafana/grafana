@@ -14,16 +14,11 @@
 
 import { round as _round, dropWhile as _dropWhile } from 'lodash';
 
-import { dateTimeAsMoment, toDuration } from '@grafana/data';
-
-const STANDARD_DATE_FORMAT = 'YYYY-MM-DD';
-const STANDARD_TIME_FORMAT = 'HH:mm';
 export const ONE_MILLISECOND = 1000;
 export const ONE_SECOND = 1000 * ONE_MILLISECOND;
 export const ONE_MINUTE = 60 * ONE_SECOND;
 export const ONE_HOUR = 60 * ONE_MINUTE;
 export const ONE_DAY = 24 * ONE_HOUR;
-const DEFAULT_MS_PRECISION = Math.log10(ONE_MILLISECOND);
 
 const UNIT_STEPS: Array<{ unit: string; microseconds: number; ofPrevious: number }> = [
   { unit: 'd', microseconds: ONE_DAY, ofPrevious: 24 },
@@ -33,43 +28,6 @@ const UNIT_STEPS: Array<{ unit: string; microseconds: number; ofPrevious: number
   { unit: 'ms', microseconds: ONE_MILLISECOND, ofPrevious: 1000 },
   { unit: 'μs', microseconds: 1, ofPrevious: 1000 },
 ];
-
-const quantizeDuration = (duration: number, floatPrecision: number, conversionFactor: number) =>
-  toFloatPrecision(duration / conversionFactor, floatPrecision) * conversionFactor;
-
-/**
- * @param {number} duration (in microseconds)
- * @returns {string} formatted, unit-labelled string with time in milliseconds
- */
-export function formatDate(duration: number) {
-  return dateTimeAsMoment(duration / ONE_MILLISECOND).format(STANDARD_DATE_FORMAT);
-}
-
-/**
- * @param {number} duration (in microseconds)
- * @returns {string} formatted, unit-labelled string with time in milliseconds
- */
-export function formatTime(duration: number) {
-  return dateTimeAsMoment(duration / ONE_MILLISECOND).format(STANDARD_TIME_FORMAT);
-}
-
-/**
- * @param {number} duration (in microseconds)
- * @returns {string} formatted, unit-labelled string with time in milliseconds
- */
-export function formatMillisecondTime(duration: number) {
-  const targetDuration = quantizeDuration(duration, DEFAULT_MS_PRECISION, ONE_MILLISECOND);
-  return `${toDuration(targetDuration / ONE_MILLISECOND).asMilliseconds()}ms`;
-}
-
-/**
- * @param {number} duration (in microseconds)
- * @returns {string} formatted, unit-labelled string with time in seconds
- */
-export function formatSecondTime(duration: number) {
-  const targetDuration = quantizeDuration(duration, DEFAULT_MS_PRECISION, ONE_SECOND);
-  return `${toDuration(targetDuration / ONE_MILLISECOND).asSeconds()}s`;
-}
 
 /**
  * Humanizes the duration for display.
@@ -114,29 +72,4 @@ export function formatDuration(duration: number): string {
 
   const secondaryUnitString = `${secondaryValue}${secondaryUnit.unit}`;
   return `${primaryUnitString} ${secondaryUnitString}`;
-}
-
-/**
- * given a number and a desired precision for the floating
- * side, return the number at the new precision.
- *
- * toFloatPrecision(3.55, 1) // 3.5
- * toFloatPrecision(0.04422, 2) // 0.04
- * toFloatPrecision(6.24e6, 2) // 6240000.00
- *
- * does not support numbers that use "e" notation on toString.
- *
- * @param {number} number
- * @param {number} precision
- * @returns {number} number at new floating precision
- */
-function toFloatPrecision(number: number, precision: number): number {
-  const log10Length = Math.floor(Math.log10(Math.abs(number))) + 1;
-  const targetPrecision = precision + log10Length;
-
-  if (targetPrecision <= 0) {
-    return Math.trunc(number);
-  }
-
-  return Number(number.toPrecision(targetPrecision));
 }
