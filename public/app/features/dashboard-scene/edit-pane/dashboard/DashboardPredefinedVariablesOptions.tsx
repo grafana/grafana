@@ -19,11 +19,12 @@ import {
   type UsePredefinedVariablesConfig,
 } from '../../utils/predefinedVariableAllowList';
 
-type PredefinedVariablesMode = 'all' | 'global' | 'folder';
+type PredefinedVariablesMode = 'none' | 'all' | 'global' | 'folder';
 
 function modeFromConfig(allowlist: UsePredefinedVariablesConfig | undefined): PredefinedVariablesMode | undefined {
+  // Missing annotation → None is the default UI selection (no injection).
   if (allowlist === undefined) {
-    return undefined;
+    return 'none';
   }
   const list = allowlist.predefinedVariablesAllowList;
   if (list === ALLOW_ALL_PREDEFINED || (Array.isArray(list) && list.includes(ALLOW_ALL_PREDEFINED))) {
@@ -35,12 +36,17 @@ function modeFromConfig(allowlist: UsePredefinedVariablesConfig | undefined): Pr
   if (Array.isArray(list) && list.length === 1 && list[0] === ALLOW_ALL_FOLDER_PREDEFINED) {
     return 'folder';
   }
-  // Empty / mixed / custom name lists: no radio selected until the user picks Global, Folder, or All.
+  if (Array.isArray(list) && list.length === 0) {
+    return 'none';
+  }
+  // Mixed / custom name lists: no radio selected until the user picks a coarse mode.
   return undefined;
 }
 
 function configFromMode(mode: PredefinedVariablesMode): UsePredefinedVariablesConfig {
   switch (mode) {
+    case 'none':
+      return { predefinedVariablesAllowList: [] };
     case 'all':
       return { predefinedVariablesAllowList: ALLOW_ALL_PREDEFINED };
     case 'global':
@@ -114,6 +120,10 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
   }
 
   const options: Array<SelectableValue<PredefinedVariablesMode>> = [
+    {
+      label: t('dashboard-scene.predefined-variables-options.none', 'None'),
+      value: 'none',
+    },
     {
       label: t('dashboard-scene.predefined-variables-options.all', 'All'),
       value: 'all',

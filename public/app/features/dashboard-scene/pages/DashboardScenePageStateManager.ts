@@ -23,6 +23,7 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
+  AnnoKeyUsePredefinedVariables,
 } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
@@ -1031,8 +1032,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
     const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
-    const annotations = rsp.metadata.annotations;
-    const resolutionInput = { annotations };
+    // k8s annotations can include non-string values; resolution only needs the allowlist string.
+    const allowlistAnnotation = rsp.metadata.annotations?.[AnnoKeyUsePredefinedVariables];
+    const resolutionInput = {
+      annotations:
+        typeof allowlistAnnotation === 'string' ? { [AnnoKeyUsePredefinedVariables]: allowlistAnnotation } : undefined,
+    };
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
       return {
