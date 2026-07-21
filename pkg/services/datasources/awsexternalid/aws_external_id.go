@@ -60,14 +60,19 @@ func usePerDatasourceExternalID(jsonData *simplejson.Json) (set bool, enabled bo
 }
 
 // clearInvalidGrafanaExternalID removes a client- or store-supplied grafanaExternalId that is
-// not bound to this datasource. Scrub always so a stolen or mismatched ID cannot be persisted
-// for later STS use when usePerDatasourceExternalId is true.
+// not bound to this datasource. Scrub when we can validate so a stolen or mismatched ID cannot
+// be persisted for later STS use when usePerDatasourceExternalId is true. When stack ID or UID
+// is missing we cannot validate, so leave the value alone rather than wiping a previously
+// minted ID during misconfiguration.
 func clearInvalidGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json) {
 	if jsonData == nil {
 		return
 	}
 	id := jsonData.Get(grafanaExternalIDJSONKey).MustString()
 	if id == "" {
+		return
+	}
+	if stackExternalID == "" || uid == "" {
 		return
 	}
 	if !isValidGrafanaExternalID(id, stackExternalID, uid) {
@@ -155,8 +160,10 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		return
 	}
 
-	if isValidGrafanaExternalID(existingID, stackExternalID, uid) {
-		// Keep the value across stack/per-DS toggles; mode is the bool.
+	if isValidGrafanaExternalID(existingID, stackExternalID, uid) ||
+		(existingID != "" && (stackExternalID == "" || uid == "")) {
+		// Keep a validated ID, or any stored ID when we cannot validate (empty stack/uid)
+		// so a misconfigured AWSExternalId does not wipe a previously minted value.
 		updated.Set(grafanaExternalIDJSONKey, existingID)
 		// When the update omits the mode flag, restore the stored value so Terraform/API
 		// updates that only send partial jsonData do not silently fall back to stack ID.

@@ -78,6 +78,16 @@ func TestEnsureGrafanaExternalID(t *testing.T) {
 		ensureGrafanaExternalID(uid, stack, jd, false)
 		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
 	})
+
+	t.Run("does not scrub when stack ID is empty", func(t *testing.T) {
+		jd := simplejson.NewFromAny(map[string]any{
+			"authType":               grafanaAssumeRoleAuthType,
+			grafanaExternalIDJSONKey: wantID,
+		})
+		ensureGrafanaExternalID(uid, "", jd, true)
+		assert.Equal(t, wantID, jd.Get(grafanaExternalIDJSONKey).MustString())
+		assert.Empty(t, jd.Get(usePerDatasourceExternalIDJSONKey).Interface())
+	})
 }
 
 func TestPreserveGrafanaExternalID(t *testing.T) {
@@ -131,6 +141,18 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 				assert.Equal(t, tc.wantModeOn, modeOn)
 			})
 		}
+	})
+
+	t.Run("keeps stored ID when stack ID is empty", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{
+			"authType":                        grafanaAssumeRoleAuthType,
+			usePerDatasourceExternalIDJSONKey: true,
+			grafanaExternalIDJSONKey:          wantID,
+		})
+		updated := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		preserveGrafanaExternalID(uid, "", existing, updated, true)
+		assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
+		assert.True(t, updated.Get(usePerDatasourceExternalIDJSONKey).MustBool())
 	})
 
 	t.Run("restores existing after scrubbing a stolen update payload", func(t *testing.T) {
