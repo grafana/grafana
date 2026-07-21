@@ -44,6 +44,9 @@ func (r *captureRing) Write(p []byte) (int, error) {
 
 	line := bytes.TrimRight(p, "\n")
 	if len(line) > captureLineMaxBytes {
+		// Query-log filtering happens after capture. A trace or datasource UID field beyond this
+		// cutoff cannot match query.log, but the bounded, visibly truncated line remains available in
+		// server-window.log.
 		line = append(line[:captureLineMaxBytes-len(captureTruncatedMark):captureLineMaxBytes-len(captureTruncatedMark)], captureTruncatedMark...)
 	}
 

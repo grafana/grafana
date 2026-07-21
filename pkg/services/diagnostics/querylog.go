@@ -109,29 +109,36 @@ func datasourceUIDNeedles(dsUIDs []string) []string {
 		}
 		seen[uid] = struct{}{}
 		for _, key := range datasourceUIDLogKeys {
-			needles = append(needles, " "+key+"="+uid)
+			needles = append(needles, key+"="+uid)
 		}
 	}
 	return needles
 }
 
 func matchesQueryLogLine(line, traceID string, dsUIDNeedles []string) bool {
-	if traceID != "" && strings.Contains(line, traceID) {
+	if traceID != "" && containsLogfmtField(line, "traceID="+traceID) {
 		return true
 	}
 	for _, needle := range dsUIDNeedles {
-		start := 0
-		for {
-			idx := strings.Index(line[start:], needle)
-			if idx < 0 {
-				break
-			}
-			end := start + idx + len(needle)
-			if end == len(line) || line[end] == ' ' {
-				return true
-			}
-			start = end
+		if containsLogfmtField(line, needle) {
+			return true
 		}
 	}
 	return false
+}
+
+func containsLogfmtField(line, field string) bool {
+	start := 0
+	for {
+		idx := strings.Index(line[start:], field)
+		if idx < 0 {
+			return false
+		}
+		idx += start
+		end := idx + len(field)
+		if (idx == 0 || line[idx-1] == ' ') && (end == len(line) || line[end] == ' ') {
+			return true
+		}
+		start = end
+	}
 }

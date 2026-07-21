@@ -18,6 +18,7 @@ func TestScopedQueryLogMatchesTraceAndAnchoredDatasourceUIDs(t *testing.T) {
 		"logger=tsdb.prometheus msg=bare-substring",
 		"logger=plugin uid=prometheus msg=uid-prefix",
 		"logger=other uid=unrelated",
+		"logger=other msg=contains-abc123-in-message",
 	}
 
 	got := ScopedQueryLog(lines, "abc123", []string{"prom", "loki", "tempo", "pyroscope"})
