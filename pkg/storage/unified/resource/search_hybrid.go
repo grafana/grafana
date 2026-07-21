@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -116,6 +117,10 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	}
 
 	fused := fuseRRF(req.Key, lex, sem)
+	fused, err := s.rerankHybridResults(ctx, embedText, fused, req.MinRelevance)
+	if err != nil {
+		return nil, err
+	}
 	if len(fused) > limit {
 		fused = fused[:limit]
 	}
@@ -133,6 +138,75 @@ func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error
 	default:
 		return err
 	}
+}
+
+// rerankHybridResults re-scores the fused candidates with the configured
+// cross-encoder, re-sorts, and drops results below the min_relevance
+// threshold. Runs on the full fused pool (pre-truncation) so rerank can
+// promote candidates into the final top-k. Fail-open: provider failures
+// return the RRF ordering untouched so search stays up when the reranker
+// is unavailable; only caller cancellation propagates as an error.
+func (s *searchServer) rerankHybridResults(ctx context.Context, query string, results []*resourcepb.HybridSearchResult, minRelevance string) ([]*resourcepb.HybridSearchResult, error) {
+	if s.reranker == nil || len(results) == 0 {
+		return results, nil
+	}
+	// Chunks[0] is the best-ranked chunk; fuseRRF guarantees it exists
+	// with non-empty content (synthesized from the title for lexical-only
+	// hits).
+	texts := make([]string, len(results))
+	for i, r := range results {
+		texts[i] = r.Chunks[0].Content
+	}
+
+	scores, err := s.reranker.Score(ctx, query, texts)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
+		return s.rerankFallback(results, "hybrid rerank failed", err), nil
+	}
+	if len(scores) != len(results) {
+		return s.rerankFallback(results, "hybrid rerank returned wrong score count",
+			fmt.Errorf("%d scores for %d results", len(scores), len(results))), nil
+	}
+
+	for i, r := range results {
+		r.Score = scores[i]
+	}
+	sort.SliceStable(results, func(i, j int) bool {
+		if results[i].Score != results[j].Score {
+			return results[i].Score > results[j].Score
+		}
+		return results[i].Key.Name < results[j].Key.Name
+	})
+
+	if threshold := s.reranker.Thresholds.Resolve(rerank.Relevance(minRelevance)); threshold > 0 {
+		kept := results[:0]
+		for _, r := range results {
+			if r.Score >= threshold {
+				kept = append(kept, r)
+			}
+		}
+		if dropped := len(results) - len(kept); dropped > 0 && s.vectorMetrics != nil {
+			s.vectorMetrics.RerankDroppedResultsTotal.
+				WithLabelValues(s.reranker.Model, minRelevance).Add(float64(dropped))
+		}
+		results = kept
+	}
+	return results, nil
+}
+
+// rerankFallback logs, counts, and returns the RRF-ordered input.
+func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, msg string, err error) []*resourcepb.HybridSearchResult {
+	reason := "error"
+	if errors.Is(err, rerank.ErrCallTimeout) {
+		reason = "timeout"
+	}
+	s.log.Warn(msg+"; returning RRF-ordered results", "err", err, "model", s.reranker.Model)
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.RerankFallbacksTotal.WithLabelValues(s.reranker.Model, reason).Inc()
+	}
+	return results
 }
 
 // rrfK is the standard Reciprocal Rank Fusion constant.

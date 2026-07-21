@@ -2,12 +2,15 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -16,6 +19,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -388,6 +392,9 @@ func newHybridTestServer(lexResp *resourcepb.ResourceSearchResponse, backend *fa
 	emb := &fakeTextEmbedder{dim: 4}
 	s := newTestSearchServer(newTestEmbedder(emb), backend, access...)
 	s.search = &fakeSearchBackend{idx: idx}
+	if s.vectorMetrics == nil {
+		s.vectorMetrics = ProvideVectorMetrics(prometheus.NewRegistry())
+	}
 	return s, idx, emb
 }
 
@@ -619,4 +626,229 @@ func TestHybridSearch_VectorLegFailureFailsRequest(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
+type fakeRerankScorer struct {
+	mu       sync.Mutex
+	scores   []float64
+	err      error
+	gotQ     string
+	gotTexts []string
+	calls    int
+}
+
+func (f *fakeRerankScorer) Score(_ context.Context, query string, texts []string) ([]float64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls++
+	f.gotQ, f.gotTexts = query, texts
+	if f.err != nil {
+		return nil, f.err
+	}
+	if f.scores != nil {
+		return f.scores, nil
+	}
+	out := make([]float64, len(texts))
+	return out, nil
+}
+
+func rerankTestReranker(s rerank.Scorer, thresholds rerank.RelevanceThresholds) *rerank.Reranker {
+	return &rerank.Reranker{Scorer: s, Model: "test/model", Thresholds: thresholds}
+}
+
+type cancelingScorer struct{ cancel context.CancelFunc }
+
+func (c *cancelingScorer) Score(ctx context.Context, _ string, _ []string) ([]float64, error) {
+	c.cancel()
+	return nil, ctx.Err()
+}
+
+func TestHybridSearch_RerankReordersAndOverwritesScores(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"first", "First", "f"},
+		[3]string{"second", "Second", "f"},
+	)
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	// RRF order: first, second. Rerank flips it.
+	scorer := &fakeRerankScorer{scores: []float64{0.1, 0.9}}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 2)
+	assert.Equal(t, "second", resp.Results[0].Key.Name)
+	assert.Equal(t, 0.9, resp.Results[0].Score)
+	assert.Equal(t, "first", resp.Results[1].Key.Name)
+	assert.Equal(t, 0.1, resp.Results[1].Score)
+	// scorer got the synthesized title chunks as documents, in RRF order
+	assert.Equal(t, []string{"First", "Second"}, scorer.gotTexts)
+}
+
+func TestHybridSearch_RerankUsesSemanticQueryForScoring(t *testing.T) {
+	s, _, _ := newHybridTestServer(lexTableResponse([3]string{"a", "A", "f"}), &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "short", SemanticQuery: "rich semantic phrasing",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "rich semantic phrasing", scorer.gotQ)
+}
+
+func TestHybridSearch_MinRelevanceDropsBelowThreshold(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"keep", "Keep", "f"},
+		[3]string{"drop", "Drop", "f"},
+	)
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{scores: []float64{0.5, 0.05}}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{Low: 0.1, High: 0.6})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", MinRelevance: "low",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, "keep", resp.Results[0].Key.Name)
+
+	// "high" (0.6) drops both
+	resp, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", MinRelevance: "high",
+	})
+	require.NoError(t, err)
+	assert.Empty(t, resp.Results)
+}
+
+func TestHybridSearch_MinRelevanceNoopWhenUncalibrated(t *testing.T) {
+	s, _, _ := newHybridTestServer(lexTableResponse([3]string{"a", "A", "f"}), &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{scores: []float64{0.0001}}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{}) // uncalibrated
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", MinRelevance: "highest",
+	})
+	require.NoError(t, err)
+	assert.Len(t, resp.Results, 1)
+}
+
+func TestHybridSearch_MinRelevanceNoopWithoutReranker(t *testing.T) {
+	s, _, _ := newHybridTestServer(lexTableResponse([3]string{"a", "A", "f"}), &fakeVectorBackend{})
+	// s.reranker stays nil
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", MinRelevance: "high",
+	})
+	require.NoError(t, err)
+	assert.Len(t, resp.Results, 1)
+	// RRF score preserved
+	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
+}
+
+func TestHybridSearch_RerankFailureFallsBackToRRFOrder(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"first", "First", "f"},
+		[3]string{"second", "Second", "f"},
+	)
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{err: errors.New("provider exploded")}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{Low: 0.1})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", MinRelevance: "low",
+	})
+	require.NoError(t, err)
+	// fail-open: RRF ordering, nothing dropped
+	require.Len(t, resp.Results, 2)
+	assert.Equal(t, "first", resp.Results[0].Key.Name)
+	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
+	// fallback metric incremented with reason=error
+	require.NotNil(t, s.vectorMetrics)
+	assert.Equal(t, float64(1), testutil.ToFloat64(
+		s.vectorMetrics.RerankFallbacksTotal.WithLabelValues("test/model", "error")))
+}
+
+func TestHybridSearch_RerankTimeoutFallsBackWithTimeoutReason(t *testing.T) {
+	s, _, _ := newHybridTestServer(lexTableResponse([3]string{"a", "A", "f"}), &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{err: rerank.ErrCallTimeout}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	assert.Len(t, resp.Results, 1)
+	assert.Equal(t, float64(1), testutil.ToFloat64(
+		s.vectorMetrics.RerankFallbacksTotal.WithLabelValues("test/model", "timeout")))
+}
+
+func TestHybridSearch_RerankScoreLengthMismatchFallsBack(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"first", "First", "f"},
+		[3]string{"second", "Second", "f"},
+	)
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{scores: []float64{0.9}} // 1 score for 2 results
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 2)
+	assert.Equal(t, "first", resp.Results[0].Key.Name)
+	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
+}
+
+func TestHybridSearch_RerankDroppedResultsMetric(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"keep", "Keep", "f"},
+		[3]string{"drop1", "D1", "f"},
+		[3]string{"drop2", "D2", "f"},
+	)
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{scores: []float64{0.5, 0.01, 0.02}}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{Low: 0.1})
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", MinRelevance: "low",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, float64(2), testutil.ToFloat64(
+		s.vectorMetrics.RerankDroppedResultsTotal.WithLabelValues("test/model", "low")))
+}
+
+func TestHybridSearch_RerankRunsBeforeLimitTruncation(t *testing.T) {
+	// 3 candidates, limit 2. RRF rank 3 gets the best rerank score and
+	// must appear in the final top-2 — proving rerank happens pre-truncation.
+	lexResp := lexTableResponse(
+		[3]string{"r1", "R1", "f"},
+		[3]string{"r2", "R2", "f"},
+		[3]string{"r3", "R3", "f"},
+	)
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{scores: []float64{0.1, 0.2, 0.9}}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", Limit: 2,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 2)
+	assert.Equal(t, "r3", resp.Results[0].Key.Name)
+	assert.Equal(t, "r2", resp.Results[1].Key.Name)
+}
+
+func TestHybridSearch_RerankCallerCancellationPropagates(t *testing.T) {
+	s, _, _ := newHybridTestServer(lexTableResponse([3]string{"a", "A", "f"}), &fakeVectorBackend{})
+	ctx, cancel := context.WithCancel(authedCtx())
+	scorer := &cancelingScorer{cancel: cancel}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	_, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
 }
