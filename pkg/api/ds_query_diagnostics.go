@@ -103,13 +103,12 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	// (returns nil when both are nil).
 	respErr := errors.Join(diagnostics.ResponseError(resp), diagnostics.PluginCaptureError(resp))
 
-	// If the query failed before any traffic or server logs were captured (e.g. pre-flight
-	// access-denied or datasource-not-found), there's nothing to diagnose, so surface the failure
-	// with the same status QueryMetricsV2 would return instead of a 200 bundle: a top-level error
-	// keeps its typed status (403/404, else 500), while a per-refId (bad-query) failure is a client
-	// error (400). A failure that produced either HTTP traffic or opted-in logs falls through — those
-	// artifacts are exactly what the bundle is for, recorded alongside query-error.txt.
-	if !diagnostics.HasCapturedHAR(resp, harBuffer) && len(queryLog) == 0 && len(serverWindowLog) == 0 {
+	// If the query failed before any traffic was captured and logs were not requested (e.g. pre-flight
+	// access-denied or datasource-not-found), there's nothing to diagnose, so surface the failure with
+	// the same status QueryMetricsV2 would return instead of a 200 bundle. When logs are explicitly
+	// requested, always build the bundle deterministically: even an empty capture window leaves the
+	// query error as a useful artifact, and unrelated ambient log volume must not decide the status.
+	if !diagnostics.HasCapturedHAR(resp, harBuffer) && !reqDTO.IncludeLogs {
 		if r := hs.diagnosticsNoCaptureError(queryErr, respErr); r != nil {
 			return r
 		}

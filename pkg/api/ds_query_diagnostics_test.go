@@ -99,6 +99,9 @@ func TestQueryDiagnosticsIncludesOptedInFilteredAndWindowLogs(t *testing.T) {
 		}).
 		Return(nil, errors.New("query failed before HTTP capture")).
 		Once()
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errors.New("silent query failure before HTTP capture")).
+		Once()
 	hs := &HTTPServer{queryDataService: fakeQuery}
 
 	request := func(includeLogs bool) response.Response {
@@ -140,4 +143,9 @@ func TestQueryDiagnosticsIncludesOptedInFilteredAndWindowLogs(t *testing.T) {
 	require.Contains(t, string(failedFiles["query-error.txt"]), "query failed before HTTP capture")
 	require.Contains(t, string(failedFiles["query.log"]), "preflight failure")
 	require.Contains(t, string(failedFiles["server-window.log"]), "preflight failure")
+
+	silentFailureWithLogsEnabled := request(true)
+	require.Equal(t, http.StatusOK, silentFailureWithLogsEnabled.Status())
+	silentFailureFiles := readTarGzFiles(t, silentFailureWithLogsEnabled.Body())
+	require.Contains(t, string(silentFailureFiles["query-error.txt"]), "silent query failure before HTTP capture")
 }

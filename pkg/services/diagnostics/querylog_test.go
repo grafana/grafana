@@ -38,8 +38,9 @@ func TestScopedQueryLogKeepsTailWithinLineCap(t *testing.T) {
 	}
 
 	got := strings.Split(strings.TrimSuffix(string(ScopedQueryLog(lines, "", []string{"prom"})), "\n"), "\n")
-	require.Len(t, got, queryLogMaxLines)
-	require.Contains(t, got[0], "line=2")
+	require.Len(t, got, queryLogMaxLines+1)
+	require.Equal(t, "[diagnostics: query.log truncated; retained last 1000 of 1002 matching lines]", got[0])
+	require.Contains(t, got[1], "line=2")
 }
 
 func TestScopedQueryLogKeepsTailWithinByteCap(t *testing.T) {
@@ -47,6 +48,7 @@ func TestScopedQueryLogKeepsTailWithinByteCap(t *testing.T) {
 	second := "logger=x uid=prom line=second " + strings.Repeat("b", 700_000)
 
 	got := ScopedQueryLog([]string{first, second}, "", []string{"prom"})
+	require.Contains(t, string(got), "[diagnostics: query.log truncated;")
 	require.NotContains(t, string(got), "line=first")
 	require.Contains(t, string(got), "line=second")
 	require.LessOrEqual(t, len(got), queryLogMaxBytes)

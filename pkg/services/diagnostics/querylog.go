@@ -23,11 +23,13 @@ func ScopedQueryLog(lines []string, traceID string, dsUIDs []string) []byte {
 
 	matched := make([]string, 0, min(len(lines), queryLogMaxLines))
 	matchedBytes := 0
+	matchedCount := 0
 	for _, line := range lines {
 		if !matchesQueryLogLine(line, traceID, needles) {
 			continue
 		}
 
+		matchedCount++
 		lineBytes := len(line) + 1
 		matched = append(matched, line)
 		matchedBytes += lineBytes
@@ -38,10 +40,25 @@ func ScopedQueryLog(lines []string, traceID string, dsUIDs []string) []byte {
 		}
 	}
 
-	if len(matched) == 0 {
+	var marker string
+	if matchedCount > len(matched) {
+		for {
+			marker = fmt.Sprintf("[diagnostics: query.log truncated; retained last %d of %d matching lines]\n", len(matched), matchedCount)
+			if len(marker)+matchedBytes <= queryLogMaxBytes || len(matched) == 0 {
+				break
+			}
+			matchedBytes -= len(matched[0]) + 1
+			matched = matched[1:]
+		}
+	}
+
+	if len(matched) == 0 && marker == "" {
 		return nil
 	}
-	return []byte(strings.Join(matched, "\n") + "\n")
+	if len(matched) == 0 {
+		return []byte(marker)
+	}
+	return []byte(marker + strings.Join(matched, "\n") + "\n")
 }
 
 // ServerWindowLog preserves the newest records emitted during a diagnostics capture window. It is
