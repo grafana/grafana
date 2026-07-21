@@ -395,7 +395,9 @@ describe('PieChart tooltip modes', () => {
       options: buildOptions({ tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.Ascending } }),
       data: { series: defaultSliceSeries },
     });
-    // Descending sort puts Chrome (60) ahead of Firefox (40), so it's the first slice.
+    // The panel's sort (options.sort, Descending from buildOptions) orders the slices, so
+    // Chrome (60) is the first slice. tooltip.sort is irrelevant here — single mode shows
+    // only the hovered row.
     await userEvent.hover(screen.getAllByTestId('data testid Pie Chart Slice')[0]);
 
     const rows = screen.getAllByTestId('SeriesTableRow');
@@ -411,7 +413,6 @@ describe('PieChart tooltip modes', () => {
     ]);
     setup({
       options: buildOptions({
-        legend: { displayMode: LegendDisplayMode.List, showLegend: false, placement: 'right', calcs: [], values: [] },
         tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending, hideZeros: true },
       }),
       data: { series: seriesWithZero },
@@ -430,8 +431,9 @@ describe('PieChart mouse interactions', () => {
     setup({ data: { series: defaultSliceSeries } });
     const slices = screen.getAllByTestId('data testid Pie Chart Slice');
 
+    // Default tooltip is multi mode, so hovering shows a row for both slices.
     await userEvent.hover(slices[0]);
-    expect(screen.getAllByTestId('SeriesTableRow').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('SeriesTableRow')).toHaveLength(2);
 
     fireEvent.mouseOut(slices[0]);
     expect(screen.queryAllByTestId('SeriesTableRow')).toHaveLength(0);
