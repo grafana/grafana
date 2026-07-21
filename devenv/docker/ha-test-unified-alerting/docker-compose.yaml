@@ -20,6 +20,7 @@ services:
       retries: 10
   mysqld-exporter:
     image: prom/mysqld-exporter
+    read_only: true
     environment:
       - DATA_SOURCE_NAME=root:rootpass@(db:3306)/
     ports:
