@@ -3,6 +3,8 @@ version: '3'
 services:
   traefik:
     image: traefik:v2.1
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - './traefik.yml:/etc/traefik/traefik.yml'
       - './configs:/etc/traefik/configs'
