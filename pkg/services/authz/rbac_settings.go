@@ -51,7 +51,8 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 	// In-memory L1 cache in front of the (potentially remote) folder cache. Reusing the
 	// deserialized folder tree across the many permission checks in a single request avoids
 	// re-unmarshalling the whole tree per check, which dominates on instances with many folders.
-	s.localFolderCacheTTL = authzSection.Key("local_folder_cache_ttl").MustDuration(30 * time.Second)
+	// Off by default; operators opt in by setting a non-zero TTL.
+	s.localFolderCacheTTL = authzSection.Key("local_folder_cache_ttl").MustDuration(0)
 
 	s.mode = mode
 	if s.mode == clientModeInproc {
