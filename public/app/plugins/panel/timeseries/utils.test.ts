@@ -402,10 +402,31 @@ describe('getCompareSeriesIdentityKey', () => {
       values: [],
       labels: { pod: 'a' },
     });
-    expect(key).toBe('Value{pod="a"}');
+    expect(key).toBe('Value {pod="a"}');
   });
 
-  it('falls back to displayNameFromDS when there are no labels', () => {
+  it('prefers labels over config.displayName to avoid collapsing series with a shared template', () => {
+    const key = getCompareSeriesIdentityKey({
+      name: 'Value',
+      type: FieldType.number,
+      config: { displayName: '${__field.labels.pod}' },
+      values: [],
+      labels: { pod: 'a' },
+    });
+    expect(key).toBe('Value {pod="a"}');
+  });
+
+  it('falls back to config.displayName when there are no labels', () => {
+    const key = getCompareSeriesIdentityKey({
+      name: 'Value',
+      type: FieldType.number,
+      config: { displayName: 'My Series', displayNameFromDS: 'ServerA' },
+      values: [],
+    });
+    expect(key).toBe('My Series');
+  });
+
+  it('falls back to displayNameFromDS when there are no labels or config.displayName', () => {
     const key = getCompareSeriesIdentityKey({
       name: 'Value',
       type: FieldType.number,
@@ -415,10 +436,10 @@ describe('getCompareSeriesIdentityKey', () => {
     expect(key).toBe('ServerA');
   });
 
-  it('falls back to frame name + field name when no labels or displayNameFromDS', () => {
+  it('falls back to frame name + field name when no labels or display names', () => {
     const frame = toDataFrame({ name: 'B', fields: [{ name: 'Value', type: FieldType.number, values: [] }] });
     const key = getCompareSeriesIdentityKey({ name: 'Value', type: FieldType.number, config: {}, values: [] }, frame);
-    expect(key).toBe('B:Value');
+    expect(key).toBe('B Value');
   });
 
   it('falls back to the field name when nothing else is available', () => {

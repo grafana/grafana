@@ -20,18 +20,23 @@ type ScaleKey = string;
 
 /**
  * Stable identity for pairing a compare-series field with its current-period counterpart.
- * Prefer labels (high-cardinality Prometheus-style frames), then DS display name, then frame+field name.
+ * Can't reuse getFieldDisplayName since compare series get a " (comparison)" suffix.
+ * Labels come first (precise per-series identity); config.displayName is not preferred over
+ * them because it's often a shared, un-interpolated template that collapses all series.
  */
 export function getCompareSeriesIdentityKey(field: Field, frame?: DataFrame): string {
   const labels = field.labels ? formatLabels(field.labels) : '';
   if (labels) {
-    return `${field.name}${labels}`;
+    return `${field.name} ${labels}`;
+  }
+  if (field.config?.displayName) {
+    return field.config.displayName;
   }
   if (field.config?.displayNameFromDS) {
     return field.config.displayNameFromDS;
   }
   if (frame?.name) {
-    return `${frame.name}:${field.name}`;
+    return `${frame.name} ${field.name}`;
   }
   return field.name;
 }
