@@ -67,6 +67,15 @@ it('renders an empty panel without padding', () => {
   expect(screen.getByText("Panel's Content").parentElement).toHaveStyle({ padding: '0px 0px 0px 0px' });
 });
 
+it('reserves space for the header bottom padding when there is no subheader', () => {
+  setup({ title: 'A' });
+
+  // The header has an 8px bottom padding when no subheader is present; the content height must
+  // account for it so the panel content does not overrun the chrome's bottom padding.
+  // innerHeight = height(100) - headerHeight(40 + 8) - panelPadding(16) - border(2) + topPadding(8) = 42
+  expect(screen.getByText("Panel's Content")).toHaveStyle({ height: '42px' });
+});
+
 it('renders an empty panel with padding', () => {
   setup({ padding: 'md' });
 
