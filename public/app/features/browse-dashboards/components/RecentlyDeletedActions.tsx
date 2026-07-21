@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { logMeasurement, reportInteraction } from '@grafana/runtime';
+import { logMeasurement, logWarning, reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
@@ -18,7 +18,7 @@ import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { useActionSelectionState } from '../state/hooks';
 import { clearFolders, setAllSelection } from '../state/slice';
-import { getRestoreNotificationData } from '../utils/notifications';
+import { getRestoreNotificationData, RESTORE_FETCH_NOT_FOUND } from '../utils/notifications';
 
 import { RestoreModal } from './RestoreModal';
 
@@ -92,25 +92,14 @@ export function RecentlyDeletedActions() {
     setIsBulkRestoreLoading(true);
 
     const promises = selectedDashboards.map(async (uid) => {
-      const table = await deletedDashboardsCache.getAsTable();
-      const row = table.rows.find((r) => r.object.metadata.name === uid);
-      if (!row) {
-        console.warn(`Dashboard ${uid} not found in deleted items`);
-        return { uid, error: 'not_found', step: 'lookup' as const };
-      }
-
-      const deleteRV = row.object.metadata.resourceVersion;
-      if (!deleteRV) {
-        console.warn(`Dashboard ${uid} is missing a resourceVersion in the trash listing`);
-        return { uid, error: 'not_found', step: 'lookup' as const };
-      }
-      // The RV on a trash row is the delete event's RV, which points at the
-      // tombstone (and on some storage backends returns 404). Step back by one
-      // so the read resolves to the dashboard as it was just before delete.
-      const previousRV = (BigInt(deleteRV) - BigInt(1)).toString();
-
       const api = await getDashboardAPI();
-      const dashboard = await api.getDashboard(uid, { resourceVersion: previousRV });
+      const dashboard = await api.getDeletedDashboard(uid);
+      if (!dashboard) {
+        // The recently-deleted listing is deleter/permission-aware: empty result means
+        // this user cannot read the deleted dashboard (or it is no longer recently deleted).
+        logWarning('Deleted dashboard not visible in the recently-deleted listing during restore', { uid });
+        return { uid, error: RESTORE_FETCH_NOT_FOUND, step: 'fetch' as const };
+      }
 
       const copy = structuredClone(dashboard);
       copy.metadata = {
@@ -125,13 +114,13 @@ export function RecentlyDeletedActions() {
 
     // Separate successful and failed restores
     const successful: string[] = [];
-    const failed: Array<{ uid: string; error: string; status?: number; step: 'lookup' | 'fetch' | 'create' }> = [];
+    const failed: Array<{ uid: string; error: string; status?: number; step: 'fetch' | 'create' }> = [];
 
     results.forEach((result, index) => {
       const dashboardUid = selectedDashboards[index];
       if (result.status === 'rejected') {
-        // Rejections come from the trash-cache lookup or the GET at the
-        // pre-delete resourceVersion — the read path of the restore pipeline.
+        // Rejections come from the recently-deleted listing fetch — the read path of the
+        // restore pipeline.
         failed.push({
           uid: dashboardUid,
           error: getErrorMessage(result.reason),
@@ -148,7 +137,7 @@ export function RecentlyDeletedActions() {
       } else {
         // Every settled promise lands in exactly one bucket: an empty error
         // message or an untitled dashboard must not fall through, or the
-        // measurement below and the trash-cache cleanup drift out of sync.
+        // measurement below and the deletedDashboardsCache cleanup drift out of sync.
         successful.push(dashboardUid);
       }
     });
@@ -168,7 +157,7 @@ export function RecentlyDeletedActions() {
       {
         status: failed.length === 0 ? 'success' : successful.length === 0 ? 'failure' : 'partial_failure',
         error_status_codes: errorStatusCodes, // e.g. '404' | '404,500' | 'unknown' | ''
-        failed_steps: failedSteps, // e.g. 'fetch' | 'lookup,create' | ''
+        failed_steps: failedSteps, // e.g. 'fetch' | 'fetch,create' | ''
       }
     );
 
