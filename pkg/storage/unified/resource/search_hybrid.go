@@ -95,13 +95,11 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			req.Key.Namespace, s.embedder.Model, req.Key.Resource,
 			dense, depth, hybridVectorFilters(req.Filters)...)
 		if err != nil {
-			s.log.Error("hybrid search: vector backend", "err", err)
-			return status.Error(codes.Internal, "vector search backend")
+			return fmt.Errorf("vector backend: %w", err)
 		}
 		allowed, err := s.batchCheckVectorSearchResults(gctx, user, req.Key, results)
 		if err != nil {
-			s.log.Error("hybrid search: authz batch check", "err", err)
-			return status.Error(codes.Internal, "authz batch check")
+			return fmt.Errorf("authz batch check: %w", err)
 		}
 		sem = make([]vector.VectorSearchResult, 0, len(results))
 		for _, r := range results {
@@ -113,18 +111,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	})
 
 	if err := g.Wait(); err != nil {
-		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded,
-		// not Internal — keyed off the parent ctx (gctx is canceled by any
-		// leg failure); a downstream cancellation while the caller is still
-		// live remains a server-side fault.
-		if ctx.Err() != nil {
-			return nil, status.FromContextError(ctx.Err()).Err()
-		}
-		if status.Code(err) != codes.Unknown {
-			return nil, err
-		}
-		s.log.Error("hybrid search", "err", err)
-		return nil, status.Error(codes.Internal, "hybrid search")
+		return nil, s.grpcStatusError(ctx, "hybrid search", err)
 	}
 
 	fused := fuseRRF(req.Key, lex, sem)
@@ -132,6 +119,19 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		fused = fused[:limit]
 	}
 	return &resourcepb.HybridSearchResponse{Results: fused}, nil
+}
+
+func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error) error {
+	if ctx.Err() != nil {
+		return status.FromContextError(ctx.Err()).Err()
+	}
+	switch status.Code(err) {
+	case codes.Unknown, codes.Canceled, codes.DeadlineExceeded:
+		s.log.Error(op, "err", err)
+		return status.Error(codes.Internal, op)
+	default:
+		return err
+	}
 }
 
 // rrfK is the standard Reciprocal Rank Fusion constant.

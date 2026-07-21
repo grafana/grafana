@@ -577,6 +577,21 @@ func TestHybridSearch_DownstreamCanceledWithLiveContextReturnsInternal(t *testin
 	assert.Equal(t, codes.Internal, status.Code(err))
 }
 
+func TestHybridSearch_DownstreamCanceledStatusWithLiveContextReturnsInternal(t *testing.T) {
+	// gRPC-backed calls inside a leg surface cancellation as a status
+	// error whose code survives %w wrapping — with a live caller it must
+	// still classify as Internal, not leak Canceled into the response.
+	backend := &fakeVectorBackend{}
+	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+	idx.err = fmt.Errorf("storage list: %w", status.Error(codes.Canceled, "context canceled"))
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
 func TestHybridSearch_VectorLegFailureFailsRequest(t *testing.T) {
 	backend := &fakeVectorBackend{err: fmt.Errorf("pgvector exploded")}
 	s, _, _ := newHybridTestServer(lexTableResponse(), backend)
