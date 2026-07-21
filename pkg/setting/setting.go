@@ -850,6 +850,11 @@ type Cfg struct {
 	TenantDeleterDryRun           bool
 	TenantDeleterInterval         time.Duration
 
+	ManifestApiServerAddress        string
+	ManifestWatcherAllowInsecureTLS bool
+	ManifestWatcherCAFile           string
+	ManifestWatcherPollInterval     time.Duration
+
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
 

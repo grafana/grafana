@@ -8846,11 +8846,16 @@
         "label": {
           "child-count": "Child Count:",
           "duration": "Duration:",
+          "end-time": "End Time:",
           "service": "Service:",
           "start-time": "Start Time:"
         }
       },
-      "share-span": "Share"
+      "resource-attributes-inherited": "(inherited from slowest span)",
+      "share-span": "Share",
+      "summary-count-aria_one": "{{count}} aggregated span",
+      "summary-count-aria_other": "{{count}} aggregated spans",
+      "summary-label": "(summary)"
     },
     "span-detail-link-buttons": {
       "logs-for-this-span": "Logs for this span",
@@ -8865,8 +8870,11 @@
     },
     "summary-span": {
       "stat-max": "Max",
+      "stat-max-lower": "max",
       "stat-median": "Median",
-      "stat-min": "Min"
+      "stat-median-lower": "median",
+      "stat-min": "Min",
+      "stat-min-lower": "min"
     },
     "supplementary-result-error": {
       "show-details": "Show details"
