@@ -539,6 +539,32 @@ describe('PanelDataPaneNext', () => {
       });
     });
 
+    it('should leave the new query datasource undefined in Mixed mode when the default cannot be resolved', async () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      // The configured default resolves to nothing, so resolveDefaultDatasourceRef leaves
+      // defaultDatasourceRef unset. addQuery in Mixed mode must then leave the query's
+      // datasource undefined (inherit the panel ds) rather than stamping a stale ref.
+      mockGetDataSourceInstance.mockResolvedValue({});
+      mockGetInstanceSettings.mockReturnValue(undefined);
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      dataPane.activate();
+      // Let onActivate's async work settle so defaultDatasourceRef reflects the (missing) default.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      dataPane.setState({ dsSettings: mixedDsSettings });
+
+      const refId = dataPane.addQuery();
+
+      expect(refId).toBe('B');
+      const setStateCall = (mockQueryRunner.setState as jest.Mock).mock.calls.find(([args]) => args.queries);
+      const newQuery = setStateCall![0].queries.find((q: DataQuery) => q.refId === refId);
+      expect(newQuery?.datasource).toBeUndefined();
+
+      consoleErrorSpy.mockRestore();
+    });
+
     it('should preserve a caller-supplied datasource (e.g. expressions)', () => {
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
 
