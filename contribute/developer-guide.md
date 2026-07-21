@@ -123,7 +123,7 @@ yarn plugin:build:dev
 ```
 
 If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>`
-with the plugins name field found in its package.json. e.g. `@grafana-plugins/<plugin-name>`.
+with the plugins name field found in its package.json. e.g. `@grafana-plugins/awesome_plugin`.
 
 ```
 yarn workspace <name_of_plugin> dev
@@ -132,7 +132,7 @@ yarn workspace <name_of_plugin> dev
 If you want to run multiple specific plugins, you can use the following command.
 
 ```
-yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
+yarn nx run-many -t dev --projects="@grafana-plugins/<name_of_plugin>,@grafana-plugins/<name_of_plugin>"
 ```
 
 If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
