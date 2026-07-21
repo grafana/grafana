@@ -802,6 +802,16 @@ type Cfg struct {
 	AzureDimensions    int    // requested output dimensionality; default 1024 (text-embedding-3-small reduced from native 1536)
 	AzureBatchSize     int    // texts per Azure embeddings call; default 50
 
+	// Rerank provider for the HybridSearch RPC ([vector_reranker] section).
+	// Empty = disabled (RRF ordering is returned as-is, min_relevance is a
+	// no-op).
+	RerankProvider        string
+	RerankVertexProjectID string
+	RerankVertexLocation  string
+	RerankVertexModel     string
+	RerankBedrockRegion   string
+	RerankBedrockModel    string
+
 	// Overrides/Quotas
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
