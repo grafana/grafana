@@ -59,7 +59,7 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
-  AnnoKeyUsePredefinedVariables,
+  AnnoKeyIgnorePredefinedVariables,
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
@@ -95,7 +95,7 @@ import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleC
 import {
   mayInjectAnyPredefinedVariables,
   resolvePredefinedVariablesForDashboard,
-} from '../utils/predefinedVariableAllowList';
+} from '../utils/predefinedVariableDenyList';
 import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
 import {
   getClosestVizPanel,
@@ -633,11 +633,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         annotations[key] = value;
       }
     }
-    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyUsePredefinedVariables];
+    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
     if (typeof initialValue === 'string') {
-      annotations[AnnoKeyUsePredefinedVariables] = initialValue;
+      annotations[AnnoKeyIgnorePredefinedVariables] = initialValue;
     } else {
-      delete annotations[AnnoKeyUsePredefinedVariables];
+      delete annotations[AnnoKeyIgnorePredefinedVariables];
     }
     this.serializer.setK8SAnnotations(annotations);
   }

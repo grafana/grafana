@@ -87,17 +87,18 @@ export const AnnoKeyEmbedded = 'grafana.app/embedded';
 export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
 
 /**
- * JSON annotation controlling which predefined (global/folder) variables a dashboard receives.
- * Value shape: `{ "predefinedVariablesAllowList": "*" | string[] }`
+ * JSON annotation listing predefined (global/folder) variables to exclude from injection.
+ * Value shape: a JSON array of strings (sentinels and/or exact variable names).
+ * Absent or `[]` → inject all. `["*"]` → inject none.
  */
-export const AnnoKeyUsePredefinedVariables = 'grafana.app/usePredefinedVariables';
+export const AnnoKeyIgnorePredefinedVariables = 'grafana.app/ignorePredefinedVariables';
 
-/** Allowlist sentinel: receive all predefined variables. */
-export const ALLOW_ALL_PREDEFINED = '*';
-/** Allowlist sentinel: receive all org-global predefined variables. */
-export const ALLOW_ALL_GLOBAL_PREDEFINED = 'global:*';
-/** Allowlist sentinel: receive all folder-scoped predefined variables. */
-export const ALLOW_ALL_FOLDER_PREDEFINED = 'folder:*';
+/** Denylist sentinel: exclude all predefined variables. */
+export const DENY_ALL_PREDEFINED = '*';
+/** Denylist sentinel: exclude all org-global predefined variables. */
+export const DENY_ALL_GLOBAL_PREDEFINED = 'global:*';
+/** Denylist sentinel: exclude all folder-scoped predefined variables. */
+export const DENY_ALL_FOLDER_PREDEFINED = 'folder:*';
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -138,7 +139,7 @@ type GrafanaClientAnnotations = {
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
 
-  [AnnoKeyUsePredefinedVariables]?: string;
+  [AnnoKeyIgnorePredefinedVariables]?: string;
 };
 
 // Labels

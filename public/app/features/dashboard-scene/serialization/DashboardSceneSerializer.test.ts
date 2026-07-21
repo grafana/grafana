@@ -20,16 +20,16 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
-  ALLOW_ALL_PREDEFINED,
   AnnoKeyDashboardSnapshotOriginalUrl,
-  AnnoKeyUsePredefinedVariables,
+  AnnoKeyIgnorePredefinedVariables,
+  DENY_ALL_PREDEFINED,
 } from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { serializeUsePredefinedVariables } from '../utils/predefinedVariableAllowList';
+import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
@@ -116,7 +116,7 @@ describe('DashboardSceneSerializer', () => {
       const dashboard = setup();
       dashboard.onEnterEditMode();
 
-      const annotation = serializeUsePredefinedVariables({ predefinedVariablesAllowList: ALLOW_ALL_PREDEFINED });
+      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
       dashboard.setState({
         meta: {
           ...dashboard.state.meta,
@@ -124,7 +124,7 @@ describe('DashboardSceneSerializer', () => {
             ...dashboard.state.meta.k8s,
             annotations: {
               ...dashboard.state.meta.k8s?.annotations,
-              [AnnoKeyUsePredefinedVariables]: annotation,
+              [AnnoKeyIgnorePredefinedVariables]: annotation,
             },
           },
         },
@@ -559,7 +559,7 @@ describe('DashboardSceneSerializer', () => {
       const dashboard = setupV2();
       dashboard.onEnterEditMode();
 
-      const annotation = serializeUsePredefinedVariables({ predefinedVariablesAllowList: ALLOW_ALL_PREDEFINED });
+      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
       dashboard.setState({
         meta: {
           ...dashboard.state.meta,
@@ -567,7 +567,7 @@ describe('DashboardSceneSerializer', () => {
             ...dashboard.state.meta.k8s,
             annotations: {
               ...dashboard.state.meta.k8s?.annotations,
-              [AnnoKeyUsePredefinedVariables]: annotation,
+              [AnnoKeyIgnorePredefinedVariables]: annotation,
             },
           },
         },

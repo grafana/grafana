@@ -28,9 +28,9 @@ import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import {
-  ALLOW_ALL_PREDEFINED,
+  AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerKind,
-  AnnoKeyUsePredefinedVariables,
+  DENY_ALL_PREDEFINED,
   ManagerKind,
 } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -48,7 +48,7 @@ import * as DashboardTemplateExtensionModule from '../settings/enterprise-compon
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { serializeUsePredefinedVariables } from '../utils/predefinedVariableAllowList';
+import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
@@ -481,7 +481,7 @@ describe('DashboardScene', () => {
         const prevMeta = { ...scene.state.meta };
         mockResultsOfDetectChangesWorker({ hasChanges: false });
 
-        const annotation = serializeUsePredefinedVariables({ predefinedVariablesAllowList: ALLOW_ALL_PREDEFINED });
+        const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
         scene.setState({
           meta: {
             ...prevMeta,
@@ -489,7 +489,7 @@ describe('DashboardScene', () => {
               ...prevMeta.k8s,
               annotations: {
                 ...prevMeta.k8s?.annotations,
-                [AnnoKeyUsePredefinedVariables]: annotation,
+                [AnnoKeyIgnorePredefinedVariables]: annotation,
               },
             },
           },

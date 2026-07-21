@@ -1,27 +1,27 @@
 import {
-  ALLOW_ALL_FOLDER_PREDEFINED,
-  ALLOW_ALL_GLOBAL_PREDEFINED,
-  ALLOW_ALL_PREDEFINED,
-  AnnoKeyUsePredefinedVariables,
+  AnnoKeyIgnorePredefinedVariables,
+  DENY_ALL_FOLDER_PREDEFINED,
+  DENY_ALL_GLOBAL_PREDEFINED,
+  DENY_ALL_PREDEFINED,
 } from 'app/features/apiserver/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { parseUsePredefinedVariables } from './predefinedVariableAllowList';
+import { parseIgnorePredefinedVariables } from './predefinedVariableDenyList';
 
-/** Current allowlist annotation value on the live dashboard (meta.k8s is source of truth in the editor). */
+/** Current denylist annotation value on the live dashboard (meta.k8s is source of truth in the editor). */
 export function getPredefinedVariablesAnnotation(dashboard: DashboardScene): string | undefined {
-  const fromMeta = dashboard.state.meta.k8s?.annotations?.[AnnoKeyUsePredefinedVariables];
+  const fromMeta = dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   if (typeof fromMeta === 'string') {
     return fromMeta;
   }
-  const fromSerializer = dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyUsePredefinedVariables];
+  const fromSerializer = dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   return typeof fromSerializer === 'string' ? fromSerializer : undefined;
 }
 
-/** Whether the allowlist annotation differs from the edit-session baseline. */
+/** Whether the denylist annotation differs from the edit-session baseline. */
 export function hasPredefinedVariablesAnnotationChanges(dashboard: DashboardScene): boolean {
-  const initial = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyUsePredefinedVariables];
+  const initial = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   const current = getPredefinedVariablesAnnotation(dashboard);
   return (initial ?? undefined) !== (current ?? undefined);
 }
@@ -29,24 +29,20 @@ export function hasPredefinedVariablesAnnotationChanges(dashboard: DashboardScen
 /** Human-readable label for save-diff UI (metadata is not part of Spec JSON). */
 export function formatPredefinedVariablesAnnotationLabel(annotation: string | undefined): string {
   if (annotation === undefined) {
-    return 'Not set';
-  }
-  const config = parseUsePredefinedVariables({ [AnnoKeyUsePredefinedVariables]: annotation });
-  if (config === undefined) {
-    return 'Not set';
-  }
-  const list = config.predefinedVariablesAllowList;
-  if (list === ALLOW_ALL_PREDEFINED || (Array.isArray(list) && list.includes(ALLOW_ALL_PREDEFINED))) {
     return 'All';
   }
-  if (Array.isArray(list) && list.length === 1 && list[0] === ALLOW_ALL_GLOBAL_PREDEFINED) {
+  const denyList = parseIgnorePredefinedVariables({ [AnnoKeyIgnorePredefinedVariables]: annotation });
+  if (denyList === undefined || denyList.length === 0) {
+    return 'All';
+  }
+  if (denyList.includes(DENY_ALL_PREDEFINED)) {
+    return 'None';
+  }
+  if (denyList.length === 1 && denyList[0] === DENY_ALL_FOLDER_PREDEFINED) {
     return 'Global';
   }
-  if (Array.isArray(list) && list.length === 1 && list[0] === ALLOW_ALL_FOLDER_PREDEFINED) {
+  if (denyList.length === 1 && denyList[0] === DENY_ALL_GLOBAL_PREDEFINED) {
     return 'Folder';
-  }
-  if (Array.isArray(list) && list.length === 0) {
-    return 'None';
   }
   return 'Custom';
 }

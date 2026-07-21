@@ -23,7 +23,7 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
-  AnnoKeyUsePredefinedVariables,
+  AnnoKeyIgnorePredefinedVariables,
 } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
@@ -72,7 +72,7 @@ import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSession
 import {
   mayInjectAnyPredefinedVariables,
   resolvePredefinedVariablesForDashboard,
-} from '../utils/predefinedVariableAllowList';
+} from '../utils/predefinedVariableDenyList';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -1032,11 +1032,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
     const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
-    // k8s annotations can include non-string values; resolution only needs the allowlist string.
-    const allowlistAnnotation = rsp.metadata.annotations?.[AnnoKeyUsePredefinedVariables];
+    // k8s annotations can include non-string values; resolution only needs the denylist string.
+    const denylistAnnotation = rsp.metadata.annotations?.[AnnoKeyIgnorePredefinedVariables];
     const resolutionInput = {
       annotations:
-        typeof allowlistAnnotation === 'string' ? { [AnnoKeyUsePredefinedVariables]: allowlistAnnotation } : undefined,
+        typeof denylistAnnotation === 'string' ? { [AnnoKeyIgnorePredefinedVariables]: denylistAnnotation } : undefined,
     };
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {

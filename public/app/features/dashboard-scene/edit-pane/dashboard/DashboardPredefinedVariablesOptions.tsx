@@ -5,54 +5,49 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 import {
-  ALLOW_ALL_FOLDER_PREDEFINED,
-  ALLOW_ALL_GLOBAL_PREDEFINED,
-  ALLOW_ALL_PREDEFINED,
-  AnnoKeyUsePredefinedVariables,
+  AnnoKeyIgnorePredefinedVariables,
+  DENY_ALL_FOLDER_PREDEFINED,
+  DENY_ALL_GLOBAL_PREDEFINED,
+  DENY_ALL_PREDEFINED,
   type ObjectMeta,
 } from 'app/features/apiserver/types';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import {
-  parseUsePredefinedVariables,
-  serializeUsePredefinedVariables,
-  type UsePredefinedVariablesConfig,
-} from '../../utils/predefinedVariableAllowList';
+  parseIgnorePredefinedVariables,
+  serializeIgnorePredefinedVariables,
+} from '../../utils/predefinedVariableDenyList';
 
 type PredefinedVariablesMode = 'none' | 'all' | 'global' | 'folder';
 
-function modeFromConfig(allowlist: UsePredefinedVariablesConfig | undefined): PredefinedVariablesMode | undefined {
-  // Missing annotation → None is the default UI selection (no injection).
-  if (allowlist === undefined) {
-    return 'none';
-  }
-  const list = allowlist.predefinedVariablesAllowList;
-  if (list === ALLOW_ALL_PREDEFINED || (Array.isArray(list) && list.includes(ALLOW_ALL_PREDEFINED))) {
+function modeFromDenyList(denyList: string[] | undefined): PredefinedVariablesMode | undefined {
+  // Missing / empty deny list → All (inject everything).
+  if (denyList === undefined || denyList.length === 0) {
     return 'all';
   }
-  if (Array.isArray(list) && list.length === 1 && list[0] === ALLOW_ALL_GLOBAL_PREDEFINED) {
+  if (denyList.includes(DENY_ALL_PREDEFINED)) {
+    return 'none';
+  }
+  if (denyList.length === 1 && denyList[0] === DENY_ALL_FOLDER_PREDEFINED) {
     return 'global';
   }
-  if (Array.isArray(list) && list.length === 1 && list[0] === ALLOW_ALL_FOLDER_PREDEFINED) {
+  if (denyList.length === 1 && denyList[0] === DENY_ALL_GLOBAL_PREDEFINED) {
     return 'folder';
-  }
-  if (Array.isArray(list) && list.length === 0) {
-    return 'none';
   }
   // Mixed / custom name lists: no radio selected until the user picks a coarse mode.
   return undefined;
 }
 
-function configFromMode(mode: PredefinedVariablesMode): UsePredefinedVariablesConfig {
+function denyListFromMode(mode: PredefinedVariablesMode): string[] | undefined {
   switch (mode) {
-    case 'none':
-      return { predefinedVariablesAllowList: [] };
     case 'all':
-      return { predefinedVariablesAllowList: ALLOW_ALL_PREDEFINED };
+      return undefined;
+    case 'none':
+      return [DENY_ALL_PREDEFINED];
     case 'global':
-      return { predefinedVariablesAllowList: [ALLOW_ALL_GLOBAL_PREDEFINED] };
+      return [DENY_ALL_FOLDER_PREDEFINED];
     case 'folder':
-      return { predefinedVariablesAllowList: [ALLOW_ALL_FOLDER_PREDEFINED] };
+      return [DENY_ALL_GLOBAL_PREDEFINED];
   }
 }
 
@@ -68,11 +63,16 @@ function readAnnotationMap(dashboard: DashboardScene): Record<string, string> {
   return merged;
 }
 
-function updateDashboardAllowlist(dashboard: DashboardScene, mode: PredefinedVariablesMode) {
-  const nextConfig = configFromMode(mode);
+function updateDashboardDenyList(dashboard: DashboardScene, mode: PredefinedVariablesMode) {
+  const nextDenyList = denyListFromMode(mode);
   const meta = dashboard.state.meta;
   const annotations = readAnnotationMap(dashboard);
-  annotations[AnnoKeyUsePredefinedVariables] = serializeUsePredefinedVariables(nextConfig);
+
+  if (nextDenyList === undefined) {
+    delete annotations[AnnoKeyIgnorePredefinedVariables];
+  } else {
+    annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList);
+  }
 
   const nextMetaK8s: Partial<ObjectMeta> = {
     ...(meta.k8s ?? {}),
@@ -91,7 +91,7 @@ function updateDashboardAllowlist(dashboard: DashboardScene, mode: PredefinedVar
     },
   });
 
-  // Update the live variable set immediately so controls match the allowlist without a reload.
+  // Update the live variable set immediately so controls match the denylist without a reload.
   // Discard restores the edit-session baseline (including prior predefined variables).
   void dashboard.refreshPredefinedVariables();
 }
@@ -102,14 +102,14 @@ interface Props {
 
 export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
   const { meta } = dashboard.useState();
-  const canEditAllowlist = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
+  const canEditDenyList = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
 
-  const annotationValue = meta.k8s?.annotations?.[AnnoKeyUsePredefinedVariables];
+  const annotationValue = meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   const mode = useMemo(() => {
-    return modeFromConfig(
-      parseUsePredefinedVariables(
+    return modeFromDenyList(
+      parseIgnorePredefinedVariables(
         annotationValue !== undefined
-          ? { [AnnoKeyUsePredefinedVariables]: annotationValue }
+          ? { [AnnoKeyIgnorePredefinedVariables]: annotationValue }
           : readAnnotationMap(dashboard)
       )
     );
@@ -143,18 +143,18 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
       label={t('dashboard-scene.predefined-variables-options.label', 'Predefined variables')}
       description={t(
         'dashboard-scene.predefined-variables-options.description',
-        'Choose which global and folder-scoped variables this dashboard receives.'
+        'This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.'
       )}
       noMargin
-      disabled={!canEditAllowlist}
+      disabled={!canEditDenyList}
     >
       <RadioButtonGroup
         options={options}
         value={mode}
-        onChange={(value) => updateDashboardAllowlist(dashboard, value)}
+        onChange={(value) => updateDashboardDenyList(dashboard, value)}
         size="sm"
         fullWidth
-        disabled={!canEditAllowlist}
+        disabled={!canEditDenyList}
       />
     </Field>
   );
