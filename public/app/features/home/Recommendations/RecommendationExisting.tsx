@@ -1,17 +1,12 @@
 import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type PluginMeta } from '@grafana/data';
 import { Stack } from '@grafana/ui';
-import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { NoDataCard } from './NoDataCard';
-import { buildKubernetesItem } from './buildKubernetesItem';
-import { KUBERNETES_APP_ID } from './kubernetesData';
 import { type ExistingItem } from './types';
-import { useKubernetesCardData } from './useKubernetesCardData';
+import { useExistingSolutions } from './useExistingSolutions';
 
 const stubbedExisting: ExistingItem[] = [
   {
@@ -49,60 +44,25 @@ const stubbedExisting: ExistingItem[] = [
 ];
 
 export function RecommendationExisting() {
-  const { settings, installed, loading: settingsLoading } = usePluginBridge(KUBERNETES_APP_ID);
-
-  if (settingsLoading) {
-    return <RecommendationExistingSkeleton />;
-  }
-
-  const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
-  if (!installed || !settings || !canAccessPluginPage(settings, bridgePath)) {
-    return <NoDataCard />;
-  }
-
-  return <LiveSolutionsCard settings={settings} />;
-}
-
-interface LiveSolutionsCardProps {
-  settings: PluginMeta<{}>;
-}
-
-function LiveSolutionsCard({ settings }: LiveSolutionsCardProps) {
   const [selectedTitle, setSelectedTitle] = useState<string>();
-  const { datasource, resolving, resolutionError, inventory, inventoryLoading, health, cpuSeries, cpuLoading } =
-    useKubernetesCardData();
+  const { loading, solutions } = useExistingSolutions();
 
-  if (resolving) {
+  if (loading) {
     return <RecommendationExistingSkeleton />;
   }
 
-  const kubernetesItem =
-    !resolutionError && datasource
-      ? buildKubernetesItem(
-          {
-            inventory,
-            inventoryLoading,
-            health,
-            cpuSeries: cpuSeries ?? null,
-            cpuLoading,
-            datasourceName: datasource.name,
-          },
-          settings
-        )
-      : null;
-
-  // No datasource has Kubernetes data (or the probe failed): nothing live to show.
-  if (!kubernetesItem) {
+  // Stubs are placeholders, not live solutions: they never satisfy the no-data check.
+  if (solutions.length === 0) {
     return <NoDataCard />;
   }
 
-  const existing = [kubernetesItem, ...stubbedExisting];
+  const existing = [...solutions, ...stubbedExisting];
   const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
   return <ExistingSolutionCard existing={existing} selected={selected} onSelect={setSelectedTitle} />;
 }
 
-// Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the Kubernetes lookups
-// load, so the first paint never shows a solution that a resolving fetch would replace.
+// Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the solution
+// lookups load, so the first paint never shows a solution that a resolving fetch would replace.
 function RecommendationExistingSkeleton() {
   return (
     <Stack
