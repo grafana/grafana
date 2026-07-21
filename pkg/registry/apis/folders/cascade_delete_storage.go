@@ -378,6 +378,12 @@ func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, us
 		return nil
 	}
 	folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
+	// Root folders carry an empty parent annotation; RBAC treats "" as no folder context, so a user
+	// who only inherits folders:write from General would be wrongly denied. Normalize to General.
+	writeParent := parentUID
+	if writeParent == "" {
+		writeParent = folder.GeneralFolderUID
+	}
 	// One homogeneous Check per resource: a mixed-resource BatchCheck is routed back to RBAC in
 	// Zanzana rollout mode, so tenants mid-rollout would be evaluated by the wrong engine.
 	checks := []struct {
@@ -385,7 +391,7 @@ func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, us
 		folder string
 	}{
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, folderUID},
-		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, parentUID},
+		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, writeParent},
 	}
 	for _, c := range checks {
 		resp, err := s.accessClient.Check(ctx, user, c.req, c.folder)
