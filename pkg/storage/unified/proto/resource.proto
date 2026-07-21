@@ -642,10 +642,7 @@ message DailyStat {
   map<string, uint64> metrics = 2;
 }
 
-message GetResourceDailyStatsResponse {
-  // Sorted ascending by day; days with no data are omitted.
-  repeated DailyStat days = 1;
-}
+
 
 // This provides the CRUD+List+Watch support needed for a k8s apiserver
 // The semantics and behaviors of this service are constrained by kubernetes
@@ -709,8 +706,9 @@ service ResourceStats {
   // untracked resources are silently dropped.
   rpc RecordEvent(RecordEventRequest) returns (RecordEventResponse);
 
-  // Read the per-day usage buckets for a single object.
-  rpc GetResourceDailyStats(GetResourceDailyStatsRequest) returns (GetResourceDailyStatsResponse);
+  // Read the per-day usage buckets for a single object. Results are streamed
+  // sorted ascending by day; days with no data are omitted.
+  rpc GetResourceDailyStats(GetResourceDailyStatsRequest) returns (stream DailyStat);
 }
 
 service BulkStore {
