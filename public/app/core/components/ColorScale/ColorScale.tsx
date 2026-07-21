@@ -102,41 +102,28 @@ export const ColorScale = ({
     }
   }
 
-  if (isVertical) {
-    const maxLabelLen = Math.max(0, ...ticks.map((tick) => tick.label.length));
-
-    return (
-      <div ref={ref} className={styles.scaleWrapperVertical}>
-        <div className={styles.scaleGradientVertical} style={{ background }} />
-        {ticks.length > 0 && (
-          // labels are absolutely positioned, so the column needs an explicit
-          // width to contribute to the intrinsic width of the scale
-          <div className={styles.legendValuesVertical} style={{ width: maxLabelLen * APPROX_CHAR_WIDTH }}>
-            {ticks.map(({ percent, label }, i) => {
-              const transform = i === 0 ? undefined : i === ticks.length - 1 ? 'translateY(100%)' : 'translateY(50%)';
-
-              return (
-                <span key={i} className={styles.legendValueVertical} style={{ bottom: `${percent}%`, transform }}>
-                  {label}
-                </span>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div ref={ref} className={styles.scaleWrapper}>
-      <div className={styles.scaleGradient} style={{ background }} />
+    <div ref={ref} className={isVertical ? styles.scaleWrapperVertical : styles.scaleWrapper}>
+      <div className={isVertical ? styles.scaleGradientVertical : styles.scaleGradient} style={{ background }} />
       {ticks.length > 0 && (
-        <div className={styles.legendValues}>
+        <div
+          className={isVertical ? styles.legendValuesVertical : styles.legendValues}
+          // labels are absolutely positioned, so the vertical column needs an
+          // explicit width to contribute to the intrinsic width of the scale
+          style={
+            isVertical ? { width: Math.max(...ticks.map((tick) => tick.label.length)) * APPROX_CHAR_WIDTH } : undefined
+          }
+        >
           {ticks.map(({ percent, label }, i) => {
-            const transform = i === 0 ? undefined : i === ticks.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)';
+            // the first tick anchors at the min end, the last at the max end,
+            // and intermediates center on their value
+            const anchor = i === 0 ? 0 : i === ticks.length - 1 ? 100 : 50;
+            const style = isVertical
+              ? { bottom: `${percent}%`, transform: anchor ? `translateY(${anchor}%)` : undefined }
+              : { left: `${percent}%`, transform: anchor ? `translateX(-${anchor}%)` : undefined };
 
             return (
-              <span key={i} className={styles.legendValue} style={{ left: `${percent}%`, transform }}>
+              <span key={i} className={isVertical ? styles.legendValueVertical : styles.legendValue} style={style}>
                 {label}
               </span>
             );

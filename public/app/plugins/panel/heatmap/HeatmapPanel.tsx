@@ -183,23 +183,17 @@ const HeatmapPanelViz = ({
 
     const isRight = placement === 'right';
 
-    const colorScale = (
-      <ColorScale
-        colorPalette={info.heatmapColors.palette}
-        min={info.heatmapColors.minValue}
-        max={info.heatmapColors.maxValue}
-        display={info.display}
-        orientation={isRight ? 'vertical' : 'horizontal'}
-      />
-    );
-
     return (
       <VizLayout.Legend placement={placement} width={isRight ? options.legend.width : undefined}>
-        {isRight ? (
-          <div className={styles.colorScaleWrapperVertical}>{colorScale}</div>
-        ) : (
-          <div className={styles.colorScaleWrapper}>{colorScale}</div>
-        )}
+        <div className={isRight ? styles.colorScaleWrapperVertical : styles.colorScaleWrapper}>
+          <ColorScale
+            colorPalette={info.heatmapColors.palette}
+            min={info.heatmapColors.minValue}
+            max={info.heatmapColors.maxValue}
+            display={info.display}
+            orientation={isRight ? 'vertical' : 'horizontal'}
+          />
+        </div>
       </VizLayout.Legend>
     );
   };
