@@ -630,11 +630,12 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 	ns := "org-1"
 	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 
-	const retentionTTL = 90 * 24 * time.Hour
+	const defaultTTL = 90 * 24 * time.Hour
 	now := time.Now().UTC().UnixMilli()
 	second := time.Second.Milliseconds()
 	futureWindowMs := maxFutureWindow.Milliseconds()
-	retentionMs := retentionTTL.Milliseconds()
+	retentionMs := defaultTTL.Milliseconds()
+	veryOldMs := (10 * 365 * 24 * time.Hour).Milliseconds()
 
 	timeEnd := func(ms int64) *int64 { return &ms }
 
@@ -645,25 +646,28 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 		time              int64
 		timeEnd           *int64
 		deletionTimestamp *metav1.Time
+		retentionTTL      time.Duration
 		expectErr         bool
 		errContains       string
 	}{
-		{"time is current", now, nil, nil, false, ""},
-		{"recent past within retention", now - retentionMs/2, nil, nil, false, ""},
-		{"inside future bound", now + futureWindowMs - second, nil, nil, false, ""},
-		{"too far in the future", now + futureWindowMs + second, nil, nil, true, "time cannot be more than 1 week in the future"},
-		{"older than retention TTL", now - retentionMs - second, nil, nil, true, "time cannot be older than retention TTL"},
-		{"valid timeEnd after time", now, timeEnd(now + second), nil, false, ""},
-		{"timeEnd before time", now, timeEnd(now - second), nil, true, "timeEnd must be after time"},
-		{"timeEnd too far in the future", now, timeEnd(now + futureWindowMs + second), nil, true, "timeEnd cannot be more than 1 week in the future"},
-		{"deletionTimestamp set on create", now, nil, &deletedAt, true, "metadata.deletionTimestamp cannot be set on create"},
+		{name: "time is current", time: now, retentionTTL: defaultTTL},
+		{name: "recent past within retention", time: now - retentionMs/2, retentionTTL: defaultTTL},
+		{name: "inside future bound", time: now + futureWindowMs - second, retentionTTL: defaultTTL},
+		{name: "too far in the future", time: now + futureWindowMs + second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be more than 1 week in the future"},
+		{name: "older than retention TTL", time: now - retentionMs - second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be older than retention TTL"},
+		{name: "very old time accepted with no retention", time: now - veryOldMs, retentionTTL: 0},
+		{name: "future bound enforced with no retention", time: now + futureWindowMs + second, retentionTTL: 0, expectErr: true, errContains: "time cannot be more than 1 week in the future"},
+		{name: "valid timeEnd after time", time: now, timeEnd: timeEnd(now + second), retentionTTL: defaultTTL},
+		{name: "timeEnd before time", time: now, timeEnd: timeEnd(now - second), retentionTTL: defaultTTL, expectErr: true, errContains: "timeEnd must be after time"},
+		{name: "timeEnd too far in the future", time: now, timeEnd: timeEnd(now + futureWindowMs + second), retentionTTL: defaultTTL, expectErr: true, errContains: "timeEnd cannot be more than 1 week in the future"},
+		{name: "deletionTimestamp set on create", time: now, deletionTimestamp: &deletedAt, retentionTTL: defaultTTL, expectErr: true, errContains: "metadata.deletionTimestamp cannot be set on create"},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			store := NewMemoryStore()
 			adapter := newTestAdapter(store, allowAll)
-			adapter.retentionTTL = retentionTTL
+			adapter.retentionTTL = tc.retentionTTL
 			ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 			name := "anno"

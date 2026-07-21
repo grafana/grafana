@@ -1,3 +1,5 @@
+import { type SQLDialect } from '@codemirror/lang-sql';
+
 import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
 
 const DEFAULT_SQL_DIALECT: CodeMirrorSqlDialect = 'standardSql';
@@ -6,14 +8,15 @@ const loadJson = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 
 const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
-  const { sql, StandardSQL, MySQL } = await import(
-    /* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'
-  );
-  const dialects = {
+  const [{ sql, StandardSQL, MySQL }, { foldByIndentation }] = await Promise.all([
+    import(/* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'),
+    import(/* webpackChunkName: "codemirror-lang-sql" */ './sqlFolding'),
+  ]);
+  const dialects: Record<CodeMirrorSqlDialect, SQLDialect> = {
     standardSql: StandardSQL,
     mySql: MySQL,
   };
-  return sql({ dialect: dialects[dialect] });
+  return [sql({ dialect: dialects[dialect], upperCaseKeywords: true }), foldByIndentation];
 };
 
 interface LoadLanguageOptions {

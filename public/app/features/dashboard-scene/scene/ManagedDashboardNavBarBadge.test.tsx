@@ -1,40 +1,21 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { config, isFetchError } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
 import { DashboardScene } from './DashboardScene';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 
-const mockUseGetRepositoryQuery = jest.fn();
+setupProvisioningMswServer();
 
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useGetRepositoryQuery: () => mockUseGetRepositoryQuery(),
-}));
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  isFetchError: jest.fn(),
-}));
-
-type RepositoryQueryState = {
-  data?: { spec?: { title?: string } };
-  isError: boolean;
-  error?: unknown;
-};
-
-function mockRepositoryQueryState(state: Partial<RepositoryQueryState> = {}) {
-  const defaultState: RepositoryQueryState = {
-    data: undefined,
-    isError: false,
-    error: undefined,
-  };
-
-  mockUseGetRepositoryQuery.mockReturnValue({
-    ...defaultState,
-    ...state,
-  });
+/** Override the frontend settings endpoint that the badge's repository lookup reads from. */
+function mockRepositories(repositories: Array<Partial<RepositoryView>>) {
+  server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ items: repositories })));
 }
 
 function buildDashboard(kind?: ManagerKind, id?: string): DashboardScene {
@@ -45,60 +26,62 @@ function buildDashboard(kind?: ManagerKind, id?: string): DashboardScene {
 
   jest.spyOn(dashboard, 'getManagerKind').mockReturnValue(kind);
   jest.spyOn(dashboard, 'getManagerIdentity').mockReturnValue(id);
+  jest.spyOn(dashboard, 'getPath').mockReturnValue('dashboards/test.json');
 
   return dashboard;
 }
 
 describe('ManagedDashboardNavBarBadge', () => {
+  let originalProvisioning: boolean | undefined;
+
   beforeEach(() => {
+    originalProvisioning = config.featureToggles.provisioning;
     config.featureToggles.provisioning = true;
-    jest.mocked(isFetchError).mockReturnValue(false);
-    mockRepositoryQueryState();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    config.featureToggles.provisioning = originalProvisioning;
+    jest.restoreAllMocks();
   });
 
-  it('returns null and skips repo query when manager kind is missing', () => {
+  it('returns null when manager kind is missing', () => {
     const dashboard = buildDashboard(undefined, undefined);
     const { container } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders orphaned repository tooltip for 404 repo fetch errors', async () => {
-    jest.mocked(isFetchError).mockReturnValue(true);
-    mockRepositoryQueryState({
-      isError: true,
-      error: { status: 404 },
-    });
+  it('renders orphaned repository badge when the repository no longer exists', async () => {
+    mockRepositories([]);
 
-    const dashboard = buildDashboard(ManagerKind.Repo, undefined);
-    const user = userEvent.setup();
+    const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main');
+    const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
-    render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
-
-    const badgeIcon = screen.getByTestId('icon-exclamation-triangle');
+    const badgeIcon = await screen.findByTestId('icon-exclamation-triangle');
     await user.hover(badgeIcon);
 
     expect(await screen.findByText('Repository not found')).toBeInTheDocument();
   });
 
-  it('renders managed repository tooltip when repo exists', async () => {
-    mockRepositoryQueryState({
-      data: { spec: { title: 'Main Repo' } },
-      isError: false,
-    });
+  it('renders managed repository tooltip with the repository title when repo exists', async () => {
+    mockRepositories([{ name: 'repo-main', title: 'Main Repo', target: 'folder', type: 'github', workflows: [] }]);
 
     const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main');
-    const user = userEvent.setup();
+    const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
-    render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
-
-    const badgeIcon = screen.getByTestId('icon-exchange-alt');
+    const badgeIcon = await screen.findByTestId('icon-exchange-alt');
     await user.hover(badgeIcon);
 
-    expect(await screen.findByText('Managed by: Repository Main Repo')).toBeInTheDocument();
+    await waitFor(async () => {
+      expect(await screen.findByText('Managed by: Repository Main Repo')).toBeInTheDocument();
+    });
+  });
+
+  it('renders a non-repository managed badge without repository lookup', async () => {
+    const dashboard = buildDashboard(ManagerKind.Terraform, undefined);
+    const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
+
+    await user.hover(screen.getByTestId('icon-exchange-alt'));
+    expect(await screen.findByText('Managed by: Terraform')).toBeInTheDocument();
   });
 });

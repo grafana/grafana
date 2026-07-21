@@ -396,9 +396,15 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	// teamsRedirectRemovedMember records that the K8s teams redirect below actually removed an
+	// existing member. In dual-write modes (Mode1-3) legacy is the primary target of that write,
+	// so the legacy fallback further down then finds the row already gone. A no-op redirect (the
+	// member wasn't there) leaves this false, so a genuinely-absent member still returns 404.
+	teamsRedirectRemovedMember := false
+
 	// Teams-specific redirect: write the membership to Team.Spec.Members via the K8s API.
 	if a.service.options.Resource == "teams" && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
-		err := a.setUserPermissionInTeamMembers(c, c.Namespace, resourceID, userID, cmd.Permission)
+		removed, err := a.setUserPermissionInTeamMembers(c, c.Namespace, resourceID, userID, cmd.Permission)
 		if errors.Is(err, ErrExternalTeamMember) {
 			return response.Err(err)
 		}
@@ -406,6 +412,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 			span.RecordError(err)
 			a.logger.Warn("Failed to set user permission via team members k8s API", "error", err, "resourceID", resourceID)
 		} else {
+			teamsRedirectRemovedMember = removed
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
 		}
 
@@ -443,6 +450,14 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_user", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
 	_, err = a.service.SetUserPermission(c.Req.Context(), c.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
+		// The teams redirect above already removed the member (and, in dual-write modes, the
+		// legacy team_member row), so this legacy removal finds nothing.
+		if teamsRedirectRemovedMember && errors.Is(err, team.ErrTeamMemberNotFound) {
+			return permissionSetResponse(cmd)
+		}
+		if errors.Is(err, team.ErrTeamMemberNotFound) {
+			return response.Error(http.StatusNotFound, "Team member not found", nil)
+		}
 		return response.Err(err)
 	}
 

@@ -23,9 +23,13 @@ func DSTypeFromDatasourceAPIGroup(group string) string {
 }
 
 // LegacyUIDScopeToK8s builds a k8s-style datasource resource scope from the suffix of
-// legacy scope "datasources:uid:<uid>"
+// legacy scope "datasources:uid:<uid>". Wildcard ("*") stays as "datasources:*";
+// concrete UIDs use the "datasources:uid:<uid>" form.
 func LegacyUIDScopeToK8s(dsType, uid string) string {
-	return K8sDatasourceAPIGroup(dsType) + "/datasources:" + uid
+	if uid == "*" {
+		return K8sDatasourceAPIGroup(dsType) + "/datasources:*"
+	}
+	return K8sDatasourceAPIGroup(dsType) + "/datasources:uid:" + uid
 }
 
 // LegacyVerbToK8sAction maps the substring after legacy prefix "datasources:" to a Kubernetes API action.

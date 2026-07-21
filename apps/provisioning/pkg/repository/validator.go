@@ -184,14 +184,13 @@ func (v *RepositoryValidator) validateDashboardPreviews(cfg *provisioning.Reposi
 	if v.allowImageRendering {
 		return nil
 	}
-	if cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
+	// Mirror the runtime accessor so validation covers every provider (GitHub reads
+	// its own config; others read PullRequest) and can never drift from it.
+	if cfg.ShouldGenerateDashboardPreviews() {
 		return field.ErrorList{field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-			cfg.Spec.GitHub.GenerateDashboardPreviews, "image rendering is not enabled")}
+			true, "image rendering is not enabled")}
 	}
-	if cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews {
-		return field.ErrorList{field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-			cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews, "image rendering is not enabled")}
-	}
+
 	return nil
 }
 

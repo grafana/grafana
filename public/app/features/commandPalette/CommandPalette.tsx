@@ -13,6 +13,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
+import { AskAssistantPill } from './AskAssistantPill';
 import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults';
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
@@ -139,6 +140,7 @@ function CommandPaletteContents() {
                 defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                 className={styles.search}
               />
+              {deepSearchEnabled && <AskAssistantPill />}
               <div className={styles.loadingBarContainer}>
                 {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
               </div>
@@ -393,7 +395,8 @@ const RenderResults = ({
             focusDeepSearch();
           }
           handled = true;
-        } else if (event.key === 'Enter') {
+        } else if (event.key === 'Enter' && !event.shiftKey) {
+          // Shift+Enter is the ask-assistant shortcut owned by CommandPaletteContents
           // The active row is always scrolled into view, so its element exists
           document.getElementById(getListboxItemId(current))?.click();
           handled = true;
@@ -421,8 +424,9 @@ const RenderResults = ({
             focusKeywordList();
           }
           handled = true;
-        } else if (event.key === 'Enter') {
-          // Keep global handlers away but let the anchor's native activation run
+        } else if (event.key === 'Enter' && !event.shiftKey) {
+          // Keep global handlers away but let the anchor's native activation run.
+          // Shift+Enter falls through to the ask-assistant shortcut instead.
           event.stopImmediatePropagation();
           return;
         } else if (event.key === 'Escape') {
