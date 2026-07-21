@@ -901,7 +901,11 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 }
 
 func TestProcessAssistantAppPlugin(t *testing.T) {
-	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{OrgRole: identity.RoleAdmin}}
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{
+		SignedInUser: &user.SignedInUser{OrgRole: identity.RoleAdmin},
+		Context:      &web.Context{Req: httpReq},
+	}
 	assistantApp := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
 			ID:   assistantAppID,
@@ -919,6 +923,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 	for _, tt := range []struct {
 		name           string
 		cfg            *setting.Cfg
+		trialMode      bool
 		wantChildPaths []string
 	}{
 		{
@@ -947,9 +952,19 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 				"/a/grafana-assistant-app/irrelevant",
 			},
 		},
+		{
+			name:      "Trial mode only includes the homepage",
+			cfg:       setting.NewCfg(),
+			trialMode: true,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			service := ServiceImpl{cfg: tt.cfg}
+			service := ServiceImpl{
+				cfg: tt.cfg,
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: map[string]any{"trialMode": tt.trialMode}},
+				}},
+			}
 			treeRoot := navtree.NavTreeRoot{}
 			service.processAppPlugin(assistantApp, reqCtx, &treeRoot)
 			appLink := treeRoot.FindById("plugin-page-" + assistantAppID)
