@@ -959,7 +959,9 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 // translation registered in mapper.go. Behaviour is preserved verbatim from the
 // pre-fork checkPermission.
 func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[string]bool, req *checkRequest, t Mapping, getTree folderTreeGetter) (bool, error) {
-	if req.Name == "" && req.Verb != utils.VerbCreate {
+	// A request with a folder but no name is a folder-scoped question, not a capabilities probe.
+	folderScoped := req.ParentFolder != "" && t.HasFolderSupport()
+	if req.Name == "" && req.Verb != utils.VerbCreate && !folderScoped {
 		// For resources that require a wildcard scope, we can perform the check immediately
 		if t.Scope("") == "*" {
 			return scopeMap["*"], nil
