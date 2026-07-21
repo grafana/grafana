@@ -25,7 +25,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
         <div>{prefix}</div>
 
         {href ? (
-          <Link href={href} onClick={onClick} color="primary" className={styles.titleLink}>
+          <Link href={href} onClick={onClick} color="primary" className={styles.titleLink} aria-label={title}>
             <Stack
               direction={oneRow ? 'row' : 'column'}
               gap={oneRow ? 1 : 0}
