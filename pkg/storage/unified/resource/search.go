@@ -619,6 +619,8 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 			resource = r
 		}
 	}
+
+	// record metrics at the end
 	defer func() {
 		code := vectorSearchResponseCode(resp, retErr)
 		if s.vectorMetrics != nil {
@@ -734,8 +736,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 }
 
 // vectorSearchResponseCode maps a VectorSearch outcome to the gRPC code label
-// on the search-duration metric. ErrorResult carries HTTP-style codes; codes
-// without an explicit mapping label as InvalidArgument (validation errors).
+// on the search-duration metric. ErrorResult carries HTTP-style codes; an
+// unmapped code labels as Unknown — a signal to add a mapping, not a silent
+// mislabel.
 func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr error) codes.Code {
 	switch {
 	case retErr != nil:
@@ -744,6 +747,8 @@ func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr erro
 		return codes.OK
 	}
 	switch resp.Error.Code {
+	case http.StatusBadRequest:
+		return codes.InvalidArgument
 	case http.StatusNotFound:
 		return codes.NotFound
 	case http.StatusForbidden:
@@ -751,7 +756,7 @@ func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr erro
 	case http.StatusUnauthorized:
 		return codes.Unauthenticated
 	default:
-		return codes.InvalidArgument
+		return codes.Unknown
 	}
 }
 
