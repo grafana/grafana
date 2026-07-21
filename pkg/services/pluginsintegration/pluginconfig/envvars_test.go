@@ -233,16 +233,18 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 		require.False(t, hasPath)
 	})
 
-	t.Run("preparation failure omits marketplace variables", func(t *testing.T) {
+	t.Run("preparation failure falls back to disk license", func(t *testing.T) {
 		environment := newTestMarketplaceLicensing("https://grafana.example.com/")
 		environment.prepareErr = errors.New("prepare environment")
 		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
 
-		_, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
-		_, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
+		licensePath, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		appURL, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
 		_, hasText := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_TEXT")
-		require.False(t, hasLicense)
-		require.False(t, hasAppURL)
+		require.True(t, hasLicense)
+		require.Equal(t, filepath.Join(mustAbs(t, "marketplace-licenses"), "license-acme-widget.jwt"), licensePath)
+		require.True(t, hasAppURL)
+		require.Equal(t, "https://grafana.example.com/", appURL)
 		require.False(t, hasText)
 	})
 
