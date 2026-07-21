@@ -778,9 +778,8 @@ function checkUserInputMatch(
   userDsInputs: DataSourceInstanceSettings[]
 ) {
   const dsName = templateizedUid.replace(/\$\{(.*)\}/, '$1');
-  const input = datasourceInputs?.find((ds) => ds.name === dsName);
-  const userInput = input && userDsInputs.find((ds) => ds.type === input.pluginId);
-  return userInput;
+  const index = datasourceInputs?.findIndex((ds) => ds.name === dsName) ?? -1;
+  return index === -1 ? undefined : userDsInputs[index];
 }
 
 function processAnnotation(
