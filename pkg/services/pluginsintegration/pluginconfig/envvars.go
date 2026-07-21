@@ -102,10 +102,9 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 	}
 
 	// Try to get the license token, falling-back to the JWT path on disk if token is not available.
-
 	token, err := p.marketplaceLicensing.LicenseToken(ctx, pluginID)
 	if err != nil {
-		p.logger.Warn("Failed to prepare marketplace license environment", "pluginId", pluginID)
+		p.logger.Error("Failed to prepare marketplace license environment", "pluginId", pluginID, "error", err)
 		return nil
 	}
 	var licensePath string
