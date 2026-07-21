@@ -232,13 +232,19 @@ export function setupCanvasCapture(): void {
   });
 }
 
-const assertUPlotReady = async () => {
+const assertUPlotReady = async (ready?: () => boolean) => {
   await waitFor(() =>
     expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
   );
-  // Some plugins redraw after their overlay mounts (e.g. the annotations plugin redraws once its markers
-  // are in the DOM). Under parallel test load that redraw can land after the first `.u-over` paint, so wait
-  // for the captured event stream to stabilize (two consecutive polls with the same count) before snapshotting.
+  // Some plugins draw only on a deferred redraw (e.g. the annotations plugin re-renders through React
+  // once uPlot publishes its time range, then draws on the next frame). Count stability alone can be
+  // satisfied BEFORE that redraw has even started, so when the case knows which ops must appear, wait
+  // for them first.
+  if (ready) {
+    await waitFor(() => expect(ready()).toBe(true));
+  }
+  // Under parallel test load a redraw can land after the first `.u-over` paint, so wait for the captured
+  // event stream to stabilize (two consecutive polls with the same count) before snapshotting.
   let previousCount = -1;
   await waitFor(() => {
     const count = uPlotInstance?.ctx.__getEvents().length ?? 0;
@@ -267,7 +273,17 @@ export async function renderCanvasCase(
   layer: 'series' | 'axes' = 'series'
 ): Promise<void> {
   renderTimeSeriesPanel(data, options, panelProps);
-  await assertUPlotReady();
+
+  // The annotations plugin draws its lines/regions on a redraw that fires only after uPlot sets the
+  // x-scale range and React re-renders the plugin (forceUpdate in AnnotationsPlugin). That redraw can
+  // start after the event stream already looks stable, so require the annotation ops — setLineDash is
+  // emitted only by the annotation pass in these suites — before trusting stability.
+  const expectAnnotations = Boolean(data?.annotations?.length);
+  await assertUPlotReady(
+    expectAnnotations
+      ? () => (uPlotInstance?.ctx.__getEvents() ?? []).some((event) => event.type === 'setLineDash')
+      : undefined
+  );
 
   const events = uPlotInstance!.ctx.__getEvents();
   const axisEvents = events.slice(0, axisBoundary);
