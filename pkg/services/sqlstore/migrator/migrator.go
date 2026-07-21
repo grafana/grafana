@@ -35,11 +35,28 @@ var (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/sqlstore/migrator")
 
+type Migrations interface {
+	AddMigration(id string, m Migration)
+}
+
+// ObsoleteMigrations is a container for migrations that are no longer active
+// These will ONLY run if the corresponding table exists.
+type ObsoleteMigrations struct {
+	Table      string
+	Migrations []Migration
+}
+
+func (o *ObsoleteMigrations) AddMigration(id string, mg Migration) {
+	mg.SetId(id)
+	o.Migrations = append(o.Migrations, mg)
+}
+
 type Migrator struct {
 	DBEngine     *xorm.Engine
 	Dialect      Dialect
 	migrations   []Migration
 	migrationIds map[string]struct{}
+	obsolete     map[string]*ObsoleteMigrations // table name -> obsolete migrations
 	Logger       log.Logger
 	Cfg          *setting.Cfg
 	isLocked     atomic.Bool
@@ -153,6 +170,16 @@ func (mg *Migrator) AddMigration(id string, m Migration) {
 	m.SetId(id)
 	mg.migrations = append(mg.migrations, m)
 	mg.migrationIds[id] = struct{}{}
+}
+
+func (mg *Migrator) AddObsoleteMigration(m *ObsoleteMigrations) {
+	if mg.obsolete == nil {
+		mg.obsolete = make(map[string]*ObsoleteMigrations)
+	}
+	if _, ok := mg.obsolete[m.Table]; ok {
+		panic(fmt.Sprintf("obsolete migration table conflict: %s", m.Table))
+	}
+	mg.obsolete[m.Table] = m
 }
 
 func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
@@ -288,6 +315,20 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 	}
 
 	successLabel := prometheus.Labels{"success": "true"}
+
+	// Add obsolete migrations if necessary
+	for _, o := range mg.obsolete {
+		exists, err := mg.DBEngine.IsTableExist(o.Table)
+		if err != nil {
+			return fmt.Errorf("failed to check table existence: %w", err)
+		}
+		if !exists {
+			continue
+		}
+		for _, m := range o.Migrations {
+			mg.AddMigration(m.Id(), m) // Handle obsolete migrations
+		}
+	}
 
 	migrationsPerformed := 0
 	migrationsSkipped := 0

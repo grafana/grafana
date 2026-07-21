@@ -51,8 +51,8 @@ func (tc *playlistsTestCase) Resources() []schema.GroupVersionResource {
 }
 
 func (tc *playlistsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
-	addPlaylistMigrations(mg)
-	addPlaylistUIDMigration(mg)
+	// addPlaylistMigrations(mg)
+	// addPlaylistUIDMigration(mg)
 }
 
 func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
