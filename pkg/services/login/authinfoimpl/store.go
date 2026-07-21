@@ -291,6 +291,9 @@ type updateAuthInfoQuery struct {
 	UserAuthTable     string
 	UserID            int64
 	AuthModule        string
+	AuthID            string
+	ExternalUID       string
+	Created           legacysql.DBTime
 	OAuthAccessToken  string
 	OAuthRefreshToken string
 	OAuthIDToken      string
@@ -370,6 +373,9 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 			UserAuthTable:     dbHelper.Table("user_auth"),
 			UserID:            authUser.UserId,
 			AuthModule:        authUser.AuthModule,
+			AuthID:            authUser.AuthId,
+			ExternalUID:       authUser.ExternalUID,
+			Created:           legacysql.NewDBTime(authUser.Created),
 			OAuthAccessToken:  authUser.OAuthAccessToken,
 			OAuthRefreshToken: authUser.OAuthRefreshToken,
 			OAuthIDToken:      authUser.OAuthIdToken,

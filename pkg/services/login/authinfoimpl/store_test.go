@@ -114,6 +114,40 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 		require.Nil(t, info)
 	})
 
+	t.Run("should update auth identity fields", func(t *testing.T) {
+		ctx := context.Background()
+		originalGetTime := GetTime
+		t.Cleanup(func() { GetTime = originalGetTime })
+
+		created := time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)
+		updated := created.Add(time.Hour)
+		GetTime = func() time.Time { return created }
+		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+			AuthModule:  login.SAMLAuthModule,
+			AuthId:      "old-auth-id",
+			UserId:      20,
+			UserUID:     "20",
+			ExternalUID: "old-external-uid",
+		}))
+
+		GetTime = func() time.Time { return updated }
+		require.NoError(t, store.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
+			AuthModule:  login.SAMLAuthModule,
+			AuthId:      "new-auth-id",
+			UserId:      20,
+			ExternalUID: "new-external-uid",
+		}))
+
+		info, err := store.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+			UserId:     20,
+			AuthModule: login.SAMLAuthModule,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "new-auth-id", info.AuthId)
+		require.Equal(t, "new-external-uid", info.ExternalUID)
+		require.Equal(t, updated, info.Created)
+	})
+
 	t.Run("should remove duplicates on update", func(t *testing.T) {
 		ctx := context.Background()
 		setCmd := &login.SetAuthInfoCommand{
@@ -326,34 +360,38 @@ VALUES (
 	}))
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "test_schema"."user_auth"
-SET o_auth_expiry = ?,
+SET auth_id = ?,
+    external_uid = ?,
+    created = ?,
+    o_auth_expiry = ?,
     o_auth_access_token = ?,
     o_auth_refresh_token = ?,
     o_auth_id_token = ?,
     o_auth_token_type = ?
 WHERE user_id = ?
   AND auth_module = ?`)).
-		WithArgs(nil, "", "", "", "", int64(42), login.LDAPAuthModule).
+		WithArgs("new-auth-id", "new-external-uid", sqlmock.AnyArg(), nil, "", "", "", "", int64(42), login.LDAPAuthModule).
 		WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id
 FROM "test_schema"."user_auth"
 WHERE user_id = ?
   AND auth_module = ?
   AND auth_id = ?`)).
-		WithArgs(int64(42), login.LDAPAuthModule, "auth-id").
+		WithArgs(int64(42), login.LDAPAuthModule, "new-auth-id").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(1)))
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."user_auth"
 WHERE user_id = ?
   AND auth_module = ?
   AND auth_id = ?
   AND id != ?`)).
-		WithArgs(int64(42), login.LDAPAuthModule, "auth-id", int64(1)).
+		WithArgs(int64(42), login.LDAPAuthModule, "new-auth-id", int64(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	require.NoError(t, store.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
-		UserId:     42,
-		AuthModule: login.LDAPAuthModule,
-		AuthId:     "auth-id",
+		UserId:      42,
+		AuthModule:  login.LDAPAuthModule,
+		AuthId:      "new-auth-id",
+		ExternalUID: "new-external-uid",
 	}))
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."user_auth"
@@ -451,6 +489,24 @@ func TestTemplates(t *testing.T) {
 						UserAuthTable:     userAuthTable,
 						UserID:            42,
 						AuthModule:        login.LDAPAuthModule,
+						AuthID:            "auth-id",
+						ExternalUID:       "external-uid",
+						Created:           legacysql.NewDBTime(now),
+						OAuthAccessToken:  "access-token",
+						OAuthRefreshToken: "refresh-token",
+						OAuthIDToken:      "id-token",
+						OAuthTokenType:    "bearer",
+						OAuthExpiry:       legacysql.NewDBTime(now),
+					},
+				},
+				{
+					Name: "oauth_only",
+					Data: updateAuthInfoQuery{
+						SQLTemplate:       queryTemplate(),
+						UserAuthTable:     userAuthTable,
+						UserID:            42,
+						AuthModule:        login.LDAPAuthModule,
+						Created:           legacysql.NewDBTime(now),
 						OAuthAccessToken:  "access-token",
 						OAuthRefreshToken: "refresh-token",
 						OAuthIDToken:      "id-token",
