@@ -588,7 +588,9 @@ func (s *Service) mergeSSOSettings(dbSettings, systemSettings *models.SSOSetting
 }
 
 // mergeSSOSettingsMTAuthoritative merges with MT-Settings winning and the DB
-// filling gaps — the read precedence past the storage read-flip (mode 3).
+// filling gaps (absent or empty values) — the mode-3 read precedence. Unlike
+// mergeSettings it filters nothing: the merge routes values, validation owns
+// the combined result.
 func (s *Service) mergeSSOSettingsMTAuthoritative(dbSettings, systemSettings *models.SSOSettings) *models.SSOSettings {
 	if dbSettings == nil {
 		return systemSettings
@@ -596,10 +598,20 @@ func (s *Service) mergeSSOSettingsMTAuthoritative(dbSettings, systemSettings *mo
 
 	s.logger.Debug("Merging SSO Settings, MT-Settings authoritative", "systemSettings", removeSecrets(systemSettings.Settings), "dbSettings", removeSecrets(dbSettings.Settings))
 
+	settings := make(map[string]any, len(systemSettings.Settings))
+	for k, v := range systemSettings.Settings {
+		settings[k] = v
+	}
+	for k, v := range dbSettings.Settings {
+		if existing, ok := settings[k]; !ok || isEmptyString(existing) {
+			settings[k] = v
+		}
+	}
+
 	return &models.SSOSettings{
 		Provider: systemSettings.Provider,
 		Source:   systemSettings.Source,
-		Settings: mergeSettings(systemSettings.Settings, dbSettings.Settings),
+		Settings: settings,
 		Created:  dbSettings.Created,
 		Updated:  dbSettings.Updated,
 	}
