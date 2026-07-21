@@ -70,13 +70,16 @@ export function applyJsonToDashboard(
         ),
       };
     }
-    if (metadata && Object.keys(metadata).length > 1) {
+    // Only metadata.name is honored when building the DTO below; reject any other field so
+    // unsupported metadata edits (e.g. labels) fail loudly rather than being silently dropped.
+    const unsupportedMetadataKeys = Object.keys(metadata ?? {}).filter((key) => key !== 'name');
+    if (unsupportedMetadataKeys.length > 0) {
       return {
         success: false,
         error: t(
           'dashboard.schema-editor.metadata-edit-unsupported',
           'Editing dashboard metadata is not yet supported ({{keys}})',
-          { keys: Object.keys(metadata).join(', ') }
+          { keys: unsupportedMetadataKeys.join(', ') }
         ),
       };
     }

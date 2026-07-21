@@ -110,6 +110,15 @@ describe('applyJsonToDashboard', () => {
     expect(result.error).toContain('metadata');
   });
 
+  it('rejects a single unsupported metadata field even when name is absent', () => {
+    const result = applyJsonToDashboard(
+      buildApplyDashboard('abc-123'),
+      JSON.stringify({ metadata: { labels: { a: 'b' } }, spec: {} })
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('metadata');
+  });
+
   it('applies the resource text generated for a saved dashboard', () => {
     const text = getDashboardResourceText(buildDashboard('abc-123'));
     const result = applyJsonToDashboard(buildApplyDashboard('abc-123'), text);
