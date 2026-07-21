@@ -13,7 +13,6 @@ SELECT
   external_uid
 FROM `test_schema`.`user_auth`
 WHERE 1 = 1
-  AND user_id = 42
   AND auth_module = 'ldap'
   AND auth_id = 'auth-id'
 ORDER BY created DESC

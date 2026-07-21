@@ -71,6 +71,12 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 		require.Equal(t, login.GoogleAuthModule, labels[2])
 	})
 
+	t.Run("should return no labels when no user IDs are supplied", func(t *testing.T) {
+		labels, err := store.GetUsersRecentlyUsedLabel(context.Background(), login.GetUserLabelsQuery{})
+		require.NoError(t, err)
+		require.Empty(t, labels)
+	})
+
 	t.Run("should always get the latest used", func(t *testing.T) {
 		ctx := context.Background()
 		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
@@ -146,6 +152,41 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 		require.Equal(t, "new-auth-id", info.AuthId)
 		require.Equal(t, "new-external-uid", info.ExternalUID)
 		require.Equal(t, updated, info.Created)
+	})
+
+	t.Run("should populate missing user UID during store construction", func(t *testing.T) {
+		ctx := context.Background()
+		now := time.Now()
+		usr := &user.User{
+			UID:     "migration-user-uid",
+			Login:   "migration-user",
+			Email:   "migration-user@example.com",
+			Created: now,
+			Updated: now,
+		}
+		require.NoError(t, sql.WithDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.Insert(usr)
+			return err
+		}))
+		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+			AuthModule: login.SAMLAuthModule,
+			AuthId:     "migration-auth-id",
+			UserId:     usr.ID,
+			UserUID:    usr.UID,
+		}))
+		require.NoError(t, sql.WithDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.Exec("UPDATE user_auth SET user_uid = NULL WHERE user_id = ?", usr.ID)
+			return err
+		}))
+
+		migrationStore, err := ProvideStore(ctx, legacysql.NewDatabaseProvider(sql), secretstest.NewFakeSecretsService())
+		require.NoError(t, err)
+		info, err := migrationStore.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+			UserId:     usr.ID,
+			AuthModule: login.SAMLAuthModule,
+		})
+		require.NoError(t, err)
+		require.Equal(t, usr.UID, info.UserUID)
 	})
 
 	t.Run("should remove duplicates on update", func(t *testing.T) {
@@ -270,6 +311,11 @@ WHERE ua.user_id IN (SELECT id FROM "test_schema"."user")
 	store, err := ProvideStore(ctx, provider, secretstest.NewFakeSecretsService())
 	require.NoError(t, err)
 
+	labels, err := store.GetUsersRecentlyUsedLabel(ctx, login.GetUserLabelsQuery{})
+	require.NoError(t, err)
+	require.Empty(t, labels)
+	require.Equal(t, 1, calls)
+
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT
   id,
   user_id,
@@ -306,7 +352,7 @@ ORDER BY created`)).
 			AddRow(int64(42), login.LDAPAuthModule).
 			AddRow(int64(84), login.GoogleAuthModule))
 
-	labels, err := store.GetUsersRecentlyUsedLabel(ctx, login.GetUserLabelsQuery{UserIDs: []int64{42, 84}})
+	labels, err = store.GetUsersRecentlyUsedLabel(ctx, login.GetUserLabelsQuery{UserIDs: []int64{42, 84}})
 	require.NoError(t, err)
 	require.Equal(t, login.LDAPAuthModule, labels[42])
 
@@ -435,7 +481,6 @@ func TestTemplates(t *testing.T) {
 					Data: getAuthInfoQuery{
 						SQLTemplate:   queryTemplate(),
 						UserAuthTable: userAuthTable,
-						UserID:        42,
 						AuthModule:    login.LDAPAuthModule,
 						AuthID:        "auth-id",
 					},

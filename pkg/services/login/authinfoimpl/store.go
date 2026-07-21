@@ -120,6 +120,10 @@ type getUsersRecentlyUsedLabelQuery struct {
 func (q getUsersRecentlyUsedLabelQuery) Validate() error { return nil }
 
 func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+	if len(query.UserIDs) == 0 {
+		return map[int64]string{}, nil
+	}
+
 	userAuths := []login.UserAuth{}
 	dbHelper, err := s.sql(ctx)
 	if err != nil {
