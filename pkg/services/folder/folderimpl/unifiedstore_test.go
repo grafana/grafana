@@ -73,7 +73,10 @@ func TestComputeFullPath(t *testing.T) {
 			wantPathUIDs: "grandparent-uid/parent-uid/Element-uid",
 		},
 		{
-			name: "should handle special characters in titles",
+			// Slashes in a title must be escaped so the title is not mistaken
+			// for a path separator. Consumers (backend SplitFullpath, the
+			// alerting frontend) rely on this to match a rule's folder.
+			name: "should escape slashes in titles",
 			parents: []*folder.Folder{
 				{
 					Title: "Parent/With/Slashes",
@@ -84,7 +87,7 @@ func TestComputeFullPath(t *testing.T) {
 					UID:   "Element-uid",
 				},
 			},
-			wantPath:     "Parent/With/Slashes/Element With Spaces",
+			wantPath:     "Parent\\/With\\/Slashes/Element With Spaces",
 			wantPathUIDs: "parent-uid/Element-uid",
 		},
 	}
@@ -1058,6 +1061,33 @@ func TestBuildFolderFullPaths(t *testing.T) {
 				ParentUID:    "parent-uid",
 				Fullpath:     "Grandparent/Parent/Child",
 				FullpathUIDs: "grandparent-uid/parent-uid/child-uid",
+			},
+		},
+		{
+			name: "should escape slashes in folder and parent titles",
+			args: args{
+				f: &folder.Folder{
+					Title:     "Child/With/Slashes",
+					UID:       "child-uid",
+					ParentUID: "parent-uid",
+				},
+				relations: map[string]string{
+					"child-uid":  "parent-uid",
+					"parent-uid": "",
+				},
+				folderMap: map[string]*folder.Folder{
+					"parent-uid": {
+						Title: "Parent/With/Slashes",
+						UID:   "parent-uid",
+					},
+				},
+			},
+			want: &folder.Folder{
+				Title:        "Child/With/Slashes",
+				UID:          "child-uid",
+				ParentUID:    "parent-uid",
+				Fullpath:     "Parent\\/With\\/Slashes/Child\\/With\\/Slashes",
+				FullpathUIDs: "parent-uid/child-uid",
 			},
 		},
 		{
