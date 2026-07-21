@@ -3,7 +3,7 @@ import { parseISO } from 'date-fns/parseISO';
 import { toDate } from 'date-fns/toDate';
 import { type Page } from 'playwright-core';
 
-import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups, type Components } from '@grafana/plugin-e2e';
 
 import { Sidebar } from '../dashboard-new-layouts/page-objects';
 
@@ -17,8 +17,13 @@ test.use({
 
 // New-layouts has no settings toolbar button; settings open from the dashboard edit-pane
 // "Dashboard options" sidebar button, then the "View all settings" button it reveals.
-async function openDashboardSettings(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  const sidebar = new Sidebar(page, dashboardPage, selectors);
+async function openDashboardSettings(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  components: Components
+) {
+  const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
   const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
   const optionsButton = sidebar.toolbar.getButton('Options');
   // The first edit-button click can be swallowed before the scene is interactive, leaving the
@@ -47,7 +52,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Tests dashboard time zone scenarios', async ({ page, gotoDashboardPage, selectors }) => {
+    test('Tests dashboard time zone scenarios', async ({ page, gotoDashboardPage, selectors, components }) => {
       // Opening settings twice via the new-layouts edit-pane flow takes longer than the default budget.
       test.slow();
       const dashboardPage = await gotoDashboardPage({ uid: TIMEZONE_DASHBOARD_UID });
@@ -60,7 +65,7 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(TZ_PANEL_TITLE))
       ).toBeVisible();
-      await openDashboardSettings(page, dashboardPage, selectors);
+      await openDashboardSettings(page, dashboardPage, selectors, components);
 
       // Change timezone to UTC
       await dashboardPage.getByGrafanaSelector(selectors.components.TimeZonePicker.containerV2).click();
@@ -94,7 +99,7 @@ test.describe(
       }
 
       // Open dashboard settings again (new-layouts flow)
-      await openDashboardSettings(page, dashboardPage, selectors);
+      await openDashboardSettings(page, dashboardPage, selectors, components);
 
       // Change timezone to Chicago
       await dashboardPage.getByGrafanaSelector(selectors.components.TimeZonePicker.containerV2).click();

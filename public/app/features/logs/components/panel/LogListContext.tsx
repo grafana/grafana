@@ -717,5 +717,5 @@ ${log.entry.replaceAll('`', '\\`')}
 
 export function getDefaultControlsExpandedMode(container: HTMLDivElement | null): boolean {
   const width = container?.clientWidth ?? window.innerWidth;
-  return width > 1200;
+  return width >= 1920;
 }

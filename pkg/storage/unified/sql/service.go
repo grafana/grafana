@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
+	appsdk "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -50,6 +51,11 @@ type service struct {
 	subservices        []services.Service
 	subservicesMngr    *services.Manager
 	subservicesWatcher *services.FailureWatcher
+
+	// manifestWatcher reloads search fields from the app-platform apiserver when
+	// configured. Created in registerServer (it needs the search registry that
+	// NewSearchOptions builds), started in starting(), nil when unconfigured.
+	manifestWatcher *resource.ManifestWatcher
 
 	// -- Shared Components
 	backend       resource.StorageBackend
@@ -349,6 +355,16 @@ func (s *service) starting(ctx context.Context) error {
 		}
 	}
 
+	// Start the manifest watcher directly rather than through subservicesMngr,
+	// which is already built by the time registerServer creates the watcher. We
+	// don't wait for it: the initial poll reaches the apiserver and the periodic
+	// rebuild check applies any change afterwards.
+	if s.manifestWatcher != nil {
+		if err := s.manifestWatcher.StartAsync(ctx); err != nil {
+			return fmt.Errorf("failed to start manifest watcher: %w", err)
+		}
+	}
+
 	// TODO: move to standalone mode once we use sharding in search servers
 	if s.cfg.EnableSharding {
 		s.log.Info("waiting until resource server is JOINING in the ring")
@@ -395,6 +411,26 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
 	if err != nil {
 		return err
+	}
+
+	// Build the manifest watcher here because it reloads into the search registry
+	// that NewSearchOptions just created. registerServer runs at construction time
+	// (from the Provide* constructors), always before the service's starting()
+	// that starts it.
+	if registry := searchOptions.SearchFields; registry != nil {
+		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
+			watcher, err := resource.NewManifestWatcher(*mwCfg, func(live []appsdk.Manifest) {
+				if err := resource.ApplyManifests(registry, resource.AppManifests(), live); err != nil {
+					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
+					return
+				}
+				s.log.Info("manifest reload applied", "live_manifests", len(live))
+			})
+			if err != nil {
+				return err
+			}
+			s.manifestWatcher = watcher
+		}
 	}
 
 	serverOptions := ServerOptions{
@@ -463,6 +499,12 @@ func (s *service) CheckHealth(ctx context.Context) (bool, error) {
 }
 
 func (s *service) stopping(_ error) error {
+	if s.manifestWatcher != nil {
+		s.manifestWatcher.StopAsync()
+		if err := s.manifestWatcher.AwaitTerminated(context.Background()); err != nil {
+			return fmt.Errorf("failed to stop manifest watcher: %w", err)
+		}
+	}
 	if s.subservicesMngr != nil {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservicesMngr)
 		if err != nil {
