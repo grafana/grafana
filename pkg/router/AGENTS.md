@@ -10,9 +10,9 @@ over time.
 
 The generic router lives here in OSS; only the loader (which knows the cloud kinds) is enterprise.
 
-- **this package (`pkg/router`, OSS)** — the generic machinery: `Router` (reconcile +
-  serving), `PathMux`, `ProxyServer`, `backendHandler`, and the `RouteConfig` /
-  `RoutesLoader` / `Interface` contracts (`ifaces.go`).
+- **this package (`pkg/router`, OSS)** — the generic machinery: `BasicRouter` (reconcile +
+  group-keyed serving), `ProxyServer`, `forwardBackend` (the per-group `Backend`), and the
+  `RouteConfig` / `RoutesLoader` / `Router` / `Backend` contracts (`ifaces.go`).
 - **`.../appmanifest/pkg/app/router` (enterprise)** — only `Loader` (`routes_loader.go`): the
   `RoutesLoader` implementation that produces `[]*RouteConfig` from the cloud control plane. How it
   sources and watches the underlying custom resources is its own concern (see that package's
@@ -53,31 +53,40 @@ Two things change independently and must not share a lifecycle:
    These are expensive and hold live keepalive connections.
 2. **The routing table** — the map of path → backend.
 
-**Keep backends persistent; rebuild the routing table freely.** A single route change must NOT
+**Keep pools persistent; rebuild the routing table freely.** A single route change must NOT
 recreate unrelated backends. Recreating a backend throws away its connection pool, forcing a
 reconnect + TLS re-handshake; doing that for *every* backend on *any* GitOps change causes a
 latency blip across all traffic when only one route changed.
 
-Implementation: `Router.backendRecords` is a persistent `map[prefix]*backendRecord`, keyed by the
-mux prefix (`/apis/<group>/`). Each record holds a long-lived `*backendHandler` (whose
-`backendConfig` swaps atomically) plus `lastRV`, the RouteConfig fingerprint last applied. `PathMux`
-is the disposable routing table. On reconcile, new groups register a handler once, changed groups
-swap config in place, and removed groups are unregistered — existing backends and their pools
-survive untouched.
+Implementation: `BasicRouter.entries` is a persistent `map[group]*groupEntry`, keyed by group.
+Each entry holds a `Backend` plus `lastRV`, the RouteConfig fingerprint last applied. On reconcile,
+groups whose `lastRV` is unchanged are left untouched, changed/new groups are rebuilt, and removed
+groups are dropped; then a fresh immutable `map[group]Backend` snapshot is published via one atomic
+store. **Connection-pool survival comes from the shared transport cache, not the Backend identity**
+(`transportFor`, keyed by `tlsCacheKey`): rebuilding a group's Backend reuses the cached transport,
+so its pool survives. Because reconcile only rebuilds the *changed* group, unrelated backends are
+never touched.
 
-This mirrors `k8s.io/apiserver/.../mux.PathRecorderMux`, which keeps a persistent handler map and
-rebuilds an immutable routing snapshot on each mutation. See `pathmux.go`.
+## Routing table (group-keyed snapshot)
 
-## PathMux (`pathmux.go`)
+The router serves by **group**, the natural key of the loaded config — not by flattened path
+prefixes. `BasicRouter.snapshot` is an `atomic.Pointer[map[group]Backend]`; reconcile rebuilds and
+stores it, serving loads it lock-free per request.
 
-A dependency-free port of `PathRecorderMux`. **Do not reintroduce k8s apimachinery/klog deps.**
-The whole point is a stdlib-only router. It matches by exact path, then prefix (most-specific
-first via `byPrefixPriority`), then a not-found handler, and swaps an immutable snapshot atomically.
+**Why not a general path mux (e.g. a `PathRecorderMux` port).** A kube-aggregator-style mux flattens
+every route into an anonymous `map[prefix]handler` plus a longest-prefix linear scan. That erases
+the group at dispatch time and buries the not-found decision, so "path in a group I don't own"
+(should fall through to `next`) and "unknown subpath inside a group I do own" (the backend's problem)
+collapse into one catch-all. This router has exactly one path grammar — `/apis/<group>/<version>/...`
+— so the group is segment #2, an O(1) map key. `Handler(next)` parses the group, looks it up in the
+snapshot, and gives **primacy to the group**: own the group → dispatch to its `Backend`; unknown
+group → `next`; the `/apis` root → router-synthesized `APIGroupList`. Keep the config's shape at
+dispatch; do not reintroduce a flattening mux. The one idea worth borrowing from `PathRecorderMux`
+is the immutable-snapshot-swapped-atomically concurrency model, which the group-keyed snapshot keeps.
 
-- `Handle` (exact) / `HandlePrefix` (subtree, trailing slash required) / `Unregister`.
-- Duplicate registration **overwrites and warns, does not panic** — routes are dynamic (GitOps)
-  config, not static code, so a bad duplicate must not crash the router. (The k8s original panics.)
-- Reads are lock-free (`atomic.Value` per-request load); mutations serialize on a mutex.
+- Duplicate group in a single `Load` **overwrites and warns, does not panic** — routes are dynamic
+  (GitOps) config, not static code, so a bad duplicate must not crash the router.
+- No k8s apimachinery/klog deps. The whole point is a stdlib-only router.
 
 ## Transports (`router.go`, `transportFor`)
 
@@ -111,7 +120,7 @@ TBD. Possibly inspect a manifest. Use a gRPC client to translate http calls via 
 | `/apis`                       | router           | **synthesized** from the loaded RouteConfig set |
 
 **Decision: one backend owns ALL versions of a given group.** A group is never split across
-backends (reconcile keys `backendRecords` by group; a duplicate group is last-wins). Consequences:
+backends (reconcile keys `entries` by group; a duplicate group is last-wins). Consequences:
 
 - `/apis/{group}` (group discovery, `APIGroup` — lists a group's versions) can be **proxied
   directly to the single owning backend**. No cross-backend merge is needed at group level.
@@ -155,8 +164,8 @@ proxy).
 
 ## Security
 
-Per repo policy, scan generated code with semgrep before landing. `PathMux` has no injection
-sinks (path used only for map lookup / prefix compare; no filesystem, shell, SQL, or template).
+Per repo policy, scan generated code with semgrep before landing. The group-keyed dispatch has no
+injection sinks (the group is used only as a map key; no filesystem, shell, SQL, or template).
 The sensitive surface is: proxy code that forwards headers / injects m2m identity/tokens / resolves
 target URLs, `transportFor`'s TLS handling (esp. the spec-gated `InsecureSkipVerify` path), and the
 standalone proxy port that runs outside the k8s handler chain. Scan and review those specifically.

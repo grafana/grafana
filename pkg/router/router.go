@@ -9,18 +9,22 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
+	"sync/atomic"
 
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"k8s.io/client-go/transport"
 )
 
-type backendRecord struct {
-	handler *backendHandler
-	// lastRV is the RouteConfig fingerprint last applied for this group (the
-	// backend-RV, or backend-RV-manifest-RV for operator/plugin modes). Used to
-	// skip rebuilding a backend whose config has not changed, preserving its
-	// connection pool across reconciles.
-	lastRV string
+const apisPrefix = "/apis"
+
+// groupEntry is the router's persistent, reconcile-only record for one group:
+// the live Backend plus lastRV, the RouteConfig fingerprint last applied. lastRV
+// lets reconcile skip rebuilding a group whose config has not changed. Touched
+// only by reconcile (single goroutine), so it needs no lock.
+type groupEntry struct {
+	backend Backend
+	lastRV  string
 }
 
 // there won't be a cloud apps router in enterprise
@@ -31,28 +35,35 @@ type BasicRouter struct {
 	dialer     *transport.DialHolder
 	transports map[tlsCacheKey]*http.Transport
 
-	// mux is the stable dispatcher. It is registered once per group and swaps its
-	// routing snapshot internally, so serving (Handler) and reconcile never race.
-	mux *PathMux
+	// entries is the desired-state map, keyed by group. Owned by reconcile
+	// (single goroutine); never read from the serving path.
+	entries map[string]*groupEntry
 
-	// backendRecords are the currently registered handlers, keyed by the mux
-	// prefix (/apis/<group>/). Touched only by reconcile (single goroutine).
-	backendRecords map[string]*backendRecord
+	// snapshot is the immutable group -> Backend map used to serve requests.
+	// reconcile rebuilds and atomically stores it; serving loads it lock-free.
+	// Keeping the routing table keyed by group (not flattened path prefixes)
+	// keeps the config's shape visible at dispatch, so Handler can give primacy
+	// to the group when deciding own-vs-fallthrough.
+	snapshot atomic.Pointer[map[string]Backend]
 }
 
 func NewRouter(loader RoutesLoader) *BasicRouter {
-	return &BasicRouter{
-		loader:         loader,
-		mux:            NewPathMux("cloud-apps"),
-		transports:     map[tlsCacheKey]*http.Transport{},
-		backendRecords: map[string]*backendRecord{},
+	r := &BasicRouter{
+		loader:     loader,
+		transports: map[tlsCacheKey]*http.Transport{},
+		entries:    map[string]*groupEntry{},
 	}
+	empty := map[string]Backend{}
+	r.snapshot.Store(&empty)
+	return r
 }
 
 // transportFor returns a transport for the given TLS settings, building and
 // caching one on first use. Called only from reconcile (single goroutine), so
 // the transports map needs no lock. Backends sharing a tlsCacheKey share a
-// transport, so their connection pools are shared too.
+// transport, so their connection pools are shared too. This shared cache is
+// what preserves connection pools across a config change: rebuilding a group's
+// Backend reuses the cached transport, so its pool survives untouched.
 func (cr *BasicRouter) transportFor(key tlsCacheKey) (*http.Transport, error) {
 	if t, ok := cr.transports[key]; ok {
 		return t, nil
@@ -85,14 +96,63 @@ func (cr *BasicRouter) transportFor(key tlsCacheKey) (*http.Transport, error) {
 	return t, nil
 }
 
-// Handler serves the reverse-proxy tree. server.go mounts it at /apis; the
-// PathMux routes by group prefix from there.
+// Handler serves the reverse-proxy tree. server.go mounts it at /apis; from
+// there it routes by GROUP, not by flattened path prefix. The group is the
+// natural key of the loaded config, so dispatch stays in group terms: a request
+// for a group we own goes to that group's Backend; anything else falls through
+// to next. That own-vs-fallthrough decision lives here, at the group layer,
+// rather than being hidden in a general-purpose path mux.
 func (cr *BasicRouter) Handler(next http.Handler) http.Handler {
 	// NOTE: when implementing OpenAPIV3Handler(), we need to support
-	// serverAddrressByClientCIDRs in /apis to allow local in-network clients to be able to connect directly as desired
-	//
-	// 2 routes to explicity handle: /apis (discovery) and /openapi/v3
-	return cr.mux
+	// serverAddressByClientCIDRs in /apis to allow local in-network clients to
+	// connect directly as desired.
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		path := req.URL.Path
+
+		// Not part of the /apis tree — not ours.
+		if path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/") {
+			next.ServeHTTP(w, req)
+			return
+		}
+
+		// Root discovery (APIGroupList) is the only path that needs a union
+		// across every group; synthesize it router-side.
+		if path == apisPrefix || path == apisPrefix+"/" {
+			cr.serveAPIGroupList(w, req)
+			return
+		}
+
+		group := groupFromPath(path)
+		backends := *cr.snapshot.Load()
+		b, ok := backends[group]
+		if !ok {
+			// A group we don't serve. Fall through rather than 404 so a caller
+			// mounted ahead of us keeps its own routes.
+			next.ServeHTTP(w, req)
+			return
+		}
+		// /apis/<group> group discovery and /apis/<group>/... both proxy to the
+		// single owning backend (one backend owns all versions of a group).
+		b.Handler().ServeHTTP(w, req)
+	})
+}
+
+// groupFromPath returns the group segment of an /apis/<group>[/...] path.
+// The caller guarantees the /apis/ prefix and a non-root path.
+func groupFromPath(path string) string {
+	rest := strings.TrimPrefix(path, apisPrefix+"/")
+	if i := strings.IndexByte(rest, '/'); i >= 0 {
+		rest = rest[:i]
+	}
+	return rest
+}
+
+// serveAPIGroupList synthesizes the /apis root (APIGroupList) from the current
+// group snapshot.
+func (cr *BasicRouter) serveAPIGroupList(w http.ResponseWriter, _ *http.Request) {
+	// TODO: build a real APIGroupList from the snapshot keys (each group's
+	// versions come from its Manifest / group discovery).
+	http.Error(w, "apis discovery not implemented", http.StatusNotImplemented)
 }
 
 // OpenAPIV3Handler serves the merged OpenAPI v3 document.
@@ -123,9 +183,17 @@ func (r *BasicRouter) Run(ctx context.Context) error {
 	}
 }
 
-// reconcile re-reads the full desired route set and converges backendRecords to
-// it: upsert changed/new groups, leave unchanged ones (RV match) untouched, drop
-// groups that disappeared. Level-triggered, so it is safe to run on any wake.
+// Ready reports the router is initialized and serving. The snapshot is
+// populated on the first reconcile in Run.
+func (r *BasicRouter) Ready(context.Context) error { return nil }
+
+// Alive reports the router is not in a non-recoverable state.
+func (r *BasicRouter) Alive(context.Context) error { return nil }
+
+// reconcile re-reads the full desired route set and converges entries to it:
+// rebuild changed/new groups, leave unchanged ones (RV match) untouched, drop
+// groups that disappeared, then publish a fresh snapshot. Level-triggered, so
+// it is safe to run on any wake.
 func (r *BasicRouter) reconcile(ctx context.Context) {
 	cfgs, err := r.loader.Load(ctx)
 	if err != nil {
@@ -136,46 +204,58 @@ func (r *BasicRouter) reconcile(ctx context.Context) {
 
 	seen := make(map[string]struct{}, len(cfgs))
 	for _, cfg := range cfgs {
-		prefix := apisPrefix(cfg.Group)
-		seen[prefix] = struct{}{}
+		group := cfg.Group
+		if _, dup := seen[group]; dup {
+			// One backend owns all versions of a group; a duplicate group in a
+			// single load is a config error. Last-wins, warn — do not crash the
+			// router on bad GitOps config.
+			slog.Warn("router: duplicate group in route set, overwriting", "group", group)
+		}
+		seen[group] = struct{}{}
 
-		rec, ok := r.backendRecords[prefix]
-		if ok && rec.lastRV == cfg.RV {
-			continue // unchanged: preserve handler and its connection pool
+		e, ok := r.entries[group]
+		if ok && e.lastRV == cfg.RV {
+			continue // unchanged: keep the live Backend (and its pool)
 		}
 
-		newCfg := r.buildBackendConfig(cfg)
+		backend := r.buildBackend(cfg)
 		if !ok {
-			// New group: register a stable handler once. Later config changes
-			// swap cfg in place rather than re-registering.
-			rec = &backendRecord{handler: &backendHandler{name: cfg.Group}}
-			rec.handler.cfg.Store(newCfg)
-			r.backendRecords[prefix] = rec
-			r.mux.HandlePrefix(prefix, rec.handler)
-		} else {
-			rec.handler.cfg.Store(newCfg) // atomic swap; pool survives
-		}
-		rec.lastRV = cfg.RV
-	}
-
-	// Drop groups no longer present.
-	for prefix := range r.backendRecords {
-		if _, ok := seen[prefix]; ok {
+			r.entries[group] = &groupEntry{backend: backend, lastRV: cfg.RV}
 			continue
 		}
-		r.mux.Unregister(prefix)
-		delete(r.backendRecords, prefix)
+		// Changed: rebuild. The transport (and its pool) is reused from the
+		// shared cache when the TLS key is unchanged, so the pool survives.
+		e.backend = backend
+		e.lastRV = cfg.RV
 	}
+
+	for group := range r.entries {
+		if _, ok := seen[group]; !ok {
+			delete(r.entries, group)
+		}
+	}
+
+	r.publish()
 }
 
-// buildBackendConfig turns a RouteConfig into a servable backendConfig. Build
-// errors are captured in buildErr so the handler serves a 500 rather than the
-// reconcile loop failing the whole set.
-func (r *BasicRouter) buildBackendConfig(cfg *RouteConfig) *backendConfig {
+// publish builds a fresh immutable group -> Backend snapshot from entries and
+// stores it atomically for the serving path.
+func (r *BasicRouter) publish() {
+	snap := make(map[string]Backend, len(r.entries))
+	for group, e := range r.entries {
+		snap[group] = e.backend
+	}
+	r.snapshot.Store(&snap)
+}
+
+// buildBackend turns a RouteConfig into a servable Backend. Build errors are
+// captured on the Backend so it serves a 500 rather than the reconcile loop
+// failing the whole set.
+func (r *BasicRouter) buildBackend(cfg *RouteConfig) Backend {
 	rs := cfg.Backend
 	if rs.Mode != v1alpha2.RouteBackendSpecModeForward {
 		// TODO: handle operator/plugin modes.
-		return &backendConfig{buildErr: fmt.Errorf("unsupported route backend mode %q", rs.Mode)}
+		return &forwardBackend{name: cfg.Group, buildErr: fmt.Errorf("unsupported route backend mode %q", rs.Mode)}
 	}
 
 	backend := rs.Forward
@@ -185,14 +265,15 @@ func (r *BasicRouter) buildBackendConfig(cfg *RouteConfig) *backendConfig {
 		insecure: backend.Tls.SkipTLSVerify,
 	})
 	if err != nil {
-		return &backendConfig{buildErr: fmt.Errorf("build transport for group=%s, err=%w", cfg.Group, err)}
+		return &forwardBackend{name: cfg.Group, buildErr: fmt.Errorf("build transport for group=%s, err=%w", cfg.Group, err)}
 	}
 
-	u, err := url.Parse(cfg.Backend.Forward.Url)
+	u, err := url.Parse(backend.Url)
 	if err != nil {
-		return &backendConfig{buildErr: fmt.Errorf("error parsing backend url: group=%s, err=%w", cfg.Group, err)}
+		return &forwardBackend{name: cfg.Group, buildErr: fmt.Errorf("error parsing backend url: group=%s, err=%w", cfg.Group, err)}
 	}
-	return &backendConfig{
+	return &forwardBackend{
+		name:   cfg.Group,
 		target: u,
 		proxy: &httputil.ReverseProxy{
 			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(u) },
@@ -200,12 +281,6 @@ func (r *BasicRouter) buildBackendConfig(cfg *RouteConfig) *backendConfig {
 			ModifyResponse: rejectBackendRedirects,
 		},
 	}
-}
-
-// apisPrefix maps an API group to its mux prefix. Trailing slash is required by
-// PathMux.HandlePrefix and gives a path-boundary match (/apis/<group>/...).
-func apisPrefix(group string) string {
-	return "/apis/" + group + "/"
 }
 
 func rejectBackendRedirects(resp *http.Response) error {
