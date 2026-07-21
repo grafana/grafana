@@ -274,7 +274,6 @@
 /devenv/dev-dashboards/datasource-loki/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-testdata/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-mysql/ @grafana/data-sources-plugins
-/devenv/dev-dashboards/datasource-postgres/ @grafana/data-sources-plugins
 
 /devenv/dev-dashboards/e2e-repeats/ @grafana/grafana-frontend-platform
 /devenv/dev-dashboards/panel-text @grafana/grafana-frontend-platform
