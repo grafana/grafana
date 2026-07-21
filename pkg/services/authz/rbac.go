@@ -89,8 +89,7 @@ func ProvideAuthZClient(
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
 		rbacSettings := rbac.Settings{
-			CacheTTL:            authCfg.cacheTTL,
-			LocalFolderCacheTTL: authCfg.localFolderCacheTTL,
+			CacheTTL: authCfg.cacheTTL,
 		}
 		if cfg != nil {
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
