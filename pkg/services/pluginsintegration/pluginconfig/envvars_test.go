@@ -188,7 +188,6 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 			require.Equal(t, tc.wantAppURL, appURL)
 		})
 	}
-
 }
 
 // TestPluginEnvVarsProvider_marketplaceLicensing verifies marketplace environment variables.
