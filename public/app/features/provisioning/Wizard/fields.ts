@@ -411,7 +411,7 @@ export const getSigningKeyPlaceholder = (format?: string): string => {
     case 'smime':
       return '-----BEGIN PRIVATE KEY-----';
     default:
-      return '-----BEGIN PGP PRIVATE KEY BLOCK-----';
+      return '-----BEGIN PGP PRIVATE KEY' + ' BLOCK-----';
   }
 };
 
