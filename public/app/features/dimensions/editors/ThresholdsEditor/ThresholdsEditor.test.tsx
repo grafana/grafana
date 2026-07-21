@@ -28,7 +28,7 @@ describe('ThresholdsEditor', () => {
   });
 
   beforeEach(() => {
-    setTestFlags({ 'dashboards.thresholdsInterpolation': true });
+    setTestFlags({ 'grafana.thresholdsInterpolation': true });
   });
 
   afterAll(() => {
@@ -307,7 +307,7 @@ describe('ThresholdsEditor', () => {
   });
 
   it('keeps numeric-only inputs and does not store expressions when the feature toggle is disabled', async () => {
-    setTestFlags({ 'dashboards.thresholdsInterpolation': false });
+    setTestFlags({ 'grafana.thresholdsInterpolation': false });
 
     const onChange = jest.fn();
     const thresholds = {
