@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -16,7 +16,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Checkbox, useStyles2 } from '@grafana/ui';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
 
 import { type SceneShareTabState, type ShareView } from './types';
@@ -72,6 +72,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
   const { onDismiss, panelRef } = model.useState();
   const styles = useStyles2(getStyles);
   const abortRef = useRef<AbortController | null>(null);
+  const [includeLogs, setIncludeLogs] = useState(true);
 
   // Abort any in-flight request if the drawer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -98,13 +99,11 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
 
     const controller = new AbortController();
     abortRef.current = controller;
-    await downloadDiagnosticsForQueries(
-      queries,
-      String(timeRange.from.valueOf()),
-      String(timeRange.to.valueOf()),
-      controller.signal
-    );
-  }, [panelRef]);
+    await downloadDiagnosticsForQueries(queries, String(timeRange.from.valueOf()), String(timeRange.to.valueOf()), {
+      includeLogs,
+      signal: controller.signal,
+    });
+  }, [includeLogs, panelRef]);
 
   const handleDismiss = () => {
     abortRef.current?.abort();
@@ -131,7 +130,18 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
         </Trans>
       </Alert>
 
-      {/* Diagnostic options (artifact selection, time range, redaction toggles) will be added here. */}
+      <Checkbox
+        id="diagnostics-include-server-logs"
+        label={t('dashboard.diagnostics.include-server-logs', 'Include server logs')}
+        aria-label={t('dashboard.diagnostics.include-server-logs', 'Include server logs')}
+        description={t(
+          'dashboard.diagnostics.include-server-logs-description',
+          'Adds filtered query logs and a bounded unfiltered server-log window to the bundle.'
+        )}
+        checked={includeLogs}
+        disabled={isGenerating}
+        onChange={(event) => setIncludeLogs(event.currentTarget.checked)}
+      />
 
       {error && (
         <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>

@@ -16,7 +16,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Checkbox, useStyles2 } from '@grafana/ui';
 import {
   type DashboardDiagnosticsPanel,
   downloadDashboardDiagnostics,
@@ -146,6 +146,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
   const styles = useStyles2(getStyles);
   const abortRef = useRef<AbortController | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [includeLogs, setIncludeLogs] = useState(true);
 
   // Abort any in-flight request if the drawer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -166,7 +167,10 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
     abortRef.current = controller;
     setProgress({ done: 0, total: panels.length });
 
-    const uid = await startDashboardDiagnostics(panels, dashboard.getSaveModel(), controller.signal);
+    const uid = await startDashboardDiagnostics(panels, dashboard.getSaveModel(), {
+      includeLogs,
+      signal: controller.signal,
+    });
 
     for (let attempt = 0; ; attempt++) {
       const status = await getDashboardDiagnosticsStatus(uid, controller.signal);
@@ -184,7 +188,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
     }
 
     await downloadDashboardDiagnostics(uid, controller.signal);
-  }, [dashboardRef]);
+  }, [dashboardRef, includeLogs]);
 
   const handleDismiss = () => {
     abortRef.current?.abort();
@@ -209,6 +213,19 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
           outside your organization.
         </Trans>
       </Alert>
+
+      <Checkbox
+        id="dashboard-diagnostics-include-server-logs"
+        label={t('dashboard.diagnostics.include-server-logs', 'Include server logs')}
+        aria-label={t('dashboard.diagnostics.include-server-logs', 'Include server logs')}
+        description={t(
+          'dashboard.diagnostics.include-server-logs-description',
+          'Adds filtered query logs and a bounded unfiltered server-log window to the bundle.'
+        )}
+        checked={includeLogs}
+        disabled={isGenerating}
+        onChange={(event) => setIncludeLogs(event.currentTarget.checked)}
+      />
 
       {isGenerating && progress && (
         <p className={styles.info}>
