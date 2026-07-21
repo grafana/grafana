@@ -258,11 +258,6 @@ export function MegaMenuItem({
           )}
         </div>
       </div>
-      {childrenVisible && link.id === 'dashboards/browse' && config.featureToggles.scopeFilters && (
-        <ErrorBoundaryAlert boundaryName="megamenu-scopes-dashboards">
-          <ScopesDashboards inline />
-        </ErrorBoundaryAlert>
-      )}
       {childrenVisible && (
         <ul className={styles.children}>
           {linkHasChildren(link) ? (
@@ -313,6 +308,11 @@ export function MegaMenuItem({
             </div>
           )}
         </ul>
+      )}
+      {childrenVisible && link.id === 'dashboards/browse' && config.featureToggles.scopeFilters && (
+        <ErrorBoundaryAlert boundaryName="megamenu-scopes-dashboards">
+          <ScopesDashboards inline />
+        </ErrorBoundaryAlert>
       )}
     </li>
   );
