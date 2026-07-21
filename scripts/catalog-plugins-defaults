@@ -7,4 +7,5 @@ opentsdb
 stackdriver
 mssql
 jaeger
+grafana-postgresql-datasource
 grafana-pyroscope-datasource
