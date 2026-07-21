@@ -757,22 +757,24 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 // unlike the vector endpoint's cosine distance. The best chunk's content is
 // surfaced as "snippet"/"subresource" for parity with the vector endpoint;
 // the full chunk list rides along under "chunks".
-func hybridSearchResultsToSearchResults(result *resourcepb.HybridSearchResponse) *dashboardv0alpha1.SearchResults {
-	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(result.GetResults()))
-	for _, r := range result.GetResults() {
+func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchResponse) *dashboardv0alpha1.SearchResults {
+	results := response.GetResults()
+	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(results))
+	for _, r := range results {
 		field := &commonv0.Unstructured{}
 		field.Set("score", r.GetScore())
-		chunks := make([]any, 0, len(r.GetChunks()))
-		for _, c := range r.GetChunks() {
+		resultChunks := r.GetChunks()
+		chunks := make([]any, 0, len(resultChunks))
+		for _, c := range resultChunks {
 			chunks = append(chunks, map[string]any{
 				"subresource": c.GetSubresource(),
 				"snippet":     c.GetContent(),
 			})
 		}
 		field.Set("chunks", chunks)
-		if len(r.GetChunks()) > 0 {
-			field.Set("subresource", r.GetChunks()[0].GetSubresource())
-			field.Set("snippet", r.GetChunks()[0].GetContent())
+		if len(resultChunks) > 0 {
+			field.Set("subresource", resultChunks[0].GetSubresource())
+			field.Set("snippet", resultChunks[0].GetContent())
 		}
 
 		hits = append(hits, dashboardv0alpha1.DashboardHit{

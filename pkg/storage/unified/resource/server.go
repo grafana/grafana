@@ -2122,8 +2122,10 @@ func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchR
 // HybridSearch delegates to the embedded searchServer, where both the
 // search backend and the vector backend live.
 func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
+	// Unimplemented (not a bare error) so API-layer callers can map a
+	// search-disabled server to 501, same as an unconfigured vector store.
 	if s.search == nil {
-		return nil, fmt.Errorf("hybrid search is not configured")
+		return nil, status.Error(codes.Unimplemented, "hybrid search is not configured")
 	}
 	return s.search.HybridSearch(ctx, req)
 }
