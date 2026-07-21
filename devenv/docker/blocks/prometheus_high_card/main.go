@@ -117,7 +117,7 @@ func main() {
 		}
 	}()
 
-	fmt.Printf("Server started at :9111\n")
+	fmt.Printf("Server started at :9111 (HTTPS)\n")
 
-	log.Fatal(http.ListenAndServe(":9111", nil))
+	log.Fatal(http.ListenAndServeTLS(":9111", "server.crt", "server.key", nil))
 }
