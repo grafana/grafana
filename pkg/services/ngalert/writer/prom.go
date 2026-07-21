@@ -240,12 +240,19 @@ type HttpClientProvider interface {
 	New(options ...httpclient.Options) (*http.Client, error)
 }
 
+// maxSeriesPerBatch caps the number of series in a single remote-write request as a
+// secondary guard alongside maxBatchSizeBytes. It keeps requests bounded even when the
+// per-series byte estimate is tiny, so a huge number of small series can't produce a
+// single oversized protobuf message.
+const maxSeriesPerBatch = 10000
+
 type PrometheusWriter struct {
-	client      promremote.Client
-	clock       clock.Clock
-	logger      log.Logger
-	metrics     *metrics.RemoteWriter
-	backendType backendType
+	client            promremote.Client
+	clock             clock.Clock
+	logger            log.Logger
+	metrics           *metrics.RemoteWriter
+	backendType       backendType
+	maxBatchSizeBytes int64
 }
 
 type PrometheusWriterConfig struct {
@@ -253,6 +260,15 @@ type PrometheusWriterConfig struct {
 	HTTPOptions httpclient.Options
 	Timeout     time.Duration
 	BackendType backendType
+	// MaxBatchSizeBytes is the estimated uncompressed size threshold above which the
+	// series in a single Write are split into multiple sequential remote-write requests.
+	// A value of 0 disables batching and preserves the original single-request behavior,
+	// which is how batching is enabled/disabled per stack.
+	//
+	// This is a static, manually-tuned threshold. The intended follow-up is to derive it
+	// from the target Mimir's configured -distributor.max-recv-msg-size limit so it tracks
+	// the backend automatically and doesn't need per-tenant tuning.
+	MaxBatchSizeBytes int64
 }
 
 func NewPrometheusWriter(
@@ -287,11 +303,12 @@ func NewPrometheusWriter(
 	}
 
 	return &PrometheusWriter{
-		client:      client,
-		clock:       clock,
-		logger:      l,
-		metrics:     metrics,
-		backendType: backend,
+		client:            client,
+		clock:             clock,
+		logger:            l,
+		metrics:           metrics,
+		backendType:       backend,
+		maxBatchSizeBytes: cfg.MaxBatchSizeBytes,
 	}, nil
 }
 
@@ -310,7 +327,6 @@ func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, nam
 // Write writes the given frames to the Prometheus remote write endpoint.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	lvs := []string{fmt.Sprint(orgID), string(w.backendType)} //nolint:prealloc
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {
@@ -329,6 +345,36 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	}
 
 	l.Debug("Writing metric", "name", name)
+
+	batches := w.batchSeries(series)
+
+	metricLabels := []string{fmt.Sprint(orgID), string(w.backendType)}
+	w.metrics.BatchesPerWrite.WithLabelValues(metricLabels...).Observe(float64(len(batches)))
+
+	// Send each batch sequentially, attempting all batches even if some fail so that
+	// partial progress is kept. Upstream retries re-send everything, which is tolerable
+	// because duplicate-timestamp errors on already-written batches are ignored.
+	var errs []error
+	for _, batch := range batches {
+		if err := w.writeBatch(ctx, l, orgID, batch); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// writeBatch sends a single batch of series and handles metrics and error classification
+// exactly as an unbatched write would.
+func (w PrometheusWriter) writeBatch(ctx context.Context, l log.Logger, orgID int64, series []promremote.TimeSeries) error {
+	lvs := []string{fmt.Sprint(orgID), string(w.backendType)} //nolint:prealloc
+
+	var batchBytes int64
+	for _, s := range series {
+		batchBytes += estimateSeriesSize(s)
+	}
+	w.metrics.WriteSizeBytes.WithLabelValues(lvs...).Observe(float64(batchBytes))
+
 	writeStart := w.clock.Now()
 	res, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
 	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(w.clock.Now().Sub(writeStart).Seconds())
@@ -345,6 +391,54 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	}
 
 	return nil
+}
+
+// batchSeries splits series into batches so each stays under the configured size and
+// series-count guards. Batching is enabled solely by a positive maxBatchSizeBytes; when it
+// is 0 (or negative) all series are returned as a single batch, preserving the original
+// single-request behavior (including the empty-series case, which yields one empty batch and
+// thus a single write). This is how batching is turned on/off per stack via config.
+func (w PrometheusWriter) batchSeries(series []promremote.TimeSeries) [][]promremote.TimeSeries {
+	if w.maxBatchSizeBytes <= 0 {
+		return [][]promremote.TimeSeries{series}
+	}
+
+	batches := make([][]promremote.TimeSeries, 0, 1)
+	var (
+		batchStart int
+		batchBytes int64
+	)
+	for i, s := range series {
+		size := estimateSeriesSize(s)
+		// Start a new batch when adding this series would exceed either guard, but never
+		// emit an empty batch: a single series larger than the threshold still goes out on
+		// its own (there's nothing smaller we could send).
+		if i > batchStart && (batchBytes+size > w.maxBatchSizeBytes || i-batchStart >= maxSeriesPerBatch) {
+			batches = append(batches, series[batchStart:i])
+			batchStart = i
+			batchBytes = 0
+		}
+		batchBytes += size
+	}
+	batches = append(batches, series[batchStart:])
+
+	return batches
+}
+
+// estimateSeriesSize approximates the uncompressed bytes a series contributes to a
+// remote-write request. It sums label name and value lengths plus a fixed allowance for
+// the sample (8-byte value, 8-byte timestamp) and per-field protobuf framing. Exactness
+// isn't required: the estimate only needs to keep batches safely under the wire limit.
+func estimateSeriesSize(s promremote.TimeSeries) int64 {
+	// Fixed allowance for the datapoint (value + timestamp) plus framing overhead.
+	const sampleAndFramingBytes = 32
+
+	var size int64 = sampleAndFramingBytes
+	for _, lbl := range s.Labels {
+		// A few bytes per label account for protobuf field tags and length prefixes.
+		size += int64(len(lbl.Name)) + int64(len(lbl.Value)) + 4
+	}
+	return size
 }
 
 func promremoteLabelsFromPoint(point Point) []promremote.Label {
