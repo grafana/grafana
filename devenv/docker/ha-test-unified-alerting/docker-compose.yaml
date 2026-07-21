@@ -32,6 +32,7 @@ services:
         condition: service_healthy
   prometheus:
     image: prom/prometheus:v2.4.2
+    read_only: true
     volumes:
       - ./prometheus/:/etc/prometheus/
     environment:
