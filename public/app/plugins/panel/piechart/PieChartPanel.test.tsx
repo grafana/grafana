@@ -18,7 +18,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
-import { type Options, PieChartType, PieChartLegendValues, PieChartLabels } from './panelcfg.gen';
+import {
+  type Options,
+  type PieChartLegendOptions,
+  PieChartType,
+  PieChartLegendValues,
+  PieChartLabels,
+} from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
@@ -357,9 +363,7 @@ describe('PieChartPanel', () => {
       expect(labelFillColors).toHaveLength(2);
       labelFillColors.forEach((color) => expect(['#ffffff', '#000000']).toContain(color));
     });
-  });
 
-  describe('label rendering', () => {
     it('suppresses the label for a slice too small to fit one (< 0.3 rad)', () => {
       // Tiny is ~1% of the total, well under the 0.3 rad label threshold.
       const seriesWithTinySlice = makeSeries([
@@ -406,15 +410,14 @@ describe('PieChartPanel', () => {
       });
       await userEvent.hover(screen.getAllByTestId('data testid Pie Chart Slice')[0]);
 
+      // Chrome stays; the zero-valued Zero series is not among the tooltip rows.
       const rows = screen.getAllByTestId('SeriesTableRow');
       expect(rows).toHaveLength(1);
       expect(rows[0]).toHaveTextContent('Chrome');
-      expect(rows[0]).toHaveTextContent('60');
+      expect(rows.some((row) => row.textContent?.includes('Zero'))).toBe(false);
     });
-  });
 
-  describe('mouse interactions', () => {
-    it('hides tooltip on mouseout after hover', async () => {
+    it('hides the tooltip on mouseout after hover', async () => {
       setup({ data: { series: defaultSliceSeries } });
       const slices = screen.getAllByTestId('data testid Pie Chart Slice');
 
@@ -438,9 +441,7 @@ describe('PieChartPanel', () => {
 
     it('does not render the legend when showLegend is false', () => {
       setup({
-        options: buildOptions({
-          legend: { displayMode: LegendDisplayMode.List, showLegend: false, placement: 'right', calcs: [], values: [] },
-        }),
+        options: buildOptions({ legend: buildLegend({ showLegend: false }) }),
         data: { series: defaultSliceSeries },
       });
 
@@ -453,13 +454,7 @@ describe('PieChartPanel', () => {
       // Table mode renders the value column; List mode would only show names.
       setup({
         options: buildOptions({
-          legend: {
-            displayMode: LegendDisplayMode.Table,
-            showLegend: true,
-            placement: 'right',
-            calcs: [],
-            values: [PieChartLegendValues.Value],
-          },
+          legend: buildLegend({ displayMode: LegendDisplayMode.Table, values: [PieChartLegendValues.Value] }),
         }),
         data: { series: defaultSliceSeries },
       });
@@ -536,17 +531,20 @@ const defaultSliceSeries = makeSeries([
   { name: 'Firefox', value: 40 },
 ]);
 
+const buildLegend = (overrides: Partial<PieChartLegendOptions> = {}): PieChartLegendOptions => ({
+  displayMode: LegendDisplayMode.List,
+  showLegend: true,
+  placement: 'right',
+  calcs: [],
+  values: [PieChartLegendValues.Percent],
+  ...overrides,
+});
+
 const buildOptions = (overrides: Partial<Options> = {}): Options => ({
   pieType: PieChartType.Pie,
   sort: SortOrder.Descending,
   displayLabels: [],
-  legend: {
-    displayMode: LegendDisplayMode.List,
-    showLegend: true,
-    placement: 'right',
-    calcs: [],
-    values: [PieChartLegendValues.Percent],
-  },
+  legend: buildLegend(),
   reduceOptions: { calcs: [] },
   orientation: VizOrientation.Auto,
   tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending },
