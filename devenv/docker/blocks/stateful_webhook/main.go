@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -146,7 +147,16 @@ func main() {
 	http.HandleFunc("/notify", ah.Notify)
 	http.HandleFunc("/notifications", ah.GetNotifications)
 
+	certFile := os.Getenv("TLS_CERT_FILE")
+	keyFile := os.Getenv("TLS_KEY_FILE")
+	if certFile == "" {
+		certFile = "/etc/webhook/tls/server.crt"
+	}
+	if keyFile == "" {
+		keyFile = "/etc/webhook/tls/server.key"
+	}
+
 	log.Println("Listening")
 	//nolint:errcheck
-	http.ListenAndServe("0.0.0.0:8080", nil)
+	http.ListenAndServeTLS("0.0.0.0:8080", certFile, keyFile, nil)
 }
