@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/util/retry"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -22,8 +23,9 @@ import (
 // the team back through the dual-writer storage.
 //
 // Idempotency: removing an already-absent user returns 200 OK.
-// Concurrency: single Get + Update, RV-checked; 409 on race, caller
-// refreshes and re-issues.
+// Concurrency: read-modify-write on Spec.Members wrapped in
+// RetryOnConflict so a concurrent membership change re-reads the latest
+// team and re-applies the removal instead of failing on an RV race.
 type TeamRemoveMemberREST struct {
 	getter  rest.Getter
 	updater rest.Updater
@@ -99,36 +101,44 @@ func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runti
 
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
-		obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		t, ok := obj.(*iamv0alpha1.Team)
-		if !ok {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("team store returned unexpected type %T", obj)))
-			return
-		}
-		removeIdx := -1
-		for i, m := range t.Spec.Members {
-			if m.Kind == "User" && m.Name == body.Name {
-				removeIdx = i
-				break
+		// Refresh and retry on conflict: a concurrent membership change
+		// races on the team's resource version and would otherwise reject
+		// this removal.
+		retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
+			if err != nil {
+				return err
 			}
-		}
-		if removeIdx >= 0 {
+			t, ok := obj.(*iamv0alpha1.Team)
+			if !ok {
+				return apierrors.NewInternalError(fmt.Errorf("team store returned unexpected type %T", obj))
+			}
+			removeIdx := -1
+			for i, m := range t.Spec.Members {
+				if m.Kind == "User" && m.Name == body.Name {
+					removeIdx = i
+					break
+				}
+			}
+			if removeIdx < 0 {
+				return nil
+			}
 			t.Spec.Members = append(t.Spec.Members[:removeIdx], t.Spec.Members[removeIdx+1:]...)
-			// 409 surfaces unchanged; SQL deadlocks (which arrive as 500
-			// from unified storage) are converted so RetryOnConflict catches them.
 			if _, _, err := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
 				nil, nil, false, &metav1.UpdateOptions{}); err != nil {
+				// RV mismatches are already 409s RetryOnConflict retries;
+				// SQL deadlocks arrive as a rolled-back 500, so surface them
+				// as conflicts to retry too.
 				if isRetryableTxnError(err) {
-					responder.Error(apierrors.NewConflict(teamResource.GroupResource(), name, err))
-					return
+					return apierrors.NewConflict(teamResource.GroupResource(), name, err)
 				}
-				responder.Error(err)
-				return
+				return err
 			}
+			return nil
+		})
+		if retryErr != nil {
+			responder.Error(retryErr)
+			return
 		}
 
 		// 200 OK whether or not a row existed; the request is idempotent.

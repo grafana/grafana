@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/util/retry"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -126,6 +127,32 @@ func TestTeamAddMemberREST_RetriesOnConflict(t *testing.T) {
 		require.Equal(t, http.StatusCreated, responder.code)
 		require.Len(t, store.team.Spec.Members, 1)
 		require.Equal(t, "user1", store.team.Spec.Members[0].Name)
+	})
+
+	t.Run("surfaces the conflict when retries are exhausted", func(t *testing.T) {
+		conflict := func() error {
+			return apierrors.NewConflict(teamResource.GroupResource(), "team1", fmt.Errorf("rv mismatch"))
+		}
+		errs := make([]error, 0, retry.DefaultRetry.Steps)
+		for range retry.DefaultRetry.Steps {
+			errs = append(errs, conflict())
+		}
+		store := &scriptedStore{
+			team: &iamv0alpha1.Team{
+				ObjectMeta: metav1.ObjectMeta{Name: "team1", Namespace: "default", ResourceVersion: "1"},
+				Spec:       iamv0alpha1.TeamSpec{Title: "t"},
+			},
+			updateErrs: errs,
+		}
+		handler := NewTeamAddMemberREST(store, tracing.NewNoopTracerService())
+
+		responder := addMemberRequest(t, handler, "team1", "user1", "member")
+
+		require.True(t, responder.called)
+		require.Error(t, responder.err)
+		require.True(t, apierrors.IsConflict(responder.err), "exhausted retries must surface the conflict")
+		require.Equal(t, retry.DefaultRetry.Steps, store.calls, "handler must retry exactly Steps times before giving up")
+		require.Empty(t, store.team.Spec.Members)
 	})
 
 	t.Run("retries a rolled-back SQL deadlock then persists", func(t *testing.T) {
