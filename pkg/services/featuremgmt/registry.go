@@ -983,6 +983,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.filterablePanels",
+			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "cloudWatchNewLabelParsing",
 			Description: "Updates CloudWatch label parsing to be more accurate",
 			Stage:       FeatureStageGeneralAvailability,

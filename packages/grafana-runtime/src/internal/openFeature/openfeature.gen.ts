@@ -61,6 +61,8 @@ export const FlagKeys = {
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
+  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
+  GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -413,6 +415,17 @@ export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.exploreMetricsSidebar", false, options).value;
+};
+
+/**
+ * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
+ *
+ * **Details:**
+ * - flag key: `grafana.filterablePanels`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.filterablePanels", false, options).value;
 };
 
 /**
