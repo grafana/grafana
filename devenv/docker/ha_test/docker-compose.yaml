@@ -3,6 +3,7 @@ version: "2.1"
 services:
   nginx-proxy:
     image: jwilder/nginx-proxy
+    read_only: true
     ports:
       - "80:80"
     volumes:
