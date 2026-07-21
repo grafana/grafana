@@ -1941,4 +1941,41 @@ describe('interpolateV1Dashboard', () => {
       ])
     ).toThrow('datasource input "DS_PROMETHEUS" references UID "nonexistent-uid" which was not found');
   });
+
+  it('should map each datasource input to its own mapping when multiple inputs share a pluginId', () => {
+    mockGetDataSourceSrv.getInstanceSettings = jest.fn().mockImplementation((uid: string) => {
+      if (uid === 'influx-a-uid') {
+        return { uid: 'influx-a-uid', type: 'influxdb', name: 'influx-a' };
+      }
+      if (uid === 'influx-b-uid') {
+        return { uid: 'influx-b-uid', type: 'influxdb', name: 'influx-b' };
+      }
+      return undefined;
+    });
+
+    const dashboard = makeDashboard({
+      __inputs: [
+        { name: 'DS_KUBERNETES', type: 'datasource', pluginId: 'influxdb', label: 'kubernetes', description: '', value: '' },
+        { name: 'DS_VANTIQSERVER', type: 'datasource', pluginId: 'influxdb', label: 'vantiqServer', description: '', value: '' },
+      ] as unknown as DashboardJson['__inputs'],
+      panels: [
+        { datasource: { type: 'influxdb', uid: '${DS_KUBERNETES}' }, targets: [], type: 'timeseries' },
+        { datasource: { type: 'influxdb', uid: '${DS_VANTIQSERVER}' }, targets: [], type: 'timeseries' },
+      ] as unknown as DashboardJson['panels'],
+    });
+
+    const result = interpolateV1Dashboard(dashboard, [
+      { name: 'DS_KUBERNETES', type: 'datasource', pluginId: 'influxdb', value: 'influx-a-uid' },
+      { name: 'DS_VANTIQSERVER', type: 'datasource', pluginId: 'influxdb', value: 'influx-b-uid' },
+    ]);
+
+    expect(getPanel(result, 0).datasource!.uid).toBe('influx-a-uid');
+    expect(getPanel(result, 1).datasource!.uid).toBe('influx-b-uid');
+  });
+
+  it('should throw when a datasource input has no matching mapping', () => {
+    expect(() => interpolateV1Dashboard(makeDashboard(), [])).toThrow(
+      'no datasource mapping found for input "DS_PROMETHEUS"'
+    );
+  });
 });
