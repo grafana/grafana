@@ -45,7 +45,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, oneRow, href, on
 
   return (
     <div className={cx(styles.row, isCompact && styles.listCompact)}>
-      <Stack direction="row" alignItems="center" gap={1} grow={1} minWidth={0}>
+      <Stack direction="row" alignItems="center" gap={1.5} grow={1} minWidth={0}>
         {prefix && <div>{prefix}</div>}
 
         {href ? (
