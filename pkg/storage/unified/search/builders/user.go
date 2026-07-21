@@ -18,11 +18,12 @@ var iamManifests = []app.Manifest{iam.LocalManifest()}
 var iamProvider = resource.NewManifestBackedProvider(iamManifests)
 
 const (
-	USER_EMAIL        = "email"
-	USER_LOGIN        = "login"
-	USER_LAST_SEEN_AT = "lastSeenAt"
-	USER_ROLE         = "role"
-	USER_DISABLED     = "disabled"
+	USER_EMAIL                 = "email"
+	USER_LOGIN                 = "login"
+	USER_LAST_SEEN_AT          = "lastSeenAt"
+	USER_ROLE                  = "role"
+	USER_DISABLED              = "disabled"
+	USER_EXTERNAL_AUTH_MODULES = "externalAuthModules"
 )
 
 // UserSortableExtraFields are the additional fields that can be used for sorting user search results.
