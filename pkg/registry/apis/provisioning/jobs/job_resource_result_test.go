@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -169,6 +171,22 @@ func TestNewJobResourceResult_WithErrorAsWarning(t *testing.T) {
 
 	assert.Nil(t, result2.Error(), "Error wrapping ParseError should be stored as warning, not error")
 	assert.NotNil(t, result2.Warning(), "Error wrapping ParseError should be stored as warning")
+}
+
+func TestNewJobResourceResult_WithRequestEntityTooLargeAsWarning(t *testing.T) {
+	tooLarge := apierrors.NewRequestEntityTooLargeError("request body too large: max size 1048576 bytes")
+	wrapped := fmt.Errorf("writing resource from file dashboards/big.json: %w",
+		fmt.Errorf("failed to read file: %w", tooLarge))
+
+	result := NewResourceResult().
+		WithName("big-dashboard").
+		WithAction(repository.FileActionCreated).
+		WithError(wrapped).
+		Build()
+
+	assert.Nil(t, result.Error(), "too-large error should be stored as a warning, not an error")
+	assert.NotNil(t, result.Warning(), "too-large error should be stored as a warning")
+	assert.Equal(t, provisioning.ReasonResourceTooLarge, result.WarningReason())
 }
 
 func TestNewJobResourceResult_WithOwnershipConflictAsWarning(t *testing.T) {
