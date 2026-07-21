@@ -658,24 +658,28 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
+	searchError := func(msg string, err error) error {
+		if ctx.Err() != nil {
+			return status.FromContextError(ctx.Err()).Err()
+		}
+		s.log.Error(msg, "err", err)
+		return status.Error(codes.Internal, msg)
+	}
+
 	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
-		return nil, err
+		return nil, searchError("vector search rate limit", err)
 	}
 
 	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
 	if err != nil {
-		return nil, err
+		return nil, searchError("embed vector search query", err)
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
-		if ctx.Err() != nil {
-			return nil, status.FromContextError(ctx.Err()).Err()
-		}
-		s.log.Error("vector search: backend", "err", err)
-		return nil, status.Error(codes.Internal, "vector search backend")
+		return nil, searchError("vector search backend", err)
 	}
 
 	// Using authz post-filtering for now
@@ -688,11 +692,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 	if err != nil {
-		if ctx.Err() != nil {
-			return nil, status.FromContextError(ctx.Err()).Err()
-		}
-		s.log.Error("vector search: authz batch check", "err", err)
-		return nil, status.Error(codes.Internal, "authz batch check")
+		return nil, searchError("authz batch check", err)
 	}
 
 	resp = &resourcepb.VectorSearchResponse{
