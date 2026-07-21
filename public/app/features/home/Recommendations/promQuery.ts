@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { createQueryRunner } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 
 export function readScalar(frames: DataFrame[], refId: string): number | null {
   const field = frames.find((f) => f.refId === refId)?.fields.find((f) => f.type === FieldType.number);
@@ -42,14 +43,56 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
   return null;
 }
 
+// Build sparkline fields from per-timestamp (ms) totals. Requires a real series (> 1 point);
+// y.state.range is populated because Sparkline's getYRange destructures it and constructed
+// fields never pass the field-overrides pass.
+export function sparklineFromTotals(totals: Map<number, number>, yName: string): FieldSparkline | null {
+  if (totals.size < 2) {
+    return null;
+  }
+  const timestamps = [...totals.keys()].sort((a, b) => a - b);
+  const x: Field = { name: 'time', type: FieldType.time, values: timestamps, config: {} };
+  const y: Field = {
+    name: yName,
+    type: FieldType.number,
+    values: timestamps.map((ts) => totals.get(ts) ?? 0),
+    config: {},
+  };
+  return { x, y: { ...y, state: { range: getMinMaxAndDelta(y) } } };
+}
+
+// Per-series numeric average keyed by the series' `labelKey` label value. Matches on label
+// presence, not refId: Tempo overwrites frame refIds with series names, so callers run one query
+// per request and unlabeled companion frames (exemplars) are skipped here.
+export function readLabeledAverages(frames: DataFrame[], labelKey: string): Array<{ label: string; avg: number }> {
+  const out: Array<{ label: string; avg: number }> = [];
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.type !== FieldType.number) {
+        continue;
+      }
+      const label = field.labels?.[labelKey];
+      if (!label) {
+        continue;
+      }
+      const finite = field.values.filter((v) => typeof v === 'number' && Number.isFinite(v));
+      if (finite.length === 0) {
+        continue;
+      }
+      out.push({ label, avg: finite.reduce((sum, v) => sum + v, 0) / finite.length });
+    }
+  }
+  return out;
+}
+
 /**
- * Run PromQL through the shared {@link createQueryRunner | QueryRunner} against `ds` — core plumbing
- * owns request building, interval math, and frame conversion, and the Prometheus datasource always
- * answers with DataFrames. Throws (surfaced as an error; callers omit the entry) when the query
- * errors or times out.
+ * Run queries through the shared {@link createQueryRunner | QueryRunner} against `ds` — core plumbing
+ * owns request building, interval math, and frame conversion, and the datasource answers with
+ * DataFrames. Throws (surfaced as an error; callers omit the entry) when the query errors or
+ * times out.
  */
-async function runPromQueries(
-  queries: PromQuery[],
+export async function runQueries(
+  queries: DataQuery[],
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   timeoutMs = 30_000
@@ -96,7 +139,7 @@ export async function runInstantQueries(
     instant: true,
     range: false,
   }));
-  return runPromQueries(targets, getDefaultTimeRange(), ds, timeoutMs);
+  return runQueries(targets, getDefaultTimeRange(), ds, timeoutMs);
 }
 
 /**
@@ -112,5 +155,6 @@ export async function runRangeQuery(
   const toTime = dateTime();
   const fromTime = dateTime().subtract(hours, 'h');
   const range: TimeRange = { from: fromTime, to: toTime, raw: { from: `now-${hours}h`, to: 'now' } };
-  return runPromQueries([{ refId, expr, instant: false, range: true }], range, ds);
+  const target: PromQuery = { refId, expr, instant: false, range: true };
+  return runQueries([target], range, ds);
 }

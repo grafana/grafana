@@ -3,6 +3,7 @@ import { t } from '@grafana/i18n';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
+import { compactFormatter } from './formatters';
 import {
   hasHealthProblems,
   KUBERNETES_APP_ID,
@@ -10,9 +11,6 @@ import {
   type KubernetesInventory,
 } from './kubernetesData';
 import { type ExistingItem } from './types';
-
-// Browser locale is the deliberate choice: the homepage number format follows the user's environment.
-const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
 export interface KubernetesItemParts {
   inventory: KubernetesInventory | undefined;

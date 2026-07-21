@@ -7,6 +7,13 @@ import {
 import { config } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
+import {
+  createTtlCachedPromise,
+  MAX_PROBED_DATASOURCES,
+  PROBE_TIMEOUT_MS,
+  RESOLUTION_TTL_MS,
+  withRetry,
+} from './dataUtils';
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
 /** Kubernetes Monitoring app plugin ID. @lintignore */
@@ -41,9 +48,6 @@ const HEALTH_QUERIES: Record<string, string> = {
 
 // Firing alert instances scoped to Kubernetes workloads; heartbeats excluded.
 const ALERTS_MATCHER = '{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""}';
-
-// Cap the probe fan-out: only the first 10 candidates (in priority order) are probed per page load.
-const MAX_PROBED_DATASOURCES = 10;
 
 // Never user-visible (useAsync swallows it) — no i18n. Tests assert this exact message.
 const NO_KUBERNETES_DATA_ERROR = 'No Prometheus datasource with Kubernetes data';
@@ -94,30 +98,6 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
   return storedMatch ? [storedMatch, ...ordered.filter((ds) => ds !== storedMatch)] : ordered;
 }
 
-// Spacing between retry attempts: the transient browser-side failures observed on the homepage
-// (connection queuing, gateway blips) can outlast an immediate retry; a short backoff covers
-// them while the region shows its skeleton. 3 attempts total.
-const RETRY_DELAYS_MS = [500, 1500];
-
-// Probes gate the whole card: 3 attempts × 30s meant fallback could wait 92s+. 10s per attempt
-// bounds the leader to ~32s worst case while still outlasting a slow-but-alive datasource.
-const PROBE_TIMEOUT_MS = 10_000;
-
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (attempt >= RETRY_DELAYS_MS.length) {
-        throw err;
-      }
-      await sleep(RETRY_DELAYS_MS[attempt]);
-    }
-  }
-}
-
 // "Has Kubernetes data" = namespaces detected; an errored probe retries with backoff, then counts
 // as no data — an unusable datasource must not win the probe.
 async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
@@ -127,35 +107,6 @@ async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid
   } catch {
     return false;
   }
-}
-
-// One shared resolution per TTL window; the TTL lets a later home visit re-resolve after datasource changes.
-const RESOLUTION_TTL_MS = 60_000;
-
-// Owns the cached promise + timestamp in a closure so no module-level binding is mutated.
-function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): { get(): Promise<T>; reset(): void } {
-  let cached: Promise<T> | undefined;
-  let cachedAt = 0;
-  return {
-    get() {
-      if (!cached || Date.now() - cachedAt > ttlMs) {
-        cachedAt = Date.now();
-        const next: Promise<T> = fn().catch((err) => {
-          // A transient rejection must not poison the cache for a whole TTL window.
-          if (cached === next) {
-            cached = undefined;
-          }
-          throw err;
-        });
-        cached = next;
-      }
-      return cached;
-    },
-    reset() {
-      cached = undefined;
-      cachedAt = 0;
-    },
-  };
 }
 
 // Probe the top-priority candidate alone first: in the common case (the default has Kubernetes

@@ -26,8 +26,8 @@ jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   usePluginBridge: jest.fn(),
 }));
 
-// The RecommendationExisting child fetches its overview from Prometheus; resolve to an empty
-// cluster so tests exercise the (deterministic) stub entries instead of hitting a datasource.
+// The existing-solutions hooks fetch live overviews from datasources; resolve them all to empty
+// so these tests exercise the recommendations carousel deterministically without HTTP.
 jest.mock('./kubernetesData', () => ({
   ...jest.requireActual('./kubernetesData'),
   resolveKubernetesDatasource: jest.fn().mockResolvedValue(null),
@@ -39,6 +39,21 @@ jest.mock('./kubernetesData', () => ({
     notReadyNodes: null,
   }),
   fetchClusterCpuSeries: jest.fn().mockResolvedValue(null),
+}));
+
+jest.mock('./logsData', () => ({
+  ...jest.requireActual('./logsData'),
+  resolveLogsDatasource: jest.fn().mockResolvedValue(null),
+  fetchLogsStats: jest.fn().mockResolvedValue({ bytes7d: 0, sources7d: 0 }),
+  fetchLogsVolume: jest.fn().mockResolvedValue({ series: null, spike: null }),
+}));
+
+jest.mock('./tracesData', () => ({
+  ...jest.requireActual('./tracesData'),
+  resolveTracesDatasource: jest.fn().mockResolvedValue(null),
+  fetchTracesServices: jest.fn().mockResolvedValue(0),
+  fetchSpanRateSeries: jest.fn().mockResolvedValue({ series: null, errorRate: null }),
+  fetchTopErrorService: jest.fn().mockResolvedValue(null),
 }));
 
 const APP_IDS = [

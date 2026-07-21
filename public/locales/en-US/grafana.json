@@ -10960,6 +10960,18 @@
         "title": "Kubernetes Monitoring",
         "view": "View"
       },
+      "logs": {
+        "action": "Open Explore (Logs)",
+        "datasource": "via {{name}}",
+        "ingest-volume": "Ingest volume · last 24h",
+        "ingested_one": "ingested · 7d · {{value}} source",
+        "ingested_other": "ingested · 7d · {{value}} sources",
+        "ingested-nosources": "ingested · 7d",
+        "spike": "Ingest spike detected",
+        "spike-detail": "{{source}} logs up {{ratio}}× in the last hour",
+        "title": "Hosted Logs",
+        "view": "View"
+      },
       "next": "Next",
       "pause": "Pause",
       "previous": "Previous",
@@ -10974,7 +10986,18 @@
         "description": "Probe your endpoints from 20+ global locations before your users notice.",
         "title": "Watch your cluster from outside"
       },
-      "title": "Recommendations for your stack"
+      "title": "Recommendations for your stack",
+      "traces": {
+        "action": "Open Explore (Traces)",
+        "datasource": "via {{name}}",
+        "errors": "≈{{value}} error spans/s",
+        "errors-detail": "{{service}} leads at {{value}}/s in the last hour",
+        "services_one": "service sending traces",
+        "services_other": "services sending traces",
+        "span-rate": "Span rate · last 3h",
+        "title": "Hosted Traces",
+        "view": "View"
+      }
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",

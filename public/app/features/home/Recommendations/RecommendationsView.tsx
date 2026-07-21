@@ -6,8 +6,9 @@ import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
 
+import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { RecommendationCard } from './RecommendationCard';
-import { RecommendationExisting } from './RecommendationExisting';
+import { RecommendationExistingSkeleton, useExistingSolutions } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
 import { type RecommendationItem } from './types';
 
@@ -29,24 +30,6 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
       setCardsMounted(true);
     }
   }, [collapsed]);
-
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-
-  // Clamp during render so a shrinking list cannot select an undefined entry.
-  const safeIndex = Math.min(index, recommendations.length - 1);
-
-  useEffect(() => {
-    if (collapsed || paused) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setIndex((safeIndex + 1) % recommendations.length);
-    }, 5000);
-
-    return () => clearTimeout(timeout);
-  }, [collapsed, paused, safeIndex, recommendations.length]);
 
   return (
     <div>
@@ -86,93 +69,140 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
         </Stack>
       </Stack>
 
-      {cardsMounted && (
-        <div className={styles.cards} hidden={collapsed}>
-          <Grid gap={0} columns={{ xs: 1, md: 2 }}>
-            <div className={styles.card}>
-              <RecommendationExisting />
+      {cardsMounted && <RecommendationCards recommendations={recommendations} collapsed={collapsed} />}
+    </div>
+  );
+}
 
-              <div className={styles.arrow}>
-                <Icon name="arrow-right" size="xl" />
-              </div>
-            </div>
+interface RecommendationCardsProps {
+  recommendations: RecommendationItem[];
+  collapsed: boolean;
+}
 
-            <div
-              className={cx(styles.card, styles.recommended)}
-              role="region"
-              aria-roledescription={t('home.recommendations.carousel-roledescription', 'carousel')}
-              aria-label={t('home.recommendations.carousel-label', 'Recommended apps')}
-            >
-              <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
-                <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
+// Mounted lazily by RecommendationsView; owns the solution lookups so a collapsed homepage never
+// fires them, and stays mounted afterwards so collapse/expand never refetches.
+function RecommendationCards({ recommendations, collapsed }: RecommendationCardsProps) {
+  const styles = useStyles2(getStyles);
 
-                <Stack direction="row" alignItems="center" gap={1}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="angle-left"
-                    onClick={() => setIndex((safeIndex - 1 + recommendations.length) % recommendations.length)}
-                    aria-label={t('home.recommendations.previous', 'Previous')}
-                  />
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-                  {recommendations.map((_, i) =>
-                    i === safeIndex ? (
-                      <Button
-                        key={i}
-                        variant="secondary"
-                        size="sm"
-                        fill="solid"
-                        icon={paused ? 'play' : 'pause'}
-                        onClick={() => setPaused(!paused)}
-                        aria-label={
-                          paused ? t('home.recommendations.resume', 'Resume') : t('home.recommendations.pause', 'Pause')
-                        }
-                        data-paused={paused ? true : undefined}
-                        className={cx(styles.dot, styles.active)}
-                      />
-                    ) : (
-                      <Button
-                        key={i}
-                        variant="secondary"
-                        size="sm"
-                        fill="solid"
-                        onClick={() => setIndex(i)}
-                        aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
-                        className={styles.dot}
-                      />
-                    )
-                  )}
+  // Clamp during render so a shrinking list cannot select an undefined entry.
+  const safeIndex = Math.min(index, recommendations.length - 1);
 
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="angle-right"
-                    onClick={() => setIndex((safeIndex + 1) % recommendations.length)}
-                    aria-label={t('home.recommendations.next', 'Next')}
-                  />
-                </Stack>
-              </Stack>
+  useEffect(() => {
+    if (collapsed || paused) {
+      return;
+    }
 
-              <div className={styles.outer}>
-                <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
-                  {recommendations.map((recommendation, i) => (
-                    <div
-                      key={recommendation.id}
-                      className={styles.item}
-                      aria-hidden={i !== safeIndex}
-                      {...(i !== safeIndex && { inert: '' })}
-                    >
-                      <RecommendationCard recommendation={recommendation} />
-                    </div>
-                  ))}
+    const timeout = setTimeout(() => {
+      setIndex((safeIndex + 1) % recommendations.length);
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [collapsed, paused, safeIndex, recommendations.length]);
+
+  const { items: existing, loading: existingLoading } = useExistingSolutions();
+  const [selectedTitle, setSelectedTitle] = useState<string>();
+  const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
+
+  // Left cell shows a skeleton while the solution lookups resolve; settled empty drops the cell
+  // so the carousel spans the full row (the richer empty-stack design is separate work).
+  const showExisting = existingLoading || existing.length > 0;
+
+  return (
+    <div className={styles.cards} hidden={collapsed}>
+      <Grid gap={0} columns={showExisting ? { xs: 1, md: 2 } : { xs: 1 }}>
+        {showExisting && (
+          <div className={styles.card}>
+            {existingLoading || !selected ? (
+              <RecommendationExistingSkeleton />
+            ) : (
+              <>
+                <ExistingSolutionCard existing={existing} selected={selected} onSelect={setSelectedTitle} />
+
+                <div className={styles.arrow} data-testid="existing-solution-arrow">
+                  <Icon name="arrow-right" size="xl" />
                 </div>
-              </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <div
+          className={cx(styles.card, styles.recommended)}
+          role="region"
+          aria-roledescription={t('home.recommendations.carousel-roledescription', 'carousel')}
+          aria-label={t('home.recommendations.carousel-label', 'Recommended apps')}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
+            <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
+
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Button
+                variant="secondary"
+                size="sm"
+                fill="text"
+                icon="angle-left"
+                onClick={() => setIndex((safeIndex - 1 + recommendations.length) % recommendations.length)}
+                aria-label={t('home.recommendations.previous', 'Previous')}
+              />
+
+              {recommendations.map((_, i) =>
+                i === safeIndex ? (
+                  <Button
+                    key={i}
+                    variant="secondary"
+                    size="sm"
+                    fill="solid"
+                    icon={paused ? 'play' : 'pause'}
+                    onClick={() => setPaused(!paused)}
+                    aria-label={
+                      paused ? t('home.recommendations.resume', 'Resume') : t('home.recommendations.pause', 'Pause')
+                    }
+                    data-paused={paused ? true : undefined}
+                    className={cx(styles.dot, styles.active)}
+                  />
+                ) : (
+                  <Button
+                    key={i}
+                    variant="secondary"
+                    size="sm"
+                    fill="solid"
+                    onClick={() => setIndex(i)}
+                    aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
+                    className={styles.dot}
+                  />
+                )
+              )}
+
+              <Button
+                variant="secondary"
+                size="sm"
+                fill="text"
+                icon="angle-right"
+                onClick={() => setIndex((safeIndex + 1) % recommendations.length)}
+                aria-label={t('home.recommendations.next', 'Next')}
+              />
+            </Stack>
+          </Stack>
+
+          <div className={styles.outer}>
+            <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
+              {recommendations.map((recommendation, i) => (
+                <div
+                  key={recommendation.id}
+                  className={styles.item}
+                  aria-hidden={i !== safeIndex}
+                  {...(i !== safeIndex && { inert: '' })}
+                >
+                  <RecommendationCard recommendation={recommendation} />
+                </div>
+              ))}
             </div>
-          </Grid>
+          </div>
         </div>
-      )}
+      </Grid>
     </div>
   );
 }

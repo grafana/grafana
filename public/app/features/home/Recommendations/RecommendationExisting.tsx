@@ -1,106 +1,87 @@
-import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type PluginMeta } from '@grafana/data';
 import { Stack } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { buildKubernetesItem } from './buildKubernetesItem';
+import { buildLogsItem } from './buildLogsItem';
+import { buildTracesItem } from './buildTracesItem';
 import { KUBERNETES_APP_ID } from './kubernetesData';
 import { type ExistingItem } from './types';
 import { useKubernetesCardData } from './useKubernetesCardData';
+import { useLogsCardData } from './useLogsCardData';
+import { useTracesCardData } from './useTracesCardData';
 
-const stubbedExisting: ExistingItem[] = [
-  {
-    title: 'Hosted Metrics',
-    icon: 'chart-line',
-    stats: {
-      primary: '4.2M series',
-      secondary: '12 hosts',
-    },
-    alert: {
-      primary: '3 hosts above 90% disk',
-      details: ['web-03 critical at 96%, ~6 h to full'],
-      action: 'View',
-      href: '#',
-    },
-    action: 'Open infrastructure',
-    href: '#',
-  },
-  {
-    title: 'Hosted Logs',
-    icon: 'file-alt',
-    stats: {
-      primary: '47 GB ingested',
-      secondary: '8 sources',
-    },
-    alert: {
-      primary: 'Ingest spike detected',
-      details: ['checkout-service logs up 3x in the last hour'],
-      action: 'View',
-      href: '#',
-    },
-    action: 'Open Explore (Logs)',
-    href: '#',
-  },
-];
-
-export function RecommendationExisting() {
+/**
+ * Live "Enabled solution" entries (Kubernetes, Logs, Traces) in fixed order, plus a single loading
+ * flag: while any resolution is pending the first paint must not show a solution set that a
+ * still-resolving fetch would replace.
+ */
+export function useExistingSolutions(): { items: ExistingItem[]; loading: boolean } {
   const { settings, installed, loading: settingsLoading } = usePluginBridge(KUBERNETES_APP_ID);
-  const [selectedTitle, setSelectedTitle] = useState<string>();
-
-  if (settingsLoading) {
-    return <RecommendationExistingSkeleton />;
-  }
-
   const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
-  if (!installed || !settings || !canAccessPluginPage(settings, bridgePath)) {
-    const selected = stubbedExisting.find((item) => item.title === selectedTitle) ?? stubbedExisting[0];
-    return <ExistingSolutionCard existing={stubbedExisting} selected={selected} onSelect={setSelectedTitle} />;
-  }
+  const k8sEnabled = Boolean(installed && settings && canAccessPluginPage(settings, bridgePath));
 
-  return <LiveSolutionsCard settings={settings} selectedTitle={selectedTitle} onSelect={setSelectedTitle} />;
-}
+  // Hooks are always called — gating happens inside via `enabled` / null resolutions.
+  const k8s = useKubernetesCardData(k8sEnabled);
+  const logs = useLogsCardData();
+  const traces = useTracesCardData();
 
-interface LiveSolutionsCardProps {
-  settings: PluginMeta<{}>;
-  selectedTitle: string | undefined;
-  onSelect: (title: string) => void;
-}
-
-function LiveSolutionsCard({ settings, selectedTitle, onSelect }: LiveSolutionsCardProps) {
-  const { datasource, resolving, resolutionError, inventory, inventoryLoading, health, cpuSeries, cpuLoading } =
-    useKubernetesCardData();
-
-  if (resolving) {
-    return <RecommendationExistingSkeleton />;
-  }
+  // The Logs/Traces CTAs are Explore links — useless without permission to run Explore queries.
+  const canExplore = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   const kubernetesItem =
-    !resolutionError && datasource
+    k8sEnabled && settings && !k8s.resolutionError && k8s.datasource
       ? buildKubernetesItem(
           {
-            inventory,
-            inventoryLoading,
-            health,
-            cpuSeries: cpuSeries ?? null,
-            cpuLoading,
-            datasourceName: datasource.name,
+            inventory: k8s.inventory,
+            inventoryLoading: k8s.inventoryLoading,
+            health: k8s.health,
+            cpuSeries: k8s.cpuSeries ?? null,
+            cpuLoading: k8s.cpuLoading,
+            datasourceName: k8s.datasource.name,
           },
           settings
         )
       : null;
 
-  const existing = kubernetesItem ? [kubernetesItem, ...stubbedExisting] : stubbedExisting;
-  const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
-  return <ExistingSolutionCard existing={existing} selected={selected} onSelect={onSelect} />;
+  const logsItem =
+    canExplore && !logs.resolutionError && logs.resolution
+      ? buildLogsItem({
+          stats: logs.stats,
+          statsLoading: logs.statsLoading,
+          volume: logs.volume,
+          volumeLoading: logs.volumeLoading,
+          datasourceUid: logs.resolution.ds.uid,
+          datasourceName: logs.resolution.ds.name,
+          sourceLabel: logs.resolution.sourceLabel,
+        })
+      : null;
+
+  const tracesItem =
+    canExplore && !traces.resolutionError && traces.resolution
+      ? buildTracesItem({
+          serviceCount: traces.serviceCount,
+          servicesLoading: traces.servicesLoading,
+          spanRate: traces.spanRate,
+          spanRateLoading: traces.spanRateLoading,
+          topErrorService: traces.topErrorService,
+          datasourceUid: traces.resolution.ds.uid,
+          datasourceName: traces.resolution.ds.name,
+        })
+      : null;
+
+  const loading = settingsLoading || k8s.resolving || logs.resolving || traces.resolving;
+  const items = [kubernetesItem, logsItem, tracesItem].filter((item) => item !== null);
+  return { items, loading };
 }
 
-// Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the Kubernetes lookups
+// Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the solution lookups
 // load, so the first paint never shows a solution that a resolving fetch would replace.
-function RecommendationExistingSkeleton() {
+export function RecommendationExistingSkeleton() {
   return (
     <Stack
       direction="column"
