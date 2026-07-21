@@ -1,4 +1,4 @@
-import { test, type Locator } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
@@ -35,12 +35,6 @@ export class VariableOptions extends PageObject {
     });
   }
 
-  getPreviewOptions(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(
-      this.selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
-    );
-  }
-
   readonly datasource = {
     selectType: async (dsType: string) => {
       await test.step(`Select variable datasource type "${dsType}"`, async () => {
@@ -57,6 +51,49 @@ export class VariableOptions extends PageObject {
         await this.dashboardPage
           .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter)
           .fill(filter);
+      });
+    },
+  };
+
+  readonly custom = {
+    openEditor: async () => {
+      await test.step('Open custom variable editor', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.optionsOpenButton)
+          .click();
+      });
+    },
+    selectFormat: async (format: 'CSV' | 'JSON') => {
+      await test.step(`Select "${format}" format`, async () => {
+        const modal = this.page.getByRole('dialog');
+        await this.dashboardPage
+          // <RadioButtonGroup /> auto-applies the RadioGroup container testid; we scope it to the modal
+          .getByGrafanaSelector(this.selectors.components.RadioGroup.container, { root: modal })
+          .getByRole('radio', { name: format, exact: true })
+          .check();
+      });
+    },
+    setValues: async (valuesInSelectedFormat: string) => {
+      await test.step('Fill custom variable options', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput)
+          .fill(valuesInSelectedFormat);
+      });
+    },
+    getPreviewOfValues: (): Locator =>
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
+      ),
+    getPreviewTable: (): Locator =>
+      // shown instead of the plain values preview when options carry properties beyond value/text
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable
+      ),
+    clickApplyButton: async () => {
+      await test.step('Apply variable changes', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton)
+          .click();
       });
     },
   };
@@ -124,6 +161,10 @@ export class VariableOptions extends PageObject {
           .click();
       });
     },
+    getPreviewOfValues: (): Locator =>
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
+      ),
     clickApplyButton: async () => {
       await test.step('Apply variable changes', async () => {
         await this.dashboardPage
