@@ -339,6 +339,16 @@ describe('useSelectedQueryDatasource', () => {
     // The panel the hook forwards as scene scope; its contents are irrelevant to this wiring.
     const panel = new VizPanel({ key: 'panel-1' });
 
+    // Matching the real settings API: a resolved template-variable ref keeps the variable string
+    // as uid/name and carries the concrete datasource in rawRef (see getDataSourceInstanceSettings).
+    const variableDsSettings: DataSourceInstanceSettings = {
+      ...mockPrometheusSettings,
+      isDefault: false,
+      name: '${metrics_source}',
+      uid: '${metrics_source}',
+      rawRef: { type: 'prometheus', uid: 'prometheus-uid' },
+    };
+
     /** Configures the async APIs to resolve the variable only when the panel scene scope (`__sceneObject`) is present. */
     function setupSectionScopedDatasourceMocks() {
       const resolvableWithSceneScope = (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
@@ -352,7 +362,7 @@ describe('useSelectedQueryDatasource', () => {
 
       mockGetDataSourceInstanceSettings.mockImplementation(
         (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
-          Promise.resolve(resolvableWithSceneScope(ref, scopedVars) ? mockPrometheusSettings : undefined)
+          Promise.resolve(resolvableWithSceneScope(ref, scopedVars) ? variableDsSettings : undefined)
       );
     }
 
@@ -365,7 +375,9 @@ describe('useSelectedQueryDatasource', () => {
       await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
 
       expect(result.current.selectedQueryDsData?.datasource).toBe(mockPrometheusDatasource);
-      expect(result.current.selectedQueryDsData?.dsSettings.uid).toBe('prometheus-uid');
+      // Settings keep the un-interpolated variable identity; rawRef proves it resolved to Prometheus.
+      expect(result.current.selectedQueryDsData?.dsSettings.uid).toBe('${metrics_source}');
+      expect(result.current.selectedQueryDsData?.dsSettings.rawRef?.uid).toBe('prometheus-uid');
     });
 
     it('fails to resolve a section-scoped datasource variable without the panel scene scope (regression guard)', async () => {
