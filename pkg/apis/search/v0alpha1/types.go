@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
@@ -203,7 +205,7 @@ type ResultItem struct {
 
 	// Fields holds the JSON values for the requested (or default) fields.
 	// Array-typed fields are returned as JSON arrays. Absent fields are omitted.
-	Fields map[string]interface{} `json:"fields,omitempty"`
+	Fields *common.Unstructured `json:"fields,omitempty"`
 }
 
 // ResourceRef is the full identity of a returned item. Namespace is implicit

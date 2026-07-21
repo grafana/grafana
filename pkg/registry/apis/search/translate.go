@@ -288,10 +288,10 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 	case "filter":
 		fp := p.Child("filter")
 		f := n.Filter
-		switch {
-		case f.Field == "":
+		switch f.Field {
+		case "":
 			errs = append(errs, field.Required(fp.Child("field"), "filter field is required"))
-		case f.Field == "labels":
+		case "labels":
 			errs = append(errs, field.Invalid(fp.Child("field"), f.Field, "use labelSelector to filter on labels"))
 		default:
 			capErrs := checkCapability(fs, f.Field, resource.SearchCapabilityFilter, fp.Child("field"))
@@ -340,7 +340,7 @@ func validateSort(sorts []searchv0.SortField, fs *fieldSet, p *field.Path) field
 }
 
 func validateReturnFields(fields []string, fs *fieldSet, p *field.Path) field.ErrorList {
-	errs := field.ErrorList{}
+	errs := make(field.ErrorList, 0, len(fields))
 	for i, f := range fields {
 		errs = append(errs, checkCapability(fs, f, resource.SearchCapabilityRetrieve, p.Index(i))...)
 	}
@@ -348,7 +348,7 @@ func validateReturnFields(fields []string, fs *fieldSet, p *field.Path) field.Er
 }
 
 func validateFacets(facets []string, fs *fieldSet, p *field.Path) field.ErrorList {
-	errs := field.ErrorList{}
+	errs := make(field.ErrorList, 0, len(facets))
 	for i, f := range facets {
 		errs = append(errs, checkCapability(fs, f, resource.SearchCapabilityFacet, p.Index(i))...)
 	}
