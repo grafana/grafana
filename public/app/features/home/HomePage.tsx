@@ -11,8 +11,10 @@ import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { FiringAlertsCard, canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
+import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
+import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
+import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
@@ -109,8 +111,7 @@ export default function HomePage() {
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
-                    {/* TODO: Alerts and incidents will combine into one card */}
-                    <FiringAlertsCard />
+                    <AlertIncidentTabs />
                   </Grid>
                 </>
               ) : (

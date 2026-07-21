@@ -117,6 +117,11 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 
 	res, err := ecp.receiverService.GetReceivers(ctx, receiverQuery, u)
 	if err != nil {
+		// New orgs have no Alertmanager config yet. Listing contact points is a
+		// valid empty state (GET-before-POST reconcilers depend on this).
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) || legacy_storage.ErrNoAlertmanagerConfiguration.Is(err) {
+			return []apimodels.EmbeddedContactPoint{}, nil
+		}
 		return nil, convertRecSvcErr(err)
 	}
 	if q.Name != "" && len(res) > 0 {

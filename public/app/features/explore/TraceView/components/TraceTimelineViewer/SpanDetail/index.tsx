@@ -34,7 +34,7 @@ import { t } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
@@ -44,6 +44,7 @@ import { type SpanLinkFunc } from '../../types/links';
 import { type TraceProcess, type TraceSpan, type TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
 import { getServiceDisplayName } from '../../utils/service-name';
+import { getSummaryCountBadgeStyle, getSummaryDurationStats } from '../../utils/summary-span';
 
 import AccordionCategorizedKeyValues from './AccordionCategorizedKeyValues';
 import AccordionKeyValues from './AccordionKeyValues';
@@ -180,6 +181,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: '50%',
       flexGrow: 1,
       flexShrink: 0,
+    }),
+    summaryHeader: css({
+      label: 'SpanDetailSummaryHeader',
+      display: 'inline-flex',
+      alignItems: 'center',
+      flexShrink: 0,
+    }),
+    summaryCountBadge: cx(
+      getSummaryCountBadgeStyle(theme),
+      css({ label: 'SpanDetailSummaryCountBadge', marginInline: '0.25rem' })
+    ),
+    summaryLabel: css({
+      label: 'SpanDetailSummaryLabel',
+      color: theme.colors.text.secondary,
+    }),
+    inheritedNote: css({
+      label: 'SpanDetailInheritedNote',
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeightRegular,
     }),
     AccordionWarnings: css({
       label: 'AccordionWarnings',
@@ -322,6 +342,15 @@ export default function SpanDetail(props: SpanDetailProps) {
   const durationIcon: IconName = 'hourglass';
   const startIcon: IconName = 'clock-nine';
 
+  // Summary spans carry aggregate stats over the collapsed group; their wall-clock
+  // duration is a window across many operations, so show min/median/max instead of a
+  // single figure and surface the group's end time.
+  const isSummarySpan = span.aggregation?.isSummary === true;
+  const summaryDurationStats = isSummarySpan && span.aggregation ? getSummaryDurationStats(span.aggregation) : null;
+  const durationValue = summaryDurationStats
+    ? summaryDurationStats.map((stat) => `${stat.value} (${stat.labelLower})`).join(' | ')
+    : formatDuration(duration);
+
   let overviewItems = [
     {
       key: 'svc',
@@ -331,7 +360,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'duration',
       label: t('explore.span-detail.overview-items.label.duration', 'Duration:'),
-      value: formatDuration(duration),
+      value: durationValue,
       icon: durationIcon,
     },
     {
@@ -340,6 +369,16 @@ export default function SpanDetail(props: SpanDetailProps) {
       value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
       icon: startIcon,
     },
+    ...(isSummarySpan
+      ? [
+          {
+            key: 'end',
+            label: t('explore.span-detail.overview-items.label.end-time', 'End Time:'),
+            value: formatDuration(relativeStartTime + duration) + getAbsoluteTime(startTime + duration, timeZone),
+            icon: startIcon,
+          },
+        ]
+      : []),
     ...(span.childSpanCount > 0
       ? [
           {
@@ -354,6 +393,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   const [mainContainerRef, { width: mainContainerWidth }] = useMeasure<HTMLDivElement>();
 
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   if (span.kind) {
     overviewItems.push({
       key: KIND,
@@ -427,7 +467,18 @@ export default function SpanDetail(props: SpanDetailProps) {
       <AccordionCategorizedKeyValues
         data={process.tags}
         sectionType="resource"
-        label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
+        label={
+          isSummarySpan ? (
+            <>
+              {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
+              <span className={styles.inheritedNote}>
+                {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
+              </span>
+            </>
+          ) : (
+            t('explore.span-detail.label-resource-attributes', 'Resource attributes')
+          )
+        }
         linksGetter={resourceLinksGetter}
         isOpen={isProcessOpen}
         onToggle={() => processToggle(spanID)}
@@ -519,6 +570,24 @@ export default function SpanDetail(props: SpanDetailProps) {
           <h6 className={styles.operationName} title={operationName}>
             {operationName}
           </h6>
+          {isSummarySpan && (
+            <span className={styles.summaryHeader}>
+              {span.aggregation && (span.aggregation.spanCount ?? 0) > 0 && (
+                <span
+                  className={styles.summaryCountBadge}
+                  style={color ? { background: color, color: theme.colors.getContrastText(color) } : undefined}
+                  aria-label={t('explore.span-detail.summary-count-aria', '', {
+                    count: span.aggregation.spanCount,
+                    defaultValue_one: '{{count}} aggregated span',
+                    defaultValue_other: '{{count}} aggregated spans',
+                  })}
+                >
+                  {span.aggregation.spanCount}
+                </span>
+              )}
+              <span className={styles.summaryLabel}>{t('explore.span-detail.summary-label', '(summary)')}</span>
+            </span>
+          )}
           <SpanDetailLinkButtons
             span={span}
             createSpanLink={createSpanLink}

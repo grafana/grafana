@@ -1,7 +1,9 @@
 package annotation
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -272,6 +274,68 @@ func TestIntegrationPostgresStore(t *testing.T) {
 			require.NotNil(t, found.DeletionTimestamp, "expected tombstone deletionTimestamp")
 		})
 	})
+}
+
+func TestIntegrationPostgresCleanup(t *testing.T) {
+	ns := metav1.NamespaceDefault
+
+	seed := func(t *testing.T, store *PostgreSQLStore, ctx context.Context, name string, ts time.Time) {
+		t.Helper()
+		_, err := store.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: name, Time: ts.UnixMilli()},
+		})
+		require.NoError(t, err, "create %s", name)
+	}
+
+	t.Run("drops partitions past the retention cutoff", func(t *testing.T) {
+		store := newTestPostgresStore(t)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		now := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
+		old := now.AddDate(0, 0, -120)   // past a 90-day cutoff: dropped
+		recent := now.AddDate(0, 0, -30) // within the cutoff: kept
+		seed(t, store, ctx, "old", old)
+		seed(t, store, ctx, "recent", recent)
+
+		deleted, err := store.Cleanup(ctx, now.AddDate(0, 0, -90))
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), deleted, "only the old partition's row should be counted")
+
+		remaining := partitionNameSet(ctx, t, store)
+		assert.NotContains(t, remaining, getPartitionName(old.UnixMilli()), "old partition should be dropped")
+		assert.Contains(t, remaining, getPartitionName(recent.UnixMilli()), "recent partition should be kept")
+	})
+
+	t.Run("keeps recent partitions protected by the 24h floor even when past the cutoff", func(t *testing.T) {
+		store := newTestPostgresStore(t)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		now := time.Now().UTC()
+		current := now                // this week: past a 1h cutoff, but inside the 24h floor
+		old := now.AddDate(0, 0, -21) // several weeks back: past both the cutoff and the floor
+		seed(t, store, ctx, "current", current)
+		seed(t, store, ctx, "old", old)
+
+		deleted, err := store.Cleanup(ctx, now.Add(-time.Hour))
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), deleted, "only the old partition's row should be counted")
+
+		remaining := partitionNameSet(ctx, t, store)
+		assert.Contains(t, remaining, getPartitionName(current.UnixMilli()), "current partition should be kept by the 24h floor")
+		assert.NotContains(t, remaining, getPartitionName(old.UnixMilli()), "old partition should be dropped")
+	})
+}
+
+func partitionNameSet(ctx context.Context, t *testing.T, store *PostgreSQLStore) map[string]struct{} {
+	t.Helper()
+	partitions, err := listPartitions(ctx, store.pool)
+	require.NoError(t, err)
+	set := make(map[string]struct{}, len(partitions))
+	for _, p := range partitions {
+		set[p.Name] = struct{}{}
+	}
+	return set
 }
 
 func annotationNames(list *AnnotationList) []string {

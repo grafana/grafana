@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -252,9 +251,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "parent/child/dashboard.json", childUID)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "parent/child/second-dash.json", childUID)
 
-		_, err = helper.Folders.Resource.Get(t.Context(), oldParentUID, metav1.GetOptions{})
-		require.Error(t, err)
-		require.True(t, apierrors.IsNotFound(err), "old unstable parent folder should be deleted")
+		helper.RequireFoldersNotFound(t, oldParentUID)
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, oldBrokenUID)
 	})
@@ -376,9 +373,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
 		requireInvalidFolderMetadataWarning(t, jobObj, "moved/", repository.FileActionCreated)
 
-		_, err = helper.Folders.Resource.Get(t.Context(), stableUID, metav1.GetOptions{})
-		require.Error(t, err)
-		require.True(t, apierrors.IsNotFound(err))
+		helper.RequireFoldersNotFound(t, stableUID)
 
 		newUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "moved")
 		require.NotEqual(t, stableUID, newUID)

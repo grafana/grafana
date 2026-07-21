@@ -6,31 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
-
-func createUnmanagedFolder(t *testing.T, helper *common.GitTestHelper, name, title string) {
-	t.Helper()
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1",
-			"kind":       "Folder",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": "default",
-			},
-			"spec": map[string]interface{}{
-				"title": title,
-			},
-		},
-	}
-	_, err := helper.Folders.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
-	require.NoError(t, err)
-}
 
 func triggerExport(t *testing.T, helper *common.GitTestHelper, repo string) *provisioning.Job {
 	t.Helper()
@@ -53,7 +33,7 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataDisabled(t *tes
 	const repoName = "git-export-no-meta"
 	helper.CreateExportGitRepo(t, repoName, nil)
 
-	createUnmanagedFolder(t, helper, "git-no-meta-uid", "git-no-meta-folder")
+	helper.CreateUnmanagedFolderWithName(t, "git-no-meta-uid", "git-no-meta-folder", "")
 
 	job := triggerExport(t, helper, repoName)
 	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
