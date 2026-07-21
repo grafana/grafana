@@ -42,6 +42,8 @@ services:
 
   mysqld-exporter:
     image: prom/mysqld-exporter
+    security_opt:
+      - no-new-privileges:true
     environment:
       - DATA_SOURCE_NAME=root:rootpass@(db:3306)/
     ports:
