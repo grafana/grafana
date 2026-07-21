@@ -29,7 +29,6 @@ export interface TextNGEditorProps {
   showLineNumbers: boolean;
   codeLanguage?: CodeLanguage;
   onChange: (content: string) => void;
-  height?: number;
 }
 
 const MERMAID_SNIPPET = '```mermaid\nflowchart LR\n  A[Build] --> B[Test] --> C[Deploy]\n```\n';
@@ -42,15 +41,7 @@ function renderPreviewHtml(mode: TextMode, content: string): string {
   return mode === TextMode.HTML ? textUtil.sanitizeTextPanelContent(content) : renderTextPanelMarkdown(content);
 }
 
-export function TextNGEditor({
-  content,
-  mode,
-  wordWrap,
-  showLineNumbers,
-  codeLanguage,
-  onChange,
-  height,
-}: TextNGEditorProps) {
+export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLanguage, onChange }: TextNGEditorProps) {
   const styles = useStyles2(getStyles);
   const [view, setView] = useState<ViewMode>('write');
   // Empty panels have nothing to render, so open them straight into the editor.
@@ -73,7 +64,10 @@ export function TextNGEditor({
   }, [mode, wordWrap]);
 
   const editorLanguage = mode === TextMode.Code && codeLanguage === CodeLanguage.Json ? 'json' : undefined;
-  const basicSetup = { lineNumbers: mode === TextMode.Code ? showLineNumbers : true };
+  const basicSetup = useMemo(
+    () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : true }),
+    [mode, showLineNumbers]
+  );
 
   const surroundSelection = (before: string, after = before) => {
     const view = editorViewRef.current;
@@ -223,7 +217,6 @@ export function TextNGEditor({
 
   const showEditor = view !== 'preview';
   const showPreview = view !== 'write';
-  const editorHeight = height ? `${Math.max(height - 90, 200)}px` : '400px';
   const lineCount = content ? content.split('\n').length : 0;
   const modeLabel = mode === TextMode.HTML ? 'HTML' : mode === TextMode.Code ? 'Code' : 'Markdown';
 
@@ -249,9 +242,7 @@ export function TextNGEditor({
             {t('textng.editor.edit', 'Edit')}
           </Button>
         </div>
-        <div className={cx(styles.pane, styles.previewPane)} style={{ height: editorHeight }}>
-          {renderOutput('TextNGEditor-view')}
-        </div>
+        <div className={cx(styles.pane, styles.previewPane)}>{renderOutput('TextNGEditor-view')}</div>
       </div>
     );
   }
@@ -279,7 +270,7 @@ export function TextNGEditor({
         </div>
       </div>
 
-      <div className={cx(styles.body, view === 'split' && styles.splitBody)} style={{ height: editorHeight }}>
+      <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
           <div className={styles.pane}>
             <CodeMirrorEditor
@@ -288,7 +279,7 @@ export function TextNGEditor({
               language={editorLanguage}
               extensions={extensions}
               basicSetup={basicSetup}
-              height={editorHeight}
+              height="100%"
               aria-label={t('textng.editor.aria-label-content', 'Text content')}
             />
           </div>
@@ -350,6 +341,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     display: 'flex',
+    flex: 1,
     width: '100%',
     minHeight: 0,
   }),
@@ -370,6 +362,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   markdownHtml: css({
     height: '100%',
+    // Skip layout/paint for off-screen blocks to keep large previews smooth.
+    '& > *': {
+      contentVisibility: 'auto',
+      containIntrinsicSize: 'auto 2rem',
+    },
   }),
   codePreview: css({
     margin: 0,

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
+import { useMemo } from 'react';
 
 import { CoreApp, type GrafanaTheme2, type PanelProps, renderTextPanelMarkdown, textUtil } from '@grafana/data';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
@@ -7,28 +8,35 @@ import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { TextNGEditor } from './TextNGEditor';
 import { defaultOptions, type Options, TextMode } from './panelcfg.gen';
 
-export function TextNGPanel({ options, onOptionsChange, height }: PanelProps<Options>) {
+export function TextNGPanel({ options, onOptionsChange }: PanelProps<Options>) {
   const styles = useStyles2(getStyles);
   const { app } = usePanelContext();
+  const { mode } = options;
 
   const content = options.content ?? defaultOptions.content ?? '';
+
+  const html = useMemo(() => {
+    if (app === CoreApp.PanelEditor || mode === TextMode.Code || !content) {
+      return ' ';
+    }
+    return mode === TextMode.HTML ? textUtil.sanitizeTextPanelContent(content) : renderTextPanelMarkdown(content);
+  }, [app, mode, content]);
 
   // In panel edit mode, take over the canvas with the inline editor.
   if (app === CoreApp.PanelEditor) {
     return (
       <TextNGEditor
         content={content}
-        mode={options.mode}
+        mode={mode}
         wordWrap={options.wordWrap ?? true}
         showLineNumbers={options.code?.showLineNumbers ?? false}
         codeLanguage={options.code?.language}
-        height={height}
         onChange={(next) => onOptionsChange({ ...options, content: next })}
       />
     );
   }
 
-  if (options.mode === TextMode.Code) {
+  if (mode === TextMode.Code) {
     return (
       <ScrollContainer minHeight="100%">
         <pre className={styles.codeContent} data-testid="TextNGPanel-code">
@@ -37,12 +45,6 @@ export function TextNGPanel({ options, onOptionsChange, height }: PanelProps<Opt
       </ScrollContainer>
     );
   }
-
-  const html = !content
-    ? ' '
-    : options.mode === TextMode.HTML
-      ? textUtil.sanitizeTextPanelContent(content)
-      : renderTextPanelMarkdown(content);
 
   return (
     <div className={styles.containStrict}>
@@ -66,6 +68,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   markdownHtml: css({
     height: '100%',
+    // Let the browser skip layout/paint for off-screen blocks, which keeps
+    // resizing large documents smooth. containIntrinsicSize remembers the last
+    // rendered size so scroll height stays stable.
+    '& > *': {
+      contentVisibility: 'auto',
+      containIntrinsicSize: 'auto 2rem',
+    },
   }),
   codeContent: css({
     margin: 0,
