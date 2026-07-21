@@ -30,6 +30,7 @@ import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import {
   AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerKind,
+  DENY_ALL_GLOBAL_PREDEFINED,
   DENY_ALL_PREDEFINED,
   ManagerKind,
 } from 'app/features/apiserver/types';
@@ -107,6 +108,12 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     prev: jest.fn(),
     stop: jest.fn(),
   },
+}));
+
+const mockFetchPredefinedVariables = jest.fn();
+jest.mock('../utils/predefinedVariables', () => ({
+  ...jest.requireActual('../utils/predefinedVariables'),
+  fetchPredefinedVariables: (...args: unknown[]) => mockFetchPredefinedVariables(...args) ?? Promise.resolve([]),
 }));
 
 locationUtil.initialize({
@@ -2681,6 +2688,128 @@ describe('DashboardScene', () => {
       const shadowed = sceneGraph.getVariables(scene).state.variables.filter((v) => v.state.name === 'shadowed');
       expect(shadowed).toHaveLength(1);
       expect(shadowed[0].state.origin).toBeUndefined();
+    });
+  });
+
+  describe('refreshPredefinedVariables', () => {
+    const originalGlobalDashboardVariables = config.featureToggles.globalDashboardVariables;
+
+    beforeEach(() => {
+      config.featureToggles.globalDashboardVariables = true;
+      mockFetchPredefinedVariables.mockReset();
+    });
+
+    afterEach(() => {
+      config.featureToggles.globalDashboardVariables = originalGlobalDashboardVariables;
+    });
+
+    it('should ignore stale fetch results when a newer refresh has started', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      let resolveFirstFetch!: (value: VariableKind[]) => void;
+      const firstFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(firstFetch).mockResolvedValueOnce([globalVar]);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+      });
+
+      // First refresh: inject all (no denylist). Fetch stays pending.
+      const staleRefresh = scene.refreshPredefinedVariables();
+
+      // Second refresh: deny all — applies immediately and invalidates the in-flight fetch.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
+            },
+          },
+        },
+      });
+      await scene.refreshPredefinedVariables();
+
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+
+      // Stale fetch completes after the newer selection; must not re-inject variables.
+      resolveFirstFetch([globalVar]);
+      await staleRefresh;
+
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+    });
+
+    it('should apply the latest denylist when overlapping fetches finish out of order', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+      const folderVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'folderVar',
+          current: { text: 'x', value: 'x' },
+          query: 'x,y',
+          origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+        },
+      } as VariableKind;
+
+      let resolveFirstFetch!: (value: VariableKind[]) => void;
+      let resolveSecondFetch!: (value: VariableKind[]) => void;
+      const firstFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
+      const secondFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveSecondFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(firstFetch).mockReturnValueOnce(secondFetch);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+      });
+
+      // First: All (no denylist)
+      const firstRefresh = scene.refreshPredefinedVariables();
+
+      // Second: Folder only (deny globals) — starts while first fetch is still pending.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_GLOBAL_PREDEFINED]),
+            },
+          },
+        },
+      });
+      const secondRefresh = scene.refreshPredefinedVariables();
+
+      // Newer fetch finishes first with the folder-only denylist applied.
+      resolveSecondFetch([globalVar, folderVar]);
+      await secondRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toEqual(['folderVar']);
+
+      // Older fetch finishes later; must not overwrite with the stale "all" resolution.
+      resolveFirstFetch([globalVar, folderVar]);
+      await firstRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toEqual(['folderVar']);
     });
   });
 

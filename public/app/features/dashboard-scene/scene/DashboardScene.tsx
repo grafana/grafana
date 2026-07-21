@@ -197,6 +197,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _editSessionSource?: 'user' | 'assistant';
 
+  /**
+   * Monotonic id so overlapping refreshPredefinedVariables() calls only apply the latest result.
+   */
+  private _predefinedVariablesRefreshId = 0;
+
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
@@ -362,6 +367,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
+    const refreshId = ++this._predefinedVariablesRefreshId;
     const folderUid = this.state.meta.folderUid;
     const annotations: Record<string, string | undefined> = {};
     for (const [key, value] of Object.entries(this.state.meta.k8s?.annotations ?? {})) {
@@ -372,11 +378,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const resolutionInput = { annotations };
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
+      if (refreshId !== this._predefinedVariablesRefreshId) {
+        return;
+      }
       this.setPredefinedVariables([]);
       return;
     }
 
     const candidates = await fetchPredefinedVariables(folderUid);
+    // A newer radio/save refresh may have started while this fetch was in flight.
+    if (refreshId !== this._predefinedVariablesRefreshId) {
+      return;
+    }
     this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
   }
 
