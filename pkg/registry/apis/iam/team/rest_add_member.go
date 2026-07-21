@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/util/retry"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -22,8 +23,9 @@ import (
 // helper that turns a single-user request into a Spec.Members write,
 // routed through the team resource's dual-writer storage.
 //
-// Concurrency: single Get + Update, no in-handler retry. RV mismatch
-// surfaces as 409; callers refresh and retry.
+// Concurrency: read-modify-write on Spec.Members wrapped in
+// RetryOnConflict so concurrent add-member requests re-read the latest
+// team and re-apply the member add instead of failing each other.
 type TeamAddMemberREST struct {
 	getter  rest.Getter
 	updater rest.Updater
@@ -109,63 +111,71 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 		// dual-writer Get/Update can resolve it.
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
-		obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		t, ok := obj.(*iamv0alpha1.Team)
-		if !ok {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("team store returned unexpected type %T", obj)))
-			return
-		}
 		var (
 			resultingPerm     iamv0alpha1.TeamTeamPermission
 			resultingExternal bool
-			needUpdate        bool
+			alreadyMember     bool
 		)
-		foundIdx := -1
-		for i, m := range t.Spec.Members {
-			if m.Kind == "User" && m.Name == body.Name {
-				foundIdx = i
-				break
+		// Refresh and retry on conflict: concurrent adds race on the team's
+		// resource version and would otherwise reject each other.
+		retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
+			if err != nil {
+				return err
 			}
-		}
-		alreadyMember := foundIdx >= 0
-		if alreadyMember {
-			// Re-add: update Permission, but leave External untouched —
-			// External records the membership origin (IdP sync vs manual)
-			// and isn't a state /addmember flips.
-			existing := t.Spec.Members[foundIdx]
-			resultingPerm = permStr
-			resultingExternal = existing.External
-			if existing.Permission != permStr {
-				t.Spec.Members[foundIdx].Permission = permStr
+			t, ok := obj.(*iamv0alpha1.Team)
+			if !ok {
+				return apierrors.NewInternalError(fmt.Errorf("team store returned unexpected type %T", obj))
+			}
+			needUpdate := false
+			foundIdx := -1
+			for i, m := range t.Spec.Members {
+				if m.Kind == "User" && m.Name == body.Name {
+					foundIdx = i
+					break
+				}
+			}
+			alreadyMember = foundIdx >= 0
+			if alreadyMember {
+				// Re-add: update Permission, but leave External untouched —
+				// External records the membership origin (IdP sync vs manual)
+				// and isn't a state /addmember flips.
+				existing := t.Spec.Members[foundIdx]
+				resultingPerm = permStr
+				resultingExternal = existing.External
+				if existing.Permission != permStr {
+					t.Spec.Members[foundIdx].Permission = permStr
+					needUpdate = true
+				}
+			} else {
+				resultingPerm = permStr
+				resultingExternal = external
+				t.Spec.Members = append(t.Spec.Members, iamv0alpha1.TeamTeamMember{
+					Kind:       "User",
+					Name:       body.Name,
+					Permission: permStr,
+					External:   external,
+				})
 				needUpdate = true
 			}
-		} else {
-			resultingPerm = permStr
-			resultingExternal = external
-			t.Spec.Members = append(t.Spec.Members, iamv0alpha1.TeamTeamMember{
-				Kind:       "User",
-				Name:       body.Name,
-				Permission: permStr,
-				External:   external,
-			})
-			needUpdate = true
-		}
-		if needUpdate {
-			// 409 surfaces unchanged; SQL deadlocks (which arrive as 500
-			// from unified storage) are converted so RetryOnConflict catches them.
+			if !needUpdate {
+				return nil
+			}
 			if _, _, err := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
 				nil, nil, false, &metav1.UpdateOptions{}); err != nil {
+				// RV mismatches are already 409s RetryOnConflict retries;
+				// SQL deadlocks arrive as a rolled-back 500, so surface them
+				// as conflicts to retry too.
 				if isRetryableTxnError(err) {
-					responder.Error(apierrors.NewConflict(teamResource.GroupResource(), name, err))
-					return
+					return apierrors.NewConflict(teamResource.GroupResource(), name, err)
 				}
-				responder.Error(err)
-				return
+				return err
 			}
+			return nil
+		})
+		if retryErr != nil {
+			responder.Error(retryErr)
+			return
 		}
 
 		// 201 on fresh insert, 200 on idempotent re-add or permission update.
