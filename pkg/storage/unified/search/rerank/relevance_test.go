@@ -34,13 +34,21 @@ func TestRelevanceThresholds_Resolve(t *testing.T) {
 }
 
 func TestThresholdsForModel(t *testing.T) {
-	v := ThresholdsForModel(ModelVertexSemanticRankerFast004)
-	assert.Equal(t, 0.087970, v.Low)
-	assert.Equal(t, 0.510220, v.Highest)
+	assert.Equal(t, RelevanceThresholds{
+		Lowest:  0.040480,
+		Low:     0.087970,
+		Medium:  0.172740,
+		High:    0.331500,
+		Highest: 0.510220,
+	}, ThresholdsForModel(ModelVertexSemanticRankerFast004))
 
-	b := ThresholdsForModel(ModelBedrockCohereRerankV35)
-	assert.Equal(t, 0.136984, b.Low)
-	assert.Equal(t, 0.050855, b.Lowest)
+	assert.Equal(t, RelevanceThresholds{
+		Lowest:  0.050855,
+		Low:     0.136984,
+		Medium:  0.323618,
+		High:    0.567194,
+		Highest: 0.800745,
+	}, ThresholdsForModel(ModelBedrockCohereRerankV35))
 
 	// unknown model = uncalibrated = zero-value (no filtering)
 	assert.Zero(t, ThresholdsForModel("vertex/some-new-model"))

@@ -11,8 +11,9 @@ import (
 )
 
 // maxRecordsPerCall is the Ranking API's documented per-request record cap.
-// HybridSearch's fused pool is capped at 200 resources, so a single call
-// always suffices — exceeding this is a caller bug, not a batching need.
+// The HybridSearch pipeline truncates its scored pool to this size
+// (maxRerankCandidates), so a single call always suffices — exceeding this
+// is a caller bug, not a batching need.
 const maxRecordsPerCall = 200
 
 // Reranker scores texts against a query via the Ranking API.

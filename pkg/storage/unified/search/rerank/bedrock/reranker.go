@@ -10,8 +10,8 @@ import (
 )
 
 // maxDocsPerCall is Cohere Rerank's per-request document cap on Bedrock.
-// HybridSearch's fused pool is capped at 200, so a single call always
-// suffices — exceeding this is a caller bug, not a batching need.
+// The HybridSearch pipeline truncates its scored pool to 200, so a single
+// call always suffices — exceeding this is a caller bug, not a batching need.
 const maxDocsPerCall = 1000
 
 // Reranker scores documents against a query via Cohere Rerank on Bedrock.

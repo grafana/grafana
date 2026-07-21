@@ -852,3 +852,70 @@ func TestHybridSearch_RerankCallerCancellationPropagates(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, codes.Canceled, status.Code(err))
 }
+
+func TestHybridSearch_RerankPoolTruncatedToMaxCandidates(t *testing.T) {
+	// 200 lexical + 150 disjoint semantic hits fuse into 350 candidates —
+	// past the Vertex 200-record cap — so the scorer must only ever see
+	// maxRerankCandidates texts.
+	rows := make([][3]string, 200)
+	for i := 0; i < 200; i++ {
+		rows[i] = [3]string{fmt.Sprintf("lex-%03d", i), fmt.Sprintf("Lex %03d", i), "f"}
+	}
+	lexResp := lexTableResponse(rows...)
+
+	sem := make([]vector.VectorSearchResult, 150)
+	for i := 0; i < 150; i++ {
+		sem[i] = vector.VectorSearchResult{
+			UID: fmt.Sprintf("sem-%03d", i), Title: fmt.Sprintf("Sem %03d", i),
+			Content: "c", Score: float64(i), Folder: "f",
+		}
+	}
+	backend := &fakeVectorBackend{results: sem}
+
+	s, _, _ := newHybridTestServer(lexResp, backend)
+	scorer := &fakeRerankScorer{}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", Limit: 200,
+	})
+	require.NoError(t, err)
+	assert.Len(t, scorer.gotTexts, maxRerankCandidates)
+	assert.Len(t, resp.Results, maxRerankCandidates)
+}
+
+func TestHybridSearch_RerankFallbackThenLimitTruncates(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"first", "First", "f"},
+		[3]string{"second", "Second", "f"},
+	)
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{err: errors.New("provider exploded")}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", Limit: 1,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 1)
+	// fail-open RRF order, then limit truncation keeps rank-1
+	assert.Equal(t, "first", resp.Results[0].Key.Name)
+	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
+}
+
+func TestHybridSearch_RerankSubstitutesNameForEmptyTitle(t *testing.T) {
+	lexResp := lexTableResponse([3]string{"noname", "", "f"})
+	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 1)
+	require.Len(t, scorer.gotTexts, 1)
+	// an empty title synthesizes an empty chunk; the resource name is the
+	// only text left to score with, instead of a 400-inducing empty doc.
+	assert.Equal(t, "noname", scorer.gotTexts[0])
+}

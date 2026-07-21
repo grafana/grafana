@@ -23,8 +23,11 @@ import (
 
 // HybridSearch implements ResourceIndexServer. Runs the lexical and
 // semantic legs concurrently, each filtered and authz-checked, then
-// fuses the rankings with RRF. Both legs fetch 2x the requested limit
-// so near-miss overlaps can still fuse into the top results.
+// fuses the rankings with RRF. When a reranker is configured, the fused
+// pool (top maxRerankCandidates) is re-scored by a cross-encoder and
+// results below the requested min_relevance threshold are dropped. Both
+// legs fetch 2x the requested limit so near-miss overlaps can still fuse
+// into the top results.
 //
 // Returns Unimplemented when no embedding provider or vector backend is
 // configured.
@@ -142,20 +145,28 @@ func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error
 
 // rerankHybridResults re-scores the fused candidates with the configured
 // cross-encoder, re-sorts, and drops results below the min_relevance
-// threshold. Runs on the full fused pool (pre-truncation) so rerank can
-// promote candidates into the final top-k. Fail-open: provider failures
+// threshold. Runs on the top-maxRerankCandidates fusion candidates, ahead
+// of limit truncation, so rerank can promote any of them into the final
+// top-k. Fail-open: provider failures
 // return the RRF ordering untouched so search stays up when the reranker
 // is unavailable; only caller cancellation propagates as an error.
 func (s *searchServer) rerankHybridResults(ctx context.Context, query string, results []*resourcepb.HybridSearchResult, minRelevance string) ([]*resourcepb.HybridSearchResult, error) {
 	if s.reranker == nil || len(results) == 0 {
 		return results, nil
 	}
-	// Chunks[0] is the best-ranked chunk; fuseRRF guarantees it exists
-	// with non-empty content (synthesized from the title for lexical-only
-	// hits).
+	if len(results) > maxRerankCandidates {
+		results = results[:maxRerankCandidates]
+	}
+	// Chunks[0] is the best-ranked chunk; fuseRRF guarantees it exists.
 	texts := make([]string, len(results))
 	for i, r := range results {
 		texts[i] = r.Chunks[0].Content
+		// A titleless lexical-only hit synthesizes an empty chunk; an empty
+		// document 400s the whole provider call, so give it the only text
+		// the resource is guaranteed to have.
+		if texts[i] == "" {
+			texts[i] = r.Key.Name
+		}
 	}
 
 	scores, err := s.reranker.Score(ctx, query, texts)
@@ -215,6 +226,15 @@ const rrfK = 60
 // maxChunksPerHybridResult bounds response size; only the best chunk
 // influences score, the rest are payload for RAG consumers.
 const maxChunksPerHybridResult = 10
+
+// maxRerankCandidates bounds the scored pool to the smallest provider cap
+// (Vertex ranks at most 200 records per call). Each leg is depth-capped at
+// 200 but the fused union of disjoint legs can reach 400; fusion ranks past
+// this cutoff are dropped from reranked responses — safe because they could
+// never enter a top-limit response under RRF ordering either. That argument
+// needs maxRerankCandidates >= maxVectorSearchLimit, and a single provider
+// call needs it <= the Vertex per-call record cap; both are 200 today.
+const maxRerankCandidates = 200
 
 type lexicalHit struct {
 	uid    string
