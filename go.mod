@@ -489,7 +489,6 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.2.0 // indirect
-	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.5.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
@@ -512,7 +511,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
