@@ -38,6 +38,8 @@ services:
       - VIRTUAL_HOST=prometheus.loc
     ports:
       - 9090
+    security_opt:
+      - no-new-privileges:true
   nginx-proxy:
     image: jwilder/nginx-proxy
     ports:
