@@ -25,6 +25,8 @@ services:
       - DATA_SOURCE_NAME=root:rootpass@(db:3306)/
     ports:
       - 9104
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
