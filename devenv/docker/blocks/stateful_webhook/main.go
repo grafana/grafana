@@ -116,19 +116,22 @@ func (ah *NotificationHandler) GetNotifications(w http.ResponseWriter, _ *http.R
 	defer ah.m.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 
-	res, err := json.MarshalIndent(map[string]any{"stats": ah.stats, "history": ah.hist}, "", "\t")
+	payload := map[string]any{"stats": ah.stats, "history": ah.hist}
+
+	// Pre-marshal only for logging; the encoder writes directly to the response.
+	res, err := json.MarshalIndent(payload, "", "\t")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		//nolint:errcheck
-		w.Write([]byte(`{"error":"failed to marshal alerts"}`))
+		if encErr := json.NewEncoder(w).Encode(map[string]string{"error": "failed to marshal alerts"}); encErr != nil {
+			log.Printf("failed to write error response: %v\n", encErr)
+		}
 		log.Printf("failed to marshal alerts: %v\n", err)
 		return
 	}
 
 	log.Printf("requested current state\n%v\n", string(res))
 
-	_, err = w.Write(res)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
 		log.Printf("failed to write response: %v\n", err)
 	}
 }
