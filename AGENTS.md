@@ -86,7 +86,7 @@ make update-workspace             # Go workspace (after adding modules)
 
 ```bash
 yarn install --immutable                          # Install frontend deps
-make devenv sources=postgres,influxdb,loki        # Start backing services
+make devenv sources=influxdb        # Start backing services
 make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
 ```
