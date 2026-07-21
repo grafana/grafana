@@ -378,25 +378,21 @@ func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, us
 		return nil
 	}
 	folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
-	resp, err := s.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
-		Namespace: namespace,
-		Checks: []authlib.BatchCheckItem{
-			{CorrelationID: "alertrules", Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource, Folder: folderUID},
-			{CorrelationID: "libraryelements", Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID, Folder: parentUID},
-		},
-	})
-	if err != nil {
-		return err
+	// One homogeneous Check per resource: a mixed-resource BatchCheck is routed back to RBAC in
+	// Zanzana rollout mode, so tenants mid-rollout would be evaluated by the wrong engine.
+	checks := []struct {
+		req    authlib.CheckRequest
+		folder string
+	}{
+		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, folderUID},
+		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, parentUID},
 	}
-	for _, key := range []string{"alertrules", "libraryelements"} {
-		res, ok := resp.Results[key]
-		if !ok {
-			return fmt.Errorf("missing access check result %q for folder %q", key, folderUID)
+	for _, c := range checks {
+		resp, err := s.accessClient.Check(ctx, user, c.req, c.folder)
+		if err != nil {
+			return err
 		}
-		if res.Error != nil {
-			return res.Error
-		}
-		if !res.Allowed {
+		if !resp.Allowed {
 			return apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), folderUID, folder.ErrAccessDenied)
 		}
 	}
