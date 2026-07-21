@@ -1164,7 +1164,8 @@
       "api-machinery": {
         "with-causes": "{{-baseMessage}}: {{-causes}}"
       },
-      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}",
+      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules."
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -2514,10 +2515,6 @@
       "delete-modal": {
         "permanently-remove": "This action will permanently remove the <1>{{routeName}}</1> notification policy.",
         "title-delete-notification-policy": "Delete notification policy"
-      },
-      "error-modal": {
-        "failed-to-update-your-configuration": "Failed to update your configuration:",
-        "title-something-went-wrong": "Something went wrong"
       },
       "filter-description": "Filter routes by using a comma separated list of matchers, e.g.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Auto-generated policies",
