@@ -208,6 +208,56 @@ describe('ThresholdsEditor', () => {
     });
   });
 
+  it('falls back to 0 when the field is cleared before typing an expression', async () => {
+    const onChange = jest.fn();
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 50, color: '#EAB839' },
+      ],
+    };
+    setup({ thresholds, onChange });
+
+    // clearing fires a change event that empties the numeric value before the
+    // expression is typed; the fallback must still persist as a number
+    const input = screen.getByRole('textbox', { name: 'Threshold 1' });
+    await userEvent.clear(input);
+    await userEvent.type(input, '$warn');
+    await userEvent.tab();
+
+    expect(onChange).toHaveBeenCalledWith({
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 0, valueExpr: '$warn', color: '#EAB839' },
+      ],
+    });
+  });
+
+  it('persists an emptied field as 0 on blur', async () => {
+    const onChange = jest.fn();
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 50, color: '#EAB839' },
+      ],
+    };
+    setup({ thresholds, onChange });
+
+    await userEvent.clear(screen.getByRole('textbox', { name: 'Threshold 1' }));
+    await userEvent.tab();
+
+    expect(onChange).toHaveBeenCalledWith({
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 0, color: '#EAB839' },
+      ],
+    });
+  });
+
   it('clears valueExpr when a numeric value is typed', async () => {
     const onChange = jest.fn();
     const thresholds = {

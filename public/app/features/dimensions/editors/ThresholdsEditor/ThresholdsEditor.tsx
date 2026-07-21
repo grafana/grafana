@@ -148,7 +148,8 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   }
 
   function onBlur() {
-    const newSteps = [...steps];
+    // an input left empty holds '' as its value — settle it to 0
+    const newSteps = steps.map((t) => (isNumber(t.value) ? t : { ...t, value: 0 }));
     sortThresholds(newSteps);
     setSteps(newSteps);
     fireOnChange(newSteps);
@@ -308,7 +309,8 @@ function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: ThresholdWith
     mode,
     steps: steps.map((t) => {
       const { key, ...rest } = t;
-      return rest; // everything except key
+      // never persist the '' an input cleared mid-edit holds — the backend requires a number
+      return isNumber(rest.value) ? rest : { ...rest, value: 0 };
     }),
   };
 }
