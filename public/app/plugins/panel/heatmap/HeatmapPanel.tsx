@@ -173,22 +173,33 @@ const HeatmapPanelViz = ({
       return null;
     }
 
-    const placement: LegendPlacement = options.legend.placement ?? 'bottom';
+    let placement: LegendPlacement = options.legend.placement ?? 'bottom';
+
+    // VizLayout forces bottom placement on narrow screens; mirror that here so
+    // we don't render a full-height vertical scale into a bottom strip
+    if (document.body.clientWidth < theme.breakpoints.values.lg) {
+      placement = 'bottom';
+    }
+
+    const isRight = placement === 'right';
+
+    const colorScale = (
+      <ColorScale
+        colorPalette={info.heatmapColors.palette}
+        min={info.heatmapColors.minValue}
+        max={info.heatmapColors.maxValue}
+        display={info.display}
+        orientation={isRight ? 'vertical' : 'horizontal'}
+      />
+    );
 
     return (
-      <VizLayout.Legend
-        placement={placement}
-        // maxHeight="20%"
-        width={placement === 'right' ? options.legend.width : undefined}
-      >
-        <div className={placement === 'right' ? styles.colorScaleWrapperRight : styles.colorScaleWrapper}>
-          <ColorScale
-            colorPalette={info.heatmapColors.palette}
-            min={info.heatmapColors.minValue}
-            max={info.heatmapColors.maxValue}
-            display={info.display}
-          />
-        </div>
+      <VizLayout.Legend placement={placement} width={isRight ? options.legend.width : undefined}>
+        {isRight ? (
+          <div className={styles.colorScaleWrapperVertical}>{colorScale}</div>
+        ) : (
+          <div className={styles.colorScaleWrapper}>{colorScale}</div>
+        )}
       </VizLayout.Legend>
     );
   };
@@ -271,8 +282,14 @@ const getStyles = () => ({
     padding: '10px 0',
     maxWidth: '300px',
   }),
-  colorScaleWrapperRight: css({
-    padding: '10px 0',
-    minWidth: '120px',
+  // vertical analog of the horizontal wrapper above; VizLayout's legend scroll
+  // container is a full-height flex column, so auto margins center the capped
+  // scale vertically while content hugs the left edge (extra configured legend
+  // width becomes empty space to the right of the values)
+  colorScaleWrapperVertical: css({
+    height: '100%',
+    maxHeight: '300px',
+    margin: 'auto 0',
+    padding: '10px 8px',
   }),
 });
