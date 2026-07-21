@@ -68,12 +68,11 @@ describe('RecentJobs', () => {
       expect(await screen.findByText('ada@example.com')).toBeInTheDocument();
     });
 
-    it('leaves the triggered by cell empty when no user triggered the job', async () => {
+    it('shows Grafana for both columns when no user triggered the job', async () => {
       setup([createJob()]);
 
       expect(await screen.findByText('job-1')).toBeInTheDocument();
-      expect(screen.queryByText('System')).not.toBeInTheDocument();
-      expect(screen.getByText('Grafana')).toBeInTheDocument();
+      expect(screen.getAllByText('Grafana')).toHaveLength(2);
     });
 
     it('shows the webhook sender with the provider as the origin', async () => {
@@ -107,8 +106,10 @@ describe('RecentJobs', () => {
 
       await user.click(await screen.findByRole('button', { name: /toggle row expanded/i }));
 
-      expect(await screen.findByText('triggeredBy')).toBeInTheDocument();
-      expect(screen.getByText(/amalavet \(via Webhook\) GitHub ID:12345/)).toBeInTheDocument();
+      expect(await screen.findByText('webhookSender')).toBeInTheDocument();
+      expect(screen.getAllByText(/amalavet/)).toHaveLength(2);
+      expect(screen.getByText('webhookSenderId')).toBeInTheDocument();
+      expect(screen.getByText(/12345/)).toBeInTheDocument();
     });
 
     it('shows user attribution in the expanded job specification', async () => {
@@ -128,8 +129,11 @@ describe('RecentJobs', () => {
 
       await user.click(await screen.findByRole('button', { name: /toggle row expanded/i }));
 
-      expect(await screen.findByText('triggeredBy')).toBeInTheDocument();
-      expect(screen.getByText(/Ada Lovelace, ada@example\.com, user:abc123/)).toBeInTheDocument();
+      expect(await screen.findByText('author')).toBeInTheDocument();
+      expect(screen.getByText('authorEmail')).toBeInTheDocument();
+      expect(screen.getByText('createdBy')).toBeInTheDocument();
+      expect(screen.getByText(/ada@example\.com/)).toBeInTheDocument();
+      expect(screen.getByText(/user:abc123/)).toBeInTheDocument();
     });
   });
 
@@ -138,7 +142,7 @@ describe('RecentJobs', () => {
       setTestFlags({ 'provisioning.userAttribution': false });
     });
 
-    it('hides the triggered by column', async () => {
+    it('hides the by column', async () => {
       setup([
         createJob({
           metadata: {
@@ -150,7 +154,7 @@ describe('RecentJobs', () => {
       ]);
 
       expect(await screen.findByText('job-1')).toBeInTheDocument();
-      expect(screen.queryByText('Triggered by')).not.toBeInTheDocument();
+      expect(screen.queryByText('By')).not.toBeInTheDocument();
       expect(screen.queryByText('Ada Lovelace')).not.toBeInTheDocument();
     });
   });
