@@ -265,6 +265,22 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 		{Key: "language", Operator: "in", Values: []string{"promql"}},
 	}
 	assert.Nil(t, validateHybridSearchRequest(r))
+
+	r = valid()
+	r.MinRelevance = "low"
+	assert.Nil(t, validateHybridSearchRequest(r))
+
+	r = valid()
+	r.MinRelevance = ""
+	assert.Nil(t, validateHybridSearchRequest(r))
+
+	r = valid()
+	r.MinRelevance = "med"
+	wantInvalid(validateHybridSearchRequest(r), "unsupported min_relevance")
+
+	r = valid()
+	r.MinRelevance = "0.5"
+	wantInvalid(validateHybridSearchRequest(r), "unsupported min_relevance")
 }
 
 func TestHybridLexicalRequest(t *testing.T) {

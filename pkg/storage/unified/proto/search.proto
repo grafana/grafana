@@ -302,6 +302,15 @@ message HybridSearchRequest {
   // promql, logql, traceql, sql). Every key is enforced natively by
   // BOTH legs. Any other key or language fails the request.
   repeated Requirement filters = 5;
+
+  // Minimum relevance a result must reach to be returned. One of:
+  // "lowest", "low", "medium", "high", "highest"; empty keeps every
+  // result. Levels resolve to server-calibrated, model-specific score
+  // thresholds targeting ~95/85/70/50/30% recall respectively.
+  // Best-effort: ignored (nothing dropped) when the server has no
+  // reranker configured or the rerank call fails. Unknown values are
+  // INVALID_ARGUMENT.
+  string min_relevance = 6;
 }
 
 message HybridSearchResponse {
@@ -321,9 +330,10 @@ message HybridSearchResult {
   // Folder UID.
   string folder = 3;
 
-  // Relevance: higher = better; scale is backend-defined (RRF today,
-  // possibly a reranking stage later). Opaque ordering signal; NOT
-  // comparable to VectorSearchResult.score (raw cosine distance).
+  // Relevance: higher = better; scale is backend-defined. With a reranker
+  // configured this is the calibrated cross-encoder relevance (roughly
+  // 0-1); otherwise it is the RRF fusion score. Opaque ordering signal;
+  // NOT comparable to VectorSearchResult.score (raw cosine distance).
   double score = 4;
 
   // Matching embedded chunks, best first, capped at 10 per result.

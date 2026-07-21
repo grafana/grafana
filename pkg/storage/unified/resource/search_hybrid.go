@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -321,6 +322,11 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 	}
 	if req.SemanticQuery != "" && strings.TrimSpace(req.SemanticQuery) == "" {
 		return reqErr("semantic_query must not be whitespace")
+	}
+	if req.MinRelevance != "" {
+		if _, err := rerank.ParseRelevance(req.MinRelevance); err != nil {
+			return reqErr(fmt.Sprintf("unsupported min_relevance %q (expected lowest, low, medium, high, or highest)", req.MinRelevance))
+		}
 	}
 	// Duplicate keys would diverge between legs: the lexical leg ANDs
 	// repeated requirements while the vector backend keeps the last one.
