@@ -25,7 +25,7 @@ type backendRecord struct {
 
 // there won't be a cloud apps router in enterprise
 // can be in OSS right now, RoutesLoader stays in enterprise in cloud
-type Router struct {
+type BasicRouter struct {
 	loader RoutesLoader
 
 	dialer     *transport.DialHolder
@@ -40,8 +40,8 @@ type Router struct {
 	backendRecords map[string]*backendRecord
 }
 
-func NewRouter(loader RoutesLoader) *Router {
-	return &Router{
+func NewRouter(loader RoutesLoader) *BasicRouter {
+	return &BasicRouter{
 		loader:         loader,
 		mux:            NewPathMux("cloud-apps"),
 		transports:     map[tlsCacheKey]*http.Transport{},
@@ -53,7 +53,7 @@ func NewRouter(loader RoutesLoader) *Router {
 // caching one on first use. Called only from reconcile (single goroutine), so
 // the transports map needs no lock. Backends sharing a tlsCacheKey share a
 // transport, so their connection pools are shared too.
-func (cr *Router) transportFor(key tlsCacheKey) (*http.Transport, error) {
+func (cr *BasicRouter) transportFor(key tlsCacheKey) (*http.Transport, error) {
 	if t, ok := cr.transports[key]; ok {
 		return t, nil
 	}
@@ -87,12 +87,16 @@ func (cr *Router) transportFor(key tlsCacheKey) (*http.Transport, error) {
 
 // Handler serves the reverse-proxy tree. server.go mounts it at /apis; the
 // PathMux routes by group prefix from there.
-func (cr *Router) Handler() http.Handler {
+func (cr *BasicRouter) Handler(next http.Handler) http.Handler {
+	// NOTE: when implementing OpenAPIV3Handler(), we need to support
+	// serverAddrressByClientCIDRs in /apis to allow local in-network clients to be able to connect directly as desired
+	//
+	// 2 routes to explicity handle: /apis (discovery) and /openapi/v3
 	return cr.mux
 }
 
 // OpenAPIV3Handler serves the merged OpenAPI v3 document.
-func (cr *Router) OpenAPIV3Handler() http.Handler {
+func (cr *BasicRouter) OpenAPIV3Handler() http.Handler {
 	// TODO: merge local control-plane specs with proxied backends' specs.
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "openapi v3 not implemented", http.StatusNotImplemented)
@@ -101,7 +105,7 @@ func (cr *Router) OpenAPIV3Handler() http.Handler {
 
 // Run does an initial load, then reconciles on every coalesced wake from the
 // loader until ctx is cancelled. A non-nil return is fatal by design.
-func (r *Router) Run(ctx context.Context) error {
+func (r *BasicRouter) Run(ctx context.Context) error {
 	dirty, err := r.loader.Notify(ctx)
 	if err != nil {
 		return fmt.Errorf("router: notify: %w", err)
@@ -122,7 +126,7 @@ func (r *Router) Run(ctx context.Context) error {
 // reconcile re-reads the full desired route set and converges backendRecords to
 // it: upsert changed/new groups, leave unchanged ones (RV match) untouched, drop
 // groups that disappeared. Level-triggered, so it is safe to run on any wake.
-func (r *Router) reconcile(ctx context.Context) {
+func (r *BasicRouter) reconcile(ctx context.Context) {
 	cfgs, err := r.loader.Load(ctx)
 	if err != nil {
 		// Keep serving last-known-good; a later wake retries.
@@ -167,7 +171,7 @@ func (r *Router) reconcile(ctx context.Context) {
 // buildBackendConfig turns a RouteConfig into a servable backendConfig. Build
 // errors are captured in buildErr so the handler serves a 500 rather than the
 // reconcile loop failing the whole set.
-func (r *Router) buildBackendConfig(cfg *RouteConfig) *backendConfig {
+func (r *BasicRouter) buildBackendConfig(cfg *RouteConfig) *backendConfig {
 	rs := cfg.Backend
 	if rs.Mode != v1alpha2.RouteBackendSpecModeForward {
 		// TODO: handle operator/plugin modes.

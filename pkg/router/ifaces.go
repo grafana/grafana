@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 )
 
@@ -17,8 +18,8 @@ type RouteConfig struct {
 	// How the prefix is handled.  This is always required
 	Backend v1alpha2.RouteBackendSpec
 
-	// For operator+plugin backends, we need the manifest to know how to handle requests
-	Manifest *v1alpha2.AppManifestSpec // includes group, versions, resources, and custom route information
+	// Includes group, versions, resources, and custom route information
+	Manifest app.ManifestData
 }
 
 type RoutesLoader interface {
@@ -32,19 +33,29 @@ type RoutesLoader interface {
 	Notify(context.Context) (<-chan struct{}, error)
 }
 
-type Interface interface {
-	// The loop that sets up the loader's notify and process ongoing events. Ready will return nil when it's done.
+// Backend corresponds to one served Group
+type Backend interface {
+	// Handler
+	Handler() http.Handler
+
+	// OpenAPIV3Handler
+	OpenAPIV3Handler() http.Handler
+
+	// Ready is the proof that passed configuration is correct and we are able to serve.
+	Ready(context.Context) error
+}
+
+type Router interface {
+	// Run runs the loop that sets up the loader's notify and process ongoing events.
+	// Ready will return nil when it's done.
 	Run(context.Context) error
 
 	// Health returns nil when the router is fully initialized, connected to required databases, and ready to receive traffic.
 	Ready(context.Context) error
 
-	// returns nil unless the router is in a non-recoverable state, such as a deadlock, and requires a full restart.
+	// Alive returns nil unless the router is in a non-recoverable state, such as a deadlock, and requires a full restart.
 	Alive(context.Context) error
 
-	// The exposed HTTP handler attached to /apis*
-	Handler() http.Handler
-
-	// The exposed HTTP handler attached to /openapi/v3*
-	OpenAPIV3Handler() http.Handler
+	// Handler will be passed routes for /apis* and /openapi/v3*, everything else will fallthrough to next
+	Handler(next http.Handler) http.Handler
 }

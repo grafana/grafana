@@ -11,7 +11,7 @@ over time.
 The generic router lives here in OSS; only the loader (which knows the cloud kinds) is enterprise.
 
 - **this package (`pkg/router`, OSS)** — the generic machinery: `Router` (reconcile +
-  serving), `PathMux`, `ProxyServer`, `Holder`, `backendHandler`, and the `RouteConfig` /
+  serving), `PathMux`, `ProxyServer`, `backendHandler`, and the `RouteConfig` /
   `RoutesLoader` / `Interface` contracts (`ifaces.go`).
 - **`.../appmanifest/pkg/app/router` (enterprise)** — only `Loader` (`routes_loader.go`): the
   `RoutesLoader` implementation that produces `[]*RouteConfig` from the cloud control plane. How it
@@ -140,13 +140,18 @@ The signal and the state are split; do not conflate them.
   close eagerly on swap, or you cut live requests. (Transports are currently shared per
   `tlsCacheKey` and not closed — revisit when per-backend teardown is added.)
 
-## Holder hand-off (`holder.go`)
+## Lifecycle / ownership
 
-The `Router` is built inside the App's `New()` (the only place k8s clients exist) but consumed by
-`server.go` (which runs the proxy). `Holder` is the one-shot, concurrency-safe hand-off: `New()`
-calls `Set`, `server.go` blocks in `Get` until published (or its context ends). The same `Holder`
-pointer is threaded through the App's `SpecificConfig`. This is what lets construction and
-consumption happen on different goroutines with no ordering assumption.
+The App owns the whole proxy. In the App's `New()` (the only place k8s clients exist), both the
+`Router` (reconcile loop) and the `ProxyServer` (listener) are built and registered as app runnables
+via `AddRunnable`. The SDK's "app runners" post-start hook drives both `Run(ctx)` methods for the
+life of the process. One owner, one crash path: if either runnable returns an error, the app's
+MultiRunner cancels the rest and brings the process down — which is intended, since both must live
+for the app to be functional. `server.go` does not manage the proxy's lifecycle.
+
+The proxy listen address/TLS (`ProxyServerConfig`) flows in through the App's `SpecificConfig`; a
+non-empty `Addr` is the standalone signal that turns the proxy on (empty → grafana-server mode, no
+proxy).
 
 ## Security
 
