@@ -2547,6 +2547,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/lezer-logql@npm:0.4.0":
+  version: 0.4.0
+  resolution: "@grafana/lezer-logql@npm:0.4.0"
+  peerDependencies:
+    "@lezer/lr": 1.4.10
+  checksum: 10/451f3b62e636dd2384b7942dbe5846de442cd6f641ef4896c4a5f4cec09ea037d38e470582ff16b88b07e696a06adf21bb1fd278297757fcff4b759077723492
+  languageName: node
+  linkType: hard
+
 "@grafana/llm@npm:1.0.9":
   version: 1.0.9
   resolution: "@grafana/llm@npm:1.0.9"
@@ -18562,6 +18571,7 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/i18n": "workspace:*"
     "@grafana/levitate": "npm:0.17.2"
+    "@grafana/lezer-logql": "npm:0.4.0"
     "@grafana/llm": "npm:1.0.9"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.10.0"
