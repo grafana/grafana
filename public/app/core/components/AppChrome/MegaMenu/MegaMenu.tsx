@@ -236,11 +236,6 @@ export const MegaMenu = memo(
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
               <>
-                {config.featureToggles.scopeFilters && (
-                  <ErrorBoundaryAlert boundaryName="megamenu-scopes-dashboards">
-                    <ScopesDashboards inline />
-                  </ErrorBoundaryAlert>
-                )}
                 {isLoading ? (
                   <ul className={styles.itemList} aria-label={navLabel} aria-busy>
                     <MegaMenuSkeleton />
@@ -256,6 +251,11 @@ export const MegaMenu = memo(
                   </ul>
                 )}
                 <MegaMenuExtensionPoint />
+                {config.featureToggles.scopeFilters && (
+                  <ErrorBoundaryAlert boundaryName="megamenu-scopes-dashboards">
+                    <ScopesDashboards inline />
+                  </ErrorBoundaryAlert>
+                )}
               </>
             </ScrollContainer>
           </div>
