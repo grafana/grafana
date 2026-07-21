@@ -56,7 +56,6 @@ export function ScopesDashboards({ inline = false }: ScopesDashboardsProps = {})
     } else if (dashboards.length === 0 && scopeNavigations.length === 0) {
       return (
         <>
-          {inline && <Divider spacing={1} />}
           <div className={styles.container} data-testid="scopes-dashboards-container">
             <div className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForScope">
               <Trans i18nKey="scopes.dashboards.noResultsForScopes">
@@ -64,6 +63,7 @@ export function ScopesDashboards({ inline = false }: ScopesDashboardsProps = {})
               </Trans>
             </div>
           </div>
+          {inline && <Divider spacing={1} />}
         </>
       );
     }
@@ -71,7 +71,6 @@ export function ScopesDashboards({ inline = false }: ScopesDashboardsProps = {})
 
   return (
     <>
-      {inline && <Divider spacing={1} />}
       <div className={styles.container} data-testid="scopes-dashboards-container">
         <ScopesDashboardsTreeSearch disabled={loading} query={searchQuery} onChange={changeSearchQuery} />
 
@@ -104,6 +103,7 @@ export function ScopesDashboards({ inline = false }: ScopesDashboardsProps = {})
           </p>
         )}
       </div>
+      {inline && <Divider spacing={1} />}
     </>
   );
 }

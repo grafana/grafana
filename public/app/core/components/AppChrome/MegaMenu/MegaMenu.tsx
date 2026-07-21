@@ -6,11 +6,9 @@ import { memo, forwardRef, useId } from 'react';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { ErrorBoundaryAlert, Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
@@ -251,11 +249,6 @@ export const MegaMenu = memo(
                   </ul>
                 )}
                 <MegaMenuExtensionPoint />
-                {config.featureToggles.scopeFilters && (
-                  <ErrorBoundaryAlert boundaryName="megamenu-scopes-dashboards">
-                    <ScopesDashboards inline />
-                  </ErrorBoundaryAlert>
-                )}
               </>
             </ScrollContainer>
           </div>
