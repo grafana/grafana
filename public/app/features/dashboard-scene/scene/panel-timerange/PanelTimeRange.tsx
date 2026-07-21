@@ -27,7 +27,7 @@ import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { DEFAULT_COMPARE_OPTIONS, PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
-import { getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
+import { getCompareSeriesRefId, getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
 
 export interface PanelTimeRangeState extends SceneTimeRangeState {
   enabled?: boolean;
@@ -111,13 +111,21 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       return extraQueries;
     }
 
-    const targets = request.targets.filter((query: SceneDataQuery) => query.timeRangeCompare !== false);
+    const targets = request.targets
+      .filter((query: SceneDataQuery) => query.timeRangeCompare !== false)
+      .map((query) => ({
+        ...query,
+        // Distinct from the primary request so query caches and panels don't collide on identity.
+        refId: getCompareSeriesRefId(query.refId),
+      }));
     if (targets.length) {
       extraQueries.push({
         req: {
           ...request,
           targets,
           range: compareRange,
+          // Must match compare range; inheriting primary rangeRaw (to: 'now') enables Prometheus incremental cache incorrectly.
+          rangeRaw: compareRange.raw,
         },
         processor: timeShiftAlignmentProcessor,
       });

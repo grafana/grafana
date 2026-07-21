@@ -107,7 +107,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     subMenu.push({
       text: t('share-panel.menu.share-link-title', 'Share link'),
       iconClassName: 'link',
-      shortcut: 'p u',
       onClick: () => {
         DashboardInteractions.sharingCategoryClicked({
           item: shareDashboardType.link,
