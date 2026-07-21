@@ -11,6 +11,9 @@ import (
 type VectorMetrics struct {
 	SearchDuration               *prometheus.HistogramVec
 	EmbedDuration                *prometheus.HistogramVec
+	RerankDuration               *prometheus.HistogramVec
+	RerankFallbacksTotal         *prometheus.CounterVec
+	RerankDroppedResultsTotal    *prometheus.CounterVec
 	ReconcilerProcessDuration    *prometheus.HistogramVec
 	ReconcilerPendingEvents      prometheus.Gauge
 	ReconcilerRetriesTotal       *prometheus.CounterVec
@@ -45,6 +48,22 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"model", "task", "status"}),
+		RerankDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "vector_storage_rerank_duration_seconds",
+			Help:                            "Time (in seconds) spent in a single rerank Scorer call to the provider (Vertex/Bedrock), labeled by model and status (ok|error|timeout).",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"model", "status"}),
+		RerankFallbacksTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_rerank_fallbacks_total",
+			Help: "Total HybridSearch requests that returned RRF-ordered results because the rerank call failed (fail-open), labeled by model and reason (timeout|error).",
+		}, []string{"model", "reason"}),
+		RerankDroppedResultsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_rerank_dropped_results_total",
+			Help: "Total HybridSearch results dropped by the min_relevance threshold, labeled by model and requested level.",
+		}, []string{"model", "level"}),
 		ReconcilerProcessDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "vector_storage_reconciler_process_duration_seconds",
 			Help:                            "Time (in seconds) to process a single embedding event in the reconciler, labeled by group, resource, and outcome status.",
