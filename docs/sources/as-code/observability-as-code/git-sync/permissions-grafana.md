@@ -163,9 +163,9 @@ When Git Sync creates a provisioned folder, it assigns these default permissions
 ### Modify folder-level permissions
 
 {{< admonition type="note" >}}
-To safely modify permissions, each provisioned folder should include a `.folder.json` metadata file with the folder's UID. Without this file, folder permissions may be lost if the folder is moved to a different path in the Git repository.
+To safely modify permissions, each provisioned folder should include a `_folder.json` metadata file with the folder's UID. Without this file, folder permissions may be lost if the folder is moved to a different path in the Git repository.
 
-For folders created from the Grafana UI, the metadata file is added automatically. If your folder is missing the metadata file, the UI shows a warning with instructions on how to add it.
+For folders created from the Grafana UI, the metadata file is added automatically. If your folder is missing the metadata file, the UI shows a warning with instructions on how to add it. Refer to [The Git Sync folder metadata file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync/#the-git-sync-folder-metadata-file) for details about this file and why it exists.
 {{< /admonition >}}
 
 You can customize folder permissions using:
