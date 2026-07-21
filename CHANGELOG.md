@@ -1,3 +1,19 @@
+<!-- 12.4.6 START -->
+
+# 12.4.6 (2026-07-21)
+
+### Features and enhancements
+
+- **Alerting:** Add protected fields authorization check to provisioning API [#127940](https://github.com/grafana/grafana/pull/127940), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Alerting:** Return 403 instead of 500 on contact point provenance mismatch [#127814](https://github.com/grafana/grafana/pull/127814), [@rwwiv](https://github.com/rwwiv)
+- **Go:** Update version to 1.26.5 [#128017](https://github.com/grafana/grafana/pull/128017), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Jaeger:** Handle gzip, deflate, and brotli compressed API responses [#128062](https://github.com/grafana/grafana/pull/128062), [@zoltanbedi](https://github.com/zoltanbedi)
+- **alerting:** fix ORM table mapping bug causing SELECT alert_rule columns FROM user on PostgreSQL [#128753](https://github.com/grafana/grafana/pull/128753), [@dhananjay6561](https://github.com/dhananjay6561)
+
+<!-- 12.4.6 END -->
 <!-- 12.4.5 START -->
 
 # 12.4.5 (2026-06-23)

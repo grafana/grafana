@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/annotationslist/panelcfg.cue file.
 
-export const pluginVersion = "12.4.6";
+export const pluginVersion = "12.4.7";
 
 export interface Options {
   limit: number;
