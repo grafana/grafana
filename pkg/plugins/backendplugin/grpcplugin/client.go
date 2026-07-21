@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 
 	"github.com/hashicorp/go-hclog"
@@ -58,6 +59,23 @@ func newClientTracerProvider(tracer trace.Tracer) trace.TracerProvider {
 	return &clientTracerProvider{tracer: tracer}
 }
 
+// illegalArgChars matches shell metacharacters that should never appear in
+// plugin executable arguments. Because exec.Command does not invoke a shell,
+// these characters are not inherently dangerous at the OS level, but their
+// presence almost certainly indicates a misconfiguration or injection attempt.
+var illegalArgChars = regexp.MustCompile(`[;&|` + "`" + `$<>(){}]`)
+
+// validateExecArgs returns an error if any argument contains characters that
+// could be interpreted as shell metacharacters.
+func validateExecArgs(args []string) error {
+	for _, arg := range args {
+		if illegalArgChars.MatchString(arg) {
+			return errors.New("plugin executable argument contains invalid characters")
+		}
+	}
+	return nil
+}
+
 func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logger, tracer trace.Tracer) (*goplugin.ClientConfig, error) {
 	executablePath := descriptor.executablePath
 	skipHostEnvVars := descriptor.skipHostEnvVars
@@ -99,6 +117,13 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		if !filepath.IsAbs(cleanPath) {
 			return nil, errors.New("plugin executable path must be an absolute path")
 		}
+		if err := validateExecArgs(descriptor.executableArgs); err != nil {
+			return nil, err
+		}
+		// executablePath has been cleaned and verified to be an absolute path above.
+		// executableArgs have been validated to contain no shell metacharacters.
+		// exec.Command does not invoke a shell, so arguments are passed directly
+		// to the OS without further interpretation, preventing command injection.
 		cfg.Cmd = exec.Command(cleanPath, descriptor.executableArgs...) //nolint:gosec
 		cfg.Cmd.Env = env
 	}
