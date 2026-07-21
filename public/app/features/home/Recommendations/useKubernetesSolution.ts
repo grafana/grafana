@@ -28,11 +28,14 @@ export function useKubernetesSolution(): ExistingSolutionProviderResult {
   // react-use's useAsync has no `enabled` option: gate inside the callbacks (with
   // `enabled` in the deps) so a missing or inaccessible app never issues Kubernetes
   // queries; the effects re-run with the real fetches once the gate opens.
-  const {
-    value: datasource,
-    loading: resolving,
-    error: resolutionError,
-  } = useAsync(async () => (enabled ? resolveKubernetesDatasource() : undefined), [enabled]);
+  //
+  // The probe value is wrapped so only an enabled run can produce a defined value: on
+  // the render where `enabled` flips true, useAsync still reports the disabled run's
+  // settled `undefined`, which must read as loading — not as a settled empty probe.
+  const probe = useAsync(
+    async () => (enabled ? { datasource: await resolveKubernetesDatasource() } : undefined),
+    [enabled]
+  );
   const { value: inventory, loading: inventoryLoading } = useAsync(
     async () => (enabled ? fetchKubernetesInventory() : undefined),
     [enabled]
@@ -49,12 +52,18 @@ export function useKubernetesSolution(): ExistingSolutionProviderResult {
     return { loading: settingsLoading, item: null };
   }
 
-  if (resolving) {
+  // A rejected probe fails closed: an unusable datasource renders as no data.
+  if (probe.error) {
+    return { loading: false, item: null };
+  }
+
+  // Undefined covers both a probe in flight and a stale disabled-run frame; only an
+  // enabled run's settled result may decide between the card and the empty state.
+  if (probe.value === undefined) {
     return { loading: true, item: null };
   }
 
-  // A rejected probe fails closed: an unusable datasource renders as no data.
-  if (resolutionError || !datasource) {
+  if (probe.value.datasource === null) {
     return { loading: false, item: null };
   }
 
@@ -67,7 +76,7 @@ export function useKubernetesSolution(): ExistingSolutionProviderResult {
         health,
         cpuSeries: cpuSeries ?? null,
         cpuLoading,
-        datasourceName: datasource.name,
+        datasourceName: probe.value.datasource.name,
       },
       settings
     ),

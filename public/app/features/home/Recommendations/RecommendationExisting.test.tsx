@@ -120,6 +120,28 @@ describe('RecommendationExisting', () => {
     expect(mockFetchInventory).not.toHaveBeenCalled();
   });
 
+  it('keeps the skeleton (never the no-data card) when the plugin gate opens before the probe resolves', async () => {
+    // Regression: on the render where the bridge settles, useAsync still carries the
+    // disabled run's settled undefined — it must read as loading, not as settled empty.
+    mockUsePluginBridge.mockReturnValue({ loading: true, installed: undefined, settings: undefined });
+    let resolveProbe: (value: typeof datasource) => void = () => {};
+    mockResolveDatasource.mockImplementation(() => new Promise((resolve) => (resolveProbe = resolve)));
+
+    const { rerender } = render(<RecommendationExisting />);
+    expect(await screen.findByTestId('recommendation-existing-skeleton')).toBeInTheDocument();
+
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: true, settings });
+    rerender(<RecommendationExisting />);
+
+    expect(screen.getByTestId('recommendation-existing-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'No data flowing yet' })).not.toBeInTheDocument();
+
+    resolveProbe(datasource);
+
+    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'No data flowing yet' })).not.toBeInTheDocument();
+  });
+
   it('shows the no-data card when resolution returns null', async () => {
     mockResolveDatasource.mockResolvedValue(null);
     mockFetchInventory.mockRejectedValue(new Error('No Prometheus datasource with Kubernetes data'));
