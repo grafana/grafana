@@ -1,4 +1,4 @@
-const http = require('http');
+const https = require('https');
 
 if (process.argv.length !== 3) {
   throw new Error('invalid command line: use node sendLogs.js LOKIC_BASE_URL');
@@ -9,7 +9,7 @@ const LOKI_BASE_URL = process.argv[2];
 // helper function, do a http request
 async function jsonRequest(data, method, url, expectedStatusCode) {
   return new Promise((resolve, reject) => {
-    const req = http.request(
+    const req = https.request(
       {
         protocol: url.protocol,
         host: url.hostname,
