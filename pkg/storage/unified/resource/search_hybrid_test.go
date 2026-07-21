@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -520,6 +521,30 @@ func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestHybridSearch_LexicalEmbeddedErrorCodes(t *testing.T) {
+	// Embedded codes with retry semantics survive; anything else is a
+	// server fault for a server-built request.
+	cases := map[int32]codes.Code{
+		http.StatusServiceUnavailable:  codes.Unavailable,
+		http.StatusTooManyRequests:     codes.ResourceExhausted,
+		http.StatusBadRequest:          codes.Internal,
+		http.StatusInternalServerError: codes.Internal,
+	}
+	for embedded, want := range cases {
+		idx := &hybridFakeIndex{resp: &resourcepb.ResourceSearchResponse{
+			Error: &resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
+		}}
+		s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
+		s.search = &fakeSearchBackend{idx: idx}
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.Error(t, err)
+		assert.Equal(t, want, status.Code(err), "embedded code %d", embedded)
+	}
 }
 
 // recordingRateLimiter satisfies vector.RateLimiter and records whether it

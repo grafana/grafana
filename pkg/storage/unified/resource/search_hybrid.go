@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 
@@ -79,7 +80,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return fmt.Errorf("lexical leg: %w", err)
 		}
 		if lexResp.Error != nil {
-			return fmt.Errorf("lexical leg: %s", lexResp.Error.Message)
+			return fmt.Errorf("lexical leg: %w", grpcErrorFromErrorResult(lexResp.Error))
 		}
 		lex = lexicalHitsFromResponse(lexResp)
 		return nil
@@ -131,6 +132,19 @@ func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error
 		return status.Error(codes.Internal, op)
 	default:
 		return err
+	}
+}
+
+// grpcErrorFromErrorResult preserves embedded codes that carry retry
+// semantics; anything else is a server fault for a server-built request.
+func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
+	switch e.Code {
+	case http.StatusTooManyRequests:
+		return status.Error(codes.ResourceExhausted, e.Message)
+	case http.StatusServiceUnavailable:
+		return status.Error(codes.Unavailable, e.Message)
+	default:
+		return fmt.Errorf("%s (code %d)", e.Message, e.Code)
 	}
 }
 
