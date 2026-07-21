@@ -674,9 +674,9 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
-		},
+		}),
 	}, nil)
 	require.NoError(t, err)
 
@@ -716,9 +716,9 @@ func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, colum
 	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                          t.TempDir(),
-		FileThreshold:                 threshold,
-		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider},
+		Root:          t.TempDir(),
+		FileThreshold: threshold,
+		SearchFields:  resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -782,9 +782,9 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-		SelectableFieldsForKinds: map[resource.LowerGroupResource][]string{
+		SearchFields: resource.NewSearchFieldsRegistry(map[resource.LowerGroupResource][]string{
 			resource.NewLowerGroupResource(key.Group, key.Resource): {"spec.some.field", "spec.some.other.field"},
-		},
+		}, nil, nil),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1024,9 +1024,9 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		FileThreshold:        threshold, // use in-memory for tests
 		PostRankAuthzEnabled: true,
 		PostRankAuthz:        cfg,
-		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
-		},
+		}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
