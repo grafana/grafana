@@ -78,7 +78,7 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "grafana.multiTenantNavTree"
     | "grafana.exploreMetricsSidebar"
-    | "dashboards.thresholdsInterpolation";
+    | "grafana.thresholdsInterpolation";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
