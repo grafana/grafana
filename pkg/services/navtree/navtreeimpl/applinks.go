@@ -22,6 +22,12 @@ const appObservabilityAppID = "grafana-app-observability-app"
 const assistantAppID = "grafana-assistant-app"
 const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
 
+var assistantOSSNavigationPaths = map[string]struct{}{
+	"/a/grafana-assistant-app":           {},
+	"/a/grafana-assistant-app/workspace": {},
+	"/a/grafana-assistant-app/settings":  {},
+}
+
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
@@ -192,6 +198,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			continue
 		}
 
+		if !s.shouldIncludeAssistantNavigation(plugin, include) {
+			continue
+		}
+
 		if !s.shouldIncludeInvestigations(plugin, include, c) {
 			continue
 		}
@@ -297,6 +307,15 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes) bool {
+	if plugin.ID != assistantAppID || s.cfg.IsEnterprise || s.cfg.StackID != "" {
+		return true
+	}
+
+	_, allowed := assistantOSSNavigationPaths[include.Path]
+	return allowed
 }
 
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {
