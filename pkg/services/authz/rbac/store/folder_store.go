@@ -178,10 +178,12 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 }
 
 // listFoldersViaSearch lists folder references (UID + parent) from the search
-// index in a single call. The resource client authenticates to unified storage
-// as the Grafana service identity, so the search returns every folder in the
-// namespace (the folder tree is built for inherited authorization, not filtered
-// to the calling user) and does not recurse into per-item authorization.
+// index in a single call. Hits carry only indexed fields (no value blob), so
+// the response is not subject to the object-list byte page cap that forces
+// listFoldersViaList into many paged round-trips. Both paths run as the
+// Grafana service identity and return every folder in the namespace — the
+// folder tree is built for inherited authorization, not filtered to the
+// calling user.
 func (s *APIFolderStore) listFoldersViaSearch(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.apistore.ListFolders.search")
 	defer span.End()
