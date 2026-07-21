@@ -117,6 +117,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isReadOnlyControl && styles.readOnlyControl
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          data-variable-name={state.name}
           onPointerDown={markUserInitiated}
         >
           <div className={styles.switchControl}>
@@ -143,6 +144,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isReadOnlyControl && styles.readOnlyControl
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          data-variable-name={state.name}
           onPointerDown={markUserInitiated}
         >
           <VariableLabel
@@ -166,6 +168,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
           isReadOnlyControl && styles.readOnlyControl
         )}
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+        data-variable-name={state.name}
         onPointerDown={markUserInitiated}
       >
         <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
