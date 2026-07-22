@@ -1,6 +1,6 @@
 import { css, keyframes } from '@emotion/css';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { AssistantPromptCard, createAssistantContextItem } from '@grafana/assistant';

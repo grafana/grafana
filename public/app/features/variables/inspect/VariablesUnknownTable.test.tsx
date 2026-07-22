@@ -86,21 +86,6 @@ describe('VariablesUnknownTable', () => {
         expect(screen.getByText('Renamed Variable')).toBeInTheDocument();
         expect(screen.getAllByTestId('VariablesUnknownButton')).toHaveLength(1);
       });
-
-      describe('but when the unknown processing takes a while', () => {
-        let user: ReturnType<typeof userEvent.setup>;
-
-        beforeEach(() => {
-          jest.useFakeTimers();
-          // Need to use delay: null here to work with fakeTimers
-          // see https://github.com/testing-library/user-event/issues/833
-          user = userEvent.setup({ delay: null });
-        });
-
-        afterEach(() => {
-          jest.useRealTimers();
-        });
-      });
     });
   });
 });
