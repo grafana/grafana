@@ -10,8 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
-	"github.com/grafana/authlib/types"
-
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -20,20 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// AnnoAuthor and AnnoAuthorEmail carry the display name and email of the user
-// that triggered the job. They are set by the server at creation time and are
-// immutable.
+// The author annotations carry the identity that triggered the job: the display
+// name, email, and unique identifier of the acting user, plus the origin the
+// job came from (UI, API, a Git provider for webhook-created jobs, or Grafana
+// for jobs created by provisioning itself). They are set by the server at
+// creation time and are immutable.
 const (
-	AnnoAuthor      = "provisioning.grafana.app/author"
-	AnnoAuthorEmail = "provisioning.grafana.app/authorEmail"
-)
-
-// AnnoWebhookSender and AnnoWebhookSenderID carry the provider username and
-// unique identifier of the user that triggered a webhook-created job. They are
-// only ever set by the provisioning service identity and are immutable.
-const (
-	AnnoWebhookSender   = "provisioning.grafana.app/webhookSender"
-	AnnoWebhookSenderID = "provisioning.grafana.app/webhookSenderId"
+	AnnoAuthor       = "provisioning.grafana.app/author"
+	AnnoAuthorEmail  = "provisioning.grafana.app/authorEmail"
+	AnnoAuthorID     = "provisioning.grafana.app/authorId"
+	AnnoAuthorOrigin = "provisioning.grafana.app/authorOrigin"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
@@ -406,10 +400,6 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return err
 	}
 
-	if err := validateWebhookSender(ctx, a, job); err != nil {
-		return err
-	}
-
 	if job.Spec.Action == provisioning.JobActionTest && (v.perfTestingEnabled == nil || !v.perfTestingEnabled(ctx)) {
 		return apierrors.NewInvalid(
 			provisioning.JobResourceInfo.GroupVersionKind().GroupKind(),
@@ -424,61 +414,41 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
 	name := job.Annotations[AnnoAuthor]
 	email := job.Annotations[AnnoAuthorEmail]
+	id := job.Annotations[AnnoAuthorID]
+	origin := job.Annotations[AnnoAuthorOrigin]
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if (name == "" && email == "") || identity.IsServiceIdentity(ctx) {
+		if (name == "" && email == "" && id == "" && origin == "") || identity.IsServiceIdentity(ctx) {
 			return nil
 		}
-		id, err := identity.GetRequester(ctx)
+		requester, err := identity.GetRequester(ctx)
 		if err != nil {
 			return apierrors.NewBadRequest("job author annotations must match the requesting user")
 		}
-		if name != "" && name != id.GetName() {
+		if name != "" && name != requester.GetName() {
 			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
 		}
-		if email != "" && email != id.GetEmail() {
+		if email != "" && email != requester.GetEmail() {
 			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
 		}
-	case admission.Update:
-		old, ok := a.GetOldObject().(*provisioning.Job)
-		if !ok {
-			return nil
-		}
-		if old.Annotations[AnnoAuthor] != name {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthor))
-		}
-		if old.Annotations[AnnoAuthorEmail] != email {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorEmail))
-		}
-	case admission.Delete, admission.Connect:
-	}
-
-	return nil
-}
-
-func validateWebhookSender(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
-	sender := job.Annotations[AnnoWebhookSender]
-	senderID := job.Annotations[AnnoWebhookSenderID]
-
-	switch a.GetOperation() {
-	case admission.Create:
-		if sender == "" && senderID == "" {
-			return nil
-		}
-		if info, ok := types.AuthInfoFrom(ctx); !ok || !identity.IsProvisioningServiceIdentity(info) {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotations %s and %s may only be set by the provisioning service", AnnoWebhookSender, AnnoWebhookSenderID))
+		if id != "" && id != requester.GetUID() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorID))
 		}
 	case admission.Update:
 		old, ok := a.GetOldObject().(*provisioning.Job)
 		if !ok {
 			return nil
 		}
-		if old.Annotations[AnnoWebhookSender] != sender {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoWebhookSender))
-		}
-		if old.Annotations[AnnoWebhookSenderID] != senderID {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoWebhookSenderID))
+		for anno, value := range map[string]string{
+			AnnoAuthor:       name,
+			AnnoAuthorEmail:  email,
+			AnnoAuthorID:     id,
+			AnnoAuthorOrigin: origin,
+		} {
+			if old.Annotations[anno] != value {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", anno))
+			}
 		}
 	case admission.Delete, admission.Connect:
 	}
