@@ -7,8 +7,11 @@ import (
 	"github.com/google/go-github/v82/github"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const CheckID = "instance"
 
 var _ checks.Check = (*check)(nil)
 
@@ -25,11 +28,11 @@ func New(cfg *setting.Cfg) checks.Check {
 }
 
 func (c *check) ID() string {
-	return "instance"
+	return CheckID
 }
 
 func (c *check) Name() string {
-	return "instance attribute"
+	return translations.CheckName(CheckID)
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {

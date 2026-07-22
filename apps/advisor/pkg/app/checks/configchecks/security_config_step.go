@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,19 +22,19 @@ type securityConfigStep struct {
 }
 
 func (s *securityConfigStep) Title() string {
-	return "Security config check"
+	return translations.StepTitle(CheckID, SecurityConfigStepID)
 }
 
 func (s *securityConfigStep) Description() string {
-	return "Checks if the Grafana security configuration is set correctly."
+	return translations.StepDescription(CheckID, SecurityConfigStepID)
 }
 
 func (s *securityConfigStep) Resolution() string {
-	return "Follow the documentation for each element."
+	return translations.StepResolution(CheckID, SecurityConfigStepID)
 }
 
 func (s *securityConfigStep) ID() string {
-	return "security_config"
+	return SecurityConfigStepID
 }
 
 func (s *securityConfigStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
@@ -61,7 +62,7 @@ func (s *securityConfigStep) Run(ctx context.Context, log logging.Logger, _ *adv
 				itemPath,
 				[]advisor.CheckErrorLink{
 					{
-						Message: "Avoid default value",
+						Message: translations.LinkMessage("avoid-default-value"),
 						Url:     "https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/",
 					},
 				},

@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sync"
 )
 
 // fileName is the per-locale JSON file. Kept in sync with crowdin.yml's
@@ -51,4 +52,57 @@ func Get(locale string) (map[string]string, error) {
 		return map[string]string{}, fmt.Errorf("parse translations for %s: %w", locale, err)
 	}
 	return result, nil
+}
+
+// enUS holds the parsed en-US source file. Checks code reads its user-facing
+// strings from here (via EN and the helpers below) so the Go code and the
+// translation source can't drift apart: adding or changing a string happens
+// in en-US/grafana-advisor.json, and Crowdin picks it up from there.
+var enUS = sync.OnceValue(func() map[string]string {
+	m, err := Get("en-US")
+	if err != nil || len(m) == 0 {
+		// The en-US file is embedded at compile time; this only trips if it is
+		// malformed, which embed_test.go and parity_test.go catch in CI.
+		panic(fmt.Sprintf("advisor translations: cannot load embedded en-US source: %v", err))
+	}
+	return m
+})
+
+// EN returns the en-US source string for key. If the key is missing from
+// en-US/grafana-advisor.json it returns the key itself, so the gap is visible
+// in the UI and caught by parity_test.go.
+func EN(key string) string {
+	if s, ok := enUS()[key]; ok {
+		return s
+	}
+	return key
+}
+
+// The helpers below build keys with the same conventions the frontend uses to
+// look up translations from IDs present in the API response (see parity_test.go).
+
+// CheckName returns the en-US display name for a check type, e.g. "data source".
+func CheckName(checkTypeID string) string {
+	return EN("advisor." + checkTypeID + ".name")
+}
+
+// StepTitle returns the en-US title for a check step.
+func StepTitle(checkTypeID, stepID string) string {
+	return EN("advisor." + checkTypeID + "." + stepID + ".title")
+}
+
+// StepDescription returns the en-US description for a check step.
+func StepDescription(checkTypeID, stepID string) string {
+	return EN("advisor." + checkTypeID + "." + stepID + ".description")
+}
+
+// StepResolution returns the en-US resolution for a check step.
+func StepResolution(checkTypeID, stepID string) string {
+	return EN("advisor." + checkTypeID + "." + stepID + ".resolution")
+}
+
+// LinkMessage returns the en-US label for a failure-link button, e.g.
+// LinkMessage("fix-me") == "Fix me".
+func LinkMessage(slug string) string {
+	return EN("advisor.link." + slug)
 }

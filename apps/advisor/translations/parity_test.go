@@ -14,10 +14,12 @@ import (
 //   advisor.link.{slug}                                            — failure-link button label
 //
 // The backend does NOT ship these keys on the wire; they're implied by the
-// naming convention. When you add a new check type, step, or new failure-link
-// message, you must:
+// naming convention. The checks code itself reads its user-facing strings from
+// en-US.json through EN() and the helpers in embed.go, so en-US.json is the
+// single source of truth: a key missing there surfaces as the raw key in the
+// UI. When you add a new check type, step, or failure-link message, you must:
 //
-//   1. Wire it in apps/advisor/pkg/app/checks/...
+//   1. Wire it in apps/advisor/pkg/app/checks/... (pointing at the new key)
 //   2. Add the matching entry to en-US.json
 //   3. Update the table below
 //
@@ -44,6 +46,8 @@ var linkSlugs = []string{
 	"configure-provider",
 	"delete-data-source",
 	"fix-me",
+	"install-amazon-managed-service-for-prometheus",
+	"install-azure-monitor-managed-service-for-prometheus",
 	"upgrade",
 	"view-azure-auth-docs",
 	"view-plugin",

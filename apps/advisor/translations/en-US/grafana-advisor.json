@@ -29,6 +29,8 @@
   "advisor.link.configure-provider": "Configure provider",
   "advisor.link.delete-data-source": "Delete data source",
   "advisor.link.fix-me": "Fix me",
+  "advisor.link.install-amazon-managed-service-for-prometheus": "Install Amazon Managed Service for Prometheus",
+  "advisor.link.install-azure-monitor-managed-service-for-prometheus": "Install Azure Monitor Managed Service for Prometheus",
   "advisor.link.upgrade": "Upgrade",
   "advisor.link.view-azure-auth-docs": "View Azure auth docs",
   "advisor.link.view-plugin": "View plugin",
