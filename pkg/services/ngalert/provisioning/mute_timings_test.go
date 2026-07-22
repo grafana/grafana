@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -1166,6 +1167,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 	t.Run("returns ErrTimeIntervalInUse if mute timing is used by rules", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
+		ruleKey := models.GenerateRuleKey(orgID)
 		ruleNsStore := fakeAlertRuleNotificationStore{
 			ListContactPointRoutingsFn: func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 				assertInTransaction(t, ctx)
@@ -1173,7 +1175,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				assert.Equal(t, timingToDelete.Name, q.TimeIntervalName)
 				assert.Empty(t, q.ReceiverName)
 				return map[models.AlertRuleKey]models.ContactPointRouting{
-					models.GenerateRuleKey(orgID): {},
+					ruleKey: {},
 				}, nil
 			},
 		}
@@ -1191,6 +1193,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.ErrorIs(t, err, ErrTimeIntervalInUse)
 		require.Len(t, ruleNsStore.Calls, 1)
 		require.Equal(t, "ListContactPointRoutings", ruleNsStore.Calls[0].Method)
+
+		var gfErr errutil.Error
+		require.ErrorAs(t, err, &gfErr)
+		require.Contains(t, gfErr.LogMessage, ruleKey.UID)
 	})
 
 	t.Run("returns ErrVersionConflict if provided version does not match", func(t *testing.T) {

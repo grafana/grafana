@@ -1,44 +1,18 @@
-import { css } from '@emotion/css';
 import { useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
-import { type IconName, type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { type PluginMeta } from '@grafana/data';
+import { Stack } from '@grafana/ui';
+import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
-interface ExistingItem {
-  title: string;
-  icon: IconName;
-  stats: {
-    primary: string;
-    secondary: string;
-  };
-  alert: {
-    primary: string;
-    secondary: string;
-    action: string;
-    href: string;
-  };
-  action: string;
-  href: string;
-}
+import { ExistingSolutionCard } from './ExistingSolutionCard';
+import { buildKubernetesItem } from './buildKubernetesItem';
+import { KUBERNETES_APP_ID } from './kubernetesData';
+import { type ExistingItem } from './types';
+import { useKubernetesCardData } from './useKubernetesCardData';
 
-const existing: ExistingItem[] = [
-  {
-    title: 'Kubernetes Monitoring',
-    icon: 'kubernetes',
-    stats: {
-      primary: '3 clusters',
-      secondary: '247 pods',
-    },
-    alert: {
-      primary: '2 alerts firing',
-      secondary: 'payments-api · 14 pod restarts in the last hour',
-      action: 'View',
-      href: '#',
-    },
-    action: 'Open K8s app',
-    href: '#',
-  },
+const stubbedExisting: ExistingItem[] = [
   {
     title: 'Hosted Metrics',
     icon: 'chart-line',
@@ -48,7 +22,7 @@ const existing: ExistingItem[] = [
     },
     alert: {
       primary: '3 hosts above 90% disk',
-      secondary: 'web-03 critical at 96% — ~6 h to full',
+      details: ['web-03 critical at 96%, ~6 h to full'],
       action: 'View',
       href: '#',
     },
@@ -64,7 +38,7 @@ const existing: ExistingItem[] = [
     },
     alert: {
       primary: 'Ingest spike detected',
-      secondary: 'checkout-service logs up 3x in the last hour',
+      details: ['checkout-service logs up 3x in the last hour'],
       action: 'View',
       href: '#',
     },
@@ -74,152 +48,83 @@ const existing: ExistingItem[] = [
 ];
 
 export function RecommendationExisting() {
-  const styles = useStyles2(getStyles);
-  const [selected, setSelected] = useState(existing[0]);
+  const { settings, installed, loading: settingsLoading } = usePluginBridge(KUBERNETES_APP_ID);
+  const [selectedTitle, setSelectedTitle] = useState<string>();
 
-  if (!selected) {
-    return null;
+  if (settingsLoading) {
+    return <RecommendationExistingSkeleton />;
   }
 
+  const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
+  if (!installed || !settings || !canAccessPluginPage(settings, bridgePath)) {
+    const selected = stubbedExisting.find((item) => item.title === selectedTitle) ?? stubbedExisting[0];
+    return <ExistingSolutionCard existing={stubbedExisting} selected={selected} onSelect={setSelectedTitle} />;
+  }
+
+  return <LiveSolutionsCard settings={settings} selectedTitle={selectedTitle} onSelect={setSelectedTitle} />;
+}
+
+interface LiveSolutionsCardProps {
+  settings: PluginMeta<{}>;
+  selectedTitle: string | undefined;
+  onSelect: (title: string) => void;
+}
+
+function LiveSolutionsCard({ settings, selectedTitle, onSelect }: LiveSolutionsCardProps) {
+  const { datasource, resolving, resolutionError, inventory, inventoryLoading, health, cpuSeries, cpuLoading } =
+    useKubernetesCardData();
+
+  if (resolving) {
+    return <RecommendationExistingSkeleton />;
+  }
+
+  const kubernetesItem =
+    !resolutionError && datasource
+      ? buildKubernetesItem(
+          {
+            inventory,
+            inventoryLoading,
+            health,
+            cpuSeries: cpuSeries ?? null,
+            cpuLoading,
+            datasourceName: datasource.name,
+          },
+          settings
+        )
+      : null;
+
+  const existing = kubernetesItem ? [kubernetesItem, ...stubbedExisting] : stubbedExisting;
+  const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
+  return <ExistingSolutionCard existing={existing} selected={selected} onSelect={onSelect} />;
+}
+
+// Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the Kubernetes lookups
+// load, so the first paint never shows a solution that a resolving fetch would replace.
+function RecommendationExistingSkeleton() {
   return (
-    <Stack direction="column" justifyContent="space-between" gap={2} flex={1}>
-      <Dropdown
-        overlay={
-          <Menu>
-            <Menu.Group label={t('home.recommendations.switch', 'Switch to another app you run')}>
-              {existing.map((item) => (
-                <Menu.Item
-                  key={item.title}
-                  label={item.title}
-                  icon={item.icon}
-                  onClick={() => setSelected(item)}
-                  active={item === selected}
-                />
-              ))}
-            </Menu.Group>
-          </Menu>
-        }
-      >
-        <Button variant="secondary" fill="text" className={styles.dropdown}>
-          <Stack direction="row" gap={1} alignItems="center">
-            <div className={styles.icon}>
-              <Icon name={selected.icon} size="lg" />
-            </div>
-
-            <Stack direction="column" gap={0}>
-              <Text variant="bodySmall" color="secondary">
-                <span className={styles.subtitle}>
-                  <Trans i18nKey="home.recommendations.existing">Enabled solution</Trans>
-                </span>
-              </Text>
-
-              <Stack direction="row" gap={0.5} alignItems="center">
-                <Text variant="h4" color="primary" role="heading" aria-level={3}>
-                  {selected.title}
-                </Text>
-
-                <Icon name="angle-down" className={styles.chevron} />
-              </Stack>
-            </Stack>
-          </Stack>
-        </Button>
-      </Dropdown>
-
-      <Stack direction="column" gap={2}>
-        <Stack direction="row" alignItems="baseline" columnGap={0.5} rowGap={0} wrap="wrap">
-          <Text variant="h2" color="primary">
-            {selected.stats.primary}
-          </Text>
-
-          <Text variant="body" color="secondary">
-            &middot; {selected.stats.secondary}
-          </Text>
+    <Stack
+      direction="column"
+      justifyContent="space-between"
+      gap={2}
+      flex={1}
+      data-testid="recommendation-existing-skeleton"
+    >
+      <Stack direction="column" gap={1.5}>
+        <Skeleton width={240} height={30} />
+        <Stack direction="row" alignItems="center" gap={1.5}>
+          <Skeleton width={44} height={44} />
+          <Skeleton width={200} height={24} />
         </Stack>
-
-        <div className={styles.alert}>
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Icon name="exclamation-triangle" size="md" className={styles.warning} />
-
-            <Stack direction="row" alignItems="center" columnGap={0.5} rowGap={0} flex="1 1 auto" wrap="wrap">
-              <Text variant="body" color="primary">
-                {selected.alert.primary}
-              </Text>
-
-              <Text variant="body" color="secondary">
-                &middot; {selected.alert.secondary}
-              </Text>
-            </Stack>
-
-            <LinkButton
-              variant="secondary"
-              size="sm"
-              fill="text"
-              icon="angle-right"
-              iconPlacement="right"
-              href={selected.alert.href}
-            >
-              {selected.alert.action}
-            </LinkButton>
-          </Stack>
-        </div>
       </Stack>
 
-      <Stack direction="row" alignItems="center" gap={1}>
-        <LinkButton
-          variant="secondary"
-          size="md"
-          fill="solid"
-          icon="arrow-right"
-          iconPlacement="right"
-          href={selected.href}
-        >
-          {selected.action}
-        </LinkButton>
+      <Stack direction="column" gap={0}>
+        <Skeleton width={140} height={35} />
+        <Skeleton width={100} height={20} />
+      </Stack>
+
+      <Stack direction="row" alignItems="center">
+        <Skeleton width={170} height={32} />
       </Stack>
     </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  dropdown: css({
-    alignSelf: 'flex-start',
-    height: 'auto',
-    padding: theme.spacing(1),
-    margin: theme.spacing(-1),
-    textAlign: 'left',
-
-    '&:hover': {
-      borderColor: theme.colors.border.medium,
-    },
-  }),
-  chevron: css({
-    color: theme.colors.text.secondary,
-
-    '[aria-expanded="true"] &': {
-      transform: 'rotate(180deg)',
-    },
-  }),
-  icon: css({
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.medium}`,
-    color: theme.colors.text.secondary,
-    padding: theme.spacing(1.5),
-    lineHeight: 0,
-  }),
-  subtitle: css({
-    textTransform: 'uppercase',
-    letterSpacing: theme.spacing(0.125),
-    opacity: 0.75,
-  }),
-  alert: css({
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(1),
-  }),
-  warning: css({
-    color: theme.colors.warning.main,
-    margin: theme.spacing(0, 0, 0, 0.5),
-  }),
-});

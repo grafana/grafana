@@ -12,6 +12,7 @@ export interface WebhookSectionProps<T extends FieldValues> {
   name: Path<T>;
   disabledName: Path<T>;
   connectionWebhookDisabled?: boolean;
+  disabledReason?: string;
   disabledError?: string;
 }
 
@@ -21,41 +22,44 @@ export function WebhookSection<T extends FieldValues>({
   name,
   disabledName,
   connectionWebhookDisabled,
+  disabledReason,
   disabledError,
 }: WebhookSectionProps<T>) {
   const isPublic = checkPublicAccess();
   const webhookDisabled = Boolean(useWatch({ control, name: disabledName }));
-  const urlDisabled = webhookDisabled || Boolean(connectionWebhookDisabled);
+  const forcedDisabled = Boolean(connectionWebhookDisabled) || Boolean(disabledReason);
+  const urlDisabled = webhookDisabled || forcedDisabled;
 
   return (
     <ControlledCollapse label={t('provisioning.webhook-section.label-webhook', 'Webhook options')} isOpen={false}>
       <Stack direction="column" gap={2}>
-        <Field
-          noMargin
-          invalid={!!disabledError}
-          error={disabledError}
-          description={
-            connectionWebhookDisabled
-              ? t(
-                  'provisioning.webhook-section.description-webhook-disabled-forced',
-                  'Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.'
-                )
-              : undefined
-          }
-        >
-          <Checkbox
-            {...register(disabledName)}
-            disabled={connectionWebhookDisabled}
-            label={t('provisioning.webhook-section.label-webhook-disabled', 'Disable webhook integration')}
-            description={
-              connectionWebhookDisabled
-                ? undefined
-                : t(
-                    'provisioning.webhook-section.description-webhook-disabled',
-                    'When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.'
-                  )
-            }
-          />
+        <Field noMargin invalid={!!disabledError} error={disabledError}>
+          {forcedDisabled ? (
+            <Checkbox
+              key="forced"
+              disabled
+              checked
+              label={t('provisioning.webhook-section.label-webhook-disabled', 'Disable webhook integration')}
+              description={
+                connectionWebhookDisabled
+                  ? t(
+                      'provisioning.webhook-section.description-webhook-disabled-forced',
+                      'Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.'
+                    )
+                  : disabledReason
+              }
+            />
+          ) : (
+            <Checkbox
+              key="user"
+              {...register(disabledName)}
+              label={t('provisioning.webhook-section.label-webhook-disabled', 'Disable webhook integration')}
+              description={t(
+                'provisioning.webhook-section.description-webhook-disabled',
+                'When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.'
+              )}
+            />
+          )}
         </Field>
         <Field
           noMargin

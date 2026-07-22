@@ -8,11 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -42,29 +40,10 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		},
 	})
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 2 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
-			return
-		}
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list folders: error: %s", err.Error())
-			return
-		}
-		if len(folders.Items) != 2 {
-			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
-			return
-		}
-
-		assert.Len(collect, dashboards.Items, 2)
-		assert.Len(collect, folders.Items, 2)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
+	helper.RequireRepoDashboardCount(t, repo1, 1)
+	helper.RequireRepoFolderCount(t, repo1, 1)
+	helper.RequireRepoDashboardCount(t, repo2, 1)
+	helper.RequireRepoFolderCount(t, repo2, 1)
 
 	// Test: Pull job should fail when trying to manage resources owned by another repository
 	t.Run("pull job should fail when trying to manage resources owned by another repository", func(t *testing.T) {
@@ -185,13 +164,7 @@ func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 
 	// Mimic "Delete and keep resources" from the UI: ensure the
 	// release-orphan-resources finalizer is set, then delete the repo.
-	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
-	]`), metav1.PatchOptions{})
-	require.NoError(t, err, "should patch finalizers")
-
-	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-	helper.WaitForRepositoryDeleted(t, repo)
+	helper.ReleaseAndDeleteRepository(t, repo)
 	common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
 	orphan, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})

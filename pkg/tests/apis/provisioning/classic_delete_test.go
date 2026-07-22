@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -182,20 +181,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		})
 
 		// Verify both dashboards were created
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			count := 0
-			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			for _, d := range dashboards.Items {
-				name := d.GetName()
-				if name == "mixed-classic-uid" || name == "mixed-k8s-uid" {
-					count++
-				}
-			}
-			assert.Equal(collect, 2, count, "both dashboards should exist")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "both dashboards should be created")
+		helper.RequireDashboards(t, "mixed-classic-uid", "mixed-k8s-uid")
 
 		// Delete both files
 		err = os.Remove(filepath.Join(repoPath, "classic.json"))

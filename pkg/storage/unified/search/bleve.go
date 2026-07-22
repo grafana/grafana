@@ -2410,22 +2410,13 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 		// When QueryFields is set, search across each named field (only Name is
 		// used; Type and Boost are ignored because bleve wildcards don't support
 		// analyzers or meaningful relevance scoring).
-		// When QueryFields is empty, default to title + IAM identity fields
-		// (email, login) for backward compatibility with older clients that
-		// don't set QueryFields.
+		// When QueryFields is empty, default to title.
 		if len(req.QueryFields) > 0 {
 			for _, field := range req.QueryFields {
 				addWildcardQueries(disjoin, req.Query, field.Name)
 			}
 		} else {
-			// Default: search title and IAM identity fields (email, login).
-			// IAM user search wraps queries as "*<query>*" — older clients
-			// may not set QueryFields, so we include email/login here for
-			// backward compatibility during the deployment gap.
-			// TODO: remove email and login fields once IAM only sends requests with QueryFields.
 			addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_TITLE)
-			addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"email")
-			addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"login")
 		}
 		return disjoin
 	}

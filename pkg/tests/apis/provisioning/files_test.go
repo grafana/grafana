@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,34 +68,10 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		},
 	})
 
-	var dashboards *unstructured.UnstructuredList
-	var folders *unstructured.UnstructuredList
-	var err error
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 3 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
-			return
-		}
-		folders, err = helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list folders: error: %s", err.Error())
-			return
-		}
-		if len(folders.Items) != 2 {
-			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
-			return
-		}
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 2)
 
-		assert.Len(collect, dashboards.Items, 3)
-		assert.Len(collect, folders.Items, 2)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
-
-	helper.ValidateManagedDashboardsFolderMetadata(t, repo, dashboards.Items)
+	helper.ValidateManagedDashboardsFolderMetadata(t, repo, dashboards)
 
 	t.Run("delete individual dashboard file on configured branch should succeed", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
@@ -109,9 +84,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 
 		// Verify the dashboard is removed from Grafana
 		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json
-		_, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
-		require.Error(t, err, "dashboard should be deleted from Grafana")
-		require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted dashboard")
+		helper.RequireDashboardsNotFound(t, allPanelsUID)
 	})
 
 	t.Run("delete individual dashboard file on branch should succeed", func(t *testing.T) {
@@ -150,8 +123,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "should return MethodNotAllowed for configured branch folder delete")
 
 		// Verify a file inside the folder still exists (operation was rejected)
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "folder", "dashboard2.json")
-		require.NoError(t, err, "file inside folder should still exist after rejected delete")
+		helper.RequireRepoFileExists(t, repo, "folder", "dashboard2.json")
 	})
 
 	t.Run("deleting a non-existent file should fail", func(t *testing.T) {
@@ -179,15 +151,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		},
 	})
 
-	helper.RequireRepoDashboardCount(t, repo, 1)
+	movedDashboards := helper.RequireRepoDashboardCount(t, repo, 1)
 	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Validate the dashboard metadata
-	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 1, len(dashboards.Items))
-
-	helper.ValidateManagedDashboardsFolderMetadata(t, repo, dashboards.Items)
+	helper.ValidateManagedDashboardsFolderMetadata(t, repo, movedDashboards)
 
 	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
 	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
@@ -209,12 +177,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
 		// Verify file was moved - read from new location
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
-		require.NoError(t, err, "file should exist at new location")
+		helper.RequireRepoFileExists(t, repo, "moved", "simple-move.json")
 
 		// Verify file no longer exists at old location
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "all-panels.json")
-		require.Error(t, err, "file should not exist at old location")
+		helper.RequireRepoFileNotFound(t, repo, "all-panels.json")
 	})
 
 	t.Run("move file without content change on branch should succeed", func(t *testing.T) {
@@ -271,12 +237,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
 		// File should exist at new location
-		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
-		require.NoError(t, err, "file should exist at new nested location")
+		helper.RequireRepoFileExists(t, repo, "deep", "nested", "timeline.json")
 
 		// File should not exist at original location
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", sourceFile)
-		require.Error(t, err, "file should not exist at original location after move")
+		helper.RequireRepoFileNotFound(t, repo, sourceFile)
 	})
 
 	t.Run("move file with content update on configured branch should succeed", func(t *testing.T) {
@@ -311,8 +275,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, "Text options", title, "content should be updated")
 
 		// Source file should not exist anymore
-		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", sourcePath)
-		require.Error(t, err, "source file should not exist after move")
+		helper.RequireRepoFileNotFound(t, repo, sourcePath)
 	})
 
 	t.Run("move directory on configured branch should return MethodNotAllowed", func(t *testing.T) {
@@ -344,8 +307,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "directory move on configured branch should return MethodNotAllowed")
 
 		// Verify files in source directory still exist (operation was rejected)
-		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "source-dir", "timeline-demo.json")
-		require.NoError(t, err, "file in source directory should still exist after rejected move")
+		helper.RequireRepoFileExists(t, repo, "source-dir", "timeline-demo.json")
 	})
 
 	t.Run("error cases", func(t *testing.T) {
@@ -429,40 +391,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		},
 	})
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 2 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
-			return
-		}
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list folders: error: %s", err.Error())
-			return
-		}
-		if len(folders.Items) != 2 {
-			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
-			return
-		}
-
-		assert.Len(collect, dashboards.Items, 2)
-		assert.Len(collect, folders.Items, 2)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
-
-	allDashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	for _, dashboard := range allDashboards.Items {
-		annotations := dashboard.GetAnnotations()
-		// Expect to be managed by repo1 or repo2
-		managerID := annotations["grafana.app/managerId"]
-		if managerID != repo1 && managerID != repo2 {
-			t.Fatalf("dashboard %s is not managed by repo1 or repo2", dashboard.GetName())
-		}
-	}
+	helper.RequireRepoDashboardCount(t, repo1, 1)
+	helper.RequireRepoFolderCount(t, repo1, 1)
+	helper.RequireRepoDashboardCount(t, repo2, 1)
+	helper.RequireRepoFolderCount(t, repo2, 1)
 
 	t.Run("CREATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		// Try to create a dashboard in repo2 that has the same UID as the one in repo1
@@ -954,21 +886,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	helper.RequireRepoDashboardCount(t, repo, 1)
 	helper.RequireRepoFolderCount(t, repo, 0)
 
-	// Wait for initial sync to complete
-	var dashboardUID string
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("could not list dashboards error: %s", err.Error())
-			return
-		}
-		if len(dashboards.Items) != 1 {
-			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 1)
-			return
-		}
-		assert.Len(collect, dashboards.Items, 1)
-		dashboardUID = dashboards.Items[0].GetName()
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards after sync")
+	dashboardUID := helper.RequireSingleRepoDashboard(t, repo).GetName()
 
 	// Grant permissions to Editor user for all dashboards using wildcard
 	// The access checker checks resource-level permissions, so we need to grant them
@@ -1004,7 +922,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 
 	// Grant view permission to Viewer role for the initial dashboard
 	setDashboardPermissions([]map[string]interface{}{
-		{"role": "Viewer", "permission": 1}, // View permission
+		{"role": "Viewer", "permission": common.FolderPermissionView},
 	})
 
 	t.Run("GET operations", func(t *testing.T) {
@@ -1221,8 +1139,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 
 			// Verify file still exists
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "delete-viewer-test.json")
-			require.NoError(t, err, "file should still exist after failed delete")
+			helper.RequireRepoFileExists(t, repo, "delete-viewer-test.json")
 		})
 
 		t.Run("editor can DELETE files", func(t *testing.T) {
@@ -1238,9 +1155,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 			// Verify file was deleted
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "delete-editor-test.json")
-			require.Error(t, err, "file should be deleted")
-			require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted file")
+			helper.RequireRepoFileNotFound(t, repo, "delete-editor-test.json")
 		})
 
 		t.Run("admin can DELETE files", func(t *testing.T) {
@@ -1256,9 +1171,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 			// Verify file was deleted
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "delete-admin-test.json")
-			require.Error(t, err, "file should be deleted")
-			require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted file")
+			helper.RequireRepoFileNotFound(t, repo, "delete-admin-test.json")
 		})
 	})
 
@@ -1355,18 +1268,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 		// Wait for dashboard to be created
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(collect, err, "should list dashboards")
-			found := false
-			for _, dash := range dashboards.Items {
-				if dash.GetName() == "security-test-dashboard" {
-					found = true
-					break
-				}
-			}
-			assert.True(collect, found, "security-test-dashboard should exist")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be created")
+		helper.RequireDashboards(t, "security-test-dashboard")
 
 		// Now try to update the dashboard as Editor, but claim it's in a different folder
 		// The file is at path "security-test.json" (root level, no folder)

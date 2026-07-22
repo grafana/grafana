@@ -28,14 +28,22 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline' | 'empty_state';
+type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legacy';
 
-export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSource: AddCardSource) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'add_query',
-    source: querySource,
-    card_source: cardSource,
-  });
+export function trackAddQuery(
+  querySource: 'saved_query' | 'new_query',
+  cardSource: AddCardSource,
+  options?: { silent?: boolean }
+) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'add_query',
+      source: querySource,
+      card_source: cardSource,
+    },
+    options
+  );
 }
 
 export function trackOpenSavedQueryPicker(source: AddCardSource) {
@@ -52,11 +60,15 @@ export function trackAddExpressionInitiated(source: AddCardSource) {
   });
 }
 
-export function trackAddTransformationInitiated(source: AddCardSource) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'add_transformation_initiated',
-    source,
-  });
+export function trackAddTransformationInitiated(source: AddCardSource, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'add_transformation_initiated',
+      source,
+    },
+    options
+  );
 }
 
 export type CardActionSource = 'content_header' | 'sidebar_card';
@@ -64,13 +76,18 @@ export type CardActionSource = 'content_header' | 'sidebar_card';
 export function trackCardAction(
   action: 'delete' | 'toggle_hide' | 'duplicate',
   itemType: QueryEditorType,
-  source: CardActionSource
+  source: CardActionSource,
+  options?: { silent?: boolean }
 ) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action,
-    item_type: itemType,
-    source,
-  });
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action,
+      item_type: itemType,
+      source,
+    },
+    options
+  );
 }
 
 export function trackTransformationToolAction(action: 'toggle_help' | 'toggle_filter' | 'toggle_debug') {
@@ -90,11 +107,15 @@ export function trackQueryMenuAction(
   });
 }
 
-export function trackReorder(itemType: 'query' | 'transformation') {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'reorder',
-    item_type: itemType,
-  });
+export function trackReorder(itemType: 'query' | 'transformation', options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'reorder',
+      item_type: itemType,
+    },
+    options
+  );
 }
 
 export function trackEditorVersionToggle(direction: 'upgrade' | 'downgrade') {
@@ -123,11 +144,15 @@ export function trackSidebarSizeToggle(direction: 'expand' | 'collapse') {
   });
 }
 
-export function trackSidebarViewChange(view: QueryEditorType) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'change_sidebar_view',
-    view,
-  });
+export function trackSidebarViewChange(view: string, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'change_sidebar_view',
+      view,
+    },
+    options
+  );
 }
 
 export function trackStackedViewToggle(direction: 'enter' | 'exit') {
@@ -137,11 +162,15 @@ export function trackStackedViewToggle(direction: 'enter' | 'exit') {
   });
 }
 
-export function trackQueryOptionsToggle(open: boolean) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'toggle_query_options',
-    open,
-  });
+export function trackQueryOptionsToggle(open: boolean, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'toggle_query_options',
+      open,
+    },
+    options
+  );
 }
 
 export function trackMultiSelectToggle(direction: 'enter' | 'exit') {
