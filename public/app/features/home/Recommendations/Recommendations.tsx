@@ -1,13 +1,21 @@
+import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
+import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { RecommendationsSkeleton } from './RecommendationsSkeleton';
 import { RecommendationsView } from './RecommendationsView';
 import { fetchInstalledPlugins, getRecommendations, type PluginRecommendationItem } from './pluginRecommendations';
 import { hasSolutionData } from './solutionDataProbes';
 import { type RecommendationItem } from './types';
+
+// Remembers whether the section rendered on the last visit: the loading skeleton only
+// shows for users who actually get recommendations, so stacks that resolve to nothing
+// never flash a skeleton that collapses into empty space.
+const WAS_VISIBLE_KEY = 'grafana.home.recommendations.was-visible';
 
 export function Recommendations() {
   const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) && config.pluginAdminEnabled;
@@ -54,38 +62,58 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
 
   // An unavailable plugin list fails closed. /api/plugins always lists at least the core plugins,
   // so an empty response means the list is unreliable and also fails closed.
-  if (pluginsLoading || !installedPlugins || installedPlugins.length === 0) {
-    return null;
+  const listReady = !pluginsLoading && !!installedPlugins && installedPlugins.length > 0;
+
+  const pluginsById = new Map((installedPlugins ?? []).map((plugin) => [plugin.id, plugin]));
+  const recommendations = !listReady
+    ? []
+    : getRecommendations().flatMap((recommendation): RecommendationItem[] => {
+        const plugin = pluginsById.get(recommendation.pluginId);
+        if (!plugin) {
+          // Unlistable plugins take the install-only path.
+          return canInstall ? [toEnableItem(recommendation)] : [];
+        }
+        if (plugin.enabled) {
+          // Pending probes exclude the card for this render instead of blocking the whole
+          // section: install/enable cards and the left no-data card mount immediately, and
+          // setup cards join once their probe settles.
+          if (probesLoading || !solutionsWithData || solutionsWithData.has(recommendation.pluginId)) {
+            return [];
+          }
+          // The setup CTA opens the app, so app access — not plugins:write — is the relevant permission.
+          return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
+            ? [toSetupItem(recommendation)]
+            : [];
+        }
+        // plugins:write is scoped to this plugin.
+        return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin)
+          ? [toEnableItem(recommendation)]
+          : [];
+      });
+
+  const visible = recommendations.length > 0;
+  // Settled empty: everything resolved and there is genuinely nothing to show — as opposed
+  // to a pending plugin list or pending probes that may still produce cards.
+  const settledEmpty = listReady
+    ? !visible && !probesLoading && !!solutionsWithData
+    : !pluginsLoading && (!installedPlugins || installedPlugins.length === 0);
+
+  useEffect(() => {
+    if (visible) {
+      store.set(WAS_VISIBLE_KEY, 'true');
+    } else if (settledEmpty) {
+      store.set(WAS_VISIBLE_KEY, 'false');
+    }
+  }, [visible, settledEmpty]);
+
+  if (visible) {
+    return <RecommendationsView recommendations={recommendations} />;
   }
 
-  const pluginsById = new Map(installedPlugins.map((plugin) => [plugin.id, plugin]));
-  const recommendations = getRecommendations().flatMap((recommendation): RecommendationItem[] => {
-    const plugin = pluginsById.get(recommendation.pluginId);
-    if (!plugin) {
-      // Unlistable plugins take the install-only path.
-      return canInstall ? [toEnableItem(recommendation)] : [];
-    }
-    if (plugin.enabled) {
-      // Pending probes exclude the card for this render instead of blocking the whole
-      // section: install/enable cards and the left no-data card mount immediately, and
-      // setup cards join once their probe settles.
-      if (probesLoading || !solutionsWithData || solutionsWithData.has(recommendation.pluginId)) {
-        return [];
-      }
-      // The setup CTA opens the app, so app access — not plugins:write — is the relevant permission.
-      return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
-        ? [toSetupItem(recommendation)]
-        : [];
-    }
-    // plugins:write is scoped to this plugin.
-    return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin)
-      ? [toEnableItem(recommendation)]
-      : [];
-  });
-
-  if (recommendations.length === 0) {
-    return null;
+  // Hold the section's space while loading, but only for users it rendered for last time.
+  if (!settledEmpty && store.getBool(WAS_VISIBLE_KEY, false)) {
+    return <RecommendationsSkeleton />;
   }
 
-  return <RecommendationsView recommendations={recommendations} />;
+  return null;
 }

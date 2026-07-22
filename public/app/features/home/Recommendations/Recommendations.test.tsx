@@ -97,6 +97,41 @@ describe('Recommendations', () => {
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
+  it('holds a skeleton while loading when the section was visible on the last visit', async () => {
+    window.localStorage.setItem('grafana.home.recommendations.was-visible', 'true');
+    mockGet.mockImplementation(() => new Promise(() => {}));
+
+    render(<Recommendations />);
+
+    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
+  });
+
+  it('shows no skeleton while loading when the section was not visible before', async () => {
+    mockGet.mockImplementation(() => new Promise(() => {}));
+
+    const { container } = render(<Recommendations />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('stores the visibility hint when the section renders', async () => {
+    render(<Recommendations />);
+
+    await screen.findByText('Recommendations for your stack');
+    await waitFor(() => expect(window.localStorage.getItem('grafana.home.recommendations.was-visible')).toBe('true'));
+  });
+
+  it('clears the visibility hint when everything settles to zero recommendations', async () => {
+    window.localStorage.setItem('grafana.home.recommendations.was-visible', 'true');
+    // All apps enabled and (per the default mock) receiving data: nothing to recommend.
+    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
+
+    const { container } = render(<Recommendations />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    await waitFor(() => expect(window.localStorage.getItem('grafana.home.recommendations.was-visible')).toBe('false'));
+  });
+
   it('renders the section even when Kubernetes Monitoring is not installed', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false });
 
