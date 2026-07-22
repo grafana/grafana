@@ -3037,7 +3037,8 @@
       "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-22T21:47:47Z"
       },
       "spec": {
         "description": "Replaces the bundled home dashboard with the unified homepage React page",

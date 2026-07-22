@@ -5,7 +5,6 @@ import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   Button,
   Field,
@@ -114,7 +113,7 @@ class SharedPreferences extends PureComponent<Props, State> {
         homeDashboardChanged({
           preferenceType: this.props.preferenceType,
           action: nextHomeDashboardUID ? 'set' : 'cleared',
-          unifiedHomepageEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUnifiedHomepage, false),
+          unifiedHomepageEnabled: true,
         });
       }
 

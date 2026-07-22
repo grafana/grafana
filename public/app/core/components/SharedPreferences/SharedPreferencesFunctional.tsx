@@ -38,7 +38,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     useSharedPreferences(resourceUri);
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
-  const unifiedHomepageEnabled = useBooleanFlagValue('grafana.unifiedHomepage', false);
   const [state, setState] = useState<PrefsState>({
     theme: undefined,
     timezone: '',
@@ -108,7 +107,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       homeDashboardChanged({
         preferenceType: props.preferenceType,
         action: nextHomeDashboardUID ? 'set' : 'cleared',
-        unifiedHomepageEnabled,
+        unifiedHomepageEnabled: true,
       });
     }
 

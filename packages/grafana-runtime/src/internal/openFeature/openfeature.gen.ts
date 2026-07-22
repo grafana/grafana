@@ -89,8 +89,6 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
-  /** Replaces the bundled home dashboard with the unified homepage React page */
-  GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
@@ -569,17 +567,6 @@ export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.starredFolders", false, options).value;
-};
-
-/**
- * Replaces the bundled home dashboard with the unified homepage React page
- *
- * **Details:**
- * - flag key: `grafana.unifiedHomepage`
- * - default value: `false`
- */
-export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.unifiedHomepage", false, options).value;
 };
 
 /**
