@@ -54,11 +54,14 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		attribute.Int("limit", limit),
 	)
 
-	// Reject unauthenticated requests before they consume a slot of the
-	// tenant's rate budget.
+	// Reject unauthenticated and cross-tenant requests before they consume
+	// a slot of the target namespace's rate budget or embed quota.
 	user, ok := types.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
+	}
+	if !types.NamespaceMatches(user.GetNamespace(), req.Key.Namespace) {
+		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
 	// Hybrid embeds a query, so it draws from the same per-tenant budget
 	// as VectorSearch.

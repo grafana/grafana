@@ -16,6 +16,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
@@ -560,6 +562,29 @@ func (r *recordingRateLimiter) Allow(context.Context, string, time.Duration, int
 
 func (r *recordingRateLimiter) SweepOlderThan(context.Context, time.Time) (int64, error) {
 	return 0, nil
+}
+
+func TestHybridSearch_NamespaceMismatchIsForbidden(t *testing.T) {
+	// A caller authenticated for one namespace must not burn another
+	// tenant's rate budget or embed quota.
+	limiter := &recordingRateLimiter{}
+	emb := &fakeTextEmbedder{dim: 4}
+	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+	s.embedder = newTestEmbedder(emb)
+	s.rateLimiter = limiter
+	s.rateLimitPerTenant = 100
+	s.rateLimitWindow = time.Minute
+
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "other-tenant", Type: authlib.TypeUser},
+	)
+	_, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.PermissionDenied, status.Code(err))
+	assert.False(t, limiter.called, "cross-tenant request must not consume rate budget")
+	assert.Empty(t, emb.gotIn.Texts, "cross-tenant request must not consume embed quota")
 }
 
 func TestHybridSearch_UnauthenticatedDoesNotConsumeRateBudget(t *testing.T) {
