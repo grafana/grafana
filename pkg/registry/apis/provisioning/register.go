@@ -699,6 +699,16 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
+	// Authorize mutates the connection secrets, so it requires write access
+	case "authorize":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
 	default:
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
@@ -900,6 +910,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = WithTimeout(NewConnectionRepositoriesConnector(b), 30*time.Second)
+	storage[provisioning.ConnectionResourceInfo.StoragePath("authorize")] = WithTimeout(NewConnectionAuthorizeConnector(b), 30*time.Second)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	testTester := repository.NewTester(b.repoValidator, existingReposValidator)

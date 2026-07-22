@@ -14,7 +14,7 @@ import { getDefaultValues } from '../Config/defaults';
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { isGitHubBased, isGitProvider } from '../utils/repositoryTypes';
+import { isGitHubBased, isGitProvider, supportsConnections } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { Stepper } from './Stepper';
@@ -53,7 +53,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       migrate: {
         history: true,
       },
-      githubAuthType: isGitHubBased(type) ? 'github-app' : 'pat',
+      githubAuthType: supportsConnections(type) ? 'github-app' : 'pat',
       githubAppMode: 'existing',
       githubApp: {},
     },

@@ -36,6 +36,14 @@ type Connection interface {
 	Test(ctx context.Context) (*provisioning.TestResults, error)
 }
 
+// AuthCodeConnection is an optional interface for connections that complete their
+// authorization by exchanging an OAuth authorization code for tokens.
+type AuthCodeConnection interface {
+	// ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
+	// Returns the value to store as the connection token.
+	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error)
+}
+
 // TokenConnection is an optional interface that connections can implement if they need
 // to handle tokens in their secrets.
 //

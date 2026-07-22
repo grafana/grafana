@@ -10,7 +10,7 @@ import { t } from '@grafana/i18n';
 import { Combobox, Field, Input } from '@grafana/ui';
 
 import { type ExternalRepository } from '../../types';
-import { isGitHubBased, isGitProvider } from '../../utils/repositoryTypes';
+import { isGitProvider, supportsConnections } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
 import { type WizardFormData } from '../types';
 
@@ -34,7 +34,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
   ]);
 
   const isGitBased = isGitProvider(type);
-  const isGitHubAppAuth = isGitHubBased(type) && githubAuthType === 'github-app';
+  const isGitHubAppAuth = supportsConnections(type) && githubAuthType === 'github-app';
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const {
     data: connectionRepositories,

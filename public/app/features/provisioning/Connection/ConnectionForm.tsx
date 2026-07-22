@@ -10,10 +10,12 @@ import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
+import { OAuthConnectionFields } from '../components/Shared/OAuthConnectionFields';
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
+import { startOAuthAuthorization } from '../utils/connectionOAuth';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 import { isGitHubBased } from '../utils/repositoryTypes';
 
@@ -39,11 +41,28 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         [{ value: 'githubEnterprise', label: 'GitHub Enterprise' }]
       : []),
+    ...(availableTypes.includes('gitlab')
+      ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        [{ value: 'gitlab', label: 'GitLab' }]
+      : []),
+    ...(availableTypes.includes('bitbucket')
+      ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        [{ value: 'bitbucket', label: 'Bitbucket' }]
+      : []),
   ];
 
   const formMethods = useForm<ConnectionFormData>({
     defaultValues:
-      data?.spec?.type === 'githubEnterprise'
+      data?.spec?.type === 'gitlab' || data?.spec?.type === 'bitbucket'
+        ? {
+            type: data.spec.type,
+            title: data?.spec?.title || '',
+            description: data?.spec?.description || '',
+            clientID: (data.spec.type === 'gitlab' ? data.spec.gitlab?.clientID : data.spec.bitbucket?.clientID) || '',
+            clientSecret: '',
+            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
+          }
+        : data?.spec?.type === 'githubEnterprise'
         ? {
             type: 'githubEnterprise',
             title: data?.spec?.title || '',
@@ -88,10 +107,20 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       });
 
       reset(formData);
+
+      // OAuth app connections need the user to authorize the app before tokens can be issued
+      if ((formData.type === 'gitlab' || formData.type === 'bitbucket') && (!isEdit || formData.clientSecret)) {
+        const name = connectionName ?? request.data?.metadata?.name;
+        if (name && formData.clientID) {
+          startOAuthAuthorization(formData.type, formData.clientID, name);
+          return;
+        }
+      }
+
       // use timeout to ensure the form resets before navigating
       setTimeout(() => navigate(CONNECTIONS_TAB_URL), 300);
     }
-  }, [request.isSuccess, reset, getValues, connectionName, navigate]);
+  }, [request.isSuccess, request.data, reset, getValues, connectionName, navigate, isEdit]);
 
   useEffect(() => {
     if (isEdit && data?.status?.fieldErrors?.length) {
@@ -115,20 +144,24 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
         ...(form.type === 'githubEnterprise'
           ? {
               githubEnterprise: {
-                appID: form.appID,
-                installationID: form.installationID,
+                appID: form.appID ?? '',
+                installationID: form.installationID ?? '',
                 serverUrl: form.serverUrl,
               },
             }
-          : {
-              github: {
-                appID: form.appID,
-                installationID: form.installationID,
-              },
-            }),
+          : form.type === 'github'
+            ? {
+                github: {
+                  appID: form.appID ?? '',
+                  installationID: form.installationID ?? '',
+                },
+              }
+            : form.type === 'gitlab'
+              ? { gitlab: { clientID: form.clientID ?? '' } }
+              : { bitbucket: { clientID: form.clientID ?? '' } }),
       };
 
-      await submitData(spec, form.privateKey);
+      await submitData(spec, form.privateKey, form.clientSecret);
     } catch (err) {
       if (isFetchError(err)) {
         const errors = getConnectionFormErrors(err.data);
@@ -184,6 +217,14 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
           {isGitHubBased(selectedType) && (
             <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} type={selectedType} />
+          )}
+
+          {(selectedType === 'gitlab' || selectedType === 'bitbucket') && (
+            <OAuthConnectionFields
+              required={!isEdit}
+              clientSecretConfigured={Boolean(data?.secure?.clientSecret)}
+              type={selectedType}
+            />
           )}
 
           <WebhookDisabledField

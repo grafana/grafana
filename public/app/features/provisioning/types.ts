@@ -47,6 +47,8 @@ type ConnectionFormDataBase = {
   title: string;
   description: string;
   privateKey?: string;
+  clientID?: string;
+  clientSecret?: string;
   webhookDisabled?: boolean;
 };
 
@@ -56,7 +58,15 @@ type GitHubConnectionFormData = ConnectionFormDataBase &
 type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
   GitHubEnterpriseConnectionConfig & { type: 'githubEnterprise' };
 
-export type ConnectionFormData = GitHubConnectionFormData | GitHubEnterpriseConnectionFormData;
+type OAuthConnectionFormData = ConnectionFormDataBase &
+  Partial<GitHubConnectionConfig> & { type: OAuthConnectionType; serverUrl?: string };
+
+export type OAuthConnectionType = 'gitlab' | 'bitbucket';
+
+export type ConnectionFormData =
+  | GitHubConnectionFormData
+  | GitHubEnterpriseConnectionFormData
+  | OAuthConnectionFormData;
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {
