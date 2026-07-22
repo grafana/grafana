@@ -399,6 +399,33 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 }
 
 func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	if query.Limit > 0 {
+		return hs.searchOrgUsersPageUsingK8s(c, query)
+	}
+
+	const pageSize = 1000
+	result := &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}
+	for page := 1; ; page++ {
+		pageQuery := *query
+		pageQuery.Limit = pageSize
+		pageQuery.Page = page
+
+		pageResult, err := hs.searchOrgUsersPageUsingK8s(c, &pageQuery)
+		if err != nil {
+			return nil, err
+		}
+		result.OrgUsers = append(result.OrgUsers, pageResult.OrgUsers...)
+
+		if int64(len(result.OrgUsers)) >= pageResult.TotalCount || len(pageResult.OrgUsers) < pageSize {
+			result.TotalCount = int64(len(result.OrgUsers))
+			result.Page = 1
+			result.PerPage = len(result.OrgUsers)
+			return result, nil
+		}
+	}
+}
+
+func (hs *HTTPServer) searchOrgUsersPageUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	searchResult, err := hs.userService.Search(c.Req.Context(), &user.SearchUsersQuery{
 		SignedInUser:         query.User,
 		OrgID:                query.OrgID,

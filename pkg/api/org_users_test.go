@@ -767,6 +767,27 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	}
 }
 
+type pagedUserService struct {
+	*usertest.FakeUserService
+	pages []user.SearchUserQueryResult
+	calls int
+}
+
+func (s *pagedUserService) Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	r := s.pages[s.calls]
+	s.calls++
+	return &r, nil
+}
+
+func searchHits(n int, startID int64) []*user.UserSearchHitDTO {
+	out := make([]*user.UserSearchHitDTO, n)
+	for i := range out {
+		id := startID + int64(i)
+		out[i] = &user.UserSearchHitDTO{ID: id, UID: fmt.Sprintf("uid-%d", id), Login: fmt.Sprintf("user-%d", id)}
+	}
+	return out
+}
+
 func TestSearchOrgUsersUsingK8s(t *testing.T) {
 	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
 	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC)
@@ -830,6 +851,42 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		require.Len(t, res.OrgUsers, 1)
 		assert.Equal(t, int64(42), res.OrgUsers[0].UserID)
 		assert.Equal(t, int64(1), res.TotalCount)
+	})
+
+	// With no limit (GetOrgUsersForCurrentOrg), all users must be returned even
+	// when they span multiple search pages, rather than being truncated.
+	t.Run("pages through all users when no limit is requested", func(t *testing.T) {
+		svc := &pagedUserService{
+			FakeUserService: &usertest.FakeUserService{},
+			pages: []user.SearchUserQueryResult{
+				{Users: searchHits(1000, 1), TotalCount: 1500, Page: 1, PerPage: 1000},
+				{Users: searchHits(500, 1001), TotalCount: 1500, Page: 2, PerPage: 1000},
+			},
+		}
+		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc}
+
+		res, err := hs.searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, 2, svc.calls, "should keep paging until all users are collected")
+		require.Len(t, res.OrgUsers, 1500)
+		assert.Equal(t, int64(1500), res.TotalCount)
+	})
+
+	// An explicit limit means a paged request, so only that single page is fetched.
+	t.Run("fetches a single page when an explicit limit is requested", func(t *testing.T) {
+		svc := &pagedUserService{
+			FakeUserService: &usertest.FakeUserService{},
+			pages: []user.SearchUserQueryResult{
+				{Users: searchHits(50, 1), TotalCount: 1500, Page: 1, PerPage: 50},
+				{Users: searchHits(50, 51), TotalCount: 1500, Page: 2, PerPage: 50}, // must not be fetched
+			},
+		}
+		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc}
+
+		res, err := hs.searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1, Limit: 50, Page: 1})
+		require.NoError(t, err)
+		assert.Equal(t, 1, svc.calls, "explicit limit must fetch exactly one page")
+		require.Len(t, res.OrgUsers, 50)
 	})
 }
 
