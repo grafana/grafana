@@ -55,6 +55,8 @@ export const FlagKeys = {
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Check for the existence of logs when linking from the Trace View */
+  GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
@@ -382,6 +384,17 @@ export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
+};
+
+/**
+ * Check for the existence of logs when linking from the Trace View
+ *
+ * **Details:**
+ * - flag key: `grafana.dynamicTraceToLogs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDynamicTraceToLogs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dynamicTraceToLogs", false, options).value;
 };
 
 /**
