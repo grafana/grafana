@@ -85,19 +85,22 @@ describe('KBarResults', () => {
       expect(screen.getByRole('option')).toBeInTheDocument();
     });
 
-    it('includes the group name in the accessible name when preceded by a group header', () => {
+    it('wraps options in a group labelled by their section header', () => {
       render(<KBarResults items={['Dashboards', createAction({ id: 'home', name: 'Home' })]} onRender={renderItem} />);
 
-      expect(screen.getByRole('option')).toHaveAccessibleName('Dashboards: Home');
+      const group = screen.getByRole('group', { name: 'Dashboards' });
+      const option = screen.getByRole('option', { name: 'Home' });
+      expect(group).toContainElement(option);
     });
 
-    it('does not add a group prefix when there is no preceding group header', () => {
+    it('does not wrap options in a group when there is no preceding section header', () => {
       render(<KBarResults items={[createAction({ id: 'home', name: 'Home' })]} onRender={renderItem} />);
 
+      expect(screen.queryByRole('group')).not.toBeInTheDocument();
       expect(screen.getByRole('option')).toHaveAccessibleName('Home');
     });
 
-    it('uses the most recent group label when there are multiple groups', () => {
+    it('groups options under their respective sections when there are multiple groups', () => {
       render(
         <KBarResults
           items={[
@@ -110,9 +113,10 @@ describe('KBarResults', () => {
         />
       );
 
-      const options = screen.getAllByRole('option');
-      expect(options[0]).toHaveAccessibleName('Dashboards: Home');
-      expect(options[1]).toHaveAccessibleName('Folders: My Folder');
+      const dashboards = screen.getByRole('group', { name: 'Dashboards' });
+      const folders = screen.getByRole('group', { name: 'Folders' });
+      expect(dashboards).toContainElement(screen.getByRole('option', { name: 'Home' }));
+      expect(folders).toContainElement(screen.getByRole('option', { name: 'My Folder' }));
     });
 
     it('marks the active item with aria-selected="true" and others with aria-selected="false"', () => {
