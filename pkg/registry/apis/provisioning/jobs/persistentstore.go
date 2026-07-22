@@ -135,10 +135,12 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		Limit:         16,
 	})
 	if err != nil {
+		s.queueMetrics.RecordClaim(ClaimOutcomeError)
 		return nil, nil, apifmt.Errorf("failed to list jobs: %w", err)
 	}
 
 	if len(jobs.Items) == 0 {
+		s.queueMetrics.RecordClaim(ClaimOutcomeEmpty)
 		logger.Debug("no jobs available to claim")
 		return nil, nil, ErrNoJobs
 	}
@@ -188,6 +190,8 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			attribute.String("job.action", string(updatedJob.Spec.Action)),
 		)
 
+		s.queueMetrics.RecordClaim(ClaimOutcomeClaimed)
+
 		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
 			// This will also use the parent context (i.e. from the for loop!), ensuring we have permissions to do this.
@@ -234,6 +238,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 	}
 
 	// We failed to claim any jobs.
+	s.queueMetrics.RecordClaim(ClaimOutcomeContended)
 	logger.Debug("no jobs claimed - all already claimed by others")
 	return nil, nil, ErrNoJobs
 }

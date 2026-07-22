@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -238,6 +239,46 @@ func TestComplete_SucceedsForOwner(t *testing.T) {
 func newTestClientset() provisioningv0alpha1.ProvisioningV0alpha1Interface {
 	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
 	return fakeclientset.NewSimpleClientset().ProvisioningV0alpha1()
+}
+
+// TestClaim_RecordsClaimOutcome verifies Claim increments the claim-outcome counter:
+// "empty" when nothing is available, "claimed" when a job is taken. Uses a store with
+// its own fresh metrics so the assertions are not affected by other tests sharing the
+// process-global counter.
+func TestClaim_RecordsClaimOutcome(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := &persistentStore{
+		client: fakeClient,
+		clock:  time.Now,
+		expiry: 30 * time.Second,
+		queueMetrics: QueueMetrics{
+			queueWaitTime: prometheus.NewHistogramVec(
+				prometheus.HistogramOpts{Name: "test_queue_wait"}, []string{"action"}),
+			claimTotal: prometheus.NewCounterVec(
+				prometheus.CounterOpts{Name: "test_claim_total"}, []string{"outcome"}),
+		},
+	}
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	// Empty store: nothing to claim -> "empty".
+	_, _, err = store.Claim(ctx)
+	require.ErrorIs(t, err, ErrNoJobs)
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimTotal.WithLabelValues(ClaimOutcomeEmpty)))
+
+	// A job is available: claim succeeds -> "claimed".
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, claimed)
+	defer rollback()
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimTotal.WithLabelValues(ClaimOutcomeClaimed)))
 }
 
 // TestRenewLease_StaleResourceVersion verifies that after RenewLease, the

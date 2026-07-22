@@ -81,6 +81,10 @@ type jobDriver struct {
 	// notifications channel for job create events
 	notifications chan struct{}
 
+	// driverID identifies this worker within the pod, used as the driver_id label on
+	// the in-flight gauge so per-worker saturation can be observed.
+	driverID string
+
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
 
@@ -96,6 +100,7 @@ func NewJobDriver(
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
 	notifications chan struct{},
+	driverID string,
 	metrics *JobMetrics,
 	workers ...Worker,
 ) (*jobDriver, error) {
@@ -108,6 +113,7 @@ func NewJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
+		driverID:             driverID,
 		metrics:              metrics,
 	}, nil
 }
@@ -180,6 +186,14 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Ensure that the job is cleaned up if we fail to complete it.
 	// The rollback function does not care about cancellations.
 	defer rollback()
+
+	// Mark this worker slot busy for the whole claim->complete duration. The Inc and
+	// the deferred Dec run on the same goroutine, so the gauge stays balanced across
+	// every return path (timeout, lease loss, shutdown, completion). Methods are
+	// nil-safe for drivers built without metrics in tests.
+	inFlightAction := string(claimedJob.Spec.Action)
+	d.metrics.IncInFlight(d.driverID, inFlightAction)
+	defer d.metrics.DecInFlight(d.driverID, inFlightAction)
 
 	namespace := claimedJob.GetNamespace()
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
