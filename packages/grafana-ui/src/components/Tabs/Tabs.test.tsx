@@ -64,14 +64,30 @@ describe('Tabs', () => {
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
-  it('should render tabs with string counters', () => {
+  it('should render capped counter when counter exceeds counterCappedAt', () => {
     render(
       <TabsBar>
-        <Tab label="Tab with Capped Counter" active={true} onChangeTab={onChangeTab} counter="50+" />
+        <Tab
+          label="Tab with Capped Counter"
+          active={true}
+          onChangeTab={onChangeTab}
+          counter={120}
+          counterCappedAt={50}
+        />
       </TabsBar>
     );
 
     expect(screen.getByText('50+')).toBeInTheDocument();
+  });
+
+  it('should render exact counter when counter does not exceed counterCappedAt', () => {
+    render(
+      <TabsBar>
+        <Tab label="Tab with Counter" active={true} onChangeTab={onChangeTab} counter={50} counterCappedAt={50} />
+      </TabsBar>
+    );
+
+    expect(screen.getByText('50')).toBeInTheDocument();
   });
 
   it('should render tabs with tooltips', async () => {

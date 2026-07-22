@@ -58,11 +58,11 @@ Counter.args = {
   value: 10,
 };
 
-export const WithStringCounter: StoryFn = () => {
+export const WithCappedCounter: StoryFn = () => {
   const [state, updateState] = useState([
     { label: '1st child', key: 'first', active: true, counter: 3 },
-    { label: '2nd child', key: 'second', active: false, counter: '50+' },
-    { label: '3rd child', key: 'third', active: false, counter: 'new' },
+    { label: '2nd child', key: 'second', active: false, counter: 120 },
+    { label: '3rd child', key: 'third', active: false, counter: 50 },
   ]);
 
   return (
@@ -75,6 +75,7 @@ export const WithStringCounter: StoryFn = () => {
               label={tab.label}
               active={tab.active}
               counter={tab.counter}
+              counterCappedAt={50}
               onChangeTab={() => updateState(state.map((tab, idx) => ({ ...tab, active: idx === index })))}
             />
           );

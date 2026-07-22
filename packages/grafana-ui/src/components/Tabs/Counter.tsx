@@ -6,14 +6,17 @@ import { useStyles2 } from '../../themes/ThemeContext';
 
 type CounterVariant = 'primary' | 'secondary';
 export interface CounterProps {
-  value: number | string;
+  value: number;
   variant?: CounterVariant;
+  /** When provided and value exceeds it, renders "{cappedAt}+" instead of the exact value. */
+  cappedAt?: number;
 }
 
-export const Counter = ({ value, variant = 'secondary' }: CounterProps) => {
+export const Counter = ({ value, variant = 'secondary', cappedAt }: CounterProps) => {
   const styles = useStyles2(getStyles, variant);
+  const isCapped = cappedAt != null && value > cappedAt;
 
-  return <span className={styles.counter}>{typeof value === 'number' ? locale(value, 0).text : value}</span>;
+  return <span className={styles.counter}>{isCapped ? `${locale(cappedAt, 0).text}+` : locale(value, 0).text}</span>;
 };
 
 const getStyles = (theme: GrafanaTheme2, variant: CounterVariant) => ({
