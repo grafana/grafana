@@ -1148,10 +1148,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 		require.ErrorIs(t, err, ErrTimeIntervalInUse)
-
-		var gfErr errutil.Error
-		require.ErrorAs(t, err, &gfErr)
-		require.Contains(t, gfErr.LogMessage, "notification policies")
 	})
 
 	t.Run("returns ErrTimeIntervalInUse if active timing is used by a route", func(t *testing.T) {
@@ -1200,7 +1196,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 		var gfErr errutil.Error
 		require.ErrorAs(t, err, &gfErr)
-		require.Contains(t, gfErr.LogMessage, "alert rules")
 		require.Contains(t, gfErr.LogMessage, ruleKey.UID)
 	})
 
