@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/mail"
 	"net/textproto"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -78,8 +79,10 @@ func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, ms
 	// Recover so one bad email cannot take down the Grafana process.
 	defer func() {
 		if r := recover(); r != nil {
+			// Match the DialAndSend path: count the attempt, then the failure.
+			emailsSentTotal.Inc()
 			emailsSentFailed.Inc()
-			err = tracing.Errorf(span, "panic while sending email: %v", r)
+			err = tracing.Errorf(span, "panic while sending email: %v\n%s", r, debug.Stack())
 		}
 	}()
 
