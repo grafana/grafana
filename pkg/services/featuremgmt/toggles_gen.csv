@@ -115,11 +115,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
-2022-10-07,queryLibrary,preview,@grafana/sharing-squad,false,false,false
+2022-10-07,queryLibrary,GA,@grafana/sharing-squad,false,false,false
 2026-07-14,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-05-22,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
-2026-05-22,savedQueriesRBAC,preview,@grafana/sharing-squad,false,false,false
-2026-05-22,newSavedQueriesExperience,preview,@grafana/sharing-squad,false,false,true
+2026-05-22,savedQueriesRBAC,GA,@grafana/sharing-squad,false,false,false
+2026-05-22,newSavedQueriesExperience,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 2025-11-07,suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 2026-05-22,dashboardValidatorApp,experimental,@grafana/sharing-squad,false,false,false
