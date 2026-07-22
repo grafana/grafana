@@ -107,7 +107,10 @@ test.describe(
       // Test that mod+o works in the main dashboard (should not trigger file dialog)
       console.log('Testing mod+o in main dashboard view...');
       await page.keyboard.press(`${modKey}+o`);
-      expect(page.url()).toBe(currentUrl); // Should not navigate away
+      // Should not navigate away. Compare pathnames rather than full URLs: the crosshair
+      // toggle triggers a time range refresh, which can asynchronously sync time params
+      // (from/to/timezone) into the query string — that's not a navigation.
+      expect(new URL(page.url()).pathname).toBe(new URL(currentUrl).pathname);
 
       // Now open settings to check if the state actually changed
       await page.keyboard.press('d');
