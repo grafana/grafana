@@ -5,6 +5,9 @@
  * outcome histogram. Each run produces real Faro/OTel telemetry against
  * whatever collector the local Grafana is wired to (see conf/custom.ini).
  *
+ * Without --journeys, runs across ALL registered journeys (each run picks one
+ * randomly). Pass --journeys to restrict to a subset.
+ *
  * Usage:
  *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 20
  *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 5 --headed
@@ -26,6 +29,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { type JourneyDriver } from '../public/app/core/journeys/__smoke__/types.ts';
+import { browseToResourceDriver } from '../public/app/core/journeys/browseToResource.smoke.ts';
+import { dashboardEditDriver } from '../public/app/core/journeys/dashboardEdit.smoke.ts';
+import { datasourceConfigureDriver } from '../public/app/core/journeys/datasourceConfigure.smoke.ts';
+import { exploreToDashboardDriver } from '../public/app/core/journeys/exploreToDashboard.smoke.ts';
+import { panelEditDriver } from '../public/app/core/journeys/panelEdit.smoke.ts';
 import { searchToResourceDriver } from '../public/app/core/journeys/searchToResource.smoke.ts';
 
 // --------------------------------------------------------------------------
@@ -63,6 +71,11 @@ interface JourneyEnd {
 // Registry of journey drivers. Add new drivers here to expose them via --journeys.
 const DRIVERS: Record<string, JourneyDriver> = {
   [searchToResourceDriver.type]: searchToResourceDriver,
+  [browseToResourceDriver.type]: browseToResourceDriver,
+  [dashboardEditDriver.type]: dashboardEditDriver,
+  [panelEditDriver.type]: panelEditDriver,
+  [datasourceConfigureDriver.type]: datasourceConfigureDriver,
+  [exploreToDashboardDriver.type]: exploreToDashboardDriver,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -78,7 +91,8 @@ function parseArgs(): Args {
   let runs = 10;
   let headless = true;
   let scenario: string | undefined;
-  let journeys: string[] = ['search_to_resource'];
+  // null = not specified, fall back to all registered journeys at validation time
+  let journeysOverride: string[] | null = null;
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -95,7 +109,7 @@ function parseArgs(): Args {
       }
       case '--journeys': {
         const raw = args[++i] ?? '';
-        journeys = raw
+        journeysOverride = raw
           .split(',')
           .map((s) => s.trim())
           .filter((s) => s.length > 0);
@@ -112,9 +126,11 @@ function parseArgs(): Args {
     throw new Error(`--runs must be a positive integer, got "${runs}"`);
   }
 
-  if (journeys.length === 0) {
+  // Explicit empty `--journeys ""` is a user error; omitted flag defaults to all.
+  if (journeysOverride !== null && journeysOverride.length === 0) {
     throw new Error(`--journeys must list at least one journey type`);
   }
+  const journeys = journeysOverride ?? Object.keys(DRIVERS);
   const registered = Object.keys(DRIVERS);
   for (const j of journeys) {
     if (!DRIVERS[j]) {
@@ -150,7 +166,7 @@ function printHelp(): void {
       'Options:',
       '  --runs, -n <N>         number of runs (default 10)',
       '  --headed               run with visible browser',
-      '  --journeys <list>      comma-separated journey types (default: search_to_resource)',
+      '  --journeys <list>      comma-separated journey types (default: all registered)',
       '  --scenario <name>      pin a single scenario across selected journeys',
       '                         (must be supported by at least one selected journey)',
       '  -h, --help             show this help',
@@ -243,6 +259,17 @@ async function ensureFixtureDashboard(): Promise<void> {
     throw new Error(`GET /api/dashboards/uid/${FIXTURE_UID} returned ${getRes.status}: ${body}`);
   }
 
+  // The fixture ships with a single text panel titled "CUJ Smoke Panel" so
+  // the panel_edit smoke driver has a stable target. Text panels need no
+  // datasource, render instantly, and survive schema upgrades.
+  const fixturePanel = {
+    id: 1,
+    type: 'text',
+    title: 'CUJ Smoke Panel',
+    gridPos: { x: 0, y: 0, w: 12, h: 4 },
+    options: { mode: 'markdown', content: 'CUJ smoke fixture — do not delete.' },
+  };
+
   const postRes = await fetch(`${GRAFANA_URL}/api/dashboards/db`, {
     method: 'POST',
     headers: {
@@ -250,7 +277,7 @@ async function ensureFixtureDashboard(): Promise<void> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      dashboard: { uid: FIXTURE_UID, title: FIXTURE_TITLE, panels: [], schemaVersion: 41 },
+      dashboard: { uid: FIXTURE_UID, title: FIXTURE_TITLE, panels: [fixturePanel], schemaVersion: 41 },
       overwrite: false,
     }),
   });
@@ -343,7 +370,9 @@ class SessionExpiredError extends Error {
 }
 
 async function runOnce(browser: Browser, driver: JourneyDriver, scenario: string): Promise<JourneyEnd> {
-  const ctx = await browser.newContext({ storageState: STORAGE_STATE });
+  // baseURL lets driver scenarios use relative paths like '/dashboards' instead
+  // of having to know GRAFANA_URL — mirrors the e2e Playwright config.
+  const ctx = await browser.newContext({ storageState: STORAGE_STATE, baseURL: GRAFANA_URL });
   await ctx.addInitScript(() => {
     // Enable journey debug logs so we can detect end events from console output.
     // The init script runs in the browser context (Playwright injects it before page scripts),

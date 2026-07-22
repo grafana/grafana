@@ -213,6 +213,67 @@ func TestV18(t *testing.T) {
 				"schemaVersion": 18,
 			},
 		},
+		{
+			name: "migrates gauge options for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"title":         "V18 Nested Gauge Options Migration Test Dashboard",
+				"schemaVersion": 17,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    1,
+								"type":  "gauge",
+								"title": "Gauge Panel",
+								"options-gauge": map[string]interface{}{
+									"unit":     "ms",
+									"stat":     "last",
+									"decimals": 2,
+									"prefix":   "Value: ",
+									"suffix":   " ms",
+									"thresholds": []interface{}{
+										map[string]interface{}{"color": "green", "value": 0},
+										map[string]interface{}{"color": "red", "value": 100},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V18 Nested Gauge Options Migration Test Dashboard",
+				"schemaVersion": 18,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    1,
+								"type":  "gauge",
+								"title": "Gauge Panel",
+								"options": map[string]interface{}{
+									"valueOptions": map[string]interface{}{
+										"unit":     "ms",
+										"stat":     "last",
+										"decimals": 2,
+										"prefix":   "Value: ",
+										"suffix":   " ms",
+									},
+									"thresholds": []interface{}{
+										map[string]interface{}{"color": "red", "value": 100},
+										map[string]interface{}{"color": "green", "value": 0},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	runMigrationTests(t, tests, schemaversion.V18)
