@@ -13,8 +13,8 @@ permissions: {}
 
 jobs:
   detect-changes:
-    # Gate the whole workflow behind this check
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    # Gate the whole workflow behind this check. Skip draft PRs entirely.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && github.event.pull_request.draft == false
     name: Detect whether code changed
     runs-on: ubuntu-x64-small
     permissions:
@@ -22,7 +22,7 @@ jobs:
     outputs:
       # Build when non-test frontend or backend changes: a test-only PR can't
       # affect the built image, so it shouldn't trigger the Docker build.
-      changed: ${{ steps.detect-changes.outputs.frontend-no-tests == 'true' || steps.detect-changes.outputs.backend == 'true' }}
+      changed: ${{ steps.detect-changes.outputs.frontend-no-tests == 'true' || steps.detect-changes.outputs.backend-no-tests == 'true' }}
       # Meticulous only exercises frontend changes, so it gates on this alone.
       frontend-no-tests: ${{ steps.detect-changes.outputs.frontend-no-tests }}
     steps:

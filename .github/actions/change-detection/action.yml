@@ -11,6 +11,9 @@ outputs:
   backend:
     description: Whether the backend or self have changed in any way
     value: ${{ steps.changed-files.outputs.backend_any_modified || 'true' }}
+  backend-no-tests:
+    description: Whether the backend or self have changed, excluding test-only changes
+    value: ${{ steps.changed-files.outputs.backend_no_tests_any_modified || 'true' }}
   frontend:
     description: Whether the frontend or self has changed in any way
     value: ${{ steps.changed-files.outputs.frontend_any_modified || 'true' }}
@@ -145,6 +148,34 @@ runs:
             - 'devenv/docker/blocks/*_tests/**'
             - 'scripts/ci/backend-tests/**'
             - '${{ inputs.self }}'
+          backend_no_tests:
+            # Same as `backend` above, but excludes Go test files. Used to gate
+            # jobs (e.g. the PR Docker build) that a test-only PR can't affect.
+            - '!*.md'
+            - '!docs/**'
+            - '!.github/**'
+            - '.github/actions/setup-enterprise/**'
+            - '.github/actions/setup-go/**'
+            - '.github/actions/report-go-cache-sizes/**'
+            - '.github/actions/checkout/**'
+            - '**/go.mod'
+            - '**/go.sum'
+            - 'go.mod'
+            - 'go.sum'
+            - 'go.work'
+            - 'go.work.sum'
+            - '**.go'
+            - 'pkg/**'
+            - '!pkg/**.md'
+            - 'apps/**'
+            - '!apps/**.md'
+            - 'build.sh'
+            - '.github/actions/change-detection/**'
+            - '**.cue'
+            - 'devenv/docker/blocks/*_tests/**'
+            - 'scripts/ci/backend-tests/**'
+            - '${{ inputs.self }}'
+            - '!**_test.go'
           frontend:
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
@@ -269,6 +300,8 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.self_all_modified_files }}"
         echo "Backend: ${{ steps.changed-files.outputs.backend_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.backend_all_modified_files }}"
+        echo "Backend (no tests): ${{ steps.changed-files.outputs.backend_no_tests_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.backend_no_tests_all_modified_files }}"
         echo "Frontend: ${{ steps.changed-files.outputs.frontend_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_all_modified_files }}"
         echo "Frontend (no tests): ${{ steps.changed-files.outputs.frontend_no_tests_any_modified || 'true' }}"
