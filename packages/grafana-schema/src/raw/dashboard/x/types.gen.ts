@@ -941,6 +941,10 @@ export interface Panel {
    */
   repeatDirection?: ('h' | 'v');
   /**
+   * Panel subtitle.
+   */
+  subtitle?: string;
+  /**
    * Depends on the panel plugin. See the plugin documentation for details.
    */
   targets?: Array<Record<string, unknown>>;

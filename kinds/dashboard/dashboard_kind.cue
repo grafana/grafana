@@ -635,6 +635,9 @@ lineage: schemas: [{
 			// Panel description.
 			description?: string
 
+			// Panel subtitle.
+			subtitle?: string
+
 			// Whether to display the panel without a background.
 			transparent?: bool | *false
 

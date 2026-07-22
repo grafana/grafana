@@ -95,6 +95,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         title: t('dashboard-scene.get-panel-frame-options.title.description', 'Description'),
         id: 'panel-frame-options-description',
         value: panel.state.description,
+        skipField: true,
         render: function renderDescription(descriptor) {
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },

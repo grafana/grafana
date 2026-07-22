@@ -22,6 +22,10 @@ export interface LibraryPanel {
    */
   description?: string;
   /**
+   * Panel subtitle
+   */
+  subtitle?: string;
+  /**
    * Folder UID
    */
   folderUid?: string;

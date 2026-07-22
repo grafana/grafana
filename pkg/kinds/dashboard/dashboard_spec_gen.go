@@ -148,6 +148,8 @@ type Panel struct {
 	Title *string `json:"title,omitempty"`
 	// Panel description.
 	Description *string `json:"description,omitempty"`
+	// Panel subtitle.
+	Subtitle *string `json:"subtitle,omitempty"`
 	// Whether to display the panel without a background.
 	Transparent *bool `json:"transparent,omitempty"`
 	// The datasource used in all targets.
