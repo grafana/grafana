@@ -101,8 +101,8 @@ interface MomentTzFactory {
 export interface MomentLike {
   _isAMomentObject?: boolean;
 
-  add(value: number | string, unit?: MomentUnit | string): MomentLike;
-  subtract(value: number | string, unit?: MomentUnit | string): MomentLike;
+  add(value: number, unit?: MomentUnit | string): MomentLike;
+  subtract(value: number, unit?: MomentUnit | string): MomentLike;
   startOf(unit: StartEndUnit): MomentLike;
   endOf(unit: StartEndUnit): MomentLike;
   set(unit: UnitGetter, value: number): MomentLike;
@@ -111,14 +111,12 @@ export interface MomentLike {
   utc(): MomentLike;
   local(): MomentLike;
   tz(): string | undefined;
-  tz(zone: string, keepLocalTime?: boolean): MomentLike;
-  date(value?: number): number | MomentLike;
+  tz(zone: string): MomentLike;
   isoWeekday(value?: number): number | MomentLike;
   hour(value?: number): number | MomentLike;
   minute(value?: number): number | MomentLike;
   isValid(): boolean;
   isBefore(input: MomentInput, unit?: DateTimeUnit): boolean;
-  isAfter(input: MomentInput, unit?: DateTimeUnit): boolean;
   isSame(input: MomentInput, unit?: DateTimeUnit): boolean;
   diff(input: MomentInput, unit?: DurationUnit): number;
   toDate(): Date;
@@ -127,7 +125,6 @@ export interface MomentLike {
   toString(): string;
   valueOf(): number;
   unix(): number;
-  toLocaleString(): string;
   utcOffset(): number;
   format(template?: FormatArg): string;
   fromNow(withoutSuffix?: boolean): string;
@@ -304,25 +301,7 @@ function normalizeStartEndUnit(unit: StartEndUnit): DateTimeUnit {
   return START_END_UNIT_MAP[unit] ?? 'day';
 }
 
-function parseClockDuration(value: string, format?: string): Duration | null {
-  if (format !== 'HH:mm' && format !== 'HH:mm:ss') {
-    return null;
-  }
-
-  const parts = value.split(':').map((v) => Number(v));
-  if (parts.some((v) => Number.isNaN(v))) {
-    return null;
-  }
-
-  const [hours = 0, minutes = 0, seconds = 0] = parts;
-  return Duration.fromObject({ hours, minutes, seconds });
-}
-
-function normalizeDurationInput(input: number | string, unit?: MomentUnit | string): Duration {
-  if (typeof input === 'string') {
-    return parseClockDuration(input, unit) ?? Duration.fromMillis(0);
-  }
-
+function normalizeDurationInput(input: number, unit?: MomentUnit | string): Duration {
   if (unit == null) {
     return Duration.fromMillis(input);
   }
@@ -568,13 +547,13 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
   };
 
   function setZone(): string | undefined;
-  function setZone(zone: string, keepLocalTime?: boolean): MomentLike;
-  function setZone(zone?: string, keepLocalTime = false): string | undefined | MomentLike {
+  function setZone(zone: string): MomentLike;
+  function setZone(zone?: string): string | undefined | MomentLike {
     if (zone == null) {
       return dt.zoneName ?? undefined;
     }
 
-    return setDt(dt.setZone(zone, { keepLocalTime }));
+    return setDt(dt.setZone(zone));
   }
 
   const getLocaleWeekStart = () => getLocaleFirstDayOfWeek(dt.locale || currentLocale);
@@ -661,8 +640,6 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
 
     tz: setZone,
 
-    date: (value?: number) => (value == null ? dt.day : setDt(dt.set({ day: value }))),
-
     hour: (value?: number) => (value == null ? dt.hour : setDt(dt.set({ hour: value }))),
 
     minute: (value?: number) => (value == null ? dt.minute : setDt(dt.set({ minute: value }))),
@@ -682,11 +659,6 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     isBefore(other, unit) {
       const [a, b] = comparableMillis(other, unit);
       return a < b;
-    },
-
-    isAfter(other, unit) {
-      const [a, b] = comparableMillis(other, unit);
-      return a > b;
     },
 
     isSame(other, unit) {
@@ -725,10 +697,6 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
 
     unix() {
       return Math.floor(dt.toSeconds());
-    },
-
-    toLocaleString() {
-      return dt.toLocaleString(DateTime.DATETIME_MED);
     },
 
     utcOffset() {
