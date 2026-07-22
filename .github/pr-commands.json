@@ -110,14 +110,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/jaeger/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Jaeger"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/loki/**/*",
       "pkg/tsdb/loki/**/*"
     ],
