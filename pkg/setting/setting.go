@@ -860,7 +860,7 @@ type Cfg struct {
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	EnableKubernetesAggregatorCapTokenAuth bool
 
-	// EnableEmbeddedAPIExtensions runs the apiextensions apiserver (CRDs/CRs) and
+	// EnableEmbeddedAPIExtensions runs the apiextensions apiserver and
 	// the AppManifest installer in-process inside single-tenant Grafana. Enterprise
 	// only; OSS keeps the no-op path. Default off.
 	EnableEmbeddedAPIExtensions bool

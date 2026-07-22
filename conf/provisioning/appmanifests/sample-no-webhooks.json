@@ -6,7 +6,7 @@
   },
   "spec": {
     "appName": "customcrdtest",
-    "appDisplayName": "customcrdtest",
+    "appDisplayName": "customcrdtest v12",
     "group": "customcrdtest.ext.grafana.app",
     "versions": [
       {
@@ -17,14 +17,6 @@
             "kind": "Widget",
             "plural": "Widgets",
             "scope": "Namespaced",
-            "admission": {
-              "validation": {
-                "operations": ["CREATE", "UPDATE"]
-              },
-              "mutation": {
-                "operations": ["CREATE", "UPDATE"]
-              }
-            },
             "schemas": {
               "OperatorState": {
                 "additionalProperties": false,
@@ -91,8 +83,7 @@
                 },
                 "type": "object"
               }
-            },
-            "conversion": true
+            }
           },
           {
             "kind": "WorkflowSteps",
@@ -176,14 +167,6 @@
             "kind": "Widget",
             "plural": "Widgets",
             "scope": "Namespaced",
-            "admission": {
-              "validation": {
-                "operations": ["CREATE", "UPDATE"]
-              },
-              "mutation": {
-                "operations": ["CREATE", "UPDATE"]
-              }
-            },
             "schemas": {
               "OperatorState": {
                 "additionalProperties": false,
@@ -262,8 +245,7 @@
                 "required": ["ready", "message"],
                 "type": "object"
               }
-            },
-            "conversion": true
+            }
           },
           {
             "kind": "WorkflowSteps",
@@ -341,14 +323,6 @@
       }
     ],
     "preferredVersion": "v1",
-    "operator": {
-      "url": "https://localhost:8443",
-      "webhooks": {
-        "conversionPath": "/convert",
-        "validationPath": "/validate",
-        "mutationPath": "/mutate"
-      }
-    },
     "roles": {
       "customcrdtest:admin": {
         "title": "customcrdtest Admin",

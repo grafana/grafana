@@ -401,7 +401,7 @@ func (s *service) start(ctx context.Context) error {
 	// apiextensions is enabled (enterprise only), the apiextensions server is
 	// chained in front of it so unknown CRD-backed groups fall through to it,
 	// mirroring kube-apiserver: core groups -> apiextensions -> notFound.
-	coreDelegate := genericapiserver.DelegationTarget(genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
+	coreDelegate := genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler)
 	var apiExtAutoRegistration aggregatorrunner.AutoRegistrationControllerProvider
 	if s.apiExtensionsRunner.IsEnabled() {
 		delegate, autoReg, err := s.apiExtensionsRunner.BuildDelegate(ctx, ApiExtensionsDelegateConfig{
