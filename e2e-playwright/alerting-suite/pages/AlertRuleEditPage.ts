@@ -130,6 +130,13 @@ export class AlertRuleEditPage {
     await this.saveButton.click();
   }
 
+  async saveAndWaitForSuccess(outcome: 'created' | 'updated'): Promise<void> {
+    await this.save();
+
+    const message = outcome === 'created' ? 'Rule added successfully' : 'Rule updated successfully';
+    await expect(this.page.getByRole('status', { name: message })).toBeVisible();
+  }
+
   protected get nameInput(): Locator {
     return this.page.getByRole('textbox', { name: 'name', exact: true });
   }

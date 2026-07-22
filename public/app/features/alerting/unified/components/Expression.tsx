@@ -3,9 +3,9 @@ import Prism, { type Grammar, type Token, type TokenStream } from 'prismjs';
 import { type FC, Fragment, type ReactNode, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { lokiGrammar } from '@grafana/lezer-logql';
 import { promqlGrammar } from '@grafana/prometheus';
 import { useStyles2 } from '@grafana/ui';
-import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
 import { type RulesSource } from 'app/types/unified-alerting';
 
 import { DataSourceType, isCloudRulesSource } from '../utils/datasource';
@@ -19,7 +19,7 @@ interface Props {
 
 const GRAMMARS: Record<'promql' | 'logql', Grammar> = {
   promql: promqlGrammar,
-  logql: LogqlSyntax,
+  logql: lokiGrammar,
 };
 
 // Render Prism's token stream as elements (mirroring the class names Prism's own stringify emits)

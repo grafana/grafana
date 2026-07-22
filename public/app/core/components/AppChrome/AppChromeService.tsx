@@ -21,6 +21,7 @@ export interface AppChromeState {
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
+  fullscreenWorkspace?: boolean;
   layout: PageLayoutType;
   returnToPrevious?: {
     title: ReturnToPreviousProps['title'];
@@ -50,6 +51,7 @@ export class AppChromeService {
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
+    fullscreenWorkspace: false,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
@@ -167,6 +169,17 @@ export class AppChromeService {
       action: 'toggle',
       mode: nextMode,
     });
+  };
+
+  public setFullscreenWorkspace = (fullscreenWorkspace: boolean) => {
+    this.update({ fullscreenWorkspace });
+    reportInteraction('grafana_fullscreen_workspace', {
+      action: fullscreenWorkspace ? 'enter' : 'exit',
+    });
+  };
+
+  public toggleFullscreenWorkspace = () => {
+    this.setFullscreenWorkspace(!this.state.getValue().fullscreenWorkspace);
   };
 
   public exitKioskMode() {

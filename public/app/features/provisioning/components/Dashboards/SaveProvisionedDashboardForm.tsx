@@ -6,6 +6,7 @@ import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
 import {
   type RepositoryView,
@@ -75,6 +76,11 @@ export function SaveProvisionedDashboardForm({
   const isCreatingFolderRef = useRef(false);
   // Lets an in-flight folder creation know the user backed out, so its result isn't applied after the fact
   const folderCreationCancelledRef = useRef(false);
+  // Snapshot of the spec actually committed by the last submit. saveCompleted must
+  // baseline against this (not getSaveModel()) so post-save change detection matches
+  // what was written — on the update path getSaveModel() would re-include values the
+  // save-option toggles omitted.
+  const savedSpecRef = useRef<Dashboard | DashboardV2Spec | undefined>(undefined);
   const mountedRef = useRef(true);
   useEffect(() => {
     return () => {
@@ -207,7 +213,10 @@ export function SaveProvisionedDashboardForm({
 
   const handleDismiss = useCallback(
     (wrapper: ResourceWrapper) => {
-      const model = dashboard.getSaveModel();
+      // Baseline against exactly what was committed. On the update path that is the
+      // change-trimmed model; getSaveModel() would re-include values the toggles
+      // omitted, so change detection would treat them as already saved until reload.
+      const model = savedSpecRef.current ?? dashboard.getSaveModel();
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
       dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
@@ -384,13 +393,26 @@ export function SaveProvisionedDashboardForm({
 
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
-      : dashboard.getSaveResource({
-          isNew,
-          title,
-          description,
-          copyTags,
-          saveAsCopy,
-        });
+      : isNew
+        ? dashboard.getSaveResource({
+            isNew,
+            title,
+            description,
+            copyTags,
+            saveAsCopy,
+          })
+        : // Existing dashboards: commit the change-trimmed model so the "Change default
+          // variables / time range / refresh" toggles are honored. getSaveResource()
+          // serializes the full scene and would re-include the current variable values
+          // (and time/refresh) even when the toggle is left off, diverging from the diff
+          // shown in the drawer. This mirrors the non-provisioned save path.
+          dashboard.getSaveResourceFromSpec(changeInfo.changedSaveModel);
+
+    // Single source of truth: baseline against exactly the spec we committed, so
+    // post-save change detection matches what was written (handleDismiss → saveCompleted).
+    // Deriving from body.spec avoids re-running getSaveAsModel() on the new/save-as path.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    savedSpecRef.current = body.spec as Dashboard | DashboardV2Spec;
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,

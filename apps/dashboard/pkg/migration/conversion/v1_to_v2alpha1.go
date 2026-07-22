@@ -2411,6 +2411,9 @@ func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQu
 	if timeShift := schemaversion.GetStringValue(panelMap, "timeShift"); timeShift != "" {
 		queryOptions.TimeShift = &timeShift
 	}
+	if timeCompare := schemaversion.GetStringValue(panelMap, "timeCompare"); timeCompare != "" {
+		queryOptions.TimeCompare = &timeCompare
+	}
 
 	return queryOptions
 }

@@ -51,7 +51,8 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
 async function runPromQueries(
   queries: PromQuery[],
   range: TimeRange,
-  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
+  timeoutMs = 30_000
 ): Promise<DataFrame[]> {
   const runner = createQueryRunner();
   try {
@@ -68,7 +69,7 @@ async function runPromQueries(
     const data = await firstValueFrom(
       runner.get().pipe(
         first((d) => d.state === LoadingState.Done || d.state === LoadingState.Error),
-        timeout(30_000)
+        timeout(timeoutMs)
       )
     );
     if (data.state === LoadingState.Error) {
@@ -86,7 +87,8 @@ async function runPromQueries(
  */
 export async function runInstantQueries(
   queries: Record<string, string>,
-  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
+  timeoutMs?: number
 ): Promise<DataFrame[]> {
   const targets: PromQuery[] = Object.entries(queries).map(([refId, expr]) => ({
     refId,
@@ -94,7 +96,7 @@ export async function runInstantQueries(
     instant: true,
     range: false,
   }));
-  return runPromQueries(targets, getDefaultTimeRange(), ds);
+  return runPromQueries(targets, getDefaultTimeRange(), ds, timeoutMs);
 }
 
 /**

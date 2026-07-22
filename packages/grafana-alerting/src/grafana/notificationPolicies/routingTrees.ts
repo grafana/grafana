@@ -13,13 +13,9 @@ export const DEFAULT_ROUTING_TREE_NAME_ALIAS = 'default';
  * backend's IsDefaultRoutingTreeName. Also treats an absent name (empty string / undefined) as the default,
  * because the frontend uses "no name" to mean the root route.
  */
-export function isDefaultRoutingTreeName(name?: string | null): boolean {
+export function isDefaultRoutingTreeName(name?: string): boolean {
   return (
-    name === undefined ||
-    name === null ||
-    name === '' ||
-    name === USER_DEFINED_TREE_NAME ||
-    name === DEFAULT_ROUTING_TREE_NAME_ALIAS
+    name === undefined || name === '' || name === USER_DEFINED_TREE_NAME || name === DEFAULT_ROUTING_TREE_NAME_ALIAS
   );
 }
 

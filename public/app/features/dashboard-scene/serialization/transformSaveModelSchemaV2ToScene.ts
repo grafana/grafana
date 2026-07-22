@@ -115,26 +115,35 @@ export function transformSaveModelSchemaV2ToScene(
 ): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
-  const annotations = dashboard.annotations ?? [];
-  const found = annotations.some((item) => item.spec.builtIn);
-  if (!found) {
-    annotations.unshift(getGrafanaBuiltInAnnotation());
+  const isSnapshot = Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]);
+
+  // Snapshots embed their annotation results in the per-panel snapshot query data, so we must
+  // not create annotation data layers — those would fire live annotation queries (e.g. the
+  // authorized annotations endpoint, which returns 401 for snapshots). Mirrors the v1
+  // transform's `!oldModel.isSnapshot()` guard.
+  let annotationLayers: DashboardAnnotationsDataLayer[] = [];
+  if (!isSnapshot) {
+    const annotations = dashboard.annotations ?? [];
+    const found = annotations.some((item) => item.spec.builtIn);
+    if (!found) {
+      annotations.unshift(getGrafanaBuiltInAnnotation());
+    }
+
+    annotationLayers = annotations.map((annotation) => {
+      const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
+
+      const layerState = {
+        key: uniqueId('annotations-'),
+        query: annotationQuerySpec,
+        name: annotation.spec.name,
+        isEnabled: Boolean(annotation.spec.enable),
+        isHidden: Boolean(annotation.spec.hide),
+        placement: annotation.spec.placement,
+      };
+
+      return new DashboardAnnotationsDataLayer(layerState);
+    });
   }
-
-  const annotationLayers = annotations.map((annotation) => {
-    const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
-
-    const layerState = {
-      key: uniqueId('annotations-'),
-      query: annotationQuerySpec,
-      name: annotation.spec.name,
-      isEnabled: Boolean(annotation.spec.enable),
-      isHidden: Boolean(annotation.spec.hide),
-      placement: annotation.spec.placement,
-    };
-
-    return new DashboardAnnotationsDataLayer(layerState);
-  });
 
   // Create alert states data layer if unified alerting is enabled
   let alertStatesLayer: AlertStatesDataLayer | undefined;
@@ -164,7 +173,7 @@ export function transformSaveModelSchemaV2ToScene(
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     folderTitle: metadata.annotations?.[AnnoKeyFolderTitle],
-    isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
+    isSnapshot,
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
 

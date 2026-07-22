@@ -135,6 +135,29 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 	}
 }
 
+func TestTagsFacetPreservesMultiWordValues(t *testing.T) {
+	mappings, err := search.GetBleveMappings(nil, "", "", nil)
+	require.NoError(t, err)
+
+	idx, err := bleve.NewMemOnly(mappings)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, idx.Close()) })
+
+	doc := resource.IndexableDocument{Tags: []string{"US West"}}
+	require.NoError(t, idx.Index("a", doc))
+
+	req := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
+	req.Size = 0
+	req.AddFacet("tags", bleve.NewFacetRequest(resource.SEARCH_FIELD_TAGS, 10))
+	result, err := idx.Search(req)
+	require.NoError(t, err)
+
+	terms := result.Facets["tags"].Terms.Terms()
+	require.Len(t, terms, 1)
+	assert.Equal(t, "US West", terms[0].Term)
+	assert.Equal(t, 1, terms[0].Count)
+}
+
 // TestStandardCreatedUpdatedAreNumeric guards that the int64 standard fields
 // created and updated are stored as numbers and returned on retrieve: with a
 // keyword mapping bleve dropped the numeric value entirely. They are

@@ -59,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -109,7 +110,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := ProvideService(context.Background(), sqlStore, cfgProvider)
+	quotaService := ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
@@ -250,7 +251,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 
 			cfgProvider, err := configprovider.ProvideService(cfg)
 			require.NoError(t, err)
-			quotaSrv := ProvideService(context.Background(), sqlStore, cfgProvider)
+			quotaSrv := ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
 			q, err := getQuotaBySrvTargetScope(t, quotaSrv, ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, quota.OrgScope, &quota.ScopeParameters{OrgID: o.ID})
 
 			require.NoError(t, err)

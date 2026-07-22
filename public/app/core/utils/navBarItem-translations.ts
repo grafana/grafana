@@ -57,6 +57,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.create-import.title', 'Import dashboard');
     case 'scenes':
       return t('nav.scenes.title', 'Scenes');
+    case 'saved-queries':
+      return t('nav.saved-queries.title', 'Saved queries');
     case 'explore':
       return t('nav.explore.title', 'Explore');
     case 'drilldown':
@@ -232,6 +234,8 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.recently-deleted.subtitle',
         'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
       );
+    case 'saved-queries':
+      return t('nav.saved-queries.subtitle', 'Reusable queries you can use across panels and Explore');
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
     case 'alerting-upgrade':

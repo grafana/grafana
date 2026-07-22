@@ -7,7 +7,13 @@ import { type RepositoryFormData } from '../types';
 
 import { WebhookSection } from './WebhookSection';
 
-function Wrapper({ connectionWebhookDisabled }: { connectionWebhookDisabled?: boolean }) {
+function Wrapper({
+  connectionWebhookDisabled,
+  disabledReason,
+}: {
+  connectionWebhookDisabled?: boolean;
+  disabledReason?: string;
+}) {
   const { register, control } = useForm<RepositoryFormData>();
   return (
     <WebhookSection
@@ -16,6 +22,7 @@ function Wrapper({ connectionWebhookDisabled }: { connectionWebhookDisabled?: bo
       name="webhook.baseUrl"
       disabledName="webhook.disabled"
       connectionWebhookDisabled={connectionWebhookDisabled}
+      disabledReason={disabledReason}
     />
   );
 }
@@ -103,6 +110,40 @@ describe('WebhookSection', () => {
       expect(
         screen.getByText(/when checked, grafana will not register or receive webhook events/i)
       ).toBeInTheDocument();
+    });
+
+    it('shows the forced description when connectionWebhookDisabled is true', async () => {
+      const { user } = render(<Wrapper connectionWebhookDisabled={true} />);
+
+      await user.click(screen.getByText('Webhook options'));
+
+      expect(screen.getByText(/disabled because the referenced github app connection/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('disabledReason', () => {
+    it('restores the stored value when the disabled reason goes away', async () => {
+      const { user, rerender } = render(<Wrapper />);
+
+      await user.click(screen.getByText('Webhook options'));
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).not.toBeChecked();
+
+      rerender(<Wrapper disabledReason="Webhooks need an email." />);
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeChecked();
+
+      rerender(<Wrapper />);
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).not.toBeChecked();
+    });
+
+    it('disables the checkbox and URL input and shows the reason', async () => {
+      const { user } = render(<Wrapper disabledReason="Webhooks need an email." />);
+
+      await user.click(screen.getByText('Webhook options'));
+
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeDisabled();
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeChecked();
+      expect(screen.getByRole('textbox')).toBeDisabled();
+      expect(screen.getByText('Webhooks need an email.')).toBeInTheDocument();
     });
   });
 

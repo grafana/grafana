@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -15,7 +14,6 @@ import (
 
 func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "delete-auth-test"
 	testRepo := common.TestRepo{
@@ -24,10 +22,11 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Grant the editor user dashboard permissions (the default editor role
 	// does not include dashboards:delete which is required by the pre-flight check).
@@ -56,7 +55,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to create delete job")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -83,7 +82,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "editor should be able to create delete job")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -107,7 +106,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to create delete job")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -133,7 +132,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "delete job should be blocked for folder resource in a file")
 		require.NotEqual(t, http.StatusAccepted, statusCode, "should not return 202 Accepted")
@@ -158,7 +157,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "delete job should be blocked for unsupported resource type")
 		require.NotEqual(t, http.StatusAccepted, statusCode, "should not return 202 Accepted")

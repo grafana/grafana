@@ -266,6 +266,14 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			countSess.Where("LOWER(name) = LOWER(?)", query.Name)
 		}
 
+		if len(query.TeamIds) > 0 {
+			countSess.In("team.id", query.TeamIds)
+		}
+
+		if len(query.UIDs) > 0 {
+			countSess.In("team.uid", query.UIDs)
+		}
+
 		// Only count teams user can see
 		countSess.Where(acFilter.Where, acFilter.Args...)
 

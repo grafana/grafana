@@ -1,4 +1,4 @@
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { RoutingTreeFactory } from '../api/notifications/v0alpha1/mocks/fakes/Routes';
 
 import {
   DEFAULT_ROUTING_TREE_NAME_ALIAS,
@@ -24,16 +24,16 @@ describe('isDefaultRoutingTreeName', () => {
 });
 
 describe('isDefaultRoutingTree', () => {
-  const treeNamed = (name?: string): RoutingTree => ({ metadata: { name } }) as RoutingTree;
-
-  it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS, undefined])(
+  // The undefined/empty name cases are covered by isDefaultRoutingTreeName above; here we only need
+  // to prove the tree-level helper delegates using the tree's metadata.name.
+  it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
     'is true for the default tree named %p',
     (name) => {
-      expect(isDefaultRoutingTree(treeNamed(name))).toBe(true);
+      expect(isDefaultRoutingTree(RoutingTreeFactory.build({ metadata: { name } }))).toBe(true);
     }
   );
 
   it('is false for a named managed route', () => {
-    expect(isDefaultRoutingTree(treeNamed('team-backend'))).toBe(false);
+    expect(isDefaultRoutingTree(RoutingTreeFactory.build({ metadata: { name: 'team-backend' } }))).toBe(false);
   });
 });

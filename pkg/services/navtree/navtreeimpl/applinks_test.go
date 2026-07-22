@@ -376,6 +376,88 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestAssistantStubNav(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	onboardingPlugin := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:          assistantOnboardingAppID,
+			Name:        "Grafana Assistant Onboarding",
+			Type:        plugins.TypeApp,
+			AutoEnabled: true,
+		},
+	}
+	assistantPlugin := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:          assistantAppID,
+			Name:        "Grafana Assistant",
+			Type:        plugins.TypeApp,
+			AutoEnabled: true,
+		},
+	}
+	appAccess := ac.Permission{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"}
+	installAccess := ac.Permission{Action: pluginaccesscontrol.ActionInstall, Scope: "*"}
+
+	tests := []struct {
+		name        string
+		plugins     []pluginstore.Plugin
+		permissions []ac.Permission
+		wantStub    bool
+	}{
+		{
+			name:        "adds stub when onboarding plugin is enabled and Assistant is absent",
+			plugins:     []pluginstore.Plugin{onboardingPlugin},
+			permissions: []ac.Permission{appAccess, installAccess},
+			wantStub:    true,
+		},
+		{
+			name:        "suppresses stub when Assistant is enabled",
+			plugins:     []pluginstore.Plugin{onboardingPlugin, assistantPlugin},
+			permissions: []ac.Permission{appAccess, installAccess},
+		},
+		{
+			name:        "suppresses stub when onboarding plugin is absent",
+			permissions: []ac.Permission{appAccess, installAccess},
+		},
+		{
+			name:        "adds stub when user cannot install plugins",
+			plugins:     []pluginstore.Plugin{onboardingPlugin},
+			permissions: []ac.Permission{appAccess},
+			wantStub:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := ServiceImpl{
+				log:            log.New("navtree"),
+				cfg:            setting.NewCfg(),
+				accessControl:  accesscontrolmock.New().WithPermissions(tt.permissions),
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{}},
+				features:       featuremgmt.WithFeatures(),
+				pluginStore:    &pluginstore.FakePluginStore{PluginList: tt.plugins},
+			}
+
+			treeRoot := navtree.NavTreeRoot{}
+			err := service.addAppLinks(&treeRoot, reqCtx)
+			require.NoError(t, err)
+
+			node := treeRoot.FindById("plugin-page-" + assistantAppID)
+			if !tt.wantStub {
+				require.Nil(t, node)
+				return
+			}
+
+			require.NotNil(t, node)
+			require.Equal(t, "Assistant", node.Text)
+			require.Equal(t, "/a/"+assistantAppID, node.Url)
+			require.Equal(t, "ai-sparkle", node.Icon)
+			require.Equal(t, assistantAppID, node.PluginID)
+			require.Equal(t, int64(navtree.WeightAssistant), node.SortWeight)
+		})
+	}
+}
+
 func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
@@ -816,6 +898,85 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		require.Len(t, appsNode.Children[0].Children, 1)
 		require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
 	})
+}
+
+func TestProcessAssistantAppPlugin(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{
+		SignedInUser: &user.SignedInUser{OrgRole: identity.RoleAdmin},
+		Context:      &web.Context{Req: httpReq},
+	}
+	assistantApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   assistantAppID,
+			Name: "Assistant",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Home", Path: "/a/grafana-assistant-app", Type: "page", AddToNav: true, DefaultNav: true},
+				{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+				{Name: "Settings", Path: "/a/grafana-assistant-app/settings", Type: "page", AddToNav: true},
+				{Name: "Irrelevant", Path: "/a/grafana-assistant-app/irrelevant", Type: "page", AddToNav: true},
+			},
+		},
+	}
+
+	for _, tt := range []struct {
+		name           string
+		cfg            *setting.Cfg
+		trialMode      bool
+		wantChildPaths []string
+	}{
+		{
+			name: "OSS only includes supported entries",
+			cfg:  setting.NewCfg(),
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+			},
+		},
+		{
+			name: "Enterprise includes all entries",
+			cfg:  &setting.Cfg{IsEnterprise: true},
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+				"/a/grafana-assistant-app/irrelevant",
+			},
+		},
+		{
+			name: "Cloud includes all entries",
+			cfg:  &setting.Cfg{StackID: "1"},
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+				"/a/grafana-assistant-app/irrelevant",
+			},
+		},
+		{
+			name:      "Trial mode only includes the homepage",
+			cfg:       setting.NewCfg(),
+			trialMode: true,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			service := ServiceImpl{
+				cfg: tt.cfg,
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: map[string]any{"trialMode": tt.trialMode}},
+				}},
+			}
+			treeRoot := navtree.NavTreeRoot{}
+			service.processAppPlugin(assistantApp, reqCtx, &treeRoot)
+			appLink := treeRoot.FindById("plugin-page-" + assistantAppID)
+
+			require.NotNil(t, appLink)
+			require.Equal(t, "/a/grafana-assistant-app", appLink.Url)
+			require.Len(t, appLink.Children, len(tt.wantChildPaths))
+			for i, wantPath := range tt.wantChildPaths {
+				require.Equal(t, wantPath, appLink.Children[i].Url)
+			}
+		})
+	}
 }
 
 func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {

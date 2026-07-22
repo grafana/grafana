@@ -98,7 +98,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
-          DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
         },
       });
     }
@@ -107,7 +107,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     subMenu.push({
       text: t('share-panel.menu.share-link-title', 'Share link'),
       iconClassName: 'link',
-      shortcut: 'p u',
       onClick: () => {
         DashboardInteractions.sharingCategoryClicked({
           item: shareDashboardType.link,
@@ -196,6 +195,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');
           dashboard.copyPanel(panel);
         },
+        shortcut: 'p c',
       });
     }
 

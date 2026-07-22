@@ -45,7 +45,6 @@ interface FormState {
 }
 
 const ERROR_MESSAGES = {
-  required: () => t('time-picker.range-content.required-error', 'This field is required'),
   default: () =>
     t(
       'time-picker.range-content.default-error',
@@ -180,7 +179,7 @@ export const TimeRangeContent = (props: Props) => {
         >
           <Input
             {...register('from', {
-              required: ERROR_MESSAGES.required(),
+              required: ERROR_MESSAGES.default(),
 
               validate: (value, formValues) => {
                 if (!isValid(value, false, timeZone)) {
@@ -209,7 +208,7 @@ export const TimeRangeContent = (props: Props) => {
         <Field label={t('time-picker.range-content.to-input', 'To')} invalid={!!errors.to} error={errors.to?.message}>
           <Input
             {...register('to', {
-              required: ERROR_MESSAGES.required(),
+              required: ERROR_MESSAGES.default(),
               validate: (value, formValues) => {
                 if (!isValid(value, true, timeZone)) {
                   return ERROR_MESSAGES.default();

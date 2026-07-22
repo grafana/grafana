@@ -110,6 +110,27 @@ describe('RadialGauge color utils', () => {
         )
       ).toMatchSnapshot();
     });
+
+    it('should produce ascending gradient stops when thresholds span negative values', () => {
+      const field = createField(FieldColorModeId.Thresholds);
+      const fieldDisplay = buildFieldDisplay(field, {
+        field: {
+          min: -100,
+          max: 100,
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: -50, color: 'yellow' },
+              { value: 0, color: 'red' },
+            ],
+          },
+        },
+      });
+      const stops = buildGradientColors(createTheme(), fieldDisplay);
+      const percents = stops.map((s) => s.percent);
+      expect(percents).toEqual([...percents].sort((a, b) => a - b));
+    });
   });
 
   describe('colorAtGradientPercent', () => {

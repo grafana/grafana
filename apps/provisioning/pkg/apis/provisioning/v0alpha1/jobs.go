@@ -77,6 +77,13 @@ const (
 	// This action has inverted validation: it is only allowed when the repository
 	// does not exist or has a DeletionTimestamp set.
 	JobActionDeleteResources JobAction = "deleteResources"
+
+	// JobActionTest is a synthetic job that does no real work: it simply sleeps
+	// for a configurable duration and then completes successfully. It exists only
+	// to generate controlled load on the job queue and controllers for
+	// performance testing, and is gated behind the provisioning.performance
+	// feature flag.
+	JobActionTest JobAction = "test"
 )
 
 // +enum
@@ -137,6 +144,9 @@ type JobSpec struct {
 
 	// Options when the action is `fix-folder-metadata`
 	FixFolderMetadata *FixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
+
+	// Required when the action is `test`
+	Test *TestJobOptions `json:"test,omitempty"`
 }
 
 func (JobSpec) OpenAPIModelName() string {
@@ -211,6 +221,16 @@ type MigrateJobOptions struct {
 	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message string `json:"message,omitempty"`
 
+	// Target branch for the migration (git only). When set to a branch other
+	// than the repository's configured branch, the migration writes the exported
+	// resources to that branch (a pull request workflow) and removes the migrated
+	// resources from the instance instead of taking ownership of them — they
+	// return as managed resources once the branch is merged and a regular sync
+	// runs on the configured branch. When empty (or equal to the configured
+	// branch), the migration writes directly to the configured branch and takes
+	// ownership of the exported resources.
+	Branch string `json:"branch,omitempty"`
+
 	// Resources to migrate. When empty, every unmanaged resource in the namespace
 	// is migrated (legacy behavior). When non-empty, only the listed resources
 	// are exported to the repository — the folder hierarchy is still emitted so
@@ -224,6 +244,13 @@ type MigrateJobOptions struct {
 	// existing folder UID. The subsequent pull creates new folders rather than
 	// taking over the originals. Has no effect when folder metadata is not written.
 	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
+
+	// SkipResourceDeletion keeps the migrated resources on the instance instead of
+	// removing them. By default a migration deletes the resources it moved (the
+	// whole namespace for an instance target, or the exported resources for a
+	// branch migration); when true, no deletion happens and the resources are
+	// left in place.
+	SkipResourceDeletion bool `json:"skipResourceDeletion,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {
@@ -297,6 +324,24 @@ type FixFolderMetadataJobOptions struct {
 
 func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
+}
+
+// TestJobOptions configures a synthetic performance-testing job. The job does
+// no real work; it sleeps for Duration and then completes. It is only usable
+// when the provisioning.performance feature flag is enabled.
+type TestJobOptions struct {
+	// Duration is how long the job should sleep before completing, expressed as
+	// a Go duration string (for example "10s" or "2m"). It must be positive and
+	// is capped by the server to keep a single job's runtime predictable.
+	Duration metav1.Duration `json:"duration,omitempty"`
+
+	// ProgressUpdates controls how many progress notifications the job emits
+	// while running. A value of 0 uses the server default.
+	ProgressUpdates int `json:"progressUpdates,omitempty"`
+}
+
+func (TestJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "TestJobOptions"
 }
 
 // The job status

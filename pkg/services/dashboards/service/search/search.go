@@ -99,7 +99,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		return v0alpha1.SearchResults{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		// Wrap via GetError so the status code/reason survives, letting callers
+		// classify transient search failures (e.g. 429/503) as retryable.
+		return v0alpha1.SearchResults{}, fmt.Errorf("error searching: %w", resource.GetError(result.Error))
 	} else if result.Results == nil {
 		return v0alpha1.SearchResults{}, nil
 	}

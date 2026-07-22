@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,23 +21,21 @@ import (
 // requested dashboard and the requested folder are written.
 func TestIntegrationProvisioning_ExportSpecificResources_FolderExported(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
+	_, err := helper.DashboardsV1.Resource.Create(t.Context(), dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
 	// A real folder, named explicitly in the export. Unlike the old behavior, a
 	// passed folder is now exported rather than silently skipped.
-	folderUID := helper.CreateUnmanagedFolder(t, ctx, "exportedfolderref", "")
+	folderUID := helper.CreateUnmanagedFolder(t, "exportedfolderref", "")
 
 	const repo = "selective-export-folderref-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		Copies:                 map[string]string{},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	})
 
 	spec := provisioning.JobSpec{

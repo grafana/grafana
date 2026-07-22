@@ -93,3 +93,52 @@ func TestV24TablePanelMigration(t *testing.T) {
 		})
 	}
 }
+
+func TestV24NestedRowPanelMigration(t *testing.T) {
+	tests := []migrationTestCase{
+		{
+			name: "auto-migrates angular table for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"schemaVersion": 23,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type": "table",
+								"styles": []interface{}{
+									map[string]interface{}{
+										"alias": "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 24,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type":            "table",
+								"autoMigrateFrom": "table-old",
+								"styles": []interface{}{
+									map[string]interface{}{
+										"alias": "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	runMigrationTests(t, tests, V24)
+}

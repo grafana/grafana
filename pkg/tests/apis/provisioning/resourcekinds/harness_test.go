@@ -17,7 +17,6 @@
 package resourcekinds
 
 import (
-	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -234,7 +233,7 @@ func TestMain(m *testing.M) {
 
 // postResourceFile creates a resource at path via the files endpoint, which both stores the
 // file in the repository and provisions the resource into Grafana.
-func postResourceFile(t *testing.T, ctx context.Context, helper *common.ProvisioningTestHelper, rk resourceKind, repo, filePath, name, title string) {
+func postResourceFile(t *testing.T, helper *common.ProvisioningTestHelper, rk resourceKind, repo, filePath, name, title string) {
 	t.Helper()
 	res := helper.AdminREST.Post().
 		Namespace("default").
@@ -243,14 +242,14 @@ func postResourceFile(t *testing.T, ctx context.Context, helper *common.Provisio
 		SubResource("files", filePath).
 		Body(common.ResourceToJSON(t, rk.newResource(t, name, title))).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 	require.NoError(t, res.Error(), "creating %s via the files endpoint should succeed", filePath)
 }
 
 // repositoryFilePaths returns the set of file paths currently in the repository.
-func repositoryFilePaths(t *testing.T, ctx context.Context, helper *common.ProvisioningTestHelper, repo string) []string {
+func repositoryFilePaths(t *testing.T, helper *common.ProvisioningTestHelper, repo string) []string {
 	t.Helper()
-	items := helper.ListRepositoryFiles(t, ctx, repo)
+	items := helper.ListRepositoryFiles(t, repo)
 	paths := make([]string, 0, len(items))
 	for _, item := range items {
 		paths = append(paths, item.Path)

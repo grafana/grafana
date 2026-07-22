@@ -1,4 +1,4 @@
-import { groupAttributesByCategory } from './attributeCategories';
+import { groupAttributesByCategory, SERVICE_CATEGORY_ID } from './attributeCategories';
 
 describe('groupAttributesByCategory', () => {
   it('groups resource attributes by semantic namespace', () => {
@@ -13,7 +13,12 @@ describe('groupAttributesByCategory', () => {
 
     const grouped = groupAttributesByCategory(attributes, 'resource');
 
-    expect(grouped.map(({ category }) => category.id)).toEqual(['service', 'kubernetes', 'telemetry-sdk', 'other']);
+    expect(grouped.map(({ category }) => category.id)).toEqual([
+      SERVICE_CATEGORY_ID,
+      'kubernetes',
+      'telemetry-sdk',
+      'other',
+    ]);
     expect(grouped[0].attributes).toHaveLength(2);
     expect(grouped[1].attributes).toHaveLength(2);
     expect(grouped[2].attributes).toHaveLength(1);
@@ -53,7 +58,7 @@ describe('groupAttributesByCategory', () => {
     );
     const spanGrouped = groupAttributesByCategory([{ key: 'http_method', value: 'POST' }], 'span');
 
-    expect(resourceGrouped.map(({ category }) => category.id)).toEqual(['service', 'kubernetes']);
+    expect(resourceGrouped.map(({ category }) => category.id)).toEqual([SERVICE_CATEGORY_ID, 'kubernetes']);
     expect(spanGrouped.map(({ category }) => category.id)).toEqual(['http']);
   });
 
@@ -154,7 +159,7 @@ describe('groupAttributesByCategory', () => {
       'span'
     );
 
-    expect(grouped.map(({ category }) => category.id)).toEqual(['kubernetes', 'service']);
+    expect(grouped.map(({ category }) => category.id)).toEqual(['kubernetes', SERVICE_CATEGORY_ID]);
   });
 
   it('orders service first and alphabetizes remaining resource categories', () => {
@@ -167,7 +172,12 @@ describe('groupAttributesByCategory', () => {
 
     const grouped = groupAttributesByCategory(attributes, 'resource');
 
-    expect(grouped.map(({ category }) => category.id)).toEqual(['service', 'cloud', 'kubernetes', 'telemetry-sdk']);
+    expect(grouped.map(({ category }) => category.id)).toEqual([
+      SERVICE_CATEGORY_ID,
+      'cloud',
+      'kubernetes',
+      'telemetry-sdk',
+    ]);
   });
 
   it('groups google cloud attributes under Cloud, not Runtime', () => {

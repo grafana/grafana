@@ -38,7 +38,7 @@ export interface DashboardEditPaneLike extends SceneObject<DashboardEditPaneStat
   goBackToPrevious(): void;
   fixSelectionOfRemovedObject(): void;
   addNewPanel(target: SceneObject | undefined): void;
-  pastePanel(target: SceneObject | undefined, source?: 'sidebar' | 'editPaneHeader'): void;
+  pastePanel(target: SceneObject | undefined): void;
   setPanelEditAction(editAction: DashboardEditActionEvent): void;
 }
 

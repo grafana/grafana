@@ -52,7 +52,6 @@ jest.mock('./layers', () => {
   return {
     getMapLayerState: jest.fn().mockReturnValue({
       options: { tooltip: true },
-      mouseEvents: { next: jest.fn() },
     }),
   };
 });

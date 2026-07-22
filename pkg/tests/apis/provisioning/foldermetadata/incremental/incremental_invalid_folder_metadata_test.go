@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -23,10 +22,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	helper := sharedGitHelper(t)
 
 	t.Run("invalid metadata creation on existing folder keeps unstable uid and reconciles changed child", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-existing"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -34,7 +33,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		})
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
-		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "team")
+		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
 
 		require.NoError(t, local.CreateFile("team/_folder.json", string(invalidFolderMetadataJSON("Broken Team"))))
 		require.NoError(t, local.CreateFile("team/dashboard.json", string(common.DashboardJSON("team-dash", "Team Dashboard Updated", 1))))
@@ -56,18 +55,18 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionCreated)
 
-		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, oldUID)
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "team/dashboard.json", oldUID)
-		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		common.RequireRepoFolderUID(t, helper.Folders, repoName, oldUID)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/dashboard.json", oldUID)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"team-dash": {Title: "Team Dashboard Updated", SourcePath: "team/dashboard.json", Folder: oldUID},
 		})
 	})
 
 	t.Run("invalid metadata on new folder falls back to unstable uid and reconciles children", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-new"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -96,20 +95,20 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionCreated)
 
-		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "team")
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "team/dashboard.json", folderUID)
-		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/dashboard.json", folderUID)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"root-dash": {Title: "Root Dashboard", SourcePath: "root.json"},
 			"team-dash": {Title: "Team Dashboard", SourcePath: "team/dashboard.json", Folder: folderUID},
 		})
 	})
 
 	t.Run("invalid metadata update on stable folder keeps stable uid and reconciles changed child", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-update"
 		const stableUID = "team-stable-uid"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -139,19 +138,19 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionUpdated)
 
-		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, stableUID)
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "team/dashboard.json", stableUID)
-		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		common.RequireRepoFolderUID(t, helper.Folders, repoName, stableUID)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/dashboard.json", stableUID)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"team-dash": {Title: "Team Dashboard Updated", SourcePath: "team/dashboard.json", Folder: stableUID},
 		})
 	})
 
 	t.Run("follow-up child update under already-invalid metadata keeps the existing stable uid", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-follow-up-child"
 		const stableUID = "team-stable-uid"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -196,21 +195,21 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.Empty(t, jobObj.Status.Errors)
 		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State)
 
-		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, stableUID)
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "team/dashboard.json", stableUID)
-		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
-		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		common.RequireRepoFolderUID(t, helper.Folders, repoName, stableUID)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/dashboard.json", stableUID)
+		helper.RequireRepoFolderCount(t, repoName, 1)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"team-dash": {Title: "Team Dashboard Follow-up", SourcePath: "team/dashboard.json", Folder: stableUID},
 		})
 	})
 
 	t.Run("invalid metadata creation on existing folder does not break valid folder meta creation on another folder in the same incremental sync", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-with-valid-replaced"
 		const parentStableUID = "parent-stable-uid"
 		const childUID = "child-stable-uid"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -222,8 +221,8 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
-		oldBrokenUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "broken")
-		oldParentUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "parent")
+		oldBrokenUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "broken")
+		oldParentUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "parent")
 		require.NotEqual(t, parentStableUID, oldParentUID, "parent should start with an unstable uid")
 		common.RequireFolderState(t, helper.Folders, childUID, "Child", "parent/child", oldParentUID)
 
@@ -247,23 +246,21 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
 		requireInvalidFolderMetadataWarning(t, jobObj, "broken/", repository.FileActionCreated)
 
-		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, parentStableUID)
+		common.RequireRepoFolderUID(t, helper.Folders, repoName, parentStableUID)
 		common.RequireFolderState(t, helper.Folders, childUID, "Child", "parent/child", parentStableUID)
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "parent/child/dashboard.json", childUID)
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "parent/child/second-dash.json", childUID)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "parent/child/dashboard.json", childUID)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "parent/child/second-dash.json", childUID)
 
-		_, err = helper.Folders.Resource.Get(ctx, oldParentUID, metav1.GetOptions{})
-		require.Error(t, err)
-		require.True(t, apierrors.IsNotFound(err), "old unstable parent folder should be deleted")
+		helper.RequireFoldersNotFound(t, oldParentUID)
 
-		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, oldBrokenUID)
+		common.RequireRepoFolderUID(t, helper.Folders, repoName, oldBrokenUID)
 	})
 
 	t.Run("moving a resource into an existing folder with invalid metadata still works", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-move-into-existing"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -275,7 +272,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
-		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "team")
+		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
 
 		_, err := local.Git("mv", "root.json", "team/root.json")
 		require.NoError(t, err)
@@ -293,17 +290,17 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		require.Empty(t, jobObj.Status.Errors)
 		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State)
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "team/root.json", folderUID)
-		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/root.json", folderUID)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"root-dash": {Title: "Root Dashboard", SourcePath: "team/root.json", Folder: folderUID},
 		})
 	})
 
 	t.Run("moving a resource into a new folder with invalid metadata falls back to unstable uid", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-move-into-new"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -333,19 +330,19 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionCreated)
 
-		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "team")
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "team/root.json", folderUID)
-		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/root.json", folderUID)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"root-dash": {Title: "Root Dashboard", SourcePath: "team/root.json", Folder: folderUID},
 		})
 	})
 
 	t.Run("moving a folder with invalid metadata falls back to delete and recreate", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-folder-move"
 		const stableUID = "team-stable-uid"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -376,26 +373,24 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
 		requireInvalidFolderMetadataWarning(t, jobObj, "moved/", repository.FileActionCreated)
 
-		_, err = helper.Folders.Resource.Get(ctx, stableUID, metav1.GetOptions{})
-		require.Error(t, err)
-		require.True(t, apierrors.IsNotFound(err))
+		helper.RequireFoldersNotFound(t, stableUID)
 
-		newUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "moved")
+		newUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "moved")
 		require.NotEqual(t, stableUID, newUID)
 
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "moved/dashboard.json", newUID)
-		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "moved/dashboard.json", newUID)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"team-dash": {Title: "Team Dashboard", SourcePath: "moved/dashboard.json", Folder: newUID},
 		})
 	})
 
 	t.Run("invalid metadata creation does not break valid metadata-backed folder rename in the same incremental sync", func(t *testing.T) {
-		ctx := context.Background()
 		const repoName = "incr-invalid-meta-with-valid-rename"
 		const parentStableUID = "parent-stable-uid"
 		const childUID = "child-stable-uid"
 		t.Cleanup(func() {
-			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -433,9 +428,9 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		common.RequireFolderState(t, helper.Folders, parentStableUID, "Parent", "new-parent", "")
 		common.RequireFolderState(t, helper.Folders, childUID, "Child", "new-parent/child", parentStableUID)
-		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "new-parent/child/dashboard.json", childUID)
-		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
-			"broken-dash": {Title: "Broken Dashboard", SourcePath: "broken/dashboard.json", Folder: common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "broken")},
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "new-parent/child/dashboard.json", childUID)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+			"broken-dash": {Title: "Broken Dashboard", SourcePath: "broken/dashboard.json", Folder: common.RequireRepoFolderTitle(t, helper.Folders, repoName, "broken")},
 			"child-dash":  {Title: "Child Dashboard", SourcePath: "new-parent/child/dashboard.json", Folder: childUID},
 		})
 	})

@@ -97,8 +97,6 @@ linters:
             - '**/pkg/tsdb/cloudwatch/**/*'
             - '**/pkg/tsdb/loki/*'
             - '**/pkg/tsdb/loki/**/*'
-            - '**/pkg/tsdb/jaeger/*'
-            - '**/pkg/tsdb/jaeger/**/*'
             - '**/pkg/tsdb/influxdb/*'
             - '**/pkg/tsdb/influxdb/**/*'
           deny:

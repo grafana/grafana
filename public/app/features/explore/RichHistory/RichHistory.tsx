@@ -1,11 +1,11 @@
 import { debounce } from 'lodash';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { TabbedContainer, type TabConfig } from '@grafana/ui';
-import { createDatasourcesList } from 'app/core/utils/richHistory';
 import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
@@ -83,7 +83,11 @@ export function RichHistory(props: RichHistoryProps) {
   }, [richHistory]);
 
   const exploreActiveDS = useSelector(selectExploreDSMaps);
-  const listOfDatasources = createDatasourcesList();
+  const { items: dataSourceItems, isLoading: isLoadingDatasources } = useDataSourceInstanceList({ mixed: true });
+  const listOfDatasources = useMemo(
+    () => dataSourceItems.map((ds) => ({ name: ds.name, uid: ds.uid })),
+    [dataSourceItems]
+  );
   const activeDatasources = exploreActiveDS.dsToExplore
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
@@ -104,6 +108,7 @@ export function RichHistory(props: RichHistoryProps) {
         height={height}
         activeDatasources={activeDatasources}
         listOfDatasources={listOfDatasources}
+        isLoadingDatasources={isLoadingDatasources}
       />
     ),
     icon: 'history',

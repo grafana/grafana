@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
@@ -149,8 +148,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pg := postgres.ProvideService()
 	my := mysql.ProvideService()
 	graf := grafanads.ProvideService(nil, features)
-	jaeger := jaeger.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, idb, lk, pr, td, pg, my, graf, jaeger)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, idb, lk, pr, td, pg, my, graf)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -235,7 +233,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"grafana":                          {},
 		"alertmanager":                     {},
 		"dashboard":                        {},
-		"jaeger":                           {},
 		"mixed":                            {},
 	}
 

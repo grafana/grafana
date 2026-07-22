@@ -142,7 +142,7 @@ func (m mockWebhookClient) CreateWebhook(context.Context, string, []string, stri
 	panic("not needed for testing")
 }
 
-func (m mockWebhookClient) GetWebhook(context.Context, int64) (repository.WebhookConfig, error) {
+func (m mockWebhookClient) GetWebhook(context.Context, repository.WebhookID) (repository.WebhookConfig, error) {
 	panic("not needed for testing")
 }
 
@@ -150,7 +150,7 @@ func (m mockWebhookClient) EditWebhook(context.Context, repository.WebhookConfig
 	panic("not needed for testing")
 }
 
-func (m mockWebhookClient) DeleteWebhook(ctx context.Context, _ int64) error {
+func (m mockWebhookClient) DeleteWebhook(ctx context.Context, _ repository.WebhookID) error {
 	if m.onDeleteFunc != nil {
 		return m.onDeleteFunc(ctx)
 	}

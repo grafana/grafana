@@ -29,6 +29,7 @@ import {
   useNestedColWidths,
   useNestedRows,
   usePaginatedRows,
+  useRowCompiler,
   useRowHeight,
   useScrollbarWidth,
   useSortedRows,
@@ -45,8 +46,6 @@ import {
 } from '../types';
 import {
   calculateFooterHeight,
-  compileFrameToRecordsV1,
-  compileFrameToRecordsV2,
   createTypographyContext,
   extractPixelValue,
   getApplyToRowBgFn,
@@ -82,7 +81,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
-    protoParserEnabled,
     showTypeIcons,
     structureRev,
     timeRange,
@@ -125,13 +123,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const nestedFramesFieldName = useMemo(() => getDisplayName(nestedFramesField), [nestedFramesField]);
   const nestedData: DataFrame[] = useMemo(() => nestedFramesField.values.map((v) => v[0]), [nestedFramesField]);
 
-  const frameToRecords = useMemo(
-    () =>
-      protoParserEnabled
-        ? compileFrameToRecordsV2(data, nestedFramesFieldName)
-        : compileFrameToRecordsV1(data, nestedFramesFieldName),
-    [data, nestedFramesFieldName, protoParserEnabled]
-  );
+  const frameToRecords = useRowCompiler(data, nestedFramesFieldName);
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 
   const getRowStableKeyForRowIdx = useCallback(
@@ -140,7 +132,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   );
 
   // nestedData is empty when the table has no rows but still carries a nested-frames transform.
-  // Guard against the missing first frame so we render an empty table instead of crashing.
+  // Guard against the missing first frame so we render an empty table instead of crashing
   const firstRowNestedData = nestedData[0];
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
@@ -163,17 +155,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
-  // Nested frames are always compiled via the V1 parser, matching legacy behavior — the proto
-  // parser is only applied to the outer frame, never to nested rows.
-  const nestedRows = useNestedRows(
-    rows,
-    nestedData,
-    true,
-    nestedFramesFieldName,
-    filter,
-    sortColumns,
-    protoParserEnabled
-  );
+  const nestedRows = useNestedRows(rows, nestedData, true, nestedFramesFieldName, filter, sortColumns);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();

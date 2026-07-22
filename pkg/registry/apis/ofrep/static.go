@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, isAuthedUser bool, w http.ResponseWriter) {
+func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, w http.ResponseWriter) {
 	_, span := tracing.Start(ctx, "ofrep.static.evalAllFlags")
 	defer span.End()
 
@@ -22,19 +21,6 @@ func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, isAuthedUser bool, 
 	}
 
 	span.SetAttributes(attribute.Int("total_flags_count", len(result.Flags)))
-
-	if !isAuthedUser {
-		var publicOnly []goffmodel.OFREPFlagBulkEvaluateSuccessResponse
-
-		for _, flag := range result.Flags {
-			if isPublicFlag(flag.Key) {
-				publicOnly = append(publicOnly, flag)
-			}
-		}
-
-		result.Flags = publicOnly
-		span.SetAttributes(attribute.Int("public_flags_count", len(publicOnly)))
-	}
 
 	writeResponse(http.StatusOK, result, b.logger, w)
 }

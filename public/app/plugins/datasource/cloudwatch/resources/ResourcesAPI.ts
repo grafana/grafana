@@ -13,6 +13,8 @@ import {
   type ResourceResponse,
   type DescribeLogGroupsRequest,
   type LogGroupResponse,
+  type ListDataSourcesRequest,
+  type LogDataSourceResponse,
   type LogGroupsResponse,
   type GetMetricsRequest,
   type GetDimensionKeysRequest,
@@ -111,6 +113,14 @@ export class ResourcesAPI extends CloudWatchRequest {
       return this.fetchLogGroupsRequest(requestParams);
     }
     return this.memoizedFetchLogGroupsRequest(requestParams);
+  }
+
+  getDataSources(params: ListDataSourcesRequest): Promise<Array<ResourceResponse<LogDataSourceResponse>>> {
+    return this.memoizedGetRequest<Array<ResourceResponse<LogDataSourceResponse>>>('data-sources', {
+      ...params,
+      region: this.templateSrv.replace(this.getActualRegion(params.region)),
+      pattern: params.pattern ?? '',
+    });
   }
 
   getLogGroupFields(region: string, logGroupName: string): Promise<Array<ResourceResponse<LogGroupField>>> {

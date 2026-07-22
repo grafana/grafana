@@ -6,8 +6,13 @@ import (
 	"fmt"
 	"path/filepath"
 	"sync"
+	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/services"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -46,6 +51,16 @@ import (
 )
 
 const ServiceName = "provisioning"
+
+// Dashboard provisioning can transiently fail at startup when the folder API is
+// not yet available (e.g. an aggregated folder.grafana.app that is still coming
+// up). Retry a bounded number of times before falling back to the allow-list, so
+// a brief folder outage does not silently leave dashboards unprovisioned until
+// the next restart.
+const (
+	defaultDashboardProvisionRetries      = 5
+	defaultDashboardProvisionRetryBackoff = 15 * time.Second
+)
 
 func ProvideService(
 	ac accesscontrol.AccessControl,
@@ -101,6 +116,9 @@ func ProvideService(
 		dual:                         dual,
 		serverLock:                   serverLockService,
 		routesPermissions:            routesPermissions,
+
+		dashboardProvisionRetries:      defaultDashboardProvisionRetries,
+		dashboardProvisionRetryBackoff: defaultDashboardProvisionRetryBackoff,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -136,7 +154,7 @@ func (ps *ProvisioningServiceImpl) starting(ctx context.Context) error {
 		return err
 	}
 
-	if err := ps.ProvisionDashboards(ctx); err != nil {
+	if err := ps.provisionDashboardsWithRetry(ctx); err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
 		// Consider the allow list of errors for which running the provisioning service should not
 		// fail. For now this includes only dashboards.ErrGetOrCreateFolder.
@@ -145,6 +163,65 @@ func (ps *ProvisioningServiceImpl) starting(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// isRetriableFolderError reports whether a dashboard provisioning failure is a
+// transient folder-API condition worth retrying (e.g. the aggregated folder API
+// not yet available at startup), as opposed to a permanent configuration error
+// (invalid folder UID, path deeper than the max nested depth) that waiting cannot fix.
+func isRetriableFolderError(err error) bool {
+	if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
+		return false
+	}
+	if apierrors.IsServiceUnavailable(err) || apierrors.IsServerTimeout(err) ||
+		apierrors.IsTimeout(err) || apierrors.IsTooManyRequests(err) {
+		return true
+	}
+	// Folder lookups over unified storage surface raw gRPC status errors from the
+	// search client that the Kubernetes apierrors predicates above do not match.
+	switch status.Code(err) {
+	case codes.Unavailable, codes.DeadlineExceeded, codes.ResourceExhausted:
+		return true
+	default:
+		return false
+	}
+}
+
+// provisionDashboardsWithRetry retries dashboard provisioning while it fails
+// because the folder API is transiently unavailable. Any other error (including
+// permanent folder configuration errors) returns immediately. The final error is
+// returned to the caller, which allow-lists ErrGetOrCreateFolder so a folder
+// outage does not block startup.
+func (ps *ProvisioningServiceImpl) provisionDashboardsWithRetry(ctx context.Context) error {
+	bo := backoff.New(ctx, backoff.Config{
+		// Min==Max keeps the historical fixed backoff between attempts.
+		MinBackoff: ps.dashboardProvisionRetryBackoff,
+		MaxBackoff: ps.dashboardProvisionRetryBackoff,
+		MaxRetries: ps.dashboardProvisionRetries,
+	})
+	var err error
+	for {
+		err = ps.ProvisionDashboards(ctx)
+		if err == nil || !isRetriableFolderError(err) {
+			return err
+		}
+		if !bo.Ongoing() {
+			// Ongoing() is also false when the context is cancelled; surface the
+			// cancellation rather than the allow-listed folder error in that case.
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return ctxErr
+			}
+			return err
+		}
+		ps.log.Warn("Failed to provision dashboards, folder API unavailable; retrying",
+			"attempt", bo.NumRetries()+1, "maxRetries", ps.dashboardProvisionRetries, "error", err)
+		bo.Wait()
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			// Return the cancellation, not the folder error, so an aborted startup
+			// is not allow-listed and reported as success by the caller.
+			return ctxErr
+		}
+	}
 }
 
 func (ps *ProvisioningServiceImpl) running(ctx context.Context) error {
@@ -205,6 +282,9 @@ func newProvisioningServiceImpl(
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
 		migratePrometheusType:   migratePrometheusType,
+
+		dashboardProvisionRetries:      defaultDashboardProvisionRetries,
+		dashboardProvisionRetryBackoff: defaultDashboardProvisionRetryBackoff,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -249,6 +329,9 @@ type ProvisioningServiceImpl struct {
 	dual                         dualwrite.Service
 	serverLock                   *serverlock.ServerLockService
 	migratePrometheusType        func(context.Context) error
+
+	dashboardProvisionRetries      int
+	dashboardProvisionRetryBackoff time.Duration
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {

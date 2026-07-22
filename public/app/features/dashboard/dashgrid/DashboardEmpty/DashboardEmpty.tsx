@@ -70,11 +70,17 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
 
   // open the edit pane when the dashboard is new and in editing mode
   // will only happen when the default empty state is shown (not overridden by extension point)
+  // skipped when the assistant started the edit session — it drives the build itself,
+  // so the pane would only take space away from the assistant sidebar
   useEffect(() => {
-    if (isEditingNewDashboard && editPane.state.openPane?.getId() !== 'add') {
+    if (
+      isEditingNewDashboard &&
+      dashboard.getEditSessionSource() !== 'assistant' &&
+      editPane.state.openPane?.getId() !== 'add'
+    ) {
       editPane.openPane(new AddNewEditPane({}));
     }
-  }, [isEditingNewDashboard, editPane]);
+  }, [isEditingNewDashboard, dashboard, editPane]);
 
   const onSelectAutoGrid = () => {
     dashboard.switchLayout(AutoGridLayoutManager.createEmpty());

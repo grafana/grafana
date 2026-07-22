@@ -40,6 +40,7 @@ import (
 type ResourceClient interface {
 	SearchClient
 	resourcepb.ResourceStoreClient
+	resourcepb.ResourceStatsClient
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.QuotasClient
@@ -54,6 +55,7 @@ type SearchClient interface {
 // Internal implementation
 type resourceClient struct {
 	resourcepb.ResourceStoreClient
+	resourcepb.ResourceStatsClient
 	resourcepb.ResourceIndexClient
 	resourcepb.ManagedObjectIndexClient
 	resourcepb.BulkStoreClient
@@ -83,6 +85,7 @@ func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cf
 func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientConnInterface) ResourceClient {
 	return &resourceClient{
 		ResourceStoreClient:      resourcepb.NewResourceStoreClient(storageCc),
+		ResourceStatsClient:      resourcepb.NewResourceStatsClient(storageCc),
 		ResourceIndexClient:      resourcepb.NewResourceIndexClient(indexCc),
 		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(indexCc),
 		BulkStoreClient:          resourcepb.NewBulkStoreClient(storageCc),
@@ -116,6 +119,7 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
+		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
 		&resourcepb.ManagedObjectIndex_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,

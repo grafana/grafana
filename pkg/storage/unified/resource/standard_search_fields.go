@@ -50,7 +50,7 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Name:         SEARCH_FIELD_TAGS,
 			Type:         SearchFieldTypeString,
 			Array:        true,
-			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFacet, SearchCapabilityRetrieve},
 			Description:  "Unique tags.",
 		},
 		{

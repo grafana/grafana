@@ -211,7 +211,7 @@ export const useShortcuts = () => {
           },
           {
             keys: ['p', 'u'],
-            description: t('help-modal.shortcuts-description.open-share-link-drawer', 'Share panel link'),
+            description: t('help-modal.shortcuts-description.copy-share-link', 'Copy panel share link'),
           },
           {
             keys: ['p', 'e'],
@@ -229,6 +229,8 @@ export const useShortcuts = () => {
             keys: ['i'],
             description: t('help-modal.shortcuts-description.inspect-panel', 'Inspect panel'),
           },
+          { keys: ['p', 'c'], description: t('help-modal.shortcuts-description.copy-panel', 'Copy Panel') },
+          { keys: ['p', 'v'], description: t('help-modal.shortcuts-description.paste-panel', 'Paste Panel') },
           { keys: ['p', 'd'], description: t('help-modal.shortcuts-description.duplicate-panel', 'Duplicate Panel') },
           { keys: ['p', 'r'], description: t('help-modal.shortcuts-description.remove-panel', 'Remove Panel') },
           {

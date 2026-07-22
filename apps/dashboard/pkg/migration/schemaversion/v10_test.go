@@ -9,6 +9,43 @@ import (
 func TestV10(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "table thresholds in a panel nested inside a row are migrated",
+			input: map[string]interface{}{
+				"schemaVersion": 9,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type": "table",
+								"styles": []interface{}{
+									map[string]interface{}{
+										"thresholds": []interface{}{"10", "20", "30"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 10,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type": "table",
+								"styles": []interface{}{
+									map[string]interface{}{
+										"thresholds": []interface{}{"20", "30"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "table panel with thresholds having 3 or more values should have first threshold removed",
 			input: map[string]interface{}{
 				"title":         "V10 Table Thresholds Migration Test Dashboard",

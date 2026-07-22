@@ -44,6 +44,7 @@ var (
 		"opentsdb":                     {ID: "opentsdb"},
 		"stackdriver":                  {ID: "stackdriver"},
 		"mssql":                        {ID: "mssql"},
+		"jaeger":                       {ID: "jaeger"},
 		"grafana-advisor-app":          {ID: "grafana-advisor-app"},
 		"grafana-pyroscope-datasource": {ID: "grafana-pyroscope-datasource"},
 	}

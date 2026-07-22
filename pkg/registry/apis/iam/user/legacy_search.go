@@ -198,6 +198,8 @@ func getResourceKey(item *org.OrgUserDTO, namespace string) *resourcepb.Resource
 	}
 }
 
+var userColumns = resource.TableColumnsByName(builders.UserSearchFields)
+
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
 	standardSearchFields := resource.StandardSearchFields()
@@ -206,15 +208,15 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 		case resource.SEARCH_FIELD_TITLE:
 			cols = append(cols, standardSearchFields.Field(resource.SEARCH_FIELD_TITLE))
 		case fieldLastSeenAt:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LAST_SEEN_AT])
+			cols = append(cols, userColumns[builders.USER_LAST_SEEN_AT])
 		case fieldRole:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_ROLE])
+			cols = append(cols, userColumns[builders.USER_ROLE])
 		case fieldEmail:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
+			cols = append(cols, userColumns[builders.USER_EMAIL])
 		case fieldLogin:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
+			cols = append(cols, userColumns[builders.USER_LOGIN])
 		case fieldDisabled:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_DISABLED])
+			cols = append(cols, userColumns[builders.USER_DISABLED])
 		case resource.SEARCH_FIELD_CREATED:
 			cols = append(cols, &resourcepb.ResourceTableColumnDefinition{
 				Name: resource.SEARCH_FIELD_CREATED,

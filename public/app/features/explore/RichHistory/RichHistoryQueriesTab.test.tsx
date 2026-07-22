@@ -13,7 +13,7 @@ const asyncSpy = jest
   .spyOn(reactUse, 'useAsync')
   .mockReturnValue({ loading: false, value: [new MockDataSourceApi('test-ds')] });
 
-const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
+const makeProps = (propOverrides?: Partial<RichHistoryQueriesTabProps>): RichHistoryQueriesTabProps => {
   const props: RichHistoryQueriesTabProps = {
     queries: [],
     totalQueries: 0,
@@ -23,6 +23,7 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
     loadMoreRichHistory: jest.fn(),
     activeDatasources: ['test-ds'],
     listOfDatasources: [{ name: 'test-ds', uid: 'test-123' }],
+    isLoadingDatasources: false,
     richHistorySearchFilters: {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -42,7 +43,11 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
 
   Object.assign(props, propOverrides);
 
-  return render(<RichHistoryQueriesTab {...props} />, { wrapper: TestProvider });
+  return props;
+};
+
+const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
+  return render(<RichHistoryQueriesTab {...makeProps(propOverrides)} />, { wrapper: TestProvider });
 };
 
 describe('RichHistoryQueriesTab', () => {
@@ -80,5 +85,47 @@ describe('RichHistoryQueriesTab', () => {
     const input = await screen.findByLabelText(/remove/i);
     fireEvent.click(input);
     expect(updateFiltersSpy).toHaveBeenCalledTimes(2);
+  });
+
+  // The datasource list loads asynchronously; seeding filters before it resolves would leave
+  // `activeDatasources` empty and never restrict history to the active Explore datasources.
+  it('should not seed filters until the datasource list has loaded', async () => {
+    const updateFiltersSpy = jest.fn();
+    const activeDatasourcesOnlySettings = {
+      retentionPeriod: 30,
+      activeDatasourcesOnly: true,
+      lastUsedDatasourceFilters: [],
+      starredTabAsFirstTab: false,
+    };
+
+    const { rerender } = render(
+      <RichHistoryQueriesTab
+        {...makeProps({
+          updateFilters: updateFiltersSpy,
+          isLoadingDatasources: true,
+          activeDatasources: [],
+          richHistorySettings: activeDatasourcesOnlySettings,
+        })}
+      />,
+      { wrapper: TestProvider }
+    );
+
+    // While the list is still loading, the effect must not seed with an empty datasource list.
+    expect(updateFiltersSpy).not.toHaveBeenCalled();
+
+    rerender(
+      <RichHistoryQueriesTab
+        {...makeProps({
+          updateFilters: updateFiltersSpy,
+          isLoadingDatasources: false,
+          activeDatasources: ['test-ds'],
+          richHistorySettings: activeDatasourcesOnlySettings,
+        })}
+      />
+    );
+
+    // Once resolved, it seeds exactly once, using the now-populated active datasources.
+    expect(updateFiltersSpy).toHaveBeenCalledTimes(1);
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ datasourceFilters: ['test-ds'] }));
   });
 });

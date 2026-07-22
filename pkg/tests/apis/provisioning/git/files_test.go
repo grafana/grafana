@@ -1,7 +1,6 @@
 package git
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,7 +18,6 @@ import (
 
 func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-create-file"
 	// Enable branch workflow since we test creating files on new branches
@@ -46,34 +44,18 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 			Param("message", "Create dashboard1.json").
 			Body(dashboardContent).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should create file on default branch")
 
 		// Verify file exists in repository
-		fileObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "dashboard1.json")
-		require.NoError(t, err, "file should exist in repository")
-		require.NotNil(t, fileObj)
+		helper.RequireRepoFileExists(t, repoName, "dashboard1.json")
 
 		// Trigger sync and verify dashboard is created
 		helper.SyncAndWait(t, repoName)
 
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-
-			found := false
-			for _, dash := range dashboards.Items {
-				if dash.GetName() == "test-dashboard-1" {
-					found = true
-					assert.Equal(collect, repoName, dash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
-					break
-				}
-			}
-			assert.True(collect, found, "dashboard should be synced to Grafana")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should appear after sync")
+		dash := helper.RequireDashboards(t, "test-dashboard-1")[0]
+		require.Equal(t, repoName, dash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
 
 	t.Run("create file on new branch", func(t *testing.T) {
@@ -90,7 +72,7 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 			Param("message", "Create dashboard2.json on feature branch").
 			Body(dashboardContent).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should create file on new branch")
 
@@ -101,7 +83,7 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "dashboard2.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "file should exist on branch")
 	})
@@ -109,7 +91,6 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 
 func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-update-file"
 	initialContent := map[string][]byte{
@@ -149,7 +130,7 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 			Param("message", "Update dashboard.json title").
 			Body(updatedContent).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should update file on default branch")
 
@@ -157,7 +138,7 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 		helper.SyncAndWait(t, repoName)
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "test-dash", metav1.GetOptions{})
+			dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), "test-dash", metav1.GetOptions{})
 			if !assert.NoError(collect, err) {
 				return
 			}
@@ -194,12 +175,12 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 			Param("message", "Update dashboard.json on branch").
 			Body(updatedContent).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should update file on branch")
 
 		// Verify the file was updated on the branch
-		fileObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{
+		fileObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{
 			ResourceVersion: branchName,
 		}, "files", "dashboard.json")
 		require.NoError(t, err, "file should exist on branch")
@@ -209,7 +190,6 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 
 func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-delete-file"
 	initialContent := map[string][]byte{
@@ -246,7 +226,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "dashboard1.json").
 			Param("message", "Delete dashboard1.json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should delete file on default branch")
 
@@ -254,7 +234,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 		helper.SyncAndWait(t, repoName)
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.DashboardsV1.Resource.Get(ctx, "dash-1", metav1.GetOptions{})
+			_, err := helper.DashboardsV1.Resource.Get(t.Context(), "dash-1", metav1.GetOptions{})
 			assert.True(collect, apierrors.IsNotFound(err), "dashboard should be deleted from Grafana")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be deleted after sync")
 	})
@@ -269,7 +249,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 			SubResource("files", "dashboard2.json").
 			Param("ref", branchName).
 			Param("message", "Delete dashboard2.json on branch").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should delete file on branch")
 
@@ -280,7 +260,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "dashboard2.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.True(t, apierrors.IsNotFound(result.Error()), "file should not exist on delete branch")
 
 		// File should still exist on main branch
@@ -289,14 +269,13 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "dashboard2.json").
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "file should still exist on main branch")
 	})
 }
 
 func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-move-file"
 	initialContent := map[string][]byte{
@@ -335,17 +314,13 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "should move file on default branch")
 
 		// Verify file moved
-		_, err = helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "moved", "dashboard.json")
-		require.NoError(t, err, "file should exist at new location")
-
-		_, err = helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "dashboard.json")
-		require.Error(t, err, "file should not exist at old location")
+		helper.RequireRepoFileExists(t, repoName, "moved", "dashboard.json")
+		helper.RequireRepoFileNotFound(t, repoName, "dashboard.json")
 	})
 }
 
 func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-move-dir"
 	initialContent := map[string][]byte{
@@ -388,14 +363,13 @@ func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "renamed", "dashboard.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "dashboard should exist at new location on branch")
 	})
 }
 
 func TestIntegrationGitFiles_ListFiles(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-list-files"
 	initialContent := map[string][]byte{
@@ -412,7 +386,7 @@ func TestIntegrationGitFiles_ListFiles(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			Suffix("files/").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should list files")
 
@@ -445,7 +419,7 @@ func TestIntegrationGitFiles_ListFiles(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "folder", "dashboard3.json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should get file in subdirectory")
 
@@ -462,7 +436,6 @@ func TestIntegrationGitFiles_ListFiles(t *testing.T) {
 
 func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-branch-ops"
 	initialContent := map[string][]byte{
@@ -486,7 +459,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Param("message", "Create branch-file1.json").
 			Body(file1Content).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should create first file on branch")
 
@@ -501,7 +474,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Param("message", "Create branch-file2.json").
 			Body(file2Content).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should create second file on same branch")
 
@@ -512,7 +485,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "branch-file1.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "first file should exist on branch")
 
 		result = helper.AdminREST.Get().
@@ -521,7 +494,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "branch-file2.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "second file should exist on branch")
 
 		// Verify files don't exist on main branch
@@ -530,7 +503,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "branch-file1.json").
-			Do(ctx)
+			Do(t.Context())
 		require.True(t, apierrors.IsNotFound(result.Error()), "first file should not exist on main branch")
 
 		result = helper.AdminREST.Get().
@@ -538,7 +511,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "branch-file2.json").
-			Do(ctx)
+			Do(t.Context())
 		require.True(t, apierrors.IsNotFound(result.Error()), "second file should not exist on main branch")
 	})
 
@@ -556,7 +529,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Param("message", "Create multi-branch.json").
 			Body(initialContent).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should create initial file")
 
@@ -571,7 +544,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Param("message", "Update multi-branch.json on branch 1").
 			Body(branch1Content).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should update file on branch 1")
 
@@ -586,7 +559,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Param("message", "Update multi-branch.json on branch 2").
 			Body(branch2Content).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should update file on branch 2")
 
@@ -597,7 +570,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "multi-branch.json").
 			Param("ref", branch1).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "should get file from branch 1")
 
 		branch1File := &unstructured.Unstructured{}
@@ -610,7 +583,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "multi-branch.json").
 			Param("ref", branch2).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "should get file from branch 2")
 
 		branch2File := &unstructured.Unstructured{}

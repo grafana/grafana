@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -65,22 +64,10 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 			}, nil
 		}
 	}
-	gvr := dashV1.DashboardResourceInfo.GroupVersionResource()
-	provider := resource.NewMapProvider(
-		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
-			gvr: DashboardSearchFields,
-		},
-		map[schema.GroupResource]string{
-			gvr.GroupResource(): gvr.Version,
-		},
-	)
-
 	gr := dashV1.DashboardResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource:        gr,
-		Namespaced:           namespaced,
-		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
-		SearchFieldsProvider: provider,
+		GroupResource: gr,
+		Namespaced:    namespaced,
 	}, nil
 }
 

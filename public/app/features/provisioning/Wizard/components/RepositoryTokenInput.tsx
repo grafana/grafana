@@ -77,6 +77,23 @@ export function RepositoryTokenInput() {
           />
         </Field>
       )}
+      {gitFields.emailConfig && (
+        <Field
+          noMargin
+          label={gitFields.emailConfig.label}
+          required={gitFields.emailConfig.required}
+          description={gitFields.emailConfig.description}
+          error={errors?.repository?.email?.message}
+          invalid={!!errors?.repository?.email?.message}
+        >
+          <Input
+            {...register('repository.email', gitFields.emailConfig.validation)}
+            id="email"
+            type="email"
+            placeholder={gitFields.emailConfig.placeholder}
+          />
+        </Field>
+      )}
     </>
   );
 }

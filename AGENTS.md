@@ -130,7 +130,7 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 ### Plugin Workspaces
 
-These built-in plugins require separate build steps: `azuremonitor`, `grafana-postgresql-datasource`, `loki`, `jaeger`, `mysql`, `grafana-testdata-datasource`.
+These built-in plugins require separate build steps: `azuremonitor`, `grafana-postgresql-datasource`, `loki`, `mysql`, `grafana-testdata-datasource`.
 
 Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 

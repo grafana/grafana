@@ -21,16 +21,14 @@ var TeamSortableExtraFields = []string{
 	TEAM_SEARCH_EMAIL,
 }
 
-// teamSearchFields are read from the generated IAM manifest, where they are
+// TeamSearchFields are read from the generated IAM manifest, where they are
 // declared in apps/iam/kinds/team.cue.
-var teamSearchFields = resource.NewManifestBackedProvider(iamManifests).Fields(
+//
+// Exported for the IAM legacy SQL search backend; do not mutate.
+var TeamSearchFields = iamProvider.Fields(
 	v0alpha1.TeamResourceInfo.GroupVersionResource(),
 )
 
-// TeamSearchTableColumnDefinitions exposes column-defs by name for the
-// IAM legacy SQL backend in team/legacy_search.go.
-var TeamSearchTableColumnDefinitions = tableColumnsByName(teamSearchFields)
-
-func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(v0alpha1.TeamResourceInfo, teamSearchFields)
+func GetTeamSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, v0alpha1.TeamResourceInfo)
 }

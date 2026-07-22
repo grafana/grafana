@@ -76,6 +76,36 @@ func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage
 	}
 }
 
+// ValidateServedVersions guards against serving unified storage while migrated data
+// carries an apiVersion the apiserver no longer registers. served must be the versions
+// for this specific resource, not the whole group.
+func (m *storageService) ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error {
+	if m.getStorageMode(ctx, gr) == unifiedmigrations.StorageModeLegacy || m.statusReader == nil {
+		return nil
+	}
+	floor, ok := m.statusReader.GetFloorVersion(gr)
+	if !ok {
+		return nil
+	}
+	for _, gv := range served {
+		if gv.Version == floor {
+			return nil
+		}
+	}
+	return fmt.Errorf(
+		"resource %q may hold unified-storage objects at apiVersion %q, but that version is not registered for the resource in the apiserver scheme (served versions: %v)",
+		gr.String(), floor, servedVersionStrings(served),
+	)
+}
+
+func servedVersionStrings(served []schema.GroupVersion) []string {
+	out := make([]string, 0, len(served))
+	for _, gv := range served {
+		out = append(out, gv.Version)
+	}
+	return out
+}
+
 // storageModeFromConfigMode maps a DualWriterMode config value to a StorageMode.
 func storageModeFromConfigMode(mode rest.DualWriterMode) unifiedmigrations.StorageMode {
 	switch {

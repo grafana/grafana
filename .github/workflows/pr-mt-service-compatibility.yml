@@ -54,7 +54,6 @@ jobs:
               - '!public/app/plugins/datasource/grafana-testdata-datasource/**'
               - '!public/app/plugins/datasource/graphite/**'
               - '!public/app/plugins/datasource/influxdb/**'
-              - '!public/app/plugins/datasource/jaeger/**'
               - '!public/app/plugins/datasource/loki/**'
               - '!public/app/plugins/datasource/mysql/**'
             backend_strict:
@@ -79,7 +78,6 @@ jobs:
               - 'public/app/plugins/datasource/grafana-testdata-datasource/**'
               - 'public/app/plugins/datasource/graphite/**'
               - 'public/app/plugins/datasource/influxdb/**'
-              - 'public/app/plugins/datasource/jaeger/**'
               - 'public/app/plugins/datasource/loki/**'
               - 'public/app/plugins/datasource/mysql/**'
 

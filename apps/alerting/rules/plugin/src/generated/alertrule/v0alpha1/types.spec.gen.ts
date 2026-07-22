@@ -34,7 +34,6 @@ export enum ExecErrState {
 
 export const defaultExecErrState = (): ExecErrState => (ExecErrState.Error);
 
-// TODO(@moustafab): this should be imported from the notifications package
 export type NotificationSettings = SimplifiedRouting | NamedRoutingTree;
 
 export const defaultNotificationSettings = (): NotificationSettings => (defaultSimplifiedRouting());
@@ -62,7 +61,6 @@ export enum NotificationSettingsType {
 
 export const defaultNotificationSettingsType = (): NotificationSettingsType => (NotificationSettingsType.SimplifiedRouting);
 
-// TODO(@moustafab): validate regex for time interval ref
 export type TimeIntervalRef = string;
 
 export const defaultTimeIntervalRef = (): TimeIntervalRef => ("");
@@ -77,8 +75,6 @@ export const defaultNamedRoutingTree = (): NamedRoutingTree => ({
 	routingTree: "",
 });
 
-// TODO: validate that only one can specify source=true
-// & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 export type ExpressionMap = Record<string, Expression>;
 
 export const defaultExpressionMap = (): ExpressionMap => ({});

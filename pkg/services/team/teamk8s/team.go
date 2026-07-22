@@ -213,8 +213,13 @@ func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID s
 		return nil, err
 	}
 
+	// Scope to a service identity for this namespace: the subresource derives the target org from the caller's
+	// identity namespace, which doesn't match for non-basic-auth identities (SSO, service accounts) and would
+	// otherwise search the wrong org and return no teams.
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+
 	// Propagate every error (including 404) so teamimpl falls back to legacy when the subresource is gated off.
-	resp, err := client.GetUserTeams(ctx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
+	resp, err := client.GetUserTeams(svcCtx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
 	if err != nil {
 		return nil, err
 	}

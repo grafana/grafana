@@ -5,9 +5,13 @@ import { Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { recommendationEnableClicked } from '../analytics/main';
 
-import type { RecommendationItem } from './Recommendations';
+import type { RecommendationItem } from './types';
 
-export function RecommendationCard({ recommendation }: { recommendation: RecommendationItem }) {
+interface RecommendationCardProps {
+  recommendation: RecommendationItem;
+}
+
+export function RecommendationCard({ recommendation }: RecommendationCardProps) {
   const styles = useStyles2(getStyles, recommendation.color);
 
   return (

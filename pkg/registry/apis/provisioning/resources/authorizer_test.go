@@ -720,6 +720,42 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 	})
 }
 
+func TestAuthorizeDeleteAllSupported(t *testing.T) {
+	t.Run("authorized - checks delete on all supported resources at root", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		for _, kind := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
+			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
+					req.Verb == utils.VerbDelete
+			}), "").Return(nil).Once()
+		}
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false)
+		err := authorizer.AuthorizeDeleteAllSupported(context.Background())
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized on first resource - returns error immediately", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false)
+		err := authorizer.AuthorizeDeleteAllSupported(context.Background())
+
+		assert.Error(t, err)
+	})
+}
+
 // dashboardFileInfo returns a FileInfo containing a classic dashboard JSON that
 // ParseFileResource will recognise as a dashboard resource.
 func dashboardFileInfo() *repository.FileInfo {

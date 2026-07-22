@@ -9,6 +9,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards"
@@ -94,6 +97,119 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
 	})
 
+	t.Run("Should retry dashboard provisioning while the folder API is unavailable", func(t *testing.T) {
+		serviceTest := setup(t)
+		serviceTest.service.dashboardProvisionRetries = 5
+
+		var calls int
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			calls++
+			if calls < 3 {
+				return fmt.Errorf("%w: %w", dashboards.ErrGetOrCreateFolder, apierrors.NewServiceUnavailable("folder API unavailable"))
+			}
+			return nil
+		}
+
+		serviceTest.startService()
+		serviceTest.waitForPollChanges()
+
+		// Provisioning should have been retried until it succeeded, so polling starts.
+		assert.Equal(t, 3, calls, "Provision should have been retried until it succeeded")
+		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
+	})
+
+	t.Run("Should retry transient gRPC search failures from unified storage", func(t *testing.T) {
+		serviceTest := setup(t)
+		serviceTest.service.dashboardProvisionRetries = 5
+
+		var calls int
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			calls++
+			if calls < 3 {
+				return fmt.Errorf("%w: %w", dashboards.ErrGetOrCreateFolder, status.Error(codes.Unavailable, "search unavailable"))
+			}
+			return nil
+		}
+
+		serviceTest.startService()
+		serviceTest.waitForPollChanges()
+
+		assert.Equal(t, 3, calls, "transient gRPC errors should be retried until success")
+		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
+	})
+
+	t.Run("Should stop retrying and allow-list a persistent folder outage", func(t *testing.T) {
+		serviceTest := setup(t)
+		serviceTest.service.dashboardProvisionRetries = 2
+
+		var calls int
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			calls++
+			return fmt.Errorf("%w: %w", dashboards.ErrGetOrCreateFolder, apierrors.NewServiceUnavailable("folder API unavailable"))
+		}
+
+		serviceTest.startService()
+		serviceTest.waitForPollChanges()
+
+		// Initial attempt + dashboardProvisionRetries, then the error is allow-listed.
+		assert.Equal(t, 3, calls, "Provision should have been attempted once plus the configured retries")
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
+	})
+
+	t.Run("Should not retry a permanent folder configuration error", func(t *testing.T) {
+		serviceTest := setup(t)
+		serviceTest.service.dashboardProvisionRetries = 5
+		// A long backoff would make this test hang if the error were wrongly retried.
+		serviceTest.service.dashboardProvisionRetryBackoff = time.Hour
+
+		var calls int
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			calls++
+			return fmt.Errorf("%w with name %q: max nested folder depth reached", dashboards.ErrGetOrCreateFolder, "general")
+		}
+
+		serviceTest.startService()
+		serviceTest.waitForPollChanges()
+
+		// Permanent config errors must not be retried, and are still allow-listed.
+		assert.Equal(t, 1, calls, "Provision should have been attempted exactly once")
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
+	})
+
+	t.Run("Should return context error when cancelled during retry backoff", func(t *testing.T) {
+		serviceTest := setup(t)
+		serviceTest.service.dashboardProvisionRetries = 5
+		serviceTest.service.dashboardProvisionRetryBackoff = time.Hour
+
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			return fmt.Errorf("%w: %w", dashboards.ErrGetOrCreateFolder, apierrors.NewServiceUnavailable("folder API unavailable"))
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := serviceTest.service.provisionDashboardsWithRetry(ctx)
+		// Cancellation must not be masked as an allow-listed folder failure.
+		require.ErrorIs(t, err, context.Canceled)
+		require.NotErrorIs(t, err, dashboards.ErrGetOrCreateFolder)
+	})
+
 	t.Run("Should return run error when dashboard provisioning fails for non-allow-listed error", func(t *testing.T) {
 		serviceTest := setup(t)
 		provisioningErr := errors.New("Non-allow-listed error")
@@ -177,6 +293,9 @@ func setup(t *testing.T) *serviceTestStruct {
 	}
 	serviceTest.service = service
 	require.NoError(t, err)
+
+	// Keep retries fast so tests exercising folder failures do not block.
+	serviceTest.service.dashboardProvisionRetryBackoff = time.Millisecond
 
 	ctx, cancel := context.WithCancel(context.Background())
 	serviceTest.cancel = cancel

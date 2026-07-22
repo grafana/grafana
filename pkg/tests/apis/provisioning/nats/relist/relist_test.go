@@ -16,10 +16,9 @@ func TestIntegrationProvisioningNATSReList_RepositoryReconciledViaReList(t *test
 	const repo = "nats-relist-create"
 
 	helper.CreateRepositoryNoWait(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 	helper.WaitForHealthyRepository(t, repo)
 }
@@ -33,10 +32,9 @@ func TestIntegrationProvisioningNATSReList_RepositoryReCheckedViaReList(t *testi
 	const repo = "nats-relist-update"
 
 	helper.CreateRepositoryNoWait(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 	helper.WaitForHealthyRepository(t, repo)
 	helper.RequireRepositoryReReconciles(t, repo)

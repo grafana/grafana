@@ -42,10 +42,10 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 }
 
 // natsNotifier emits an Event per WatchNotification received from NATS rather
-// than by polling the store. Watch subscribes to the entire stream (SubjectAll)
-// and ignores the resource selectors in WatchOptions, so it is not a drop-in
-// per-watch notifier. PreviousRV is carried on the wire, matching the
-// store-sourced notifiers.
+// than by polling the store. Watch subscribes to the whole resource change
+// stream (SubjectAllResources) and ignores the resource selectors in
+// WatchOptions, so it is not a drop-in per-watch notifier. PreviousRV is carried
+// on the wire, matching the store-sourced notifiers.
 //
 // Delivery is at-most-once (core NATS, no JetStream): a missed message is never
 // redelivered, and there is no server-side polling backstop when this is the
@@ -143,7 +143,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 // unsubscribes on ctx cancel and returns true; on failure it logs and returns
 // false so the caller can retry.
 func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject string, data []byte)) bool {
-	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAll, handler)
+	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAllResources, handler)
 	if err != nil {
 		n.log.Error("failed to subscribe to nats, will retry", "error", err)
 		return false

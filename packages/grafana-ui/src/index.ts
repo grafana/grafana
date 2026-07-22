@@ -80,6 +80,7 @@ export { TagList } from './components/Tags/TagList';
 export { FilterPill } from './components/FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
+/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; this export may be removed in a future release. */
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
@@ -413,15 +414,9 @@ export {
 
 export type { Themeable, Themeable2 } from './types/theme';
 export type { ValidationRule, ValidationEvents } from './types/input';
-export type {
-  SearchFunction,
-  CompletionItemGroup,
-  HighlightPart,
-  CompletionItem,
-  TypeaheadOutput,
-  TypeaheadInput,
-  SuggestionsState,
-} from './types/completion';
+export type { SearchFunction, CompletionItemGroup, HighlightPart, CompletionItem } from './types/completion';
+/** @deprecated Slate typeahead types are being removed from `@grafana/ui`. Migrate to CodeMirror; these may be removed in a future release. */
+export type { TypeaheadOutput, TypeaheadInput, SuggestionsState } from './types/completion';
 export { CompletionItemKind } from './types/completion';
 export type { FormsOnSubmit, FormFieldErrors, FormAPI, FieldArrayApi } from './types/forms';
 export type { IconName, IconType, IconSize } from './types/icon';
@@ -444,6 +439,7 @@ export {
   sortedColors,
 } from './utils/colors';
 export { EventsWithValidation, validate, hasValidationEvent, regexValidation } from './utils/validate';
+/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; these exports may be removed in a future release. */
 export { SCHEMA, makeFragment, makeValue } from './utils/slate';
 export { linkModelToContextMenuItems } from './utils/dataLinks';
 export { getTagColorIndexFromName, getTagColorsFromName, getTagColor } from './utils/tags';
@@ -477,14 +473,23 @@ export { GlobalStyles } from './themes/GlobalStyles/GlobalStyles';
 
 export { styleMixins, commonOptionsBuilder };
 
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { BracesPlugin } from './slate-plugins/braces';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { ClearPlugin } from './slate-plugins/clear';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { ClipboardPlugin } from './slate-plugins/clipboard';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { IndentationPlugin } from './slate-plugins/indentation';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { NewlinePlugin } from './slate-plugins/newline';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { RunnerPlugin } from './slate-plugins/runner';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { SlatePrism, type Token } from './slate-plugins/slate-prism';
+/** @deprecated Slate plugin; being removed from `@grafana/ui`. Migrate to CodeMirror. */
 export { SuggestionsPlugin } from './slate-plugins/suggestions';
 export {
   Sidebar,

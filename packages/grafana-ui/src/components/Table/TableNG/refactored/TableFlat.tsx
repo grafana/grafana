@@ -19,6 +19,7 @@ import {
   usePaginatedRows,
   useScrollbarWidth,
   useSortedRows,
+  useRowCompiler,
 } from '../hooks';
 import {
   type CellRootRenderer,
@@ -30,8 +31,6 @@ import {
 } from '../types';
 import {
   calculateFooterHeight,
-  compileFrameToRecordsV1,
-  compileFrameToRecordsV2,
   createTypographyContext,
   extractPixelValue,
   getApplyToRowBgFn,
@@ -69,7 +68,6 @@ export function TableFlat(props: TableNGProps) {
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
-    protoParserEnabled,
     showTypeIcons,
     structureRev,
     timeRange,
@@ -107,10 +105,7 @@ export function TableFlat(props: TableNGProps) {
 
   const resizeHandler = useColumnResize(onColumnResize);
 
-  const frameToRecords = useMemo(
-    () => (protoParserEnabled ? compileFrameToRecordsV2(data, undefined) : compileFrameToRecordsV1(data, undefined)),
-    [data, protoParserEnabled]
-  );
+  const frameToRecords = useRowCompiler(data);
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 
   const { rows: filteredRows, filter, setFilter, filterResult } = useFilteredRows(rows, data.fields);

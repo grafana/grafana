@@ -109,6 +109,11 @@ export interface FeatureToggles {
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
+  * Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.
+  * @default false
+  */
+  awsAssumeRolePerDatasourceExternalId?: boolean;
+  /**
   * Enable support for Machine Learning in server-side expressions
   * @default false
   */
@@ -770,11 +775,6 @@ export interface FeatureToggles {
   */
   alertingNotificationsStepMode?: boolean;
   /**
-  * Enables cross cluster search in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchCrossClusterSearch?: boolean;
-  /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
   */
@@ -1370,11 +1370,6 @@ export interface FeatureToggles {
   * @default false
   */
   flameGraphWithCallTree?: boolean;
-  /**
-  * Enables the advisor report integration with datasource pages
-  * @default false
-  */
-  advisorDatasourceIntegration?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false

@@ -660,7 +660,7 @@ func (rc *RepositoryController) process(key string) error {
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		logger.Info("quota changed", "quota", newQuota)
-	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
+	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
 		logger.Info("webhook missing, reconciling")
 	case shouldRotateWebhookSecret:
 		logger.Info("webhook secret rotation due")
@@ -871,7 +871,7 @@ func (rc *RepositoryController) process(key string) error {
 // Returns hook operations, whether processing should continue, and any error
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
-		(obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0)
+		repository.GetID(obj.Status.Webhook).IsEmpty()
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
@@ -909,7 +909,7 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	if len(obj.Spec.Workflows) == 0 {
 		return false
 	}
-	if obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0 {
+	if repository.GetID(obj.Status.Webhook).IsEmpty() {
 		return false
 	}
 	if obj.Status.Webhook.LastRotated == 0 {

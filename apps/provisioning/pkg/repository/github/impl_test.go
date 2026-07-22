@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-github/v82/github"
 	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -753,7 +754,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Call the method being tested
-			got, err := client.GetWebhook(t.Context(), tt.webhookID)
+			got, err := client.GetWebhook(t.Context(), repo.WebhookID{ID: tt.webhookID})
 
 			// Check the error
 			if tt.wantErr != nil {
@@ -892,7 +893,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Call the method being tested
-			err = client.DeleteWebhook(t.Context(), tt.webhookID)
+			err = client.DeleteWebhook(t.Context(), repo.WebhookID{ID: tt.webhookID})
 
 			// Check the error
 			if tt.wantErr != nil {

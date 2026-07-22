@@ -3,6 +3,8 @@ import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { type RouteDescriptor } from 'app/core/navigation/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { checkRequiredFeatures } from '../GettingStarted/features';
@@ -14,6 +16,18 @@ import {
   PROVISIONING_URL,
 } from '../constants';
 
+// The provisioning admin pages are for repository managers. Gating on read would let everyone in:
+// `provisioning.repositories:read` is granted to the Viewer basic role (git-sync flows need it).
+const adminRoles = () => contextSrv.evaluatePermission([AccessControlAction.ProvisioningRepositoriesWrite]);
+
+// Connection pages have their own RBAC actions; custom roles may grant connection management
+// without repository write access.
+const connectionRoles = () =>
+  contextSrv.evaluatePermission([
+    AccessControlAction.ProvisioningConnectionsCreate,
+    AccessControlAction.ProvisioningConnectionsWrite,
+  ]);
+
 export function getProvisioningRoutes(): RouteDescriptor[] {
   const featureToggles = config.featureToggles || {};
   if (!featureToggles.provisioning) {
@@ -24,6 +38,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     return [
       {
         path: PROVISIONING_URL,
+        roles: adminRoles,
         component: SafeDynamicImport(
           () =>
             import(
@@ -37,12 +52,14 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
   return [
     {
       path: PROVISIONING_URL,
+      roles: adminRoles,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RepositoryListPage"*/ 'app/features/provisioning/HomePage')
       ),
     },
     {
       path: GETTING_STARTED_URL,
+      roles: adminRoles,
       component: SafeDynamicImport(
         () =>
           import(
@@ -52,6 +69,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     },
     {
       path: `${CONNECTIONS_URL}/:name/edit`,
+      roles: connectionRoles,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
@@ -59,6 +77,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     },
     {
       path: `${CONNECTIONS_URL}/new`,
+      roles: connectionRoles,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
@@ -66,12 +85,14 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     },
     {
       path: `${CONNECT_URL}/:type`,
+      roles: adminRoles,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/ConnectPage')
       ),
     },
     {
       path: PROVISIONING_URL + '/:name',
+      roles: adminRoles,
       component: SafeDynamicImport(
         () =>
           import(
@@ -81,6 +102,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     },
     {
       path: PROVISIONING_URL + '/:name/edit',
+      roles: adminRoles,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "EditRepositoryPage"*/ 'app/features/provisioning/Repository/EditRepositoryPage')
@@ -88,12 +110,14 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     },
     {
       path: PROVISIONING_URL + '/:name/file/*',
+      roles: adminRoles,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FileStatusPage"*/ 'app/features/provisioning/File/FileStatusPage')
       ),
     },
     {
       path: PROVISIONING_URL + '/:name/history/*',
+      roles: adminRoles,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FileHistoryPage"*/ 'app/features/provisioning/File/FileHistoryPage')
       ),

@@ -199,9 +199,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
         if (legend) {
           legendProps.next({
             styleConfig: style,
-            size: style.dims?.size,
             layerName: options.name,
-            layer: vectorLayer,
           });
         }
         const graphFrames = getGraphFrame(data.series);

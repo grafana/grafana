@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
@@ -7,7 +8,9 @@ import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
 
 import { RichHistory, type RichHistoryProps } from './RichHistory';
 
-jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [] }) }));
+jest.mock('../state/selectors', () => ({
+  selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [{ datasource: { uid: 'active-ds-uid' } }] }),
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -18,6 +21,18 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
+}));
+
+// Stable identity: a fresh array per render would re-trigger effects that
+// depend on the datasource list on every render.
+const mockDataSourceItems = [{ name: 'active-ds', uid: 'active-ds-uid' }];
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: () => ({
+    isLoading: false,
+    items: mockDataSourceItems,
+  }),
 }));
 
 jest.mock('react-use', () => ({
@@ -78,5 +93,32 @@ describe('RichHistory', () => {
     const tabs = screen.getAllByRole('tab');
     expect(tabs[0].className).toMatch(/-*activeTabStyle/);
     expect(tabs[1].className).not.toMatch(/-*activeTabStyle/);
+  });
+
+  it('should seed Starred filters from last-used filters, not the active datasource', async () => {
+    const user = userEvent.setup();
+    const updateHistorySearchFilters = jest.fn();
+    setup({
+      updateHistorySearchFilters,
+      richHistorySettings: {
+        retentionPeriod: 7,
+        starredTabAsFirstTab: false,
+        activeDatasourcesOnly: false,
+        lastUsedDatasourceFilters: [],
+      },
+    });
+    await screen.findByPlaceholderText(/search queries/i);
+    updateHistorySearchFilters.mockClear();
+
+    await user.click(screen.getByRole('tab', { name: 'Starred' }));
+    expect(updateHistorySearchFilters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ datasourceFilters: [], starred: true })
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Query history' }));
+    await user.click(screen.getByRole('tab', { name: 'Starred' }));
+    expect(updateHistorySearchFilters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ datasourceFilters: [], starred: true })
+    );
   });
 });

@@ -50,6 +50,18 @@ describe('useImportEntrypointState', () => {
       });
       expect(result.current.reason).toBeUndefined();
     });
+
+    it('reports isLoading while the admin_config query is in flight, then false', async () => {
+      setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+
+      const { result } = renderUseImportEntrypointState();
+
+      expect(result.current.isLoading).toBe(true);
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+    });
   });
 
   describe('with alerting.syncExternalAlertmanager feature flag disabled', () => {

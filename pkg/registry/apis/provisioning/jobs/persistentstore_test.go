@@ -396,3 +396,25 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 		"Update after RenewLease should not conflict. "+
 			"If it does, RenewLease stored a stale ResourceVersion.")
 }
+
+func TestGenerateJobName(t *testing.T) {
+	t.Run("pull and migrate share a deterministic sync name", func(t *testing.T) {
+		pull := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull}}
+		migrate := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionMigrate}}
+		generateJobName(pull)
+		generateJobName(migrate)
+		assert.Equal(t, "repo-sync", pull.Name)
+		assert.Equal(t, "repo-sync", migrate.Name)
+	})
+
+	t.Run("test jobs get unique names so concurrent load can be queued on one repository", func(t *testing.T) {
+		first := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionTest}}
+		second := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionTest}}
+		generateJobName(first)
+		generateJobName(second)
+		assert.NotEqual(t, first.Name, second.Name,
+			"two test jobs on the same repository must not collide on name")
+		assert.Contains(t, first.Name, "repo-test-")
+		assert.Contains(t, second.Name, "repo-test-")
+	})
+}

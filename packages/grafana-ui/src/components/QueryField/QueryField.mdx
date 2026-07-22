@@ -1,0 +1,93 @@
+import { ArgTypes } from '@storybook/addon-docs/blocks';
+import { QueryField } from './QueryField';
+
+# QueryField (deprecated)
+
+> **Deprecated.** `QueryField` and the Slate-based editing primitives in `@grafana/ui`
+> are deprecated. New code should use [`CodeMirrorEditor`](?path=/docs/inputs-codemirroreditor--docs)
+> instead. These exports may be removed in a future release.
+
+## Background
+
+`QueryField` is built on [Slate](https://docs.slatejs.org/), which is no longer
+maintained in `@grafana/ui`. Editing components across Grafana have consolidated
+onto [CodeMirror](https://codemirror.net/) so there is a single, unified code
+editor to maintain, theme, and extend. `CodeMirrorEditor` is the replacement for
+every Slate-based use case that `QueryField` covered.
+
+Existing usages keep working — this deprecation is a signal not to build anything
+new on Slate, and to migrate existing editors when convenient.
+
+## What's deprecated
+
+- `QueryField`, `QueryFieldProps`
+- Typeahead types: `TypeaheadInput`, `TypeaheadOutput`, `SuggestionsState`
+- Slate utilities: `SCHEMA`, `makeFragment`, `makeValue`
+- Slate plugins: `BracesPlugin`, `ClearPlugin`, `ClipboardPlugin`, `IndentationPlugin`,
+  `NewlinePlugin`, `RunnerPlugin`, `SelectionShortcutsPlugin`, `SlatePrism`,
+  `SuggestionsPlugin`
+
+## Migrating to CodeMirrorEditor
+
+`CodeMirrorEditor` is currently exported from `@grafana/ui/unstable`:
+
+```tsx
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
+```
+
+### What's different, React-wise
+
+| Concern           | `QueryField` (Slate)                                                 | `CodeMirrorEditor`                                                          |
+| ----------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Component model   | Class component; mutable Slate `Value` with local two-way binding    | Controlled function component; plain `value: string` + `onChange(value)`    |
+| Theming           | `Themeable2` — a `theme` prop must be threaded through               | Handled internally; optional `theme` prop only to override the default      |
+| Behavior          | Composed from Slate plugins (`SuggestionsPlugin`, `RunnerPlugin`, …) | Composed from CodeMirror `extensions` plus `basicSetup` toggles             |
+| Autocomplete      | `onTypeahead: (TypeaheadInput) => Promise<TypeaheadOutput>`          | `completionSources` (CodeMirror `CompletionSource`) with a `completionMode` |
+| Apply-suggestion  | `onWillApplySuggestion`                                              | Handled by the completion source's `apply`                                  |
+| Run on Enter      | `RunnerPlugin` + `onRunQuery`                                        | A keymap `extension`                                                        |
+| Typeahead portal  | required `portalOrigin` prop                                         | not needed — CodeMirror manages its own popup layer                         |
+| Single-line input | default behavior                                                     | pass `basicSetup={false}` and `indentWithTab={false}`                       |
+| Accessibility     | `contenteditable` div; `aria-labelledby` set manually                | `aria-label` / `aria-labelledby` props on a real editor input               |
+
+### Before / after
+
+```tsx
+// Before — Slate QueryField
+import { QueryField, type TypeaheadInput, type TypeaheadOutput } from '@grafana/ui';
+
+<QueryField
+  query={value}
+  portalOrigin="my-datasource"
+  onChange={setValue}
+  onRunQuery={runQuery}
+  onTypeahead={async (input: TypeaheadInput): Promise<TypeaheadOutput> => ({
+    suggestions: [{ label: 'Functions', items: [{ label: 'rate' }, { label: 'sum' }] }],
+  })}
+/>;
+```
+
+```tsx
+// After — CodeMirrorEditor
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+
+const completionSource = (context: CompletionContext): CompletionResult | null => {
+  const word = context.matchBefore(/\w*/);
+  if (!word || (word.from === word.to && !context.explicit)) {
+    return null;
+  }
+  return {
+    from: word.from,
+    options: [
+      { label: 'rate', type: 'function' },
+      { label: 'sum', type: 'function' },
+    ],
+  };
+};
+
+<CodeMirrorEditor value={value} onChange={setValue} completionSources={[completionSource]} aria-label="Query" />;
+```
+
+## Props
+
+<ArgTypes of={QueryField} />

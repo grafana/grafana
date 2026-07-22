@@ -2,7 +2,13 @@ name: External PR Notify Trigger
 
 on:
   pull_request_target:  # zizmor: ignore[dangerous-triggers]
-    types: [labeled]
+    # Fire when an external PR is opened. Previously this keyed off the
+    # 'pr/external' labeled event, but that label is applied downstream (by the
+    # handler, once org membership is confirmed) rather than up front, so the
+    # labeled event no longer arrives. Firing on 'opened' is safe: this job runs
+    # base-ref code only, and the authoritative external check (org-membership)
+    # gates all downstream work in the handler.
+    types: [opened]
 
 permissions:
   contents: read
@@ -19,7 +25,6 @@ jobs:
       contents: read       # checkout champions list
       pull-requests: write # apply community/champion label
     if: |
-      github.event.label.name == 'pr/external' &&
       !contains(github.event.pull_request.labels.*.name, 'pr/auto-triaged') &&
       contains(fromJSON('["NONE", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER", "CONTRIBUTOR"]'), github.event.pull_request.author_association)
 

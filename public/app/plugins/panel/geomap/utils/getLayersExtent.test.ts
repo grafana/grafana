@@ -25,7 +25,6 @@ function vectorLayerState(name: string, coordinates: number[][]): MapLayerState 
     layer: new VectorLayer({ source }),
     handler: {} as MapLayerState['handler'],
     onChange: jest.fn(),
-    mouseEvents: {} as MapLayerState['mouseEvents'],
     getName: () => name,
   };
 }

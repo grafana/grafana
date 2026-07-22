@@ -78,6 +78,63 @@ describe('useMigrationData (folder-scoped kinds)', () => {
     expect(result.current.data.find((f) => f.uid === 'child')?.directResources.map((d) => d.uid)).toEqual(['d2']);
   });
 
+  it('records the ancestor path for nested folders and leaves root/general rows pathless', async () => {
+    mockSearch([
+      folder('grandparent'),
+      folder('parent', 'grandparent'),
+      folder('child', 'parent'),
+      dashboard('d1', 'child'),
+      dashboard('r1', ''),
+    ]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The deeply-nested folder carries its ancestors, outermost first, excluding itself.
+    expect(result.current.data.find((f) => f.uid === 'child')?.path).toEqual(['grandparent', 'parent']);
+    // Root resources roll into the pathless General row.
+    expect(result.current.data.find((f) => f.uid === 'general')?.path).toEqual([]);
+  });
+
+  it('stops the ancestor walk when a parent folder is not in the listed folders', async () => {
+    // `orphan` points at a parent (`ghost`) that the search never returned, so
+    // the walk can't resolve it. The path ends up empty rather than throwing.
+    mockSearch([folder('orphan', 'ghost'), dashboard('d1', 'orphan')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.find((f) => f.uid === 'orphan')?.path).toEqual([]);
+  });
+
+  it('falls back to the folder uid and an empty path when the containing folder is not listed', async () => {
+    // The dashboard names a parent folder that search never returned as a folder
+    // row. The row still renders, keyed by the parent uid it references, with the
+    // uid used as the title (no folder title to resolve) and no ancestor path.
+    mockSearch([dashboard('d1', 'unlisted')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data).toHaveLength(1);
+    const [row] = result.current.data;
+    // Unresolved folder: the title falls back to the uid and the path is empty.
+    expect(row.title).toBe(row.uid);
+    expect(row.path).toEqual([]);
+    expect(row.directResources.map((d) => d.uid)).toEqual(['d1']);
+  });
+
+  it('does not loop forever on a cyclic parent reference', async () => {
+    // A malformed hierarchy where `a` and `b` are each other's parent. The seen
+    // guard stops the walk after one hop instead of spinning indefinitely.
+    mockSearch([folder('a', 'b'), folder('b', 'a'), dashboard('d1', 'a')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.find((f) => f.uid === 'a')?.path).toEqual(['b']);
+  });
+
   it('rolls root-level dashboards into a synthetic General row and excludes managed ones', async () => {
     mockSearch([
       folder('a'),
@@ -164,6 +221,21 @@ describe('useMigrationData (non-folder kinds)', () => {
     // p3 is already managed, so only p1 and p2 are migration candidates.
     expect(row.directResources.map((r) => r.uid)).toEqual(['p1', 'p2']);
     expect(row.directResources.every((r) => r.kind.kind === 'Playlist')).toBe(true);
+  });
+
+  it('skips the folder listing entirely when no kind is folder-scoped', async () => {
+    // Playlists are the only kind here and aren't folder-scoped, so the hook
+    // never lists folders. A search failure must not matter — nothing depends
+    // on it — and the synthetic playlist row still renders.
+    server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+    mockPlaylists([playlist('p1', 'Morning rotation')]);
+
+    const { result } = renderHook(() => useMigrationData([resourceKindInfos.playlist]), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(false);
+    expect(result.current.data.map((f) => f.title)).toEqual(['Playlists']);
+    expect(result.current.data[0].directResources.map((r) => r.uid)).toEqual(['p1']);
   });
 
   it('falls back to the name when a playlist has no title, and drops entries without a name', async () => {

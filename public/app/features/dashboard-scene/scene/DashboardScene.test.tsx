@@ -176,6 +176,39 @@ describe('DashboardScene', () => {
 
         expect(spy).not.toHaveBeenCalled();
       });
+
+      it('exposes the edit session source', () => {
+        const scene = buildTestScene();
+        scene.activate();
+
+        expect(scene.getEditSessionSource()).toBeUndefined();
+
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.getEditSessionSource()).toBe('assistant');
+      });
+
+      it('tags the session from the editSource url param when a new dashboard auto-enters edit mode', () => {
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=assistant');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+        expect(scene.getEditSessionSource()).toBe('assistant');
+      });
+
+      it('defaults to source "user" when a new dashboard auto-enters edit mode without the param', () => {
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
+        expect(scene.getEditSessionSource()).toBe('user');
+      });
     });
 
     describe('Given scene in edit mode', () => {
@@ -234,6 +267,42 @@ describe('DashboardScene', () => {
         // Resets tracking
         expect(stopSpy).toHaveBeenCalled();
         expect(startSpy).toHaveBeenCalled();
+      });
+
+      it('activateEditPane activates an inactive edit pane and releases it on exit', () => {
+        const editPane = scene.state.editPane;
+        expect(editPane.isActive).toBe(false);
+
+        scene.activateEditPane();
+        expect(editPane.isActive).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(editPane.isActive).toBe(false);
+      });
+
+      it('activateEditPane is a no-op when the edit pane is already active', () => {
+        const editPane = scene.state.editPane;
+        const activateSpy = jest.spyOn(editPane, 'activate');
+        editPane.activate();
+
+        scene.activateEditPane();
+
+        expect(activateSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('re-activates the swapped-in edit pane when discarding and keeping edit', () => {
+        const editPane = scene.state.editPane;
+        scene.activateEditPane();
+        expect(editPane.isActive).toBe(true);
+
+        scene.discardChangesAndKeepEditing();
+
+        // The original pane is released, but a fresh clone is swapped in and re-activated so
+        // programmatic mutations keep working while we stay in edit mode.
+        expect(editPane.isActive).toBe(false);
+        const newEditPane = scene.state.editPane;
+        expect(newEditPane).not.toBe(editPane);
+        expect(newEditPane.isActive).toBe(true);
       });
 
       it('Exiting already saved dashboard should not restore initial state', () => {
@@ -706,6 +775,13 @@ describe('DashboardScene', () => {
         expect(addedPanel).toBeDefined();
         expect(addedPanel.state.key).toBe('panel-7');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+      });
+
+      it('Should do nothing when pasting with an empty clipboard', () => {
+        store.delete(LS_PANEL_COPY_KEY);
+
+        expect(() => scene.pastePanel()).not.toThrow();
+        expect(buildGridItemForPanel).not.toHaveBeenCalled();
       });
 
       describe('Copy/Paste panel styles', () => {

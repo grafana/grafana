@@ -144,6 +144,163 @@ describe('AzureMonitorDatasource', () => {
       });
     });
 
+    it('should expand a multi-value template variable in dimension filter values', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        if (target?.includes('$entities')) {
+          if (interpolated) {
+            interpolated.push({ value: 'topic-a,topic-b', match: '$entities', variableName: 'entities' });
+          }
+          return 'topic-a,topic-b';
+        }
+        return target || '';
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['$entities'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['topic-a', 'topic-b'] }],
+        },
+      });
+    });
+
+    it('should preserve literal text around a multi-value variable in dimension filter values', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        if (target?.includes('$entities')) {
+          if (interpolated) {
+            interpolated.push({ value: 'topic-a,topic-b', match: '$entities', variableName: 'entities' });
+          }
+          return (target ?? '').replace('$entities', 'topic-a,topic-b');
+        }
+        return target || '';
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['prefix-$entities'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [
+            { dimension: 'EntityName', operator: 'eq', filters: ['prefix-topic-a', 'prefix-topic-b'] },
+          ],
+        },
+      });
+    });
+
+    it('should not duplicate filter values when the same variable appears twice in one expression', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        const result = target ?? '';
+        // The real templateSrv records one interpolation entry per match,
+        // so a repeated variable produces duplicate entries.
+        const occurrences = (result.match(/\$env/g) ?? []).length;
+        for (let i = 0; i < occurrences; i++) {
+          interpolated?.push({ value: 'dev,prod', match: '$env', variableName: 'env' });
+        }
+        return result.replaceAll('$env', 'dev,prod');
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['$env-$env'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['dev-dev', 'prod-prod'] }],
+        },
+      });
+    });
+
+    it('should expand multiple multi-value variables in one dimension filter value', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        let result = target ?? '';
+        if (result.includes('$regions')) {
+          if (interpolated) {
+            interpolated.push({ value: 'eu,us', match: '$regions', variableName: 'regions' });
+          }
+          result = result.replace('$regions', 'eu,us');
+        }
+        if (result.includes('$envs')) {
+          if (interpolated) {
+            interpolated.push({ value: 'dev,prod', match: '$envs', variableName: 'envs' });
+          }
+          result = result.replace('$envs', 'dev,prod');
+        }
+        return result;
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['$regions-$envs'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [
+            { dimension: 'EntityName', operator: 'eq', filters: ['eu-dev', 'eu-prod', 'us-dev', 'us-prod'] },
+          ],
+        },
+      });
+    });
+
+    it('should leave single-value dimension filter values unchanged', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        if (target?.includes('$entity')) {
+          if (interpolated) {
+            interpolated.push({ value: 'topic-a', match: '$entity', variableName: 'entity' });
+          }
+          return 'topic-a';
+        }
+        return target || '';
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'sw', filters: ['$entity', 'literal-value'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'sw', filters: ['topic-a', 'literal-value'] }],
+        },
+      });
+    });
+
     it('expand template variables in resource groups and names', () => {
       const resourceGroup = '$rg';
       const resourceName = '$rn';

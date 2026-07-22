@@ -92,7 +92,10 @@ describe('CommitOptionsSection', () => {
 
     await user.click(screen.getByText('Commit options'));
 
-    expect(screen.getByRole('textbox')).toHaveAttribute('name', 'commit.singleResourceMessageTemplate');
+    expect(screen.getByRole('textbox', { name: /Commit message template/i })).toHaveAttribute(
+      'name',
+      'commit.singleResourceMessageTemplate'
+    );
     expect(screen.getByRole('checkbox')).toHaveAttribute('name', 'commit.enforceTemplate');
   });
 

@@ -110,12 +110,16 @@ func (r *migrationRepository) legacyToMerge(ctx context.Context, query *annotati
 }
 
 // findByID reads a single annotation from the new store, falling back to legacy when the
-// record is not there yet (pre-migration record or an alert annotation).
+// record is not there yet (pre-migration record or an alert annotation). A record deleted
+// in the new store (ErrGone) is authoritatively gone and must not fall back to legacy.
 func (r *migrationRepository) findByID(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	dto, err := r.proxy.Get(ctx, query.OrgID, query.AnnotationID)
 	switch {
 	case err == nil:
 		return []*annotations.ItemDTO{dto}, nil
+	case errors.Is(err, ErrGone):
+		// deleted in new store, don't fall back to legacy
+		return nil, nil
 	case errors.Is(err, ErrNotFound):
 		return r.legacy.Find(ctx, query)
 	default:
@@ -157,7 +161,8 @@ func (r *migrationRepository) SaveMany(ctx context.Context, items []annotations.
 }
 
 // Update writes to the new store. On ErrNotFound (older record) it falls back to legacy,
-// which preserves any Data the caller omits.
+// which preserves any Data the caller omits. On ErrGone (deleted in the new store) it
+// returns the error without falling back, so an update can't resurrect a deleted record.
 func (r *migrationRepository) Update(ctx context.Context, item *annotations.Item) error {
 	err := r.proxy.Update(ctx, item.OrgID, item.ID, item)
 	if err == nil || !errors.Is(err, ErrNotFound) {
@@ -166,24 +171,30 @@ func (r *migrationRepository) Update(ctx context.Context, item *annotations.Item
 	return r.legacy.Update(ctx, item)
 }
 
-// Delete removes one annotation from the new store, falling back to legacy on ErrNotFound
-// (older record).
-// TODO: this only removes the new-store copy. If the same annotation still exists in
-// legacy (e.g. migrated but not purged), the legacy row survives and reappears in the
-// merged Find results. Needs a dual-delete or a tombstone once soft-delete lands.
+// Delete removes one annotation from both stores.
+// When a record is not in the new store yet (ErrNotFound), legacy still owns it so we delete it there.
+// When a record is already deleted in the new store (ErrGone), we still best-effort delete the
+// legacy record to ensure consistency.
 func (r *migrationRepository) Delete(ctx context.Context, params *annotations.DeleteParams) error {
 	// No ID means a mass delete by dashboard/panel, which the proxy can't express.
 	if params.ID == 0 {
 		return r.legacy.Delete(ctx, params)
 	}
 	err := r.proxy.Delete(ctx, params.OrgID, params.ID)
-	if err == nil {
+	switch {
+	case err == nil, errors.Is(err, ErrGone):
+		// Best-effort delete the legacy copy. A failure means the annotation could
+		// briefly resurface in a merged read until legacy is retired for the instance.
+		// A re-delete would land here again and retry the cleanup.
+		if err := r.legacy.Delete(ctx, params); err != nil {
+			r.logger.Warn("failed to delete legacy copy after new-store delete", "id", params.ID, "err", err)
+		}
 		return nil
-	}
-	if !errors.Is(err, ErrNotFound) {
+	case errors.Is(err, ErrNotFound):
+		return r.legacy.Delete(ctx, params)
+	default:
 		return err
 	}
-	return r.legacy.Delete(ctx, params)
 }
 
 // TODO: FindTags reads from legacy only. Follow up to proxy tag searches to the new store.

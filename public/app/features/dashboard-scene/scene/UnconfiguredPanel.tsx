@@ -147,6 +147,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
     }
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
+    DashboardInteractions.panelActionClicked('use_library_panel', props.id, 'panel');
   };
 
   if (panelContext.app === CoreApp.PanelEditor) {

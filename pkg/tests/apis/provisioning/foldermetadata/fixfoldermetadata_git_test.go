@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -18,7 +17,6 @@ import (
 // leaves the default branch untouched.
 func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "fix-meta-git-branch"
 	const featureBranch = "add-folder-metadata"
@@ -46,16 +44,16 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 		"fix-folder-metadata job on branch %q should succeed", featureBranch)
 
 	// Both _folder.json files must appear on the feature branch with valid content.
-	parentUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/_folder.json", featureBranch)
-	childUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/child/_folder.json", featureBranch)
+	parentUID := requireFolderMetadataOnRef(t, helper, repoName, "parent/_folder.json", featureBranch)
+	childUID := requireFolderMetadataOnRef(t, helper, repoName, "parent/child/_folder.json", featureBranch)
 	require.NotEqual(t, parentUID, childUID,
 		"parent and child folders should have different UIDs")
 	require.Equal(t, expectedCommitMsg, common.LatestCommitSubject(t, repo, featureBranch))
 
 	// Neither file should exist on the default branch — the job only touched the
 	// feature branch.
-	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/_folder.json")
-	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/child/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, repoName, "parent/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, repoName, "parent/child/_folder.json")
 }
 
 // TestIntegrationGit_FixFolderMetadata_ExistingBranch verifies that the
@@ -65,7 +63,6 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 // leave the default branch untouched.
 func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "fix-meta-git-existing-branch"
 	const featureBranch = "pre-existing-branch"
@@ -96,15 +93,15 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 		"fix-folder-metadata job on pre-existing branch %q should succeed", featureBranch)
 
 	// Both _folder.json files must appear on the feature branch with valid content.
-	parentUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/_folder.json", featureBranch)
-	childUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/child/_folder.json", featureBranch)
+	parentUID := requireFolderMetadataOnRef(t, helper, repoName, "parent/_folder.json", featureBranch)
+	childUID := requireFolderMetadataOnRef(t, helper, repoName, "parent/child/_folder.json", featureBranch)
 
 	require.NotEqual(t, parentUID, childUID,
 		"parent and child folders should have different UIDs")
 
 	// Neither file should exist on the default branch.
-	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/_folder.json")
-	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/child/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, repoName, "parent/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, repoName, "parent/child/_folder.json")
 }
 
 // TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch verifies that the
@@ -113,7 +110,6 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 // would push directly to main, which is not allowed.
 func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "fix-meta-readonly-main"
 
@@ -136,14 +132,14 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch(t *testing.T) {
 		SubResource("jobs").
 		Body(body).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 
 	require.True(t, apierrors.IsForbidden(result.Error()),
 		"job targeting the default branch on a read-only repo should be forbidden; got: %v", result.Error())
 
 	// The default branch (main) must remain untouched.
-	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/_folder.json")
-	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/child/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, repoName, "parent/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, repoName, "parent/child/_folder.json")
 }
 
 // TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef verifies
@@ -153,7 +149,6 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch(t *testing.T) {
 // branch and the default branch stays untouched.
 func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "fix-meta-readonly-branch"
 	const featureBranch = "fix-folders"
@@ -173,19 +168,19 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testi
 	require.Equal(t, string(provisioning.JobStateSuccess), state,
 		"fix-folder-metadata job on branch %q should succeed even when the default branch is read-only", featureBranch)
 
-	parentUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/_folder.json", featureBranch)
-	childUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/child/_folder.json", featureBranch)
+	parentUID := requireFolderMetadataOnRef(t, helper, repoName, "parent/_folder.json", featureBranch)
+	childUID := requireFolderMetadataOnRef(t, helper, repoName, "parent/child/_folder.json", featureBranch)
 
 	require.NotEqual(t, parentUID, childUID,
 		"parent and child folders should have different UIDs")
 
-	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/_folder.json")
-	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/child/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, repoName, "parent/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, repoName, "parent/child/_folder.json")
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
-func requireFolderMetadataOnRef(t *testing.T, h *common.GitTestHelper, ctx context.Context, repoName, filePath, ref string) string {
+func requireFolderMetadataOnRef(t *testing.T, h *common.GitTestHelper, repoName, filePath, ref string) string {
 	t.Helper()
 
 	subresourceParts := append([]string{"files"}, strings.Split(filePath, "/")...)
@@ -195,7 +190,7 @@ func requireFolderMetadataOnRef(t *testing.T, h *common.GitTestHelper, ctx conte
 		Name(repoName).
 		SubResource(subresourceParts...).
 		Param("ref", ref).
-		Do(ctx)
+		Do(t.Context())
 
 	require.NoError(t, result.Error(),
 		"%s: _folder.json should be readable on branch %q", filePath, ref)
@@ -219,7 +214,7 @@ func requireFolderMetadataOnRef(t *testing.T, h *common.GitTestHelper, ctx conte
 	return uid
 }
 
-func requireFileAbsentOnDefaultBranch(t *testing.T, h *common.GitTestHelper, ctx context.Context, repoName, filePath string) {
+func requireFileAbsentOnDefaultBranch(t *testing.T, h *common.GitTestHelper, repoName, filePath string) {
 	t.Helper()
 
 	subresourceParts := append([]string{"files"}, strings.Split(filePath, "/")...)
@@ -228,7 +223,7 @@ func requireFileAbsentOnDefaultBranch(t *testing.T, h *common.GitTestHelper, ctx
 		Resource("repositories").
 		Name(repoName).
 		SubResource(subresourceParts...).
-		Do(ctx)
+		Do(t.Context())
 
 	require.True(t, apierrors.IsNotFound(result.Error()),
 		"%s should not exist on the default branch; got: %v", filePath, result.Error())

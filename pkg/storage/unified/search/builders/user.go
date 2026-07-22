@@ -13,12 +13,17 @@ import (
 // populate IndexableDocument.SelectableFields for IAM kinds.
 var iamManifests = []app.Manifest{iam.LocalManifest()}
 
+// iamProvider is shared by all IAM builders and their exported field sets, so
+// the manifest is parsed once.
+var iamProvider = resource.NewManifestBackedProvider(iamManifests)
+
 const (
-	USER_EMAIL        = "email"
-	USER_LOGIN        = "login"
-	USER_LAST_SEEN_AT = "lastSeenAt"
-	USER_ROLE         = "role"
-	USER_DISABLED     = "disabled"
+	USER_EMAIL                 = "email"
+	USER_LOGIN                 = "login"
+	USER_LAST_SEEN_AT          = "lastSeenAt"
+	USER_ROLE                  = "role"
+	USER_DISABLED              = "disabled"
+	USER_EXTERNAL_AUTH_MODULES = "externalAuthModules"
 )
 
 // UserSortableExtraFields are the additional fields that can be used for sorting user search results.
@@ -29,7 +34,7 @@ var UserSortableExtraFields = []string{
 	USER_LAST_SEEN_AT,
 }
 
-// userSearchFields are read from the generated IAM manifest (declared in
+// UserSearchFields are read from the generated IAM manifest (declared in
 // apps/iam/kinds/user.cue).
 //
 // lastSeenAt (int64) and disabled (boolean) declare the filter capability to
@@ -40,15 +45,10 @@ var UserSortableExtraFields = []string{
 // would not match a numeric-indexed term yet. No in-tree client filters by
 // lastSeenAt or disabled today, so this is a known gap rather than a rollout
 // concern.
-var userSearchFields = resource.NewManifestBackedProvider(iamManifests).Fields(iamv0.UserResourceInfo.GroupVersionResource())
+//
+// Exported for the IAM legacy SQL search backend; do not mutate.
+var UserSearchFields = iamProvider.Fields(iamv0.UserResourceInfo.GroupVersionResource())
 
-// UserTableColumnDefinitions exposes column-defs by name for wire-API
-// consumers (the IAM legacy SQL backend in user/legacy_search.go).
-// Derived from userSearchFields via tableColumnsByName. UniqueValues was
-// set on the historical hand-written email/login entries but has no
-// production consumer and is not preserved.
-var UserTableColumnDefinitions = tableColumnsByName(userSearchFields)
-
-func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(iamv0.UserResourceInfo, userSearchFields)
+func GetUserBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, iamv0.UserResourceInfo)
 }

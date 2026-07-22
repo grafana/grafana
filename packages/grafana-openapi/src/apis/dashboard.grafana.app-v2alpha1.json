@@ -2615,6 +2615,9 @@
             "type": "integer",
             "format": "int64"
           },
+          "timeCompare": {
+            "type": "string"
+          },
           "timeFrom": {
             "type": "string"
           },

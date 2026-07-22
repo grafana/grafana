@@ -24,7 +24,8 @@
     },
     "accent": {
       "main": "palette.orange600",
-      "text": "palette.orange700"
+      "text": "palette.orange700",
+      "contrastText": "palette.white"
     },
     "error": {
       "main": "palette.coral600",

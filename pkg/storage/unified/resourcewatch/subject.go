@@ -10,10 +10,12 @@ import (
 // position to watch every namespace's notifications for a resource.
 const allNamespaces = "*"
 
-// SubjectAll is the NATS multi-token wildcard (">"), matching every Subject(...)
-// value regardless of group, namespace, or resource. A consumer that needs the
-// full change stream (not one resource type) subscribes to this.
-const SubjectAll = ">"
+// SubjectAllResources matches every Subject(...) whose group is a single-token
+// grafana.app group ({group}.grafana.app.{namespace}.{resource}). Single-token
+// "*" wildcards keep out non-resource bus traffic (e.g. $SYS.*) that a ">"
+// firehose would deliver and fail to unmarshal. Groups with >1 token before
+// .grafana.app are not matched.
+const SubjectAllResources = "*.grafana.app.*.*"
 
 // Subject returns the NATS subject that carries change notifications for a
 // resource type within a namespace, as the dotted tokens

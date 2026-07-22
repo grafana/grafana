@@ -32,34 +32,37 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	}
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		if resp.StatusCode == http.StatusOK && !isAuthedUser {
-			var result goffmodel.OFREPBulkEvaluateSuccessResponse
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				return err
-			}
-			_ = resp.Body.Close()
-
-			var filteredFlags []goffmodel.OFREPFlagBulkEvaluateSuccessResponse
-			for _, f := range result.Flags {
-				if isPublicFlag(f.Key) {
-					filteredFlags = append(filteredFlags, f)
-				}
-			}
-
-			result.Flags = filteredFlags
-			newBodyBytes, err := json.Marshal(result)
-			if err != nil {
-				b.logger.Error("Failed to encode filtered result", "error", err)
-				return err
-			}
-
-			// Replace the body
-			resp.Body = io.NopCloser(bytes.NewReader(newBodyBytes))
-			resp.ContentLength = int64(len(newBodyBytes))
-			resp.Header.Set("Content-Length", strconv.Itoa(len(newBodyBytes)))
-			resp.Header.Set("Content-Type", "application/json")
+		if resp.StatusCode != http.StatusOK {
+			return nil
 		}
 
+		// Unauth is always filtered to public flags. Authed is filtered only when the flag is on.
+		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx) {
+			return nil
+		}
+
+		var result goffmodel.OFREPBulkEvaluateSuccessResponse
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			b.logger.Error("Failed to decode bulk eval response", "error", err)
+			return err
+		}
+		_ = resp.Body.Close()
+
+		filteredFlags := make([]goffmodel.OFREPFlagBulkEvaluateSuccessResponse, 0, len(result.Flags))
+		for _, f := range result.Flags {
+			if isPublic(f.Metadata) {
+				filteredFlags = append(filteredFlags, f)
+			}
+		}
+
+		result.Flags = filteredFlags
+		newBodyBytes, err := json.Marshal(result)
+		if err != nil {
+			b.logger.Error("Failed to encode filtered result", "error", err)
+			return err
+		}
+
+		rewriteResponse(resp, resp.StatusCode, newBodyBytes, "application/json")
 		return nil
 	}
 
@@ -81,9 +84,44 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	}
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		if resp.StatusCode == http.StatusOK && !isAuthedUser && !isPublicFlag(flagKey) {
-			writeResponse(http.StatusUnauthorized, struct{}{}, b.logger, w)
+		// Unauth may only see public flags. Checked here since metadata is only known after eval.
+		if resp.StatusCode != http.StatusOK || isAuthedUser {
+			return nil
 		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			b.logger.Error("Failed to read flag eval response", "key", flagKey, "error", err)
+			return err
+		}
+		_ = resp.Body.Close()
+
+		var result goffmodel.OFREPEvaluateSuccessResponse
+		if err := json.Unmarshal(body, &result); err != nil {
+			b.logger.Error("Failed to decode flag eval response", "key", flagKey, "error", err)
+			return err
+		}
+
+		if isPublic(result.Metadata) {
+			resp.Body = io.NopCloser(bytes.NewReader(body))
+			return nil
+		}
+
+		// Not public -> respond as if the flag doesn't exist, so an unauthed
+		// caller can't use the 404-vs-401 distinction to probe which private
+		// flags exist.
+		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "key", flagKey)
+		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
+			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
+				ErrorCode:    "FLAG_NOT_FOUND",
+				ErrorDetails: fmt.Sprintf("Flag %q was not found", flagKey),
+			},
+			Key: flagKey,
+		})
+		if err != nil {
+			return err
+		}
+		rewriteResponse(resp, http.StatusNotFound, notFoundBody, "application/json")
 		return nil
 	}
 
@@ -116,4 +154,15 @@ func namespaceUserAgent(namespace string) string {
 		return "features-grafana-app"
 	}
 	return "features-grafana-app/" + namespace
+}
+
+// rewriteResponse swaps a proxied response for a new one, so the reverse proxy
+// forwards our content instead of the original upstream response.
+func rewriteResponse(resp *http.Response, statusCode int, body []byte, contentType string) {
+	resp.StatusCode = statusCode
+	resp.Status = fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode))
+	resp.Body = io.NopCloser(bytes.NewReader(body))
+	resp.ContentLength = int64(len(body))
+	resp.Header.Set("Content-Length", strconv.Itoa(len(body)))
+	resp.Header.Set("Content-Type", contentType)
 }

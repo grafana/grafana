@@ -329,6 +329,49 @@ func TestVectorSearch_BackendErrorReturnsInternal(t *testing.T) {
 	assert.Equal(t, codes.Internal, status.Code(err))
 }
 
+// canceledAuthedCtx returns an authed context that is already canceled,
+// mimicking a client that disconnected mid-request.
+func canceledAuthedCtx() context.Context {
+	ctx, cancel := context.WithCancel(authedCtx())
+	cancel()
+	return ctx
+}
+
+func TestVectorSearch_EmbedderContextCanceledReturnsCanceled(t *testing.T) {
+	// Mimic the bedrock client's wrapping of a client-disconnect cancellation.
+	wantErr := fmt.Errorf("bedrock: invoke: %w", context.Canceled)
+	emb := newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: wantErr})
+	s := newTestSearchServer(emb, &fakeVectorBackend{})
+	_, err := s.VectorSearch(canceledAuthedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
+}
+
+func TestVectorSearch_EmbedderDeadlineExceededReturnsDeadlineExceeded(t *testing.T) {
+	ctx, cancel := context.WithTimeout(authedCtx(), 0)
+	defer cancel()
+	wantErr := fmt.Errorf("bedrock: invoke: %w", context.DeadlineExceeded)
+	emb := newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: wantErr})
+	s := newTestSearchServer(emb, &fakeVectorBackend{})
+	_, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.DeadlineExceeded, status.Code(err))
+}
+
+func TestVectorSearch_BackendContextCanceledReturnsCanceled(t *testing.T) {
+	backend := &fakeVectorBackend{err: fmt.Errorf("pgvector: %w", context.Canceled)}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
+	_, err := s.VectorSearch(canceledAuthedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
+}
+
 // fakeAccessClient implements authlib.AccessClient with a per-row decision
 // function. Used to exercise the post-filter authz path.
 type fakeAccessClient struct {
@@ -412,6 +455,34 @@ func TestVectorSearch_NoUserInContextReturnsUnauthenticated(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.Unauthenticated, status.Code(err))
+}
+
+func TestVectorSearch_AuthzContextCanceledReturnsCanceled(t *testing.T) {
+	// gRPC-backed authz clients surface cancellation as a status error, not
+	// a wrapped context.Canceled sentinel — the handler must key off the
+	// incoming context, not the error shape.
+	access := &erroringAccessClient{err: status.Error(codes.Canceled, "context canceled")}
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{{UID: "u1", Score: 0.1}},
+	}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+	_, err := s.VectorSearch(canceledAuthedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err))
+}
+
+func TestVectorSearch_DownstreamCanceledErrWithLiveContextReturnsInternal(t *testing.T) {
+	// A downstream cancellation while the caller's context is still live is
+	// a server-side fault, not a client disconnect — stays Internal.
+	backend := &fakeVectorBackend{err: fmt.Errorf("pgvector: %w", context.Canceled)}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
 }
 
 func TestVectorSearch_AuthzCompileErrorReturnsInternal(t *testing.T) {

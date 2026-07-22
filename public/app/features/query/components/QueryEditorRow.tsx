@@ -33,6 +33,8 @@ import {
   QueryOperationRow,
   type QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { QueryEditorType } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/constants';
+import { trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
@@ -252,6 +254,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       });
     }
 
+    trackCardAction(
+      'delete',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
+
     onRemoveQuery(query);
 
     if (onQueryRemoved) {
@@ -274,6 +283,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onCopyQuery = () => {
     const { query, onAddQuery, onQueryCopied } = this.props;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    trackCardAction(
+      'duplicate',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
     const copy = cloneDeep(query);
     onAddQuery(copy);
 
@@ -284,6 +300,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onHideQuery = () => {
     const { query, onChange, onRunQuery, onQueryToggled } = this.props;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    trackCardAction(
+      'toggle_hide',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
 
@@ -540,7 +563,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
       >
-        <div className={rowClasses} id={this.id}>
+        <div
+          className={rowClasses}
+          id={this.id}
+          data-testid={selectors.components.Plugins.queryEditorRow(datasource.type, query.refId)}
+          data-plugin-id={datasource.type}
+        >
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>

@@ -25,4 +25,8 @@ var (
 	ErrMTSettingsNotImplemented = errutil.NotImplemented("sso.mtSettingsNotImplemented",
 		errutil.WithPublicMessage("Resolving SSO settings from the MT-Settings service is not implemented yet")).
 		Errorf("MT-Settings SSO settings resolution not implemented")
+
+	ErrMTSettingsClientNotConfigured = errutil.Internal("sso.mtSettingsClientNotConfigured",
+		errutil.WithPublicMessage("The MT-Settings service client is not configured")).
+		Errorf("MT-Settings client not configured or failed to initialize; see server startup logs")
 )

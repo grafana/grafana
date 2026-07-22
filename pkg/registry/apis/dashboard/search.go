@@ -714,6 +714,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
 		for _, v := range facets {
+			if v != resource.SEARCH_FIELD_TAGS {
+				return nil, apierrors.NewBadRequest(fmt.Sprintf("faceting is not supported for field %q", v))
+			}
 			searchRequest.Facet[v] = &resourcepb.ResourceSearchRequest_Facet{
 				Field: v,
 				Limit: int64(facetLimit),

@@ -27,7 +27,7 @@ import { isNewGroup } from './utils';
 interface ComboboxStaticProps<T extends string | number>
   extends Pick<
     InputProps,
-    'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+    'placeholder' | 'autoFocus' | 'id' | 'aria-label' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
   > {
   /**
    * Allows the user to set a value which is not in the list of options.
@@ -158,6 +158,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     minWidth,
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
+    'aria-label': ariaLabel,
     'data-testid': dataTestId,
     autoFocus,
     onBlur,
@@ -436,6 +437,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           ref: inputRef,
           onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+          'aria-label': ariaLabel,
           placeholder,
           'data-testid': dataTestId,
           onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {

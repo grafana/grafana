@@ -511,3 +511,112 @@ receivers:
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 	})
 }
+
+func TestMultiOrgAlertmanager_PromoteExtraConfiguration(t *testing.T) {
+	orgID := int64(1)
+	ctx := context.Background()
+
+	extraConfig := v1.ExtraConfiguration{
+		Identifier: "my-import",
+		AlertmanagerConfig: `route:
+  receiver: imported-receiver
+receivers:
+  - name: imported-receiver`,
+	}
+
+	t.Run("promotes staged config into main config", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
+		require.NoError(t, err)
+
+		renamed, err := mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig.Identifier)
+		require.NoError(t, err)
+		require.Empty(t, renamed.Receivers, "no renames expected")
+		require.Empty(t, renamed.TimeIntervals, "no renames expected")
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+
+		// ExtraConfigs must be empty after promotion.
+		require.Empty(t, gettableConfig.ExtraConfigs, "extra config must be removed after promotion")
+
+		// Imported receiver must now be in the main config.
+		receiverNames := make([]string, 0, len(gettableConfig.AlertmanagerConfig.Receivers))
+		for _, r := range gettableConfig.AlertmanagerConfig.Receivers {
+			receiverNames = append(receiverNames, r.Name)
+		}
+		require.Contains(t, receiverNames, "imported-receiver")
+	})
+
+	t.Run("returns not-found error when identifier does not exist", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, "nonexistent")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrAlertmanagerExtraConfigNotFound)
+	})
+
+	t.Run("returns error when org does not exist", func(t *testing.T) {
+		mam := setupMam(t, nil)
+
+		_, err := mam.PromoteExtraConfiguration(ctx, 999, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig.Identifier)
+		require.ErrorContains(t, err, "failed to get current configuration")
+	})
+
+	t.Run("renames receiver on name collision", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		// The default Grafana config already has a receiver named "grafana-default-email".
+		// Import a config whose receiver collides with it.
+		colliding := v1.ExtraConfiguration{
+			Identifier: "importer",
+			AlertmanagerConfig: `route:
+  receiver: grafana-default-email
+receivers:
+  - name: grafana-default-email`,
+		}
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, colliding, false, false, false)
+		require.NoError(t, err)
+
+		renamed, err := mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, "importer")
+		require.NoError(t, err)
+		require.NotEmpty(t, renamed.Receivers, "collision must produce a rename")
+	})
+
+	t.Run("promoted templates have no converted_prometheus provenance in config blob", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		withTemplate := v1.ExtraConfiguration{
+			Identifier: "tmpl-import",
+			AlertmanagerConfig: `route:
+  receiver: tmpl-receiver
+receivers:
+  - name: tmpl-receiver`,
+			TemplateFiles: map[string]string{
+				"my-template": `{{ define "my-template" }}hello{{ end }}`,
+			},
+		}
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, withTemplate, false, false, false)
+		require.NoError(t, err)
+
+		_, err = mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, "tmpl-import")
+		require.NoError(t, err)
+
+		// Load the raw config and verify templates don't have converted_prometheus provenance.
+		raw, err := mam.configStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+		require.NoError(t, err)
+		cfg, err := Load([]byte(raw.AlertmanagerConfiguration))
+		require.NoError(t, err)
+		for _, tmpl := range cfg.Templates {
+			require.NotEqual(t, definitions.Provenance(models.ProvenanceConvertedPrometheus), tmpl.Provenance,
+				"template %q must not have converted_prometheus provenance after promotion", tmpl.Title)
+		}
+	})
+}

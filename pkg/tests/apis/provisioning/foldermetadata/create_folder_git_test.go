@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,7 +17,6 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-folder-metadata-files"
 	_, _ = helper.CreateGitRepo(t, repoName, nil, "write", "branch")
@@ -34,7 +32,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "meta-folder", "_folder.json").
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "_folder.json should exist in the folder")
 	})
 
@@ -52,7 +50,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "branch-meta-folder", "_folder.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "_folder.json should exist on the branch")
 
 		result = helper.AdminREST.Get().
@@ -60,7 +58,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "branch-meta-folder", "_folder.json").
-			Do(ctx)
+			Do(t.Context())
 		require.True(t, apierrors.IsNotFound(result.Error()), "_folder.json should not exist on the default branch")
 	})
 
@@ -78,7 +76,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "outer", "_folder.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "parent _folder.json should exist on the branch")
 
 		result = helper.AdminREST.Get().
@@ -87,7 +85,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "outer", "inner", "_folder.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "child _folder.json should exist on the branch")
 	})
 
@@ -104,7 +102,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "existing-parent", "_folder.json").
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "parent _folder.json should exist on default branch")
 
 		// Now create a child inside that parent on a NEW branch.
@@ -124,7 +122,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "existing-parent", "new-child", "_folder.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "child _folder.json should exist on the branch")
 
 		// Verify the parent _folder.json is still readable on the branch (inherited from default).
@@ -134,7 +132,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "existing-parent", "_folder.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "parent _folder.json should be readable on the branch (inherited)")
 	})
 }

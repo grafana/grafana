@@ -2681,6 +2681,25 @@
           }
         }
       ]
+    },
+    "/users/~": {
+      "get": {
+        "tags": ["Display"],
+        "description": "Show display information for the currently authenticated identity",
+        "operationId": "getCurrentUserDisplay",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Display"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3174,6 +3193,14 @@
           "email": {
             "type": "string",
             "default": ""
+          },
+          "externalAuthModules": {
+            "description": "Auth module identifiers the user is externally synced with.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
           },
           "internalId": {
             "description": "Deprecated internal (legacy SQL) id of the user.",

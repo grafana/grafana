@@ -124,7 +124,7 @@ describe('ExploreLogsTable', () => {
   });
 
   const panelData: PanelData = {
-    state: LoadingState.Loading,
+    state: LoadingState.Done,
     series: [getMockLokiFrame()],
     timeRange: {
       from: toUtc('2019-01-01 10:00:00'),
@@ -240,7 +240,7 @@ describe('ExploreLogsTable', () => {
 
     it('Should respect options.frameIndex', async () => {
       const data: PanelData = {
-        state: LoadingState.Loading,
+        state: LoadingState.Done,
         series: [getMockLokiFrame(), getMockLokiFrameDataPlane()],
         timeRange: {
           from: toUtc('2019-01-01 10:00:00'),

@@ -2931,6 +2931,38 @@
           }
         }
       ]
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~": {
+      "get": {
+        "tags": [
+          "Display"
+        ],
+        "description": "Show display information for the currently authenticated identity",
+        "operationId": "getCurrentUserDisplay",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3495,6 +3527,14 @@
           "email": {
             "type": "string",
             "default": ""
+          },
+          "externalAuthModules": {
+            "description": "Auth module identifiers the user is externally synced with.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
           },
           "internalId": {
             "description": "Deprecated internal (legacy SQL) id of the user.",

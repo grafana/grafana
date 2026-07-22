@@ -26,7 +26,6 @@ import (
 // HistoricJob must then be swept by the listing-driven cleanup.
 func TestIntegrationProvisioningNATSHistoricJob_CleanedViaListing(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	historicJobs := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -45,7 +44,7 @@ func TestIntegrationProvisioningNATSHistoricJob_CleanedViaListing(t *testing.T) 
 	// window without racing a two-phase assertion.
 	var archived bool
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		items := listHistoricJobs(ctx, collect, historicJobs)
+		items := listHistoricJobs(t.Context(), collect, historicJobs)
 		if len(items) > 0 {
 			archived = true
 		}

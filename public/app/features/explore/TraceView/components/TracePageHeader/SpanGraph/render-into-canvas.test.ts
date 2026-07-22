@@ -38,8 +38,8 @@ describe('renderIntoCanvas()', () => {
   const basicItem = { valueWidth: 100, valueOffset: 50, serviceName: 'some-name' };
 
   class CanvasContext {
-    fillStyle: undefined;
-    fillRectAccumulator: Array<{ fillStyle: undefined; height: number; width: number; x: number; y: number }> = [];
+    fillStyle: unknown;
+    fillRectAccumulator: Array<{ fillStyle: unknown; height: number; width: number; x: number; y: number }> = [];
 
     constructor() {
       this.fillStyle = undefined;
@@ -55,6 +55,17 @@ describe('renderIntoCanvas()', () => {
         x,
         y,
       });
+    }
+
+    // Minimal CanvasGradient stub: records its color stops so tests can assert
+    // a gradient (vs a solid rgba string) was used for summary spans.
+    createLinearGradient() {
+      const stops: Array<{ offset: number; color: string }> = [];
+      return {
+        __isGradient: true,
+        stops,
+        addColorStop: (offset: number, color: string) => stops.push({ offset, color }),
+      };
     }
   }
 
@@ -155,6 +166,81 @@ describe('renderIntoCanvas()', () => {
       expect(canvas.getContext.mock.calls).toEqual([['2d', { alpha: false }]]);
       expect(canvas.contexts.length).toBe(1);
       expect(canvas.contexts[0].fillRectAccumulator).toEqual(expectedDrawings);
+    });
+  });
+
+  describe('summary spans', () => {
+    it('draws a summary as a block proportional to its span_count (shape preservation)', () => {
+      const items = [
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-normal' },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-summary', isSummary: true, spanCount: 10 },
+      ];
+      const canvas = new Canvas();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
+      // index 0 is the background fill; 1 = normal span, 2 = summary span
+      const [, normalRect, summaryRect] = canvas.contexts[0].fillRectAccumulator;
+      // the summary fills ~span_count times a normal span's vertical footprint,
+      // restoring the density the collapsed spans would have occupied
+      expect(Math.round(summaryRect.height / normalRect.height)).toBe(10);
+    });
+
+    it('scales summary height with span_count (larger count is taller)', () => {
+      const items = [
+        { valueWidth: 100, valueOffset: 0, serviceName: 'a', isSummary: true, spanCount: 5 },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'b', isSummary: true, spanCount: 20 },
+      ];
+      const canvas = new Canvas();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
+      const [, small, large] = canvas.contexts[0].fillRectAccumulator;
+      expect(large.height).toBeGreaterThan(small.height);
+    });
+
+    it('fills summary spans with a gradient and normal spans with a solid color', () => {
+      const items = [
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-normal' },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-summary', isSummary: true },
+      ];
+      const canvas = new Canvas();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
+      const [, normalRect, summaryRect] = canvas.contexts[0].fillRectAccumulator;
+      expect(typeof normalRect.fillStyle).toBe('string');
+      // gradient object with light tint -> base -> dark shade stops
+      expect(summaryRect.fillStyle).toMatchObject({
+        __isGradient: true,
+        stops: [{ offset: 0 }, { offset: 0.38 }, { offset: 1 }],
+      });
+    });
+  });
+
+  describe('fill color caching', () => {
+    it('computes each service fill color once, regardless of item count or summary/normal mix', () => {
+      // Large, mostly-normal trace with only three services repeated: this is the
+      // hot path (unpruned traces) that motivates caching per service instead of
+      // recomputing the fill for every span.
+      const items = _range(300).map((i) => ({
+        valueWidth: 100,
+        valueOffset: i,
+        serviceName: `svc-${i % 3}`,
+        isSummary: i % 50 === 0,
+      }));
+      const canvas = new Canvas();
+      const getFillColor = getColorFactory();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getFillColor, BG_COLOR);
+      expect(getFillColor.inputOutput.map((io) => io.input)).toEqual(['svc-0', 'svc-1', 'svc-2']);
+    });
+
+    it('reuses one identical solid fill string for every normal span of a service', () => {
+      const items = [
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-a' },
+        { valueWidth: 100, valueOffset: 1, serviceName: 'svc-a' },
+        { valueWidth: 100, valueOffset: 2, serviceName: 'svc-a' },
+      ];
+      const canvas = new Canvas();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
+      // index 0 is the background fill; the rest are the span rects.
+      const [, ...rects] = canvas.contexts[0].fillRectAccumulator;
+      expect(typeof rects[0].fillStyle).toBe('string');
+      expect(new Set(rects.map((r) => r.fillStyle)).size).toBe(1);
     });
   });
 

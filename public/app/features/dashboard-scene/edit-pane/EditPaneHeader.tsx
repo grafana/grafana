@@ -2,6 +2,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Sidebar } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -74,7 +75,11 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
           icon="clipboard-alt"
           fill="text"
           data-testid={selectors.components.EditPaneHeader.paste}
-          onClick={() => editPane.pastePanel(editPane.getSelectedObject(), 'editPaneHeader')}
+          onClick={() => {
+            const target = editPane.getSelectedObject();
+            editPane.pastePanel(target);
+            DashboardInteractions.trackPastePanelClick('editPaneHeader', getLayoutType(target), 'click');
+          }}
         >
           <Trans i18nKey="dashboard.layout.common.paste">Paste</Trans>
         </Button>

@@ -1,7 +1,6 @@
 package webhook
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -107,9 +106,9 @@ func expectedWebhookURL(baseURL, namespace, repoName string) string {
 // waitForWebhook polls until Status.Webhook is populated with the expected ID.
 func waitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string, expectedID int64) {
 	t.Helper()
-	ctx := context.Background()
+
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(collect, err)
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		require.NotNil(collect, repo.Status.Webhook, "webhook should be set")
@@ -120,7 +119,6 @@ func waitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string,
 
 func TestIntegrationProvisioning_GithubRepoNoWebhookWhenDisabled(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	// The package enables a public root URL so webhook delivery can be tested;
 	// this repo opts out explicitly and should not register a webhook.
@@ -132,7 +130,7 @@ func TestIntegrationProvisioning_GithubRepoNoWebhookWhenDisabled(t *testing.T) {
 	}, "write")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -164,7 +162,6 @@ func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
 // mocked GitHub comments endpoint captures the PR worker's generated comment.
 func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "github-pr-comment"
 	const dashboardPath = "dashboard.json"
@@ -209,7 +206,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	// produces the [original] link in the comment; SyncAndWait only waits for
 	// job success, not resource visibility, so without this barrier the Get can
 	// race the sync write and drop the [original] link.
-	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, ctx, "gh-pr-comment-dash", repoName, dashboardPath)
+	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, "gh-pr-comment-dash", repoName, dashboardPath)
 
 	const branchName = "feature-pr-comment"
 	_, err := local.Git("checkout", "-b", branchName)
@@ -247,13 +244,13 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 
 	// Sign with the webhook secret Grafana persisted for this repository,
 	// because the webhook handler validates against that decrypted value.
-	obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+	obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err, "failed to read repository")
 	repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 	secretName := repo.Secure.WebhookSecret.Name
 	require.NotEmpty(t, secretName, "webhook secret should be stored")
 
-	decrypted, err := helper.GetEnv().DecryptService.Decrypt(ctx, provisioning.GROUP, repo.Namespace, secretName)
+	decrypted, err := helper.GetEnv().DecryptService.Decrypt(t.Context(), provisioning.GROUP, repo.Namespace, secretName)
 	require.NoError(t, err, "failed to decrypt webhook secret")
 	require.Len(t, decrypted, 1)
 	result, ok := decrypted[secretName]
@@ -279,7 +276,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 		SetHeader(github.EventTypeHeader, "pull_request").
 		SetHeader(github.DeliveryIDHeader, fmt.Sprintf("%s-delivery", repoName)).
 		SetHeader(github.SHA256SignatureHeader, signature).
-		Do(ctx).
+		Do(t.Context()).
 		StatusCode(&code)
 
 	require.NoError(t, webhookResult.Error(), "webhook should accept pull request payload")
@@ -289,7 +286,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	require.NoError(t, err, "webhook response should include the queued job")
 	job, ok := jobObj.(*unstructured.Unstructured)
 	require.True(t, ok, "webhook response should be an unstructured job, got %T", jobObj)
-	helper.AwaitJobSuccess(t, ctx, job)
+	helper.AwaitJobSuccess(t, job)
 
 	commentsMu.Lock()
 	capturedComments := append([]string(nil), comments...)
@@ -328,7 +325,6 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 
 func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "github-webhook-restart"
 	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
@@ -349,19 +345,19 @@ func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testin
 	// "secure value not found" even though the patch itself doesn't touch secure.
 	patch := []byte(`{"status":{"webhook":null}}`)
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
+		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 		assert.NoError(collect, err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "clear webhook status")
 
 	// Trigger reconciliation by updating the spec.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		latest, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		latest, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
 		updated := latest.DeepCopy()
 		updated.Object["spec"].(map[string]any)["title"] = "Restart Dashboard (updated)"
-		_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+		_, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
 		assert.NoError(collect, err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "spec update should succeed")
 
@@ -371,7 +367,6 @@ func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testin
 
 func TestIntegrationProvisioning_WebhookLastRotatedSetOnCreation(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "github-last-rotated"
 	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
@@ -385,7 +380,7 @@ func TestIntegrationProvisioning_WebhookLastRotatedSetOnCreation(t *testing.T) {
 
 	// Wait for webhook, then check LastRotated.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -399,7 +394,6 @@ func TestIntegrationProvisioning_WebhookLastRotatedSetOnCreation(t *testing.T) {
 
 func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "github-rotation-test"
 	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
@@ -435,25 +429,25 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 	expiredTimestamp := int64(1)
 	patch := []byte(fmt.Sprintf(`{"status":{"webhook":{"id":200,"url":"https://grafana.example.com/hook","subscribedEvents":["pull_request","push"],"lastRotated":%d}}}`, expiredTimestamp))
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
+		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 		assert.NoError(collect, err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "expire LastRotated")
 
 	// Trigger reconciliation.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		latest, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		latest, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
 		updated := latest.DeepCopy()
 		updated.Object["spec"].(map[string]any)["title"] = "Rotation Dashboard (updated)"
-		_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+		_, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
 		assert.NoError(collect, err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "spec update should succeed")
 
 	// Wait for rotation — LastRotated should be updated.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
