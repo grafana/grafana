@@ -120,9 +120,12 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	}
 
 	fused := fuseRRF(req.Key, lex, sem)
-	fused, err := s.rerankHybridResults(ctx, embedText, fused, req.MinRelevance)
-	if err != nil {
-		return nil, err
+	if !req.SkipRerank {
+		var err error
+		fused, err = s.rerankHybridResults(ctx, embedText, fused, req.MinRelevance)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if len(fused) > limit {
 		fused = fused[:limit]
@@ -420,6 +423,11 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 	if req.MinRelevance != "" {
 		if _, err := rerank.ParseRelevance(req.MinRelevance); err != nil {
 			return reqErr(fmt.Sprintf("unsupported min_relevance %q (expected lowest, low, medium, high, or highest)", req.MinRelevance))
+		}
+		// A threshold without reranking is meaningless — reject rather than
+		// silently ignore one of the two.
+		if req.SkipRerank {
+			return reqErr("min_relevance cannot be combined with skip_rerank")
 		}
 	}
 	// Duplicate keys would diverge between legs: the lexical leg ANDs

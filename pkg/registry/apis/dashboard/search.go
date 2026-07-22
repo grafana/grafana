@@ -463,6 +463,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									Schema:      spec.Int64Property(),
 								},
 							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "minRelevance",
+									In:          "query",
+									Description: "minimum reranker relevance a result must reach: lowest, low, medium, high, or highest. Empty keeps every result. Best-effort: ignored when the backend has no reranker configured. Cannot be combined with skipRerank",
+									Required:    false,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "skipRerank",
+									In:          "query",
+									Description: "skip the reranking stage and return RRF-fused ordering directly, trading result quality for latency",
+									Required:    false,
+									Schema:      spec.BooleanProperty(),
+								},
+							},
 						},
 						Responses: &spec3.Responses{
 							ResponsesProps: spec3.ResponsesProps{
@@ -730,6 +748,10 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 		Query:         queryParams.Get("query"),
 		SemanticQuery: queryParams.Get("semanticQuery"),
 		Limit:         int64(limit),
+		// Both validated server-side; an unknown min_relevance or the
+		// min_relevance+skip_rerank combination surfaces as InvalidArgument.
+		MinRelevance: queryParams.Get("minRelevance"),
+		SkipRerank:   queryParams.Get("skipRerank") == "true",
 	}
 	if folder := queryParams.Get("folder"); folder != "" {
 		folder = foldermodel.ToLegacyFolderUID(folder)

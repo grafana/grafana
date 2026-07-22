@@ -285,6 +285,15 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 	r = valid()
 	r.MinRelevance = "0.5"
 	wantInvalid(validateHybridSearchRequest(r), "unsupported min_relevance")
+
+	r = valid()
+	r.SkipRerank = true
+	assert.Nil(t, validateHybridSearchRequest(r))
+
+	r = valid()
+	r.SkipRerank = true
+	r.MinRelevance = "low"
+	wantInvalid(validateHybridSearchRequest(r), "min_relevance cannot be combined with skip_rerank")
 }
 
 func TestHybridLexicalRequest(t *testing.T) {
@@ -743,6 +752,21 @@ func TestHybridSearch_MinRelevanceNoopWithoutReranker(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, resp.Results, 1)
 	// RRF score preserved
+	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
+}
+
+func TestHybridSearch_SkipRerankBypassesConfiguredReranker(t *testing.T) {
+	s, _, _ := newHybridTestServer(lexTableResponse([3]string{"a", "A", "f"}), &fakeVectorBackend{})
+	scorer := &fakeRerankScorer{scores: []float64{0.9}}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{Low: 0.1})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q", SkipRerank: true,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, 0, scorer.calls, "scorer must not be called when skip_rerank is set")
+	// RRF score preserved, not the scorer's 0.9
 	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
 }
 

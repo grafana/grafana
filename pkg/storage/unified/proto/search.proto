@@ -311,6 +311,13 @@ message HybridSearchRequest {
   // reranker configured or the rerank call fails. Unknown values are
   // INVALID_ARGUMENT.
   string min_relevance = 6;
+
+  // Skip the reranking stage even when the server has a reranker
+  // configured, returning RRF-fused ordering directly. For callers that
+  // prefer fusion latency over cross-encoder quality. Setting this
+  // together with min_relevance is INVALID_ARGUMENT (thresholds are
+  // meaningless without reranking).
+  bool skip_rerank = 7;
 }
 
 message HybridSearchResponse {
