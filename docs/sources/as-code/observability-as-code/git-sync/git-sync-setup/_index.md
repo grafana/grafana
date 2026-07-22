@@ -244,6 +244,12 @@ You can also select these optional settings:
 
 After deciding on these options, you can chose to configure a verified account with the **Commit options**. Alternatively, if you want your your commits to remain unsigned, click **Save** to continue.
 
+{{< admonition type="note" >}}
+
+GitHub limits each repository to 20 webhooks per event type (for example, `push` and `pull_request`). Because Git Sync registers webhooks per repository connection, syncing the same repository from many Grafana instances can exceed this limit and cause GitHub to reject new webhooks with an `HTTP 422` error. Disable webhook integration for connections that don't need real-time sync to stay under the limit.
+
+{{< /admonition >}}
+
 ### Signed commit option
 
 Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
