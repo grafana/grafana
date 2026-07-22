@@ -13,6 +13,7 @@ if [ "$1" = configure ]; then
   [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
   [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
   [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
+  [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/grafana"
   if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
     addgroup --system "$GRAFANA_GROUP" --quiet
   fi
@@ -25,7 +26,12 @@ if [ "$1" = configure ]; then
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana /var/lib/grafana
   # Move plugins-bundled into place, see https://github.com/grafana/grafana/issues/123110
-  mv $GRAFANA_HOME/data/plugins-bundled $DATA_DIR
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+    mkdir -p "$DATA_DIR"
+    rm -rf "${DATA_DIR:?}/plugins-bundled"
+    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
+  fi
   chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
   chmod 755 /var/log/grafana /var/lib/grafana
 

@@ -19,6 +19,8 @@ stopGrafana() {
 if [ $1 -eq 1 ] ; then
   [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
   [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
+  [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/grafana"
   if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
     groupadd -r "$GRAFANA_GROUP"
   fi
@@ -30,7 +32,12 @@ if [ $1 -eq 1 ] ; then
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana /var/lib/grafana
   # Move plugins-bundled into place - see https://github.com/grafana/grafana/issues/123110
-  mv $GRAFANA_HOME/data/plugins-bundled $DATA_DIR
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+    mkdir -p "$DATA_DIR"
+    rm -rf "${DATA_DIR:?}/plugins-bundled"
+    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
+  fi
   chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
   chmod 755 /var/log/grafana /var/lib/grafana
 
@@ -74,8 +81,24 @@ if [ $1 -eq 1 ] ; then
   echo " sudo /bin/systemctl start grafana-server.service"
 
 elif [ $1 -ge 2 ] ; then
+  [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
+  [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
+  [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/grafana"
+
   if [ "$RESTART_ON_UPGRADE" == "true" ]; then
     stopGrafana
+  fi
+
+  # Replace bundled plugins with the new version - see https://github.com/grafana/grafana/issues/123110
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+    mkdir -p "$DATA_DIR"
+    rm -rf "${DATA_DIR:?}/plugins-bundled"
+    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
+  fi
+
+  if [ "$RESTART_ON_UPGRADE" == "true" ]; then
     startGrafana
   fi
 fi
