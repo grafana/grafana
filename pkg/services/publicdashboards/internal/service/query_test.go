@@ -1402,10 +1402,11 @@ func TestSanitizeData(t *testing.T) {
 							"refId":      "A",
 							"datasource": "prometheus",
 						},
-						map[string]interface{}{
-							"rawSql": "SELECT * FROM metrics",
-							"refId":  "B",
-						},
+					map[string]interface{}{
+						"rawSql":   "SELECT * FROM metrics",
+						"rawQuery": "SELECT * FROM metrics WHERE env = 'prod'",
+						"refId":    "B",
+					},
 						map[string]interface{}{
 							"target":     "aliasByNode(stats.gauges.*, 1)",
 							"targetFull": "aliasByNode(stats.gauges.production, 1)",
