@@ -29,9 +29,9 @@ jobs:
     outputs:
       # Build when non-test frontend or backend changes: a test-only PR can't
       # affect the built image, so it shouldn't trigger the Docker build.
-      changed: ${{ steps.detect-changes.outputs.frontend-no-tests == 'true' || steps.detect-changes.outputs.backend-no-tests == 'true' }}
+      changed: ${{ steps.detect-changes.outputs.frontend-src == 'true' || steps.detect-changes.outputs.backend-src == 'true' }}
       # Meticulous only exercises frontend changes, so it gates on this alone.
-      frontend-no-tests: ${{ steps.detect-changes.outputs.frontend-no-tests }}
+      frontend-src: ${{ steps.detect-changes.outputs.frontend-src }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -212,7 +212,7 @@ jobs:
           echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
 
   run-meticulous-tests:
-    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-no-tests == 'true'
+    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-src == 'true'
     needs: [push-docker-image, detect-changes]
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small

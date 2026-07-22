@@ -11,15 +11,15 @@ outputs:
   backend:
     description: Whether the backend or self have changed in any way
     value: ${{ steps.changed-files.outputs.backend_any_modified || 'true' }}
-  backend-no-tests:
+  backend-src:
     description: Whether the backend or self have changed, excluding test-only changes
-    value: ${{ steps.changed-files.outputs.backend_no_tests_any_modified || 'true' }}
+    value: ${{ steps.changed-files.outputs.backend_src_any_modified || 'true' }}
   frontend:
     description: Whether the frontend or self has changed in any way
     value: ${{ steps.changed-files.outputs.frontend_any_modified || 'true' }}
-  frontend-no-tests:
+  frontend-src:
     description: Whether the frontend or self has changed, excluding test-only changes
-    value: ${{ steps.changed-files.outputs.frontend_no_tests_any_modified || 'true' }}
+    value: ${{ steps.changed-files.outputs.frontend_src_any_modified || 'true' }}
   frontend-dependencies:
     description: Whether the frontend dependencies or self have changed in any way
     value: ${{ steps.changed-files.outputs.frontend_dependencies_any_modified || 'true' }}
@@ -148,7 +148,7 @@ runs:
             - 'devenv/docker/blocks/*_tests/**'
             - 'scripts/ci/backend-tests/**'
             - '${{ inputs.self }}'
-          backend_no_tests:
+          backend_src:
             # Same as `backend` above, but excludes Go test files. Used to gate
             # jobs (e.g. the PR Docker build) that a test-only PR can't affect.
             - '!*.md'
@@ -200,7 +200,7 @@ runs:
             - '.yarn/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
-          frontend_no_tests:
+          frontend_src:
             # Same as `frontend` above, but excludes test-only changes. Used to
             # gate frontend jobs (e.g. Meticulous) that a test-only PR can't affect.
             - '.github/actions/setup-enterprise/**'
@@ -234,6 +234,8 @@ runs:
             - '!**.spec.js'
             - '!e2e/**'
             - '!e2e-playwright/**'
+            # apps/dashboard/pkg/migration/** carries Go tests; exclude them too.
+            - '!**_test.go'
           frontend_dependencies:
             - 'yarn.lock'
             - 'package.json'
@@ -300,12 +302,12 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.self_all_modified_files }}"
         echo "Backend: ${{ steps.changed-files.outputs.backend_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.backend_all_modified_files }}"
-        echo "Backend (no tests): ${{ steps.changed-files.outputs.backend_no_tests_any_modified || 'true' }}"
-        echo " --> ${{ steps.changed-files.outputs.backend_no_tests_all_modified_files }}"
+        echo "Backend (src): ${{ steps.changed-files.outputs.backend_src_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.backend_src_all_modified_files }}"
         echo "Frontend: ${{ steps.changed-files.outputs.frontend_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_all_modified_files }}"
-        echo "Frontend (no tests): ${{ steps.changed-files.outputs.frontend_no_tests_any_modified || 'true' }}"
-        echo " --> ${{ steps.changed-files.outputs.frontend_no_tests_all_modified_files }}"
+        echo "Frontend (src): ${{ steps.changed-files.outputs.frontend_src_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.frontend_src_all_modified_files }}"
         echo "Frontend packages: ${{ steps.changed-files.outputs.frontend_packages_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_packages_all_modified_files }}"
         echo "E2E: ${{ steps.changed-files.outputs.e2e_any_modified || 'true' }}"
