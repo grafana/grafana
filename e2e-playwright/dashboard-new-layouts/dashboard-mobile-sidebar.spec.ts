@@ -16,9 +16,10 @@ test.describe('Mobile sidebar', { tag: ['@dashboards'] }, () => {
     gotoDashboardPage,
     selectors,
     page,
+    components,
   }) => {
     const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-    const sidebar = new Sidebar(page, dashboardPage, selectors);
+    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
     await expect(sidebar.getContainer()).not.toBeVisible();
     await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
