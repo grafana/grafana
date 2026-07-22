@@ -549,6 +549,16 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 	return nil
 }
 
+// ReportIncompleteRoleSource implements accesscontrol.RoleSourceReporter. It
+// records that a declare-only role source failed to declare its roles this
+// run, so seeding will not delete absent fixed roles (and with them their
+// user and team assignments).
+func (s *Service) ReportIncompleteRoleSource(source string) {
+	if s.seeder != nil {
+		s.seeder.ReportIncompleteRoleSource(source)
+	}
+}
+
 // RegisterFixedRoles registers all declared roles in RAM
 func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	_, span := tracer.Start(ctx, "accesscontrol.acimpl.RegisterFixedRoles")

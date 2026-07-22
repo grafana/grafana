@@ -128,8 +128,10 @@ func (s *Server) Init() error {
 		return err
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
+	// When seeding is deferred to the FixedRolesLoader background service,
+	// skip it here so declare-only role sources (e.g. the IAM roles syncer)
+	// run before the single seeding pass.
+	if !accesscontrol.SeedRolesViaLoader(s.features, s.cfg) {
 		if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
 			return err
 		}

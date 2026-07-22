@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -22,6 +23,9 @@ type Seeder struct {
 	seededPluginRoles   map[string]bool
 	seededPlugins       map[string]bool
 	hasSeededAlready    bool
+
+	incompleteMu          sync.Mutex
+	incompleteRoleSources []string
 }
 
 // SeedingBackend provides the seed-set specific operations needed to seed.
@@ -410,11 +414,35 @@ func (s *Seeder) HasSeededAlready() bool {
 	return s.hasSeededAlready
 }
 
+// ReportIncompleteRoleSource records that a role source (e.g. the IAM roles
+// syncer) failed to declare its roles for this run. While any source is
+// incomplete, RemoveAbsentRoles will not delete absent fixed roles: an absent
+// role could belong to the failed source, and deleting it also deletes its
+// user and team assignments, which would not be restored by a later
+// successful sync.
+func (s *Seeder) ReportIncompleteRoleSource(source string) {
+	s.incompleteMu.Lock()
+	defer s.incompleteMu.Unlock()
+	s.incompleteRoleSources = append(s.incompleteRoleSources, source)
+}
+
+func (s *Seeder) incompleteSources() []string {
+	s.incompleteMu.Lock()
+	defer s.incompleteMu.Unlock()
+	return slices.Clone(s.incompleteRoleSources)
+}
+
 func (s *Seeder) RemoveAbsentRoles(ctx context.Context) error {
 	roleMap, errGet := s.roleStore.LoadRoles(ctx)
 	if errGet != nil {
 		s.log.Error("failed to get fixed roles from store", "err", errGet)
 		return errGet
+	}
+
+	incomplete := s.incompleteSources()
+	if len(incomplete) > 0 {
+		s.log.Warn("skipping removal of absent fixed roles: some role sources did not declare their roles this run",
+			"sources", strings.Join(incomplete, ", "))
 	}
 
 	toRemove := []string{}
@@ -424,6 +452,10 @@ func (s *Seeder) RemoveAbsentRoles(ctx context.Context) error {
 		}
 		if r.IsFixed() {
 			if !s.seededFixedRoles[r.Name] {
+				if len(incomplete) > 0 {
+					s.log.Debug("fixed role not seeded this run, skipping its removal due to incomplete role sources", "role", r.Name)
+					continue
+				}
 				s.log.Info("role is not seeded anymore, mark it for deletion", "role", r.Name)
 				toRemove = append(toRemove, r.UID)
 			}
