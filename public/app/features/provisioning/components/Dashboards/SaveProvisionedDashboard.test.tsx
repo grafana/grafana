@@ -1,11 +1,9 @@
 import { render, screen } from 'test/test-utils';
 
-import { appEvents } from 'app/core/app_events';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
-import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
@@ -73,6 +71,10 @@ function setup(
 }
 
 describe('SaveProvisionedDashboard', () => {
+  beforeEach(() => {
+    window.history.replaceState({}, '', '/');
+  });
+
   it('shows the provisioned form with a link to switch to the database for a new folderless dashboard', () => {
     setup();
 
@@ -122,6 +124,17 @@ describe('SaveProvisionedDashboard', () => {
     });
 
     expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
+  });
+
+  it('shows the database escape when a new dashboard dead-ends on an orphaned repo', () => {
+    setup({
+      isNew: false,
+      defaultValues: null,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Orphaned,
+    });
+
     expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
   });
 
@@ -192,6 +205,42 @@ describe('SaveProvisionedDashboard', () => {
     expect(dashboard.setState).not.toHaveBeenCalledWith({ meta: { folderUid: undefined } });
   });
 
+  it('clears the folder when escaping while the repository is still loading', async () => {
+    const dashboard = createDashboard({ folderUid: 'loading-folder' });
+    const { user, rerender, props } = setup({}, { dashboard });
+
+    // A provisioned subfolder pick puts the folder query into loading, repository transiently undefined
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: true,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Loading,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // Loading is not a confirmed dead-end, so the still-provisioned folder must be cleared
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
+  });
+
+  it('restores the entry folder on switch-back so a folder-target Git form resolves again', async () => {
+    window.history.replaceState({}, '', '/?folderUid=repo-folder');
+    const dashboard = createDashboard({ folderUid: 'unmanaged-folder' });
+    const { user } = setup(
+      { isNew: false, defaultValues: null, repository: undefined, repoDataStatus: RepoViewStatus.Error },
+      { dashboard }
+    );
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+    await user.click(screen.getByRole('button', { name: /git repository/i }));
+
+    // Switch-back restores the folder the drawer resolved from, not root, so the Git form can resolve
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'repo-folder' } });
+  });
+
   it('restores the git-flow folder when the database form is cancelled via closeModal', async () => {
     const dashboard = createDashboard({ folderUid: 'git-folder-uid' });
     const { user, unmount } = setup({}, { dashboard });
@@ -211,14 +260,27 @@ describe('SaveProvisionedDashboard', () => {
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 
-    // useSaveDashboard publishes this before the overlay closes
-    appEvents.publish(new DashboardSavedEvent());
+    // A completed save assigns a new uid via saveCompleted before the overlay closes
+    dashboard.state.meta.uid = 'saved-uid';
     dashboard.state.meta.folderUid = 'db-folder-uid';
     unmount();
 
     expect(dashboard.setState).not.toHaveBeenCalledWith({
       meta: expect.objectContaining({ folderUid: 'git-folder-uid' }),
     });
+  });
+
+  it('restores the git-flow folder on cancel even for a save-as-copy of an existing dashboard', async () => {
+    const dashboard = createDashboard({ folderUid: 'git-folder-uid', uid: 'existing-uid' });
+    const { user, unmount } = setup({ isNew: false }, { dashboard, saveAsCopy: true });
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // Cancel leaves the uid untouched (no new resource created), so the restore must still run
+    dashboard.state.meta.folderUid = 'db-folder-uid';
+    unmount();
+
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid', uid: 'existing-uid' } });
   });
 
   it('clears the folder when switching to the database form', async () => {

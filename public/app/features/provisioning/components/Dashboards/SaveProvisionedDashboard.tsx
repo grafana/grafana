@@ -2,13 +2,11 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
 import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
 import { SaveDashboardAsForm } from 'app/features/dashboard-scene/saving/SaveDashboardAsForm';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
-import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
@@ -28,37 +26,31 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     useProvisionedDashboardData(dashboard, saveAsCopy);
   const [saveToDatabase, setSaveToDatabase] = useState(false);
   const [canSaveToDatabaseInstead, setCanSaveToDatabaseInstead] = useState(false);
-  const dbSwitchRef = useRef<{ active: boolean; gitMeta?: DashboardMeta }>({ active: false });
+  const dbSwitchRef = useRef<{ active: boolean; gitMeta?: DashboardMeta; savedUid?: string }>({ active: false });
 
   // changeInfo.isNew stays stable across repo resolution; the hook's isNew flips false on error
   const isNewDashboard = changeInfo.isNew || !!saveAsCopy;
 
-  // Keep the escape available for folderless repos and whenever a new dashboard hits the error gate
+  const isDeadEnd = repoDataStatus === RepoViewStatus.Error || repoDataStatus === RepoViewStatus.Orphaned;
+
+  // Keep the escape available for folderless repos and whenever a new dashboard dead-ends
   useEffect(() => {
     if (repository) {
       setCanSaveToDatabaseInstead(repository.target === 'folderless' && isNewDashboard);
-    } else if (repoDataStatus === RepoViewStatus.Error && isNewDashboard) {
+    } else if (isDeadEnd && isNewDashboard) {
       setCanSaveToDatabaseInstead(true);
     }
-  }, [repository, repoDataStatus, isNewDashboard]);
+  }, [repository, isDeadEnd, isNewDashboard]);
 
-  // Restore the full git-flow meta so database-form folder picks (folderUid and manager
-  // annotations) don't leak back into the provisioned form and rebind it to the wrong repo
+  // Restore the git-flow meta so database-form folder picks (folderUid and manager annotations)
+  // don't leak back into the provisioned form. Skip it when a save moved the uid on: that meta stands.
   const restoreGitMeta = useCallback(() => {
-    const { active, gitMeta } = dbSwitchRef.current;
-    if (active && gitMeta) {
+    const { active, gitMeta, savedUid } = dbSwitchRef.current;
+    if (active && gitMeta && dashboard.state.meta.uid === savedUid) {
       dashboard.setState({ meta: gitMeta });
     }
     dbSwitchRef.current.active = false;
   }, [dashboard]);
-
-  // A completed database save must not trigger the restore below
-  useEffect(() => {
-    const sub = appEvents.subscribe(DashboardSavedEvent, () => {
-      dbSwitchRef.current.active = false;
-    });
-    return () => sub.unsubscribe();
-  }, []);
 
   // Cancel in the database form bypasses drawer.onClose, so restore on unmount too
   useEffect(() => {
@@ -67,13 +59,19 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
 
   const handleSwitchToDatabase = () => {
     const meta = dashboard.state.meta;
-    if (repository) {
-      // The selected folder is provisioned and can't take a database save, so open the form at root
-      dbSwitchRef.current = { active: true, gitMeta: { ...meta } };
-      dashboard.setState({ meta: { ...meta, folderUid: undefined } });
+    if (repoDataStatus === RepoViewStatus.Error) {
+      // Dead-ended on an unmanaged folder pick: keep it (a valid database folder). Restore the
+      // entry folder (what useIsProvisionedNG resolves) on switch-back so the Git form works again.
+      const entryFolderUid = new URLSearchParams(window.location.search).get('folderUid') || undefined;
+      dbSwitchRef.current = {
+        active: true,
+        savedUid: meta.uid,
+        gitMeta: { ...meta, folderUid: entryFolderUid, k8s: undefined },
+      };
     } else {
-      // Dead-ended on an unmanaged folder pick: keep it (a valid database folder) and return to root on switch-back
-      dbSwitchRef.current = { active: true, gitMeta: { ...meta, folderUid: undefined, k8s: undefined } };
+      // Provisioned or still resolving: a database save into it would be rejected, so open the form at root
+      dbSwitchRef.current = { active: true, savedUid: meta.uid, gitMeta: { ...meta } };
+      dashboard.setState({ meta: { ...meta, folderUid: undefined } });
     }
     setSaveToDatabase(true);
   };
