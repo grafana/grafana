@@ -24,6 +24,8 @@ export function DiagnosticsDrawerContent({
   onDismiss,
 }: DiagnosticsDrawerContentProps) {
   const styles = useStyles2(getStyles);
+  // Default-on here so admins get useful bundles by default; the request helpers default includeLogs
+  // to false, so this drawer selection is the only thing that opts a request into log capture.
   const [includeLogs, setIncludeLogs] = useState(true);
 
   return (
@@ -49,7 +51,7 @@ export function DiagnosticsDrawerContent({
           'dashboard.diagnostics.include-server-logs-description',
           'Adds filtered query logs and a bounded unfiltered server-log window to the bundle.'
         )}
-        checked={includeLogs}
+        value={includeLogs}
         disabled={isGenerating}
         onChange={(event) => setIncludeLogs(event.currentTarget.checked)}
       />
