@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, type UrlQueryMap, type UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
@@ -68,11 +67,16 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       );
   }
 
-  private executeScript(result: any) {
+  private async executeScript(result: any) {
     const services = {
       dashboardSrv: getDashboardSrv(),
       datasourceSrv: getDatasourceSrv(),
     };
+
+    // scripted dashboards are a public contract that exposes the real moment API to user-authored
+    // scripts, so load it on demand here instead of shipping it in the initial bundle
+    const { default: moment } = await import('moment');
+
     const scriptFunc = new Function(
       'ARGS',
       'kbn',
