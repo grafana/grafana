@@ -108,26 +108,40 @@ export interface MomentLike {
   set(unit: UnitGetter, value: number): MomentLike;
   get(unit: UnitGetter): number;
   locale(value: string): MomentLike;
-  utc(): MomentLike;
+  utc(keepLocalTime?: boolean): MomentLike;
   local(): MomentLike;
   tz(): string | undefined;
-  tz(zone: string): MomentLike;
+  tz(zone: string, keepLocalTime?: boolean): MomentLike;
+  clone(): MomentLike;
+  year(value?: number): number | MomentLike;
+  month(value?: number): number | MomentLike;
+  date(value?: number): number | MomentLike;
+  day(value?: number): number | MomentLike;
+  weekday(value?: number): number | MomentLike;
   isoWeekday(value?: number): number | MomentLike;
+  week(value?: number): number | MomentLike;
+  isoWeek(value?: number): number | MomentLike;
   hour(value?: number): number | MomentLike;
   minute(value?: number): number | MomentLike;
+  second(value?: number): number | MomentLike;
+  millisecond(value?: number): number | MomentLike;
   isValid(): boolean;
   isBefore(input: MomentInput, unit?: DateTimeUnit): boolean;
+  isAfter(input: MomentInput, unit?: DateTimeUnit): boolean;
+  isBetween(a: MomentInput, b: MomentInput, unit?: DateTimeUnit, inclusivity?: string): boolean;
   isSame(input: MomentInput, unit?: DateTimeUnit): boolean;
-  diff(input: MomentInput, unit?: DurationUnit): number;
+  diff(input: MomentInput, unit?: DurationUnit, asFloat?: boolean): number;
   toDate(): Date;
   toISOString(keepOffset?: boolean): string | null;
   toJSON(): string | null;
   toString(): string;
   valueOf(): number;
   unix(): number;
+  toLocaleString(): string;
   utcOffset(): number;
   format(template?: FormatArg): string;
   fromNow(withoutSuffix?: boolean): string;
+  toNow(withoutSuffix?: boolean): string;
   from(input: MomentInput, withoutSuffix?: boolean): string;
 }
 
@@ -547,13 +561,13 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
   };
 
   function setZone(): string | undefined;
-  function setZone(zone: string): MomentLike;
-  function setZone(zone?: string): string | undefined | MomentLike {
+  function setZone(zone: string, keepLocalTime?: boolean): MomentLike;
+  function setZone(zone?: string, keepLocalTime = false): string | undefined | MomentLike {
     if (zone == null) {
       return dt.zoneName ?? undefined;
     }
 
-    return setDt(dt.setZone(zone));
+    return setDt(dt.setZone(zone, { keepLocalTime }));
   }
 
   const getLocaleWeekStart = () => getLocaleFirstDayOfWeek(dt.locale || currentLocale);
@@ -630,8 +644,8 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.setLocale(normalizeLocale(value) ?? DEFAULT_LOCALE));
     },
 
-    utc() {
-      return setDt(dt.setZone('utc'));
+    utc(keepLocalTime = false) {
+      return setDt(dt.setZone('utc', { keepLocalTime }));
     },
 
     local() {
@@ -640,9 +654,30 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
 
     tz: setZone,
 
-    hour: (value?: number) => (value == null ? dt.hour : setDt(dt.set({ hour: value }))),
+    clone() {
+      return makeMoment(dt);
+    },
 
-    minute: (value?: number) => (value == null ? dt.minute : setDt(dt.set({ minute: value }))),
+    year: (value?: number) => (value == null ? dt.year : setDt(dt.set({ year: value }))),
+
+    // moment months are 0-based
+    month: (value?: number) => (value == null ? dt.month - 1 : setDt(dt.set({ month: value + 1 }))),
+
+    date: (value?: number) => (value == null ? dt.day : setDt(dt.set({ day: value }))),
+
+    // moment days are 0-based starting on Sunday
+    day(value?: number) {
+      const current = toMomentDay(dt.weekday);
+      if (value == null) {
+        return current;
+      }
+
+      return setDt(dt.plus({ days: value - current }));
+    },
+
+    weekday(value?: number) {
+      return api.day(value);
+    },
 
     isoWeekday(value?: number) {
       if (value == null) {
@@ -651,6 +686,26 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
 
       return setDt(dt.plus({ days: value - dt.weekday }));
     },
+
+    week(value?: number) {
+      if (value == null) {
+        return dt.weekNumber;
+      }
+
+      return setDt(dt.plus({ weeks: value - dt.weekNumber }));
+    },
+
+    isoWeek(value?: number) {
+      return api.week(value);
+    },
+
+    hour: (value?: number) => (value == null ? dt.hour : setDt(dt.set({ hour: value }))),
+
+    minute: (value?: number) => (value == null ? dt.minute : setDt(dt.set({ minute: value }))),
+
+    second: (value?: number) => (value == null ? dt.second : setDt(dt.set({ second: value }))),
+
+    millisecond: (value?: number) => (value == null ? dt.millisecond : setDt(dt.set({ millisecond: value }))),
 
     isValid() {
       return dt.isValid;
@@ -661,14 +716,33 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return a < b;
     },
 
+    isAfter(other, unit) {
+      const [a, b] = comparableMillis(other, unit);
+      return a > b;
+    },
+
+    // like moment, bounds are not reordered (a reversed range is simply never matched) and the
+    // unit truncates the endpoints as well as this instant
+    isBetween(a, b, unit, inclusivity = '()') {
+      const [value, left] = comparableMillis(a, unit);
+      const [, right] = comparableMillis(b, unit);
+
+      const afterStart = inclusivity.startsWith('[') ? value >= left : value > left;
+      const beforeEnd = inclusivity.endsWith(']') ? value <= right : value < right;
+
+      return afterStart && beforeEnd;
+    },
+
     isSame(other, unit) {
       const [a, b] = comparableMillis(other, unit);
       return a === b;
     },
 
-    diff(other, unit = 'milliseconds') {
+    diff(other, unit = 'milliseconds', asFloat = false) {
       const b = normalizeInput(other);
-      return dt.diff(b, unit).as(unit);
+      const value = dt.diff(b, unit).as(unit);
+      // moment truncates toward zero (returning 0, never -0) unless asFloat is passed
+      return asFloat ? value : Math.trunc(value) || 0;
     },
 
     toDate() {
@@ -699,6 +773,10 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return Math.floor(dt.toSeconds());
     },
 
+    toLocaleString() {
+      return dt.toLocaleString(DateTime.DATETIME_MED);
+    },
+
     utcOffset() {
       return dt.offset;
     },
@@ -712,6 +790,10 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
 
     fromNow(withoutSuffix = false) {
       return toRelativeString(dt, undefined, dt.locale, withoutSuffix);
+    },
+
+    toNow(withoutSuffix = false) {
+      return toRelativeString(DateTime.now(), dt, dt.locale, withoutSuffix);
     },
 
     from(input, withoutSuffix = false) {

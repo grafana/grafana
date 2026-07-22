@@ -170,7 +170,7 @@ describe('Date time picker', () => {
 
       const onChangeInputArg = onChangeInput.mock.calls[0][0];
 
-      expect(dateTimeAsMoment(dateTimeForTimeZone(timeZone, onChangeInputArg)).get('date')).toBe(day);
+      expect(dateTimeAsMoment(dateTimeForTimeZone(timeZone, onChangeInputArg)).date()).toBe(day);
     }
   );
 

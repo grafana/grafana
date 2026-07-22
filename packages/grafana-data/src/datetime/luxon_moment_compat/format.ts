@@ -1,16 +1,20 @@
 import type { DateTime } from 'luxon';
 
 const TOKEN_MAP: Record<string, string> = {
-  LLLL: 'cccc, LLLL d, yyyy h:mm a',
-  LLL: 'LLLL d, yyyy h:mm a',
-  LL: 'LLLL d, yyyy',
-  LTS: 'h:mm:ss a',
-  LT: 'h:mm a',
+  // moment's L* tokens are locale-aware (word order changes per locale), so map them to luxon's
+  // localized macro tokens rather than fixed patterns. `L` and `llll` have no exact luxon macro
+  // (`D` is unpadded while moment's `L` pads, and no macro uses an abbreviated weekday), so they
+  // keep en-US shaped patterns.
+  LLLL: 'DDDD t',
+  LLL: 'DDD t',
+  LL: 'DDD',
+  LTS: 'tt',
+  LT: 't',
   L: 'MM/dd/yyyy',
   llll: 'ccc, LLL d, yyyy h:mm a',
-  lll: 'LLL d, yyyy h:mm a',
-  ll: 'LLL d, yyyy',
-  l: 'M/d/yyyy',
+  lll: 'DD t',
+  ll: 'DD',
+  l: 'D',
 
   YYYY: 'yyyy',
   YY: 'yy',
@@ -26,7 +30,7 @@ const TOKEN_MAP: Record<string, string> = {
   A: 'a',
   a: "'__mls__'a'__mle__'",
 
-  ZZ: 'Z',
+  ZZ: 'ZZZ',
   Z: 'ZZ',
   z: 'ZZZZ',
   zz: 'ZZZZZ',

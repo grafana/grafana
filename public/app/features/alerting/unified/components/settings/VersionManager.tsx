@@ -301,7 +301,7 @@ const LastAppliedCell = ({ value }: CellProps<VersionData>) => {
 
   return (
     <Stack direction="row" alignItems="center">
-      {date.toDate().toLocaleString()}
+      {date.toLocaleString()}
       <Text variant="bodySmall" color="secondary">
         {date.fromNow()}
       </Text>
