@@ -1816,7 +1816,8 @@
       "metadata": {
         "name": "datasourceAPIServers",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-09-19T08:28:27Z"
+        "creationTimestamp": "2024-09-19T08:28:27Z",
+        "deletionTimestamp": "2026-07-21T07:41:20Z"
       },
       "spec": {
         "description": "Expose some datasources as apiservers.",

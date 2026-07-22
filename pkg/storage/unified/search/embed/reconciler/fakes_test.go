@@ -207,6 +207,10 @@ func newFakeVector() *fakeVector {
 
 func subsKey(ns, model, res, uid string) string { return ns + "|" + model + "|" + res + "|" + uid }
 
+func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+}
+
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }

@@ -226,15 +226,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "datasourceAPIServers",
-			Description:     "Expose some datasources as apiservers.",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server, including all datasources",
 			Stage:           FeatureStageExperimental,
