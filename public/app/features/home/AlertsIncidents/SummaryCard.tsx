@@ -123,6 +123,12 @@ export function SummaryCard<T>({
   );
 }
 
+/** Left-aligned fixed-width prefix cell so titles align across rows. */
+export function SummaryCardPrefix({ children }: { children: ReactNode }) {
+  const styles = useStyles2(getStyles);
+  return <span className={styles.prefix}>{children}</span>;
+}
+
 /** Right-aligned relative-time cell shared by both cards. */
 export function SummaryCardAge({ date }: { date: Date | number }) {
   const styles = useStyles2(getStyles);
@@ -160,5 +166,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minWidth: theme.spacing(10),
     display: 'inline-flex',
     justifyContent: 'flex-end',
+  }),
+  prefix: css({
+    display: 'inline-flex',
+    flexShrink: 0,
+    // Reserves a fixed column for the severity badge ("Critical" is the widest label)
+    // so titles align across rows.
+    minWidth: theme.spacing(8),
+    justifyContent: 'flex-start',
   }),
 });

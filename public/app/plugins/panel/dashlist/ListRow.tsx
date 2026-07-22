@@ -59,7 +59,7 @@ export function ListRow({
   return (
     <div className={cx(styles.row, isCompact && styles.listCompact, !showDivider && styles.flush)}>
       <Stack direction="row" alignItems="center" gap={1.5} grow={1} minWidth={0}>
-        {prefix && <div>{prefix}</div>}
+        {prefix && <div className={styles.prefixCell}>{prefix}</div>}
 
         {href ? (
           <Link href={href} onClick={onClick} color="primary" className={styles.titleLink}>
@@ -87,6 +87,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   listCompact: css({
     margin: 0,
+  }),
+  // Prevents a long title from squeezing the prefix; width policy stays with callers.
+  prefixCell: css({
+    flexShrink: 0,
   }),
   flush: css({
     borderBottom: 'none',

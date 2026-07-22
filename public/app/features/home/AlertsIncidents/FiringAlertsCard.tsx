@@ -9,7 +9,7 @@ import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { alertsCardClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge } from './SummaryCard';
+import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
 import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
 
@@ -147,7 +147,9 @@ export function FiringAlertsCardView({
                   </span>
                 </Tooltip>
               ) : (
-                <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+                <SummaryCardPrefix>
+                  <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+                </SummaryCardPrefix>
               )
             }
             trailing={<SummaryCardAge date={startedAt} />}

@@ -11,7 +11,7 @@ import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { incidentsCardClicked } from '../analytics/main';
 
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
-import { SummaryCard, SummaryCardAge } from './SummaryCard';
+import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
 import { useIncidents, type IncidentsData } from './useIncidents';
 
@@ -66,10 +66,12 @@ export function IncidentsCardView({
       renderItem={(incident) => (
         <ListRow
           prefix={
-            <Badge
-              text={incident.severityLabel}
-              color={severityLevelColor(canonicalSeverity(incident.severityLabel))}
-            />
+            <SummaryCardPrefix>
+              <Badge
+                text={incident.severityLabel}
+                color={severityLevelColor(canonicalSeverity(incident.severityLabel))}
+              />
+            </SummaryCardPrefix>
           }
           title={incident.title}
           trailing={<SummaryCardAge date={new Date(incident.createdTime)} />}
