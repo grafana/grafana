@@ -66,7 +66,7 @@ func (a *AvatarCacheServer) Handler(ctx *contextmodel.ReqContext) {
 
 	ctx.Resp.Header().Set("Content-Type", "image/jpeg")
 
-	if !a.cfg.EnableGzip {
+	if !a.cfg.EnableCompression {
 		ctx.Resp.Header().Set("Content-Length", strconv.Itoa(len(avatar.data)))
 	}
 

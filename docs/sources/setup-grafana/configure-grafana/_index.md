@@ -297,9 +297,25 @@ executed with working directory set to the installation path.
 
 #### `enable_gzip`
 
-Set this option to `true` to enable HTTP compression, this can improve
-transfer speed and bandwidth utilization. It is recommended that most
-users leave it set at the default of `true`, however compression might increase CPU usage on constrained environments or cause issues with poorly-configured reverse proxies.
+{{< admonition type="note" >}}
+Deprecated: Use `enable_compression` instead.
+{{< /admonition >}}
+
+#### `enable_compression`
+
+Enables or disables HTTP response compression. Supports zstd, Brotli, gzip, and deflate encodings. By default it's set to `true`. Set to `false` to disable compression. When not explicitly set, it falls back to the value of `enable_gzip`.
+
+#### `content_encoding`
+
+Prioritized list of HTTP response content encodings used when `enable_compression` is enabled. Supported values are `zstd`, `br`, `deflate`, and `gzip`.
+
+Grafana uses this list in order when the client accepts multiple encodings. If not set or if all configured values are invalid, Grafana defaults to `gzip`.
+
+Example:
+
+```ini
+content_encoding = zstd, br, gzip
+```
 
 #### `cert_file`
 

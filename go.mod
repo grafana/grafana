@@ -135,7 +135,7 @@ require (
 	github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 	github.com/jmoiron/sqlx v1.4.0 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
-	github.com/klauspost/pgzip v1.2.6 // @grafana/grafana-backend-group
+	github.com/klauspost/compress v1.19.0 // @grafana/grafana-backend-group
 	github.com/lib/pq v1.12.3 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.5.0 // @grafana/alerting-backend
@@ -517,7 +517,6 @@ require (
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/klauspost/compress v1.19.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
