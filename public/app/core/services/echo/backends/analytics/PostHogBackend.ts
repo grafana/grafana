@@ -48,21 +48,18 @@ export class PostHogBackend implements EchoBackend<PageviewEchoEvent, PostHogBac
     if (!(window.posthog && window.posthog.__loaded)) {
       // loadScript is not awaited (constructors can't be async), so identify/capture are
       // called before the SDK has loaded. These stubs queue those calls for the SDK to replay.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-      const tempPosthog: any[] = ((window as Record<string, any>).posthog = []);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tempPosthog: any = (window.posthog = []);
       for (const method of ['identify', 'capture']) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-        (tempPosthog as Record<string, any>)[method] = function (...args: unknown[]) {
+        tempPosthog[method] = function (...args: unknown[]) {
           tempPosthog.push([method, ...args]);
         };
       }
 
       // array.js replays pending init() calls from the standard snippet's _i queue rather than
       // from the array above, so register init in that format or the token is silently dropped.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-      (tempPosthog as Record<string, any>).__SV = 1;
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-      (tempPosthog as Record<string, any>)._i = [[options.postHogToken, { api_host: apiHost }, 'posthog']];
+      tempPosthog.__SV = 1;
+      tempPosthog._i = [[options.postHogToken, { api_host: apiHost }, 'posthog']];
 
       loadScript(`${apiHost}/static/array.js`, true);
     } else {
