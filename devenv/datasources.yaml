@@ -170,16 +170,6 @@ datasources:
     secureJsonData:
       password: password
 
-  - name: gdev-postgres-ds-tests
-    type: postgres
-    url: localhost:5432
-    user: grafanatest
-    secureJsonData:
-      password: grafanatest
-    jsonData:
-      sslmode: 'disable'
-      database: grafanadstest
-
   - name: gdev-cloudwatch
     uid: gdev-cloudwatch
     type: cloudwatch
