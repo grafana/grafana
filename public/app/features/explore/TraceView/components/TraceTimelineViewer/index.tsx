@@ -96,6 +96,7 @@ export type TProps = {
   detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
+  detailSummaryAttributesToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;

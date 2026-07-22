@@ -80,6 +80,7 @@ describe('<SpanDetail>', () => {
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
     tagsToggle: jest.fn(),
+    summaryAttributesToggle: jest.fn(),
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
     createFocusSpanLink: jest.fn().mockReturnValue({}),
@@ -181,6 +182,7 @@ describe('<SpanDetail>', () => {
     props.processToggle.mockReset();
     props.logsToggle.mockReset();
     props.logItemToggle.mockReset();
+    props.summaryAttributesToggle.mockReset();
 
     setPluginLinksHook(() => ({
       isLoading: false,
@@ -364,6 +366,48 @@ describe('<SpanDetail>', () => {
       expect(screen.queryByText('(summary)')).not.toBeInTheDocument();
       expect(screen.queryByText('End Time:')).not.toBeInTheDocument();
       expect(screen.queryByText('(inherited from slowest span)')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('summary attribute tags', () => {
+    const summarySpanWithTags = {
+      ...span,
+      aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 3 },
+      tags: [
+        { key: 'http.method', value: 'POST' },
+        { key: 'aggregation.is_summary', value: 'true' },
+        { key: 'aggregation.span_count', value: '3' },
+      ],
+    };
+    // All accordions collapsed so each renders its abbreviated key preview.
+    const summaryTagsProps = { ...props, span: summarySpanWithTags, detailState: new DetailState() };
+
+    beforeEach(() => {
+      jest.mocked(formatDuration).mockImplementation((duration: number) => `${duration}us`);
+    });
+
+    it('renders a dedicated Summary attributes accordion for summary spans', () => {
+      render(<SpanDetail {...(summaryTagsProps as unknown as SpanDetailProps)} />);
+      expect(screen.getByRole('switch', { name: /Summary attributes/ })).toBeInTheDocument();
+    });
+
+    it('moves aggregation.* tags out of Span attributes into Summary attributes', () => {
+      render(<SpanDetail {...(summaryTagsProps as unknown as SpanDetailProps)} />);
+      // The aggregation key is shown once (in the Summary attributes preview), not duplicated
+      // under Span attributes.
+      expect(screen.getAllByText('aggregation.span_count')).toHaveLength(1);
+      expect(screen.getByText('http.method')).toBeInTheDocument();
+    });
+
+    it('toggles the Summary attributes accordion', async () => {
+      render(<SpanDetail {...(summaryTagsProps as unknown as SpanDetailProps)} />);
+      await userEvent.click(screen.getByRole('switch', { name: /Summary attributes/ }));
+      expect(props.summaryAttributesToggle).toHaveBeenLastCalledWith(span.spanID);
+    });
+
+    it('does not render a Summary attributes accordion for non-summary spans', () => {
+      render(<SpanDetail {...({ ...props, detailState: new DetailState() } as unknown as SpanDetailProps)} />);
+      expect(screen.queryByRole('switch', { name: /Summary attributes/ })).not.toBeInTheDocument();
     });
   });
 

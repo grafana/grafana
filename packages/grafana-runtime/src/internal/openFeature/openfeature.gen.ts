@@ -141,6 +141,8 @@ export const FlagKeys = {
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
   SqlExpressionsCodeMirror: "sqlExpressionsCodeMirror",
+  /** Enables column autocomplete for SQL Expressions */
+  SqlExpressionsColumnAutoComplete: "sqlExpressionsColumnAutoComplete",
   /** Enables option to position series names above bars in the state timeline panel */
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
@@ -855,6 +857,17 @@ export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagSqlExpressionsCodeMirror = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("sqlExpressionsCodeMirror", false, options).value;
+};
+
+/**
+ * Enables column autocomplete for SQL Expressions
+ *
+ * **Details:**
+ * - flag key: `sqlExpressionsColumnAutoComplete`
+ * - default value: `false`
+ */
+export const useFlagSqlExpressionsColumnAutoComplete = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("sqlExpressionsColumnAutoComplete", false, options).value;
 };
 
 /**

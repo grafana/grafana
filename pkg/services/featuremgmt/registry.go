@@ -889,7 +889,7 @@ var (
 			Name:        "sqlExpressionsColumnAutoComplete",
 			Description: "Enables column autocomplete for SQL Expressions",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
