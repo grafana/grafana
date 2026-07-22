@@ -165,6 +165,7 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 			continue
 		}
 		if err != nil {
+			s.queueMetrics.RecordClaim(ClaimOutcomeError)
 			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", name, namespace, err)
 		}
 
@@ -182,6 +183,10 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 			attribute.String("job.action", string(updatedJob.Spec.Action)),
 		)
 
+		// Record the wait only now that the claim succeeded: a candidate we lost to a
+		// conflicting worker (handled above with continue) must not count, or racing
+		// losers would each record a wait for a job they never claimed.
+		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
 		s.queueMetrics.RecordClaim(ClaimOutcomeClaimed)
 
 		return updatedJob.DeepCopy(), func() {
