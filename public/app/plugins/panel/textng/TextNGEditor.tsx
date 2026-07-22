@@ -156,12 +156,6 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
       onClick: () => prefixSelectedLines('- [ ] '),
     },
     {
-      key: 'code',
-      tooltip: t('textng.editor.tooltip-code', 'Inline code'),
-      icon: 'brackets-curly',
-      onClick: () => surroundSelection('`'),
-    },
-    {
       key: 'table',
       tooltip: t('textng.editor.tooltip-table', 'Table'),
       icon: 'table',
@@ -200,7 +194,6 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
     key: 'variable',
     tooltip: t('textng.editor.tooltip-insert-variable', 'Insert variable'),
     icon: 'brackets-curly',
-    label: t('textng.editor.insert-variable', 'Insert variable'),
     onClick: () => insertAtCursor('${}'),
   };
 
