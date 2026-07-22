@@ -195,7 +195,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by
 // appending a suffix derived from identifier. Returns renamed resources for tracking adjustments made.
-func DeduplicateResources(a, b v1.PostableApiAlertingConfig, identifier string) RenameResources {
+func DeduplicateResources(a v1.PostableApiAlertingConfig, b v1.ExtraAlertmanagerConfig, identifier string) RenameResources {
 	_, renamedReceivers, _ := Receivers(a.Receivers, b.Receivers, identifier)
 	_, renamedTimeIntervals, _ := TimeIntervals(
 		a.MuteTimeIntervals,

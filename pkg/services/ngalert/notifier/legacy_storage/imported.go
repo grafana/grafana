@@ -12,7 +12,7 @@ import (
 type ImportedConfigRevision struct {
 	identifier     string
 	rev            *ConfigRevision
-	importedConfig *v1.PostableApiAlertingConfig
+	importedConfig *v1.ExtraAlertmanagerConfig
 }
 
 func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
