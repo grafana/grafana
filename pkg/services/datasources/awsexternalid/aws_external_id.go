@@ -14,6 +14,13 @@ const (
 	grafanaAssumeRoleAuthType         = "grafana_assume_role"
 	grafanaExternalIDJSONKey          = "grafanaExternalId"
 	usePerDatasourceExternalIDJSONKey = "usePerDatasourceExternalId"
+
+	// SigV4 datasources (e.g. OpenSearch) that support Grafana Assume Role signal auth via
+	// sigV4AuthType rather than authType, and store the per-datasource ID pair under these
+	// sigV4-prefixed keys instead of the unprefixed native ones.
+	sigV4AuthTypeJSONKey                   = "sigV4AuthType"
+	sigV4GrafanaExternalIDJSONKey          = "sigV4GrafanaExternalId"
+	sigV4UsePerDatasourceExternalIDJSONKey = "sigV4UsePerDatasourceExternalId"
 )
 
 // BeforeSave mints or preserves per-datasource grafanaExternalId on create/update.
@@ -47,12 +54,37 @@ func isValidGrafanaExternalID(id, stackExternalID, datasourceUID string) bool {
 	return id == buildGrafanaExternalID(stackExternalID, datasourceUID)
 }
 
-// usePerDatasourceExternalID reports whether jsonData sets usePerDatasourceExternalId and its value.
+// isGrafanaAssumeRole reports whether jsonData declares Grafana Assume Role auth, either via
+// the native authType key or the SigV4-prefixed sigV4AuthType key used by SigV4 datasources
+// (e.g. OpenSearch) that support Grafana Assume Role.
+func isGrafanaAssumeRole(jsonData *simplejson.Json) bool {
+	if jsonData == nil {
+		return false
+	}
+	if jsonData.Get("authType").MustString() == grafanaAssumeRoleAuthType {
+		return true
+	}
+	return jsonData.Get(sigV4AuthTypeJSONKey).MustString() == grafanaAssumeRoleAuthType
+}
+
+// externalIDKeys selects the per-datasource ID / mode key pair to operate on, based on
+// whether jsonData is on the SigV4 auth path (sigV4AuthType == grafana_assume_role) or the
+// native AWS auth path. A nil or non-SigV4-GAR jsonData defaults to the native pair.
+func externalIDKeys(jsonData *simplejson.Json) (idKey, modeKey string) {
+	if jsonData != nil && jsonData.Get(sigV4AuthTypeJSONKey).MustString() == grafanaAssumeRoleAuthType {
+		return sigV4GrafanaExternalIDJSONKey, sigV4UsePerDatasourceExternalIDJSONKey
+	}
+	return grafanaExternalIDJSONKey, usePerDatasourceExternalIDJSONKey
+}
+
+// usePerDatasourceExternalID reports whether jsonData sets its (native or SigV4-prefixed)
+// per-datasource mode key and its value.
 func usePerDatasourceExternalID(jsonData *simplejson.Json) (set bool, enabled bool) {
 	if jsonData == nil {
 		return false, false
 	}
-	v, exists := jsonData.CheckGet(usePerDatasourceExternalIDJSONKey)
+	_, modeKey := externalIDKeys(jsonData)
+	v, exists := jsonData.CheckGet(modeKey)
 	if !exists {
 		return false, false
 	}
@@ -68,7 +100,8 @@ func clearInvalidGrafanaExternalID(uid, stackExternalID string, jsonData *simple
 	if jsonData == nil {
 		return
 	}
-	id := jsonData.Get(grafanaExternalIDJSONKey).MustString()
+	idKey, _ := externalIDKeys(jsonData)
+	id := jsonData.Get(idKey).MustString()
 	if id == "" {
 		return
 	}
@@ -76,14 +109,15 @@ func clearInvalidGrafanaExternalID(uid, stackExternalID string, jsonData *simple
 		return
 	}
 	if !isValidGrafanaExternalID(id, stackExternalID, uid) {
-		jsonData.Del(grafanaExternalIDJSONKey)
+		jsonData.Del(idKey)
 	}
 }
 
 func mintGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json) {
-	jsonData.Set(grafanaExternalIDJSONKey, buildGrafanaExternalID(stackExternalID, uid))
+	idKey, modeKey := externalIDKeys(jsonData)
+	jsonData.Set(idKey, buildGrafanaExternalID(stackExternalID, uid))
 	// Mode must be true: aws-sdk uses the stack ID when the bool is unset/false, even if an ID is stored.
-	jsonData.Set(usePerDatasourceExternalIDJSONKey, true)
+	jsonData.Set(modeKey, true)
 }
 
 func awsAssumeRolePerDatasourceExternalIDEnabled(ctx context.Context) bool {
@@ -107,10 +141,11 @@ func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.J
 	if !allowGenerate {
 		return
 	}
-	if jsonData.Get("authType").MustString() != grafanaAssumeRoleAuthType {
+	if !isGrafanaAssumeRole(jsonData) {
 		return
 	}
 
+	idKey, _ := externalIDKeys(jsonData)
 	modeSet, modeOn := usePerDatasourceExternalID(jsonData)
 	if modeSet && !modeOn {
 		return
@@ -119,7 +154,7 @@ func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.J
 	if stackExternalID == "" || uid == "" {
 		return
 	}
-	if jsonData.Get(grafanaExternalIDJSONKey).MustString() != "" {
+	if jsonData.Get(idKey).MustString() != "" {
 		return
 	}
 
@@ -144,19 +179,27 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	// Never persist a stolen / mismatched ID from the update payload.
 	clearInvalidGrafanaExternalID(uid, stackExternalID, updated)
 
+	existingIsGAR := isGrafanaAssumeRole(existing)
+	existingIdKey, _ := externalIDKeys(existing)
 	existingID := ""
-	existingAuthType := ""
 	if existing != nil {
-		existingID = existing.Get(grafanaExternalIDJSONKey).MustString()
-		existingAuthType = existing.Get("authType").MustString()
+		existingID = existing.Get(existingIdKey).MustString()
 	}
 
-	updatedAuthType := updated.Get("authType").MustString()
+	updatedIsGAR := isGrafanaAssumeRole(updated)
+	idKey, modeKey := externalIDKeys(updated)
 	modeSet, modeOn := usePerDatasourceExternalID(updated)
 
 	// Leaving Grafana Assume Role: drop the ID when minting is FT-enabled (otherwise leave it).
-	if allowGenerate && updatedAuthType != grafanaAssumeRoleAuthType {
-		updated.Del(grafanaExternalIDJSONKey)
+	// Once updated's own authType/sigV4AuthType no longer says grafana_assume_role,
+	// externalIDKeys(updated) can no longer tell native from SigV4, so the key pair to clear
+	// is chosen from the prior (existing) auth path instead.
+	if allowGenerate && !updatedIsGAR {
+		delKey := idKey
+		if existingIsGAR {
+			delKey = existingIdKey
+		}
+		updated.Del(delKey)
 		return
 	}
 
@@ -164,12 +207,12 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		(existingID != "" && (stackExternalID == "" || uid == "")) {
 		// Keep a validated ID, or any stored ID when we cannot validate (empty stack/uid)
 		// so a misconfigured AWSExternalId does not wipe a previously minted value.
-		updated.Set(grafanaExternalIDJSONKey, existingID)
+		updated.Set(idKey, existingID)
 		// When the update omits the mode flag, restore the stored value so Terraform/API
 		// updates that only send partial jsonData do not silently fall back to stack ID.
 		if !modeSet {
 			if existingModeSet, existingModeOn := usePerDatasourceExternalID(existing); existingModeSet {
-				updated.Set(usePerDatasourceExternalIDJSONKey, existingModeOn)
+				updated.Set(modeKey, existingModeOn)
 			}
 		}
 		return
@@ -180,7 +223,7 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	if !allowGenerate {
 		return
 	}
-	if updatedAuthType != grafanaAssumeRoleAuthType {
+	if !updatedIsGAR {
 		return
 	}
 	if modeSet && !modeOn {
@@ -189,12 +232,12 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	if stackExternalID == "" || uid == "" {
 		return
 	}
-	if updated.Get(grafanaExternalIDJSONKey).MustString() != "" {
+	if updated.Get(idKey).MustString() != "" {
 		return
 	}
 
 	// Mint when switching into GAR (bool unset defaults to per-DS) or when explicitly opting in.
-	switchingIn := existingAuthType != grafanaAssumeRoleAuthType
+	switchingIn := !existingIsGAR
 	optingIn := modeSet && modeOn
 	if !switchingIn && !optingIn {
 		return

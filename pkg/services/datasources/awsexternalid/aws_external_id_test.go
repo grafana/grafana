@@ -235,3 +235,72 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 		assert.Equal(t, wantID, ftOff.Get(grafanaExternalIDJSONKey).MustString())
 	})
 }
+
+// TestEnsureGrafanaExternalID_SigV4 covers create-time mint/scrub for SigV4 datasources
+// (e.g. OpenSearch) that signal Grafana Assume Role via sigV4AuthType instead of authType.
+// Per the design, SigV4 GAR uses the sigV4-prefixed key pair exclusively; unprefixed keys
+// must never be set for this path.
+func TestEnsureGrafanaExternalID_SigV4(t *testing.T) {
+	const uid, stack = "dsUid1", "stackABC"
+	wantID := stack + "-" + uid
+
+	t.Run("mints sigV4 keys for new SigV4 GAR datasources and does not touch native keys", func(t *testing.T) {
+		jd := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: grafanaAssumeRoleAuthType})
+		ensureGrafanaExternalID(uid, stack, jd, true)
+		assert.Equal(t, wantID, jd.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		assert.True(t, jd.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
+		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
+		assert.Empty(t, jd.Get(usePerDatasourceExternalIDJSONKey).Interface())
+	})
+
+	t.Run("stack mode does not mint sigV4 ID", func(t *testing.T) {
+		jd := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
+			sigV4UsePerDatasourceExternalIDJSONKey: false,
+		})
+		ensureGrafanaExternalID(uid, stack, jd, true)
+		assert.Empty(t, jd.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("scrubs stolen sigV4GrafanaExternalId", func(t *testing.T) {
+		stolen := stack + "-otherUid"
+		jd := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:          grafanaAssumeRoleAuthType,
+			sigV4GrafanaExternalIDJSONKey: stolen,
+		})
+		// FT off: scrub happens regardless, but no remint should occur, so the field stays empty.
+		ensureGrafanaExternalID(uid, stack, jd, false)
+		assert.Empty(t, jd.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+	})
+}
+
+// TestPreserveGrafanaExternalID_SigV4 covers update-time preserve/scrub/clear for the SigV4
+// (sigV4AuthType) path, mirroring TestPreserveGrafanaExternalID's native coverage.
+func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
+	const uid, stack = "dsUid1", "stackABC"
+	wantID := stack + "-" + uid
+
+	t.Run("update omitting mode/ID preserves existing sigV4 values", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
+			sigV4UsePerDatasourceExternalIDJSONKey: true,
+			sigV4GrafanaExternalIDJSONKey:          wantID,
+		})
+		updated := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: grafanaAssumeRoleAuthType})
+		preserveGrafanaExternalID(uid, stack, existing, updated, true)
+		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		assert.True(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("leaving SigV4 GAR clears sigV4GrafanaExternalId when FT on", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:          grafanaAssumeRoleAuthType,
+			sigV4GrafanaExternalIDJSONKey: wantID,
+		})
+		updated := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: "keys"})
+		preserveGrafanaExternalID(uid, stack, existing, updated, true)
+		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
+}
