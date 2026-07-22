@@ -254,6 +254,16 @@ describe('Explore', () => {
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();
     });
+
+    it('renders without error when a Mixed datasource contains a Prometheus query', async () => {
+      setup({
+        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
+        queries: [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-uid' } }],
+      });
+
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      expect(screen.getByRole('button', { name: 'Collapse outline' })).toBeInTheDocument();
+    });
   });
 
   describe('Saved Queries Integration', () => {
