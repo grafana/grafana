@@ -5,6 +5,7 @@ import { render } from 'test/test-utils';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -64,14 +65,14 @@ describe('DownloadDiagnostics', () => {
     expect(panelModel).toEqual(expect.objectContaining({ id: 1, type: 'table' }));
   });
 
-  it('resolves a v2 panel from dashboard elements by its scene key', async () => {
+  it('resolves a v2 repeat clone using the serializer element mapping', async () => {
     const panelElement = { kind: 'Panel', spec: { id: 7, title: 'V2 panel' } };
     const dashboardModel = {
       title: 'V2 dashboard',
       elements: { 'custom-panel-key': panelElement },
       layout: { kind: 'GridLayout', spec: { items: [] } },
     };
-    const { tab } = setupScenario(undefined, undefined, 'custom-panel-key', dashboardModel);
+    const { tab } = setupScenario(undefined, undefined, 'panel-7-clone-1', dashboardModel, 'v2');
 
     render(<tab.Component model={tab} />);
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
@@ -142,7 +143,8 @@ function setupScenario(
   dashboardSaveModel: unknown = {
     uid: 'dash-1',
     panels: [{ id: 1, type: 'table', title: 'Panel' }],
-  }
+  },
+  serializerVersion: 'v1' | 'v2' = 'v1'
 ) {
   const vizPanel = new VizPanel({
     key: panelKey,
@@ -153,13 +155,20 @@ function setupScenario(
 
   const gridItem = new DashboardGridItem({ key: 'grid-item-1', body: vizPanel });
 
-  const dashboard = new DashboardScene({
-    title: 'Dash',
-    uid: 'dash-1',
-    meta: { canEdit: true },
-    $timeRange: new SceneTimeRange({}),
-    body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
-  });
+  const dashboard = new DashboardScene(
+    {
+      title: 'Dash',
+      uid: 'dash-1',
+      meta: { canEdit: true },
+      $timeRange: new SceneTimeRange({}),
+      body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
+    },
+    serializerVersion
+  );
+
+  if (serializerVersion === 'v2') {
+    dashboard.serializer.initializeElementMapping(dashboardSaveModel as DashboardV2Spec);
+  }
 
   // Stub the save model so tests exercise this view's panel lookup + payload wiring without depending
   // on serializer internals. The default is v1; individual tests can supply a v2 model.

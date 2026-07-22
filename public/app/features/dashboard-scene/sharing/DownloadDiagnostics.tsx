@@ -92,18 +92,20 @@ function findV1PanelSaveModel(panels: unknown, id: number): unknown {
 }
 
 // V1 dashboards store panels in panels[], while v2 dashboards store them in elements keyed by the
-// scene panel key. Kept dependency-free to avoid the serialization/utils import cycle the rest of
-// this file works around.
-function findPanelSaveModel(dashboard: unknown, panel: VizPanel): unknown {
-  if (!isRecord(dashboard)) {
+// serializer's element id. Kept dependency-free to avoid the serialization/utils import cycle the
+// rest of this file works around.
+function findPanelSaveModel(dashboardModel: unknown, panel: VizPanel, dashboard: DashboardScene): unknown {
+  if (!isRecord(dashboardModel)) {
     return undefined;
   }
 
-  if (isRecord(dashboard.elements) && panel.state.key) {
-    return dashboard.elements[panel.state.key];
+  const panelId = panelIdFrom(panel);
+  if (isRecord(dashboardModel.elements)) {
+    const elementId = dashboard.serializer.getElementIdForPanel(panelId);
+    return elementId ? dashboardModel.elements[elementId] : undefined;
   }
 
-  return findV1PanelSaveModel(dashboard.panels, panelIdFrom(panel));
+  return findV1PanelSaveModel(dashboardModel.panels, panelId);
 }
 
 // The download uses a blob-response fetch, whose FetchError carries the detail in status/statusText
@@ -148,8 +150,9 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     // Bundle this panel's JSON and the dashboard JSON for context. The panel's save model is resolved
     // from the dashboard save model rather than serialized separately (avoids the serialization
     // import cycle this view already works around); undefined models are simply not sent.
-    const dashboardModel = dashboardRef?.resolve().getSaveModel();
-    const panelModel = findPanelSaveModel(dashboardModel, panel);
+    const dashboard = dashboardRef?.resolve();
+    const dashboardModel = dashboard?.getSaveModel();
+    const panelModel = dashboard ? findPanelSaveModel(dashboardModel, panel, dashboard) : undefined;
 
     const controller = new AbortController();
     abortRef.current = controller;
