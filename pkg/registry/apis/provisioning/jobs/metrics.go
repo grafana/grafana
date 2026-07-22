@@ -219,12 +219,12 @@ func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountCh
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
 	// Record duration for every outcome so slow-but-failing jobs are visible (a job
-	// that runs to the timeout then errors is exactly what we want to catch). The
-	// resource-count bucket is only meaningful on success — a failed job's count is
-	// partial — so failures are bucketed under a sentinel.
-	bucket := durationBucketUnknown
-	if outcome == utils.SuccessOutcome {
-		bucket = utils.GetResourceCountBucket(resourceCountChanged)
+	// that runs to the timeout then errors is exactly what we want to catch). Only a
+	// failed job's resource count is unreliable (partial work), so bucket errors under
+	// a sentinel; success and warning keep their size bucket.
+	bucket := utils.GetResourceCountBucket(resourceCountChanged)
+	if outcome == utils.ErrorOutcome {
+		bucket = durationBucketUnknown
 	}
 	m.durationHist.WithLabelValues(jobAction, bucket, outcome).Observe(duration)
 }

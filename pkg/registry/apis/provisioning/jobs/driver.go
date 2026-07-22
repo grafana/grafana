@@ -267,7 +267,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 		d.metrics.RecordJob(
 			string(d.currentJob.Spec.Action),
 			string(d.currentJob.Status.State),
-			resourceChangeCount(d.currentJob.Status.Summary),
+			resourceChangeCount(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
 			duration.Seconds(),
 		)
 	}
@@ -493,15 +493,27 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 	return err
 }
 
-// resourceChangeCount sums the create/update/delete counts across a job's status
-// summaries, giving the total resources changed for the duration histogram bucket.
-func resourceChangeCount(summaries []*provisioning.JobResourceSummary) int {
+// resourceChangeCount totals the resources a job changed, for the duration histogram
+// bucket. It is action-aware to match each worker's original counting: push counts
+// writes; delete counts deletes; move counts creates only (a rename is recorded as
+// both a create and a delete, so summing would double-count); everything else (pull,
+// migrate, ...) sums create+update+delete.
+func resourceChangeCount(action provisioning.JobAction, summaries []*provisioning.JobResourceSummary) int {
 	total := 0
 	for _, s := range summaries {
 		if s == nil {
 			continue
 		}
-		total += int(s.Create + s.Update + s.Delete)
+		switch action {
+		case provisioning.JobActionPush:
+			total += int(s.Write)
+		case provisioning.JobActionDelete:
+			total += int(s.Delete)
+		case provisioning.JobActionMove:
+			total += int(s.Create)
+		default:
+			total += int(s.Create + s.Update + s.Delete)
+		}
 	}
 	return total
 }

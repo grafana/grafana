@@ -93,10 +93,12 @@ func TestJobMetrics_RecordJobDurationOnAllOutcomes(t *testing.T) {
 
 	m.RecordJob("pull", utils.SuccessOutcome, 3, 2.0)
 	m.RecordJob("pull", utils.ErrorOutcome, 0, 7.0)
+	m.RecordJob("pull", "warning", 5, 3.0) // string(provisioning.JobStateWarning)
 
-	// Both outcomes recorded a duration series (before the fix, only success did).
-	require.Equal(t, 2, testutil.CollectAndCount(m.durationHist))
-	// Success bucketed by resource count; failure under the sentinel bucket.
+	// All three outcomes recorded a duration series (before, only success did).
+	require.Equal(t, 3, testutil.CollectAndCount(m.durationHist))
+	// Success and warning keep their resource-count bucket; only failure uses the sentinel.
 	require.Equal(t, uint64(1), histSampleCount(t, m.durationHist, "pull", utils.GetResourceCountBucket(3), utils.SuccessOutcome))
+	require.Equal(t, uint64(1), histSampleCount(t, m.durationHist, "pull", utils.GetResourceCountBucket(5), "warning"))
 	require.Equal(t, uint64(1), histSampleCount(t, m.durationHist, "pull", durationBucketUnknown, utils.ErrorOutcome))
 }
