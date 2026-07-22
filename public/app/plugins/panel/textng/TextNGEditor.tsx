@@ -245,7 +245,7 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
-          <div className={styles.pane}>
+          <div className={cx(styles.pane, styles.editorPane)}>
             <CodeMirrorEditor
               value={content}
               onChange={onChange}
@@ -319,6 +319,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
+  }),
+  editorPane: css({
+    display: 'flex',
+    flexDirection: 'column',
+    // Give CodeMirror a bounded height so it scrolls internally instead of growing.
+    '& > *': {
+      flex: 1,
+      minHeight: 0,
+      overflow: 'auto',
+    },
   }),
   previewPane: css({
     overflow: 'auto',
