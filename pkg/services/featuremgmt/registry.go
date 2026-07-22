@@ -661,14 +661,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "dashboardDefaultLayoutSelector",
-			Description: "Enables default layout selector in dashboard settings",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
