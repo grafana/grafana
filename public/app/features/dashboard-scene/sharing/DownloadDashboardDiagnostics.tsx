@@ -23,6 +23,7 @@ import {
   getDashboardDiagnosticsStatus,
   startDashboardDiagnostics,
 } from 'app/features/query/diagnostics/downloadDiagnostics';
+import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -79,10 +80,10 @@ function panelIdFrom(panel: VizPanel): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
-// Collects every data panel's queries (with the runner-level datasource filled in and hidden queries
-// dropped, mirroring the single-panel view) into the whole-dashboard request payload. Panels with no
-// active queries (e.g. text panels) are omitted.
-function collectDashboardPanels(dashboard: DashboardScene): DashboardDiagnosticsPanel[] {
+// Collects every data panel's queries (with the runner-level datasource filled in, hidden queries
+// dropped, and template/scoped variables interpolated, mirroring the single-panel view) into the
+// whole-dashboard request payload. Panels with no active queries (e.g. text panels) are omitted.
+async function collectDashboardPanels(dashboard: DashboardScene): Promise<DashboardDiagnosticsPanel[]> {
   const vizPanels = sceneGraph.findAllObjects(dashboard, (o) => o instanceof VizPanel);
   const panels: DashboardDiagnosticsPanel[] = [];
 
@@ -93,12 +94,19 @@ function collectDashboardPanels(dashboard: DashboardScene): DashboardDiagnostics
     }
     const runner = getQueryRunnerFor(panel);
     const runnerDatasource = runner?.state.datasource;
-    const queries: DataQuery[] = (runner?.state.queries ?? [])
+    const rawQueries: DataQuery[] = (runner?.state.queries ?? [])
       .map((query) => (query.datasource ? query : { ...query, datasource: runnerDatasource }))
       .filter((query) => !query.hide);
-    if (queries.length === 0) {
+    if (rawQueries.length === 0) {
       continue;
     }
+    // Interpolate so each captured panel matches what it ran; scopedVars carries this panel so a
+    // repeated panel's clone-local variable value resolves from its position in the scene graph.
+    const queries = await interpolateDiagnosticsQueries(
+      rawQueries,
+      { __sceneObject: { value: panel } },
+      runner?.state.data?.request?.filters
+    );
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
     // Repeat-by-variable clones share their source panel's key (e.g. `panel-3-clone-1` and
     // `panel-3-clone-2` both parse to id 3 in panelIdFrom), so multiple entries below can carry the
@@ -155,9 +163,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
     if (!dashboard) {
       return;
     }
-    const panels = collectDashboardPanels(dashboard);
-    // Known limitation (follow-up): template variables are sent un-interpolated, so captured traffic
-    // won't match panels that use $vars until per-datasource interpolation is applied.
+    const panels = await collectDashboardPanels(dashboard);
     if (panels.length === 0) {
       throw new Error(t('dashboard.diagnostics.no-panels', 'This dashboard has no panels with active queries.'));
     }

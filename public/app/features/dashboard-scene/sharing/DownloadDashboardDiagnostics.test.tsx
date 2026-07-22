@@ -2,9 +2,11 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
+import { type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import {
   downloadDashboardDiagnostics,
   getDashboardDiagnosticsStatus,
@@ -23,6 +25,17 @@ jest.mock('app/features/query/diagnostics/downloadDiagnostics', () => ({
   downloadDashboardDiagnostics: jest.fn(),
 }));
 
+// Interpolation runs through the real interpolateDiagnosticsQueries helper; only the datasource
+// lookup is mocked. interpolateVariablesInQueries defaults to an identity so the plain scenarios
+// forward their queries unchanged, and individual tests override it to assert interpolation.
+const interpolateVariablesInQueries = jest.fn(
+  (queries: DataQuery[], _scopedVars?: ScopedVars, _filters?: unknown): DataQuery[] => queries
+);
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(() => Promise.resolve({ interpolateVariablesInQueries })),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
@@ -33,6 +46,8 @@ describe('DownloadDashboardDiagnostics', () => {
     jest.mocked(startDashboardDiagnostics).mockReset();
     jest.mocked(getDashboardDiagnosticsStatus).mockReset();
     jest.mocked(downloadDashboardDiagnostics).mockReset();
+    interpolateVariablesInQueries.mockClear();
+    interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) => queries);
   });
 
   it('renders the sensitive-data warning and download action', () => {
@@ -61,6 +76,30 @@ describe('DownloadDashboardDiagnostics', () => {
     // Only the two data panels are sent; the text panel (no active queries) is skipped.
     const [panels] = jest.mocked(startDashboardDiagnostics).mock.calls[0];
     expect(panels.map((p) => p.title)).toEqual(['Panel A', 'Panel B']);
+  });
+
+  it('interpolates each panel’s queries before posting, scoped to that panel', async () => {
+    interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) =>
+      queries.map((q) => ({ ...q, expr: (q as { expr?: string }).expr?.replace('$job', 'grafana') }))
+    );
+    jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
+    jest
+      .mocked(getDashboardDiagnosticsStatus)
+      .mockResolvedValue({ uid: 'job-1', state: 'complete', panelsDone: 1, panelsTotal: 1 });
+    const { tab } = setupTemplatedScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    await screen.findByRole('button', { name: 'Download diagnostics' });
+
+    const [panels] = jest.mocked(startDashboardDiagnostics).mock.calls[0];
+    // The resolved query, not the literal $job, is captured for the panel (WMD1 / #1530).
+    expect(panels[0].queries).toEqual([
+      { refId: 'A', datasource: { uid: 'prom', type: 'prometheus' }, expr: 'up{job="grafana"}' },
+    ]);
+    // scopedVars carries the panel so scene variables (incl. repeat-local values) resolve.
+    expect(interpolateVariablesInQueries.mock.calls[0][1]?.__sceneObject).toBeDefined();
   });
 
   it('shows the generation-failed alert when the job errors out', async () => {
@@ -159,6 +198,32 @@ function setupScenario(opts: { onDismiss?: () => void; onlyEmptyPanels?: boolean
   // query-runner lookup need here. We deliberately skip activation so the SceneQueryRunners do not
   // try to execute (and fail) their queries against a real datasource.
   const tab = new DownloadDashboardDiagnostics({ dashboardRef: dashboard.getRef(), onDismiss });
+
+  return { tab, dashboard };
+}
+
+function setupTemplatedScenario() {
+  const panel = new VizPanel({
+    key: 'panel-1',
+    pluginId: 'table',
+    title: 'Templated panel',
+    $data: new SceneQueryRunner({
+      datasource: { uid: 'prom', type: 'prometheus' },
+      queries: [{ refId: 'A', expr: 'up{job="$job"}' }],
+    }),
+  });
+
+  const dashboard = new DashboardScene({
+    title: 'Dash',
+    uid: 'dash-1',
+    meta: { canEdit: true },
+    $timeRange: new SceneTimeRange({}),
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({ children: [new DashboardGridItem({ key: 'grid-item-1', body: panel })] }),
+    }),
+  });
+
+  const tab = new DownloadDashboardDiagnostics({ dashboardRef: dashboard.getRef() });
 
   return { tab, dashboard };
 }

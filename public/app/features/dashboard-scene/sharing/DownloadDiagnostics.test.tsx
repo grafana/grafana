@@ -2,9 +2,11 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
+import { type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -17,6 +19,17 @@ jest.mock('app/features/query/diagnostics/downloadDiagnostics', () => ({
   downloadDiagnosticsForQueries: jest.fn(),
 }));
 
+// Interpolation runs through the real interpolateDiagnosticsQueries helper; only the datasource
+// lookup is mocked. interpolateVariablesInQueries defaults to an identity so the plain scenarios
+// forward their queries unchanged, and individual tests override it to assert interpolation.
+const interpolateVariablesInQueries = jest.fn(
+  (queries: DataQuery[], _scopedVars?: ScopedVars, _filters?: unknown): DataQuery[] => queries
+);
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(() => Promise.resolve({ interpolateVariablesInQueries })),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
@@ -25,6 +38,8 @@ setPluginImportUtils({
 describe('DownloadDiagnostics', () => {
   beforeEach(() => {
     jest.mocked(downloadDiagnosticsForQueries).mockClear();
+    interpolateVariablesInQueries.mockClear();
+    interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) => queries);
   });
 
   it('renders the sensitive-data warning and download action', () => {
@@ -67,6 +82,28 @@ describe('DownloadDiagnostics', () => {
       { refId: 'A', datasource: { uid: 'runner-ds', type: 'prometheus' } },
       { refId: 'B', datasource: { uid: 'own-ds', type: 'loki' } },
     ]);
+  });
+
+  it('interpolates template variables before posting, scoped to the panel', async () => {
+    interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) =>
+      queries.map((q) => ({ ...q, expr: (q as { expr?: string }).expr?.replace('$job', 'grafana') }))
+    );
+    const runner = new SceneQueryRunner({
+      datasource: { uid: 'prom', type: 'prometheus' },
+      queries: [{ refId: 'A', expr: 'up{job="$job"}' }],
+    });
+    const { tab } = setupScenario(undefined, runner);
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    const [queries] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    // The resolved query, not the literal $job, is what gets captured (WMD1 / #1530).
+    expect(queries).toEqual([
+      { refId: 'A', datasource: { uid: 'prom', type: 'prometheus' }, expr: 'up{job="grafana"}' },
+    ]);
+    // scopedVars carries the panel so scene variables (incl. repeat-local values) resolve.
+    expect(interpolateVariablesInQueries.mock.calls[0][1]?.__sceneObject).toBeDefined();
   });
 
   it('shows the request status in the alert when the download fails', async () => {
