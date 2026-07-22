@@ -4,7 +4,7 @@ import { memo, useState, useEffect } from 'react';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -16,6 +16,7 @@ import {
   FieldSet,
   isWeekStart,
   Label,
+  LinkButton,
   Stack,
   TimeZonePicker,
   useStyles2,
@@ -186,12 +187,25 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
           >
-            <Combobox
-              options={themeOptions}
-              value={currentThemeOption.value}
-              onChange={handleThemeChanged}
-              id="shared-preferences-theme-select"
-            />
+            <Stack direction="row" gap={1} alignItems="center">
+              <Box flex={1}>
+                <Combobox
+                  options={themeOptions}
+                  value={currentThemeOption.value}
+                  onChange={handleThemeChanged}
+                  id="shared-preferences-theme-select"
+                />
+              </Box>
+              {config.featureToggles.themeStudio && (
+                <LinkButton
+                  variant="secondary"
+                  icon="adjust-circle"
+                  href="/admin/theme-studio"
+                  tooltip={t('shared-preferences.theme.open-studio', 'Open Theme Studio')}
+                  aria-label={t('shared-preferences.theme.open-studio', 'Open Theme Studio')}
+                />
+              )}
+            </Stack>
           </Field>
 
           <Field

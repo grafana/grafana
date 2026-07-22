@@ -4,13 +4,16 @@ import * as React from 'react';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
+  Box,
   Button,
   Field,
   FieldSet,
   Label,
+  LinkButton,
+  Stack,
   TimeZonePicker,
   WeekStartPicker,
   FeatureBadge,
@@ -172,12 +175,25 @@ class SharedPreferences extends PureComponent<Props, State> {
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
           >
-            <Combobox
-              options={this.themeOptions}
-              value={currentThemeOption.value}
-              onChange={this.onThemeChanged}
-              id="shared-preferences-theme-select"
-            />
+            <Stack direction="row" gap={1} alignItems="center">
+              <Box flex={1}>
+                <Combobox
+                  options={this.themeOptions}
+                  value={currentThemeOption.value}
+                  onChange={this.onThemeChanged}
+                  id="shared-preferences-theme-select"
+                />
+              </Box>
+              {config.featureToggles.themeStudio && (
+                <LinkButton
+                  variant="secondary"
+                  icon="adjust-circle"
+                  href="/admin/theme-studio"
+                  tooltip={t('shared-preferences.theme.open-studio', 'Open Theme Studio')}
+                  aria-label={t('shared-preferences.theme.open-studio', 'Open Theme Studio')}
+                />
+              )}
+            </Stack>
           </Field>
 
           <Field

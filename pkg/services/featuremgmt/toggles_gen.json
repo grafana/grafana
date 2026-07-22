@@ -3033,6 +3033,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.themeStudio",
+        "resourceVersion": "1784724090199",
+        "creationTimestamp": "2026-07-22T12:41:30Z",
+        "deletionTimestamp": "2026-07-22T12:54:10Z"
+      },
+      "spec": {
+        "description": "Enables the Theme Studio page for interactively building and previewing custom themes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -5835,6 +5850,24 @@
         "description": "Enables creating alerts from Tempo data source",
         "stage": "experimental",
         "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "themeStudio",
+        "resourceVersion": "1784724850278",
+        "creationTimestamp": "2026-07-21T23:02:57Z",
+        "deletionTimestamp": "2026-07-22T12:41:30Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 12:54:10.278218 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the Theme Studio page for interactively building and previewing custom themes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
