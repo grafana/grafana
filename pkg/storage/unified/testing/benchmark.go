@@ -488,7 +488,7 @@ func runStorageAndSearchBenchmark(
 	}
 
 	// Discover group/resource pairs from the configured document builders
-	builders, err := searchOpts.Resources.GetDocumentBuilders()
+	builders, err := searchOpts.Resources.GetDocumentBuilders(searchOpts.SearchFields)
 	require.NoError(t, err)
 	require.NotEmpty(t, builders, "search options must have at least one document builder")
 

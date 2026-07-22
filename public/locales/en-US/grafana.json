@@ -4523,6 +4523,8 @@
       "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboard failed",
+      "failed-create-permission": "You don't have permission to add dashboards to the selected folder. Choose a folder where you have edit permissions, or ask an administrator to restore the dashboards.",
+      "failed-fetch": "The dashboards could no longer be found or you don't have permission to restore them. Ask an administrator to restore them.",
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboard restored successfully",
       "success-multiple": "Dashboards restored",
@@ -5108,9 +5110,7 @@
     "connect-data": {
       "apps-header": "Apps",
       "datasources-header": "Data Sources",
-      "empty-message": "No results matching your query were found",
-      "request-data-source": "Request a new data source",
-      "roadmap": "View roadmap"
+      "empty-message": "No results matching your query were found"
     },
     "connections-home-page": {
       "welcome-to-connections": "Welcome to Connections"
@@ -8842,6 +8842,7 @@
       "label-resource-attributes": "Resource attributes",
       "label-span-attributes": "Span attributes",
       "label-stack-trace": "Stack trace",
+      "label-summary-attributes": "Summary attributes",
       "label-warnings": "Warnings",
       "overview-items": {
         "label": {
@@ -10748,6 +10749,7 @@
     "placeholder-start-color-from-value": "Auto (min)",
     "placeholder-value-name": "Value",
     "placement-options": {
+      "label-bottom": "Bottom",
       "label-hidden": "Hidden",
       "label-left": "Left",
       "label-right": "Right"
@@ -15821,7 +15823,7 @@
     },
     "zone": {
       "select-aria-label": "Time zone picker",
-      "select-search-input": "Type to search (country, city, abbreviation)"
+      "select-search-input": "Type to search (city, abbreviation)"
     }
   },
   "timeline": {
