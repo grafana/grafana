@@ -13,9 +13,9 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     viewport: { width: 1280, height: 1080 },
   });
 
-  test('should collapse and expand all rows', async ({ gotoDashboardPage, page, selectors }) => {
+  test('should collapse and expand all rows', async ({ gotoDashboardPage, page, selectors, components }) => {
     const dashboardPage = await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
-    const panel = new Panel(page, dashboardPage, selectors);
+    const panel = new Panel({ page, dashboardPage, selectors, components });
 
     const panelContents = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
     await expect(panelContents).toHaveCount(5);
@@ -39,9 +39,9 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     await expect(page.getByText('server = B, pod = Bob')).toBeVisible();
   });
 
-  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors }) => {
+  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors, components }) => {
     const dashboardPage = await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
-    const panel = new Panel(page, dashboardPage, selectors);
+    const panel = new Panel({ page, dashboardPage, selectors, components });
 
     const panel1 = panel.getContainerByTitle('Panel #1');
     await expect(panel1).toBeVisible();

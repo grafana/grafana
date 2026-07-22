@@ -149,10 +149,14 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 	childUID := helper.CreateUnmanagedFolder(t, "Selective Migrate Child", parentUID)
 	dashName := helper.CreateUnmanagedDashboard(t, "Dashboard in nested unmanaged folder", childUID)
 
+	// Selective migration is only supported for folder/folderless targets (an
+	// instance target must migrate everything). folderless preserves the nested
+	// folder hierarchy without a wrapper folder, so the ancestry assertions below
+	// hold.
 	const repo = "selective-migrate-nested-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repo,
-		SyncTarget: "instance",
+		SyncTarget: "folderless",
 		Workflows:  []string{"write"},
 		Copies:     map[string]string{},
 	})
