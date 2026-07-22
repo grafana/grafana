@@ -11,6 +11,7 @@ import { getCategoriesLabels } from 'app/features/transformers/utils';
 
 import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from './TransformationCard';
+import { TransformationSearchStatus } from './TransformationSearchStatus';
 import { type FilterCategory } from './TransformationsEditor';
 
 const VIEW_ALL_VALUE = 'viewAll';
@@ -110,6 +111,8 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
             );
           })}
         </Stack>
+
+        <TransformationSearchStatus count={xforms.length} />
 
         <TransformationsGrid
           showIllustrations={showIllustrations}

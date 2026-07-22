@@ -8,6 +8,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, FilterPill, Grid, IconButton, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { TransformationCard } from 'app/features/dashboard/components/TransformationsEditor/TransformationCard';
+import { TransformationSearchStatus } from 'app/features/dashboard/components/TransformationsEditor/TransformationSearchStatus';
 import { hasBackendDatasource } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/utils';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -118,6 +119,8 @@ export function TransformationTypePicker() {
           />
         ))}
       </Stack>
+
+      <TransformationSearchStatus count={filteredTransformations.length} />
 
       {filteredTransformations.length === 0 ? (
         <EmptyState

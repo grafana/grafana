@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
@@ -53,6 +53,31 @@ describe('TransformationsEditor', () => {
 
       const search = screen.getByTestId(selectors.components.Transforms.searchInput);
       expect(search).toBeDefined();
+    });
+
+    it('announces search results to screen readers via a live region', async () => {
+      setup([
+        {
+          id: 'reduce',
+          options: {},
+        },
+      ]);
+
+      const addTransformationButton = screen.getByTestId(selectors.components.Transforms.addTransformationButton);
+      await userEvent.click(addTransformationButton);
+
+      const status = screen.getByRole('status');
+      expect(status).toHaveAttribute('aria-live', 'polite');
+
+      const search = screen.getByTestId(selectors.components.Transforms.searchInput);
+      await userEvent.type(search, 'reduce');
+
+      await waitFor(() => expect(status).toHaveTextContent(/\d+ transformations? found/));
+
+      await userEvent.clear(search);
+      await userEvent.type(search, 'this matches nothing');
+
+      await waitFor(() => expect(status).toHaveTextContent('No transformations found'));
     });
   });
 
