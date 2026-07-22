@@ -66,6 +66,62 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 		"should have warning message mentioning the malformed dashboard file or validation failure")
 }
 
+// TestIntegrationProvisioning_JobWarningResult_ManagedByOtherFile reproduces the
+// customer scenario: two files in the same repo declaring the same dashboard UID.
+// Sequence: sync file A (owns the UID) → add file B with the SAME UID and change
+// A's UID → sync again. A's replace tries to delete the old UID, which B may now
+// own, producing the "skipping delete of old resource ... now managed by ..."
+// warning.
+func TestIntegrationProvisioning_JobWarningResult_ManagedByOtherFile(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "job-warning-managed-by-other-repo"
+	testRepo := common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
+	}
+	helper.CreateLocalRepo(t, testRepo)
+
+	dashboard := func(name, title string) []byte {
+		return []byte(fmt.Sprintf(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":%q},"spec":{"title":%q}}`, name, title))
+	}
+
+	// Sync 1: only A exists, owning UID "shared-uid".
+	helper.WriteToProvisioningPath(t, "dir-a/dashboard.json", dashboard("shared-uid", "Dashboard A"))
+	job1 := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	job1Obj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job1.Object, job1Obj))
+	t.Logf("SYNC 1: state=%s warnings=%v errors=%v", job1Obj.Status.State, job1Obj.Status.Warnings, job1Obj.Status.Errors)
+
+	// Between syncs: add B with the SAME UID, and change A's UID so A becomes a replace.
+	helper.WriteToProvisioningPath(t, "dir-b/dashboard.json", dashboard("shared-uid", "Dashboard B"))
+	helper.WriteToProvisioningPath(t, "dir-a/dashboard.json", dashboard("new-uid", "Dashboard A v2"))
+
+	// Sync 2: A's replace tries to delete "shared-uid", now owned by B.
+	job2 := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	job2Obj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job2.Object, job2Obj))
+	t.Logf("SYNC 2: state=%s warnings=%v errors=%v", job2Obj.Status.State, job2Obj.Status.Warnings, job2Obj.Status.Errors)
+
+	require.Empty(t, job2Obj.Status.Errors, "the ownership conflict must not surface as an error")
+	found := false
+	for _, w := range job2Obj.Status.Warnings {
+		if strings.Contains(w, "skipping delete of old resource") {
+			found = true
+			break
+		}
+	}
+	require.True(t, found, "expected a 'skipping delete of old resource' warning; got warnings=%v", job2Obj.Status.Warnings)
+	require.Equal(t, provisioning.JobStateWarning, job2Obj.Status.State)
+}
+
 func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 	helper := sharedHelper(t)
 
