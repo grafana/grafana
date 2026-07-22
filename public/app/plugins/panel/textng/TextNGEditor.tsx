@@ -1,5 +1,6 @@
 import { html as htmlLang } from '@codemirror/lang-html';
 import { markdown as markdownLang } from '@codemirror/lang-markdown';
+import { type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
@@ -44,12 +45,12 @@ function renderPreviewHtml(mode: TextMode, content: string): string {
 export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLanguage, onChange }: TextNGEditorProps) {
   const styles = useStyles2(getStyles);
   const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
-  const editorViewRef = useRef<EditorView | null>(null);
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
 
   const previewHtml = useMemo(() => (mode === TextMode.Code ? '' : renderPreviewHtml(mode, content)), [mode, content]);
 
   const extensions = useMemo(() => {
-    const exts = [EditorView.updateListener.of((update) => (editorViewRef.current = update.view))];
+    const exts: Extension[] = [];
     if (wordWrap) {
       exts.push(EditorView.lineWrapping);
     }
@@ -67,8 +68,13 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
     [mode, showLineNumbers]
   );
 
+  // Resolve the live EditorView from the DOM at action time. Caching it in a ref
+  // is unreliable: @uiw/react-codemirror reconfigures/remounts the view across
+  // renders (and view switches), which can leave a stale or null reference.
+  const getEditorView = () => (editorContainerRef.current ? EditorView.findFromDOM(editorContainerRef.current) : null);
+
   const surroundSelection = (before: string, after = before) => {
-    const view = editorViewRef.current;
+    const view = getEditorView();
     if (!view) {
       return;
     }
@@ -82,7 +88,7 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
   };
 
   const insertAtCursor = (text: string) => {
-    const view = editorViewRef.current;
+    const view = getEditorView();
     if (!view) {
       return;
     }
@@ -92,7 +98,7 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
   };
 
   const prefixSelectedLines = (prefix: string) => {
-    const view = editorViewRef.current;
+    const view = getEditorView();
     if (!view) {
       return;
     }
@@ -245,7 +251,7 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
-          <div className={cx(styles.pane, styles.editorPane)}>
+          <div ref={editorContainerRef} className={cx(styles.pane, styles.editorPane)}>
             <CodeMirrorEditor
               value={content}
               onChange={onChange}
