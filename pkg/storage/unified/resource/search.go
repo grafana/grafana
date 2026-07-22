@@ -311,7 +311,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
 	s.inFlightRebuilds = map[NamespacedResource]*rebuildState{}
 
-	info, err := opts.Resources.GetDocumentBuilders()
+	info, err := opts.Resources.GetDocumentBuilders(searchFields)
 	if err != nil {
 		return nil, err
 	}
@@ -2111,7 +2111,7 @@ type TestDocumentBuilderSupplier struct {
 	GroupsResources map[string]string
 }
 
-func (s *TestDocumentBuilderSupplier) GetDocumentBuilders() ([]DocumentBuilderInfo, error) {
+func (s *TestDocumentBuilderSupplier) GetDocumentBuilders(_ *SearchFieldsRegistry) ([]DocumentBuilderInfo, error) {
 	builders := make([]DocumentBuilderInfo, 0, len(s.GroupsResources))
 
 	// Add builders for all possible group/resource combinations
