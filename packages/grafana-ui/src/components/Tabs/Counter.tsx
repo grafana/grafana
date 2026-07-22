@@ -6,14 +6,14 @@ import { useStyles2 } from '../../themes/ThemeContext';
 
 type CounterVariant = 'primary' | 'secondary';
 export interface CounterProps {
-  value: number;
+  value: number | string;
   variant?: CounterVariant;
 }
 
 export const Counter = ({ value, variant = 'secondary' }: CounterProps) => {
   const styles = useStyles2(getStyles, variant);
 
-  return <span className={styles.counter}>{locale(value, 0).text}</span>;
+  return <span className={styles.counter}>{typeof value === 'number' ? locale(value, 0).text : value}</span>;
 };
 
 const getStyles = (theme: GrafanaTheme2, variant: CounterVariant) => ({

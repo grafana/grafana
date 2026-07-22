@@ -21,8 +21,8 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   href?: string;
   icon?: IconName;
   onChangeTab?: (event: React.MouseEvent<HTMLElement>) => void;
-  /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
-  counter?: number | null;
+  /** A number or string rendered next to the text. Usually used to display the number of items in a tab's view, or a capped count like "50+". */
+  counter?: number | string | null;
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
   truncate?: boolean;
@@ -62,7 +62,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       <>
         {icon && <Icon name={icon} data-testid={`tab-icon-${icon}`} />}
         {label}
-        {typeof counter === 'number' && <Counter value={counter} />}
+        {counter != null && <Counter value={counter} />}
         {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );

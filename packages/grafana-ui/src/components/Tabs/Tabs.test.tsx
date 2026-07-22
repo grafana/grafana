@@ -64,6 +64,16 @@ describe('Tabs', () => {
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
+  it('should render tabs with string counters', () => {
+    render(
+      <TabsBar>
+        <Tab label="Tab with Capped Counter" active={true} onChangeTab={onChangeTab} counter="50+" />
+      </TabsBar>
+    );
+
+    expect(screen.getByText('50+')).toBeInTheDocument();
+  });
+
   it('should render tabs with tooltips', async () => {
     const { user } = setup(
       <TabsBar>

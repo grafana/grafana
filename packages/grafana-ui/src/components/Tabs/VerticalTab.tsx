@@ -17,7 +17,7 @@ export const VerticalTab = forwardRef<HTMLAnchorElement, TabProps>(
       <>
         {icon && <Icon name={icon} />}
         {label}
-        {typeof counter === 'number' && <Counter value={counter} />}
+        {counter != null && <Counter value={counter} />}
         {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );
