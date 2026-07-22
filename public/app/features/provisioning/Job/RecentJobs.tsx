@@ -10,8 +10,8 @@ import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimel
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
+import { type RepoType } from '../Wizard/types';
 import { getStatusColor } from '../utils/repositoryStatus';
-import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { formatTimestamp } from '../utils/time';
 
@@ -24,8 +24,8 @@ interface Props {
 
 const AnnoAuthor = 'provisioning.grafana.app/author';
 const AnnoAuthorEmail = 'provisioning.grafana.app/authorEmail';
-const AnnoWebhookSender = 'provisioning.grafana.app/webhookSender';
-const AnnoWebhookSenderId = 'provisioning.grafana.app/webhookSenderId';
+const AnnoAuthorId = 'provisioning.grafana.app/authorId';
+const AnnoAuthorOrigin = 'provisioning.grafana.app/authorOrigin';
 
 type JobCell = {
   row: {
@@ -48,7 +48,7 @@ function formatJobDuration(job: Job): string | null {
   return intervalToAbbreviatedDurationString(interval, true);
 }
 
-const getJobColumns = (showAuthor: boolean, repo: Repository) => [
+const getJobColumns = (showAuthor: boolean) => [
   {
     id: 'jobId',
     header: t('provisioning.recent-jobs.column-job-id', 'Job ID'),
@@ -73,29 +73,22 @@ const getJobColumns = (showAuthor: boolean, repo: Repository) => [
   ...(showAuthor
     ? [
         {
-          id: 'by',
-          header: t('provisioning.recent-jobs.column-by', 'By'),
+          id: 'author',
+          header: t('provisioning.recent-jobs.column-author', 'Author'),
           cell: ({ row: { original: job } }: JobCell) => {
             const annotations = job.metadata?.annotations;
-            return (
-              annotations?.[AnnoWebhookSender] ||
-              annotations?.[AnnoAuthor] ||
-              annotations?.[AnnoAuthorEmail] ||
-              t('provisioning.recent-jobs.by-grafana', 'Grafana')
-            );
+            return annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
           },
         },
         {
-          id: 'from',
-          header: t('provisioning.recent-jobs.column-from', 'From'),
+          id: 'origin',
+          header: t('provisioning.recent-jobs.column-origin', 'Origin'),
           cell: ({ row: { original: job } }: JobCell) => {
-            if (job.metadata?.annotations?.[AnnoWebhookSender] && repo.spec) {
-              const provider = getRepositoryTypeConfig(repo.spec.type)?.label;
-              if (provider) {
-                return provider;
-              }
+            const origin = job.metadata?.annotations?.[AnnoAuthorOrigin];
+            if (!origin) {
+              return t('provisioning.recent-jobs.origin-grafana', 'Grafana');
             }
-            return t('provisioning.recent-jobs.from-grafana', 'Grafana');
+            return getRepositoryTypeConfig(origin as RepoType)?.label ?? origin;
           },
         },
       ]
@@ -146,10 +139,10 @@ function ExpandedRow({ row }: ExpandedRowProps) {
     };
     const annotations = row.metadata?.annotations;
     for (const [key, anno] of [
-      ['webhookSender', AnnoWebhookSender],
-      ['webhookSenderId', AnnoWebhookSenderId],
       ['author', AnnoAuthor],
       ['authorEmail', AnnoAuthorEmail],
+      ['authorId', AnnoAuthorId],
+      ['authorOrigin', AnnoAuthorOrigin],
     ]) {
       const value = annotations?.[anno];
       if (value) {
@@ -210,7 +203,7 @@ export function RecentJobs({ repo }: Props) {
     repositoryName: repo.metadata?.name ?? 'x',
   });
   const showAuthor = useBooleanFlagValue('provisioning.userAttribution', false);
-  const jobColumns = useMemo(() => getJobColumns(showAuthor, repo), [showAuthor, repo]);
+  const jobColumns = useMemo(() => getJobColumns(showAuthor), [showAuthor]);
   const hasLoadedDataRef = useRef(false);
 
   if (activeQuery.data || historicQuery.data) {

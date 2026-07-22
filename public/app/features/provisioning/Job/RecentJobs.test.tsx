@@ -39,19 +39,22 @@ describe('RecentJobs', () => {
       setTestFlags({ 'provisioning.userAttribution': true });
     });
 
-    it('shows the triggering user with Grafana as the origin', async () => {
+    it('shows the triggering user with the recorded origin', async () => {
       setup([
         createJob({
           metadata: {
             name: 'job-1',
             uid: 'uid-1',
-            annotations: { 'provisioning.grafana.app/author': 'Ada Lovelace' },
+            annotations: {
+              'provisioning.grafana.app/author': 'Ada Lovelace',
+              'provisioning.grafana.app/authorOrigin': 'UI',
+            },
           },
         }),
       ]);
 
       expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
-      expect(screen.getByText('Grafana')).toBeInTheDocument();
+      expect(screen.getByText('UI')).toBeInTheDocument();
     });
 
     it('falls back to the author email when the name is missing', async () => {
@@ -68,11 +71,11 @@ describe('RecentJobs', () => {
       expect(await screen.findByText('ada@example.com')).toBeInTheDocument();
     });
 
-    it('shows Grafana for both columns when no user triggered the job', async () => {
+    it('shows Grafana as the origin with no author when no user triggered the job', async () => {
       setup([createJob()]);
 
       expect(await screen.findByText('job-1')).toBeInTheDocument();
-      expect(screen.getAllByText('Grafana')).toHaveLength(2);
+      expect(screen.getByText('Grafana')).toBeInTheDocument();
     });
 
     it('shows the webhook sender with the provider as the origin', async () => {
@@ -81,7 +84,10 @@ describe('RecentJobs', () => {
           metadata: {
             name: 'job-1',
             uid: 'uid-1',
-            annotations: { 'provisioning.grafana.app/webhookSender': 'amalavet' },
+            annotations: {
+              'provisioning.grafana.app/author': 'amalavet',
+              'provisioning.grafana.app/authorOrigin': 'github',
+            },
           },
         }),
       ]);
@@ -97,8 +103,9 @@ describe('RecentJobs', () => {
             name: 'job-1',
             uid: 'uid-1',
             annotations: {
-              'provisioning.grafana.app/webhookSender': 'amalavet',
-              'provisioning.grafana.app/webhookSenderId': '12345',
+              'provisioning.grafana.app/author': 'amalavet',
+              'provisioning.grafana.app/authorId': '12345',
+              'provisioning.grafana.app/authorOrigin': 'github',
             },
           },
         }),
@@ -106,10 +113,11 @@ describe('RecentJobs', () => {
 
       await user.click(await screen.findByRole('button', { name: /toggle row expanded/i }));
 
-      expect(await screen.findByText('webhookSender')).toBeInTheDocument();
+      expect(await screen.findByText('author')).toBeInTheDocument();
       expect(screen.getAllByText(/amalavet/)).toHaveLength(2);
-      expect(screen.getByText('webhookSenderId')).toBeInTheDocument();
+      expect(screen.getByText('authorId')).toBeInTheDocument();
       expect(screen.getByText(/12345/)).toBeInTheDocument();
+      expect(screen.getByText('authorOrigin')).toBeInTheDocument();
     });
 
     it('shows user attribution in the expanded job specification', async () => {
@@ -139,7 +147,7 @@ describe('RecentJobs', () => {
       setTestFlags({ 'provisioning.userAttribution': false });
     });
 
-    it('hides the by column', async () => {
+    it('hides the author column', async () => {
       setup([
         createJob({
           metadata: {
@@ -151,7 +159,7 @@ describe('RecentJobs', () => {
       ]);
 
       expect(await screen.findByText('job-1')).toBeInTheDocument();
-      expect(screen.queryByText('By')).not.toBeInTheDocument();
+      expect(screen.queryByText('Author')).not.toBeInTheDocument();
       expect(screen.queryByText('Ada Lovelace')).not.toBeInTheDocument();
     });
   });
