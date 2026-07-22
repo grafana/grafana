@@ -150,7 +150,18 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
+      <DashboardPreviewBanner
+        queryParams={queryParams}
+        route={route.routeName}
+        slug={slug}
+        path={path}
+        onSaveToNewBranch={() => {
+          // Keep the in-memory draft: enter edit mode on the current scene and open the save drawer,
+          // where the provisioned save form lets the user pick a new branch.
+          dashboard.onEnterEditMode();
+          dashboard.openSaveDrawer({});
+        }}
+      />
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />

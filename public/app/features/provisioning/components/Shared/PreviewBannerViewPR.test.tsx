@@ -179,6 +179,46 @@ describe('PreviewBannerViewPR', () => {
     });
   });
 
+  describe('onOpenPullRequest override', () => {
+    beforeEach(() => {
+      mockUsePullRequestParam.mockReturnValue({
+        prURL: undefined,
+        newPrURL: undefined,
+        repoURL: undefined,
+        repoType: 'github',
+        resourcePushedTo: 'abc',
+        action: undefined,
+        prTitle: undefined,
+      });
+    });
+
+    it('runs the override instead of opening the link directly', async () => {
+      const onOpenPullRequest = jest.fn();
+      render(
+        <PreviewBannerViewPR
+          isNewPr
+          prURL="https://github.com/org/repo/compare"
+          onOpenPullRequest={onOpenPullRequest}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+
+      expect(onOpenPullRequest).toHaveBeenCalledTimes(1);
+      expect(windowOpenSpy).not.toHaveBeenCalled();
+
+      // The override receives a fallback that opens the computed link when invoked.
+      onOpenPullRequest.mock.calls[0][0]();
+      expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank');
+    });
+
+    it('shows a checking state on the button while pre-flighting', () => {
+      render(<PreviewBannerViewPR isNewPr prURL="https://github.com/org/repo/compare" isCheckingBranch />);
+
+      expect(screen.getByText('Checking branch…')).toBeInTheDocument();
+    });
+  });
+
   describe('Different repository types', () => {
     it('should handle GitLab repository type', () => {
       setup({ prURL: 'test-url', isNewPr: false, repoType: 'gitlab' });
