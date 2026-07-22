@@ -114,6 +114,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	}
 
 	usedDirs := map[string]bool{}
+	panelJSONByID := indexPanelJSON(dashboardJSON)
 	for _, p := range panels {
 		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
 
@@ -125,8 +126,14 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 
 		dir := uniquePanelDir(p.ID, p.Title, usedDirs)
 		entry.Dir = dir
-		if len(p.PanelJSON) > 0 {
-			files[dir+"/panel.json"] = indentJSON(p.PanelJSON)
+		// The whole-dashboard client posts the dashboard save model once rather than each panel's JSON
+		// separately, so resolve this panel's JSON from that model by id when it wasn't supplied inline.
+		panelJSON := p.PanelJSON
+		if len(panelJSON) == 0 {
+			panelJSON = panelJSONByID[p.ID]
+		}
+		if len(panelJSON) > 0 {
+			files[dir+"/panel.json"] = indentJSON(panelJSON)
 		}
 
 		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
@@ -155,6 +162,66 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	}
 
 	return buildTarGz(files)
+}
+
+// indexPanelJSON indexes the raw panel JSON from v1 and v2 dashboard save models by panel id.
+// Each entry is stored as it appears in its own schema, so panel.json shape differs by version:
+// the bare panel object for v1 (from "panels"), and the full {kind, spec} element for v2 (from
+// "elements") -- the same split the bundle's dashboard.json already has.
+// Collapsed v1 rows carry their children in a nested "panels" array, so the index includes them recursively.
+func indexPanelJSON(dashboardJSON json.RawMessage) map[int64]json.RawMessage {
+	panelsByID := make(map[int64]json.RawMessage)
+	if len(dashboardJSON) == 0 {
+		return panelsByID
+	}
+	var doc struct {
+		Panels   []json.RawMessage          `json:"panels"`
+		Elements map[string]json.RawMessage `json:"elements"`
+	}
+	if err := json.Unmarshal(dashboardJSON, &doc); err != nil {
+		return panelsByID
+	}
+	indexPanelsByID(doc.Panels, panelsByID)
+	indexElementsByID(doc.Elements, panelsByID)
+	return panelsByID
+}
+
+func indexPanelsByID(panels []json.RawMessage, panelsByID map[int64]json.RawMessage) {
+	for _, raw := range panels {
+		var meta struct {
+			ID     *int64            `json:"id"`
+			Panels []json.RawMessage `json:"panels"`
+		}
+		if err := json.Unmarshal(raw, &meta); err != nil {
+			continue
+		}
+		if meta.ID != nil {
+			if _, exists := panelsByID[*meta.ID]; !exists {
+				panelsByID[*meta.ID] = raw
+			}
+		}
+		indexPanelsByID(meta.Panels, panelsByID)
+	}
+}
+
+// indexElementsByID indexes v2 "elements" entries by their spec.id. Both a regular "Panel" and a
+// "LibraryPanel" carry a resolved panel spec with an id, so both are indexed; other element kinds
+// (rows, tabs, ...) have no panel id and are skipped.
+func indexElementsByID(elements map[string]json.RawMessage, panelsByID map[int64]json.RawMessage) {
+	for _, raw := range elements {
+		var meta struct {
+			Kind string `json:"kind"`
+			Spec struct {
+				ID *int64 `json:"id"`
+			} `json:"spec"`
+		}
+		if err := json.Unmarshal(raw, &meta); err != nil || (meta.Kind != "Panel" && meta.Kind != "LibraryPanel") || meta.Spec.ID == nil {
+			continue
+		}
+		if _, exists := panelsByID[*meta.Spec.ID]; !exists {
+			panelsByID[*meta.Spec.ID] = raw
+		}
+	}
 }
 
 // uniquePanelDir builds a stable, filesystem-safe directory name (panels/<id>-<slug>),
