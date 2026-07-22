@@ -1504,6 +1504,14 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " is immutable",
 		},
 		{
+			name:            "update changing id",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: requester.GetEmail(), AnnoAuthorID: "user:someone-else", AnnoAuthorOrigin: "UI"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthorID + " is immutable",
+		},
+		{
 			name:            "update changing origin",
 			ctx:             userCtx,
 			operation:       admission.Update,
@@ -1549,4 +1557,3 @@ func TestValidateAuthor(t *testing.T) {
 		})
 	}
 }
-
