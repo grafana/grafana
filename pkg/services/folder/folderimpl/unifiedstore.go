@@ -600,6 +600,7 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 }
 
 func escapeSlashes(title string) string {
+	title = strings.ReplaceAll(title, "\\", "\\\\")
 	return strings.ReplaceAll(title, "/", "\\/")
 }
 
