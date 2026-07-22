@@ -190,7 +190,6 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const vLineFeature = new Feature({});
     const lineFeatures = [hLineFeature, vLineFeature];
 
-    // Clear the geometries + styles
     // Stale crosshair geometry would otherwise pollute the "fit to data" extent.
     const clearCrosshair = () => {
       crosshairFeature.setGeometry(undefined);
