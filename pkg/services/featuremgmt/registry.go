@@ -1022,7 +1022,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // POC: enabled by default for ephemeral instance testing
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -1054,7 +1054,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "false",
+			Expression:  "true", // POC: enabled by default for ephemeral instance testing
 		},
 		{
 			Name:        "dashboardLibrary",
