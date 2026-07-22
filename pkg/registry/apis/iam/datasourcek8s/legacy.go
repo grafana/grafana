@@ -39,19 +39,29 @@ func K8sDSActionToLegacy(action string) (string, bool) {
 	}
 }
 
-// DSUIDScopeToLegacy converts a k8s datasource instance scope to legacy datasources:uid:
+// K8sDSUIDScopeToLegacy converts a k8s datasource instance scope to legacy datasources:uid:
 // and returns the datasource type (e.g. "loki", or "*" for wildcard groups).
+// e.g. "loki.datasource.grafana.app/datasources:uid:abc" → "datasources:uid:abc", "loki"
+// e.g. "loki.datasource.grafana.app/datasources:*" → "datasources:*", "loki"
+// e.g. "loki.datasource.grafana.app/datasources:uid:*" → "datasources:uid:*", "loki"
 func K8sDSUIDScopeToLegacy(scope string) (legacyScope, dsType string, ok bool) {
 	group, resourceUID, ok := strings.Cut(scope, "/")
 	if !ok {
 		return "", "", false
 	}
-	resource, uid, ok := strings.Cut(resourceUID, ":")
-	if !ok || resource != "datasources" || uid == "" {
+	resource, rest, ok := strings.Cut(resourceUID, ":")
+	if !ok || resource != "datasources" || rest == "" {
 		return "", "", false
 	}
 	dsType, ok = strings.CutSuffix(group, K8sDatasourceAPIGroupSuffix)
 	if !ok || dsType == "" {
+		return "", "", false
+	}
+	if rest == "*" {
+		return "datasources:*", dsType, true
+	}
+	uid, ok := strings.CutPrefix(rest, "uid:")
+	if !ok || uid == "" {
 		return "", "", false
 	}
 	return "datasources:uid:" + uid, dsType, true

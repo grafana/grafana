@@ -208,6 +208,15 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorCatalogList: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCatalogListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Response:    &sqlVectorCatalogListResponse{},
+					},
+				},
+			},
 			sqlVectorCollectionSearch: {
 				{
 					Name: "no filters",

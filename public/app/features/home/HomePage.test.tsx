@@ -6,6 +6,7 @@ import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@gra
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
@@ -48,9 +49,14 @@ describe('HomePage', () => {
   const originalBuildInfo = { ...config.buildInfo };
   const originalNamespace = config.namespace;
 
-  afterEach(() => {
+  afterEach(async () => {
     config.buildInfo = { ...originalBuildInfo };
     config.namespace = originalNamespace;
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
+    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
     jest.restoreAllMocks();
   });
 
@@ -201,6 +207,35 @@ describe('HomePage', () => {
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+  });
+
+  it('does not render HomepageTabs extension tabs on the redesigned homepage', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+
+    const tabComponent = createComponentWithMeta(
+      {
+        pluginId: 'grafana-setupguide-app',
+        title: 'Plugin tab',
+        component: (({ register }: HomepageTabExtensionProps) => {
+          useEffect(() => register({ id: 'plugin-tab', label: 'Plugin tab' }), [register]);
+          return null;
+        }) as React.ComponentType,
+      },
+      PluginExtensionPoints.HomepageTabs
+    );
+
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components: extensionPointId === PluginExtensionPoints.HomepageTabs ? [tabComponent] : [],
+    }));
+
+    render(<HomePage />);
+
+    // Built-in tabs still render once the tab list settles...
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+    // ...but the redesigned homepage ignores the HomepageTabs extension point.
+    expect(screen.queryByRole('tab', { name: 'Plugin tab' })).not.toBeInTheDocument();
   });
 
   it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {

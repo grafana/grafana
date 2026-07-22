@@ -80,7 +80,7 @@ export const MegaMenu = memo(
         key={key}
         link={link}
         isPinned={isPinned}
-        onClick={state.megaMenuDocked ? undefined : onClose}
+        onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
         activeItem={activeItem}
         onPin={onPinItem}
         editMode={editMode}
@@ -141,7 +141,7 @@ export const MegaMenu = memo(
           activeItem={activeItem}
           editMode={editMode}
           onUnpin={() => onUnpin(entry.url)}
-          onClick={state.megaMenuDocked ? undefined : onClose}
+          onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
           draggableProvided={draggableProvided}
           disabled={isSaving}
         />

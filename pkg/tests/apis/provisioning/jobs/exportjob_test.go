@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -17,37 +16,37 @@ import (
 
 func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Write dashboards at
 	dashboard := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
-	_, err := helper.DashboardsV0.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	createdV0, err := helper.DashboardsV0.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v0 dashboard")
 
 	// FIXME: add helper and template for dashboards in different versions
 	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err = helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	createdV1, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
 	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
-	_, err = helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	createdV2alpha, err := helper.DashboardsV2alpha1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
 
 	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	createdV2beta, err := helper.DashboardsV2beta1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2beta1 dashboard")
 
 	// Now for the repository.
 	const repo = "local-repository"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance", // Export is only supported for instance sync
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{}, // No initial files needed for export test
-		ExpectedDashboards: 4,                   // 4 dashboards created above (v0, v1, v2alpha1, v2beta1)
-		ExpectedFolders:    0,                   // No folders expected after sync
+		Name:       repo,
+		SyncTarget: "instance", // Export is only supported for instance sync
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{}, // No initial files needed for export test
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireDashboards(t, createdV0.GetName(), createdV1.GetName(), createdV2alpha.GetName(), createdV2beta.GetName())
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Now export
 	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
@@ -111,7 +110,6 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Test table for different dashboard versions
 	tests := []struct {
@@ -127,7 +125,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			name: "v0alpha1",
 			file: "../exportunifiedtorepository/dashboard-test-v0.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-				return helper.DashboardsV0.Resource.Create(ctx, dashboard, opts)
+				return helper.DashboardsV0.Resource.Create(t.Context(), dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v0",
 			expectedName:  "test-v0",
@@ -140,7 +138,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			name: "v1",
 			file: "../exportunifiedtorepository/dashboard-test-v1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-				return helper.DashboardsV1.Resource.Create(ctx, dashboard, opts)
+				return helper.DashboardsV1.Resource.Create(t.Context(), dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v1",
 			expectedName:  "test-v1",
@@ -151,7 +149,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			name: "v2alpha1",
 			file: "../exportunifiedtorepository/dashboard-test-v2alpha1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-				return helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, opts)
+				return helper.DashboardsV2alpha1.Resource.Create(t.Context(), dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v2alpha1",
 			expectedName:  "test-v2alpha1",
@@ -162,7 +160,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			name: "v2beta1",
 			file: "../exportunifiedtorepository/dashboard-test-v2beta1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-				return helper.DashboardsV2beta1.Resource.Create(ctx, dashboard, opts)
+				return helper.DashboardsV2beta1.Resource.Create(t.Context(), dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v2beta1",
 			expectedName:  "test-v2beta1",
@@ -172,23 +170,26 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	}
 
 	// Create dashboards in different versions
+	names := make([]string, 0, len(tests))
 	for _, tt := range tests {
 		dashboard := helper.LoadYAMLOrJSONFile(tt.file)
-		_, err := tt.createFunc(dashboard, metav1.CreateOptions{})
+		created, err := tt.createFunc(dashboard, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create %s dashboard", tt.name)
+		names = append(names, created.GetName())
 	}
 
 	// Create repository
 	const repo = "version-test-repository"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance", // Export is only supported for instance sync
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{},
-		ExpectedDashboards: len(tests),
-		ExpectedFolders:    0,
+		Name:       repo,
+		SyncTarget: "instance", // Export is only supported for instance sync
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireDashboards(t, names...)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Export dashboards
 	spec := provisioning.JobSpec{
@@ -237,7 +238,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 
 	// Verify that listing via v1 API shows storedVersion when conversion fails
 	// This tests the generic version handling logic
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err, "should be able to list dashboards via v1 API")
 
 	for _, dashboard := range dashboards.Items {

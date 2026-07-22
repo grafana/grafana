@@ -124,7 +124,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 			defer cancel()
 			out := n.Watch(ctx, WatchOptions{})
 			require.NotNil(t, sub.handler)
-			assert.Equal(t, resourcewatch.SubjectAll, sub.subject)
+			assert.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
 
 			sub.handler("some.subject", mustMarshalNotification(t, &resourcepb.WatchNotification{
 				Type:                    tc.typ,

@@ -3,10 +3,16 @@ import { t } from '@grafana/i18n';
 
 export type AttributeSectionType = 'resource' | 'span';
 
+export const SERVICE_CATEGORY_ID = 'service' as const;
+
+export const SERVICE_HEXAGON_CATEGORY_ICON = 'service-hexagon' as const;
+
+type AttributeCategoryIcon = IconName | typeof SERVICE_HEXAGON_CATEGORY_ICON;
+
 interface AttributeCategoryDefinition {
   id: string;
   label: string;
-  icon: IconName;
+  icon: AttributeCategoryIcon;
   match: (key: string) => boolean;
 }
 
@@ -19,17 +25,17 @@ interface AttributeCategoryConfig {
   id: string;
   labelKey: string;
   defaultLabel: string;
-  icon: IconName;
+  icon: AttributeCategoryIcon;
   prefixes: string[];
   excludedPrefixes?: string[];
 }
 
 const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
   {
-    id: 'service',
+    id: SERVICE_CATEGORY_ID,
     labelKey: 'explore.span-detail.attribute-category.service',
     defaultLabel: 'Service',
-    icon: 'application-observability',
+    icon: SERVICE_HEXAGON_CATEGORY_ICON,
     prefixes: ['service'],
   },
   {
@@ -155,7 +161,7 @@ const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
 ];
 
 const SECTION_CATEGORY_PRIORITY: Record<AttributeSectionType, string[]> = {
-  resource: ['service'],
+  resource: [SERVICE_CATEGORY_ID],
   span: ['http', 'url'],
 };
 

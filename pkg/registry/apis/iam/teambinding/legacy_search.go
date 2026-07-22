@@ -183,11 +183,13 @@ func getFieldValueFromRequirements(reqs []*resourcepb.Requirement, key string) s
 	return ""
 }
 
+var teamBindingColumnDefs = resource.TableColumnsByName(builders.TeamBindingSearchFields)
+
 func teamBindingColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
 	for _, f := range fields {
 		name := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
-		if col, ok := builders.TeamBindingTableColumnDefinitions[name]; ok {
+		if col, ok := teamBindingColumnDefs[name]; ok {
 			cols = append(cols, col)
 		}
 	}

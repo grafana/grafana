@@ -502,12 +502,16 @@ func (hs *HTTPServer) registerRoutes() {
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
-		// On-demand datasource diagnostics. Admin-only, experimental.
-		// Two deliberate, independent gates: this registration is
-		// on-prem only (empty StackID => never on Grafana Cloud), and the handler additionally gates
-		// on the grafana.onDemandDiagnostics feature flag at request time. Admin-only, experimental.
+		// On-demand datasource diagnostics. Admin-only, on-prem-only, experimental.
+		// Two deliberate, independent gates:
+		// 1. on-prem only (empty StackID => never on Grafana Cloud)
+		// 2. grafana.onDemandDiagnostics flag at request time
 		if hs.Cfg.StackID == "" {
-			apiRoute.Post("/ds/diagnostics", reqGrafanaAdmin, routing.Wrap(hs.QueryDiagnostics))
+			apiRoute.Post("/ds/diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDiagnostics))
+			// Dashboard-level diagnostics: async create/poll/download (support-bundle style).
+			apiRoute.Post("/ds/dashboard-diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDashboardDiagnostics))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid", reqGrafanaAdmin, routing.Wrap(hs.GetDashboardDiagnosticsStatus))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid/download", reqGrafanaAdmin, routing.Wrap(hs.DownloadDashboardDiagnostics))
 		}
 
 		// Unified Alerting

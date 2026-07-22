@@ -34,17 +34,18 @@ type availableUpdate struct {
 type PluginsService struct {
 	availableUpdates map[string]availableUpdate
 
-	enabled         bool
-	grafanaVersion  string
-	pluginStore     pluginstore.Store
-	httpClient      httpClient
-	mutex           sync.RWMutex
-	log             log.Logger
-	tracer          tracing.Tracer
-	updateCheckURL  *url.URL
-	pluginInstaller plugins.Installer
-	updateChecker   *pluginchecker.Service
-	updateStrategy  string
+	enabled          bool
+	grafanaVersion   string
+	pluginStore      pluginstore.Store
+	httpClient       httpClient
+	mutex            sync.RWMutex
+	log              log.Logger
+	tracer           tracing.Tracer
+	updateCheckURL   *url.URL
+	updateCheckToken string
+	pluginInstaller  plugins.Installer
+	updateChecker    *pluginchecker.Service
+	updateStrategy   string
 
 	features featuremgmt.FeatureToggles
 	cfg      *setting.Cfg
@@ -86,6 +87,7 @@ func ProvidePluginsService(cfg *setting.Cfg,
 		pluginStore:      pluginStore,
 		availableUpdates: make(map[string]availableUpdate),
 		updateCheckURL:   parsedUpdateCheckURL,
+		updateCheckToken: cfg.GrafanaComProxyAPIToken,
 		pluginInstaller:  pluginInstaller,
 		features:         features,
 		updateChecker:    updateChecker,
@@ -171,6 +173,12 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL.String(), nil)
 	if err != nil {
 		return err
+	}
+	// authenticate when a grafana.com token is configured (e.g. in Grafana Cloud)
+	// so the response reflects the plugin scopes visible to this instance instead
+	// of the anonymous catalog
+	if s.updateCheckToken != "" {
+		req.Header.Set("Authorization", "Bearer "+s.updateCheckToken)
 	}
 	resp, err := s.httpClient.Do(req)
 	if err != nil {

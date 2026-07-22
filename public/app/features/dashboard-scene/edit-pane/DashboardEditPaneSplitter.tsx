@@ -268,11 +268,12 @@ function useUpdateAppChromeActions(dashboard: DashboardScene) {
   useLayoutEffect(() => {
     const hasUid = Boolean(dashboard.state.uid);
     const canStar = Boolean(dashboard.state.meta.canStar);
+    const isSnapshot = Boolean(dashboard.state.meta.isSnapshot);
 
     const breadcrumbActions = (
       <>
         {hasUid && canStar && <StarButton dashboard={dashboard} />}
-        {hasUid && canStar && <PublicDashboardBadge dashboard={dashboard} />}
+        {hasUid && canStar && !isSnapshot && <PublicDashboardBadge dashboard={dashboard} />}
         {renderDynamicNavActions()}
       </>
     );

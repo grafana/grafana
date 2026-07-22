@@ -6,18 +6,24 @@ import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@g
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
 import { mapNumbertoTimeInSlider, mapQueriesToHeadings } from 'app/core/utils/richHistory';
-import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import {
+  type SortOrder,
+  type RichHistorySearchFilters,
+  type RichHistorySettings,
+} from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
+import { useSeedRichHistoryFilters } from './useSeedRichHistoryFilters';
 
 export interface RichHistoryQueriesTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
+  loadError: boolean;
   updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
   loadMoreRichHistory: () => void;
@@ -25,6 +31,8 @@ export interface RichHistoryQueriesTabProps {
   richHistorySearchFilters?: RichHistorySearchFilters;
   activeDatasources: string[];
   listOfDatasources: Array<{ name: string; uid: string }>;
+  isLoadingDatasources: boolean;
+  dsListError: boolean;
   height: number;
 }
 
@@ -113,6 +121,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     queries,
     totalQueries,
     loading,
+    loadError,
     richHistorySearchFilters,
     updateFilters,
     clearRichHistoryResults,
@@ -121,26 +130,22 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     height,
     listOfDatasources,
     activeDatasources,
+    isLoadingDatasources,
+    dsListError,
   } = props;
 
   const styles = useStyles2(getStyles, height);
 
-  // on mount, set filter to either active datasource or all datasources
-  useEffect(() => {
-    const datasourceFilters =
-      !richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
-        ? richHistorySettings.lastUsedDatasourceFilters
-        : activeDatasources;
-    const filters: RichHistorySearchFilters = {
-      search: '',
-      sortOrder: SortOrder.Descending,
-      datasourceFilters,
-      from: 0,
-      to: richHistorySettings.retentionPeriod,
-      starred: false,
-    };
-    updateFilters(filters);
+  useSeedRichHistoryFilters({
+    starred: false,
+    isLoadingDatasources,
+    dsListError,
+    activeDatasources,
+    richHistorySettings,
+    updateFilters,
+  });
 
+  useEffect(() => {
     return () => {
       clearRichHistoryResults();
     };
@@ -163,7 +168,16 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     } else {
       return [];
     }
-  }, [richHistorySearchFilters?.datasourceFilters]);
+  }, [richHistorySearchFilters?.datasourceFilters, listOfDatasources]);
+
+  if (dsListError && richHistorySettings.activeDatasourcesOnly) {
+    return (
+      <Alert
+        severity="error"
+        title={t('explore.rich-history-queries-tab.datasource-list-error', 'Unable to load data sources')}
+      />
+    );
+  }
 
   if (!richHistorySearchFilters) {
     return (
@@ -250,13 +264,16 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
           </div>
         </div>
 
-        {(loading || loadingDs) && (
+        {loadError ? (
+          <Alert
+            severity="error"
+            title={t('explore.rich-history-queries-tab.load-error', 'Unable to load query history')}
+          />
+        ) : loading || loadingDs ? (
           <span>
             <Trans i18nKey="explore.rich-history-queries-tab.loading-results">Loading results...</Trans>
           </span>
-        )}
-
-        {!(loading || loadingDs) &&
+        ) : (
           Object.keys(mappedQueriesToHeadings).map((heading) => {
             return (
               <div key={heading}>
@@ -291,8 +308,9 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
                 })}
               </div>
             );
-          })}
-        {partialResults ? (
+          })
+        )}
+        {!loadError && partialResults ? (
           <div>
             <Trans
               i18nKey="explore.rich-history-queries-tab.showing-queries"
