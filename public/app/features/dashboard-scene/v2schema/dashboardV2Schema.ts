@@ -496,7 +496,7 @@ const panelKindSchema = z.object({
   spec: z.object({
     id: z.number(),
     title: z.string(),
-    description: z.string(),
+    description: z.string().optional(),
     links: nullableArray(dataLinkSchema),
     data: queryGroupKindSchema,
     vizConfig: vizConfigKindSchema,
