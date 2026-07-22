@@ -110,6 +110,14 @@ var appManifestData = app.ManifestData{
 							EmitZeroIfAbsent: true,
 							Description:      "Whether the user is disabled",
 						},
+						{
+							Name:         "externalAuthModules",
+							Path:         "spec.externalAuthInfo[*].module",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"retrieve"},
+							Description:  "Auth module identifiers the user is externally synced with",
+						},
 					},
 					Routes: map[string]spec3.PathProps{
 						"/teams": {
@@ -1369,6 +1377,18 @@ var appManifestData = app.ManifestData{
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
+									},
+								},
+								"externalAuthModules": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Auth module identifiers the user is externally synced with.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
 									},
 								},
 								"internalId": {
