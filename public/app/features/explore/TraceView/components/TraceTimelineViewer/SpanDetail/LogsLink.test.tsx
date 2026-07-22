@@ -1,11 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { of, throwError } from 'rxjs';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
+
 
 import { type DataSourceApi, type DataSourceInstanceSettings, type LinkModel, toDataFrame } from '@grafana/data';
-import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { SpanLinkType, type SpanLinkModel } from '../../types/links';
 
@@ -17,14 +17,10 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagGrafanaDynamicTraceToLogs: jest.fn(),
-}));
-
 const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSettings);
-const useFlagGrafanaDynamicTraceToLogsMock = jest.mocked(useFlagGrafanaDynamicTraceToLogs);
+
+const DYNAMIC_TRACE_TO_LOGS_FLAG = 'grafana.dynamicTraceToLogs';
 
 const CTA_RELATED_LOGS = 'Related logs';
 
@@ -64,11 +60,20 @@ const logsFrame = toDataFrame({
 const emptyFrame = toDataFrame({ fields: [{ name: 'time', values: [] }] });
 
 describe('LogsLinkButton', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
-    useFlagGrafanaDynamicTraceToLogsMock.mockReturnValue(true);
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
+    await act(async () => {
+      setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: true });
+    });
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('renders the link button with its CTA copy', () => {
@@ -78,14 +83,16 @@ describe('LogsLinkButton', () => {
     expect(screen.getByText(CTA_RELATED_LOGS)).toBeInTheDocument();
   });
 
-  it('does not query the datasource when the link has no interpolated query', () => {
+  it('does not query the datasource when the link has no query', () => {
     render(<LogsLinkButton spanLinkModel={createSpanLinkModel()} />);
 
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
 
   it('does not check for logs when the dynamicTraceToLogs flag is disabled', async () => {
-    useFlagGrafanaDynamicTraceToLogsMock.mockReturnValue(false);
+    await act(async () => {
+      setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
+    });
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,9 +114,9 @@ describe('LogsLinkButton', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('runs the interpolated query against its datasource to check for logs', async () => {
-    const query = mockDatasourceReturningFrames([logsFrame], 'loki');
-    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+  it('runs the query against its datasource to check for logs', async () => {
+    const query = mockDatasourceReturningFrames([logsFrame], 'elasticsearch');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };
 
     render(
       <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
