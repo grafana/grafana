@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -18,11 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// The author annotations carry the identity that triggered the job: the display
-// name, email, and unique identifier of the acting user, plus the origin the
-// job came from (UI, API, a Git provider for webhook-created jobs, or Grafana
-// for jobs created by provisioning itself). They are set by the server at
-// creation time and are immutable.
 const (
 	AnnoAuthor       = "provisioning.grafana.app/author"
 	AnnoAuthorEmail  = "provisioning.grafana.app/authorEmail"
@@ -419,21 +416,32 @@ func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioni
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if (name == "" && email == "" && id == "" && origin == "") || identity.IsServiceIdentity(ctx) {
+		if info, ok := types.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(info) {
 			return nil
 		}
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			return apierrors.NewBadRequest("job author annotations must match the requesting user")
+		if requester, err := identity.GetRequester(ctx); err == nil && requester.IsIdentityType(types.TypeUser) {
+			if name == "" && email == "" && id == "" && origin == "" {
+				return nil
+			}
+			if name != requester.GetName() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+			}
+			if email != requester.GetEmail() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
+			}
+			if id != requester.GetUID() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorID))
+			}
+			if origin != "Grafana" {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must be Grafana for user-created jobs", AnnoAuthorOrigin))
+			}
+			return nil
 		}
-		if name != "" && name != requester.GetName() {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+		if name != "" || email != "" || id != "" {
+			return apierrors.NewBadRequest("job author annotations may only be set by a user or the provisioning service")
 		}
-		if email != "" && email != requester.GetEmail() {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
-		}
-		if id != "" && id != requester.GetUID() {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorID))
+		if origin != "" && origin != "Unknown" {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must be Unknown when no user or provisioning service is involved", AnnoAuthorOrigin))
 		}
 	case admission.Update:
 		old, ok := a.GetOldObject().(*provisioning.Job)
