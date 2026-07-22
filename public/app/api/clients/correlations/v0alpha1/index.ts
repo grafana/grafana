@@ -36,25 +36,16 @@ export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         }
       };
     },
-    updateCorrelation: (endpointDefinition) => {
-      const originalQuery = endpointDefinition.query;
-      if (!originalQuery) {
-        return;
-      }
-      endpointDefinition.query = (requestOptions) => ({
-        ...originalQuery(requestOptions),
-        headers: {
-          'Content-Type': 'application/merge-patch+json',
-        },
-      });
-      endpointDefinition.onQueryStarted = async ({}, { queryFulfilled, dispatch }) => {
+    updateCorrelation: {
+      onQueryStarted: async ({}, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
+
           dispatch(notifyApp(createSuccessNotification(t('correlations.notify.edit-success', 'Correlation updated'))));
         } catch (e) {
           handleError(e, dispatch, t('correlations.notify.edit-error', 'Error updating correlation'));
         }
-      };
+      },
     },
     deleteCorrelation: {
       onQueryStarted: async ({}, { queryFulfilled, dispatch }) => {
