@@ -15,6 +15,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { getObservablePluginLinks } from '../plugins/extensions/getPluginExtensions';
 
 import { CommandPalette } from './CommandPalette';
+import { type CommandPaletteAction } from './types';
 
 setPluginLinksHook(() => ({
   links: [],
@@ -357,6 +358,44 @@ describe('CommandPalette', () => {
           isDeepSearchLoaded: true,
           deepSearchItemsCount: 2,
           itemsCount: expect.any(Number),
+          target: '/d/dash-1',
+        })
+      );
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('reports the destination url as target when a navigational keyword result is clicked', async () => {
+      // Clicking the row's real <a href> makes jsdom log an (unimplemented)
+      // navigation error — suppress it; we only care about the report
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const actions: CommandPaletteAction[] = [
+        {
+          id: 'test/latency-dashboard',
+          name: 'Latency overview',
+          section: 'Dashboards',
+          sectionId: 'dashboards',
+          priority: 1,
+          url: '/d/abc123',
+        },
+      ];
+      render(
+        <KBarProvider actions={actions}>
+          <CommandPalette />
+        </KBarProvider>
+      );
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Latency overview');
+
+      const option = await screen.findByRole('option', { name: /Latency overview/ }, { timeout: 3000 });
+      await user.click(option);
+
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'command_palette_action_selected',
+        expect.objectContaining({
+          actionId: 'test/latency-dashboard',
+          section: 'dashboards',
+          isDeepSearchAction: false,
+          target: '/d/abc123',
         })
       );
       consoleErrorSpy.mockRestore();
@@ -380,6 +419,8 @@ describe('CommandPalette', () => {
           // Stable slug, not the translated section header ("Preferences")
           section: 'preferences',
           itemsCount: expect.any(Number),
+          // Change theme executes in place — no destination to report
+          target: undefined,
         })
       );
     });
