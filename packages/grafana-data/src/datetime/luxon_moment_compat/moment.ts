@@ -372,6 +372,10 @@ function parseWithFallbacks(value: string, options?: MomentOptions): DateTime {
     () => DateTime.fromRFC2822(value, options),
     () => DateTime.fromHTTP(value, options),
     () => DateTime.fromSQL(value, options),
+    // like moment, fall back to js Date() parsing as a last resort. it accepts looser inputs than
+    // the luxon parsers above, e.g. RFC 2822 strings missing their mandatory timezone (seen in
+    // RSS pubDates), which it interprets in the environment's local zone.
+    () => DateTime.fromJSDate(new Date(value), options),
   ];
 
   for (const parse of parsers) {
