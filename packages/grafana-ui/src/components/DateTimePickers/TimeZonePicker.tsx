@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react';
 
 import { type SelectableValue, type TimeZone, InternalTimeZones } from '@grafana/data';
+import { canonicalZoneName, getTimeZonesAt } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 
 import { Select } from '../Select/Select';
@@ -8,12 +9,7 @@ import { Select } from '../Select/Select';
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
-import {
-  canonicalZoneName,
-  getTimeZoneDisplayInfo,
-  getTimeZonesAt,
-  type TimeZoneDisplayInfo,
-} from './TimeZonePicker/timeZoneUtils';
+import { getTimeZoneDisplayInfo, type TimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;

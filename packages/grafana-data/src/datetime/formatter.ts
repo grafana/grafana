@@ -3,6 +3,7 @@
 import { type TimeZone } from '../types/time';
 
 import { type DateTimeOptions, getTimeZone } from './common';
+import { findTimeZoneAt } from './easytz_lookup';
 import { systemDateFormats } from './formats';
 import moment from './luxon_moment_compat/moment';
 import { type DateTimeInput, type Moment, toUtc, dateTimeAsMoment } from './moment_wrapper';
@@ -75,8 +76,11 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
  *
  * @public
  */
-export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
-  toTz(dateInUtc, getTimeZone(options)).format(`${systemDateFormats.fullDate} z`);
+export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
+  const timeZone = getTimeZone(options);
+  const time = toTz(dateInUtc, timeZone);
+  return `${time.format(systemDateFormats.fullDate)} ${zoneAbbreviation(time, timeZone)}`;
+};
 
 /**
  * Helper function to return only the time zone abbreviation for a given date and time value. If no options
@@ -87,8 +91,20 @@ export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, opti
  *
  * @public
  */
-export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
-  toTz(dateInUtc, getTimeZone(options)).format('z');
+export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
+  const timeZone = getTimeZone(options);
+  return zoneAbbreviation(toTz(dateInUtc, timeZone), timeZone);
+};
+
+// The luxon-backed `z` token can only produce ICU's localized offset names (e.g. "GMT+2") for
+// most zones, so the DST-correct abbreviation (CEST, EDT, ...) comes from the easy-tz dataset
+// instead. Mirrors toTz's zone resolution: a valid IANA name is looked up directly, anything
+// else ('browser', unknown names) resolves to the local zone; 'utc' isn't in the easy-tz list
+// and falls back to the shim's own `z` formatting ("UTC").
+const zoneAbbreviation = (time: Moment, timeZone: TimeZone): string => {
+  const ianaName = moment.tz.zone(timeZone)?.name ?? moment.tz.guess();
+  return findTimeZoneAt(ianaName, time.valueOf())?.abbr ?? time.format('z');
+};
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
   if (options?.defaultWithMS) {
