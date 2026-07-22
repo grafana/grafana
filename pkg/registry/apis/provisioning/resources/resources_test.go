@@ -527,6 +527,11 @@ func TestDeleteOldResource(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "skipping delete of old resource old-uid")
 		require.Contains(t, err.Error(), "alerts/other-file.json")
+		// Must be the typed error so jobs.classifyWarning demotes it to a warning
+		// instead of failing the whole sync job.
+		var managedByOtherErr *ResourceManagedByOtherFileError
+		require.ErrorAs(t, err, &managedByOtherErr)
+		require.ErrorIs(t, err, ErrResourceManagedByOtherFile)
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 

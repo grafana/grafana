@@ -201,6 +201,72 @@ func TestFullSync_FolderCreationFailed_UnmanagedConflictBecomesWarning(t *testin
 	require.Equal(t, provisioning.ReasonResourceInvalid, recorded.WarningReason())
 }
 
+// TestFullSync_ReplaceResource_ManagedByOtherFileBecomesWarning drives the real
+// full-sync apply pipeline for a resource replacement (a file whose identity
+// changed) where deleting the old resource is refused because another file in the
+// repository now owns that UID. This mirrors the customer scenario of duplicate
+// dashboard UIDs across files. The refusal must surface as a job warning (so the
+// sync does not fail), not a hard error. It exercises the real error wrapping in
+// applyChange and the real warning classification, mocking only the resources
+// boundary so it stays deterministic (a single change, no ordering race).
+func TestFullSync_ReplaceResource_ManagedByOtherFileBecomesWarning(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+	})
+
+	// A single updated file: previously owned "pecan-amounts-metrics", now maps to
+	// a new UID, so full sync takes the replace path and tries to delete the old one.
+	changes := []ResourceFileChange{
+		{
+			Action: repository.FileActionUpdated,
+			Path:   "paidly/pecan-dashboards/amounts-metrics.json",
+			Existing: &provisioning.ResourceListItem{
+				Name:     "pecan-amounts-metrics",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
+		},
+	}
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(changes, nil, nil, nil)
+
+	oldGVR := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	managedByOtherErr := resources.NewResourceManagedByOtherFileError(
+		"pecan-amounts-metrics",
+		"pecan/pecan-dashboards/amounts-metrics.json",
+		"paidly/pecan-dashboards/amounts-metrics.json",
+	)
+	repoResources.On("ReplaceResourceFromFile", mock.Anything,
+		"paidly/pecan-dashboards/amounts-metrics.json", "current-ref", "pecan-amounts-metrics", oldGVR).
+		Return("pecan-amounts-metrics-v2", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, managedByOtherErr)
+
+	progress.On("SetTotal", mock.Anything, len(changes)).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", "paidly/pecan-dashboards/amounts-metrics.json").Return(false).Maybe()
+
+	var recorded jobs.JobResourceResult
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		recorded = r
+		return r.Path() == "paidly/pecan-dashboards/amounts-metrics.json"
+	})).Return()
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
+	require.NoError(t, err, "a resource owned by another file should not fail the whole job")
+
+	require.Nil(t, recorded.Error(), "managed-by-other-file should be stored as warning, not error")
+	require.NotNil(t, recorded.Warning(), "managed-by-other-file should be stored as warning")
+	require.Equal(t, provisioning.ReasonResourceManagedByOther, recorded.WarningReason())
+	require.Contains(t, recorded.Warning().Error(), "skipping delete of old resource pecan-amounts-metrics")
+	require.Contains(t, recorded.Warning().Error(), "now managed by pecan/pecan-dashboards/amounts-metrics.json")
+}
+
 func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 	repo := repository.NewMockRepository(t)
 	repoResources := resources.NewMockRepositoryResources(t)
