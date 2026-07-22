@@ -233,6 +233,12 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantWatcherUsePolling = section.Key("tenant_watcher_use_polling").MustBool(false)
 	cfg.TenantWatcherPollInterval = section.Key("tenant_watcher_poll_interval").MustDuration(1 * time.Hour)
 
+	// search manifest watcher
+	cfg.ManifestApiServerAddress = section.Key("manifest_api_server_address").String()
+	cfg.ManifestWatcherAllowInsecureTLS = section.Key("manifest_watcher_allow_insecure_tls").MustBool(false)
+	cfg.ManifestWatcherCAFile = section.Key("manifest_watcher_ca_file").String()
+	cfg.ManifestWatcherPollInterval = section.Key("manifest_watcher_poll_interval").MustDuration(1 * time.Hour)
+
 	// tenant deleter
 	cfg.EnableTenantDeleter = section.Key("tenant_deleter_enabled").MustBool(false)
 	cfg.TenantDeleterDryRun = section.Key("tenant_deleter_dry_run").MustBool(true)

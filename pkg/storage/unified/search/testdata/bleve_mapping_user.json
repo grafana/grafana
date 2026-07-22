@@ -71,6 +71,18 @@
               }
             ]
           },
+          "externalAuthModules": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
           "lastSeenAt": {
             "enabled": true,
             "dynamic": true,

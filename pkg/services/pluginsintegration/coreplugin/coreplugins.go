@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
@@ -42,7 +41,6 @@ const (
 	PostgreSQL    = "grafana-postgresql-datasource"
 	MySQL         = "mysql"
 	Grafana       = "grafana"
-	Jaeger        = "jaeger"
 )
 
 func init() {
@@ -85,7 +83,7 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service,
 	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service,
 	pr *prometheus.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	graf *grafanads.Service, jaeger *jaeger.Service) *Registry {
+	graf *grafanads.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
@@ -100,7 +98,6 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		PostgreSQL:   asBackendPlugin(pg),
 		MySQL:        asBackendPlugin(my),
 		Grafana:      asBackendPlugin(graf),
-		Jaeger:       asBackendPlugin(jaeger),
 	})
 }
 
@@ -216,8 +213,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = postgres.ProvideService()
 	case MySQL:
 		svc = mysql.ProvideService()
-	case Jaeger:
-		svc = jaeger.ProvideService(httpClientProvider)
 	default:
 		return nil, ErrCorePluginNotFound
 	}
