@@ -1,3 +1,5 @@
+import { guessBrowserTimeZone } from '@grafana/data';
+
 import { formatUtcOffset } from './TimeZoneOffset';
 import { getTimeZoneDisplayInfo, resolveIanaName } from './timeZoneUtils';
 
