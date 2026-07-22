@@ -276,7 +276,7 @@ export function ContentOutline({
 }
 
 const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisible: boolean) => {
-  const expandedWidth = '300px';
+  const expandedWidth = metricsExplorerVisible ? '300px' : '160px';
 
   return {
     wrapper: css({
