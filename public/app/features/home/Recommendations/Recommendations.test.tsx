@@ -152,6 +152,30 @@ describe('Recommendations', () => {
     expect(screen.queryByRole('link', { name: /Add Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
   });
 
+  it('renders known cards immediately and appends the setup card when its probe settles', async () => {
+    let resolveProbe: (hasData: boolean) => void = () => {};
+    jest
+      .mocked(hasSolutionData)
+      .mockImplementation((pluginId: string) =>
+        pluginId === 'grafana-synthetic-monitoring-app'
+          ? new Promise((resolve) => (resolveProbe = resolve))
+          : Promise.resolve(true)
+      );
+    mockGet.mockResolvedValue(
+      APP_IDS.map((id) => listItem(id, { enabled: id === 'grafana-synthetic-monitoring-app' }))
+    );
+
+    render(<Recommendations />);
+
+    // Disabled apps render without waiting for the synthetic-monitoring probe.
+    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/, hidden: true })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
+
+    resolveProbe(false);
+
+    expect(await screen.findByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).toBeInTheDocument();
+  });
+
   it('hides the section when every enabled app has data', async () => {
     mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
 

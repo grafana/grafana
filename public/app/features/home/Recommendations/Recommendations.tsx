@@ -12,6 +12,9 @@ import { type RecommendationItem } from './types';
 export function Recommendations() {
   const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) && config.pluginAdminEnabled;
   // Unscoped pre-gate only; each disabled card re-checks plugins:write scoped to its own plugin.
+  // Deliberate limitation: users with only app access (no plugins:write/install anywhere) do not
+  // see the section at all — recommendations are a plugin-management surface, and the pre-gate
+  // spares every viewer the /api/plugins fetch and the solution data probes.
   const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
   if (!canInstall && !canWriteSome) {
     return null;
@@ -51,7 +54,7 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
 
   // An unavailable plugin list fails closed. /api/plugins always lists at least the core plugins,
   // so an empty response means the list is unreliable and also fails closed.
-  if (pluginsLoading || !installedPlugins || installedPlugins.length === 0 || probesLoading || !solutionsWithData) {
+  if (pluginsLoading || !installedPlugins || installedPlugins.length === 0) {
     return null;
   }
 
@@ -63,7 +66,10 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
       return canInstall ? [toEnableItem(recommendation)] : [];
     }
     if (plugin.enabled) {
-      if (solutionsWithData.has(recommendation.pluginId)) {
+      // Pending probes exclude the card for this render instead of blocking the whole
+      // section: install/enable cards and the left no-data card mount immediately, and
+      // setup cards join once their probe settles.
+      if (probesLoading || !solutionsWithData || solutionsWithData.has(recommendation.pluginId)) {
         return [];
       }
       // The setup CTA opens the app, so app access — not plugins:write — is the relevant permission.
