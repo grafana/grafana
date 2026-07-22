@@ -14,7 +14,7 @@ export interface CounterProps {
 
 export const Counter = ({ value, variant = 'secondary', cappedAt }: CounterProps) => {
   const styles = useStyles2(getStyles, variant);
-  const isCapped = cappedAt != null && value > cappedAt;
+  const isCapped = cappedAt !== undefined && value > cappedAt;
 
   return <span className={styles.counter}>{isCapped ? `${locale(cappedAt, 0).text}+` : locale(value, 0).text}</span>;
 };
