@@ -217,6 +217,28 @@ jobs:
       # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
       # to turn on scrict CSP, add `cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \`
 
+      # Mock grafana.com plugin catalog so install/uninstall tests run offline. Grafana is pointed at
+      # it via [grafana_com] api_url in custom.ini. Local runs start this via the Playwright webServer;
+      # in CI (GRAFANA_URL set) that block is skipped, so start it here on the same :3002.
+      - name: Start mock plugin catalog
+        run: |
+          node packages/grafana-test-utils/src/mock-plugin-catalog/server.mjs \
+            > grafana-server/mock-plugin-catalog.log 2>&1 &
+
+          timeout=30
+          elapsed=0
+          until curl -s -f http://localhost:3002/plugins > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              printf "\n--- mock plugin catalog logs ---\n"
+              cat grafana-server/mock-plugin-catalog.log
+              printf "Timeout after %d seconds waiting for the mock plugin catalog\n" "$timeout"
+              exit 1
+            fi
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+          echo "The mock plugin catalog is ready on :3002"
+
       - name: Start Grafana server
         run: |
           grafana-server/bin/grafana server \

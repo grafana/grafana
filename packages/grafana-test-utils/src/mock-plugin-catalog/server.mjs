@@ -15,7 +15,7 @@ import { dirname, join } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ZIPS_DIR = join(__dirname, 'zips');
 const META_DIR = join(__dirname, 'meta');
-const PORT = Number(process.env.PORT) || 8765;
+const PORT = Number(process.env.PORT) || 3002;
 
 // grafanaDependency is intentionally permissive so whatever Grafana version runs
 // the test passes the compatibility filter. No sha256 -> the backend skips checksum

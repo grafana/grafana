@@ -36,7 +36,7 @@ yarn workspace @grafana/test-utils mock-plugin-catalog
 # terminal 2 — point Grafana at the mock and allow the unsigned test plugins.
 # Use export: the inline `VAR=... make run` form does not propagate through
 # make/air to the respawned backend process.
-export GF_GRAFANA_COM_API_URL=http://localhost:8765
+export GF_GRAFANA_COM_API_URL=http://localhost:3002
 export GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-poc-app,grafana-poc-panel,grafana-pocds-datasource
 make run
 ```
@@ -56,10 +56,10 @@ dir outside the repo so it never touches the repo-root `.yarnrc.yml`.
 ## Verify (browserless)
 
 ```bash
-curl -s localhost:8765/plugins | jq '.items | length'                           # => 3
+curl -s localhost:3002/plugins | jq '.items | length'                           # => 3
 curl -s -u admin:admin localhost:3000/api/gnet/plugins | jq '.items | length'   # => 3
 
-ids=$(curl -s localhost:8765/plugins | jq -r '.items[].id')
+ids=$(curl -s localhost:3002/plugins | jq -r '.items[].id')
 for id in $ids; do
   curl -s -u admin:admin -X POST localhost:3000/api/plugins/$id/install -w " $id %{http_code}\n"
 done                                                                            # => 200 each

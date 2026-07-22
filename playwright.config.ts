@@ -49,12 +49,22 @@ export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
 export default defineConfig<PluginOptions>({
   ...baseConfig,
   ...(!process.env.GRAFANA_URL && {
-    webServer: {
-      command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
-      url: DEFAULT_URL,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
+    // Local only — in CI GRAFANA_URL is set, so both servers are started by the workflow instead.
+    webServer: [
+      {
+        command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+        url: DEFAULT_URL,
+        stdout: 'pipe',
+        stderr: 'pipe',
+      },
+      {
+        // Stands in for the grafana.com plugin catalog so install/uninstall tests run offline.
+        command: 'yarn workspace @grafana/test-utils mock-plugin-catalog',
+        url: 'http://localhost:3002/plugins',
+        stdout: 'pipe',
+        stderr: 'pipe',
+      },
+    ],
   }),
   projects: [
     // Login to Grafana with admin user and store the cookie on disk for use in other tests
@@ -203,6 +213,19 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'grafana-e2etest-panel',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
+    }),
+    // Install/uninstall the mock-catalog plugins. Baseline (MT flags off); the MT variant is a
+    // separate project that depends on this one so the two never mutate install state concurrently.
+    withAuth({
+      name: 'plugin-catalog',
+      testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests'),
+      testIgnore: /useMTPlugins/,
+    }),
+    withAuth({
+      name: 'plugin-catalog-mt',
+      testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests/useMTPlugins'),
+      // Runs only after plugin-catalog finishes, so the two never install/uninstall at the same time.
+      dependencies: ['plugin-catalog'],
     }),
   ],
 });
