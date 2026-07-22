@@ -60,7 +60,7 @@ func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(
 		"/api/folders/inner-a-uid/permissions",
 		map[string]interface{}{
 			"items": []map[string]interface{}{
-				{"userId": viewerUserID, "permission": 2},
+				{"userId": viewerUserID, "permission": common.FolderPermissionEdit},
 			},
 		},
 		helper.Org1.Admin,

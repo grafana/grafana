@@ -12,6 +12,7 @@ import {
   type GetRepositoryFilesWithPathApiResponse,
   provisioningAPIv0alpha1,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -208,7 +209,8 @@ abstract class DashboardScenePageStateManagerBase<T>
 
     if (isRedirectResponse(rsp)) {
       const newUrl = locationUtil.processRedirectUri(rsp.redirectUri, locationService.getLocation());
-      locationService.replace(newUrl);
+      // Landing-page resolution, not a navigation: journey trackers keep previousUrl absent.
+      locationService.replace(markAsUrlRewrite(newUrl));
       return null;
     }
 
@@ -887,11 +889,12 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
         if (dashboardUrl !== currentPath) {
           // Spread current location to persist search params used for navigation
-          locationService.replace({
-            ...locationService.getLocation(),
-            pathname: dashboardUrl,
-          });
-          console.log('not correct url correcting', dashboardUrl, currentPath);
+          locationService.replace(
+            markAsUrlRewrite({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            })
+          );
         }
       }
 
@@ -1183,11 +1186,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         const currentPath = locationService.getLocation().pathname;
         if (dashboardUrl !== currentPath) {
           // Spread current location to persist search params used for navigation
-          locationService.replace({
-            ...locationService.getLocation(),
-            pathname: dashboardUrl,
-          });
-          console.log('not correct url correcting', dashboardUrl, currentPath);
+          locationService.replace(
+            markAsUrlRewrite({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            })
+          );
         }
       }
       // Populate nav model in global store according to the folder

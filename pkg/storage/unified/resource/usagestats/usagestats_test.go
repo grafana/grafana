@@ -82,6 +82,20 @@ func TestDeclarations(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestDeclarationsValidate(t *testing.T) {
+	require.NoError(t, DefaultDeclarations().Validate())
+
+	// A resource declaring more metrics than fit in one daily batch cannot
+	// flush and must be rejected at startup.
+	tooMany := make([]string, kv.MaxBatchOps+1)
+	for i := range tooMany {
+		tooMany[i] = fmt.Sprintf("metric-%d", i)
+	}
+	decls := &Declarations{byGR: map[string]StatsDeclaration{}}
+	decls.add(StatsDeclaration{Group: "g.grafana.app", Resource: "things", Metrics: tooMany, Windows: []int{1}})
+	require.ErrorContains(t, decls.Validate(), "exceeding the max batch size")
+}
+
 func TestDeclarationFieldNames(t *testing.T) {
 	require.Equal(t, "views_last_1_days", aggregateField("views", 1))
 	require.Equal(t, "views_last_7_days", aggregateField("views", 7))
@@ -145,6 +159,95 @@ func TestStoreIncrementDaily(t *testing.T) {
 		_, hasErrors := daily[day]["errors"]
 		require.False(t, hasErrors)
 	})
+}
+
+func TestStoreReadDailyRange(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, store *Store) {
+		ctx := context.Background()
+		o := newTestObject("dash-a")
+
+		require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-20", map[string]uint64{"views": 3}))
+		require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-22", map[string]uint64{"views": 7, "queries": 1}))
+		require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-24", map[string]uint64{"views": 2}))
+		require.NoError(t, store.IncrementDaily(ctx, o, overflowBucket, map[string]uint64{"views": 100}))
+
+		collect := func(from, to string) []DailyBucket {
+			var got []DailyBucket
+			for b, err := range store.ReadDailyRange(ctx, o, from, to) {
+				require.NoError(t, err)
+				got = append(got, b)
+			}
+			return got
+		}
+
+		// Streamed ascending, overflow excluded, all metrics per day present.
+		full := collect("", "")
+		require.Equal(t, []string{"2026-06-20", "2026-06-22", "2026-06-24"}, bucketDays(full))
+		require.Equal(t, uint64(3), full[0].Metrics["views"])
+		require.Equal(t, uint64(7), full[1].Metrics["views"])
+		require.Equal(t, uint64(1), full[1].Metrics["queries"])
+		require.Equal(t, uint64(2), full[2].Metrics["views"])
+
+		// Inclusive range bounds.
+		require.Equal(t, []string{"2026-06-22", "2026-06-24"}, bucketDays(collect("2026-06-22", "")))
+		require.Equal(t, []string{"2026-06-20", "2026-06-22"}, bucketDays(collect("", "2026-06-22")))
+		require.Equal(t, []string{"2026-06-22"}, bucketDays(collect("2026-06-21", "2026-06-23")))
+
+		// Empty result for a range with no data.
+		require.Empty(t, collect("2027-01-01", "2027-12-31"))
+
+		// Early consumer termination stops iteration.
+		var seen int
+		for range store.ReadDailyRange(ctx, o, "", "") {
+			seen++
+			break
+		}
+		require.Equal(t, 1, seen)
+	})
+}
+
+func TestStoreReadDailyRangeBatching(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, store *Store) {
+		ctx := context.Background()
+		o := newTestObject("dash-a")
+
+		// Enough days that the 3-metric keys span several BatchGet chunks and
+		// individual days straddle chunk boundaries (3 does not divide 50).
+		const days = 40
+		want := make(map[string]uint64, days)
+		for i := 0; i < days; i++ {
+			day := fmt.Sprintf("2026-06-%02d", i+1)
+			views := uint64(i + 1)
+			require.NoError(t, store.IncrementDaily(ctx, o, day, map[string]uint64{
+				"views":   views,
+				"queries": views * 2,
+				"errors":  0, // zero deltas are skipped, so this key won't exist
+			}))
+			want[day] = views
+		}
+
+		var got []DailyBucket
+		for b, err := range store.ReadDailyRange(ctx, o, "", "") {
+			require.NoError(t, err)
+			got = append(got, b)
+		}
+
+		require.Len(t, got, days)
+		for i, b := range got {
+			require.Equal(t, fmt.Sprintf("2026-06-%02d", i+1), b.Day, "days must stream in ascending order")
+			require.Equal(t, want[b.Day], b.Metrics["views"])
+			require.Equal(t, want[b.Day]*2, b.Metrics["queries"])
+			require.Len(t, b.Metrics, 2, "each day carries exactly its non-zero metrics, even across batch boundaries")
+		}
+	})
+}
+
+func bucketDays(buckets []DailyBucket) []string {
+	out := make([]string, 0, len(buckets))
+	for _, b := range buckets {
+		out = append(out, b.Day)
+	}
+	return out
 }
 
 func TestStoreFoldIntoOverflow(t *testing.T) {

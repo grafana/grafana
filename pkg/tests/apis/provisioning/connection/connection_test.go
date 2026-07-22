@@ -723,17 +723,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		})
 
 		// Wait for initial reconciliation - controller should update status
-		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
-			if err != nil {
-				return false
-			}
-			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
-			return updated.Status.ObservedGeneration == updated.Generation &&
-				updated.Status.Health.Checked > 0 &&
-				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
-				updated.Status.Health.Healthy
-		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
+		helper.WaitForHealthyConnection(t, connName)
 
 		// Verify initial health check was set
 		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
@@ -790,17 +780,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		})
 
 		// Wait for initial reconciliation - controller should update status
-		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
-			if err != nil {
-				return false
-			}
-			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
-			return updated.Status.ObservedGeneration == updated.Generation &&
-				updated.Status.Health.Checked > 0 &&
-				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
-				updated.Status.Health.Healthy
-		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
+		helper.WaitForHealthyConnection(t, connName)
 
 		// Verify initial health check was set
 		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
@@ -929,17 +909,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		})
 
 		// Wait for initial reconciliation - controller should update status
-		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
-			if err != nil {
-				return false
-			}
-			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
-			return updated.Status.ObservedGeneration == updated.Generation &&
-				updated.Status.Health.Checked > 0 &&
-				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
-				updated.Status.Health.Healthy
-		}, 10*time.Second, 500*time.Millisecond, "connection should be initially reconciled with health status")
+		helper.WaitForHealthyConnection(t, connName)
 
 		// Verify initial health check was set
 		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
@@ -1707,10 +1677,7 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 		require.NoError(t, err, "failed to delete repository")
 
 		// Wait for the repository to be fully deleted (might have finalizers)
-		require.Eventually(t, func() bool {
-			_, err := helper.Repositories.Resource.Get(t.Context(), "repo-referencing-connection", metav1.GetOptions{})
-			return k8serrors.IsNotFound(err)
-		}, 30*time.Second, 100*time.Millisecond, "repository should be deleted")
+		helper.WaitForRepositoryDeleted(t, "repo-referencing-connection")
 
 		// Now deletion should succeed
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {

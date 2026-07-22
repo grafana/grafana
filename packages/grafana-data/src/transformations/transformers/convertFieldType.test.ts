@@ -60,6 +60,27 @@ describe('field convert type', () => {
     });
   });
 
+  it.each([
+    ['utc', 'YYYY-MM-DD HH:mm:ss', Date.UTC(2024, 0, 1)],
+    ['Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss', Date.UTC(2023, 11, 31, 18, 30)],
+    ['utc', '', Date.UTC(2024, 0, 1)],
+  ])('will parse string time in the specified timezone', (timezone, dateFormat, expected) => {
+    const field: Field = {
+      name: 'date',
+      type: FieldType.string,
+      values: ['2024-01-01 00:00:00'],
+      config: {},
+    };
+
+    const result = convertFieldType(field, {
+      destinationType: FieldType.time,
+      dateFormat,
+      timezone,
+    });
+
+    expect(result.values).toEqual([expected]);
+  });
+
   it('will not parse improperly formatted date strings', () => {
     const options = { targetField: 'misformatted dates', destinationType: FieldType.time };
 

@@ -20,32 +20,39 @@ import (
 func TestHTTPCaptureMiddleware_noBuffer_passthrough(t *testing.T) {
 	var contextualMWs []sdkhttpclient.Middleware
 	var called bool
+	var gotHeader string
 	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHTTPCaptureMiddleware()))
-	cdt.TestHandler.QueryDataFunc = func(ctx context.Context, _ *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	cdt.TestHandler.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 		called = true
 		contextualMWs = sdkhttpclient.ContextualMiddlewareFromContext(ctx)
+		gotHeader = req.Headers[harCaptureHeader]
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	// No buffer in context -> pure pass-through, no capturing middleware injected.
+	// No buffer in context -> pure pass-through: no capturing middleware injected and no external
+	// capture header set.
 	_, err := cdt.MiddlewareHandler.QueryData(context.Background(), &backend.QueryDataRequest{})
 	require.NoError(t, err)
 	assert.True(t, called)
 	assert.Empty(t, contextualMWs)
+	assert.Empty(t, gotHeader)
 }
 
-func TestHTTPCaptureMiddleware_withBuffer_injectsContextualMiddleware(t *testing.T) {
+func TestHTTPCaptureMiddleware_withBuffer_injectsContextualMiddlewareAndSetsHeader(t *testing.T) {
 	var contextualMWs []sdkhttpclient.Middleware
+	var gotHeader string
 	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHTTPCaptureMiddleware()))
-	cdt.TestHandler.QueryDataFunc = func(ctx context.Context, _ *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	cdt.TestHandler.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 		contextualMWs = sdkhttpclient.ContextualMiddlewareFromContext(ctx)
+		gotHeader = req.Headers[harCaptureHeader]
 		return &backend.QueryDataResponse{}, nil
 	}
 
 	ctx, _ := harcapture.WithCapture(context.Background())
 	_, err := cdt.MiddlewareHandler.QueryData(ctx, &backend.QueryDataRequest{})
 	require.NoError(t, err)
-	assert.NotEmpty(t, contextualMWs)
+	assert.NotEmpty(t, contextualMWs, "core (in-process) capturing RoundTripper is injected")
+	assert.Equal(t, "true", gotHeader, "external gRPC plugins are signalled via the capture header")
 }
 
 func TestHTTPCaptureMiddleware_withBuffer_capturesHTTPEntry(t *testing.T) {

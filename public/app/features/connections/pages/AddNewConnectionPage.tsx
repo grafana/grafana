@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { PluginType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { RoadmapLinks } from 'app/features/plugins/admin/components/RoadmapLinks';
 import UpdateAllButton from 'app/features/plugins/admin/components/UpdateAllButton';
 import UpdateAllModal from 'app/features/plugins/admin/components/UpdateAllModal';
 import { useGetUpdatable } from 'app/features/plugins/admin/state/hooks';
@@ -49,7 +48,6 @@ export function AddNewConnectionPage() {
     <Page navId={'connections-add-new-connection'} actions={updateAllButton} className={styles.pageContainer}>
       <Page.Contents>
         <AddNewConnection />
-        <RoadmapLinks />
         <UpdateAllModal
           isOpen={showUpdateModal}
           isLoading={areUpdatesLoading}

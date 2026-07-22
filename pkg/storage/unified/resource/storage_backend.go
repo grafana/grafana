@@ -186,8 +186,20 @@ type KVBackend interface {
 	LeaseManager() *lease.Manager
 }
 
+// ExperimentalKVOptions carries an alternative KV plus per-use-case flags
+// selecting which backend components use it.
+type ExperimentalKVOptions struct {
+	KV KV
+	// TenantMetadata stores tenant pending-delete metadata (written by
+	// the tenant watcher, read by the tenant deleter) in KV instead of KvStore.
+	TenantMetadata bool
+}
+
 type KVBackendOptions struct {
-	KvStore              KV
+	KvStore KV
+	// ExperimentalKV, when set, routes flagged use-cases to an alternative KV.
+	// Nil preserves existing behavior.
+	ExperimentalKV       *ExperimentalKVOptions
 	DisablePruner        bool
 	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
@@ -270,6 +282,11 @@ func getSnowflakeNode() (*snowflake.Node, error) {
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	kv := opts.KvStore
+	pdKV := opts.KvStore
+	if opts.ExperimentalKV != nil && opts.ExperimentalKV.TenantMetadata {
+		pdKV = opts.ExperimentalKV.KV
+	}
+	pds := newPendingDeleteStore(pdKV)
 
 	logger := opts.Log
 	if opts.Log == nil {
@@ -360,7 +377,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant watcher.
 	if opts.TenantWatcherConfig != nil {
-		tw, err := NewTenantWatcher(ctx, backend.dataStore, func(ctx context.Context, event *WriteEvent) (int64, error) {
+		tw, err := NewTenantWatcher(ctx, backend.dataStore, pds, func(ctx context.Context, event *WriteEvent) (int64, error) {
 			return backend.WriteEvent(ctx, *event)
 		}, *opts.TenantWatcherConfig)
 		if err != nil {
@@ -371,7 +388,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant deleter.
 	if opts.TenantDeleterConfig != nil {
-		td := NewTenantDeleter(backend.dataStore, newPendingDeleteStore(backend.kv), *opts.TenantDeleterConfig)
+		td := NewTenantDeleter(backend.dataStore, pds, *opts.TenantDeleterConfig)
 		td.Start(ctx)
 		backend.tenantDeleter = td
 	}

@@ -6,10 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -237,14 +235,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			"exactly 1 of the 2 new dashboards should be skipped due to quota")
 
 		// Step 5: Verify partial sync — 1 new dashboard was created (total 2), 1 was skipped
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			assert.Len(collect, dashboards.Items, 2,
-				"should have 2 dashboards: the original + 1 new (the other was skipped)")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Step 6: Verify the repo is now at quota (1 folder + 2 dashboards = 3/3)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -332,21 +323,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Step 5: Verify no new dashboards were created. One new folder consumes the last quota slot,
 		// so its sibling dashboard is skipped due to quota. The other folder fails creation,
 		// so its child dashboard is skipped because the parent folder could not be created.
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			var repoDashboardCount int
-			for _, d := range dashboards.Items {
-				managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
-				if managerID == repo {
-					repoDashboardCount++
-				}
-			}
-			assert.Equal(collect, 2, repoDashboardCount,
-				"should still have only 2 dashboards: both new dashboards were skipped due to quota")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Should have 4 folders: root + subfolder + subfolder/nested + 1 new (the other was skipped)
 		helper.RequireRepoFolderCount(t, repo, 4)

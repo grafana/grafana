@@ -12,6 +12,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -705,9 +706,11 @@ describe('DashboardScenePageStateManager v1', () => {
         await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
 
         // URL correction should happen because playlist is not active
-        expect(mockLocationService.replace).toHaveBeenCalledWith({
-          pathname: '/d/fake-uid/f09f93a6-warehouse-dashboard-test',
-        });
+        expect(mockLocationService.replace).toHaveBeenCalledWith(
+          markAsUrlRewrite({
+            pathname: '/d/fake-uid/f09f93a6-warehouse-dashboard-test',
+          })
+        );
       });
 
       it('should skip URL correction when playlist is active', async () => {
@@ -1267,7 +1270,9 @@ describe('DashboardScenePageStateManager v2', () => {
           const loader = new DashboardScenePageStateManagerV2({});
           await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
-          expect(mockLocationService.replace).toHaveBeenCalledWith('/d/custom-home?tab=recent&doc=some-query-value');
+          expect(mockLocationService.replace).toHaveBeenCalledWith(
+            markAsUrlRewrite('/d/custom-home?tab=recent&doc=some-query-value')
+          );
           expect(loader.state.dashboard).toBeUndefined();
         } finally {
           locationService.replace = originalReplace;
@@ -1480,9 +1485,11 @@ describe('DashboardScenePageStateManager v2', () => {
         await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
 
         // URL correction should happen because playlist is not active
-        expect(mockLocationService.replace).toHaveBeenCalledWith({
-          pathname: '/d/fake-uid/f09f93a6-warehouse-dashboard-test',
-        });
+        expect(mockLocationService.replace).toHaveBeenCalledWith(
+          markAsUrlRewrite({
+            pathname: '/d/fake-uid/f09f93a6-warehouse-dashboard-test',
+          })
+        );
       });
 
       it('should skip URL correction when playlist is active', async () => {
@@ -2366,7 +2373,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
         expect(mockLocationService.replace).toHaveBeenCalledWith(
-          '/a/custom-home-plugin?tab=recent&doc=some-query-value'
+          markAsUrlRewrite('/a/custom-home-plugin?tab=recent&doc=some-query-value')
         );
         expect(loader.state.dashboard).toBeUndefined();
       } finally {

@@ -1481,30 +1481,34 @@ func (s *server) RecordEvent(ctx context.Context, req *resourcepb.RecordEventReq
 	return &resourcepb.RecordEventResponse{}, nil
 }
 
-func (s *server) GetResourceDailyStats(ctx context.Context, req *resourcepb.GetResourceDailyStatsRequest) (*resourcepb.GetResourceDailyStatsResponse, error) {
-	ctx, span := tracer.Start(ctx, "resource.server.GetResourceDailyStats")
+func (s *server) GetResourceDailyStats(req *resourcepb.GetResourceDailyStatsRequest, stream resourcepb.ResourceStats_GetResourceDailyStatsServer) error {
+	ctx, span := tracer.Start(stream.Context(), "resource.server.GetResourceDailyStats")
 	defer span.End()
 
 	if s.statsIngester == nil {
-		return nil, status.Error(codes.Unimplemented, "usage stats are not enabled")
+		return status.Error(codes.Unimplemented, "usage stats are not enabled")
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return nil, status.Error(codes.Unauthenticated, "no user found in context")
+		return status.Error(codes.Unauthenticated, "no user found in context")
 	}
 	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, status.Error(codes.InvalidArgument, r.Message)
+		return status.Error(codes.InvalidArgument, r.Message)
 	}
 	if err := s.checkStatsReadAccess(ctx, user, req.Key); err != nil {
-		return nil, err
+		return err
 	}
 
-	days, err := s.statsIngester.GetResourceDailyStats(ctx, req.Key, req.FromDay, req.ToDay)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+	for day, err := range s.statsIngester.GetResourceDailyStats(ctx, req.Key, req.FromDay, req.ToDay) {
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+		if err := stream.Send(day); err != nil {
+			return err
+		}
 	}
-	return &resourcepb.GetResourceDailyStatsResponse{Days: days}, nil
+	return nil
 }
 
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
