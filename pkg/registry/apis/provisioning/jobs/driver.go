@@ -84,6 +84,10 @@ type jobProcessor struct {
 	// Only the first worker who supports the job will process it; the rest are ignored.
 	workers []Worker
 
+	// driverID identifies this worker within the pod, used as the driver_id label on
+	// the in-flight gauge so per-worker saturation can be observed.
+	driverID string
+
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
 
@@ -102,6 +106,7 @@ func newJobProcessor(
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
+	driverID string,
 	metrics *JobMetrics,
 	processed *usinformer.ProcessedMetrics,
 	workers ...Worker,
@@ -113,6 +118,7 @@ func newJobProcessor(
 		repoGetter:           repoGetter,
 		historicJobs:         historicJobs,
 		workers:              workers,
+		driverID:             driverID,
 		metrics:              metrics,
 		processed:            processed,
 	}
@@ -156,6 +162,14 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	if !enqueuedAt.IsZero() {
 		d.processed.ObserveDeliveryLatency(trigger, enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
 	}
+
+	// Mark this worker slot busy for the whole claim->complete duration. The Inc and
+	// the deferred Dec run on the same goroutine, so the gauge stays balanced across
+	// every return path (timeout, lease loss, shutdown, completion). Methods are
+	// nil-safe for drivers built without metrics in tests.
+	inFlightAction := string(claimedJob.Spec.Action)
+	d.metrics.IncInFlight(d.driverID, inFlightAction)
+	defer d.metrics.DecInFlight(d.driverID, inFlightAction)
 
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)

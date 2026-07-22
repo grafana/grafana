@@ -182,6 +182,8 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 			attribute.String("job.action", string(updatedJob.Spec.Action)),
 		)
 
+		s.queueMetrics.RecordClaim(ClaimOutcomeClaimed)
+
 		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
 			// Keep the identity-augmented context so we have permissions to do this.
@@ -229,6 +231,7 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 
 	// Every attempt conflicted; treat the job as claimed by someone else. If it is in fact
 	// still unclaimed, the informer re-list re-discovers it.
+	s.queueMetrics.RecordClaim(ClaimOutcomeContended)
 	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
 	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
 }
