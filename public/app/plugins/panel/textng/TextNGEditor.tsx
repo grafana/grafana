@@ -63,7 +63,7 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
 
   const editorLanguage = mode === TextMode.Code && codeLanguage === CodeLanguage.Json ? 'json' : undefined;
   const basicSetup = useMemo(
-    () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : true }),
+    () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),
     [mode, showLineNumbers]
   );
 

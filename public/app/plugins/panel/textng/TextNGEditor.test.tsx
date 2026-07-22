@@ -12,23 +12,34 @@ jest.mock('@grafana/ui/unstable', () => ({
   CodeMirrorEditor: ({
     value,
     onChange,
+    basicSetup,
     'aria-label': ariaLabel,
   }: {
     value: string;
     onChange: (value: string) => void;
+    basicSetup?: { lineNumbers?: boolean };
     'aria-label'?: string;
-  }) => <textarea aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />,
+  }) => (
+    <textarea
+      aria-label={ariaLabel}
+      value={value}
+      data-line-numbers={String(Boolean(basicSetup?.lineNumbers))}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  ),
 }));
 
 function ControlledEditor({
   initialValue,
   mode,
   wordWrap = true,
+  showLineNumbers = false,
   onChange,
 }: {
   initialValue: string;
   mode: TextMode;
   wordWrap?: boolean;
+  showLineNumbers?: boolean;
   onChange: (value: string) => void;
 }) {
   const [value, setValue] = useState(initialValue);
@@ -37,7 +48,7 @@ function ControlledEditor({
       content={value}
       mode={mode}
       wordWrap={wordWrap}
-      showLineNumbers={false}
+      showLineNumbers={showLineNumbers}
       onChange={(next) => {
         setValue(next);
         onChange(next);
@@ -46,8 +57,16 @@ function ControlledEditor({
   );
 }
 
-const setup = (value: string, mode: TextMode, onChange = jest.fn(), wordWrap = true) => {
-  render(<ControlledEditor initialValue={value} mode={mode} wordWrap={wordWrap} onChange={onChange} />);
+const setup = (value: string, mode: TextMode, onChange = jest.fn(), wordWrap = true, showLineNumbers = false) => {
+  render(
+    <ControlledEditor
+      initialValue={value}
+      mode={mode}
+      wordWrap={wordWrap}
+      showLineNumbers={showLineNumbers}
+      onChange={onChange}
+    />
+  );
   return { onChange };
 };
 
@@ -143,6 +162,36 @@ describe('TextNGEditor', () => {
       await userEvent.type(editor, 'updated');
 
       expect(onChange).toHaveBeenLastCalledWith('updated');
+    });
+  });
+
+  describe('line numbers', () => {
+    it('never shows line numbers in Markdown mode', async () => {
+      setup('# Hello', TextMode.Markdown, jest.fn(), true, true);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'false');
+    });
+
+    it('never shows line numbers in HTML mode', async () => {
+      setup('<p>Hello</p>', TextMode.HTML, jest.fn(), true, true);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'false');
+    });
+
+    it('shows line numbers in Code mode when showLineNumbers is enabled', async () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), true, true);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
+    });
+
+    it('hides line numbers in Code mode when showLineNumbers is disabled', async () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), true, false);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'false');
     });
   });
 });
