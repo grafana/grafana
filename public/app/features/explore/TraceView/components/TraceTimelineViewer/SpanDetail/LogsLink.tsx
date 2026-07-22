@@ -70,7 +70,7 @@ function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
   const [presence, setPresence] = useState<LogsPresence>('loading');
 
-  const { query, timeRange } = spanLinkModel.linkModel.interpolatedParams ?? {};  
+  const { query, timeRange } = spanLinkModel.linkModel.interpolatedParams ?? {};
 
   const queryKey = query ? JSON.stringify(query) : undefined;
   const timeRangeKey = timeRange ? `${timeRange.from.valueOf()}-${timeRange.to.valueOf()}` : undefined;
