@@ -558,7 +558,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/grafanads"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
 	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
-	_ "github.com/grafana/grafana/pkg/tsdb/jaeger"
 	_ "github.com/grafana/grafana/pkg/tsdb/loki"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
