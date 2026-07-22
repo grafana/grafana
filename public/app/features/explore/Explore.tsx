@@ -601,7 +601,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     const isPrometheusSelected = datasourceInstance?.meta.mixed
-      ? this.props.queries.some((q) => q.datasource?.type === 'prometheus')
+      ? this.props.queries.some(
+          (q) => q.datasource?.type != null && matchPluginId('prometheus', { id: q.datasource.type })
+        )
       : !!datasourceInstance && matchPluginId('prometheus', datasourceInstance.meta);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showNoData =

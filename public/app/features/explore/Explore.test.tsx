@@ -255,10 +255,10 @@ describe('Explore', () => {
       getBoolMock.mockRestore();
     });
 
-    it('renders without error when a Mixed datasource contains a Prometheus query', async () => {
+    it('detects a managed Prometheus flavor query in a Mixed datasource', async () => {
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
-        queries: [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-uid' } }],
+        queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
       });
 
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
