@@ -86,7 +86,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, e
 		e.identifier,
 	)
 
-	importedTitles := map[string]struct{}{}
+	importedTitles := make(map[string]struct{}, len(added))
 	for _, title := range added {
 		importedTitles[title] = struct{}{}
 	}
