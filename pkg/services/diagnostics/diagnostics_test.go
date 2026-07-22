@@ -452,18 +452,25 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardV2Model(t *testing.T) {
 			"panel-3": {
 				"kind": "Panel",
 				"spec": {"id": 3, "title": "CPU Usage", "vizConfig": {"group": "timeseries"}}
+			},
+			"panel-4": {
+				"kind": "LibraryPanel",
+				"spec": {"id": 4, "title": "Shared Errors", "libraryPanel": {"uid": "shared-errors"}}
 			}
 		}
 	}`)
 	panels := []DashboardPanel{
 		{ID: 3, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/3")},
+		{ID: 4, Title: "Shared Errors", HARBuffer: bufferWithEntry(t, "http://ds/4")},
 	}
 	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
 	require.Contains(t, files, "panels/3-cpu-usage/panel.json")
+	require.Contains(t, files, "panels/4-shared-errors/panel.json")
 	require.Contains(t, string(files["panels/3-cpu-usage/panel.json"]), `"timeseries"`)
+	require.Contains(t, string(files["panels/4-shared-errors/panel.json"]), `"shared-errors"`)
 }
 
 func TestIndexPanelJSON(t *testing.T) {

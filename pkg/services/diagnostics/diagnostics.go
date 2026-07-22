@@ -209,7 +209,7 @@ func indexElementsByID(elements map[string]json.RawMessage, panelsByID map[int64
 				ID *int64 `json:"id"`
 			} `json:"spec"`
 		}
-		if err := json.Unmarshal(raw, &meta); err != nil || meta.Kind != "Panel" || meta.Spec.ID == nil {
+		if err := json.Unmarshal(raw, &meta); err != nil || (meta.Kind != "Panel" && meta.Kind != "LibraryPanel") || meta.Spec.ID == nil {
 			continue
 		}
 		if _, exists := panelsByID[*meta.Spec.ID]; !exists {
