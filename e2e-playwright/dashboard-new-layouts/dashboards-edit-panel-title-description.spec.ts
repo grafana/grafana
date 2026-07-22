@@ -18,7 +18,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can edit panel title and description', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can edit panel title', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       const controls = new Controls(page, dashboardPage, selectors);
@@ -36,13 +36,27 @@ test.describe(
       const newTitle = `New panel title (${Date.now()})`;
       await titleInput.fill(newTitle);
 
-      const newDescription = `New panel description (${Date.now()})`;
-      await sidebar.panelOptions.getDescriptionTextarea().fill(newDescription);
-
       await expect(panel.getHeaderByTitle(oldTitle)).toBeHidden();
 
       const header = panel.getHeaderByTitle(newTitle);
       await expect(header).toBeVisible();
+    });
+
+    test('can edit panel description', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+
+      const controls = new Controls(page, dashboardPage, selectors);
+      const panel = new Panel(page, dashboardPage, selectors);
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
+
+      await controls.enterEditMode();
+
+      await panel.selectByTitle(/^No Data Points Warning$/);
+
+      const newDescription = `New panel description (${Date.now()})`;
+      await sidebar.panelOptions.getDescriptionTextarea().fill(newDescription);
+
+      const header = panel.getHeaderByTitle(/^No Data Points Warning$/);
 
       // Reveal description tooltip and check that its value is as expected
       const descriptionIcon = header.locator('[data-testid="title-items-container"] > span').first();

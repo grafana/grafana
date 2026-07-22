@@ -238,10 +238,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const label = (
     <Stack direction="row" justifyContent="space-between">
-      <Label
-        htmlFor={id}
-        data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description')}
-      >
+      <Label htmlFor={id}>
         <Trans i18nKey="dashboard.viz-panel.options.description">Description</Trans>
       </Label>
       <Stack>
@@ -262,7 +259,10 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   return (
     <>
       {/* eslint-disable-next-line @grafana/require-no-margin */}
-      <Field label={label}>
+      <Field
+        label={label}
+        data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description')}
+      >
         <TextArea
           id={id}
           value={subtitle ?? description}
