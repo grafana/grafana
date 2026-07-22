@@ -99,3 +99,52 @@ func TestDiagnosticsRoutesAreServerAdminOnly(t *testing.T) {
 		})
 	}
 }
+
+// TestDiagnosticsRoutesAreNotRegisteredOnCloud is the companion to TestDiagnosticsRoutesAreServerAdminOnly:
+// the diagnostics routes are also gated at registration by the on-prem check in registerRoutes — they
+// register only when Cfg.StackID == "" (see api.go). On Grafana Cloud (StackID set) they must not exist
+// at all. The bundle can contain sensitive datasource traffic, so "never on Cloud" is a security
+// boundary, not just a config nicety, and a regression that registered them on Cloud must fail here.
+//
+// The probe is a NON-admin caller asserting 404. That is what distinguishes "route absent" from "route
+// present but short-circuited elsewhere": if these routes were wrongly registered on Cloud, reqGrafanaAdmin
+// would answer a non-admin with 403 (see the companion test) before any handler/flag logic — so a 404
+// proves the route was never registered. A server admin would also get 404 here, but that is
+// indistinguishable from the flag-off handler 404, so it could not prove absence on its own.
+func TestDiagnosticsRoutesAreNotRegisteredOnCloud(t *testing.T) {
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		cfg := setting.NewCfg()
+		// Non-empty StackID => Grafana Cloud => the diagnostics routes must not be registered.
+		cfg.StackID = "12345"
+		hs.Cfg = cfg
+	})
+
+	// The same routes as the companion test; on Cloud none of them should exist.
+	routes := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodPost, "/api/ds/diagnostics"},
+		{http.MethodPost, "/api/ds/dashboard-diagnostics"},
+		{http.MethodGet, "/api/ds/dashboard-diagnostics/someuid"},
+		{http.MethodGet, "/api/ds/dashboard-diagnostics/someuid/download"},
+	}
+
+	// A non-admin is the discriminating probe (see the doc comment): a registered route would answer 403
+	// at the reqGrafanaAdmin gate, an unregistered one answers 404.
+	nonAdmin := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: false}
+
+	for _, rt := range routes {
+		t.Run(fmt.Sprintf("%s %s is not registered on Cloud", rt.method, rt.path), func(t *testing.T) {
+			req := server.NewRequest(rt.method, rt.path, nil)
+			req = webtest.RequestWithSignedInUser(req, nonAdmin)
+
+			resp, err := server.Send(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			require.Equal(t, http.StatusNotFound, resp.StatusCode,
+				"on Cloud the route must not be registered: a non-admin gets 404 (route absent), not 403 (route present but gated)")
+		})
+	}
+}
