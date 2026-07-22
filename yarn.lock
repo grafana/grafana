@@ -15618,19 +15618,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.4.0":
-  version: 3.4.0
-  resolution: "dompurify@npm:3.4.0"
-  dependencies:
-    "@types/trusted-types": "npm:^2.0.7"
-  dependenciesMeta:
-    "@types/trusted-types":
-      optional: true
-  checksum: 10/ead40b78ec51cd451f2c74fada4233ee0afeafdbab54af2f4a4bd5d4d138ac04d0d85140e79f533803ecfd1c3758edc1176087039c1e7217824f9794a9d34d2c
-  languageName: node
-  linkType: hard
-
-"dompurify@npm:^3.4.0":
+"dompurify@npm:3.4.12, dompurify@npm:^3.4.0":
   version: 3.4.12
   resolution: "dompurify@npm:3.4.12"
   dependencies:
@@ -18669,7 +18657,7 @@ __metadata:
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:4.1.0"
     debounce-promise: "npm:3.1.2"
-    dompurify: "npm:3.4.0"
+    dompurify: "npm:3.4.12"
     downsample: "npm:1.4.0"
     enquirer: "npm:^2.4.1"
     esbuild: "npm:0.25.8"
