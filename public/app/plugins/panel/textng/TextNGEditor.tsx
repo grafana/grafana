@@ -68,9 +68,6 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
     [mode, showLineNumbers]
   );
 
-  // Resolve the live EditorView from the DOM at action time. Caching it in a ref
-  // is unreliable: @uiw/react-codemirror reconfigures/remounts the view across
-  // renders (and view switches), which can leave a stale or null reference.
   const getEditorView = () => (editorContainerRef.current ? EditorView.findFromDOM(editorContainerRef.current) : null);
 
   const surroundSelection = (before: string, after = before) => {
