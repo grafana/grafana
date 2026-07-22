@@ -2721,6 +2721,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.filterablePanels",
+        "resourceVersion": "1784637166683",
+        "creationTimestamp": "2026-07-21T12:32:46Z"
+      },
+      "spec": {
+        "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.frontendLegacyAPIHandling",
         "resourceVersion": "1783501568190",
         "creationTimestamp": "2026-07-08T09:06:08Z"

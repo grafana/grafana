@@ -41,7 +41,7 @@ function AlertIncidentTabsInner() {
     },
   ];
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={2} minWidth={0}>
       <Stack justifyContent="space-between" alignItems="center">
         <Text element="h2" variant="h5">
           <Trans i18nKey="home.alerts-incidents.title">Alerts & incidents</Trans>
