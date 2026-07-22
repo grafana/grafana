@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { useAssistant } from '@grafana/assistant';
 import { PluginSignatureStatus } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
@@ -9,6 +11,16 @@ import { getPluginsStateMock } from '../../mocks/mockHelpers';
 import { type CatalogPlugin, PluginStatus } from '../../types';
 
 import { InstallControlsButton } from './InstallControlsButton';
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(),
+  createAssistantContextItem: jest.fn(<T extends object>(type: string, data: T) => ({
+    type,
+    ...data,
+  })),
+}));
+
+const mockUseAssistant = jest.mocked(useAssistant);
 
 const plugin: CatalogPlugin = {
   description: 'The test plugin',
@@ -40,6 +52,17 @@ const plugin: CatalogPlugin = {
 };
 
 describe('InstallControlsButton', () => {
+  beforeEach(() => {
+    // Default: assistant unavailable, so the plain install button renders.
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: false,
+      openAssistant: undefined,
+      closeAssistant: undefined,
+      toggleAssistant: undefined,
+    });
+  });
+
   it('should not allow install if angular is detected', () => {
     render(
       <TestProvider>
@@ -344,6 +367,77 @@ describe('InstallControlsButton', () => {
         </TestProvider>
       );
       expect(screen.queryByText('Update')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('install button with assistant', () => {
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+    const openAssistant = jest.fn();
+
+    beforeEach(() => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
+      mockUseAssistant.mockReturnValue({
+        isLoading: false,
+        isAvailable: true,
+        openAssistant,
+        closeAssistant: jest.fn(),
+        toggleAssistant: jest.fn(),
+      });
+    });
+
+    it('renders assistant and manual install options in a dropdown when the assistant is available', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.INSTALL} />
+        </TestProvider>
+      );
+
+      await user.click(screen.getByRole('button', { name: /install/i }));
+
+      expect(await screen.findByText('Install with assistant')).toBeInTheDocument();
+      expect(screen.getByText('Install manually')).toBeInTheDocument();
+    });
+
+    it('opens the assistant when "Install with assistant" is selected', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.INSTALL} />
+        </TestProvider>
+      );
+
+      await user.click(screen.getByRole('button', { name: /install/i }));
+      await user.click(await screen.findByText('Install with assistant'));
+
+      expect(openAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: `grafana/plugin-page/${plugin.id}/install-plugin`,
+          mode: 'assistant',
+          autoSend: true,
+        })
+      );
+    });
+
+    it('renders a plain install button (no dropdown) when the assistant is not available', () => {
+      mockUseAssistant.mockReturnValue({
+        isLoading: false,
+        isAvailable: false,
+        openAssistant: undefined,
+        closeAssistant: undefined,
+        toggleAssistant: undefined,
+      });
+
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.INSTALL} />
+        </TestProvider>
+      );
+
+      expect(screen.getByRole('button', { name: /install/i })).toBeInTheDocument();
+      expect(screen.queryByText('Install with assistant')).not.toBeInTheDocument();
     });
   });
 });

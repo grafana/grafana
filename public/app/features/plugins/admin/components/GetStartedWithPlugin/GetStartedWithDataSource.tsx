@@ -36,7 +36,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     }
 
     openAssistant({
-      origin: `grafana/plugin-page/${plugin.id}`,
+      origin: `grafana/plugin-page/${plugin.id}/add-data-source`,
       mode: 'assistant',
       context: [
         createAssistantContextItem('structured', {

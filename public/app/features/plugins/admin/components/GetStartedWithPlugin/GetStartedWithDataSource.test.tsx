@@ -126,7 +126,7 @@ describe('GetStartedWithDataSource', () => {
     expect(mockAddDataSource).toHaveBeenCalledWith({ id: plugin.id, name: plugin.name }, expect.anything());
   });
 
-  it('creates the data source and opens the assistant when "Set up with assistant" is selected', async () => {
+  it('opens the assistant when "Set up with assistant" is selected', async () => {
     const openAssistant = jest.fn();
     mockUseAssistant.mockReturnValue({
       isLoading: false,
@@ -150,7 +150,7 @@ describe('GetStartedWithDataSource', () => {
 
     expect(openAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
-        origin: `grafana/plugin-page/${plugin.id}`,
+        origin: `grafana/plugin-page/${plugin.id}/add-data-source`,
         mode: 'assistant',
         autoSend: true,
         context: [expect.objectContaining({ type: 'structured', data: { pluginId: plugin.id, title: 'Plugin ID' } })],

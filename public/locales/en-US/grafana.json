@@ -13024,7 +13024,12 @@
     "install-controls": {
       "contact-us": "Contact us",
       "install": "Install",
+      "install-assistant": "Install with assistant",
+      "install-assistant-description": "Guided installation",
+      "install-manually": "Install manually",
+      "install-manually-description": "Install it yourself",
       "installing": "Installing",
+      "plugin-id": "Plugin ID",
       "update": "Update",
       "updating": "Updating"
     },
