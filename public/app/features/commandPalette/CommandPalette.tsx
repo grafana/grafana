@@ -114,6 +114,14 @@ function CommandPaletteContents() {
     return () => clearTimeout(handle);
   }, [searchQuery]);
 
+  useDeepSearchResultsShownReporting(
+    isFetchingDeepSearchResults,
+    showDeepSearch,
+    deepSearchResults.length,
+    deepSearchEnabled,
+    searchQuery.length
+  );
+
   // Track input modality so onSelectAction (which doesn't see the originating
   // event) can report whether the activation came from keyboard or mouse.
   const onPointerDownCapture = useCallback(() => setCommandPaletteInputMode('mouse'), []);
@@ -539,6 +547,32 @@ const getCommandPalettePosition = () => {
   const lateralSpace = screenWidth - inputRightPosition;
   return lateralSpace;
 };
+
+// Denominator for Deep Search Discovery/Adoption: fire once per settled deep
+// search render. useDeepSearchResults already debounces the fetch, so keying
+// off its fetching flag settling to false gives one event per result set
+// rather than one per keystroke.
+function useDeepSearchResultsShownReporting(
+  isFetchingDeepSearchResults: boolean,
+  showDeepSearch: boolean,
+  deepSearchResultsLength: number,
+  deepSearchEnabled: boolean,
+  searchQueryLength: number
+) {
+  const deepSearchWasFetchingRef = useRef(false);
+  useEffect(() => {
+    const settled = deepSearchWasFetchingRef.current && !isFetchingDeepSearchResults;
+    deepSearchWasFetchingRef.current = isFetchingDeepSearchResults;
+    if (settled && showDeepSearch) {
+      reportInteraction('command_palette_deep_search_results_shown', {
+        isDeepSearchEnabled: deepSearchEnabled,
+        isDeepSearchLoaded: showDeepSearch && !isFetchingDeepSearchResults,
+        deepSearchItemsCount: deepSearchResultsLength,
+        queryLength: searchQueryLength,
+      });
+    }
+  }, [isFetchingDeepSearchResults, showDeepSearch, deepSearchResultsLength, deepSearchEnabled, searchQueryLength]);
+}
 
 const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
   return {

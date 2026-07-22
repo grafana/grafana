@@ -60,6 +60,143 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	return buildTarGz(files)
 }
 
+// DashboardPanel is one panel's captured input for a whole-dashboard diagnostics archive. The
+// caller runs each panel's queries with an independent HAR capture buffer and hands the results
+// here for assembly.
+type DashboardPanel struct {
+	ID          int64
+	Title       string
+	PanelJSON   json.RawMessage
+	Datasources []string                   // datasource UIDs the panel references (for the manifest)
+	Resp        *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
+	HARBuffer   *harcapture.Buffer         // in-process capture buffer for this panel's queries
+	QueryErr    error                      // top-level error running the panel's queries, if any
+	Skipped     string                     // non-empty => panel was not executed (e.g. non-data panel)
+}
+
+// dashboardManifest is manifest.json: a machine-readable summary of what the whole-dashboard bundle
+// contains, so a reader can see which panels ran, were skipped, or errored without unpacking each dir.
+type dashboardManifest struct {
+	GeneratedAt string               `json:"generatedAt"`
+	PanelsTotal int                  `json:"panelsTotal"`
+	PanelsRun   int                  `json:"panelsRun"`
+	Panels      []manifestPanelEntry `json:"panels"`
+}
+
+type manifestPanelEntry struct {
+	ID          int64    `json:"id"`
+	Title       string   `json:"title"`
+	Dir         string   `json:"dir,omitempty"`
+	Datasources []string `json:"datasources,omitempty"`
+	HARBytes    int      `json:"harBytes,omitempty"`
+	Skipped     string   `json:"skipped,omitempty"`
+	Error       string   `json:"error,omitempty"`
+	// CaptureError records a failure to serialize this panel's captured traffic. It's kept separate
+	// from Error (a query failure) so one unserializable buffer only loses this panel's traffic.har,
+	// not the whole multi-panel bundle.
+	CaptureError string `json:"captureError,omitempty"`
+}
+
+// BuildDashboard assembles a whole-dashboard .tar.gz: a shared dashboard.json and manifest.json plus
+// per-panel panels/<id>-<slug>/{panel.json, traffic.har, query-error.txt}.
+//
+// Like Build, captured traffic and error text are recorded VERBATIM -- redaction is intentionally
+// deferred (see the harcapture package doc) -- and server logs are omitted (not request-scoped).
+func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []DashboardPanel) ([]byte, error) {
+	manifest := dashboardManifest{
+		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
+		PanelsTotal: len(panels),
+	}
+
+	files := map[string][]byte{}
+	if len(dashboardJSON) > 0 {
+		files["dashboard.json"] = indentJSON(dashboardJSON)
+	}
+
+	usedDirs := map[string]bool{}
+	for _, p := range panels {
+		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
+
+		if p.Skipped != "" {
+			entry.Skipped = p.Skipped
+			manifest.Panels = append(manifest.Panels, entry)
+			continue
+		}
+
+		dir := uniquePanelDir(p.ID, p.Title, usedDirs)
+		entry.Dir = dir
+		if len(p.PanelJSON) > 0 {
+			files[dir+"/panel.json"] = indentJSON(p.PanelJSON)
+		}
+
+		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
+		// record it against this panel in the manifest and keep everything else (dashboard.json, the
+		// other panels' traffic, manifest). Only this panel loses its traffic.har.
+		har, err := collectHAR(p.Resp, p.HARBuffer)
+		if err != nil {
+			entry.CaptureError = err.Error()
+		} else if len(har) > 0 {
+			files[dir+"/traffic.har"] = har
+			entry.HARBytes = len(har)
+		}
+
+		if p.QueryErr != nil {
+			entry.Error = p.QueryErr.Error()
+			files[dir+"/query-error.txt"] = []byte(p.QueryErr.Error() + "\n")
+		} else {
+			manifest.PanelsRun++
+		}
+
+		manifest.Panels = append(manifest.Panels, entry)
+	}
+
+	if manifestJSON, err := json.MarshalIndent(manifest, "", "  "); err == nil {
+		files["manifest.json"] = manifestJSON
+	}
+
+	return buildTarGz(files)
+}
+
+// uniquePanelDir builds a stable, filesystem-safe directory name (panels/<id>-<slug>),
+// disambiguating collisions with a numeric suffix.
+func uniquePanelDir(id int64, title string, used map[string]bool) string {
+	base := fmt.Sprintf("panels/%d", id)
+	if slug := panelTitleSlug(title); slug != "" {
+		base += "-" + slug
+	}
+	dir := base
+	for i := 2; used[dir]; i++ {
+		dir = fmt.Sprintf("%s-%d", base, i)
+	}
+	used[dir] = true
+	return dir
+}
+
+// panelTitleSlug lowercases a title and keeps only [a-z0-9], collapsing other runs to single
+// hyphens and capping length so directory names stay short and portable.
+func panelTitleSlug(s string) string {
+	s = strings.ToLower(s)
+	var b strings.Builder
+	prevDash := false
+	for _, r := range s {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+			prevDash = false
+		default:
+			if !prevDash && b.Len() > 0 {
+				b.WriteByte('-')
+				prevDash = true
+			}
+		}
+	}
+	out := strings.Trim(b.String(), "-")
+	if len(out) > 40 {
+		out = strings.Trim(out[:40], "-")
+	}
+	return out
+}
+
 // harResponseRefIDPrefix is the reserved refId prefix for the synthetic capture responses that
 // externalized (gRPC) plugins return. The SDK namespaces the refId per datasource UID (e.g.
 // "__har__P123") so frames from multiple datasources don't collide when Grafana merges a

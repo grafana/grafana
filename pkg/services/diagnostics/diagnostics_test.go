@@ -379,6 +379,79 @@ func TestResponseError(t *testing.T) {
 	require.Equal(t, "A: bad query\nB: boom", err.Error())
 }
 
+func bufferWithEntry(t *testing.T, url string) *harcapture.Buffer {
+	t.Helper()
+	buf := &harcapture.Buffer{}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	require.NoError(t, err)
+	buf.AddEntry(req, nil, nil, time.Now(), time.Millisecond)
+	return buf
+}
+
+func TestBuildDashboard(t *testing.T) {
+	panels := []DashboardPanel{
+		{ID: 1, Title: "CPU Usage", PanelJSON: json.RawMessage(`{"id":1}`), Datasources: []string{"prom"}, HARBuffer: bufferWithEntry(t, "http://ds/1")},
+		{ID: 2, Title: "Text panel", Skipped: "no queries (non-data panel)"},
+	}
+	blob, err := NewBundler().BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "dashboard.json")
+	require.Contains(t, files, "manifest.json")
+	require.Contains(t, files, "panels/1-cpu-usage/panel.json")
+	require.Contains(t, files, "panels/1-cpu-usage/traffic.har")
+	require.NotContains(t, files, "server.log", "server log is intentionally omitted (not request-scoped)")
+	// A skipped panel gets no dir.
+	for name := range files {
+		require.NotContains(t, name, "panels/2", "skipped panel must not have a dir")
+	}
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Equal(t, 2, m.PanelsTotal)
+	require.Equal(t, 1, m.PanelsRun, "only the data panel ran")
+	require.Len(t, m.Panels, 2)
+	require.Equal(t, "no queries (non-data panel)", m.Panels[1].Skipped)
+	require.Equal(t, "panels/1-cpu-usage", m.Panels[0].Dir)
+	require.Positive(t, m.Panels[0].HARBytes)
+}
+
+func TestBuildDashboard_recordsPanelQueryError(t *testing.T) {
+	panels := []DashboardPanel{
+		{ID: 7, Title: "Broken", QueryErr: errors.New("datasource exploded")},
+	}
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/7-broken/query-error.txt")
+	require.Contains(t, string(files["panels/7-broken/query-error.txt"]), "datasource exploded")
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Equal(t, 0, m.PanelsRun, "a panel whose query errored is not counted as run")
+	require.Equal(t, "datasource exploded", m.Panels[0].Error)
+}
+
+func TestBuildDashboard_dirCollision(t *testing.T) {
+	// Two panels share an id+title, so their dirs must be disambiguated.
+	panels := []DashboardPanel{
+		{ID: 3, Title: "Same", HARBuffer: bufferWithEntry(t, "http://ds/a")},
+		{ID: 3, Title: "Same", HARBuffer: bufferWithEntry(t, "http://ds/b")},
+	}
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/3-same/traffic.har")
+	require.Contains(t, files, "panels/3-same-2/traffic.har", "collision disambiguated with a numeric suffix")
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Equal(t, 2, m.PanelsTotal)
+}
+
 func readTarGz(t *testing.T, data []byte) map[string][]byte {
 	t.Helper()
 

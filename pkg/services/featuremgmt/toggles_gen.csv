@@ -112,6 +112,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-04,newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 2026-03-09,dashboardUnifiedDrilldownControls,GA,@grafana/dashboards-squad,false,false,true
 2026-07-17,dashboards.filterablePanels,experimental,@grafana/dashboards-squad,false,false,true
+2026-07-21,grafana.filterablePanels,experimental,@grafana/dashboards-squad,false,false,true
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
@@ -238,6 +239,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,favoriteDatasources,experimental,@grafana/grafana-catalog,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2026-06-17,grafana.starredFolders,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-07-17,grafana.newTextPanel,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
 2025-07-31,alertingTriage,experimental,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingAlertsActivityBanner,experimental,@grafana/alerting-squad,false,false,true
@@ -362,3 +364,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-07-17,features.bulkFlagEvalFiltering,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-07-20,grafana.exploreMetricsSidebar,experimental,@grafana/datapro,false,false,true
